@@ -1,0 +1,6 @@
+{
+  "name": "YAAD",
+  "description": "A simple and friendly shopping-memory mobile app designed to help you create shopping lists, remember what you need, and organize your grocery trips effortlessly.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
