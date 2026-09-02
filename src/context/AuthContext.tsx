@@ -22,7 +22,7 @@ interface AuthContextType {
   updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
   updateUserProfile: (updates: {
     full_name?: string;
-    avatar_url?: string;
+    avatar_url?: string | null;
     language?: AppLanguage;
     usage_purpose?: string;
     referral_source?: string;
@@ -317,7 +317,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const updateUserProfile = async (updates: {
     full_name?: string;
-    avatar_url?: string;
+    avatar_url?: string | null;
     language?: AppLanguage;
     usage_purpose?: string;
     referral_source?: string;
@@ -330,7 +330,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       const { data, error } = await supabaseUpdateProfile(user.id, {
         full_name: updates.full_name,
-        avatar_url: updates.avatar_url,
+        avatar_url: updates.avatar_url ?? undefined,
         language: updates.language,
         usage_purpose: updates.usage_purpose,
         referral_source: updates.referral_source,
@@ -345,7 +345,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (data) {
         setProfile(data);
       } else {
-        setProfile((prev) => (prev ? { ...prev, ...updates } : null));
+        setProfile((prev) => (prev ? { ...prev, ...updates, avatar_url: updates.avatar_url ?? undefined } : null));
       }
 
       return { error: null };

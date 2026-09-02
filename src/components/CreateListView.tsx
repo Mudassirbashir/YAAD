@@ -43,7 +43,7 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
           aria-label="Go back"
           className="flex items-center justify-center w-10 h-10 -ml-2 rounded-full hover:bg-surface-container-low transition-colors text-primary active:scale-95"
         >
-          <ArrowLeft className="w-5 h-5 text-primary" />
+          <ArrowLeft className="w-5 h-5 rtl:rotate-180 text-primary" />
         </button>
       </header>
 
@@ -108,7 +108,7 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
             className="w-full h-[56px] bg-primary text-on-primary font-['Manrope'] text-base font-semibold rounded-full flex items-center justify-center gap-2 hover:bg-primary-container transition-all shadow-[0px_8px_24px_rgba(0,30,21,0.15)] active:scale-[0.98]"
           >
             <span>{t('createList.submitBtn')}</span>
-            <ArrowRight className="w-5 h-5" />
+            <ArrowRight className="w-5 h-5 rtl:rotate-180" />
           </button>
         </div>
       </main>

@@ -159,6 +159,12 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
   const getCategoryName = (categoryId: CategoryId | string): string => {
     if (!categoryId) return t('categories.other');
 
+    // Direct translation key match
+    const translated = t(`categories.${categoryId}`);
+    if (translated && translated !== `categories.${categoryId}`) {
+      return translated;
+    }
+
     // Check if categoryId is in categories list
     const validCategory = CATEGORIES_LIST.find((c) => c.id === categoryId);
     if (validCategory) {
@@ -173,17 +179,32 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     if (legacyLower.includes('fruit')) {
       return t('categories.fruits');
     }
-    if (legacyLower.includes('dairy') || legacyLower.includes('egg')) {
+    if (legacyLower.includes('seafood') || legacyLower.includes('fish') || legacyLower.includes('machli') || legacyLower.includes('prawn')) {
+      return t('categories.seafood');
+    }
+    if (legacyLower.includes('egg') || legacyLower.includes('anda')) {
+      return t('categories.eggs');
+    }
+    if (legacyLower.includes('dairy') || legacyLower.includes('milk') || legacyLower.includes('doodh')) {
       return t('categories.dairy');
     }
-    if (legacyLower.includes('meat') || legacyLower.includes('seafood') || legacyLower.includes('gosht')) {
+    if (legacyLower.includes('meat') || legacyLower.includes('chicken') || legacyLower.includes('gosht')) {
       return t('categories.meat');
+    }
+    if (legacyLower.includes('spice') || legacyLower.includes('masala')) {
+      return t('categories.spices');
+    }
+    if (legacyLower.includes('herb') || legacyLower.includes('dhaniya') || legacyLower.includes('mint')) {
+      return t('categories.herbs');
+    }
+    if (legacyLower.includes('dry fruit') || legacyLower.includes('nut') || legacyLower.includes('badam')) {
+      return t('categories.dry_fruits');
     }
     if (legacyLower.includes('bakery') || legacyLower.includes('bread')) {
       return t('categories.bakery');
     }
-    if (legacyLower.includes('pantry') || legacyLower.includes('grain') || legacyLower.includes('staple')) {
-      return t('categories.grains_staples');
+    if (legacyLower.includes('pantry') || legacyLower.includes('grain') || legacyLower.includes('staple') || legacyLower.includes('grocery')) {
+      return t('categories.grocery');
     }
     if (legacyLower.includes('beverage') || legacyLower.includes('drink')) {
       return t('categories.beverages');
@@ -191,11 +212,20 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     if (legacyLower.includes('snack')) {
       return t('categories.snacks');
     }
-    if (legacyLower.includes('clean') || legacyLower.includes('household')) {
+    if (legacyLower.includes('clean') || legacyLower.includes('safai')) {
+      return t('categories.cleaning');
+    }
+    if (legacyLower.includes('house') || legacyLower.includes('ghar')) {
       return t('categories.household');
     }
     if (legacyLower.includes('personal') || legacyLower.includes('soap')) {
       return t('categories.personal_care');
+    }
+    if (legacyLower.includes('medic') || legacyLower.includes('health') || legacyLower.includes('dawa')) {
+      return t('categories.health');
+    }
+    if (legacyLower.includes('baby') || legacyLower.includes('child')) {
+      return t('categories.baby');
     }
 
     return categoryId;

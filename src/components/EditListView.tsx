@@ -161,9 +161,9 @@ export const EditListView: React.FC<EditListViewProps> = ({
         <div className="space-y-2.5">
           <form
             onSubmit={handleAddItem}
-            className="flex items-center bg-surface-container-lowest rounded-full shadow-[0px_4px_20px_rgba(0,30,21,0.05)] border border-surface-container-high focus-within:border-primary transition-colors p-1 pl-4 pr-1.5"
+            className="flex items-center bg-surface-container-lowest rounded-full shadow-[0px_4px_20px_rgba(0,30,21,0.05)] border border-surface-container-high focus-within:border-primary transition-colors p-1 ps-4 pe-1.5"
           >
-            <Search className="w-5 h-5 text-outline mr-2 shrink-0" />
+            <Search className="w-5 h-5 text-outline me-2 shrink-0" />
             <input
               value={newItemName}
               onChange={(e) => setNewItemName(e.target.value)}

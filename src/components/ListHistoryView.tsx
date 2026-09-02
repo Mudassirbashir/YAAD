@@ -137,7 +137,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
                   </div>
 
                   <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary shadow-xs shrink-0 group-hover:bg-surface-variant transition-colors">
-                    <ChevronRight className="w-5 h-5 text-primary" />
+                    <ChevronRight className="w-5 h-5 text-primary rtl:rotate-180" />
                   </div>
                 </article>
               );

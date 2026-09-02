@@ -192,7 +192,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
             aria-label="Go back"
             className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors text-primary active:scale-95"
           >
-            <ArrowLeft className="w-5 h-5 text-primary" />
+            <ArrowLeft className="w-5 h-5 rtl:rotate-180 text-primary" />
           </button>
           <h2 className="font-['Plus_Jakarta_Sans'] text-base sm:text-lg font-bold text-primary truncate max-w-[200px] sm:max-w-xs text-center">
             {listTitle}
@@ -228,12 +228,12 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                   if (inputError) setInputError('');
                 }}
                 placeholder={t('addItems.inputPlaceholder')}
-                className="w-full h-12 bg-surface-container-low rounded-2xl px-4 pr-12 text-sm text-on-surface font-['Manrope'] border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline"
+                className="w-full h-12 bg-surface-container-low rounded-2xl ps-4 pe-12 text-sm text-on-surface font-['Manrope'] border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline"
                 autoFocus
               />
               <button
                 type="submit"
-                className="absolute right-1.5 top-1.5 w-9 h-9 rounded-xl bg-primary text-on-primary flex items-center justify-center hover:bg-primary-container active:scale-95 transition-all shadow-xs"
+                className="absolute end-1.5 top-1.5 w-9 h-9 rounded-xl bg-primary text-on-primary flex items-center justify-center hover:bg-primary-container active:scale-95 transition-all shadow-xs"
                 aria-label="Add item"
               >
                 <Plus className="w-5 h-5" />

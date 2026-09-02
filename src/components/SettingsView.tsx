@@ -29,18 +29,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { Language } from '../translations';
 import { Avatar } from './Avatar';
-
-// Preset avatar options
-const AVATAR_PRESETS = [
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
-  'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80',
-];
+import { AvatarPickerModal } from './AvatarPickerModal';
 
 interface SettingsViewProps {
   onBack: () => void;
@@ -211,14 +200,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     }
   };
 
-  // Select Avatar Preset
-  const handleSelectAvatar = async (url: string | null) => {
-    if (!user) return;
+  // Select Avatar (Emoji or Initials)
+  const handleSelectAvatar = async (avatarValue: string | null) => {
     setIsSavingProfile(true);
-    setShowAvatarPicker(false);
 
     const { error } = await updateUserProfile({
-      avatar_url: url || undefined,
+      avatar_url: avatarValue,
     });
 
     setIsSavingProfile(false);
@@ -226,7 +213,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     if (error) {
       setProfileMessage({ type: 'error', text: error.message || 'Unable to update avatar' });
     } else {
-      setProfileMessage({ type: 'success', text: t('settings.saved') });
+      setProfileMessage({ type: 'success', text: t('settings.avatarUpdated') || t('settings.saved') });
       setTimeout(() => setProfileMessage(null), 3000);
     }
   };
@@ -576,7 +563,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   }`}
                 >
                   <div>
-                    <span className="block text-base font-bold font-['Noto_Nastaliq_Urdu',sans-serif]">
+                    <span className="block text-base font-bold font-urdu">
                       {t('settings.languageUrdu')}
                     </span>
                     <span className="block text-xs text-outline mt-0.5">
@@ -851,60 +838,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       </main>
 
       {/* ==================================================================== */}
-      {/* MODAL 1: Avatar Preset Picker */}
+      {/* MODAL 1: Emoji & Custom Avatar Picker */}
       {/* ==================================================================== */}
-      {showAvatarPicker && (
-        <div
-          onClick={() => setShowAvatarPicker(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-in fade-in duration-200"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="bg-surface-container-lowest rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-surface-dim space-y-4 animate-in zoom-in-95 duration-200"
-          >
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-bold text-on-surface font-['Manrope']">
-                {t('settings.chooseAvatar')}
-              </h3>
-              <button
-                onClick={() => setShowAvatarPicker(false)}
-                className="w-7 h-7 rounded-full flex items-center justify-center text-outline hover:bg-surface-container-low"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-4 gap-3 py-2">
-              {AVATAR_PRESETS.map((preset, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handleSelectAvatar(preset)}
-                  className={`w-14 h-14 rounded-full overflow-hidden border-2 transition-transform hover:scale-105 active:scale-95 ${
-                    profile?.avatar_url === preset ? 'border-primary ring-2 ring-primary/30' : 'border-surface-dim'
-                  }`}
-                >
-                  <img src={preset} alt={`Avatar ${idx + 1}`} className="w-full h-full object-cover" />
-                </button>
-              ))}
-            </div>
-
-            <div className="pt-2 border-t border-surface-dim flex justify-between gap-2">
-              <button
-                onClick={() => handleSelectAvatar(null)}
-                className="px-3 py-1.5 text-xs font-semibold text-outline hover:text-on-surface rounded-xl hover:bg-surface-container-low transition-colors"
-              >
-                Use Initials
-              </button>
-              <button
-                onClick={() => setShowAvatarPicker(false)}
-                className="px-4 py-1.5 text-xs font-bold text-on-primary bg-primary rounded-xl hover:bg-primary/90 transition-colors"
-              >
-                {t('settings.cancel')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AvatarPickerModal
+        isOpen={showAvatarPicker}
+        onClose={() => setShowAvatarPicker(false)}
+        currentAvatarUrl={profile?.avatar_url}
+        onSave={handleSelectAvatar}
+        userName={displayName}
+        userEmail={user?.email}
+      />
 
       {/* ==================================================================== */}
       {/* MODAL 2: Sign Out Confirmation */}

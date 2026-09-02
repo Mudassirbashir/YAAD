@@ -36,7 +36,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
               aria-label="Go back"
               className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors text-primary active:scale-95"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-5 h-5 rtl:rotate-180" />
             </button>
           ) : (
             <div className="flex items-center">

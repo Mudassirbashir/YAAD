@@ -1,24 +1,33 @@
 import { Language } from './translations';
 
 export type CategoryId =
-  | 'vegetables'
   | 'fruits'
+  | 'vegetables'
   | 'dairy'
   | 'meat'
+  | 'seafood'
+  | 'eggs'
   | 'bakery'
-  | 'grains_staples'
   | 'beverages'
-  | 'snacks'
+  | 'grocery'
+  | 'spices'
+  | 'herbs'
+  | 'dry_fruits'
   | 'frozen'
   | 'household'
   | 'cleaning'
   | 'personal_care'
-  | 'baby_care'
-  | 'medicines'
+  | 'health'
+  | 'baby'
   | 'stationery'
   | 'electronics'
+  | 'snacks'
   | 'clothing'
-  | 'other';
+  | 'other'
+  // Backward compatibility aliases:
+  | 'grains_staples'
+  | 'baby_care'
+  | 'medicines';
 
 export interface CategoryInfo {
   id: CategoryId;
@@ -28,24 +37,29 @@ export interface CategoryInfo {
 }
 
 export const CATEGORIES_LIST: CategoryInfo[] = [
-  { id: 'vegetables', icon: 'eco', defaultName: 'Vegetables', order: 1 },
-  { id: 'fruits', icon: 'nutrition', defaultName: 'Fruits', order: 2 },
-  { id: 'dairy', icon: 'egg', defaultName: 'Dairy & Eggs', order: 3 },
-  { id: 'grains_staples', icon: 'inventory_2', defaultName: 'Grains & Staples', order: 4 },
-  { id: 'meat', icon: 'set_meal', defaultName: 'Meat & Seafood', order: 5 },
-  { id: 'bakery', icon: 'bakery_dining', defaultName: 'Bakery', order: 6 },
-  { id: 'beverages', icon: 'local_cafe', defaultName: 'Beverages', order: 7 },
-  { id: 'snacks', icon: 'cookie', defaultName: 'Snacks', order: 8 },
-  { id: 'frozen', icon: 'ac_unit', defaultName: 'Frozen Food', order: 9 },
-  { id: 'household', icon: 'home', defaultName: 'Household', order: 10 },
-  { id: 'cleaning', icon: 'cleaning_services', defaultName: 'Cleaning', order: 11 },
-  { id: 'personal_care', icon: 'soap', defaultName: 'Personal Care', order: 12 },
-  { id: 'baby_care', icon: 'child_care', defaultName: 'Baby Care', order: 13 },
-  { id: 'medicines', icon: 'medication', defaultName: 'Medicines', order: 14 },
-  { id: 'stationery', icon: 'edit_note', defaultName: 'Stationery', order: 15 },
-  { id: 'electronics', icon: 'devices', defaultName: 'Electronics', order: 16 },
-  { id: 'clothing', icon: 'checkroom', defaultName: 'Clothing', order: 17 },
-  { id: 'other', icon: 'category', defaultName: 'Other', order: 18 },
+  { id: 'fruits', icon: 'nutrition', defaultName: 'Fruits', order: 1 },
+  { id: 'vegetables', icon: 'eco', defaultName: 'Vegetables', order: 2 },
+  { id: 'dairy', icon: 'water_drop', defaultName: 'Dairy', order: 3 },
+  { id: 'meat', icon: 'set_meal', defaultName: 'Meat', order: 4 },
+  { id: 'seafood', icon: 'phishing', defaultName: 'Seafood', order: 5 },
+  { id: 'eggs', icon: 'egg', defaultName: 'Eggs', order: 6 },
+  { id: 'bakery', icon: 'bakery_dining', defaultName: 'Bakery', order: 7 },
+  { id: 'beverages', icon: 'local_cafe', defaultName: 'Beverages', order: 8 },
+  { id: 'grocery', icon: 'inventory_2', defaultName: 'Grocery', order: 9 },
+  { id: 'spices', icon: 'local_fire_department', defaultName: 'Spices', order: 10 },
+  { id: 'herbs', icon: 'spa', defaultName: 'Herbs', order: 11 },
+  { id: 'dry_fruits', icon: 'grain', defaultName: 'Dry Fruits', order: 12 },
+  { id: 'frozen', icon: 'ac_unit', defaultName: 'Frozen', order: 13 },
+  { id: 'snacks', icon: 'cookie', defaultName: 'Snacks', order: 14 },
+  { id: 'household', icon: 'home', defaultName: 'Household', order: 15 },
+  { id: 'cleaning', icon: 'cleaning_services', defaultName: 'Cleaning', order: 16 },
+  { id: 'personal_care', icon: 'soap', defaultName: 'Personal Care', order: 17 },
+  { id: 'health', icon: 'medication', defaultName: 'Health', order: 18 },
+  { id: 'baby', icon: 'child_care', defaultName: 'Baby', order: 19 },
+  { id: 'stationery', icon: 'edit_note', defaultName: 'Stationery', order: 20 },
+  { id: 'electronics', icon: 'devices', defaultName: 'Electronics', order: 21 },
+  { id: 'clothing', icon: 'checkroom', defaultName: 'Clothing', order: 22 },
+  { id: 'other', icon: 'category', defaultName: 'Other', order: 23 },
 ];
 
 export const CATEGORY_MAP: Record<CategoryId, CategoryInfo> = CATEGORIES_LIST.reduce(
@@ -53,11 +67,39 @@ export const CATEGORY_MAP: Record<CategoryId, CategoryInfo> = CATEGORIES_LIST.re
     acc[cat.id] = cat;
     return acc;
   },
-  {} as Record<CategoryId, CategoryInfo>
+  {
+    // Aliases mapped to their primary targets
+    grains_staples: { id: 'grocery', icon: 'inventory_2', defaultName: 'Grocery', order: 9 },
+    baby_care: { id: 'baby', icon: 'child_care', defaultName: 'Baby', order: 19 },
+    medicines: { id: 'health', icon: 'medication', defaultName: 'Health', order: 18 },
+  } as Record<CategoryId, CategoryInfo>
 );
 
 // Backward compatibility alias for CategoryType
 export type CategoryType = string;
+
+export interface CanonicalItem {
+  id: string;
+  canonicalName: string;
+  nameUrdu: string;
+  nameRomanUrdu: string;
+  categoryId: CategoryId;
+  defaultUnit?: string;
+  aliases: string[];
+}
+
+export interface SmartRecognitionResult {
+  canonicalName: string;
+  nameUrdu?: string;
+  nameRomanUrdu?: string;
+  quantity?: string;
+  unit?: string;
+  categoryId: CategoryId;
+  confidence: number;
+  isRecognized: boolean;
+  rawInput: string;
+  matchedVia: 'exact_alias' | 'phonetic_match' | 'fuzzy_match' | 'user_override' | 'keyword_rule' | 'ai' | 'fallback';
+}
 
 export interface ShoppingItem {
   id: string;

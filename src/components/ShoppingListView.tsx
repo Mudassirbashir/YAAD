@@ -199,14 +199,14 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
           <input
             value={newItemText}
             onChange={(e) => setNewItemText(e.target.value)}
-            className="w-full h-[54px] pl-5 pr-14 rounded-full border-none bg-transparent focus:ring-2 focus:ring-primary/20 text-base text-on-surface placeholder:text-outline font-['Manrope'] outline-none"
+            className="w-full h-[54px] ps-5 pe-14 rounded-full border-none bg-transparent focus:ring-2 focus:ring-primary/20 text-base text-on-surface placeholder:text-outline font-['Manrope'] outline-none"
             placeholder={t('shoppingList.inputPlaceholder')}
             type="text"
           />
           <button
             type="submit"
             aria-label="Add item"
-            className="absolute right-1.5 top-1/2 -translate-y-1/2 w-10 h-10 bg-secondary-container text-on-secondary-container rounded-full flex items-center justify-center hover:opacity-90 active:scale-95 transition-all shadow-xs"
+            className="absolute end-1.5 top-1/2 -translate-y-1/2 w-10 h-10 bg-secondary-container text-on-secondary-container rounded-full flex items-center justify-center hover:opacity-90 active:scale-95 transition-all shadow-xs"
           >
             <Plus className="w-5 h-5" />
           </button>

@@ -171,14 +171,14 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 {t('auth.fullNameLabel') || 'Full Name'}
               </label>
               <div className="relative">
-                <UserIcon className="w-4 h-4 text-outline absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <UserIcon className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   id="auth_input_fullname"
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder={t('auth.fullNamePlaceholder') || 'Your full name'}
-                  className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl pl-10 pr-3.5 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope']"
+                  className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-3.5 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope']"
                   required
                 />
               </div>
@@ -190,14 +190,14 @@ export const AuthView: React.FC<AuthViewProps> = ({
               {t('auth.emailLabel') || 'Email Address'}
             </label>
             <div className="relative">
-              <Mail className="w-4 h-4 text-outline absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Mail className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 id="auth_input_email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={t('auth.emailPlaceholder') || 'you@example.com'}
-                className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl pl-10 pr-3.5 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope']"
+                className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-3.5 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope']"
                 autoComplete="email"
                 required
               />
@@ -209,14 +209,14 @@ export const AuthView: React.FC<AuthViewProps> = ({
               {t('auth.passwordLabel') || 'Password'}
             </label>
             <div className="relative">
-              <Lock className="w-4 h-4 text-outline absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <Lock className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 id="auth_input_password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={t('auth.passwordPlaceholder') || '••••••••'}
-                className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl pl-10 pr-3.5 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope']"
+                className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-3.5 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope']"
                 autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
                 required
               />

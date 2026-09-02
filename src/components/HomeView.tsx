@@ -167,7 +167,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     onClick={() => onSelectList(list)}
                     className="bg-surface-container-lowest rounded-3xl p-4 sm:p-5 flex items-center justify-between shadow-[0px_4px_20px_rgba(0,30,21,0.03)] border border-surface-dim/70 cursor-pointer hover:bg-surface-container-low transition-all active:scale-[0.99] group select-none"
                   >
-                    <div className="flex flex-col gap-1.5 flex-1 min-w-0 pr-3">
+                    <div className="flex flex-col gap-1.5 flex-1 min-w-0 pe-3">
                       <div className="flex items-center gap-2">
                         <span
                           className={`font-['Manrope'] text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider flex items-center gap-1 ${
@@ -217,7 +217,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     </div>
 
                     <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-primary shrink-0 group-hover:bg-surface-variant transition-colors">
-                      <ChevronRight className="w-5 h-5 text-primary" />
+                      <ChevronRight className="w-5 h-5 text-primary rtl:rotate-180" />
                     </div>
                   </article>
                 );

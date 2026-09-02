@@ -9,11 +9,13 @@ import {
   Loader2,
   AlertCircle,
   HelpCircle,
+  Camera,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { Language } from '../translations';
 import { Avatar } from './Avatar';
+import { AvatarPickerModal } from './AvatarPickerModal';
 
 interface ProfileSetupViewProps {
   onComplete: () => void;
@@ -24,6 +26,8 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
   const { language, setLanguage, t } = useLanguage();
 
   const [fullName, setFullName] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(profile?.avatar_url || null);
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState<Language>(language || 'en');
   const [usagePurpose, setUsagePurpose] = useState<string>('');
   const [referralSource, setReferralSource] = useState<string>('');
@@ -37,6 +41,9 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
       setFullName(user.user_metadata.full_name);
     } else if (user?.user_metadata?.name) {
       setFullName(user.user_metadata.name);
+    }
+    if (profile?.avatar_url) {
+      setAvatarUrl(profile.avatar_url);
     }
   }, [profile, user]);
 
@@ -58,6 +65,7 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
     try {
       const { error } = await updateUserProfile({
         full_name: fullName.trim(),
+        avatar_url: avatarUrl || undefined,
         language: selectedLanguage,
         usage_purpose: usagePurpose || undefined,
         referral_source: referralSource || undefined,
@@ -121,6 +129,35 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Avatar Selector */}
+          <div className="flex flex-col items-center justify-center gap-2 pb-1">
+            <div className="relative group">
+              <Avatar
+                name={fullName || user?.email}
+                email={user?.email}
+                avatarUrl={avatarUrl}
+                size="xl"
+                onClick={() => setShowAvatarPicker(true)}
+                className="cursor-pointer shadow-md ring-4 ring-primary-fixed/30 hover:scale-105 transition-transform"
+              />
+              <button
+                type="button"
+                onClick={() => setShowAvatarPicker(true)}
+                aria-label="Choose Avatar"
+                className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-md hover:bg-primary/90 transition-transform active:scale-90"
+              >
+                <Camera className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowAvatarPicker(true)}
+              className="text-xs font-semibold text-primary hover:underline"
+            >
+              {t('settings.chooseAvatar') || 'Choose Avatar'}
+            </button>
+          </div>
+
           {/* User Name (Required) */}
           <div className="space-y-1.5">
             <label className="font-['Manrope'] text-xs font-bold text-on-surface-variant flex items-center gap-1.5">
@@ -187,7 +224,7 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
                     : 'border-outline-variant bg-surface-container hover:bg-surface-container-high text-on-surface'
                 }`}
               >
-                <span className="block font-['Plus_Jakarta_Sans'] text-xs font-bold">اردو</span>
+                <span className="block font-urdu text-base font-bold leading-normal">اردو</span>
                 <span className="text-[10px] text-on-surface-variant">Urdu</span>
               </button>
             </div>
@@ -263,6 +300,18 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
           </button>
         </form>
       </div>
+
+      {/* Avatar Picker Modal */}
+      <AvatarPickerModal
+        isOpen={showAvatarPicker}
+        onClose={() => setShowAvatarPicker(false)}
+        currentAvatarUrl={avatarUrl}
+        onSave={(newVal) => {
+          setAvatarUrl(newVal);
+        }}
+        userName={fullName || user?.email}
+        userEmail={user?.email}
+      />
     </div>
   );
 };

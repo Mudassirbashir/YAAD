@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle2, AlertCircle, Edit2, LogOut, LogIn, Check } from 'lucide-react';
+import { X, CheckCircle2, AlertCircle, Edit2, LogOut, LogIn, Check, Camera } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { Avatar } from './Avatar';
+import { AvatarPickerModal } from './AvatarPickerModal';
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   const [statusMsg, setStatusMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
 
   useEffect(() => {
     if (profile?.full_name) {
@@ -60,6 +62,19 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
     }
   };
 
+  const handleSelectAvatar = async (avatarValue: string | null) => {
+    const { error } = await updateUserProfile({
+      avatar_url: avatarValue,
+    });
+
+    if (error) {
+      setStatusMsg({ type: 'error', text: error.message || 'Unable to update avatar' });
+    } else {
+      setStatusMsg({ type: 'success', text: t('settings.avatarUpdated') || 'Avatar updated successfully!' });
+      setTimeout(() => setStatusMsg(null), 3000);
+    }
+  };
+
   const displayName = profile?.full_name || user?.user_metadata?.full_name || (user ? 'Account User' : 'Guest');
   const displayEmail = profile?.email || user?.email || (user ? 'No email' : 'Not signed in');
 
@@ -76,20 +91,33 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         <button
           onClick={onClose}
           aria-label="Close"
-          className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center text-outline hover:bg-surface-container-low transition-colors"
+          className="absolute top-4 end-4 w-8 h-8 rounded-full flex items-center justify-center text-outline hover:bg-surface-container-low transition-colors"
         >
           <X className="w-4 h-4" />
         </button>
 
         {/* User Avatar */}
         <div className="pt-2 flex justify-center">
-          <Avatar
-            name={displayName}
-            email={user?.email}
-            avatarUrl={profile?.avatar_url}
-            size="xl"
-            className="shadow-md ring-4 ring-primary-fixed/30"
-          />
+          <div className="relative group">
+            <Avatar
+              name={displayName}
+              email={user?.email}
+              avatarUrl={profile?.avatar_url}
+              size="xl"
+              onClick={user ? () => setShowAvatarPicker(true) : undefined}
+              className={`shadow-md ring-4 ring-primary-fixed/30 ${user ? 'cursor-pointer hover:scale-105' : ''}`}
+            />
+            {user && (
+              <button
+                type="button"
+                onClick={() => setShowAvatarPicker(true)}
+                aria-label={t('settings.chooseAvatar')}
+                className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-md hover:bg-primary/90 transition-transform active:scale-90"
+              >
+                <Camera className="w-3 h-3" />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Status Message */}
@@ -230,6 +258,16 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Avatar Picker Modal */}
+      <AvatarPickerModal
+        isOpen={showAvatarPicker}
+        onClose={() => setShowAvatarPicker(false)}
+        currentAvatarUrl={profile?.avatar_url}
+        onSave={handleSelectAvatar}
+        userName={displayName}
+        userEmail={user?.email}
+      />
     </div>
   );
 };
