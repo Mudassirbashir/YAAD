@@ -22,6 +22,9 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- Ensure has_completed_setup column exists on pre-existing installations
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS has_completed_setup BOOLEAN DEFAULT FALSE;
+
 -- 2. SHOPPING_LISTS TABLE (Parent List Entity)
 CREATE TABLE IF NOT EXISTS public.shopping_lists (
   id TEXT PRIMARY KEY,
@@ -30,8 +33,6 @@ CREATE TABLE IF NOT EXISTS public.shopping_lists (
   icon TEXT DEFAULT 'shopping_basket',
   is_completed BOOLEAN DEFAULT FALSE NOT NULL,
   completed_at TIMESTAMPTZ,
-  created_at_label TEXT,
-  created_timestamp BIGINT,
   items JSONB DEFAULT '[]'::jsonb,
   created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL

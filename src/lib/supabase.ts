@@ -136,6 +136,50 @@ export function ensureValidUUID(id?: string): string {
 }
 
 /**
+ * Safely upsert a row into a Supabase table with automatic schema-mismatch recovery.
+ * If Supabase PostgREST reports a missing column in the schema cache,
+ * it dynamically strips the offending column and retries.
+ */
+export async function resilientUpsert(
+  table: string,
+  payload: Record<string, unknown>,
+  options?: { onConflict?: string }
+): Promise<{ data: any; error: Error | null }> {
+  if (!supabase) return { data: null, error: new Error('Supabase client not initialized') };
+
+  const mutablePayload = { ...payload };
+  const maxRetries = 6;
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    const query = options?.onConflict
+      ? supabase.from(table).upsert(mutablePayload, { onConflict: options.onConflict }).select()
+      : supabase.from(table).upsert(mutablePayload).select();
+
+    const { data, error } = await query;
+    if (!error) {
+      return { data, error: null };
+    }
+
+    // Check for column missing error pattern from PostgREST / Supabase
+    const match =
+      error.message.match(/Could not find the '([^']+)' column/i) ||
+      error.message.match(/column "([^"]+)" of relation/i) ||
+      error.message.match(/column '([^']+)' does not exist/i);
+
+    if (match && match[1] && match[1] in mutablePayload) {
+      const offendingColumn = match[1];
+      console.warn(`Column '${offendingColumn}' not found in '${table}' schema cache. Retrying upsert without '${offendingColumn}'.`);
+      delete mutablePayload[offendingColumn];
+      continue;
+    }
+
+    return { data: null, error: new Error(error.message) };
+  }
+
+  return { data: null, error: new Error(`Failed to upsert to ${table} after schema adaptation retries.`) };
+}
+
+/**
  * ----------------------------------------------------------------------
  * 1. PROFILES OPERATIONS (CREATE, READ, UPDATE, DELETE)
  * ----------------------------------------------------------------------
@@ -196,37 +240,19 @@ export async function updateProfile(
       };
     }
 
-    const payload = {
+    const payload: Record<string, unknown> = {
       ...updates,
       updated_at: new Date().toISOString(),
     };
 
-    // Try upsert first
-    const { data: upsertData, error: upsertError } = await supabase
-      .from('profiles')
-      .upsert({ id: verifiedUserId, ...payload })
-      .select()
-      .maybeSingle();
+    const { data: upsertData, error: upsertError } = await resilientUpsert(
+      'profiles',
+      { id: verifiedUserId, ...payload },
+      { onConflict: 'id' }
+    );
 
-    if (!upsertError && upsertData) {
-      return { data: upsertData as UserProfile, error: null };
-    }
-
-    // If upsert hits an RLS conflict or check restriction, try direct update as fallback
     if (upsertError) {
-      console.warn('Upsert profile attempt encountered notice, attempting direct update:', upsertError.message);
-      const { data: updateData, error: updateError } = await supabase
-        .from('profiles')
-        .update(payload)
-        .eq('id', verifiedUserId)
-        .select()
-        .maybeSingle();
-
-      if (!updateError && updateData) {
-        return { data: updateData as UserProfile, error: null };
-      }
-
-      console.warn('Supabase updateProfile note:', updateError?.message || upsertError.message);
+      console.warn('Supabase updateProfile notice:', upsertError.message);
       return {
         data: {
           id: verifiedUserId,
@@ -239,7 +265,8 @@ export async function updateProfile(
       };
     }
 
-    return { data: upsertData as UserProfile, error: null };
+    const savedProfile = Array.isArray(upsertData) ? upsertData[0] : upsertData;
+    return { data: (savedProfile || { id: verifiedUserId, ...payload }) as UserProfile, error: null };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Failed to update profile';
     console.error('Exception during updateProfile:', err);
@@ -397,23 +424,24 @@ export async function saveUserShoppingList(
       ? list.items.every((i) => i.completed)
       : Boolean(list.isCompleted);
 
-    // 1. Upsert public.shopping_lists row with all fields
+    const createdIso = list.createdTimestamp
+      ? new Date(list.createdTimestamp).toISOString()
+      : new Date().toISOString();
+
+    // 1. Upsert public.shopping_lists row with standard fields
     const listPayload: Record<string, unknown> = {
       id: safeListId,
       user_id: verifiedUserId,
       title: list.title || 'Shopping List',
       icon: list.icon || 'shopping_basket',
       is_completed: isCompleted,
-      completed_at: list.completedAt || (isCompleted ? new Date().toISOString() : null),
-      created_at_label: list.createdAt || 'Today',
-      created_timestamp: list.createdTimestamp || Date.now(),
+      completed_at: list.completedAt ? (list.completedAt.includes('T') ? list.completedAt : new Date().toISOString()) : (isCompleted ? new Date().toISOString() : null),
       items: list.items || [], // Dual persistence: embedded JSON ensures instant atomic recovery
+      created_at: createdIso,
       updated_at: new Date().toISOString(),
     };
 
-    const { error: listError } = await supabase
-      .from('shopping_lists')
-      .upsert(listPayload);
+    const { error: listError } = await resilientUpsert('shopping_lists', listPayload);
 
     if (listError) {
       console.error('Error saving shopping list to Supabase:', listError.message);
@@ -826,27 +854,6 @@ export async function toggleShoppingItemStatus(
     return { error: error ? new Error(error.message) : null };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Failed to toggle item';
-    return { error: new Error(msg) };
-  }
-}
-
-/**
- * Initiate Google OAuth authentication
- */
-export async function signInWithGoogleOAuth(): Promise<{ error: Error | null }> {
-  if (!supabase) {
-    return { error: new Error('Supabase is not configured yet.') };
-  }
-  try {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: typeof window !== 'undefined' ? window.location.origin : undefined,
-      },
-    });
-    return { error: error ? new Error(error.message) : null };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Failed to initiate Google OAuth';
     return { error: new Error(msg) };
   }
 }

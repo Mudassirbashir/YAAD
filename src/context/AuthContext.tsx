@@ -6,13 +6,7 @@ import {
   getProfile,
   updateProfile as supabaseUpdateProfile,
   deleteUserAccountData,
-  signInWithGoogleOAuth,
 } from '../lib/supabase';
-import {
-  authenticateWithPasskey,
-  registerPasskey,
-  hasRegisteredPasskey,
-} from '../lib/passkey';
 import { UserProfile, AppLanguage } from '../types';
 
 interface AuthContextType {
@@ -23,10 +17,6 @@ interface AuthContextType {
   isConfigured: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
-  signInWithGoogle: () => Promise<{ error: Error | null }>;
-  signInWithPasskeyAuth: (email: string) => Promise<{ error: Error | null }>;
-  registerDevicePasskey: (email: string, fullName: string) => Promise<{ error: Error | null }>;
-  hasPasskey: (email: string) => boolean;
   signOut: () => Promise<void>;
   deleteAccount: () => Promise<{ error: Error | null }>;
   updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
@@ -236,30 +226,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const signInWithGoogle = async () => {
-    return signInWithGoogleOAuth();
-  };
-
-  const signInWithPasskeyAuth = async (email: string) => {
-    const result = await authenticateWithPasskey(email);
-    if (!result.success) {
-      return { error: new Error(result.error || 'Passkey authentication failed.') };
-    }
-    return { error: null };
-  };
-
-  const registerDevicePasskey = async (email: string, fullName: string) => {
-    const result = await registerPasskey(email, fullName);
-    if (!result.success) {
-      return { error: new Error(result.error || 'Passkey registration failed.') };
-    }
-    return { error: null };
-  };
-
-  const hasPasskey = (email: string) => {
-    return hasRegisteredPasskey(email);
-  };
-
   const signOut = async () => {
     if (supabase) {
       try {
@@ -399,10 +365,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isConfigured: isSupabaseConfigured,
         signIn,
         signUp,
-        signInWithGoogle,
-        signInWithPasskeyAuth,
-        registerDevicePasskey,
-        hasPasskey,
         signOut,
         deleteAccount,
         updatePassword,

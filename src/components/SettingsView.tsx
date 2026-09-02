@@ -29,7 +29,6 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { Language } from '../translations';
 import { Avatar } from './Avatar';
-import { checkPasskeySupport, PasskeySupportStatus } from '../lib/passkey';
 
 // Preset avatar options
 const AVATAR_PRESETS = [
@@ -66,9 +65,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     profile,
     updateUserProfile,
     updatePassword,
-    signInWithGoogle,
-    registerDevicePasskey,
-    hasPasskey,
   } = useAuth();
 
   // Local state for Name Editing
@@ -97,11 +93,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // Passkey State
-  const [passkeyStatus, setPasskeyStatus] = useState<PasskeySupportStatus | null>(null);
-  const [isRegisteringPasskey, setIsRegisteringPasskey] = useState(false);
-  const [passkeyMsg, setPasskeyMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-
   // Sign out & Account Deletion confirmation
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -118,13 +109,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       setFullNameInput('');
     }
   }, [profile, user]);
-
-  // Check Passkey support on mount
-  useEffect(() => {
-    checkPasskeySupport().then((status) => {
-      setPasskeyStatus(status);
-    });
-  }, []);
 
   // Close modals on Escape key
   useEffect(() => {
@@ -277,34 +261,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     }
   };
 
-  // Handle Google OAuth Link/SignIn
-  const handleGoogleConnect = async () => {
-    try {
-      await signInWithGoogle();
-    } catch (e) {
-      console.warn('Google sign-in error:', e);
-    }
-  };
-
-  // Handle Passkey Registration
-  const handleRegisterPasskey = async () => {
-    if (!user?.email) return;
-    setIsRegisteringPasskey(true);
-    setPasskeyMsg(null);
-
-    const name = profile?.full_name || user?.user_metadata?.full_name || 'YAAD User';
-    const { error } = await registerDevicePasskey(user.email, name);
-
-    setIsRegisteringPasskey(false);
-
-    if (error) {
-      setPasskeyMsg({ type: 'error', text: error.message || 'Failed to register passkey.' });
-    } else {
-      setPasskeyMsg({ type: 'success', text: t('settings.passkeySuccess') });
-      setTimeout(() => setPasskeyMsg(null), 4000);
-    }
-  };
-
   // Handle Sign Out confirmation
   const handleConfirmSignOut = async () => {
     setIsSigningOut(true);
@@ -330,8 +286,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const displayName =
     profile?.full_name || user?.user_metadata?.full_name || (user ? 'Account User' : t('settings.guestUser'));
   const displayEmail = user?.email || (user ? 'Authenticated user' : t('settings.guestSubtitle'));
-  const isGoogleUser = user?.app_metadata?.provider === 'google' || user?.user_metadata?.iss?.includes('google');
-  const userHasPasskey = user?.email ? hasPasskey(user.email) : false;
 
   return (
     <div
@@ -837,108 +791,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 )}
               </div>
 
-              {/* 2. Google Account Status */}
-              <div className="pt-3 border-t border-surface-dim flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-surface-container flex items-center justify-center shrink-0">
-                    <svg className="w-4 h-4" viewBox="0 0 24 24">
-                      <path
-                        fill="#4285F4"
-                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                      />
-                      <path
-                        fill="#34A853"
-                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                      />
-                      <path
-                        fill="#FBBC05"
-                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-                      />
-                      <path
-                        fill="#EA4335"
-                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-on-surface">
-                      {t('settings.googleAccount')}
-                    </h3>
-                    <p className="text-xs text-outline">
-                      {isGoogleUser ? t('settings.googleConnected') : t('settings.googleNotConnected')}
-                    </p>
-                  </div>
-                </div>
-
-                {isGoogleUser ? (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-secondary-fixed/50 text-primary">
-                    <Check className="w-3 h-3" />
-                    {t('settings.googleConnected')}
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleGoogleConnect}
-                    className="px-3 py-1.5 text-xs font-semibold text-on-surface-variant bg-surface-container-low hover:bg-surface-container rounded-xl transition-colors"
-                  >
-                    {t('settings.linkGoogle')}
-                  </button>
-                )}
-              </div>
-
-              {/* 3. Passkey / WebAuthn */}
-              <div className="pt-3 border-t border-surface-dim space-y-2">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-primary-fixed/30 text-primary flex items-center justify-center shrink-0">
-                      <Smartphone className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-bold text-on-surface">
-                        {t('settings.passkeyTitle')}
-                      </h3>
-                      <p className="text-xs text-outline">
-                        {passkeyStatus?.isSupported
-                          ? userHasPasskey
-                            ? t('settings.passkeyRegistered')
-                            : t('settings.passkeySupported')
-                          : t('settings.passkeyNotSupported')}
-                      </p>
-                    </div>
-                  </div>
-
-                  {passkeyStatus?.isSupported && (
-                    <button
-                      id="register_passkey_btn"
-                      type="button"
-                      onClick={handleRegisterPasskey}
-                      disabled={isRegisteringPasskey}
-                      className="px-3 py-1.5 text-xs font-semibold text-primary bg-primary-fixed/30 hover:bg-primary-fixed/50 rounded-xl transition-colors disabled:opacity-50"
-                    >
-                      {isRegisteringPasskey ? t('settings.saving') : t('settings.registerPasskey')}
-                    </button>
-                  )}
-                </div>
-
-                {passkeyMsg && (
-                  <div
-                    className={`p-2 rounded-xl text-xs flex items-center gap-2 ${
-                      passkeyMsg.type === 'success'
-                        ? 'bg-secondary-fixed/50 text-primary font-bold'
-                        : 'bg-error-container text-on-error-container'
-                    }`}
-                  >
-                    {passkeyMsg.type === 'success' ? (
-                      <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-primary" />
-                    ) : (
-                      <AlertCircle className="w-3.5 h-3.5 shrink-0 text-error" />
-                    )}
-                    <span>{passkeyMsg.text}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* 4. Sign Out */}
+              {/* Sign Out */}
               <div className="pt-3 border-t border-surface-dim flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-xl bg-surface-container flex items-center justify-center text-outline">
@@ -964,7 +817,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </button>
               </div>
 
-              {/* 5. Danger Zone: Delete Account */}
+              {/* Danger Zone: Delete Account */}
               <div className="pt-4 border-t border-error/20 space-y-2">
                 <div className="p-4 rounded-2xl bg-error-container/30 border border-error/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="space-y-1">
