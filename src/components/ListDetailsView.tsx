@@ -127,15 +127,26 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
                             <div className="w-6 h-6 rounded-full border-2 border-outline flex items-center justify-center shrink-0" />
                           )}
 
-                          <span
-                            className={`font-['Manrope'] text-base truncate ${
-                              item.completed
-                                ? 'line-through text-outline'
-                                : 'text-on-surface font-medium'
-                            }`}
-                          >
-                            {item.name}
-                          </span>
+                          <div className="flex items-center gap-1.5 min-w-0 flex-1 flex-wrap">
+                            <span
+                              className={`font-['Manrope'] text-base truncate ${
+                                item.completed
+                                  ? 'line-through text-outline'
+                                  : 'text-on-surface font-medium'
+                              }`}
+                            >
+                              {item.name}
+                            </span>
+                            {item.nameUrdu && (
+                              <span
+                                className={`font-['Noto_Nastaliq_Urdu','Jameel_Noori_Nastaleeq',serif] text-xs ${
+                                  item.completed ? 'text-outline/70' : 'text-on-surface-variant font-normal'
+                                }`}
+                              >
+                                ({item.nameUrdu})
+                              </span>
+                            )}
+                          </div>
                         </div>
 
                         {formattedQty && (

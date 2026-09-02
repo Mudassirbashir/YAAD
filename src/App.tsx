@@ -25,6 +25,10 @@ import {
   clearAllUserShoppingLists,
   setupNetworkSyncListener,
 } from './lib/supabase';
+import { NetworkStatusPill } from './components/NetworkStatusPill';
+import { PWAUpdateNotification } from './components/PWAUpdateNotification';
+import { useOnlineStatus } from './lib/useOnlineStatus';
+import { getOfflineLists, saveOfflineListsBatch, purgeAllUserOfflineData } from './lib/offlineDb';
 import { Loader2 } from 'lucide-react';
 
 const STORAGE_ONBOARDED_KEY = 'yaad_has_onboarded_v2';
@@ -57,23 +61,12 @@ export default function App() {
   const [listsFetchError, setListsFetchError] = useState<string | null>(null);
 
   // Shopping lists collection scoped by authenticated user
-  const [lists, setLists] = useState<ShoppingList[]>(() => {
-    try {
-      const storageKey = getStorageKey(user?.id);
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        return JSON.parse(saved);
-      }
-    } catch (e) {
-      console.error('Failed to load lists from localStorage', e);
-    }
-    return [];
-  });
+  const [lists, setLists] = useState<ShoppingList[]>([]);
 
   // Track previous user to detect sign in / sign out / switch
   const [prevUserId, setPrevUserId] = useState<string | null | undefined>(user?.id);
 
-  // Sync with Supabase & localStorage when user changes (login or logout)
+  // Sync with Supabase & IndexedDB when user changes (login or logout)
   const fetchShoppingLists = useCallback(async (userId: string | null) => {
     if (!userId) {
       setLists([]);
@@ -85,31 +78,40 @@ export default function App() {
     setIsLoadingLists(true);
     setListsFetchError(null);
 
-    // 1. Read cached local state for instant responsiveness
+    // 1. Read from IndexedDB for immediate responsiveness
     try {
-      const cached = localStorage.getItem(getStorageKey(userId));
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed)) {
-          setLists(parsed);
-        }
+      const offlineLists = await getOfflineLists(userId);
+      if (offlineLists && offlineLists.length > 0) {
+        setLists(offlineLists);
       }
     } catch (e) {
-      console.warn('Could not read cached lists:', e);
+      console.warn('Could not read offline lists from IndexedDB:', e);
     }
 
-    // 2. Fetch fresh data from Supabase backend
-    if (isConfigured) {
-      const { lists: cloudLists, error } = await loadUserShoppingLists(userId);
+    // 2. Fetch and synchronize fresh data from backend
+    try {
+      const { lists: freshLists, error } = await loadUserShoppingLists(userId);
       if (error) {
-        console.error('Error fetching shopping lists from Supabase:', error);
+        console.warn('Notice loading shopping lists:', error);
         setListsFetchError(error.message);
-      } else if (cloudLists) {
-        setLists(cloudLists);
+      } else if (freshLists) {
+        setLists(freshLists);
       }
+    } catch (err: any) {
+      console.warn('Error loading shopping lists:', err);
+    } finally {
+      setIsLoadingLists(false);
     }
-    setIsLoadingLists(false);
-  }, [isConfigured]);
+  }, []);
+
+  // Online / Offline status and automatic synchronization
+  const { isOnline, syncStatus, pendingCount, triggerSync } = useOnlineStatus(
+    useCallback(() => {
+      if (user?.id) {
+        fetchShoppingLists(user.id);
+      }
+    }, [user?.id, fetchShoppingLists])
+  );
 
   useEffect(() => {
     const currentUserId = user?.id || null;
@@ -133,14 +135,12 @@ export default function App() {
     return cleanup;
   }, [user?.id, isConfigured, fetchShoppingLists]);
 
-  // Save lists to user-scoped localStorage whenever lists state changes
+  // Save lists to IndexedDB whenever lists state changes
   useEffect(() => {
-    try {
-      const storageKey = getStorageKey(user?.id);
-      localStorage.setItem(storageKey, JSON.stringify(lists));
-    } catch (e) {
-      console.error('Failed to save lists to localStorage', e);
-    }
+    if (!user?.id || lists.length === 0) return;
+    saveOfflineListsBatch(user.id, lists).catch((e) => {
+      console.warn('IndexedDB save batch notice:', e);
+    });
   }, [lists, user?.id]);
 
   // Authentication Gate Router: Enforce protected screen flow
@@ -305,6 +305,7 @@ export default function App() {
       if (user?.id) {
         const storageKey = getStorageKey(user.id);
         localStorage.removeItem(storageKey);
+        await purgeAllUserOfflineData(user.id);
       }
       localStorage.removeItem(STORAGE_ONBOARDED_KEY);
       localStorage.removeItem(STORAGE_PROFILE_SETUP_KEY);
@@ -322,6 +323,9 @@ export default function App() {
 
   // Handle Sign Out
   const handleSignOut = async () => {
+    if (user?.id) {
+      await purgeAllUserOfflineData(user.id);
+    }
     await signOut();
     setLists([]);
     setActiveListId(null);
@@ -654,6 +658,17 @@ export default function App() {
         onClose={() => setIsAuthModalOpen(false)}
         initialMode={authModalMode}
       />
+
+      {/* Apple-style Network Status Pill */}
+      <NetworkStatusPill
+        isOnline={isOnline}
+        syncStatus={syncStatus}
+        pendingCount={pendingCount}
+        onSyncClick={triggerSync}
+      />
+
+      {/* PWA Update Notification */}
+      <PWAUpdateNotification />
     </div>
   );
 }

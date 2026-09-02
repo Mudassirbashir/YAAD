@@ -30,6 +30,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { Language } from '../translations';
 import { Avatar } from './Avatar';
 import { AvatarPickerModal } from './AvatarPickerModal';
+import { PWAInstallPrompt } from './PWAInstallPrompt';
 
 interface SettingsViewProps {
   onBack: () => void;
@@ -654,6 +655,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   </button>
                 )}
               </div>
+            </div>
+
+            {/* PWA App Installation & Offline Access */}
+            <div className="pt-3 border-t border-surface-dim">
+              <PWAInstallPrompt mode="settings_card" />
             </div>
           </div>
         </section>

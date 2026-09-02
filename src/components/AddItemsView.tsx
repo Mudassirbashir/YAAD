@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   ArrowLeft,
   Plus,
@@ -7,6 +7,7 @@ import {
   ShoppingCart,
   AlertCircle,
   Package,
+  CheckCircle2,
 } from 'lucide-react';
 import { CategoryId, CATEGORIES_LIST, ShoppingItem } from '../types';
 import { useLanguage } from '../context/LanguageContext';
@@ -39,6 +40,13 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
   const [userManuallySelectedCategory, setUserManuallySelectedCategory] = useState<boolean>(false);
   const [inputError, setInputError] = useState<string>('');
   const [isCategorizing, setIsCategorizing] = useState<boolean>(false);
+
+  // Live parsed recognition object
+  const currentRecognition = useMemo(() => {
+    const trimmed = inputVal.trim();
+    if (!trimmed) return null;
+    return parseShoppingItem(trimmed);
+  }, [inputVal]);
 
   // Auto-detect category in real-time as user types (if user hasn't manually clicked a category for this input)
   useEffect(() => {
@@ -86,6 +94,9 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
     const newItem: ShoppingItem = {
       id: newItemId,
       name: parsed.name,
+      canonicalName: parsed.canonicalName,
+      nameUrdu: parsed.nameUrdu,
+      nameRomanUrdu: parsed.nameRomanUrdu,
       quantity: parsed.quantity,
       unit: parsed.unit,
       rawInput: parsed.rawInput,
@@ -93,6 +104,8 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
       category: getCategoryName(finalCategory),
       completed: false,
       userModifiedCategory: userManuallySelectedCategory,
+      confidence: parsed.confidence,
+      isRecognized: parsed.isRecognized,
     };
 
     setItems((prev) => [newItem, ...prev]);
@@ -247,6 +260,39 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
               </p>
             )}
 
+            {/* Live Recognition Preview */}
+            {currentRecognition && inputVal.trim().length > 0 && (
+              <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-2xl bg-surface-container-low border border-surface-container-high/80 text-xs animate-in fade-in duration-150">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="w-6 h-6 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                    <CategoryIcon categoryId={selectedCategory} className="w-3.5 h-3.5" />
+                  </span>
+                  <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
+                    <span className="font-['Manrope'] font-bold text-primary truncate">
+                      {currentRecognition.name}
+                    </span>
+                    {currentRecognition.nameUrdu && (
+                      <span className="font-['Noto_Nastaliq_Urdu','Jameel_Noori_Nastaleeq',serif] text-xs text-on-surface-variant font-normal shrink-0">
+                        ({currentRecognition.nameUrdu})
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0 ms-auto">
+                  {currentRecognition.quantity && (
+                    <span className="px-2 py-0.5 rounded-md bg-surface-container text-primary font-['Manrope'] font-bold text-[11px]">
+                      {currentRecognition.quantity} {currentRecognition.unit || ''}
+                    </span>
+                  )}
+                  <span className="text-[11px] font-['Manrope'] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-md flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-primary" />
+                    <span>{getCategoryName(selectedCategory)}</span>
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Category Selector Chips */}
             <div className="space-y-1.5 pt-1">
               <div className="flex justify-between items-center">
@@ -322,9 +368,21 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                         <CategoryIcon categoryId={itemCatId} className="w-4 h-4" />
                       </span>
                       <div className="min-w-0 flex-1">
-                        <p className="font-['Manrope'] text-sm font-semibold text-primary truncate">
-                          {item.name}
-                        </p>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="font-['Manrope'] text-sm font-semibold text-primary truncate">
+                            {item.name}
+                          </p>
+                          {item.nameUrdu && (
+                            <span className="font-['Noto_Nastaliq_Urdu','Jameel_Noori_Nastaleeq',serif] text-xs text-on-surface-variant/80 font-normal">
+                              ({item.nameUrdu})
+                            </span>
+                          )}
+                        </div>
+                        {item.rawInput && item.rawInput.trim().toLowerCase() !== item.name.trim().toLowerCase() && (
+                          <p className="font-['Manrope'] text-[10px] text-outline truncate">
+                            typed: "{item.rawInput}"
+                          </p>
+                        )}
 
                         {/* Category Dropdown picker for instant override */}
                         <div className="relative inline-block mt-0.5">

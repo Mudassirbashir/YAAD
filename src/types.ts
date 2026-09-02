@@ -110,6 +110,10 @@ export interface ShoppingItem {
   quantity?: string;
   unit?: string;
   rawInput?: string;
+  canonicalName?: string;
+  nameUrdu?: string;
+  nameRomanUrdu?: string;
+  isRecognized?: boolean;
   note?: string;
   userModifiedCategory?: boolean;
   confidence?: number;
@@ -176,6 +180,14 @@ export interface FrequentlyBoughtItem {
 export interface CategorizeResult {
   categoryId: CategoryId;
   confidence: number;
-  matchedVia: 'user_override' | 'local_rule' | 'ai' | 'fallback';
+  matchedVia:
+    | 'user_override'
+    | 'local_rule'
+    | 'exact_alias'
+    | 'phonetic_match'
+    | 'fuzzy_match'
+    | 'keyword_rule'
+    | 'ai'
+    | 'fallback';
   normalizedItemName?: string;
 }

@@ -10,7 +10,7 @@ export default defineConfig(() => {
       react(),
       tailwindcss(),
       VitePWA({
-        registerType: 'autoUpdate',
+        registerType: 'prompt',
         includeAssets: [
           'favicon.ico',
           'favicon-16x16.png',
@@ -19,18 +19,22 @@ export default defineConfig(() => {
           'favicon.png',
           'apple-touch-icon.png',
           'logo.png',
+          'pwa-192x192.png',
+          'pwa-512x512.png',
+          'pwa-maskable-512x512.png',
         ],
         manifest: {
           id: '/',
-          name: 'YAAD | یاد - Simple Shopping Memory',
+          name: 'YAAD',
           short_name: 'YAAD',
-          description: 'YAAD is a simple shopping-memory application to create lists, remember what you need, and organize grocery trips.',
+          description: 'YAAD is a smart shopping list application that helps users create, organize and complete shopping lists easily.',
           start_url: '/',
           scope: '/',
           display: 'standalone',
           orientation: 'portrait-primary',
           background_color: '#fbf9f5',
           theme_color: '#005039',
+          categories: ['shopping', 'productivity', 'lifestyle'],
           icons: [
             {
               src: '/favicon-16x16.png',
@@ -83,10 +87,58 @@ export default defineConfig(() => {
           ],
         },
         workbox: {
-          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,json}'],
+          cleanupOutdatedCaches: true,
+          navigateFallback: '/index.html',
+          // Prevent Service Worker from hijacking API, Auth, or Supabase endpoints
+          navigateFallbackDenylist: [/^\/api\//, /^\/auth\//, /supabase/],
+          runtimeCaching: [
+            {
+              // Cache Google Fonts stylesheets
+              urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'google-fonts-stylesheets-v1',
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
+                expiration: {
+                  maxEntries: 10,
+                  maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+                },
+              },
+            },
+            {
+              // Cache Google Fonts font files
+              urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'google-fonts-webfonts-v1',
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
+                expiration: {
+                  maxEntries: 30,
+                  maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+                },
+              },
+            },
+            {
+              // Cache local static images
+              urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'yaad-images-v1',
+                expiration: {
+                  maxEntries: 60,
+                  maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+                },
+              },
+            },
+          ],
         },
         devOptions: {
-          enabled: true,
+          enabled: false, // Disabled in development to avoid interference with rapid edits
           type: 'module',
         },
       }),
@@ -97,10 +149,7 @@ export default defineConfig(() => {
       },
     },
     server: {
-      // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
-      // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
     },
   };

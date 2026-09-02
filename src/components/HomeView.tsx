@@ -3,6 +3,7 @@ import { Plus, ChevronRight, Clock, AlertCircle, RefreshCw, ShoppingBag, CheckCi
 import { ShoppingList } from '../types';
 import { TopHeader } from './TopHeader';
 import { useLanguage } from '../context/LanguageContext';
+import { PWAInstallPrompt } from './PWAInstallPrompt';
 
 interface HomeViewProps {
   lists: ShoppingList[];
@@ -47,6 +48,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
             {t('home.subtitle')}
           </p>
         </div>
+
+        {/* PWA Install Promotion Banner (shown conditionally when installable) */}
+        <PWAInstallPrompt mode="banner" />
 
         {/* Create List Hero Button / Card */}
         <div

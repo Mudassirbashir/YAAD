@@ -8,6 +8,7 @@ import {
   categorizeItemLocally,
   saveUserCategoryOverride,
 } from '../lib/categorizer';
+import { parseShoppingItem } from '../lib/itemParser';
 import { generateUUID } from '../lib/uuid';
 
 interface EditListViewProps {
@@ -34,16 +35,23 @@ export const EditListView: React.FC<EditListViewProps> = ({
     const trimmed = newItemName.trim();
     if (!trimmed) return;
 
-    // Use smart categorizer if default or use selected
-    const local = categorizeItemLocally(trimmed);
-    const catId = local.confidence >= 0.7 ? local.categoryId : selectedCategory;
+    const parsed = parseShoppingItem(trimmed);
+    const catId = parsed.suggestedCategoryId || selectedCategory;
 
     const newItem: ShoppingItem = {
       id: generateUUID(),
-      name: trimmed,
+      name: parsed.name,
+      canonicalName: parsed.canonicalName,
+      nameUrdu: parsed.nameUrdu,
+      nameRomanUrdu: parsed.nameRomanUrdu,
+      quantity: parsed.quantity,
+      unit: parsed.unit,
+      rawInput: parsed.rawInput,
       categoryId: catId,
       category: getCategoryName(catId),
       completed: false,
+      confidence: parsed.confidence,
+      isRecognized: parsed.isRecognized,
     };
 
     setItems((prev) => [newItem, ...prev]);
@@ -230,31 +238,46 @@ export const EditListView: React.FC<EditListViewProps> = ({
                           className="p-3.5 flex items-center gap-3 bg-surface-container-lowest group hover:bg-surface-container-low/30 transition-colors"
                         >
                           <div className="flex-grow flex flex-col gap-1 min-w-0">
-                            <input
-                              value={item.name}
-                              onChange={(e) => handleUpdateItemName(item.id, e.target.value)}
-                              className="bg-transparent border-none outline-none font-['Manrope'] text-base text-on-surface w-full focus:ring-0 p-0 m-0"
-                              type="text"
-                            />
+                            <div className="flex items-center gap-2">
+                              <input
+                                value={item.name}
+                                onChange={(e) => handleUpdateItemName(item.id, e.target.value)}
+                                className="bg-transparent border-none outline-none font-['Manrope'] text-base text-on-surface w-full focus:ring-0 p-0 m-0 font-medium"
+                                type="text"
+                              />
+                              {item.nameUrdu && (
+                                <span className="font-['Noto_Nastaliq_Urdu','Jameel_Noori_Nastaleeq',serif] text-xs text-on-surface-variant font-normal shrink-0">
+                                  ({item.nameUrdu})
+                                </span>
+                              )}
+                            </div>
 
-                            <select
-                              value={itemCatId}
-                              onChange={(e) =>
-                                handleUpdateItemCategory(
-                                  item.id,
-                                  e.target.value as CategoryId,
-                                  item.name
-                                )
-                              }
-                              aria-label={`Category for ${item.name}`}
-                              className="text-[11px] font-['Manrope'] text-on-surface-variant bg-surface-container-low px-2 py-0.5 rounded-md border border-surface-dim outline-none w-fit cursor-pointer"
-                            >
-                              {CATEGORIES_LIST.map((c) => (
-                                <option key={c.id} value={c.id}>
-                                  {getCategoryName(c.id)}
-                                </option>
-                              ))}
-                            </select>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <select
+                                value={itemCatId}
+                                onChange={(e) =>
+                                  handleUpdateItemCategory(
+                                    item.id,
+                                    e.target.value as CategoryId,
+                                    item.name
+                                  )
+                                }
+                                aria-label={`Category for ${item.name}`}
+                                className="text-[11px] font-['Manrope'] text-on-surface-variant bg-surface-container-low px-2 py-0.5 rounded-md border border-surface-dim outline-none w-fit cursor-pointer"
+                              >
+                                {CATEGORIES_LIST.map((c) => (
+                                  <option key={c.id} value={c.id}>
+                                    {getCategoryName(c.id)}
+                                  </option>
+                                ))}
+                              </select>
+
+                              {item.quantity && (
+                                <span className="text-[11px] font-['Manrope'] font-bold text-primary bg-surface-container px-2 py-0.5 rounded-md">
+                                  {item.quantity} {item.unit || ''}
+                                </span>
+                              )}
+                            </div>
                           </div>
 
                           <div className="flex items-center gap-2 shrink-0">

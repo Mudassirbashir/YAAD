@@ -7,6 +7,7 @@ import {
   updateProfile as supabaseUpdateProfile,
   deleteUserAccountData,
 } from '../lib/supabase';
+import { purgeAllUserOfflineData } from '../lib/offlineDb';
 import { UserProfile, AppLanguage } from '../types';
 
 interface AuthContextType {
@@ -227,6 +228,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const signOut = async () => {
+    if (user?.id) {
+      try {
+        await purgeAllUserOfflineData(user.id);
+      } catch (err) {
+        console.warn('Could not purge offline data on sign out:', err);
+      }
+    }
     if (supabase) {
       try {
         await supabase.auth.signOut();
@@ -269,13 +277,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
       }
 
-      // 3. Clear user-specific localStorage cache
+      // 3. Purge user offline data from IndexedDB and localStorage
       try {
+        await purgeAllUserOfflineData(currentUserId);
         localStorage.removeItem(`yaad_shopping_lists_u_${currentUserId}`);
         localStorage.removeItem('yaad_shopping_lists_guest');
         localStorage.removeItem('yaad_user_language');
       } catch (e) {
-        console.warn('Could not clear user localStorage:', e);
+        console.warn('Could not clear user local offline storage:', e);
       }
 
       // 4. Terminate Supabase session

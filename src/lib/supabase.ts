@@ -2,6 +2,20 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { UserProfile, ShoppingList, ShoppingItem, CategoryId, FrequentlyBoughtItem } from '../types';
 import { generateUUID, isValidUUID } from './uuid';
+import {
+  getOfflineLists,
+  saveOfflineList,
+  saveOfflineListsBatch,
+  deleteOfflineList,
+  clearUserOfflineLists,
+  enqueueOfflineOperation,
+  getPendingOfflineOperations,
+  removePendingOfflineOperation,
+  updatePendingOperationStatus,
+  clearUserOfflineQueue,
+  purgeAllUserOfflineData,
+  PendingOfflineOperation,
+} from './offlineDb';
 
 const env = (import.meta as unknown as { env?: Record<string, string> }).env || {};
 const supabaseUrl = (env.VITE_SUPABASE_URL || '').trim();
@@ -39,7 +53,7 @@ export interface OfflineQueueItem {
 const getOfflineQueueKey = (userId: string) => `yaad_offline_queue_u_${userId}`;
 
 /**
- * Retrieve pending offline actions from localStorage
+ * Retrieve pending offline actions (fallback to IndexedDB)
  */
 export function getPendingOfflineChanges(userId: string): OfflineQueueItem[] {
   try {
@@ -54,10 +68,18 @@ export function getPendingOfflineChanges(userId: string): OfflineQueueItem[] {
 }
 
 /**
- * Enqueue a pending offline action to localStorage
+ * Enqueue a pending offline action (persisted safely to IndexedDB & legacy mirror)
  */
 export function enqueueOfflineChange(userId: string, change: Omit<OfflineQueueItem, 'id' | 'timestamp'>): void {
   try {
+    // Also save to IndexedDB offline queue
+    enqueueOfflineOperation({
+      type: change.type as any,
+      userId,
+      listId: change.payload?.id || change.payload?.listId || generateUUID(),
+      payload: change.payload,
+    }).catch((e) => console.warn('IndexedDB enqueue notice:', e));
+
     const queue = getPendingOfflineChanges(userId);
     const item: OfflineQueueItem = {
       ...change,
@@ -65,7 +87,6 @@ export function enqueueOfflineChange(userId: string, change: Omit<OfflineQueueIt
       timestamp: Date.now(),
     };
 
-    // If saving a list that already has a pending save in the queue, update the existing queue item
     if (item.type === 'SAVE_LIST' && item.payload?.id) {
       const filtered = queue.filter(
         (q) => !(q.type === 'SAVE_LIST' && q.payload?.id === item.payload.id)
@@ -75,7 +96,6 @@ export function enqueueOfflineChange(userId: string, change: Omit<OfflineQueueIt
       return;
     }
 
-    // If deleting a list, remove any pending save for that list and add delete
     if (item.type === 'DELETE_LIST' && item.payload?.listId) {
       const filtered = queue.filter(
         (q) => !(q.payload?.id === item.payload.listId || (q.type === 'DELETE_LIST' && q.payload?.listId === item.payload.listId))
@@ -93,11 +113,12 @@ export function enqueueOfflineChange(userId: string, change: Omit<OfflineQueueIt
 }
 
 /**
- * Clear offline queue for a user
+ * Clear offline queue for a user across storage layers
  */
 export function clearOfflineQueue(userId: string): void {
   try {
     localStorage.removeItem(getOfflineQueueKey(userId));
+    clearUserOfflineQueue(userId).catch(() => {});
   } catch (e) {
     console.warn('Error clearing offline queue:', e);
   }
@@ -282,19 +303,22 @@ export async function updateProfile(
 
 /**
  * Load shopping lists and items from Supabase for authenticated user.
- * Supports both normalized relational schema (shopping_items) and embedded JSONB lists.
+ * Combines instant local IndexedDB serving with cloud synchronization.
  */
 export async function loadUserShoppingLists(
   userId: string
-): Promise<{ lists: ShoppingList[]; error: Error | null }> {
-  if (!supabase) {
-    return { lists: [], error: null };
+): Promise<{ lists: ShoppingList[]; error: Error | null; isOffline?: boolean }> {
+  const verifiedUserId = (await getVerifiedUserId(userId)) || userId;
+
+  // 1. Instantly read from local IndexedDB
+  const cachedOfflineLists = await getOfflineLists(verifiedUserId);
+
+  if (!supabase || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+    return { lists: cachedOfflineLists, error: null, isOffline: true };
   }
 
   try {
-    const verifiedUserId = await getVerifiedUserId(userId) || userId;
-
-    // 1. Query public.shopping_lists
+    // 2. Query public.shopping_lists
     let listsData: any[] | null = null;
     const { data: orderedData, error: listsError } = await supabase
       .from('shopping_lists')
@@ -311,7 +335,7 @@ export async function loadUserShoppingLists(
 
       if (fallbackError) {
         console.error('Error loading shopping lists from Supabase:', fallbackError.message);
-        return { lists: [], error: new Error(fallbackError.message) };
+        return { lists: cachedOfflineLists, error: null, isOffline: true };
       }
       listsData = fallbackData;
     } else {
@@ -319,10 +343,15 @@ export async function loadUserShoppingLists(
     }
 
     if (!listsData || listsData.length === 0) {
+      // Check if user has offline-created lists that are pending sync
+      const pendingOps = await getPendingOfflineOperations(verifiedUserId);
+      if (pendingOps.length > 0) {
+        return { lists: cachedOfflineLists, error: null };
+      }
       return { lists: [], error: null };
     }
 
-    // 2. Query child public.shopping_items table for normalized list items
+    // 3. Query child public.shopping_items table for normalized list items
     const listIds = listsData.map((l) => l.id);
     const { data: itemsData, error: itemsError } = await supabase
       .from('shopping_items')
@@ -331,7 +360,6 @@ export async function loadUserShoppingLists(
       .eq('user_id', verifiedUserId);
 
     if (itemsError) {
-      // If shopping_items table does not exist or has custom rules, fallback gracefully to embedded JSON
       console.warn('Note loading child shopping_items (falling back to embedded JSON):', itemsError.message);
     }
 
@@ -355,8 +383,8 @@ export async function loadUserShoppingLists(
       });
     }
 
-    // 3. Map database rows to Application ShoppingList model
-    const mappedLists: ShoppingList[] = listsData.map((row) => {
+    // 4. Map database rows to Application ShoppingList model
+    const remoteLists: ShoppingList[] = listsData.map((row) => {
       const relationalItems = itemsByListId.get(row.id) || [];
       const fallbackItems = Array.isArray(row.items) ? row.items : [];
       const allItems = relationalItems.length > 0 ? relationalItems : fallbackItems;
@@ -386,37 +414,70 @@ export async function loadUserShoppingLists(
       };
     });
 
-    // Client-side sort by createdTimestamp descending
-    mappedLists.sort((a, b) => (b.createdTimestamp || 0) - (a.createdTimestamp || 0));
+    // 5. Conflict-Safe Merge with Pending Offline Changes
+    const pendingOps = await getPendingOfflineOperations(verifiedUserId);
+    const pendingListIds = new Set(pendingOps.map((op) => op.listId));
 
-    return { lists: mappedLists, error: null };
+    const mergedLists: ShoppingList[] = remoteLists.map((remoteList) => {
+      if (pendingListIds.has(remoteList.id)) {
+        const localVersion = cachedOfflineLists.find((cl) => cl.id === remoteList.id);
+        if (localVersion) {
+          return { ...localVersion, isSynced: false };
+        }
+      }
+      return remoteList;
+    });
+
+    // Include any locally-created lists that have not yet reached Supabase
+    cachedOfflineLists.forEach((localList) => {
+      if (!remoteLists.some((rl) => rl.id === localList.id)) {
+        mergedLists.push({ ...localList, isSynced: false });
+      }
+    });
+
+    // Sort descending by createdTimestamp
+    mergedLists.sort((a, b) => (b.createdTimestamp || 0) - (a.createdTimestamp || 0));
+
+    // 6. Update local IndexedDB cache with verified data
+    await saveOfflineListsBatch(verifiedUserId, mergedLists);
+
+    return { lists: mergedLists, error: null };
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Failed to load shopping lists';
-    console.error('Exception loading shopping lists:', err);
-    return { lists: [], error: new Error(msg) };
+    console.warn('Exception loading shopping lists from Supabase, serving offline cache:', err);
+    return { lists: cachedOfflineLists, error: null, isOffline: true };
   }
 }
 
 /**
- * Save / persist shopping list and its items to Supabase.
- * Atomically persists to public.shopping_lists and synchronizes public.shopping_items.
- * If offline, enqueues the change safely for later synchronization.
+ * Save / persist shopping list and its items.
+ * Immediately saves to IndexedDB for offline capability, and syncs to Supabase.
  */
 export async function saveUserShoppingList(
   userId: string,
   list: ShoppingList
-): Promise<{ success: boolean; error: Error | null }> {
-  const verifiedUserId = await getVerifiedUserId(userId) || userId;
+): Promise<{ success: boolean; error: Error | null; isOffline?: boolean }> {
+  const verifiedUserId = (await getVerifiedUserId(userId)) || userId;
   const safeListId = list.id || generateUUID();
+  const listToSave: ShoppingList = {
+    ...list,
+    id: safeListId,
+    userId: verifiedUserId,
+    isSynced: false,
+  };
 
-  // If Supabase client is not available or offline, enqueue for background sync
-  if (!supabase) {
-    enqueueOfflineChange(verifiedUserId, {
+  // 1. Immediately persist to IndexedDB (Instant optimistic write)
+  await saveOfflineList(verifiedUserId, listToSave);
+
+  // 2. If offline or Supabase not available, queue for background sync
+  const isCurrentlyOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+  if (!supabase || isCurrentlyOffline) {
+    await enqueueOfflineOperation({
       type: 'SAVE_LIST',
       userId: verifiedUserId,
-      payload: list,
+      listId: safeListId,
+      payload: listToSave,
     });
-    return { success: true, error: null };
+    return { success: true, error: null, isOffline: true };
   }
 
   try {
@@ -428,7 +489,6 @@ export async function saveUserShoppingList(
       ? new Date(list.createdTimestamp).toISOString()
       : new Date().toISOString();
 
-    // 1. Upsert public.shopping_lists row with standard fields
     const listPayload: Record<string, unknown> = {
       id: safeListId,
       user_id: verifiedUserId,
@@ -436,7 +496,7 @@ export async function saveUserShoppingList(
       icon: list.icon || 'shopping_basket',
       is_completed: isCompleted,
       completed_at: list.completedAt ? (list.completedAt.includes('T') ? list.completedAt : new Date().toISOString()) : (isCompleted ? new Date().toISOString() : null),
-      items: list.items || [], // Dual persistence: embedded JSON ensures instant atomic recovery
+      items: list.items || [],
       created_at: createdIso,
       updated_at: new Date().toISOString(),
     };
@@ -444,28 +504,23 @@ export async function saveUserShoppingList(
     const { error: listError } = await resilientUpsert('shopping_lists', listPayload);
 
     if (listError) {
-      console.error('Error saving shopping list to Supabase:', listError.message);
-      // Queue offline change so progress is not lost
-      enqueueOfflineChange(verifiedUserId, {
+      console.warn('Error saving list to Supabase, queuing offline mutation:', listError.message);
+      await enqueueOfflineOperation({
         type: 'SAVE_LIST',
         userId: verifiedUserId,
-        payload: list,
+        listId: safeListId,
+        payload: listToSave,
       });
-      return { success: false, error: new Error(listError.message) };
+      return { success: true, error: null, isOffline: true };
     }
 
-    // 2. Synchronize child public.shopping_items table
+    // Synchronize child public.shopping_items table
     if (list.items) {
-      // Remove old items for this list to maintain clean relational consistency
-      const { error: deleteError } = await supabase
+      await supabase
         .from('shopping_items')
         .delete()
         .eq('list_id', safeListId)
         .eq('user_id', verifiedUserId);
-
-      if (deleteError) {
-        console.warn('Notice clearing items during sync:', deleteError.message);
-      }
 
       if (list.items.length > 0) {
         const itemRows = list.items.map((item, index) => ({
@@ -482,70 +537,65 @@ export async function saveUserShoppingList(
           updated_at: new Date().toISOString(),
         }));
 
-        const { error: itemsError } = await supabase
-          .from('shopping_items')
-          .insert(itemRows);
-
-        if (itemsError) {
-          console.warn('Notice inserting relational shopping_items:', itemsError.message);
-        }
+        await supabase.from('shopping_items').insert(itemRows);
       }
     }
 
-    // 3. If the list was just completed, update frequently bought items in Supabase
-    if (isCompleted && list.items.length > 0) {
-      const completedItems = list.items.filter((i) => i.completed);
-      if (completedItems.length > 0) {
-        recordFrequentlyBoughtItems(verifiedUserId, completedItems).catch((e) => {
-          console.warn('Notice recording frequently bought items:', e);
-        });
+    // Mark list as synced in IndexedDB
+    await saveOfflineList(verifiedUserId, { ...listToSave, isSynced: true });
+
+    // Clean up any pending offline queue items for this list
+    const pending = await getPendingOfflineOperations(verifiedUserId);
+    for (const op of pending) {
+      if (op.listId === safeListId && (op.type === 'SAVE_LIST' || op.type === 'UPDATE_LIST')) {
+        await removePendingOfflineOperation(op.id);
       }
     }
 
     return { success: true, error: null };
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Failed to save shopping list';
-    console.error('Exception saving shopping list:', err);
-    enqueueOfflineChange(verifiedUserId, {
+    console.warn('Network exception saving list, queuing offline:', err);
+    await enqueueOfflineOperation({
       type: 'SAVE_LIST',
       userId: verifiedUserId,
-      payload: list,
+      listId: safeListId,
+      payload: listToSave,
     });
-    return { success: false, error: new Error(msg) };
+    return { success: true, error: null, isOffline: true };
   }
 }
 
 /**
- * Delete a shopping list and its child items from Supabase (respecting RLS)
+ * Delete a shopping list and its child items from Supabase and IndexedDB.
  */
 export async function deleteUserShoppingList(
   userId: string,
   listId: string
-): Promise<{ success: boolean; error: Error | null }> {
-  const verifiedUserId = await getVerifiedUserId(userId) || userId;
+): Promise<{ success: boolean; error: Error | null; isOffline?: boolean }> {
+  const verifiedUserId = (await getVerifiedUserId(userId)) || userId;
 
-  if (!supabase) {
-    enqueueOfflineChange(verifiedUserId, {
+  // 1. Immediately delete from IndexedDB
+  await deleteOfflineList(verifiedUserId, listId);
+
+  // 2. If offline or no supabase, enqueue DELETE_LIST
+  const isCurrentlyOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+  if (!supabase || isCurrentlyOffline) {
+    await enqueueOfflineOperation({
       type: 'DELETE_LIST',
       userId: verifiedUserId,
+      listId,
       payload: { listId },
     });
-    return { success: true, error: null };
+    return { success: true, error: null, isOffline: true };
   }
 
   try {
-    // 1. Delete items from public.shopping_items
-    const { error: itemsError } = await supabase
+    await supabase
       .from('shopping_items')
       .delete()
       .eq('list_id', listId)
       .eq('user_id', verifiedUserId);
 
-    if (itemsError) {
-      console.warn('Notice deleting child shopping_items:', itemsError.message);
-    }
-
-    // 2. Delete list from public.shopping_lists
     const { error: listError } = await supabase
       .from('shopping_lists')
       .delete()
@@ -553,48 +603,50 @@ export async function deleteUserShoppingList(
       .eq('user_id', verifiedUserId);
 
     if (listError) {
-      console.error('Error deleting shopping list from Supabase:', listError.message);
-      enqueueOfflineChange(verifiedUserId, {
+      console.warn('Error deleting from Supabase, queuing offline mutation:', listError.message);
+      await enqueueOfflineOperation({
         type: 'DELETE_LIST',
         userId: verifiedUserId,
+        listId,
         payload: { listId },
       });
-      return { success: false, error: new Error(listError.message) };
     }
 
     return { success: true, error: null };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Failed to delete shopping list';
-    console.error('Exception deleting shopping list:', err);
-    enqueueOfflineChange(verifiedUserId, {
+  } catch (err) {
+    console.warn('Exception deleting from Supabase, queuing offline:', err);
+    await enqueueOfflineOperation({
       type: 'DELETE_LIST',
       userId: verifiedUserId,
+      listId,
       payload: { listId },
     });
-    return { success: false, error: new Error(msg) };
+    return { success: true, error: null, isOffline: true };
   }
 }
 
 /**
- * Clear all shopping lists and items for an authenticated user from Supabase
+ * Clear all shopping lists and items for an authenticated user from Supabase and IndexedDB
  */
 export async function clearAllUserShoppingLists(
   userId: string
 ): Promise<{ success: boolean; error: Error | null }> {
+  const verifiedUserId = (await getVerifiedUserId(userId)) || userId;
+
+  // Clear local IndexedDB first
+  await clearUserOfflineLists(verifiedUserId);
+  clearOfflineQueue(verifiedUserId);
+
   if (!supabase) {
-    return { success: false, error: new Error('Supabase is not configured') };
+    return { success: true, error: null };
   }
 
   try {
-    const verifiedUserId = await getVerifiedUserId(userId) || userId;
-
-    // 1. Delete all user items
     await supabase
       .from('shopping_items')
       .delete()
       .eq('user_id', verifiedUserId);
 
-    // 2. Delete all user lists
     const { error: listsError } = await supabase
       .from('shopping_lists')
       .delete()
@@ -605,11 +657,9 @@ export async function clearAllUserShoppingLists(
       return { success: false, error: new Error(listsError.message) };
     }
 
-    clearOfflineQueue(verifiedUserId);
     return { success: true, error: null };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Failed to clear all shopping lists';
-    console.error('Exception clearing shopping lists:', err);
     return { success: false, error: new Error(msg) };
   }
 }
@@ -815,6 +865,7 @@ export async function deleteUserAccountData(
     }
 
     clearOfflineQueue(verifiedUserId);
+    await purgeAllUserOfflineData(verifiedUserId);
     return { success: true, error: null };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Failed to delete account data';
@@ -865,54 +916,117 @@ export async function toggleShoppingItemStatus(
  */
 
 /**
- * Process all pending offline changes when back online
+ * Process all pending offline changes from IndexedDB when back online
  */
 export async function syncPendingOfflineChanges(
   userId: string
 ): Promise<{ syncedCount: number; error: Error | null }> {
-  if (!supabase || !navigator.onLine) {
+  if (!supabase || (typeof navigator !== 'undefined' && !navigator.onLine)) {
     return { syncedCount: 0, error: null };
   }
 
-  const queue = getPendingOfflineChanges(userId);
+  const verifiedUserId = (await getVerifiedUserId(userId)) || userId;
+  const queue = await getPendingOfflineOperations(verifiedUserId);
   if (queue.length === 0) {
     return { syncedCount: 0, error: null };
   }
 
   let syncedCount = 0;
-  const remainingQueue: OfflineQueueItem[] = [];
 
   for (const item of queue) {
     try {
-      if (item.type === 'SAVE_LIST') {
-        const res = await saveUserShoppingList(userId, item.payload);
-        if (res.success) {
-          syncedCount++;
-        } else {
-          remainingQueue.push(item);
+      if (item.type === 'SAVE_LIST' || item.type === 'UPDATE_LIST' || item.type === 'CREATE_LIST') {
+        const list = item.payload;
+        if (list && list.id) {
+          const isCompleted = list.items?.length > 0
+            ? list.items.every((i: ShoppingItem) => i.completed)
+            : Boolean(list.isCompleted);
+
+          const listPayload: Record<string, unknown> = {
+            id: list.id,
+            user_id: verifiedUserId,
+            title: list.title || 'Shopping List',
+            icon: list.icon || 'shopping_basket',
+            is_completed: isCompleted,
+            completed_at: list.completedAt ? (list.completedAt.includes('T') ? list.completedAt : new Date().toISOString()) : (isCompleted ? new Date().toISOString() : null),
+            items: list.items || [],
+            created_at: list.createdTimestamp ? new Date(list.createdTimestamp).toISOString() : new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          };
+
+          const { error: listErr } = await resilientUpsert('shopping_lists', listPayload);
+          if (!listErr) {
+            if (list.items) {
+              await supabase
+                .from('shopping_items')
+                .delete()
+                .eq('list_id', list.id)
+                .eq('user_id', verifiedUserId);
+
+              if (list.items.length > 0) {
+                const itemRows = list.items.map((it: ShoppingItem, idx: number) => ({
+                  id: ensureValidUUID(it.id),
+                  list_id: list.id,
+                  user_id: verifiedUserId,
+                  item_name: it.name,
+                  category: it.categoryId || it.category || 'other',
+                  quantity: it.quantity || null,
+                  unit: it.unit || it.note || null,
+                  raw_input: it.rawInput || null,
+                  is_completed: Boolean(it.completed),
+                  sort_order: idx,
+                  updated_at: new Date().toISOString(),
+                }));
+                await supabase.from('shopping_items').insert(itemRows);
+              }
+            }
+
+            await saveOfflineList(verifiedUserId, { ...list, isSynced: true });
+            await removePendingOfflineOperation(item.id);
+            syncedCount++;
+          } else {
+            await updatePendingOperationStatus(item.id, {
+              retryCount: item.retryCount + 1,
+              lastError: listErr.message,
+              syncStatus: 'failed',
+            });
+          }
         }
       } else if (item.type === 'DELETE_LIST') {
-        const res = await deleteUserShoppingList(userId, item.payload.listId);
-        if (res.success) {
-          syncedCount++;
-        } else {
-          remainingQueue.push(item);
+        const listId = item.payload?.listId || item.listId;
+        if (listId) {
+          await supabase
+            .from('shopping_items')
+            .delete()
+            .eq('list_id', listId)
+            .eq('user_id', verifiedUserId);
+
+          const { error: delErr } = await supabase
+            .from('shopping_lists')
+            .delete()
+            .eq('id', listId)
+            .eq('user_id', verifiedUserId);
+
+          if (!delErr) {
+            await removePendingOfflineOperation(item.id);
+            syncedCount++;
+          } else {
+            await updatePendingOperationStatus(item.id, {
+              retryCount: item.retryCount + 1,
+              lastError: delErr.message,
+              syncStatus: 'failed',
+            });
+          }
         }
       }
-    } catch (e) {
+    } catch (e: any) {
       console.warn('Error processing queued offline item:', e);
-      remainingQueue.push(item);
+      await updatePendingOperationStatus(item.id, {
+        retryCount: item.retryCount + 1,
+        lastError: e?.message || 'Unknown sync error',
+        syncStatus: 'failed',
+      });
     }
-  }
-
-  try {
-    if (remainingQueue.length === 0) {
-      clearOfflineQueue(userId);
-    } else {
-      localStorage.setItem(getOfflineQueueKey(userId), JSON.stringify(remainingQueue));
-    }
-  } catch (e) {
-    console.warn('Error updating offline queue after sync:', e);
   }
 
   return { syncedCount, error: null };

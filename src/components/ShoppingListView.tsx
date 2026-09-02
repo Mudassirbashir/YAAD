@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Plus, Check, Edit3, CheckCheck } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Plus, Check, Edit3, CheckCheck, Sparkles } from 'lucide-react';
 import { ShoppingList, ShoppingItem, CategoryId } from '../types';
 import { TopHeader } from './TopHeader';
 import { CategoryIcon } from './CategoryIcon';
@@ -29,6 +29,12 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
   const { t, getCategoryName } = useLanguage();
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
   const [newItemText, setNewItemText] = useState<string>('');
+
+  const quickAddParsed = useMemo(() => {
+    const trimmed = newItemText.trim();
+    if (!trimmed) return null;
+    return parseShoppingItem(trimmed);
+  }, [newItemText]);
 
   const totalItems = list.items.length;
   const completedItemsCount = list.items.filter((i) => i.completed).length;
@@ -85,12 +91,17 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
     const newItem: ShoppingItem = {
       id: newItemId,
       name: parsed.name,
+      canonicalName: parsed.canonicalName,
+      nameUrdu: parsed.nameUrdu,
+      nameRomanUrdu: parsed.nameRomanUrdu,
       quantity: parsed.quantity,
       unit: parsed.unit,
       rawInput: parsed.rawInput,
       categoryId: parsed.suggestedCategoryId,
       category: getCategoryName(parsed.suggestedCategoryId),
       completed: false,
+      confidence: parsed.confidence,
+      isRecognized: parsed.isRecognized,
     };
 
     const updatedList: ShoppingList = {
@@ -192,25 +203,57 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
         </div>
 
         {/* Add Item Input Bar */}
-        <form
-          onSubmit={handleAddInlineItem}
-          className="relative w-full shadow-[0px_4px_20px_rgba(0,30,21,0.05)] rounded-full bg-surface-container-lowest border border-surface-container-high/60"
-        >
-          <input
-            value={newItemText}
-            onChange={(e) => setNewItemText(e.target.value)}
-            className="w-full h-[54px] ps-5 pe-14 rounded-full border-none bg-transparent focus:ring-2 focus:ring-primary/20 text-base text-on-surface placeholder:text-outline font-['Manrope'] outline-none"
-            placeholder={t('shoppingList.inputPlaceholder')}
-            type="text"
-          />
-          <button
-            type="submit"
-            aria-label="Add item"
-            className="absolute end-1.5 top-1/2 -translate-y-1/2 w-10 h-10 bg-secondary-container text-on-secondary-container rounded-full flex items-center justify-center hover:opacity-90 active:scale-95 transition-all shadow-xs"
+        <div className="space-y-2">
+          <form
+            onSubmit={handleAddInlineItem}
+            className="relative w-full shadow-[0px_4px_20px_rgba(0,30,21,0.05)] rounded-full bg-surface-container-lowest border border-surface-container-high/60"
           >
-            <Plus className="w-5 h-5" />
-          </button>
-        </form>
+            <input
+              value={newItemText}
+              onChange={(e) => setNewItemText(e.target.value)}
+              className="w-full h-[54px] ps-5 pe-14 rounded-full border-none bg-transparent focus:ring-2 focus:ring-primary/20 text-base text-on-surface placeholder:text-outline font-['Manrope'] outline-none"
+              placeholder={t('shoppingList.inputPlaceholder')}
+              type="text"
+            />
+            <button
+              type="submit"
+              aria-label="Add item"
+              className="absolute end-1.5 top-1/2 -translate-y-1/2 w-10 h-10 bg-secondary-container text-on-secondary-container rounded-full flex items-center justify-center hover:opacity-90 active:scale-95 transition-all shadow-xs"
+            >
+              <Plus className="w-5 h-5" />
+            </button>
+          </form>
+
+          {/* Real-time Recognition Badge */}
+          {quickAddParsed && newItemText.trim().length > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2 rounded-2xl bg-surface-container-low border border-surface-container-high/80 text-xs animate-in fade-in duration-150">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="w-5 h-5 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                  <CategoryIcon categoryId={quickAddParsed.suggestedCategoryId} className="w-3 h-3" />
+                </span>
+                <span className="font-['Manrope'] font-bold text-primary truncate">
+                  {quickAddParsed.name}
+                </span>
+                {quickAddParsed.nameUrdu && (
+                  <span className="font-['Noto_Nastaliq_Urdu','Jameel_Noori_Nastaleeq',serif] text-xs text-on-surface-variant font-normal shrink-0">
+                    ({quickAddParsed.nameUrdu})
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0 ms-auto">
+                {quickAddParsed.quantity && (
+                  <span className="px-2 py-0.5 rounded-md bg-surface-container text-primary font-['Manrope'] font-bold text-[11px]">
+                    {quickAddParsed.quantity} {quickAddParsed.unit || ''}
+                  </span>
+                )}
+                <span className="text-[11px] font-['Manrope'] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-md flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-primary" />
+                  <span>{getCategoryName(quickAddParsed.suggestedCategoryId)}</span>
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Categories / Filter Chips */}
         <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8">
@@ -298,17 +341,33 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
 
                         {/* Item Details */}
                         <div className="flex flex-col min-w-0 flex-1">
-                          <span
-                            className={`font-['Manrope'] text-base transition-all truncate ${
-                              isChecked
-                                ? 'line-through text-outline font-normal'
-                                : 'text-on-surface font-semibold group-hover:text-primary'
-                            }`}
-                          >
-                            {item.name}
-                          </span>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span
+                              className={`font-['Manrope'] text-base transition-all truncate ${
+                                isChecked
+                                  ? 'line-through text-outline font-normal'
+                                  : 'text-on-surface font-semibold group-hover:text-primary'
+                              }`}
+                            >
+                              {item.name}
+                            </span>
+                            {item.nameUrdu && (
+                              <span
+                                className={`font-['Noto_Nastaliq_Urdu','Jameel_Noori_Nastaleeq',serif] text-xs transition-opacity ${
+                                  isChecked ? 'opacity-50 text-outline' : 'text-on-surface-variant font-normal'
+                                }`}
+                              >
+                                ({item.nameUrdu})
+                              </span>
+                            )}
+                          </div>
                           <span className="font-['Manrope'] text-[11px] text-on-surface-variant font-medium">
                             {getCategoryName((item.categoryId || 'other') as CategoryId)}
+                            {item.rawInput && item.rawInput.trim().toLowerCase() !== item.name.trim().toLowerCase() && (
+                              <span className="opacity-70 ms-1">
+                                • typed: "{item.rawInput}"
+                              </span>
+                            )}
                           </span>
                         </div>
 
