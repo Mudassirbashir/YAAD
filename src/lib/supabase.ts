@@ -15,6 +15,8 @@ import {
   clearUserOfflineQueue,
   purgeAllUserOfflineData,
   PendingOfflineOperation,
+  saveOfflineProfile,
+  getOfflineProfile,
 } from './offlineDb';
 
 const env = (import.meta as unknown as { env?: Record<string, string> }).env || {};
@@ -157,6 +159,29 @@ export function ensureValidUUID(id?: string): string {
 }
 
 /**
+ * Detects whether an error or environment is offline / network connectivity related.
+ */
+export function isNetworkOrOfflineError(error: unknown): boolean {
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    return true;
+  }
+  if (!error) return false;
+  if (error instanceof TypeError && (error.message.includes('fetch') || error.message.includes('Network'))) {
+    return true;
+  }
+  const msg = typeof error === 'string' ? error : (error as any).message || String(error);
+  return (
+    /failed to fetch/i.test(msg) ||
+    /network.*error/i.test(msg) ||
+    /networkrequestfailed/i.test(msg) ||
+    /err_internet_disconnected/i.test(msg) ||
+    /err_connection/i.test(msg) ||
+    /offline/i.test(msg) ||
+    /aborted/i.test(msg)
+  );
+}
+
+/**
  * Safely upsert a row into a Supabase table with automatic schema-mismatch recovery.
  * If Supabase PostgREST reports a missing column in the schema cache,
  * it dynamically strips the offending column and retries.
@@ -165,36 +190,53 @@ export async function resilientUpsert(
   table: string,
   payload: Record<string, unknown>,
   options?: { onConflict?: string }
-): Promise<{ data: any; error: Error | null }> {
+): Promise<{ data: any; error: Error | null; isOffline?: boolean }> {
   if (!supabase) return { data: null, error: new Error('Supabase client not initialized') };
+
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    return { data: null, error: null, isOffline: true };
+  }
 
   const mutablePayload = { ...payload };
   const maxRetries = 6;
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
-    const query = options?.onConflict
-      ? supabase.from(table).upsert(mutablePayload, { onConflict: options.onConflict }).select()
-      : supabase.from(table).upsert(mutablePayload).select();
+    try {
+      const query = options?.onConflict
+        ? supabase.from(table).upsert(mutablePayload, { onConflict: options.onConflict }).select()
+        : supabase.from(table).upsert(mutablePayload).select();
 
-    const { data, error } = await query;
-    if (!error) {
-      return { data, error: null };
+      const { data, error } = await query;
+      if (!error) {
+        return { data, error: null };
+      }
+
+      // If network/offline error, do not retry repeatedly
+      if (isNetworkOrOfflineError(error)) {
+        return { data: null, error: null, isOffline: true };
+      }
+
+      // Check for column missing error pattern from PostgREST / Supabase
+      const match =
+        error.message.match(/Could not find the '([^']+)' column/i) ||
+        error.message.match(/column "([^"]+)" of relation/i) ||
+        error.message.match(/column '([^']+)' does not exist/i);
+
+      if (match && match[1] && match[1] in mutablePayload) {
+        const offendingColumn = match[1];
+        console.warn(`Column '${offendingColumn}' not found in '${table}' schema cache. Retrying upsert without '${offendingColumn}'.`);
+        delete mutablePayload[offendingColumn];
+        continue;
+      }
+
+      return { data: null, error: new Error(error.message) };
+    } catch (err: unknown) {
+      if (isNetworkOrOfflineError(err)) {
+        return { data: null, error: null, isOffline: true };
+      }
+      const msg = err instanceof Error ? err.message : 'Upsert query exception';
+      return { data: null, error: new Error(msg) };
     }
-
-    // Check for column missing error pattern from PostgREST / Supabase
-    const match =
-      error.message.match(/Could not find the '([^']+)' column/i) ||
-      error.message.match(/column "([^"]+)" of relation/i) ||
-      error.message.match(/column '([^']+)' does not exist/i);
-
-    if (match && match[1] && match[1] in mutablePayload) {
-      const offendingColumn = match[1];
-      console.warn(`Column '${offendingColumn}' not found in '${table}' schema cache. Retrying upsert without '${offendingColumn}'.`);
-      delete mutablePayload[offendingColumn];
-      continue;
-    }
-
-    return { data: null, error: new Error(error.message) };
   }
 
   return { data: null, error: new Error(`Failed to upsert to ${table} after schema adaptation retries.`) };
@@ -210,9 +252,16 @@ export async function resilientUpsert(
  * Fetch profile from Supabase public.profiles table using authenticated user's ID
  */
 export async function getProfile(userId: string): Promise<UserProfile | null> {
-  if (!supabase) return null;
+  const cached = await getOfflineProfile<UserProfile>(userId);
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    return cached;
+  }
+  if (!supabase) return cached;
   try {
-    const verifiedUserId = await getVerifiedUserId(userId) || userId;
+    const verifiedUserId = (await getVerifiedUserId(userId)) || userId;
+    if (!verifiedUserId) {
+      return cached;
+    }
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
@@ -220,13 +269,21 @@ export async function getProfile(userId: string): Promise<UserProfile | null> {
       .maybeSingle();
 
     if (error) {
-      console.warn('Error fetching profile from Supabase:', error.message);
-      return null;
+      if (!isNetworkOrOfflineError(error)) {
+        console.warn('Error fetching profile from Supabase:', error.message);
+      }
+      return cached;
     }
-    return data as UserProfile;
+    if (data) {
+      await saveOfflineProfile(verifiedUserId, data);
+      return data as UserProfile;
+    }
+    return cached;
   } catch (err) {
-    console.error('Exception fetching profile:', err);
-    return null;
+    if (!isNetworkOrOfflineError(err)) {
+      console.warn('Exception fetching profile:', err);
+    }
+    return cached;
   }
 }
 
@@ -237,61 +294,64 @@ export async function updateProfile(
   userId: string,
   updates: Partial<UserProfile>
 ): Promise<{ data: UserProfile | null; error: Error | null }> {
-  if (!supabase) {
-    return { data: null, error: new Error('Supabase is not configured.') };
+  const verifiedUserId = (await getVerifiedUserId(userId)) || userId;
+
+  // Retrieve existing profile from cache first so partial updates NEVER wipe existing fields
+  const existingProfile = await getOfflineProfile<UserProfile>(verifiedUserId);
+
+  const mergedProfile: UserProfile = {
+    id: verifiedUserId,
+    full_name: updates.full_name !== undefined ? (updates.full_name || null) : (existingProfile?.full_name ?? null),
+    email: updates.email !== undefined ? (updates.email || null) : (existingProfile?.email ?? null),
+    avatar_url: updates.avatar_url !== undefined ? (updates.avatar_url || null) : (existingProfile?.avatar_url ?? null),
+    language: updates.language !== undefined ? updates.language : (existingProfile?.language ?? 'en'),
+    usage_purpose: updates.usage_purpose !== undefined ? updates.usage_purpose : (existingProfile?.usage_purpose ?? null),
+    referral_source: updates.referral_source !== undefined ? updates.referral_source : (existingProfile?.referral_source ?? null),
+    has_completed_setup: updates.has_completed_setup !== undefined ? updates.has_completed_setup : (existingProfile?.has_completed_setup ?? true),
+  };
+
+  // Always save to offline IndexedDB immediately
+  await saveOfflineProfile(verifiedUserId, mergedProfile);
+
+  if (!supabase || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+    return { data: mergedProfile, error: null };
   }
 
   try {
-    const verifiedUserId = await getVerifiedUserId(userId);
-    if (!verifiedUserId) {
-      // No active session in client (e.g. pending email confirmation or offline)
-      console.warn('updateProfile notice: No active authenticated session for user ID', userId);
-      return {
-        data: {
-          id: userId,
-          full_name: updates.full_name || null,
-          email: updates.email || null,
-          avatar_url: updates.avatar_url || null,
-          language: updates.language,
-          usage_purpose: updates.usage_purpose,
-          referral_source: updates.referral_source,
-          has_completed_setup: updates.has_completed_setup,
-        } as UserProfile,
-        error: null,
-      };
-    }
-
     const payload: Record<string, unknown> = {
-      ...updates,
+      ...mergedProfile,
       updated_at: new Date().toISOString(),
     };
 
-    const { data: upsertData, error: upsertError } = await resilientUpsert(
+    const { data: upsertData, error: upsertError, isOffline } = await resilientUpsert(
       'profiles',
-      { id: verifiedUserId, ...payload },
+      payload,
       { onConflict: 'id' }
     );
+
+    if (isOffline || (upsertError && isNetworkOrOfflineError(upsertError))) {
+      return { data: mergedProfile, error: null };
+    }
 
     if (upsertError) {
       console.warn('Supabase updateProfile notice:', upsertError.message);
       return {
-        data: {
-          id: verifiedUserId,
-          full_name: updates.full_name || null,
-          email: updates.email || null,
-          avatar_url: updates.avatar_url || null,
-          ...updates,
-        } as UserProfile,
+        data: mergedProfile,
         error: null,
       };
     }
 
     const savedProfile = Array.isArray(upsertData) ? upsertData[0] : upsertData;
-    return { data: (savedProfile || { id: verifiedUserId, ...payload }) as UserProfile, error: null };
+    const finalProfile = (savedProfile ? { ...mergedProfile, ...savedProfile } : mergedProfile) as UserProfile;
+    await saveOfflineProfile(verifiedUserId, finalProfile);
+    return { data: finalProfile, error: null };
   } catch (err: unknown) {
+    if (isNetworkOrOfflineError(err)) {
+      return { data: mergedProfile, error: null };
+    }
     const message = err instanceof Error ? err.message : 'Failed to update profile';
-    console.error('Exception during updateProfile:', err);
-    return { data: null, error: new Error(message) };
+    console.warn('Exception during updateProfile:', message);
+    return { data: mergedProfile, error: null };
   }
 }
 
@@ -327,6 +387,9 @@ export async function loadUserShoppingLists(
       .order('created_at', { ascending: false });
 
     if (listsError) {
+      if (isNetworkOrOfflineError(listsError)) {
+        return { lists: cachedOfflineLists, error: null, isOffline: true };
+      }
       console.warn('Note on ordered lists query, attempting general select:', listsError.message);
       const { data: fallbackData, error: fallbackError } = await supabase
         .from('shopping_lists')
@@ -334,7 +397,9 @@ export async function loadUserShoppingLists(
         .eq('user_id', verifiedUserId);
 
       if (fallbackError) {
-        console.error('Error loading shopping lists from Supabase:', fallbackError.message);
+        if (!isNetworkOrOfflineError(fallbackError)) {
+          console.error('Error loading shopping lists from Supabase:', fallbackError.message);
+        }
         return { lists: cachedOfflineLists, error: null, isOffline: true };
       }
       listsData = fallbackData;
@@ -516,28 +581,49 @@ export async function saveUserShoppingList(
 
     // Synchronize child public.shopping_items table
     if (list.items) {
-      await supabase
-        .from('shopping_items')
-        .delete()
-        .eq('list_id', safeListId)
-        .eq('user_id', verifiedUserId);
+      try {
+        await supabase
+          .from('shopping_items')
+          .delete()
+          .eq('list_id', safeListId)
+          .eq('user_id', verifiedUserId);
 
-      if (list.items.length > 0) {
-        const itemRows = list.items.map((item, index) => ({
-          id: ensureValidUUID(item.id),
-          list_id: safeListId,
-          user_id: verifiedUserId,
-          item_name: item.name,
-          category: item.categoryId || item.category || 'other',
-          quantity: item.quantity || null,
-          unit: item.unit || item.note || null,
-          raw_input: item.rawInput || null,
-          is_completed: Boolean(item.completed),
-          sort_order: index,
-          updated_at: new Date().toISOString(),
-        }));
+        if (list.items.length > 0) {
+          const itemRows = list.items.map((item, index) => ({
+            id: ensureValidUUID(item.id),
+            list_id: safeListId,
+            user_id: verifiedUserId,
+            item_name: item.name,
+            category: item.categoryId || item.category || 'other',
+            quantity: item.quantity || null,
+            unit: item.unit || item.note || null,
+            raw_input: item.rawInput || null,
+            is_completed: Boolean(item.completed),
+            sort_order: index,
+            updated_at: new Date().toISOString(),
+          }));
 
-        await supabase.from('shopping_items').insert(itemRows);
+          const { error: insertErr } = await supabase.from('shopping_items').insert(itemRows);
+          if (insertErr && isNetworkOrOfflineError(insertErr)) {
+            await enqueueOfflineOperation({
+              type: 'SAVE_LIST',
+              userId: verifiedUserId,
+              listId: safeListId,
+              payload: listToSave,
+            });
+            return { success: true, error: null, isOffline: true };
+          }
+        }
+      } catch (childErr) {
+        if (isNetworkOrOfflineError(childErr)) {
+          await enqueueOfflineOperation({
+            type: 'SAVE_LIST',
+            userId: verifiedUserId,
+            listId: safeListId,
+            payload: listToSave,
+          });
+          return { success: true, error: null, isOffline: true };
+        }
       }
     }
 
@@ -554,6 +640,15 @@ export async function saveUserShoppingList(
 
     return { success: true, error: null };
   } catch (err: unknown) {
+    if (isNetworkOrOfflineError(err)) {
+      await enqueueOfflineOperation({
+        type: 'SAVE_LIST',
+        userId: verifiedUserId,
+        listId: safeListId,
+        payload: listToSave,
+      });
+      return { success: true, error: null, isOffline: true };
+    }
     console.warn('Network exception saving list, queuing offline:', err);
     await enqueueOfflineOperation({
       type: 'SAVE_LIST',
@@ -573,6 +668,9 @@ export async function deleteUserShoppingList(
   listId: string
 ): Promise<{ success: boolean; error: Error | null; isOffline?: boolean }> {
   const verifiedUserId = (await getVerifiedUserId(userId)) || userId;
+  if (!verifiedUserId) {
+    return { success: false, error: new Error('Authentication required to delete list') };
+  }
 
   // 1. Immediately delete from IndexedDB
   await deleteOfflineList(verifiedUserId, listId);
@@ -590,11 +688,21 @@ export async function deleteUserShoppingList(
   }
 
   try {
-    await supabase
+    const { error: itemsError } = await supabase
       .from('shopping_items')
       .delete()
       .eq('list_id', listId)
       .eq('user_id', verifiedUserId);
+
+    if (itemsError && isNetworkOrOfflineError(itemsError)) {
+      await enqueueOfflineOperation({
+        type: 'DELETE_LIST',
+        userId: verifiedUserId,
+        listId,
+        payload: { listId },
+      });
+      return { success: true, error: null, isOffline: true };
+    }
 
     const { error: listError } = await supabase
       .from('shopping_lists')
@@ -603,6 +711,15 @@ export async function deleteUserShoppingList(
       .eq('user_id', verifiedUserId);
 
     if (listError) {
+      if (isNetworkOrOfflineError(listError)) {
+        await enqueueOfflineOperation({
+          type: 'DELETE_LIST',
+          userId: verifiedUserId,
+          listId,
+          payload: { listId },
+        });
+        return { success: true, error: null, isOffline: true };
+      }
       console.warn('Error deleting from Supabase, queuing offline mutation:', listError.message);
       await enqueueOfflineOperation({
         type: 'DELETE_LIST',
@@ -614,6 +731,15 @@ export async function deleteUserShoppingList(
 
     return { success: true, error: null };
   } catch (err) {
+    if (isNetworkOrOfflineError(err)) {
+      await enqueueOfflineOperation({
+        type: 'DELETE_LIST',
+        userId: verifiedUserId,
+        listId,
+        payload: { listId },
+      });
+      return { success: true, error: null, isOffline: true };
+    }
     console.warn('Exception deleting from Supabase, queuing offline:', err);
     await enqueueOfflineOperation({
       type: 'DELETE_LIST',
@@ -631,7 +757,10 @@ export async function deleteUserShoppingList(
 export async function clearAllUserShoppingLists(
   userId: string
 ): Promise<{ success: boolean; error: Error | null }> {
-  const verifiedUserId = (await getVerifiedUserId(userId)) || userId;
+  const verifiedUserId = await getVerifiedUserId(userId);
+  if (!verifiedUserId) {
+    return { success: false, error: new Error('Authentication required to clear shopping lists') };
+  }
 
   // Clear local IndexedDB first
   await clearUserOfflineLists(verifiedUserId);
@@ -681,7 +810,10 @@ export async function getFrequentlyBoughtItems(
   }
 
   try {
-    const verifiedUserId = await getVerifiedUserId(userId) || userId;
+    const verifiedUserId = await getVerifiedUserId(userId);
+    if (!verifiedUserId) {
+      return { items: [], error: null };
+    }
     const { data, error } = await supabase
       .from('frequently_bought_items')
       .select('*')
@@ -719,19 +851,26 @@ export async function recordFrequentlyBoughtItems(
   userId: string,
   items: ShoppingItem[]
 ): Promise<{ success: boolean; error: Error | null }> {
-  if (!supabase || items.length === 0) {
+  if (!supabase || items.length === 0 || (typeof navigator !== 'undefined' && !navigator.onLine)) {
     return { success: true, error: null };
   }
 
   try {
-    const verifiedUserId = await getVerifiedUserId(userId) || userId;
+    const verifiedUserId = (await getVerifiedUserId(userId)) || userId;
+    if (!verifiedUserId) {
+      return { success: true, error: null };
+    }
 
     // Fetch existing records to increment purchase_count
     const itemNames = items.map((i) => i.name.trim().toLowerCase());
-    const { data: existing } = await supabase
+    const { data: existing, error: fetchError } = await supabase
       .from('frequently_bought_items')
       .select('*')
       .eq('user_id', verifiedUserId);
+
+    if (fetchError && isNetworkOrOfflineError(fetchError)) {
+      return { success: true, error: null };
+    }
 
     const existingMap = new Map<string, { id: string; count: number }>();
     if (existing) {
@@ -765,15 +904,20 @@ export async function recordFrequentlyBoughtItems(
       .upsert(upsertRows, { onConflict: 'user_id,item_name' });
 
     if (upsertError) {
+      if (isNetworkOrOfflineError(upsertError)) {
+        return { success: true, error: null };
+      }
       console.warn('Note recording frequently bought items:', upsertError.message);
-      return { success: false, error: new Error(upsertError.message) };
+      return { success: true, error: null };
     }
 
     return { success: true, error: null };
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Failed to record frequently bought items';
-    console.error('Exception recording frequently bought items:', err);
-    return { success: false, error: new Error(msg) };
+    if (isNetworkOrOfflineError(err)) {
+      return { success: true, error: null };
+    }
+    console.warn('Notice recording frequently bought items:', err);
+    return { success: true, error: null };
   }
 }
 
@@ -787,7 +931,10 @@ export async function deleteFrequentlyBoughtItem(
   if (!supabase) return { success: false, error: new Error('Supabase not configured') };
 
   try {
-    const verifiedUserId = await getVerifiedUserId(userId) || userId;
+    const verifiedUserId = await getVerifiedUserId(userId);
+    if (!verifiedUserId) {
+      return { success: false, error: new Error('Authentication required to delete frequently bought item') };
+    }
     const { error } = await supabase
       .from('frequently_bought_items')
       .delete()
@@ -822,7 +969,10 @@ export async function deleteUserAccountData(
   }
 
   try {
-    const verifiedUserId = await getVerifiedUserId(userId) || userId;
+    const verifiedUserId = await getVerifiedUserId(userId);
+    if (!verifiedUserId) {
+      return { success: false, error: new Error('Authentication required to delete account data') };
+    }
 
     // 1. Delete all user items from public.shopping_items
     const { error: itemsError } = await supabase
@@ -889,9 +1039,14 @@ export async function toggleShoppingItemStatus(
   itemId: string,
   isCompleted: boolean
 ): Promise<{ error: Error | null }> {
-  if (!supabase) return { error: null };
+  if (!supabase || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+    return { error: null };
+  }
   try {
-    const verifiedUserId = await getVerifiedUserId(userId) || userId;
+    const verifiedUserId = (await getVerifiedUserId(userId)) || userId;
+    if (!verifiedUserId) {
+      return { error: null };
+    }
     const { error } = await supabase
       .from('shopping_items')
       .update({
@@ -902,8 +1057,15 @@ export async function toggleShoppingItemStatus(
       .eq('list_id', listId)
       .eq('user_id', verifiedUserId);
 
+    if (error && isNetworkOrOfflineError(error)) {
+      return { error: null };
+    }
+
     return { error: error ? new Error(error.message) : null };
   } catch (err: unknown) {
+    if (isNetworkOrOfflineError(err)) {
+      return { error: null };
+    }
     const msg = err instanceof Error ? err.message : 'Failed to toggle item';
     return { error: new Error(msg) };
   }
@@ -934,6 +1096,11 @@ export async function syncPendingOfflineChanges(
   let syncedCount = 0;
 
   for (const item of queue) {
+    // If connection dropped during sync loop, abort gracefully
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      break;
+    }
+
     try {
       if (item.type === 'SAVE_LIST' || item.type === 'UPDATE_LIST' || item.type === 'CREATE_LIST') {
         const list = item.payload;
@@ -954,7 +1121,12 @@ export async function syncPendingOfflineChanges(
             updated_at: new Date().toISOString(),
           };
 
-          const { error: listErr } = await resilientUpsert('shopping_lists', listPayload);
+          const { error: listErr, isOffline } = await resilientUpsert('shopping_lists', listPayload);
+          if (isOffline || (listErr && isNetworkOrOfflineError(listErr))) {
+            // Network failure mid-sync, pause queue processing
+            break;
+          }
+
           if (!listErr) {
             if (list.items) {
               await supabase
@@ -1007,6 +1179,10 @@ export async function syncPendingOfflineChanges(
             .eq('id', listId)
             .eq('user_id', verifiedUserId);
 
+          if (delErr && isNetworkOrOfflineError(delErr)) {
+            break;
+          }
+
           if (!delErr) {
             await removePendingOfflineOperation(item.id);
             syncedCount++;
@@ -1020,6 +1196,9 @@ export async function syncPendingOfflineChanges(
         }
       }
     } catch (e: any) {
+      if (isNetworkOrOfflineError(e)) {
+        break;
+      }
       console.warn('Error processing queued offline item:', e);
       await updatePendingOperationStatus(item.id, {
         retryCount: item.retryCount + 1,

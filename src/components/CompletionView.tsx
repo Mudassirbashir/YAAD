@@ -5,6 +5,7 @@ import { TopHeader } from './TopHeader';
 import { CategoryIcon } from './CategoryIcon';
 import { useLanguage } from '../context/LanguageContext';
 import { playCompletionSound } from '../lib/sound';
+import { BidiText } from '../utils/bidi';
 
 interface CompletionViewProps {
   list: ShoppingList;
@@ -36,7 +37,11 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
   return (
     <div className="w-full max-w-xl md:max-w-2xl lg:max-w-3xl mx-auto min-h-screen flex flex-col antialiased bg-background pb-28 selection:bg-primary-container selection:text-on-primary-container">
       {/* TopAppBar */}
-      <TopHeader title={t('appName')} onAvatarClick={onOpenProfile} />
+      <TopHeader
+        title={t('appName')}
+        onSettingsClick={onOpenProfile}
+        onAvatarClick={onOpenProfile}
+      />
 
       {/* Main Container */}
       <main className="flex-1 px-4 sm:px-6 md:px-8 space-y-6 pt-2">
@@ -82,16 +87,16 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
         {/* Completed List Container */}
         <section className="bg-surface-container-lowest rounded-3xl shadow-[0px_6px_24px_rgba(0,30,21,0.04)] border border-surface-container-high/70 p-5 space-y-4">
           <div className="flex justify-between items-center border-b border-surface-dim/60 pb-3">
-            <h3 className="font-['Plus_Jakarta_Sans'] text-lg sm:text-xl font-bold text-primary truncate pr-2">
+            <BidiText as="h3" className="font-['Plus_Jakarta_Sans'] text-lg sm:text-xl font-bold text-primary truncate pe-2">
               {list.title}
-            </h3>
+            </BidiText>
             <span className="font-['Manrope'] text-xs font-bold text-primary px-2.5 py-1 bg-surface-container rounded-full shrink-0">
               {t('home.itemsCount', { count: list.items.length })}
             </span>
           </div>
 
           {/* List Items Summary */}
-          <div className="space-y-3.5 max-h-[240px] overflow-y-auto pr-1">
+          <div className="space-y-3.5 max-h-[240px] overflow-y-auto pe-1">
             {categoryIds.map((catId) => {
               const categoryItems = list.items.filter(
                 (i) => (i.categoryId || 'other') === catId
@@ -115,19 +120,22 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
                         key={item.id}
                         className="flex items-center justify-between gap-3 p-2.5 sm:p-3 bg-surface-bright rounded-2xl border border-surface-dim/40"
                       >
-                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1" dir="auto">
                           <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
                             <Check className="w-3 h-3 text-primary stroke-[3]" />
                           </div>
-                          <span className="font-['Manrope'] text-sm text-outline line-through truncate font-medium">
+                          <BidiText className="font-['Manrope'] text-sm text-outline line-through truncate font-medium">
                             {item.name}
-                          </span>
+                          </BidiText>
                         </div>
 
                         {formattedQty && (
-                          <span className="font-['Manrope'] text-xs text-outline bg-surface-container-low px-2 py-0.5 rounded-md shrink-0 font-medium">
+                          <bdi
+                            dir="ltr"
+                            className="font-['Manrope'] tabular-nums text-xs text-outline bg-surface-container-low px-2 py-0.5 rounded-md shrink-0 font-medium"
+                          >
                             {formattedQty}
-                          </span>
+                          </bdi>
                         )}
                       </div>
                     );

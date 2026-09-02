@@ -4,6 +4,7 @@ import { ShoppingList, CategoryId } from '../types';
 import { TopHeader } from './TopHeader';
 import { CategoryIcon } from './CategoryIcon';
 import { useLanguage } from '../context/LanguageContext';
+import { BidiText } from '../utils/bidi';
 
 interface ListDetailsViewProps {
   list: ShoppingList;
@@ -127,8 +128,8 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
                             <div className="w-6 h-6 rounded-full border-2 border-outline flex items-center justify-center shrink-0" />
                           )}
 
-                          <div className="flex items-center gap-1.5 min-w-0 flex-1 flex-wrap">
-                            <span
+                          <div className="flex items-center gap-1.5 min-w-0 flex-1 flex-wrap" dir="auto">
+                            <BidiText
                               className={`font-['Manrope'] text-base truncate ${
                                 item.completed
                                   ? 'line-through text-outline'
@@ -136,10 +137,10 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
                               }`}
                             >
                               {item.name}
-                            </span>
+                            </BidiText>
                             {item.nameUrdu && (
                               <span
-                                className={`font-['Noto_Nastaliq_Urdu','Jameel_Noori_Nastaleeq',serif] text-xs ${
+                                className={`font-urdu text-xs ${
                                   item.completed ? 'text-outline/70' : 'text-on-surface-variant font-normal'
                                 }`}
                               >
@@ -150,9 +151,12 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
                         </div>
 
                         {formattedQty && (
-                          <span className="font-['Manrope'] text-xs text-outline bg-surface-container-low px-2.5 py-1 rounded-md shrink-0 font-medium">
+                          <bdi
+                            dir="ltr"
+                            className="font-['Manrope'] tabular-nums text-xs text-outline bg-surface-container-low px-2.5 py-1 rounded-md shrink-0 font-medium"
+                          >
                             {formattedQty}
-                          </span>
+                          </bdi>
                         )}
                       </li>
                     );

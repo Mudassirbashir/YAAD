@@ -55,13 +55,14 @@
   --color-error-container: #ffdad6;
   --color-on-error-container: #93000a;
   
-  --font-display-lg: "Plus Jakarta Sans", "Noto Naskh Arabic", sans-serif;
-  --font-headline-md: "Plus Jakarta Sans", "Noto Naskh Arabic", sans-serif;
-  --font-body-lg: "Manrope", "Noto Naskh Arabic", sans-serif;
-  --font-body-md: "Manrope", "Noto Naskh Arabic", sans-serif;
-  --font-label-sm: "Manrope", "Noto Naskh Arabic", sans-serif;
-  --font-button-text: "Manrope", "Noto Naskh Arabic", sans-serif;
-  --font-urdu: "Noto Naskh Arabic", sans-serif;
+  --font-display-lg: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-headline-md: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-body-lg: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-body-md: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-label-sm: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-button-text: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-urdu: "Noto Nastaliq Urdu", "Urdu Typesetting", "Jameel Noori Nastaleeq", "Noto Sans Arabic", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-urdu-clean: "Noto Sans Arabic", "Noto Nastaliq Urdu", sans-serif;
 }
 
 @layer base {
@@ -70,7 +71,7 @@
   }
   
   body {
-    font-family: "Manrope", "Noto Naskh Arabic", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     background-color: var(--color-background);
     color: var(--color-on-background);
     text-rendering: optimizeLegibility;
@@ -83,72 +84,109 @@
   html[lang="ur"] body,
   [dir="rtl"],
   [lang="ur"] {
-    font-family: "Noto Naskh Arabic", "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    line-height: 1.65;
+    font-family: "Noto Nastaliq Urdu", "Urdu Typesetting", "Jameel Noori Nastaleeq", "Noto Sans Arabic", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.95;
+    letter-spacing: 0 !important;
   }
 
-  /* Prevent negative/positive letter-spacing from breaking cursive Urdu joining */
-  [dir="rtl"] h1,
-  [dir="rtl"] h2,
-  [dir="rtl"] h3,
-  [dir="rtl"] h4,
-  [dir="rtl"] h5,
-  [dir="rtl"] h6,
-  [dir="rtl"] button,
-  [dir="rtl"] input,
-  [dir="rtl"] textarea,
-  [dir="rtl"] span,
-  [dir="rtl"] p,
-  [dir="rtl"] a,
-  [lang="ur"] h1,
-  [lang="ur"] h2,
-  [lang="ur"] h3,
-  [lang="ur"] h4,
-  [lang="ur"] h5,
-  [lang="ur"] h6,
-  [lang="ur"] button,
-  [lang="ur"] input,
-  [lang="ur"] textarea,
-  [lang="ur"] span,
-  [lang="ur"] p,
-  [lang="ur"] a,
+  /* Explicit Roman Urdu and English font preservation using the standard Latin typography */
+  html[lang="en"] body,
+  html[lang="ur-Latn"] body,
+  [lang="en"],
+  [lang="ur-Latn"] {
+    font-family: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  /* Headings in Urdu: High quality line height prevents ascenders/descenders (e.g. ے، ں، ج، چ) from clipping */
+  html[lang="ur"] h1, [dir="rtl"] h1, .font-urdu h1 {
+    font-family: "Noto Nastaliq Urdu", "Urdu Typesetting", "Jameel Noori Nastaleeq", "Noto Sans Arabic", sans-serif;
+    line-height: 1.85 !important;
+    letter-spacing: 0 !important;
+  }
+  html[lang="ur"] h2, [dir="rtl"] h2, .font-urdu h2 {
+    font-family: "Noto Nastaliq Urdu", "Urdu Typesetting", "Jameel Noori Nastaleeq", "Noto Sans Arabic", sans-serif;
+    line-height: 1.85 !important;
+    letter-spacing: 0 !important;
+  }
+  html[lang="ur"] h3, [dir="rtl"] h3, .font-urdu h3 {
+    font-family: "Noto Nastaliq Urdu", "Urdu Typesetting", "Jameel Noori Nastaleeq", "Noto Sans Arabic", sans-serif;
+    line-height: 1.85 !important;
+    letter-spacing: 0 !important;
+  }
+  html[lang="ur"] h4, [dir="rtl"] h4, .font-urdu h4 {
+    font-family: "Noto Nastaliq Urdu", "Urdu Typesetting", "Jameel Noori Nastaleeq", "Noto Sans Arabic", sans-serif;
+    line-height: 1.85 !important;
+    letter-spacing: 0 !important;
+  }
+  html[lang="ur"] p, [dir="rtl"] p, .font-urdu p {
+    line-height: 2.1 !important;
+    letter-spacing: 0 !important;
+  }
+
+  /* Prevent any positive/negative letter-spacing from breaking cursive Urdu joining */
+  html[lang="ur"] *,
+  [dir="rtl"] *,
   .font-urdu,
-  .font-urdu-brand {
-    letter-spacing: normal !important;
+  .font-urdu * {
+    letter-spacing: 0 !important;
   }
 
-  /* Proper line height for Urdu headings to prevent ascenders/descenders from clipping */
-  [dir="rtl"] h1, [lang="ur"] h1 {
-    line-height: 1.45;
+  /* Buttons & interactive touch targets in Urdu */
+  html[lang="ur"] button,
+  [dir="rtl"] button {
+    line-height: 1.75;
   }
-  [dir="rtl"] h2, [lang="ur"] h2 {
-    line-height: 1.5;
+
+  /* Urdu input fields with natural RTL cursor alignment */
+  html[lang="ur"] input,
+  html[lang="ur"] textarea,
+  input[dir="rtl"],
+  textarea[dir="rtl"] {
+    font-family: "Noto Nastaliq Urdu", "Urdu Typesetting", "Jameel Noori Nastaleeq", "Noto Sans Arabic", sans-serif;
+    text-align: right;
+    line-height: 1.9;
   }
-  [dir="rtl"] h3, [lang="ur"] h3 {
-    line-height: 1.55;
+
+  /* BiDi plaintext behavior for auto-detecting inputs */
+  input[dir="auto"],
+  textarea[dir="auto"] {
+    unicode-bidi: plaintext;
   }
-  [dir="rtl"] p, [lang="ur"] p {
-    line-height: 1.7;
+
+  /* BiDi isolation tags */
+  bdi,
+  .bidi-isolate {
+    unicode-bidi: isolate;
+  }
+
+  bdi[dir="ltr"],
+  .bidi-ltr {
+    direction: ltr !important;
+    unicode-bidi: isolate !important;
+    font-family: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-variant-numeric: tabular-nums;
   }
 }
 
 .font-urdu {
-  font-family: "Noto Naskh Arabic", sans-serif;
-  letter-spacing: normal !important;
+  font-family: "Noto Nastaliq Urdu", "Urdu Typesetting", "Jameel Noori Nastaleeq", "Noto Sans Arabic", sans-serif;
+  letter-spacing: 0 !important;
+  line-height: 1.85;
 }
 
 .font-urdu-brand {
-  font-family: "Noto Naskh Arabic", sans-serif;
+  font-family: "Noto Nastaliq Urdu", "Urdu Typesetting", "Jameel Noori Nastaleeq", "Noto Sans Arabic", serif;
   font-weight: 700;
-  letter-spacing: normal !important;
+  letter-spacing: 0 !important;
+  line-height: 1.2;
 }
 
 .font-display {
-  font-family: "Plus Jakarta Sans", "Noto Naskh Arabic", sans-serif;
+  font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .font-body {
-  font-family: "Manrope", "Noto Naskh Arabic", sans-serif;
+  font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .material-symbols-outlined {

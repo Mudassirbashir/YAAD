@@ -3,12 +3,13 @@ import { Plus, ChevronRight, Clock, AlertCircle, RefreshCw, ShoppingBag, CheckCi
 import { ShoppingList } from '../types';
 import { TopHeader } from './TopHeader';
 import { useLanguage } from '../context/LanguageContext';
-import { PWAInstallPrompt } from './PWAInstallPrompt';
+import { isNetworkOrOfflineError } from '../lib/supabase';
+import { BidiText } from '../utils/bidi';
 
 interface HomeViewProps {
   lists: ShoppingList[];
   onCreateList: () => void;
-  onSelectList: (list: ShoppingList) => void;
+  onSelectList: (list: ShoppingList | string) => void;
   onOpenProfile: () => void;
   onOpenMenu: () => void;
   isLoading?: boolean;
@@ -33,6 +34,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
       {/* TopAppBar */}
       <TopHeader
         title={t('appName')}
+        onSettingsClick={onOpenMenu || onOpenProfile}
         onAvatarClick={onOpenProfile}
         onMenuClick={onOpenMenu}
       />
@@ -40,7 +42,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
       {/* Main Content */}
       <main className="flex-1 px-4 sm:px-6 md:px-8 pt-3 sm:pt-4 flex flex-col gap-6">
         {/* Header Greeting / Hero */}
-        <div className="flex flex-col gap-1">
+        <div id="home_greeting_section" className="flex flex-col gap-1">
           <h1 className="font-['Plus_Jakarta_Sans'] text-3xl sm:text-4xl font-extrabold text-primary tracking-tight">
             {t('home.greeting')}
           </h1>
@@ -48,9 +50,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
             {t('home.subtitle')}
           </p>
         </div>
-
-        {/* PWA Install Promotion Banner (shown conditionally when installable) */}
-        <PWAInstallPrompt mode="banner" />
 
         {/* Create List Hero Button / Card */}
         <div
@@ -98,8 +97,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
             )}
           </div>
 
-          {/* Error Banner */}
-          {error && (
+          {/* Error Banner (Only shown for non-offline server errors) */}
+          {error && !isNetworkOrOfflineError(error) && (
             <div className="p-4 bg-error-container/30 border border-error/20 rounded-2xl text-xs font-['Manrope'] text-error flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0" />
@@ -195,9 +194,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
                         </span>
                       </div>
 
-                      <h4 className="font-['Plus_Jakarta_Sans'] text-lg font-bold text-primary truncate group-hover:text-primary-container transition-colors">
+                      <BidiText as="h4" className="font-['Plus_Jakarta_Sans'] text-lg font-bold text-primary truncate group-hover:text-primary-container transition-colors">
                         {list.title}
-                      </h4>
+                      </BidiText>
 
                       <div className="flex items-center gap-3 text-xs font-['Manrope'] text-on-surface-variant">
                         <span>{t('home.itemsCount', { count: totalItems })}</span>

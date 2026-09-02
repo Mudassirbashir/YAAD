@@ -12,6 +12,7 @@ import {
 import { CategoryId, CATEGORIES_LIST, ShoppingItem } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { CategoryIcon } from './CategoryIcon';
+import { BidiText } from '../utils/bidi';
 import {
   categorizeItemLocally,
   smartCategorizeItem,
@@ -203,13 +204,13 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
           <button
             onClick={onBack}
             aria-label="Go back"
-            className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors text-primary active:scale-95"
+            className="w-10 h-10 -ms-2 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors text-primary active:scale-95"
           >
             <ArrowLeft className="w-5 h-5 rtl:rotate-180 text-primary" />
           </button>
-          <h2 className="font-['Plus_Jakarta_Sans'] text-base sm:text-lg font-bold text-primary truncate max-w-[200px] sm:max-w-xs text-center">
+          <BidiText as="h2" className="font-['Plus_Jakarta_Sans'] text-base sm:text-lg font-bold text-primary truncate max-w-[200px] sm:max-w-xs text-center">
             {listTitle}
-          </h2>
+          </BidiText>
           <div className="w-10" />
         </div>
       </header>
@@ -234,6 +235,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
             <div className="relative">
               <input
                 type="text"
+                dir="auto"
                 value={inputVal}
                 onChange={(e) => {
                   setInputVal(e.target.value);
@@ -368,19 +370,19 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                         <CategoryIcon categoryId={itemCatId} className="w-4 h-4" />
                       </span>
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <p className="font-['Manrope'] text-sm font-semibold text-primary truncate">
+                        <div className="flex items-center gap-1.5 flex-wrap" dir="auto">
+                          <BidiText className="font-['Manrope'] text-sm font-semibold text-primary truncate">
                             {item.name}
-                          </p>
+                          </BidiText>
                           {item.nameUrdu && (
-                            <span className="font-['Noto_Nastaliq_Urdu','Jameel_Noori_Nastaleeq',serif] text-xs text-on-surface-variant/80 font-normal">
+                            <span className="font-urdu text-xs text-on-surface-variant/80 font-normal">
                               ({item.nameUrdu})
                             </span>
                           )}
                         </div>
                         {item.rawInput && item.rawInput.trim().toLowerCase() !== item.name.trim().toLowerCase() && (
                           <p className="font-['Manrope'] text-[10px] text-outline truncate">
-                            typed: "{item.rawInput}"
+                            typed: "<bdi>{item.rawInput}</bdi>"
                           </p>
                         )}
 
@@ -415,7 +417,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                         className="px-2.5 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high text-primary font-['Manrope'] text-xs font-bold border border-surface-dim transition-colors"
                         title={t('addItems.quantityHint')}
                       >
-                        {item.quantity ? `${item.quantity}${item.unit ? ' ' + item.unit : ''}` : '1x'}
+                        <bdi dir="ltr">{item.quantity ? `${item.quantity}${item.unit ? ' ' + item.unit : ''}` : '1x'}</bdi>
                       </button>
 
                       <button

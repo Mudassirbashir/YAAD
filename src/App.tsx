@@ -341,19 +341,31 @@ export default function App() {
 
   // Create list flow
   const handleStartCreateList = () => {
+    if (!user) {
+      setCurrentScreen('auth');
+      return;
+    }
     setCurrentScreen('create_list');
   };
 
   const handleCreateListTitleSubmitted = (title: string) => {
+    if (!user) {
+      setCurrentScreen('auth');
+      return;
+    }
     setTempNewListTitle(title);
     setCurrentScreen('add_items');
   };
 
   const handleStartShoppingFromNewItems = async (items: ShoppingItem[]) => {
+    if (!user) {
+      setCurrentScreen('auth');
+      return;
+    }
     const newListId = generateUUID();
     const newList: ShoppingList = {
       id: newListId,
-      userId: user?.id,
+      userId: user.id,
       title: tempNewListTitle.trim() || 'Shopping List',
       createdAt: 'Today',
       createdTimestamp: Date.now(),
@@ -372,38 +384,61 @@ export default function App() {
     setCurrentScreen('shopping_list');
 
     // Persist to Supabase if authenticated
-    if (user && isConfigured) {
+    if (isConfigured) {
       await saveUserShoppingList(user.id, newList);
     }
   };
 
   // View / Edit / Complete actions
-  const handleOpenListInShoppingMode = (listId: string) => {
-    setActiveListId(listId);
+  const handleOpenListInShoppingMode = (listOrId: ShoppingList | string) => {
+    if (!user) {
+      setCurrentScreen('auth');
+      return;
+    }
+    const targetId = typeof listOrId === 'string' ? listOrId : listOrId.id;
+    setActiveListId(targetId);
     setCurrentScreen('shopping_list');
   };
 
-  const handleOpenListDetails = (listId: string) => {
-    setActiveListId(listId);
+  const handleOpenListDetails = (listOrId: ShoppingList | string) => {
+    if (!user) {
+      setCurrentScreen('auth');
+      return;
+    }
+    const targetId = typeof listOrId === 'string' ? listOrId : listOrId.id;
+    setActiveListId(targetId);
     setCurrentScreen('list_details');
   };
 
-  const handleEditList = (listId: string) => {
-    setActiveListId(listId);
+  const handleEditList = (listOrId: ShoppingList | string) => {
+    if (!user) {
+      setCurrentScreen('auth');
+      return;
+    }
+    const targetId = typeof listOrId === 'string' ? listOrId : listOrId.id;
+    setActiveListId(targetId);
     setCurrentScreen('edit_list');
   };
 
   const handleUpdateList = async (updatedList: ShoppingList) => {
+    if (!user) {
+      setCurrentScreen('auth');
+      return;
+    }
     setLists((prev) =>
       prev.map((l) => (l.id === updatedList.id ? updatedList : l))
     );
 
-    if (user && isConfigured) {
+    if (isConfigured) {
       await saveUserShoppingList(user.id, updatedList);
     }
   };
 
   const handleCompleteTrip = async (listOrId: ShoppingList | string) => {
+    if (!user) {
+      setCurrentScreen('auth');
+      return;
+    }
     const targetId = typeof listOrId === 'string' ? listOrId : listOrId.id;
     const target = typeof listOrId === 'object' ? listOrId : lists.find((l) => l.id === targetId);
     if (!target) return;
@@ -418,18 +453,26 @@ export default function App() {
     setActiveListId(targetId);
     setCurrentScreen('completion');
 
-    if (user && isConfigured) {
+    if (isConfigured) {
       await saveUserShoppingList(user.id, completedList);
     }
   };
 
   const handleFinishCompletion = () => {
+    if (!user) {
+      setCurrentScreen('auth');
+      return;
+    }
     setActiveListId(null);
     setCurrentScreen('history');
     setActiveTab('lists');
   };
 
   const handleReuseList = async (listId: string) => {
+    if (!user) {
+      setCurrentScreen('auth');
+      return;
+    }
     const target = lists.find((l) => l.id === listId);
     if (!target) return;
 
@@ -437,7 +480,7 @@ export default function App() {
     const duplicatedList: ShoppingList = {
       ...target,
       id: duplicatedId,
-      userId: user?.id,
+      userId: user.id,
       title: `${target.title} (Copy)`,
       createdAt: 'Today',
       createdTimestamp: Date.now(),
@@ -454,30 +497,42 @@ export default function App() {
     setActiveListId(duplicatedId);
     setCurrentScreen('shopping_list');
 
-    if (user && isConfigured) {
+    if (isConfigured) {
       await saveUserShoppingList(user.id, duplicatedList);
     }
   };
 
   const handleDeleteList = async (listId: string) => {
+    if (!user) {
+      setCurrentScreen('auth');
+      return;
+    }
     setLists((prev) => prev.filter((l) => l.id !== listId));
     if (activeListId === listId) {
       setActiveListId(null);
     }
     setCurrentScreen('history');
 
-    if (user && isConfigured) {
+    if (isConfigured) {
       await deleteUserShoppingList(user.id, listId);
     }
   };
 
   const handleSaveEditedList = async (savedList: ShoppingList) => {
+    if (!user) {
+      setCurrentScreen('auth');
+      return;
+    }
     await handleUpdateList(savedList);
     setCurrentScreen('shopping_list');
   };
 
   // Navigation tab switcher
   const handleTabChange = (tab: NavigationTab) => {
+    if (!user) {
+      setCurrentScreen('auth');
+      return;
+    }
     setActiveTab(tab);
     if (tab === 'home') {
       setCurrentScreen('home');
@@ -491,12 +546,28 @@ export default function App() {
   };
 
   const handleOpenSettingsScreen = () => {
+    if (!user) {
+      setCurrentScreen('auth');
+      return;
+    }
     setCurrentScreen('settings');
     setActiveTab('settings');
   };
 
-  // Currently active list object
-  const currentActiveList = lists.find((l) => l.id === activeListId) || lists[0] || null;
+  // Currently active list object (only available for authenticated users)
+  const currentActiveList = user ? (lists.find((l) => l.id === activeListId) || lists[0] || null) : null;
+
+  // Fallback if user is currently on a list-dependent screen but the list is missing/empty
+  useEffect(() => {
+    if (
+      ['shopping_list', 'completion', 'list_details', 'edit_list'].includes(currentScreen) &&
+      !isLoadingLists &&
+      !currentActiveList
+    ) {
+      setCurrentScreen('home');
+      setActiveTab('home');
+    }
+  }, [currentScreen, isLoadingLists, currentActiveList]);
 
   // Determine if bottom navigation bar should be visible
   const showBottomNav =
@@ -518,21 +589,21 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-background text-on-background flex flex-col justify-between selection:bg-primary-container selection:text-on-primary-container">
-      {/* Screen Routing */}
+      {/* Screen Routing: Gated strictly by authentication status */}
       {currentScreen === 'splash' && (
         <SplashView onFinish={handleSplashFinish} />
       )}
 
-      {currentScreen === 'onboarding' && (
-        <OnboardingView onComplete={handleOnboardingComplete} />
-      )}
-
-      {currentScreen === 'auth' && (
+      {!user && currentScreen !== 'splash' && (
         <AuthView onSuccess={handleAuthSuccess} />
       )}
 
-      {currentScreen === 'profile_setup' && (
+      {user && currentScreen === 'profile_setup' && (
         <ProfileSetupView onComplete={handleProfileSetupComplete} />
+      )}
+
+      {user && currentScreen === 'onboarding' && (
+        <OnboardingView onComplete={handleOnboardingComplete} />
       )}
 
       {currentScreen === 'home' && user && (

@@ -6,8 +6,9 @@ import {
   getProfile,
   updateProfile as supabaseUpdateProfile,
   deleteUserAccountData,
+  isNetworkOrOfflineError,
 } from '../lib/supabase';
-import { purgeAllUserOfflineData } from '../lib/offlineDb';
+import { purgeAllUserOfflineData, getOfflineProfile, saveOfflineProfile } from '../lib/offlineDb';
 import { UserProfile, AppLanguage } from '../types';
 
 interface AuthContextType {
@@ -76,29 +77,95 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     async function initAuth() {
       try {
-        const { data: { session: initialSession }, error } = await supabase!.auth.getSession();
-        if (error) {
-          console.warn('Error getting session from Supabase:', error.message);
+        const { data: { session: initialSession }, error: sessionError } = await supabase!.auth.getSession();
+        if (sessionError) {
+          console.warn('Error getting session from Supabase:', sessionError.message);
         }
 
         if (isMounted) {
-          setSession(initialSession);
-          setUser(initialSession?.user || null);
-
           if (initialSession?.user) {
-            const synced = await syncProfileFromUser(initialSession.user);
-            if (isMounted) {
-              setProfile(synced || {
-                id: initialSession.user.id,
-                full_name: initialSession.user.user_metadata?.full_name || initialSession.user.user_metadata?.name || null,
-                email: initialSession.user.email || null,
-                avatar_url: initialSession.user.user_metadata?.avatar_url || initialSession.user.user_metadata?.picture || null,
-              });
+            let activeUser = initialSession.user;
+            const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+
+            // Only attempt remote validation if device is currently online
+            if (!isOffline) {
+              try {
+                const { data: userData, error: userError } = await supabase!.auth.getUser();
+
+                if (userError) {
+                  if (isNetworkOrOfflineError(userError)) {
+                    // Network issue occurred during fetch: trust stored session
+                    activeUser = initialSession.user;
+                  } else {
+                    // Server explicitly returned an auth failure (e.g. invalid/revoked refresh token)
+                    console.warn('Stored session is expired or invalid. Clearing authentication state:', userError.message);
+                    try {
+                      await supabase!.auth.signOut();
+                    } catch {}
+                    if (isMounted) {
+                      setSession(null);
+                      setUser(null);
+                      setProfile(null);
+                    }
+                    return;
+                  }
+                } else if (userData?.user) {
+                  activeUser = userData.user;
+                }
+              } catch (err: unknown) {
+                if (isNetworkOrOfflineError(err)) {
+                  activeUser = initialSession.user;
+                } else {
+                  console.warn('Unexpected error verifying session:', err);
+                }
+              }
             }
+
+            // Valid session maintained (online or offline)
+            setSession(initialSession);
+            setUser(activeUser);
+
+            // 1. Instantly restore profile from local IndexedDB cache
+            const cachedProfile = await getOfflineProfile<UserProfile>(activeUser.id);
+            if (cachedProfile && isMounted) {
+              setProfile(cachedProfile);
+            }
+
+            // 2. If online, synchronize with Supabase; otherwise create fallback
+            if (!isOffline) {
+              const synced = await syncProfileFromUser(activeUser);
+              if (synced && isMounted) {
+                setProfile(synced);
+                await saveOfflineProfile(activeUser.id, synced);
+              }
+            } else if (!cachedProfile && isMounted) {
+              const fallbackProfile: UserProfile = {
+                id: activeUser.id,
+                full_name: activeUser.user_metadata?.full_name || activeUser.user_metadata?.name || null,
+                email: activeUser.email || null,
+                avatar_url: activeUser.user_metadata?.avatar_url || activeUser.user_metadata?.picture || null,
+              };
+              setProfile(fallbackProfile);
+              await saveOfflineProfile(activeUser.id, fallbackProfile);
+            }
+          } else {
+            setSession(null);
+            setUser(null);
+            setProfile(null);
           }
         }
       } catch (err) {
-        console.error('Error initializing auth:', err);
+        if (isNetworkOrOfflineError(err)) {
+          // If network failed, do not clear local auth session
+          console.warn('Network offline during auth initialization');
+        } else {
+          console.error('Error initializing auth:', err);
+          if (isMounted) {
+            setSession(null);
+            setUser(null);
+            setProfile(null);
+          }
+        }
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -106,14 +173,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     initAuth();
 
-    // Listen to Supabase auth state changes (e.g. Google OAuth redirect, login, logout)
+    // Listen to Supabase auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, currentSession) => {
+      async (event, currentSession) => {
         if (!isMounted) return;
-        setSession(currentSession);
-        setUser(currentSession?.user || null);
 
-        if (currentSession?.user) {
+        if (event === 'SIGNED_OUT' || !currentSession?.user) {
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+          setIsLoading(false);
+          return;
+        }
+
+        setSession(currentSession);
+        setUser(currentSession.user);
+
+        if (currentSession.user) {
           const synced = await syncProfileFromUser(currentSession.user);
           if (isMounted) {
             setProfile(synced || {
@@ -123,8 +199,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               avatar_url: currentSession.user.user_metadata?.avatar_url || currentSession.user.user_metadata?.picture || null,
             });
           }
-        } else {
-          setProfile(null);
         }
         setIsLoading(false);
       }
@@ -143,6 +217,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const signIn = async (email: string, password: string) => {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      return { error: new Error('You are currently offline. Please connect to the internet to sign in.') };
+    }
     if (!supabase) {
       return { error: new Error('Supabase configuration missing in environment variables.') };
     }
@@ -153,26 +230,37 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
 
       if (error) {
+        if (isNetworkOrOfflineError(error)) {
+          return { error: new Error('Unable to reach server. Please check your internet connection and try again.') };
+        }
         return { error: new Error(error.message) };
       }
 
       if (data.user) {
         const synced = await syncProfileFromUser(data.user);
-        setProfile(synced || {
+        const activeProfile = synced || {
           id: data.user.id,
           full_name: data.user.user_metadata?.full_name || null,
           email: data.user.email || null,
           avatar_url: data.user.user_metadata?.avatar_url || null,
-        });
+        };
+        setProfile(activeProfile);
+        await saveOfflineProfile(data.user.id, activeProfile);
       }
       return { error: null };
     } catch (err: unknown) {
+      if (isNetworkOrOfflineError(err)) {
+        return { error: new Error('Unable to reach server. Please check your internet connection and try again.') };
+      }
       const msg = err instanceof Error ? err.message : 'Sign in failed';
       return { error: new Error(msg) };
     }
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      return { error: new Error('You are currently offline. Please connect to the internet to create an account.') };
+    }
     if (!supabase) {
       return { error: new Error('Supabase configuration missing in environment variables.') };
     }
@@ -191,6 +279,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
 
       if (error) {
+        if (isNetworkOrOfflineError(error)) {
+          return { error: new Error('Unable to reach server. Please check your internet connection and try again.') };
+        }
         return { error: new Error(error.message) };
       }
 
@@ -203,25 +294,32 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           });
 
           const p = await getProfile(data.user.id);
-          setProfile(p || {
+          const activeProfile = p || {
             id: data.user.id,
             full_name: trimmedName,
             email: trimmedEmail,
             avatar_url: null,
-          });
+          };
+          setProfile(activeProfile);
+          await saveOfflineProfile(data.user.id, activeProfile);
         } else {
           // Session is pending confirmation; set local profile state
-          setProfile({
+          const localProfile = {
             id: data.user.id,
             full_name: trimmedName,
             email: trimmedEmail,
             avatar_url: null,
-          });
+          };
+          setProfile(localProfile);
+          await saveOfflineProfile(data.user.id, localProfile);
         }
       }
 
       return { error: null };
     } catch (err: unknown) {
+      if (isNetworkOrOfflineError(err)) {
+        return { error: new Error('Unable to reach server. Please check your internet connection and try again.') };
+      }
       const msg = err instanceof Error ? err.message : 'Sign up failed';
       return { error: new Error(msg) };
     }
@@ -312,6 +410,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (!supabase) {
       return { error: new Error('Backend is not available') };
     }
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      return { error: new Error('Unable to change password while offline. Please check your internet connection.') };
+    }
     try {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) {
@@ -319,6 +420,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
       return { error: null };
     } catch (err: unknown) {
+      if (isNetworkOrOfflineError(err)) {
+        return { error: new Error('Unable to reach server. Please check your internet connection and try again.') };
+      }
       const msg = err instanceof Error ? err.message : 'Failed to update password';
       return { error: new Error(msg) };
     }
@@ -336,16 +440,38 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return { error: new Error('No authenticated user') };
     }
 
+    const currentUserId = user.id;
+
     try {
-      const { data, error } = await supabaseUpdateProfile(user.id, {
-        full_name: updates.full_name,
-        avatar_url: updates.avatar_url ?? undefined,
-        language: updates.language,
-        usage_purpose: updates.usage_purpose,
-        referral_source: updates.referral_source,
-        has_completed_setup: updates.has_completed_setup,
-        email: user.email,
-      });
+      // 1. Optimistically compute and update local state and IndexedDB immediately
+      const optimisticMerged: UserProfile = {
+        id: currentUserId,
+        full_name: updates.full_name !== undefined ? (updates.full_name || null) : (profile?.full_name ?? null),
+        email: user.email || profile?.email || null,
+        avatar_url: updates.avatar_url !== undefined ? (updates.avatar_url || null) : (profile?.avatar_url ?? null),
+        language: updates.language !== undefined ? updates.language : (profile?.language ?? 'en'),
+        usage_purpose: updates.usage_purpose !== undefined ? updates.usage_purpose : profile?.usage_purpose,
+        referral_source: updates.referral_source !== undefined ? updates.referral_source : profile?.referral_source,
+        has_completed_setup: updates.has_completed_setup !== undefined ? updates.has_completed_setup : profile?.has_completed_setup,
+      };
+
+      setProfile(optimisticMerged);
+      await saveOfflineProfile(currentUserId, optimisticMerged);
+
+      // 2. Keep Supabase Auth user_metadata in sync so auth session restores correctly
+      if (supabase && (updates.full_name !== undefined || updates.avatar_url !== undefined)) {
+        try {
+          const metadataUpdates: Record<string, unknown> = {};
+          if (updates.full_name !== undefined) metadataUpdates.full_name = updates.full_name;
+          if (updates.avatar_url !== undefined) metadataUpdates.avatar_url = updates.avatar_url;
+          await supabase.auth.updateUser({ data: metadataUpdates });
+        } catch (authMetaErr) {
+          console.warn('Notice updating user metadata in Supabase Auth:', authMetaErr);
+        }
+      }
+
+      // 3. Save to Supabase profiles table
+      const { data, error } = await supabaseUpdateProfile(currentUserId, updates);
 
       if (error) {
         return { error };
@@ -353,8 +479,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       if (data) {
         setProfile(data);
-      } else {
-        setProfile((prev) => (prev ? { ...prev, ...updates, avatar_url: updates.avatar_url ?? undefined } : null));
+        await saveOfflineProfile(currentUserId, data);
       }
 
       return { error: null };

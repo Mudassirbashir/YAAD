@@ -168,6 +168,7 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
             <div className="relative">
               <input
                 type="text"
+                dir="auto"
                 value={fullName}
                 onChange={(e) => {
                   setFullName(e.target.value);

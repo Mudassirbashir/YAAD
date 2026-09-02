@@ -4,6 +4,7 @@ import { ShoppingList, ShoppingItem, CategoryId } from '../types';
 import { TopHeader } from './TopHeader';
 import { CategoryIcon } from './CategoryIcon';
 import { useLanguage } from '../context/LanguageContext';
+import { BidiText, MixedQuantityBadge } from '../utils/bidi';
 import { categorizeItemLocally, smartCategorizeItem } from '../lib/categorizer';
 import { parseShoppingItem } from '../lib/itemParser';
 import { playCompletionSound, playItemCheckSound, triggerHaptic } from '../lib/sound';
@@ -209,6 +210,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
             className="relative w-full shadow-[0px_4px_20px_rgba(0,30,21,0.05)] rounded-full bg-surface-container-lowest border border-surface-container-high/60"
           >
             <input
+              dir="auto"
               value={newItemText}
               onChange={(e) => setNewItemText(e.target.value)}
               className="w-full h-[54px] ps-5 pe-14 rounded-full border-none bg-transparent focus:ring-2 focus:ring-primary/20 text-base text-on-surface placeholder:text-outline font-['Manrope'] outline-none"
@@ -231,20 +233,22 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                 <span className="w-5 h-5 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
                   <CategoryIcon categoryId={quickAddParsed.suggestedCategoryId} className="w-3 h-3" />
                 </span>
-                <span className="font-['Manrope'] font-bold text-primary truncate">
+                <BidiText className="font-bold text-primary truncate">
                   {quickAddParsed.name}
-                </span>
+                </BidiText>
                 {quickAddParsed.nameUrdu && (
-                  <span className="font-['Noto_Nastaliq_Urdu','Jameel_Noori_Nastaleeq',serif] text-xs text-on-surface-variant font-normal shrink-0">
+                  <span className="font-urdu text-xs text-on-surface-variant font-normal shrink-0">
                     ({quickAddParsed.nameUrdu})
                   </span>
                 )}
               </div>
               <div className="flex items-center gap-1.5 shrink-0 ms-auto">
                 {quickAddParsed.quantity && (
-                  <span className="px-2 py-0.5 rounded-md bg-surface-container text-primary font-['Manrope'] font-bold text-[11px]">
-                    {quickAddParsed.quantity} {quickAddParsed.unit || ''}
-                  </span>
+                  <MixedQuantityBadge
+                    quantity={quickAddParsed.quantity}
+                    unit={quickAddParsed.unit}
+                    className="px-2 py-0.5 rounded-md bg-surface-container text-primary text-[11px] font-bold"
+                  />
                 )}
                 <span className="text-[11px] font-['Manrope'] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-md flex items-center gap-1">
                   <Sparkles className="w-3 h-3 text-primary" />
@@ -341,8 +345,8 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
 
                         {/* Item Details */}
                         <div className="flex flex-col min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span
+                          <div className="flex items-center gap-1.5 flex-wrap" dir="auto">
+                            <BidiText
                               className={`font-['Manrope'] text-base transition-all truncate ${
                                 isChecked
                                   ? 'line-through text-outline font-normal'
@@ -350,10 +354,10 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                               }`}
                             >
                               {item.name}
-                            </span>
+                            </BidiText>
                             {item.nameUrdu && (
                               <span
-                                className={`font-['Noto_Nastaliq_Urdu','Jameel_Noori_Nastaleeq',serif] text-xs transition-opacity ${
+                                className={`font-urdu text-xs transition-opacity ${
                                   isChecked ? 'opacity-50 text-outline' : 'text-on-surface-variant font-normal'
                                 }`}
                               >
@@ -365,7 +369,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                             {getCategoryName((item.categoryId || 'other') as CategoryId)}
                             {item.rawInput && item.rawInput.trim().toLowerCase() !== item.name.trim().toLowerCase() && (
                               <span className="opacity-70 ms-1">
-                                • typed: "{item.rawInput}"
+                                • typed: "<bdi>{item.rawInput}</bdi>"
                               </span>
                             )}
                           </span>
@@ -373,15 +377,16 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
 
                         {/* Quantity & Unit Badge */}
                         {formattedQty && (
-                          <span
-                            className={`font-['Manrope'] text-xs font-semibold px-2.5 py-1 rounded-lg shrink-0 ${
+                          <bdi
+                            dir="ltr"
+                            className={`font-['Manrope'] tabular-nums text-xs font-semibold px-2.5 py-1 rounded-lg shrink-0 ${
                               isChecked
                                 ? 'bg-surface-container text-outline'
                                 : 'bg-surface-container-high text-primary border border-surface-dim'
                             }`}
                           >
                             {formattedQty}
-                          </span>
+                          </bdi>
                         )}
                       </div>
                     );

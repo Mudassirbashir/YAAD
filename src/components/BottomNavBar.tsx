@@ -20,7 +20,8 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   const [settingsRotated, setSettingsRotated] = useState(false);
 
   const handleSettingsClick = () => {
-    setSettingsRotated((prev) => !prev);
+    setSettingsRotated(true);
+    setTimeout(() => setSettingsRotated(false), 400);
     onTabChange('settings');
   };
 
@@ -35,56 +36,63 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   return (
     <nav
       id="bottom_navigation_bar"
+      role="tablist"
       aria-label="Main Navigation"
-      className="fixed bottom-0 left-0 right-0 w-full z-40 pointer-events-none pb-4 pt-1 px-4 max-w-md md:max-w-lg mx-auto"
+      className="fixed bottom-0 left-0 right-0 w-full z-40 pointer-events-none pb-4 pt-1 px-4 max-w-sm sm:max-w-md md:max-w-lg mx-auto select-none"
     >
-      {/* Translucent Frosted Glass Navigation Pill Container */}
-      <div className="pointer-events-auto bg-surface-container-lowest/85 backdrop-blur-xl border border-surface-dim/80 shadow-[0px_8px_30px_rgba(0,30,21,0.08)] rounded-2xl p-1.5 flex items-center justify-between gap-1 transition-colors duration-200">
+      {/* YAAD Original Soft-Glass Capsule Container */}
+      <div className="pointer-events-auto bg-surface-container-lowest/85 dark:bg-surface-container-lowest/90 backdrop-blur-xl border border-primary/10 shadow-[0px_8px_32px_rgba(0,35,24,0.08)] rounded-2xl p-1.5 flex items-center justify-between gap-1 transition-colors duration-200">
         
         {/* 1. Home Tab */}
         <button
           id="nav_tab_home"
+          role="tab"
           type="button"
           onClick={() => onTabChange('home')}
-          className={`flex-1 relative flex flex-col items-center justify-center py-2 px-2 rounded-xl transition-all duration-200 select-none group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
-            activeTab === 'home' ? 'text-primary' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low/40'
-          }`}
+          aria-selected={activeTab === 'home'}
           aria-label={t('nav.home')}
-          aria-current={activeTab === 'home' ? 'page' : undefined}
+          className={`flex-1 relative flex flex-col items-center justify-center py-2 px-2 rounded-xl transition-all duration-150 active:scale-95 group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer ${
+            activeTab === 'home'
+              ? 'text-primary'
+              : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low/40'
+          }`}
         >
-          {/* Active translucent glass background pill */}
+          {/* YAAD Signature Soft Glass Pill Active Indicator */}
           {activeTab === 'home' && (
             <motion.div
-              layoutId="activeNavIndicator"
-              className="absolute inset-0 bg-primary/10 border border-primary/20 backdrop-blur-sm rounded-xl"
+              layoutId="yaadActiveNavPill"
+              className="absolute inset-0 bg-primary/[0.08] dark:bg-primary/[0.18] border border-primary/20 dark:border-primary/30 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.7),0_2px_8px_rgba(0,40,25,0.05)] backdrop-blur-xs pointer-events-none"
               transition={
                 prefersReducedMotion
                   ? { duration: 0 }
-                  : { type: 'spring', stiffness: 450, damping: 35 }
+                  : { type: 'spring', stiffness: 420, damping: 32 }
               }
             />
           )}
 
-          <div className="relative z-10 flex flex-col items-center">
+          <div className="relative z-10 flex flex-col items-center gap-0.5">
             <motion.div
               animate={{
-                scale: activeTab === 'home' ? 1.08 : 1,
-                opacity: activeTab === 'home' ? 1 : 0.72,
+                scale: activeTab === 'home' ? 1.05 : 1,
+                opacity: activeTab === 'home' ? 1 : 0.75,
               }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
             >
               <Home
                 className={`w-5 h-5 transition-colors duration-200 ${
-                  activeTab === 'home' ? 'stroke-[2.4] text-primary' : 'stroke-[1.8]'
+                  activeTab === 'home' ? 'stroke-[2.3] text-primary' : 'stroke-[1.8]'
                 }`}
               />
             </motion.div>
             <span
-              className={`text-[11px] mt-1 font-['Manrope'] tracking-tight transition-all duration-200 ${
+              className={`text-[11px] font-['Manrope'] tracking-tight transition-colors duration-200 flex items-center gap-1 ${
                 activeTab === 'home' ? 'font-bold text-primary' : 'font-medium text-on-surface-variant'
               }`}
             >
               {t('nav.home')}
+              {activeTab === 'home' && (
+                <span className="w-1 h-1 rounded-full bg-primary inline-block" />
+              )}
             </span>
           </div>
         </button>
@@ -92,36 +100,43 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
         {/* 2. Create Tab */}
         <button
           id="nav_tab_create"
+          role="tab"
           type="button"
           onClick={handleCreateClick}
-          className={`flex-1 relative flex flex-col items-center justify-center py-2 px-2 rounded-xl transition-all duration-200 select-none group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
-            activeTab === 'create' ? 'text-primary' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low/40'
-          }`}
+          aria-selected={activeTab === 'create'}
           aria-label={t('nav.create')}
+          className={`flex-1 relative flex flex-col items-center justify-center py-2 px-2 rounded-xl transition-all duration-150 active:scale-95 group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer ${
+            activeTab === 'create'
+              ? 'text-primary'
+              : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low/40'
+          }`}
         >
-          {/* Active translucent glass background pill (if in create mode) */}
+          {/* YAAD Signature Soft Glass Pill Active Indicator (if in create mode) */}
           {activeTab === 'create' && (
             <motion.div
-              layoutId="activeNavIndicator"
-              className="absolute inset-0 bg-primary/10 border border-primary/20 backdrop-blur-sm rounded-xl"
+              layoutId="yaadActiveNavPill"
+              className="absolute inset-0 bg-primary/[0.08] dark:bg-primary/[0.18] border border-primary/20 dark:border-primary/30 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.7),0_2px_8px_rgba(0,40,25,0.05)] backdrop-blur-xs pointer-events-none"
               transition={
                 prefersReducedMotion
                   ? { duration: 0 }
-                  : { type: 'spring', stiffness: 450, damping: 35 }
+                  : { type: 'spring', stiffness: 420, damping: 32 }
               }
             />
           )}
 
-          <div className="relative z-10 flex flex-col items-center">
-            <div className="w-8 h-8 rounded-xl bg-primary text-on-primary flex items-center justify-center shadow-xs group-hover:scale-105 active:scale-95 transition-transform duration-200">
-              <Plus className="w-4 h-4 text-white stroke-[2.6] transition-transform duration-200 group-hover:rotate-90" />
+          <div className="relative z-10 flex flex-col items-center gap-0.5">
+            <div className="w-8 h-8 rounded-xl bg-primary text-on-primary flex items-center justify-center shadow-[0_3px_10px_rgba(0,55,40,0.22)] group-hover:scale-105 active:scale-95 transition-all duration-150">
+              <Plus className="w-4 h-4 text-white stroke-[2.6] transition-transform duration-200 group-hover:rotate-90 group-active:rotate-90 motion-reduce:transform-none" />
             </div>
             <span
-              className={`text-[11px] mt-0.5 font-['Manrope'] tracking-tight transition-all duration-200 ${
+              className={`text-[11px] font-['Manrope'] tracking-tight transition-colors duration-200 flex items-center gap-1 ${
                 activeTab === 'create' ? 'font-bold text-primary' : 'font-medium text-on-surface-variant'
               }`}
             >
               {t('nav.create')}
+              {activeTab === 'create' && (
+                <span className="w-1 h-1 rounded-full bg-primary inline-block" />
+              )}
             </span>
           </div>
         </button>
@@ -129,51 +144,57 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
         {/* 3. Settings Tab */}
         <button
           id="nav_tab_settings"
+          role="tab"
           type="button"
           onClick={handleSettingsClick}
-          className={`flex-1 relative flex flex-col items-center justify-center py-2 px-2 rounded-xl transition-all duration-200 select-none group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
-            activeTab === 'settings' ? 'text-primary' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low/40'
-          }`}
+          aria-selected={activeTab === 'settings'}
           aria-label={t('nav.settings')}
-          aria-current={activeTab === 'settings' ? 'page' : undefined}
+          className={`flex-1 relative flex flex-col items-center justify-center py-2 px-2 rounded-xl transition-all duration-150 active:scale-95 group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer ${
+            activeTab === 'settings'
+              ? 'text-primary'
+              : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low/40'
+          }`}
         >
-          {/* Active translucent glass background pill */}
+          {/* YAAD Signature Soft Glass Pill Active Indicator */}
           {activeTab === 'settings' && (
             <motion.div
-              layoutId="activeNavIndicator"
-              className="absolute inset-0 bg-primary/10 border border-primary/20 backdrop-blur-sm rounded-xl"
+              layoutId="yaadActiveNavPill"
+              className="absolute inset-0 bg-primary/[0.08] dark:bg-primary/[0.18] border border-primary/20 dark:border-primary/30 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.7),0_2px_8px_rgba(0,40,25,0.05)] backdrop-blur-xs pointer-events-none"
               transition={
                 prefersReducedMotion
                   ? { duration: 0 }
-                  : { type: 'spring', stiffness: 450, damping: 35 }
+                  : { type: 'spring', stiffness: 420, damping: 32 }
               }
             />
           )}
 
-          <div className="relative z-10 flex flex-col items-center">
+          <div className="relative z-10 flex flex-col items-center gap-0.5">
             <motion.div
               animate={{
-                scale: activeTab === 'settings' ? 1.08 : 1,
-                opacity: activeTab === 'settings' ? 1 : 0.72,
+                scale: activeTab === 'settings' ? 1.05 : 1,
+                opacity: activeTab === 'settings' ? 1 : 0.75,
                 rotate: settingsRotated ? 60 : 0,
               }}
               transition={{
-                duration: 0.25,
+                duration: 0.3,
                 ease: [0.25, 1, 0.5, 1],
               }}
             >
               <Settings
                 className={`w-5 h-5 transition-colors duration-200 ${
-                  activeTab === 'settings' ? 'stroke-[2.4] text-primary' : 'stroke-[1.8]'
+                  activeTab === 'settings' ? 'stroke-[2.3] text-primary' : 'stroke-[1.8]'
                 }`}
               />
             </motion.div>
             <span
-              className={`text-[11px] mt-1 font-['Manrope'] tracking-tight transition-all duration-200 ${
+              className={`text-[11px] font-['Manrope'] tracking-tight transition-colors duration-200 flex items-center gap-1 ${
                 activeTab === 'settings' ? 'font-bold text-primary' : 'font-medium text-on-surface-variant'
               }`}
             >
               {t('nav.settings')}
+              {activeTab === 'settings' && (
+                <span className="w-1 h-1 rounded-full bg-primary inline-block" />
+              )}
             </span>
           </div>
         </button>

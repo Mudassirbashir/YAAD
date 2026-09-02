@@ -3,10 +3,11 @@ import { Calendar, ShoppingBag, ChevronRight, Clock, Plus, AlertCircle, RefreshC
 import { ShoppingList } from '../types';
 import { TopHeader } from './TopHeader';
 import { useLanguage } from '../context/LanguageContext';
+import { BidiText } from '../utils/bidi';
 
 interface ListHistoryViewProps {
   lists: ShoppingList[];
-  onSelectList: (list: ShoppingList) => void;
+  onSelectList: (list: ShoppingList | string) => void;
   onCreateNewList: () => void;
   onOpenProfile: () => void;
   onOpenMenu: () => void;
@@ -32,6 +33,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
       {/* TopAppBar */}
       <TopHeader
         title={t('appName')}
+        onSettingsClick={onOpenMenu || onOpenProfile}
         onAvatarClick={onOpenProfile}
         onMenuClick={onOpenMenu}
       />
@@ -119,9 +121,9 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
                       </div>
                     )}
 
-                    <h3 className="font-['Plus_Jakarta_Sans'] text-lg sm:text-xl text-primary font-bold group-hover:text-primary-container transition-colors">
+                    <BidiText as="h3" className="font-['Plus_Jakarta_Sans'] text-lg sm:text-xl text-primary font-bold group-hover:text-primary-container transition-colors">
                       {list.title}
-                    </h3>
+                    </BidiText>
 
                     <div className="flex items-center gap-3 text-on-surface-variant font-['Manrope'] text-xs">
                       <span className="flex items-center gap-1">

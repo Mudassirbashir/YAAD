@@ -154,6 +154,7 @@ export const EditListView: React.FC<EditListViewProps> = ({
           </label>
           <input
             id="listName"
+            dir="auto"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="w-full bg-transparent border-b-2 border-primary focus:border-primary-container outline-none py-1 text-3xl font-bold font-['Plus_Jakarta_Sans'] text-primary transition-colors tracking-tight"
@@ -173,6 +174,7 @@ export const EditListView: React.FC<EditListViewProps> = ({
           >
             <Search className="w-5 h-5 text-outline me-2 shrink-0" />
             <input
+              dir="auto"
               value={newItemName}
               onChange={(e) => setNewItemName(e.target.value)}
               className="flex-grow bg-transparent border-none outline-none font-['Manrope'] text-base text-on-surface py-2.5"
@@ -238,15 +240,16 @@ export const EditListView: React.FC<EditListViewProps> = ({
                           className="p-3.5 flex items-center gap-3 bg-surface-container-lowest group hover:bg-surface-container-low/30 transition-colors"
                         >
                           <div className="flex-grow flex flex-col gap-1 min-w-0">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2" dir="auto">
                               <input
+                                dir="auto"
                                 value={item.name}
                                 onChange={(e) => handleUpdateItemName(item.id, e.target.value)}
                                 className="bg-transparent border-none outline-none font-['Manrope'] text-base text-on-surface w-full focus:ring-0 p-0 m-0 font-medium"
                                 type="text"
                               />
                               {item.nameUrdu && (
-                                <span className="font-['Noto_Nastaliq_Urdu','Jameel_Noori_Nastaleeq',serif] text-xs text-on-surface-variant font-normal shrink-0">
+                                <span className="font-urdu text-xs text-on-surface-variant font-normal shrink-0">
                                   ({item.nameUrdu})
                                 </span>
                               )}
@@ -273,9 +276,9 @@ export const EditListView: React.FC<EditListViewProps> = ({
                               </select>
 
                               {item.quantity && (
-                                <span className="text-[11px] font-['Manrope'] font-bold text-primary bg-surface-container px-2 py-0.5 rounded-md">
+                                <bdi dir="ltr" className="text-[11px] font-['Manrope'] tabular-nums font-bold text-primary bg-surface-container px-2 py-0.5 rounded-md">
                                   {item.quantity} {item.unit || ''}
-                                </span>
+                                </bdi>
                               )}
                             </div>
                           </div>

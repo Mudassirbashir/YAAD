@@ -41,7 +41,7 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
         <button
           onClick={onBack}
           aria-label="Go back"
-          className="flex items-center justify-center w-10 h-10 -ml-2 rounded-full hover:bg-surface-container-low transition-colors text-primary active:scale-95"
+          className="flex items-center justify-center w-10 h-10 -ms-2 rounded-full hover:bg-surface-container-low transition-colors text-primary active:scale-95"
         >
           <ArrowLeft className="w-5 h-5 rtl:rotate-180 text-primary" />
         </button>
@@ -57,6 +57,7 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
           <form onSubmit={handleSubmit} className="relative w-full">
             <input
               autoFocus
+              dir="auto"
               value={listName}
               onChange={(e) => {
                 setListName(e.target.value);
@@ -93,7 +94,7 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
                   }}
                   className="text-xs font-semibold text-primary bg-surface-container hover:bg-surface-container-high px-3 py-1.5 rounded-full transition-colors border border-surface-dim active:scale-95"
                 >
-                  {suggestion}
+                  <bdi dir="auto">{suggestion}</bdi>
                 </button>
               ))}
             </div>

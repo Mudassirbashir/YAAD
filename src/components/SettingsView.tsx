@@ -30,7 +30,6 @@ import { useLanguage } from '../context/LanguageContext';
 import { Language } from '../translations';
 import { Avatar } from './Avatar';
 import { AvatarPickerModal } from './AvatarPickerModal';
-import { PWAInstallPrompt } from './PWAInstallPrompt';
 
 interface SettingsViewProps {
   onBack: () => void;
@@ -426,6 +425,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     <div className="flex gap-2">
                       <input
                         type="text"
+                        dir="auto"
                         value={fullNameInput}
                         onChange={(e) => setFullNameInput(e.target.value)}
                         placeholder={t('settings.namePlaceholder')}
@@ -656,11 +656,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 )}
               </div>
             </div>
-
-            {/* PWA App Installation & Offline Access */}
-            <div className="pt-3 border-t border-surface-dim">
-              <PWAInstallPrompt mode="settings_card" />
-            </div>
           </div>
         </section>
 
@@ -739,12 +734,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
                           placeholder={t('settings.newPasswordPlaceholder')}
-                          className="w-full px-3.5 py-2 text-sm rounded-xl bg-surface border border-surface-dim focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 pr-10"
+                          className="w-full px-3.5 py-2 text-sm rounded-xl bg-surface border border-surface-dim focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 pe-10"
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute inset-y-0 right-3 flex items-center text-outline hover:text-on-surface"
+                          className="absolute inset-y-0 end-3 flex items-center text-outline hover:text-on-surface"
                         >
                           {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>

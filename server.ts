@@ -449,7 +449,10 @@ app.post('/api/account/delete', async (req, res) => {
     const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
 
-    if (supabaseUrl && serviceKey && token) {
+    if (supabaseUrl && serviceKey) {
+      if (!token) {
+        return res.status(401).json({ error: 'Authorization header with Bearer token is required' });
+      }
       const { createClient } = await import('@supabase/supabase-js');
       const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
         auth: { autoRefreshToken: false, persistSession: false },
@@ -459,6 +462,16 @@ app.post('/api/account/delete', async (req, res) => {
       const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
       if (userError || !user || user.id !== userId) {
         return res.status(403).json({ error: 'Unauthorized account deletion request' });
+      }
+
+      // Explicitly purge all user-owned data across tables to prevent orphaned records
+      try {
+        await supabaseAdmin.from('shopping_items').delete().eq('user_id', userId);
+        await supabaseAdmin.from('shopping_lists').delete().eq('user_id', userId);
+        await supabaseAdmin.from('frequently_bought_items').delete().eq('user_id', userId);
+        await supabaseAdmin.from('profiles').delete().eq('id', userId);
+      } catch (tableCleanErr: any) {
+        console.warn('Notice cleaning user tables before auth deletion:', tableCleanErr?.message);
       }
 
       // Delete user from auth.users (cascades or cleans up auth records)
@@ -600,14 +613,16 @@ Return JSON with:
 
 // Vite middleware & Static serving
 async function startServer() {
-  if (process.env.NODE_ENV !== 'production') {
+  const distPath = path.join(process.cwd(), 'dist');
+  const isProduction = process.env.NODE_ENV === 'production' || (typeof __filename !== 'undefined' && __filename.endsWith('server.cjs'));
+
+  if (!isProduction) {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));

@@ -500,3 +500,11 @@ export async function getAppMetadata<T>(key: string): Promise<T | null> {
     }
   }
 }
+
+export async function saveOfflineProfile(userId: string, profile: any): Promise<void> {
+  await setAppMetadata(`profile_${userId}`, profile);
+}
+
+export async function getOfflineProfile<T = any>(userId: string): Promise<T | null> {
+  return await getAppMetadata<T>(`profile_${userId}`);
+}

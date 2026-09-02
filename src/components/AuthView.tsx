@@ -175,6 +175,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 <input
                   id="auth_input_fullname"
                   type="text"
+                  dir="auto"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder={t('auth.fullNamePlaceholder') || 'Your full name'}
