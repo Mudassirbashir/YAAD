@@ -29,6 +29,7 @@ interface AuthContextType {
   hasPasskey: (email: string) => boolean;
   signOut: () => Promise<void>;
   deleteAccount: () => Promise<{ error: Error | null }>;
+  updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
   updateUserProfile: (updates: {
     full_name?: string;
     avatar_url?: string;
@@ -203,19 +204,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
 
       if (data.user) {
-        // Explicitly create/update profile table record
-        await supabaseUpdateProfile(data.user.id, {
-          full_name: trimmedName,
-          email: trimmedEmail,
-        });
+        // If session was established immediately (e.g. auto-confirm enabled)
+        if (data.session) {
+          await supabaseUpdateProfile(data.user.id, {
+            full_name: trimmedName,
+            email: trimmedEmail,
+          });
 
-        const p = await getProfile(data.user.id);
-        setProfile(p || {
-          id: data.user.id,
-          full_name: trimmedName,
-          email: trimmedEmail,
-          avatar_url: null,
-        });
+          const p = await getProfile(data.user.id);
+          setProfile(p || {
+            id: data.user.id,
+            full_name: trimmedName,
+            email: trimmedEmail,
+            avatar_url: null,
+          });
+        } else {
+          // Session is pending confirmation; set local profile state
+          setProfile({
+            id: data.user.id,
+            full_name: trimmedName,
+            email: trimmedEmail,
+            avatar_url: null,
+          });
+        }
       }
 
       return { error: null };
@@ -322,6 +333,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const updatePassword = async (newPassword: string): Promise<{ error: Error | null }> => {
+    if (!supabase) {
+      return { error: new Error('Backend is not available') };
+    }
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) {
+        return { error: new Error(error.message) };
+      }
+      return { error: null };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to update password';
+      return { error: new Error(msg) };
+    }
+  };
+
   const updateUserProfile = async (updates: {
     full_name?: string;
     avatar_url?: string;
@@ -378,6 +405,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         hasPasskey,
         signOut,
         deleteAccount,
+        updatePassword,
         updateUserProfile,
         refreshProfile,
       }}

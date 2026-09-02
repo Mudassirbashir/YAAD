@@ -72,11 +72,38 @@ export const EditListView: React.FC<EditListViewProps> = ({
     );
   };
 
-  const handleUpdateQuantity = (id: string, currentQty?: string) => {
-    const nextQty =
-      !currentQty ? '2x' : currentQty === '2x' ? '3x' : currentQty === '3x' ? '1 kg' : currentQty === '1 kg' ? '1 dozen' : '';
+  const handleUpdateQuantity = (id: string, currentQty?: string, currentUnit?: string) => {
+    let nextQty = '2';
+    let nextUnit = currentUnit;
+
+    if (!currentQty) {
+      nextQty = '2';
+    } else if (currentQty === '2') {
+      nextQty = '3';
+    } else if (currentQty === '3') {
+      nextQty = '1';
+      nextUnit = nextUnit || 'kg';
+    } else if (currentQty === '1' && nextUnit === 'kg') {
+      nextQty = '2';
+      nextUnit = 'kg';
+    } else if (currentQty === '2' && nextUnit === 'kg') {
+      nextQty = '1';
+      nextUnit = 'dozen';
+    } else {
+      nextQty = '';
+      nextUnit = undefined;
+    }
+
     setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, quantity: nextQty || undefined } : item))
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              quantity: nextQty || undefined,
+              unit: nextUnit || undefined,
+            }
+          : item
+      )
     );
   };
 
@@ -233,11 +260,11 @@ export const EditListView: React.FC<EditListViewProps> = ({
                           <div className="flex items-center gap-2 shrink-0">
                             <button
                               type="button"
-                              onClick={() => handleUpdateQuantity(item.id, item.quantity)}
+                              onClick={() => handleUpdateQuantity(item.id, item.quantity, item.unit)}
                               className="text-outline font-['Manrope'] text-xs bg-surface-container-low px-2.5 py-1 rounded-full hover:bg-surface-container transition-colors"
                               title="Click to adjust quantity"
                             >
-                              {item.quantity || '1x'}
+                              {item.quantity ? `${item.quantity}${item.unit ? ' ' + item.unit : ''}` : '1x'}
                             </button>
 
                             <button

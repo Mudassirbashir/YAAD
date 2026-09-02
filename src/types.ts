@@ -66,6 +66,8 @@ export interface ShoppingItem {
   category?: string;
   completed: boolean;
   quantity?: string;
+  unit?: string;
+  rawInput?: string;
   note?: string;
   userModifiedCategory?: boolean;
   confidence?: number;
@@ -118,6 +120,15 @@ export interface UserProfile {
   has_completed_setup?: boolean;
   updated_at?: string;
   created_at?: string;
+}
+
+export interface FrequentlyBoughtItem {
+  id: string;
+  userId?: string;
+  name: string;
+  category: CategoryId | string;
+  purchaseCount: number;
+  lastPurchasedAt: string;
 }
 
 export interface CategorizeResult {

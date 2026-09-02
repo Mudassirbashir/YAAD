@@ -12,10 +12,10 @@ import { CompletionView } from './components/CompletionView';
 import { ListHistoryView } from './components/ListHistoryView';
 import { ListDetailsView } from './components/ListDetailsView';
 import { EditListView } from './components/EditListView';
+import { SettingsView } from './components/SettingsView';
 import { BottomNavBar } from './components/BottomNavBar';
-import { SettingsModal } from './components/SettingsModal';
-import { ProfileModal } from './components/ProfileModal';
 import { AuthModal } from './components/AuthModal';
+import { ProductTour } from './components/ProductTour';
 import { useAuth } from './context/AuthContext';
 import { generateUUID } from './lib/uuid';
 import {
@@ -23,11 +23,13 @@ import {
   saveUserShoppingList,
   deleteUserShoppingList,
   clearAllUserShoppingLists,
+  setupNetworkSyncListener,
 } from './lib/supabase';
 import { Loader2 } from 'lucide-react';
 
 const STORAGE_ONBOARDED_KEY = 'yaad_has_onboarded_v2';
 const STORAGE_PROFILE_SETUP_KEY = 'yaad_profile_setup_done';
+const STORAGE_TOUR_KEY = 'yaad_tour_completed_v1';
 const getStorageKey = (userId?: string | null) => {
   return userId ? `yaad_shopping_lists_u_${userId}` : 'yaad_shopping_lists_guest';
 };
@@ -44,10 +46,11 @@ export default function App() {
   const [tempNewListTitle, setTempNewListTitle] = useState<string>('');
 
   // Modals state
-  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
-  const [isProfileOpen, setIsProfileOpen] = useState<boolean>(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
+
+  // Interactive Product Tour state
+  const [isTourActive, setIsTourActive] = useState<boolean>(false);
 
   // Loading & error state for shopping lists
   const [isLoadingLists, setIsLoadingLists] = useState<boolean>(false);
@@ -119,6 +122,17 @@ export default function App() {
     }
   }, [user?.id, prevUserId, fetchShoppingLists]);
 
+  // Real-time network sync listener when returning online
+  useEffect(() => {
+    if (!user?.id || !isConfigured) return;
+
+    const cleanup = setupNetworkSyncListener(user.id, () => {
+      fetchShoppingLists(user.id);
+    });
+
+    return cleanup;
+  }, [user?.id, isConfigured, fetchShoppingLists]);
+
   // Save lists to user-scoped localStorage whenever lists state changes
   useEffect(() => {
     try {
@@ -135,25 +149,15 @@ export default function App() {
 
     if (currentScreen === 'splash') return;
 
-    const hasOnboarded = localStorage.getItem(STORAGE_ONBOARDED_KEY) === 'true';
-
-    // 1. If user hasn't onboarded yet, show onboarding
-    if (!hasOnboarded) {
-      if (currentScreen !== 'onboarding') {
-        setCurrentScreen('onboarding');
-      }
-      return;
-    }
-
-    // 2. If user is NOT authenticated, redirect to auth screen
+    // 1. If user is NOT authenticated, redirect to auth screen
     if (!user) {
-      if (currentScreen !== 'auth' && currentScreen !== 'onboarding') {
+      if (currentScreen !== 'auth') {
         setCurrentScreen('auth');
       }
       return;
     }
 
-    // 3. User is authenticated -> check first-time profile setup
+    // 2. User is authenticated -> check first-time profile setup
     const hasSetupLocal = localStorage.getItem(STORAGE_PROFILE_SETUP_KEY) === 'true';
     const isSetupComplete = profile?.has_completed_setup || (hasSetupLocal && !!profile?.full_name);
 
@@ -164,37 +168,81 @@ export default function App() {
       return;
     }
 
-    // 4. Authenticated & setup completed -> if currently on auth/onboarding/profile_setup, go to home
+    // 3. User is authenticated & profile setup complete -> Check First-Time Onboarding
+    const hasOnboarded = localStorage.getItem(STORAGE_ONBOARDED_KEY) === 'true';
+    if (!hasOnboarded) {
+      if (currentScreen !== 'onboarding') {
+        setCurrentScreen('onboarding');
+      }
+      return;
+    }
+
+    // 4. Authenticated, profile set up & onboarded -> if currently on auth/onboarding/profile_setup, go to home
     if (currentScreen === 'auth' || currentScreen === 'onboarding' || currentScreen === 'profile_setup') {
       setCurrentScreen('home');
+      setActiveTab('home');
+
+      // Check if product tour has been completed before
+      const tourDone = localStorage.getItem(STORAGE_TOUR_KEY) === 'true';
+      if (!tourDone) {
+        setIsTourActive(true);
+      }
     }
   }, [user, profile, isAuthLoading, currentScreen]);
 
   // Handle splash completion
   const handleSplashFinish = () => {
+    if (!user) {
+      setCurrentScreen('auth');
+      return;
+    }
+    const hasSetup = profile?.has_completed_setup || localStorage.getItem(STORAGE_PROFILE_SETUP_KEY) === 'true';
+    if (!hasSetup && (!profile?.full_name || profile.full_name.trim() === '')) {
+      setCurrentScreen('profile_setup');
+      return;
+    }
     const hasOnboarded = localStorage.getItem(STORAGE_ONBOARDED_KEY) === 'true';
     if (!hasOnboarded) {
       setCurrentScreen('onboarding');
-    } else if (!user) {
-      setCurrentScreen('auth');
-    } else {
-      const hasSetup = profile?.has_completed_setup || localStorage.getItem(STORAGE_PROFILE_SETUP_KEY) === 'true';
-      if (!hasSetup && (!profile?.full_name || profile.full_name.trim() === '')) {
-        setCurrentScreen('profile_setup');
-      } else {
-        setCurrentScreen('home');
+      return;
+    }
+    setCurrentScreen('home');
+    const tourDone = localStorage.getItem(STORAGE_TOUR_KEY) === 'true';
+    if (!tourDone) {
+      setIsTourActive(true);
+    }
+  };
+
+  // Handle onboarding completion
+  const handleOnboardingComplete = (startTour?: boolean) => {
+    localStorage.setItem(STORAGE_ONBOARDED_KEY, 'true');
+    setCurrentScreen('home');
+    setActiveTab('home');
+    if (startTour !== false) {
+      const tourDone = localStorage.getItem(STORAGE_TOUR_KEY) === 'true';
+      if (!tourDone || startTour === true) {
+        setIsTourActive(true);
       }
     }
   };
 
-  // Handle onboarding completion -> navigate to Auth Gate
-  const handleOnboardingComplete = () => {
-    localStorage.setItem(STORAGE_ONBOARDED_KEY, 'true');
-    if (!user) {
-      setCurrentScreen('auth');
-    } else {
-      setCurrentScreen('home');
-    }
+  // Handle tour completion / skip
+  const handleTourComplete = () => {
+    localStorage.setItem(STORAGE_TOUR_KEY, 'true');
+    setIsTourActive(false);
+  };
+
+  const handleTourSkip = () => {
+    localStorage.setItem(STORAGE_TOUR_KEY, 'true');
+    setIsTourActive(false);
+  };
+
+  // Replay tour from Settings
+  const handleRestartTour = () => {
+    localStorage.removeItem(STORAGE_TOUR_KEY);
+    setIsTourActive(true);
+    setCurrentScreen('home');
+    setActiveTab('home');
   };
 
   // Handle successful login/signup from AuthView
@@ -202,15 +250,29 @@ export default function App() {
     const hasSetup = profile?.has_completed_setup || localStorage.getItem(STORAGE_PROFILE_SETUP_KEY) === 'true';
     if (!hasSetup && (!profile?.full_name || profile.full_name.trim() === '')) {
       setCurrentScreen('profile_setup');
-    } else {
-      setCurrentScreen('home');
+      return;
     }
+    const hasOnboarded = localStorage.getItem(STORAGE_ONBOARDED_KEY) === 'true';
+    if (!hasOnboarded) {
+      setCurrentScreen('onboarding');
+      return;
+    }
+    setCurrentScreen('home');
   };
 
   // Handle profile setup completion
   const handleProfileSetupComplete = () => {
     localStorage.setItem(STORAGE_PROFILE_SETUP_KEY, 'true');
-    setCurrentScreen('home');
+    const hasOnboarded = localStorage.getItem(STORAGE_ONBOARDED_KEY) === 'true';
+    if (!hasOnboarded) {
+      setCurrentScreen('onboarding');
+    } else {
+      setCurrentScreen('home');
+      const tourDone = localStorage.getItem(STORAGE_TOUR_KEY) === 'true';
+      if (!tourDone) {
+        setIsTourActive(true);
+      }
+    }
   };
 
   // Replay onboarding
@@ -253,8 +315,6 @@ export default function App() {
     // Wipe all local states immediately
     setLists([]);
     setActiveListId(null);
-    setIsSettingsOpen(false);
-    setIsProfileOpen(false);
     // Redirect to auth screen so unauthenticated user cannot access home
     setCurrentScreen('auth');
     setActiveTab('home');
@@ -265,8 +325,6 @@ export default function App() {
     await signOut();
     setLists([]);
     setActiveListId(null);
-    setIsSettingsOpen(false);
-    setIsProfileOpen(false);
     setCurrentScreen('auth');
     setActiveTab('home');
   };
@@ -341,18 +399,19 @@ export default function App() {
     }
   };
 
-  const handleCompleteTrip = async (listId: string) => {
-    const target = lists.find((l) => l.id === listId);
+  const handleCompleteTrip = async (listOrId: ShoppingList | string) => {
+    const targetId = typeof listOrId === 'string' ? listOrId : listOrId.id;
+    const target = typeof listOrId === 'object' ? listOrId : lists.find((l) => l.id === targetId);
     if (!target) return;
 
     const completedList: ShoppingList = {
       ...target,
       isCompleted: true,
-      completedAt: 'Today',
+      completedAt: target.completedAt || new Date().toISOString(),
     };
 
-    setLists((prev) => prev.map((l) => (l.id === listId ? completedList : l)));
-    setActiveListId(listId);
+    setLists((prev) => prev.map((l) => (l.id === targetId ? completedList : l)));
+    setActiveListId(targetId);
     setCurrentScreen('completion');
 
     if (user && isConfigured) {
@@ -423,17 +482,21 @@ export default function App() {
     } else if (tab === 'lists') {
       setCurrentScreen('history');
     } else if (tab === 'settings') {
-      setIsSettingsOpen(true);
+      setCurrentScreen('settings');
     }
   };
 
+  const handleOpenSettingsScreen = () => {
+    setCurrentScreen('settings');
+    setActiveTab('settings');
+  };
 
   // Currently active list object
   const currentActiveList = lists.find((l) => l.id === activeListId) || lists[0] || null;
 
   // Determine if bottom navigation bar should be visible
   const showBottomNav =
-    (currentScreen === 'home' || currentScreen === 'history') && !!user;
+    (currentScreen === 'home' || currentScreen === 'history' || currentScreen === 'settings') && !!user;
 
   // Loading state while auth is being resolved on launch
   if (isAuthLoading && currentScreen !== 'splash') {
@@ -476,8 +539,8 @@ export default function App() {
           onRetry={() => fetchShoppingLists(user?.id || null)}
           onCreateList={handleStartCreateList}
           onSelectList={handleOpenListInShoppingMode}
-          onOpenProfile={() => setIsProfileOpen(true)}
-          onOpenMenu={() => setIsSettingsOpen(true)}
+          onOpenProfile={handleOpenSettingsScreen}
+          onOpenMenu={handleOpenSettingsScreen}
         />
       )}
 
@@ -503,16 +566,21 @@ export default function App() {
           onUpdateList={handleUpdateList}
           onCompleteTrip={handleCompleteTrip}
           onEditList={handleEditList}
-          onOpenProfile={() => setIsProfileOpen(true)}
+          onOpenProfile={handleOpenSettingsScreen}
         />
       )}
 
       {currentScreen === 'completion' && user && currentActiveList && (
         <CompletionView
           list={currentActiveList}
-          onCompleteTrip={handleFinishCompletion}
+          onReturnHome={() => {
+            setActiveListId(null);
+            setCurrentScreen('home');
+            setActiveTab('home');
+          }}
+          onViewHistory={handleFinishCompletion}
           onAddMoreItems={() => setCurrentScreen('shopping_list')}
-          onOpenProfile={() => setIsProfileOpen(true)}
+          onOpenProfile={handleOpenSettingsScreen}
         />
       )}
 
@@ -524,8 +592,8 @@ export default function App() {
           onRetry={() => fetchShoppingLists(user?.id || null)}
           onSelectList={handleOpenListDetails}
           onCreateNewList={handleStartCreateList}
-          onOpenProfile={() => setIsProfileOpen(true)}
-          onOpenMenu={() => setIsSettingsOpen(true)}
+          onOpenProfile={handleOpenSettingsScreen}
+          onOpenMenu={handleOpenSettingsScreen}
         />
       )}
 
@@ -537,7 +605,7 @@ export default function App() {
           onContinueShopping={handleOpenListInShoppingMode}
           onEditList={handleEditList}
           onDeleteList={handleDeleteList}
-          onOpenProfile={() => setIsProfileOpen(true)}
+          onOpenProfile={handleOpenSettingsScreen}
         />
       )}
 
@@ -546,7 +614,21 @@ export default function App() {
           list={currentActiveList}
           onBack={() => setCurrentScreen('shopping_list')}
           onSave={handleSaveEditedList}
-          onOpenProfile={() => setIsProfileOpen(true)}
+          onOpenProfile={handleOpenSettingsScreen}
+        />
+      )}
+
+      {currentScreen === 'settings' && user && (
+        <SettingsView
+          onBack={() => {
+            setCurrentScreen('home');
+            setActiveTab('home');
+          }}
+          onSignOut={handleSignOut}
+          onDeleteAccount={handleDeleteAccount}
+          onOpenAuth={handleOpenAuth}
+          onRestartTour={handleRestartTour}
+          onReplayOnboarding={handleResetOnboarding}
         />
       )}
 
@@ -559,27 +641,11 @@ export default function App() {
         />
       )}
 
-      {/* Settings Modal */}
-      <SettingsModal
-        isOpen={isSettingsOpen}
-        onClose={() => {
-          setIsSettingsOpen(false);
-          if (activeTab === 'settings') {
-            setActiveTab('home');
-          }
-        }}
-        onResetOnboarding={handleResetOnboarding}
-        onClearAllData={handleClearAllData}
-        onDeleteAccount={handleDeleteAccount}
-        onOpenAuth={handleOpenAuth}
-      />
-
-      {/* Profile Modal */}
-      <ProfileModal
-        isOpen={isProfileOpen}
-        onClose={() => setIsProfileOpen(false)}
-        onOpenAuth={handleOpenAuth}
-        onDeleteAccount={handleDeleteAccount}
+      {/* Interactive Product Tour (Spotlight on Home view) */}
+      <ProductTour
+        isActive={isTourActive && currentScreen === 'home'}
+        onComplete={handleTourComplete}
+        onSkip={handleTourSkip}
       />
 
       {/* Auth Modal (Sign in / Sign up) */}

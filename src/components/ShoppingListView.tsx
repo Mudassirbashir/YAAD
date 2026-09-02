@@ -5,7 +5,8 @@ import { TopHeader } from './TopHeader';
 import { CategoryIcon } from './CategoryIcon';
 import { useLanguage } from '../context/LanguageContext';
 import { categorizeItemLocally, smartCategorizeItem } from '../lib/categorizer';
-import { playCompletionSound } from '../lib/sound';
+import { parseShoppingItem } from '../lib/itemParser';
+import { playCompletionSound, playItemCheckSound, triggerHaptic } from '../lib/sound';
 import { generateUUID } from '../lib/uuid';
 
 interface ShoppingListViewProps {
@@ -33,47 +34,62 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
   const completedItemsCount = list.items.filter((i) => i.completed).length;
   const percentComplete = totalItems > 0 ? Math.round((completedItemsCount / totalItems) * 100) : 0;
 
-  // Toggle item completed state
+  // Toggle item completed state with instant haptic & sound feedback
   const handleToggleItem = (itemId: string) => {
+    let willBeChecked = false;
+
     const updatedItems = list.items.map((item) => {
       if (item.id === itemId) {
-        return { ...item, completed: !item.completed };
+        const nextState = !item.completed;
+        if (nextState) willBeChecked = true;
+        return { ...item, completed: nextState };
       }
       return item;
     });
 
+    const isAllCompleted = updatedItems.length > 0 && updatedItems.every((i) => i.completed);
+
     const updatedList: ShoppingList = {
       ...list,
       items: updatedItems,
-      isCompleted: updatedItems.length > 0 && updatedItems.every((i) => i.completed),
+      isCompleted: isAllCompleted,
     };
 
     onUpdateList(updatedList);
 
-    // If user just checked the last uncompleted item, trigger completion sound & view!
-    const newlyCompletedCount = updatedItems.filter((i) => i.completed).length;
-    if (newlyCompletedCount === totalItems && totalItems > 0) {
-      playCompletionSound();
-      setTimeout(() => {
-        onCompleteTrip(updatedList);
-      }, 400);
+    // Haptic & Sound Feedback
+    if (willBeChecked) {
+      triggerHaptic(15);
+      if (isAllCompleted) {
+        // Final item completed -> sequence completion chime!
+        playCompletionSound();
+        setTimeout(() => {
+          onCompleteTrip(updatedList);
+        }, 400);
+      } else {
+        // Individual item tap
+        playItemCheckSound();
+      }
     }
   };
 
-  // Add new inline item using smart categorizer
+  // Add new inline item using natural language parser and smart categorizer
   const handleAddInlineItem = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const trimmed = newItemText.trim();
     if (!trimmed) return;
 
-    const localResult = categorizeItemLocally(trimmed);
+    const parsed = parseShoppingItem(trimmed);
     const newItemId = generateUUID();
 
     const newItem: ShoppingItem = {
       id: newItemId,
-      name: trimmed,
-      categoryId: localResult.categoryId,
-      category: getCategoryName(localResult.categoryId),
+      name: parsed.name,
+      quantity: parsed.quantity,
+      unit: parsed.unit,
+      rawInput: parsed.rawInput,
+      categoryId: parsed.suggestedCategoryId,
+      category: getCategoryName(parsed.suggestedCategoryId),
       completed: false,
     };
 
@@ -86,11 +102,12 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
     onUpdateList(updatedList);
     setNewItemText('');
 
-    // If low confidence match, refine with AI in background
+    // If low confidence local categorizer match, refine with AI in background
+    const localResult = categorizeItemLocally(parsed.name);
     if (localResult.confidence < 0.8) {
-      smartCategorizeItem(trimmed)
+      smartCategorizeItem(parsed.name)
         .then((aiResult) => {
-          if (aiResult.categoryId && aiResult.categoryId !== localResult.categoryId) {
+          if (aiResult.categoryId && aiResult.categoryId !== parsed.suggestedCategoryId) {
             const refinedList: ShoppingList = {
               ...updatedList,
               items: updatedList.items.map((it) =>
@@ -150,10 +167,10 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
         {/* Header & Summary */}
         <div className="flex flex-col gap-2">
           <div className="flex justify-between items-end">
-            <h1 className="font-['Plus_Jakarta_Sans'] text-3xl font-extrabold text-primary tracking-tight">
+            <h1 className="font-['Plus_Jakarta_Sans'] text-2xl sm:text-3xl font-extrabold text-primary tracking-tight truncate pr-2">
               {list.title}
             </h1>
-            <span className="font-['Manrope'] text-sm text-on-surface-variant font-medium">
+            <span className="font-['Manrope'] text-sm text-on-surface-variant font-medium shrink-0">
               {t('home.itemsCount', { count: totalItems })}
             </span>
           </div>
@@ -249,14 +266,22 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                   </span>
                 </h2>
 
-                <div className="flex flex-col gap-3.5">
+                <div className="flex flex-col gap-2.5">
                   {categoryItems.map((item) => {
                     const isChecked = item.completed;
+                    const formattedQty = item.quantity
+                      ? `${item.quantity}${item.unit ? ' ' + item.unit : ''}`
+                      : item.note || null;
+
                     return (
                       <div
                         key={item.id}
                         onClick={() => handleToggleItem(item.id)}
-                        className="flex items-center gap-3.5 cursor-pointer select-none group py-1"
+                        className={`flex items-center justify-between gap-3.5 p-3 rounded-2xl cursor-pointer select-none transition-all duration-200 ${
+                          isChecked
+                            ? 'bg-surface-container-low/60 opacity-60'
+                            : 'bg-surface-bright hover:bg-surface-container-low border border-surface-dim/50'
+                        }`}
                       >
                         {/* Custom Round Checkbox */}
                         <div
@@ -271,26 +296,32 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                           )}
                         </div>
 
-                        {/* Item label */}
-                        <span
-                          className={`font-['Manrope'] text-base transition-all flex-1 ${
-                            isChecked
-                              ? 'line-through text-outline font-normal'
-                              : 'text-on-surface font-medium group-hover:text-primary'
-                          }`}
-                        >
-                          {item.name}
-                        </span>
-
-                        {item.quantity && (
+                        {/* Item Details */}
+                        <div className="flex flex-col min-w-0 flex-1">
                           <span
-                            className={`font-['Manrope'] text-xs px-2 py-0.5 rounded-md ${
+                            className={`font-['Manrope'] text-base transition-all truncate ${
                               isChecked
-                                ? 'bg-surface-container-low text-outline'
-                                : 'bg-surface-container text-on-surface-variant'
+                                ? 'line-through text-outline font-normal'
+                                : 'text-on-surface font-semibold group-hover:text-primary'
                             }`}
                           >
-                            {item.quantity}
+                            {item.name}
+                          </span>
+                          <span className="font-['Manrope'] text-[11px] text-on-surface-variant font-medium">
+                            {getCategoryName((item.categoryId || 'other') as CategoryId)}
+                          </span>
+                        </div>
+
+                        {/* Quantity & Unit Badge */}
+                        {formattedQty && (
+                          <span
+                            className={`font-['Manrope'] text-xs font-semibold px-2.5 py-1 rounded-lg shrink-0 ${
+                              isChecked
+                                ? 'bg-surface-container text-outline'
+                                : 'bg-surface-container-high text-primary border border-surface-dim'
+                            }`}
+                          >
+                            {formattedQty}
                           </span>
                         )}
                       </div>
@@ -307,7 +338,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
           <div className="pt-2 pb-4">
             <button
               onClick={() => onCompleteTrip(list)}
-              className="w-full h-[52px] rounded-full bg-surface-container-high text-primary font-['Manrope'] text-sm font-bold hover:bg-surface-container-highest transition-all flex items-center justify-center gap-2 active:scale-95 border border-surface-dim"
+              className="w-full h-[52px] rounded-full bg-primary text-on-primary font-['Manrope'] text-sm font-bold hover:bg-primary-container shadow-sm transition-all flex items-center justify-center gap-2 active:scale-95"
             >
               <span>{t('shoppingList.finishTrip')}</span>
               <CheckCheck className="w-4 h-4" />

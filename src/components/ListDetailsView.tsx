@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { History, Check, ShoppingCart, RotateCcw, Trash2, Edit3 } from 'lucide-react';
 import { ShoppingList, CategoryId } from '../types';
 import { TopHeader } from './TopHeader';
@@ -26,6 +26,18 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
 }) => {
   const { t, getCategoryName } = useLanguage();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Close modal when pressing Escape key
+  useEffect(() => {
+    if (!showDeleteConfirm) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowDeleteConfirm(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showDeleteConfirm]);
 
   // Group items by categoryId
   const categoryIds: CategoryId[] = Array.from(
@@ -92,40 +104,48 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
                 </div>
 
                 <ul className="flex flex-col divide-y divide-surface-container/60">
-                  {categoryItems.map((item) => (
-                    <li
-                      key={item.id}
-                      className={`flex items-center gap-3.5 p-4 transition-colors ${
-                        item.completed
-                          ? 'opacity-75 bg-surface-container-lowest'
-                          : 'bg-surface-container-lowest'
-                      }`}
-                    >
-                      {item.completed ? (
-                        <div className="w-6 h-6 rounded-full bg-secondary-fixed flex items-center justify-center text-secondary shrink-0 shadow-xs">
-                          <Check className="w-3.5 h-3.5 stroke-[3]" />
-                        </div>
-                      ) : (
-                        <div className="w-6 h-6 rounded-full border-2 border-outline flex items-center justify-center shrink-0" />
-                      )}
+                  {categoryItems.map((item) => {
+                    const formattedQty = item.quantity
+                      ? `${item.quantity}${item.unit ? ' ' + item.unit : ''}`
+                      : item.note || null;
 
-                      <span
-                        className={`font-['Manrope'] text-base flex-1 ${
+                    return (
+                      <li
+                        key={item.id}
+                        className={`flex items-center justify-between gap-3.5 p-4 transition-colors ${
                           item.completed
-                            ? 'line-through text-outline'
-                            : 'text-on-surface font-medium'
+                            ? 'opacity-75 bg-surface-container-lowest'
+                            : 'bg-surface-container-lowest'
                         }`}
                       >
-                        {item.name}
-                      </span>
+                        <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                          {item.completed ? (
+                            <div className="w-6 h-6 rounded-full bg-secondary-fixed flex items-center justify-center text-secondary shrink-0 shadow-xs">
+                              <Check className="w-3.5 h-3.5 stroke-[3]" />
+                            </div>
+                          ) : (
+                            <div className="w-6 h-6 rounded-full border-2 border-outline flex items-center justify-center shrink-0" />
+                          )}
 
-                      {item.quantity && (
-                        <span className="font-['Manrope'] text-xs text-outline bg-surface-container-low px-2 py-0.5 rounded-md">
-                          {item.quantity}
-                        </span>
-                      )}
-                    </li>
-                  ))}
+                          <span
+                            className={`font-['Manrope'] text-base truncate ${
+                              item.completed
+                                ? 'line-through text-outline'
+                                : 'text-on-surface font-medium'
+                            }`}
+                          >
+                            {item.name}
+                          </span>
+                        </div>
+
+                        {formattedQty && (
+                          <span className="font-['Manrope'] text-xs text-outline bg-surface-container-low px-2.5 py-1 rounded-md shrink-0 font-medium">
+                            {formattedQty}
+                          </span>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
               </section>
             );

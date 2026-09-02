@@ -16,6 +16,7 @@ import {
   smartCategorizeItem,
   saveUserCategoryOverride,
 } from '../lib/categorizer';
+import { parseShoppingItem } from '../lib/itemParser';
 import { generateUUID } from '../lib/uuid';
 
 interface AddItemsViewProps {
@@ -50,9 +51,9 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
     }
 
     if (!userManuallySelectedCategory) {
-      const local = categorizeItemLocally(trimmed);
-      if (local.categoryId && local.confidence >= 0.7) {
-        setSelectedCategory(local.categoryId);
+      const parsed = parseShoppingItem(trimmed);
+      if (parsed.suggestedCategoryId) {
+        setSelectedCategory(parsed.suggestedCategoryId);
       }
     }
   }, [inputVal, userManuallySelectedCategory]);
@@ -70,21 +71,24 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
       return;
     }
 
+    const parsed = parseShoppingItem(trimmed);
     let finalCategory = selectedCategory;
 
-    // If user didn't manually pick category, run full categorizer
+    // If user didn't manually pick category, use parsed suggestion
     if (!userManuallySelectedCategory) {
-      const localResult = categorizeItemLocally(trimmed);
-      finalCategory = localResult.categoryId;
+      finalCategory = parsed.suggestedCategoryId;
     } else {
       // User explicitly chose this category for this item -> remember this preference!
-      saveUserCategoryOverride(trimmed, selectedCategory);
+      saveUserCategoryOverride(parsed.name, selectedCategory);
     }
 
     const newItemId = generateUUID();
     const newItem: ShoppingItem = {
       id: newItemId,
-      name: trimmed,
+      name: parsed.name,
+      quantity: parsed.quantity,
+      unit: parsed.unit,
+      rawInput: parsed.rawInput,
       categoryId: finalCategory,
       category: getCategoryName(finalCategory),
       completed: false,
@@ -98,10 +102,10 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
 
     // If local match was low confidence and user didn't manually pick, trigger background AI refinement
     if (!userManuallySelectedCategory) {
-      const localCheck = categorizeItemLocally(trimmed);
+      const localCheck = categorizeItemLocally(parsed.name);
       if (localCheck.confidence < 0.8) {
         setIsCategorizing(true);
-        smartCategorizeItem(trimmed)
+        smartCategorizeItem(parsed.name)
           .then((aiResult) => {
             if (aiResult.categoryId && aiResult.categoryId !== finalCategory) {
               setItems((currentItems) =>
@@ -127,11 +131,38 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
     setItems((prev) => prev.filter((i) => i.id !== id));
   };
 
-  const handleQuantityCycle = (id: string, currentQty?: string) => {
-    const nextQty =
-      !currentQty ? '2x' : currentQty === '2x' ? '3x' : currentQty === '3x' ? '1 kg' : currentQty === '1 kg' ? '1 dozen' : currentQty === '1 dozen' ? '1 packet' : '';
+  const handleQuantityCycle = (id: string, currentQty?: string, currentUnit?: string) => {
+    let nextQty = '2';
+    let nextUnit = currentUnit;
+
+    if (!currentQty) {
+      nextQty = '2';
+    } else if (currentQty === '2') {
+      nextQty = '3';
+    } else if (currentQty === '3') {
+      nextQty = '1';
+      nextUnit = nextUnit || 'kg';
+    } else if (currentQty === '1' && nextUnit === 'kg') {
+      nextQty = '2';
+      nextUnit = 'kg';
+    } else if (currentQty === '2' && nextUnit === 'kg') {
+      nextQty = '1';
+      nextUnit = 'dozen';
+    } else {
+      nextQty = '';
+      nextUnit = undefined;
+    }
+
     setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, quantity: nextQty || undefined } : item))
+      prev.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              quantity: nextQty || undefined,
+              unit: nextUnit || undefined,
+            }
+          : item
+      )
     );
   };
 
@@ -322,11 +353,11 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                     <div className="flex items-center gap-1.5 shrink-0">
                       <button
                         type="button"
-                        onClick={() => handleQuantityCycle(item.id, item.quantity)}
+                        onClick={() => handleQuantityCycle(item.id, item.quantity, item.unit)}
                         className="px-2.5 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high text-primary font-['Manrope'] text-xs font-bold border border-surface-dim transition-colors"
                         title={t('addItems.quantityHint')}
                       >
-                        {item.quantity || '1x'}
+                        {item.quantity ? `${item.quantity}${item.unit ? ' ' + item.unit : ''}` : '1x'}
                       </button>
 
                       <button

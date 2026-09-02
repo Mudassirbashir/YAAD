@@ -59,38 +59,89 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
   const isRTL = language === 'ur';
   const dir = isRTL ? 'rtl' : 'ltr';
 
-  // Nested translation resolver with param substitution
+  // Nested translation resolver with param substitution and robust key matching
   const t = (path: string, params?: Record<string, string | number>): string => {
-    const currentDict = translations[language] || translations.en;
-    const parts = path.split('.');
+    if (!path) return '';
 
-    let current: any = currentDict;
-    for (const part of parts) {
-      if (current && typeof current === 'object' && part in current) {
-        current = current[part];
-      } else {
-        // Fallback to English
-        let fallback: any = translations.en;
-        for (const p of parts) {
-          if (fallback && typeof fallback === 'object' && p in fallback) {
-            fallback = fallback[p];
-          } else {
-            fallback = undefined;
-            break;
-          }
+    // Clean duplicate segments like "home.home.create" -> "home.create"
+    const rawParts = path.split('.').filter(Boolean);
+    const parts: string[] = [];
+    for (let i = 0; i < rawParts.length; i++) {
+      if (i > 0 && rawParts[i] === rawParts[i - 1]) continue;
+      parts.push(rawParts[i]);
+    }
+
+    const resolveInObj = (obj: any, keys: string[]): any => {
+      let current: any = obj;
+      for (const key of keys) {
+        if (!current || typeof current !== 'object') return undefined;
+
+        // 1. Direct match
+        if (key in current) {
+          current = current[key];
+          continue;
         }
-        current = fallback || path;
-        break;
+
+        // 2. camelCase match (e.g. 'your_list_title' -> 'yourListTitle' or 'yourListsTitle')
+        const camel = key.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+        if (camel in current) {
+          current = current[camel];
+          continue;
+        }
+        const camelPlural = camel + 's';
+        if (camelPlural in current) {
+          current = current[camelPlural];
+          continue;
+        }
+
+        // 3. snake_case match
+        const snake = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+        if (snake in current) {
+          current = current[snake];
+          continue;
+        }
+
+        // 4. Case-insensitive key match
+        const lowerKey = key.toLowerCase().replace(/[_-]/g, '');
+        const matchingKey = Object.keys(current).find(
+          (k) => k.toLowerCase().replace(/[_-]/g, '') === lowerKey
+        );
+        if (matchingKey) {
+          current = current[matchingKey];
+          continue;
+        }
+
+        return undefined;
       }
+      return current;
+    };
+
+    // 1. Try current language dictionary
+    let current = resolveInObj(translations[language], parts);
+
+    // 2. Fallback to English dictionary if not found or non-string
+    if (current === undefined && language !== 'en') {
+      current = resolveInObj(translations.en, parts);
+    }
+
+    // 3. Try matching direct top-level key or last token in en
+    if (current === undefined && parts.length > 1) {
+      const lastKey = parts[parts.length - 1];
+      current = resolveInObj(translations.en, [lastKey]);
     }
 
     let result: string;
     if (typeof current === 'string') {
       result = current;
+    } else if (typeof current === 'number') {
+      result = String(current);
+    } else if (Array.isArray(current)) {
+      result = current.join(', ');
     } else {
-      // Fallback: humanize the last token so raw keys like "home.yourListsTitle" never show
+      // Clean fallback: humanize the last token so raw keys like "home.your_list_title" never display
       const lastKey = parts[parts.length - 1] || path;
       result = lastKey
+        .replace(/[._-]+/g, ' ')
         .replace(/([A-Z])/g, ' $1')
         .replace(/^./, (str) => str.toUpperCase())
         .trim();

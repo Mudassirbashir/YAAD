@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Home, Plus, Settings } from 'lucide-react';
+import { motion, useReducedMotion } from 'motion/react';
 import { NavigationTab } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -15,82 +16,166 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   onCreateClick,
 }) => {
   const { t } = useLanguage();
+  const prefersReducedMotion = useReducedMotion();
+  const [settingsRotated, setSettingsRotated] = useState(false);
+
+  const handleSettingsClick = () => {
+    setSettingsRotated((prev) => !prev);
+    onTabChange('settings');
+  };
+
+  const handleCreateClick = () => {
+    if (onCreateClick) {
+      onCreateClick();
+    } else {
+      onTabChange('create');
+    }
+  };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 w-full z-50 pointer-events-none pb-4 pt-1 px-4 max-w-lg md:max-w-xl lg:max-w-2xl mx-auto">
-      {/* Apple-style floating frosted glass pill container */}
-      <div className="pointer-events-auto bg-surface-container-lowest/85 backdrop-blur-xl border border-white/60 shadow-[0px_8px_32px_rgba(0,30,21,0.10)] rounded-3xl p-1.5 flex items-center justify-between transition-all duration-300">
+    <nav
+      id="bottom_navigation_bar"
+      aria-label="Main Navigation"
+      className="fixed bottom-0 left-0 right-0 w-full z-40 pointer-events-none pb-4 pt-1 px-4 max-w-md md:max-w-lg mx-auto"
+    >
+      {/* Translucent Frosted Glass Navigation Pill Container */}
+      <div className="pointer-events-auto bg-surface-container-lowest/85 backdrop-blur-xl border border-surface-dim/80 shadow-[0px_8px_30px_rgba(0,30,21,0.08)] rounded-2xl p-1.5 flex items-center justify-between gap-1 transition-colors duration-200">
         
         {/* 1. Home Tab */}
         <button
+          id="nav_tab_home"
+          type="button"
           onClick={() => onTabChange('home')}
-          className={`flex-1 flex flex-col items-center justify-center py-2 px-3 rounded-2xl transition-all duration-200 active:scale-95 group relative ${
-            activeTab === 'home'
-              ? 'bg-primary-container/15 text-primary font-bold shadow-xs'
-              : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low/50'
+          className={`flex-1 relative flex flex-col items-center justify-center py-2 px-2 rounded-xl transition-all duration-200 select-none group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
+            activeTab === 'home' ? 'text-primary' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low/40'
           }`}
           aria-label={t('nav.home')}
+          aria-current={activeTab === 'home' ? 'page' : undefined}
         >
-          <div className="relative">
-            <Home
-              className={`w-5 h-5 transition-transform duration-200 ${
-                activeTab === 'home' ? 'scale-110 stroke-[2.4]' : 'stroke-[1.8] group-hover:scale-105'
-              }`}
+          {/* Active translucent glass background pill */}
+          {activeTab === 'home' && (
+            <motion.div
+              layoutId="activeNavIndicator"
+              className="absolute inset-0 bg-primary/10 border border-primary/20 backdrop-blur-sm rounded-xl"
+              transition={
+                prefersReducedMotion
+                  ? { duration: 0 }
+                  : { type: 'spring', stiffness: 450, damping: 35 }
+              }
             />
-            {activeTab === 'home' && (
-              <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary" />
-            )}
+          )}
+
+          <div className="relative z-10 flex flex-col items-center">
+            <motion.div
+              animate={{
+                scale: activeTab === 'home' ? 1.08 : 1,
+                opacity: activeTab === 'home' ? 1 : 0.72,
+              }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+            >
+              <Home
+                className={`w-5 h-5 transition-colors duration-200 ${
+                  activeTab === 'home' ? 'stroke-[2.4] text-primary' : 'stroke-[1.8]'
+                }`}
+              />
+            </motion.div>
+            <span
+              className={`text-[11px] mt-1 font-['Manrope'] tracking-tight transition-all duration-200 ${
+                activeTab === 'home' ? 'font-bold text-primary' : 'font-medium text-on-surface-variant'
+              }`}
+            >
+              {t('nav.home')}
+            </span>
           </div>
-          <span className="text-[11px] mt-1 font-['Manrope'] tracking-tight">
-            {t('nav.home')}
-          </span>
         </button>
 
-        {/* 2. Center Create/Add Button (Elevated Apple-Style Glass Button) */}
+        {/* 2. Create Tab */}
         <button
-          onClick={() => {
-            if (onCreateClick) {
-              onCreateClick();
-            } else {
-              onTabChange('create' as NavigationTab);
-            }
-          }}
-          className="flex-1 flex flex-col items-center justify-center py-1 px-2 group active:scale-90 transition-all duration-200 select-none relative"
+          id="nav_tab_create"
+          type="button"
+          onClick={handleCreateClick}
+          className={`flex-1 relative flex flex-col items-center justify-center py-2 px-2 rounded-xl transition-all duration-200 select-none group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
+            activeTab === 'create' ? 'text-primary' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low/40'
+          }`}
           aria-label={t('nav.create')}
         >
-          <div className="w-12 h-10 rounded-2xl bg-gradient-to-b from-primary to-primary-container text-on-primary flex items-center justify-center shadow-[0px_4px_16px_rgba(0,35,25,0.25)] border border-primary-fixed-dim/40 backdrop-blur-md group-hover:shadow-[0px_6px_20px_rgba(0,35,25,0.35)] group-hover:scale-105 transition-all duration-300 relative overflow-hidden">
-            {/* Subtle glass reflection highlight */}
-            <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/10 to-white/25 pointer-events-none" />
-            <Plus className="w-5 h-5 text-white stroke-[2.6] transition-transform duration-200 group-hover:rotate-90" />
+          {/* Active translucent glass background pill (if in create mode) */}
+          {activeTab === 'create' && (
+            <motion.div
+              layoutId="activeNavIndicator"
+              className="absolute inset-0 bg-primary/10 border border-primary/20 backdrop-blur-sm rounded-xl"
+              transition={
+                prefersReducedMotion
+                  ? { duration: 0 }
+                  : { type: 'spring', stiffness: 450, damping: 35 }
+              }
+            />
+          )}
+
+          <div className="relative z-10 flex flex-col items-center">
+            <div className="w-8 h-8 rounded-xl bg-primary text-on-primary flex items-center justify-center shadow-xs group-hover:scale-105 active:scale-95 transition-transform duration-200">
+              <Plus className="w-4 h-4 text-white stroke-[2.6] transition-transform duration-200 group-hover:rotate-90" />
+            </div>
+            <span
+              className={`text-[11px] mt-0.5 font-['Manrope'] tracking-tight transition-all duration-200 ${
+                activeTab === 'create' ? 'font-bold text-primary' : 'font-medium text-on-surface-variant'
+              }`}
+            >
+              {t('nav.create')}
+            </span>
           </div>
-          <span className="text-[11px] mt-1 font-bold text-primary font-['Manrope'] tracking-tight">
-            {t('nav.create')}
-          </span>
         </button>
 
         {/* 3. Settings Tab */}
         <button
-          onClick={() => onTabChange('settings')}
-          className={`flex-1 flex flex-col items-center justify-center py-2 px-3 rounded-2xl transition-all duration-200 active:scale-95 group relative ${
-            activeTab === 'settings'
-              ? 'bg-primary-container/15 text-primary font-bold shadow-xs'
-              : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low/50'
+          id="nav_tab_settings"
+          type="button"
+          onClick={handleSettingsClick}
+          className={`flex-1 relative flex flex-col items-center justify-center py-2 px-2 rounded-xl transition-all duration-200 select-none group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
+            activeTab === 'settings' ? 'text-primary' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low/40'
           }`}
           aria-label={t('nav.settings')}
+          aria-current={activeTab === 'settings' ? 'page' : undefined}
         >
-          <div className="relative">
-            <Settings
-              className={`w-5 h-5 transition-transform duration-200 ${
-                activeTab === 'settings' ? 'scale-110 stroke-[2.4] rotate-45' : 'stroke-[1.8] group-hover:scale-105'
-              }`}
+          {/* Active translucent glass background pill */}
+          {activeTab === 'settings' && (
+            <motion.div
+              layoutId="activeNavIndicator"
+              className="absolute inset-0 bg-primary/10 border border-primary/20 backdrop-blur-sm rounded-xl"
+              transition={
+                prefersReducedMotion
+                  ? { duration: 0 }
+                  : { type: 'spring', stiffness: 450, damping: 35 }
+              }
             />
-            {activeTab === 'settings' && (
-              <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-primary" />
-            )}
+          )}
+
+          <div className="relative z-10 flex flex-col items-center">
+            <motion.div
+              animate={{
+                scale: activeTab === 'settings' ? 1.08 : 1,
+                opacity: activeTab === 'settings' ? 1 : 0.72,
+                rotate: settingsRotated ? 60 : 0,
+              }}
+              transition={{
+                duration: 0.25,
+                ease: [0.25, 1, 0.5, 1],
+              }}
+            >
+              <Settings
+                className={`w-5 h-5 transition-colors duration-200 ${
+                  activeTab === 'settings' ? 'stroke-[2.4] text-primary' : 'stroke-[1.8]'
+                }`}
+              />
+            </motion.div>
+            <span
+              className={`text-[11px] mt-1 font-['Manrope'] tracking-tight transition-all duration-200 ${
+                activeTab === 'settings' ? 'font-bold text-primary' : 'font-medium text-on-surface-variant'
+              }`}
+            >
+              {t('nav.settings')}
+            </span>
           </div>
-          <span className="text-[11px] mt-1 font-['Manrope'] tracking-tight">
-            {t('nav.settings')}
-          </span>
         </button>
 
       </div>

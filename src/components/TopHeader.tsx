@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Settings, SlidersHorizontal } from 'lucide-react';
+import { ArrowLeft, Settings } from 'lucide-react';
 import { APP_IMAGES } from '../data/initialData';
 import { useAuth } from '../context/AuthContext';
 import { Avatar } from './Avatar';
@@ -31,6 +31,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
         <div className="flex items-center z-10">
           {showBack ? (
             <button
+              id="top_header_back_btn"
               onClick={onBack}
               aria-label="Go back"
               className="w-10 h-10 -ml-2 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors text-primary active:scale-95"
@@ -38,11 +39,12 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
               <ArrowLeft className="w-5 h-5" />
             </button>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center">
+              {/* Preserved Full Transparent YAAD Logo (no circular crop, no artificial background) */}
               <img
-                src={APP_IMAGES.logoSmall}
+                src={APP_IMAGES.logoTransparent}
                 alt="YAAD Logo"
-                className="h-8 w-auto max-w-[34px] object-contain select-none"
+                className="h-8 sm:h-9 w-auto object-contain select-none transition-transform duration-200 hover:scale-105"
               />
             </div>
           )}
@@ -71,14 +73,16 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             rightAction
           ) : onMenuClick ? (
             <button
+              id="top_header_settings_btn"
               onClick={onMenuClick}
               aria-label="Open Settings"
-              className="w-10 h-10 -mr-2 flex items-center justify-center rounded-full text-primary hover:bg-surface-container-low active:scale-95 transition-colors"
+              className="w-10 h-10 -mr-2 flex items-center justify-center rounded-full text-primary hover:bg-surface-container-low active:scale-95 transition-all group"
             >
-              <SlidersHorizontal className="w-5 h-5 text-primary" />
+              <Settings className="w-5 h-5 text-primary stroke-[2] transition-transform duration-250 group-hover:rotate-45" />
             </button>
           ) : onAvatarClick ? (
             <button
+              id="top_header_avatar_btn"
               onClick={onAvatarClick}
               aria-label="User Profile"
               className="focus:outline-none focus:ring-2 focus:ring-primary/20 rounded-full active:scale-95 transition-transform -mr-1"
@@ -99,4 +103,3 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
     </header>
   );
 };
-
