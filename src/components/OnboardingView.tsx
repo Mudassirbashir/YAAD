@@ -106,19 +106,12 @@ export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) =>
           <div className="w-8" />
         )}
 
-        {step < 3 ? (
+        {step < 3 && (
           <button
             onClick={onComplete}
             className="text-on-surface-variant font-['Manrope'] text-sm font-semibold px-4 py-1.5 rounded-full hover:bg-surface-container-low transition-colors"
           >
             {t('onboarding.skip')}
-          </button>
-        ) : (
-          <button
-            onClick={onComplete}
-            className="text-on-surface-variant font-['Manrope'] text-xs font-semibold px-3 py-1.5 rounded-full hover:bg-surface-container-low transition-colors"
-          >
-            {t('onboarding.continueAsGuest')}
           </button>
         )}
       </div>
@@ -353,21 +346,13 @@ export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) =>
         </div>
 
         {/* Action Button for Step 1 & 2 */}
-        {step < 3 ? (
+        {step < 3 && (
           <button
             onClick={handleNext}
             className="w-full max-w-md h-[54px] rounded-full bg-primary text-on-primary font-['Manrope'] text-base font-semibold flex items-center justify-center gap-2 shadow-[0px_8px_20px_rgba(0,30,21,0.15)] hover:bg-primary-container active:scale-[0.98] transition-all"
           >
             <span>{t('onboarding.next')}</span>
             <ArrowRight className="w-5 h-5" />
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={onComplete}
-            className="text-xs font-['Manrope'] font-semibold text-outline hover:text-primary transition-colors py-1"
-          >
-            {t('onboarding.continueAsGuest')}
           </button>
         )}
       </div>

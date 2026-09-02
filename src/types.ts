@@ -89,6 +89,8 @@ export interface ShoppingList {
 export type ScreenType =
   | 'splash'
   | 'onboarding'
+  | 'auth'
+  | 'profile_setup'
   | 'home'
   | 'create_list'
   | 'add_items'
@@ -111,7 +113,11 @@ export interface UserProfile {
   full_name?: string;
   avatar_url?: string;
   language?: Language;
+  usage_purpose?: string;
+  referral_source?: string;
+  has_completed_setup?: boolean;
   updated_at?: string;
+  created_at?: string;
 }
 
 export interface CategorizeResult {

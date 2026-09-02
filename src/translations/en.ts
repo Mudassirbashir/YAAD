@@ -207,7 +207,7 @@ export const en = {
     done: 'Done',
   },
 
-  // Auth Modal
+  // Auth Modal & Screen
   auth: {
     signInTitle: 'Welcome Back',
     signInSubtitle: 'Sign in to sync and access your shopping lists anywhere.',
@@ -216,7 +216,7 @@ export const en = {
     emailLabel: 'Email Address',
     emailPlaceholder: 'you@example.com',
     passwordLabel: 'Password',
-    passwordPlaceholder: 'Enter your password',
+    passwordPlaceholder: 'Enter your password (min 6 chars)',
     fullNameLabel: 'Full Name',
     fullNamePlaceholder: 'Your name',
     signInBtn: 'Sign In',
@@ -225,7 +225,39 @@ export const en = {
     hasAccountPrompt: 'Already have an account?',
     switchSignUp: 'Create one',
     switchSignIn: 'Sign In',
-    guestNote: 'You can continue using YAAD as guest with instant device storage.',
+    guestNote: 'Sign in required to keep your shopping lists synchronized.',
+    googleBtn: 'Continue with Google',
+    passkeyBtn: 'Sign in with Passkey',
+    passkeyRegister: 'Register Device Passkey',
+    passkeyNotSupported: 'Passkeys are not supported on this device/browser. Please use Email or Google Sign-In.',
+    passkeyPrompt: 'Use biometric (Touch ID / Face ID) or security key',
+    orDivider: 'or continue with',
+    requireAuthNotice: 'Sign in or create an account to access your shopping lists',
+    secureNote: 'Your shopping lists are securely stored and synced across all your devices.',
+  },
+
+  // First-Time Profile Setup
+  profileSetup: {
+    title: 'Welcome to YAAD!',
+    subtitle: 'Let\'s personalize your shopping experience in two quick steps.',
+    nameLabel: 'Your Full Name',
+    namePlaceholder: 'e.g. Sara Ahmed',
+    nameRequired: 'Please enter your name to continue.',
+    languageLabel: 'Preferred Language',
+    usageLabel: 'What do you mainly use YAAD for? (Optional)',
+    usageOptionGroceries: 'Weekly Groceries & Staples',
+    usageOptionHousehold: 'Household & Personal Care',
+    usageOptionParty: 'Events, Parties & Gatherings',
+    usageOptionFamily: 'Family & Daily Errands',
+    usageOptionOther: 'General Shopping & To-Do',
+    referralLabel: 'How did you hear about YAAD? (Optional)',
+    referralFriends: 'Friends or Family',
+    referralSocial: 'Social Media',
+    referralSearch: 'Search Engine (Google)',
+    referralAppStore: 'App Store / Recommendation',
+    referralOther: 'Other',
+    submitBtn: 'Save & Start Shopping',
+    saving: 'Setting up your profile...',
   },
 
   // Profile Modal

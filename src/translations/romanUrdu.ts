@@ -209,7 +209,7 @@ export const romanUrdu: typeof en = {
     done: 'Ho gaya',
   },
 
-  // Auth Modal
+  // Auth Modal & Screen
   auth: {
     signInTitle: 'Khush Amdeed',
     signInSubtitle: 'Apni shopping lists sync karne k liye sign in karein.',
@@ -218,7 +218,7 @@ export const romanUrdu: typeof en = {
     emailLabel: 'Email Address',
     emailPlaceholder: 'you@example.com',
     passwordLabel: 'Password',
-    passwordPlaceholder: 'Apna password likhein',
+    passwordPlaceholder: 'Kam az kam 6 characters ka password',
     fullNameLabel: 'Pura Naam',
     fullNamePlaceholder: 'Apna naam likhein',
     signInBtn: 'Sign In',
@@ -227,7 +227,39 @@ export const romanUrdu: typeof en = {
     hasAccountPrompt: 'Pehle se account hai?',
     switchSignUp: 'Naya banayein',
     switchSignIn: 'Sign In',
-    guestNote: 'Aap bina account banaye bhi phone storage k sath YAAD use kar sakte hain.',
+    guestNote: 'Shopping lists mehfooz rakhne k liye sign in zaroori hai.',
+    googleBtn: 'Google k zariye Sign In',
+    passkeyBtn: 'Passkey se Sign In karein',
+    passkeyRegister: 'Device Passkey Banayein',
+    passkeyNotSupported: 'Is browser/device par Passkey support nahi hai. Email ya Google istemal karein.',
+    passkeyPrompt: 'Fingerprint / Face ID ya Security Key ka istemal karein',
+    orDivider: 'ya in k zariye chalein',
+    requireAuthNotice: 'Apni shopping lists dekhne k liye sign in karein ya naya account banayein',
+    secureNote: 'Aapka saara data mehfooz tareeqay se encrypted aur cloud par sync hota hai.',
+  },
+
+  // First-Time Profile Setup
+  profileSetup: {
+    title: 'YAAD mein Khush Amdeed!',
+    subtitle: 'Do asaan tareeqon mein apni pasand set karein.',
+    nameLabel: 'Aapka Pura Naam',
+    namePlaceholder: 'Jaise: Sara Ahmed',
+    nameRequired: 'Agay barhne k liye apna naam likhein.',
+    languageLabel: 'Pasandeeda Zaban',
+    usageLabel: 'Aap YAAD kis maqsad k liye use karein ge? (Ikhtiyari)',
+    usageOptionGroceries: 'Haftawar Grocery aur Sauda',
+    usageOptionHousehold: 'Ghar aur Zaroori Cheezein',
+    usageOptionParty: 'Taqreebaat aur Dawat ki Shopping',
+    usageOptionFamily: 'Ghar walon ki Rozmarrah Shopping',
+    usageOptionOther: 'Aam Shopping aur To-Do',
+    referralLabel: 'Aapko YAAD ka kahan se pata chala? (Ikhtiyari)',
+    referralFriends: 'Doston ya Rishtedaron se',
+    referralSocial: 'Social Media',
+    referralSearch: 'Google / Search',
+    referralAppStore: 'App Store / Mashwara',
+    referralOther: 'Kisi aur jagah se',
+    submitBtn: 'Save Karein aur Shuru Karein',
+    saving: 'Profile set ho raha hai...',
   },
 
   // Profile Modal

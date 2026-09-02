@@ -209,7 +209,7 @@ export const ur: typeof en = {
     done: 'ہو گیا',
   },
 
-  // Auth Modal
+  // Auth Modal & Screen
   auth: {
     signInTitle: 'خوش آمدید',
     signInSubtitle: 'اپنی خریداری کی لسٹیں سنک کرنے کے لیے سائن ان کریں۔',
@@ -218,7 +218,7 @@ export const ur: typeof en = {
     emailLabel: 'ای میل ایڈریس',
     emailPlaceholder: 'you@example.com',
     passwordLabel: 'پاس ورڈ',
-    passwordPlaceholder: 'اپنا پاس ورڈ درج کریں',
+    passwordPlaceholder: 'کم از کم 6 ہندسوں کا پاس ورڈ',
     fullNameLabel: 'پورا نام',
     fullNamePlaceholder: 'اپنا نام درج کریں',
     signInBtn: 'سائن ان کریں',
@@ -227,7 +227,39 @@ export const ur: typeof en = {
     hasAccountPrompt: 'پہلے سے اکاؤنٹ ہے؟',
     switchSignUp: 'نیا بنائیں',
     switchSignIn: 'سائن ان کریں',
-    guestNote: 'آپ بغیر اکاؤنٹ کے بھی فون اسٹوریج کے ساتھ یاد ایپ استعمال کر سکتے ہیں۔',
+    guestNote: 'خریداری کی لسٹیں محفوظ رکھنے کے لیے سائن ان ضروری ہے۔',
+    googleBtn: 'گوگل کے ذریعے سائن ان',
+    passkeyBtn: 'پاس کی سے سائن ان کریں',
+    passkeyRegister: 'ڈیوائس پاس کی بنائیں',
+    passkeyNotSupported: 'اس براؤزر/ڈیوائس پر پاس کی سپورٹ نہیں ہے۔ ای میل یا گوگل استعمال کریں۔',
+    passkeyPrompt: 'فنگر پرنٹ / فیس آئی ڈی یا سیکیورٹی کی استعمال کریں',
+    orDivider: 'یا ان کے ذریعے چلیں',
+    requireAuthNotice: 'خریداری کی لسٹیں دیکھنے کے لیے لاگ ان کریں یا اکاؤنٹ بنائیں',
+    secureNote: 'آپ کا سارا ڈیٹا محفوظ طریقے سے کلاؤڈ پر محفوظ اور سنک ہوتا ہے۔',
+  },
+
+  // First-Time Profile Setup
+  profileSetup: {
+    title: 'یاد ایپ میں خوش آمدید!',
+    subtitle: 'دو آسان مراحل میں اپنی پسند منتخب کریں۔',
+    nameLabel: 'آپ کا پورا نام',
+    namePlaceholder: 'مثلاً: سارہ احمد',
+    nameRequired: 'آگے بڑھنے کے لیے اپنا نام درج کریں۔',
+    languageLabel: 'پسندیدہ زبان',
+    usageLabel: 'آپ یاد ایپ کس مقصد کے لیے استعمال کریں گے؟ (اختیاری)',
+    usageOptionGroceries: 'ہفتہ وار سودا اور راشن',
+    usageOptionHousehold: 'گھریلو اور ضروری اشیاء',
+    usageOptionParty: 'تقریبات اور دعوت کی خریداری',
+    usageOptionFamily: 'گھر والوں کے روزمرہ کام',
+    usageOptionOther: 'عام خریداری اور فہرست',
+    referralLabel: 'آپ کو یاد ایپ کا کہاں سے پتہ چلا؟ (اختیاری)',
+    referralFriends: 'دوستوں یا رشتہ داروں سے',
+    referralSocial: 'سوشل میڈیا',
+    referralSearch: 'گوگل / سرچ',
+    referralAppStore: 'ایپ اسٹور / مشورہ',
+    referralOther: 'کسی اور جگہ سے',
+    submitBtn: 'محفوظ کریں اور شروع کریں',
+    saving: 'پروفائل سیٹ ہو رہی ہے...',
   },
 
   // Profile Modal

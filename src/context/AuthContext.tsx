@@ -8,6 +8,11 @@ import {
   deleteUserAccountData,
   signInWithGoogleOAuth,
 } from '../lib/supabase';
+import {
+  authenticateWithPasskey,
+  registerPasskey,
+  hasRegisteredPasskey,
+} from '../lib/passkey';
 import { UserProfile, AppLanguage } from '../types';
 
 interface AuthContextType {
@@ -19,9 +24,19 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
+  signInWithPasskeyAuth: (email: string) => Promise<{ error: Error | null }>;
+  registerDevicePasskey: (email: string, fullName: string) => Promise<{ error: Error | null }>;
+  hasPasskey: (email: string) => boolean;
   signOut: () => Promise<void>;
   deleteAccount: () => Promise<{ error: Error | null }>;
-  updateUserProfile: (updates: { full_name?: string; avatar_url?: string; language?: AppLanguage }) => Promise<{ error: Error | null }>;
+  updateUserProfile: (updates: {
+    full_name?: string;
+    avatar_url?: string;
+    language?: AppLanguage;
+    usage_purpose?: string;
+    referral_source?: string;
+    has_completed_setup?: boolean;
+  }) => Promise<{ error: Error | null }>;
   refreshProfile: () => Promise<void>;
 }
 
@@ -32,6 +47,31 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // Helper to sync user metadata (Google OAuth or email) into profiles table
+  const syncProfileFromUser = async (authUser: User) => {
+    try {
+      const existingProfile = await getProfile(authUser.id);
+      const meta = authUser.user_metadata || {};
+      const metaFullName = meta.full_name || meta.name || '';
+      const metaAvatar = meta.avatar_url || meta.picture || '';
+
+      if (!existingProfile || !existingProfile.full_name) {
+        if (metaFullName || metaAvatar) {
+          const { data } = await supabaseUpdateProfile(authUser.id, {
+            full_name: metaFullName || existingProfile?.full_name || undefined,
+            avatar_url: metaAvatar || existingProfile?.avatar_url || undefined,
+            email: authUser.email,
+          });
+          if (data) return data;
+        }
+      }
+      return existingProfile;
+    } catch (e) {
+      console.warn('Error syncing profile from user metadata:', e);
+      return null;
+    }
+  };
 
   // Initialize session and auth state listener
   useEffect(() => {
@@ -54,13 +94,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setUser(initialSession?.user || null);
 
           if (initialSession?.user) {
-            const userProfile = await getProfile(initialSession.user.id);
+            const synced = await syncProfileFromUser(initialSession.user);
             if (isMounted) {
-              setProfile(userProfile || {
+              setProfile(synced || {
                 id: initialSession.user.id,
-                full_name: initialSession.user.user_metadata?.full_name || null,
+                full_name: initialSession.user.user_metadata?.full_name || initialSession.user.user_metadata?.name || null,
                 email: initialSession.user.email || null,
-                avatar_url: initialSession.user.user_metadata?.avatar_url || null,
+                avatar_url: initialSession.user.user_metadata?.avatar_url || initialSession.user.user_metadata?.picture || null,
               });
             }
           }
@@ -74,7 +114,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     initAuth();
 
-    // Listen to Supabase auth state changes
+    // Listen to Supabase auth state changes (e.g. Google OAuth redirect, login, logout)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, currentSession) => {
         if (!isMounted) return;
@@ -82,13 +122,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setUser(currentSession?.user || null);
 
         if (currentSession?.user) {
-          const userProfile = await getProfile(currentSession.user.id);
+          const synced = await syncProfileFromUser(currentSession.user);
           if (isMounted) {
-            setProfile(userProfile || {
+            setProfile(synced || {
               id: currentSession.user.id,
-              full_name: currentSession.user.user_metadata?.full_name || null,
+              full_name: currentSession.user.user_metadata?.full_name || currentSession.user.user_metadata?.name || null,
               email: currentSession.user.email || null,
-              avatar_url: currentSession.user.user_metadata?.avatar_url || null,
+              avatar_url: currentSession.user.user_metadata?.avatar_url || currentSession.user.user_metadata?.picture || null,
             });
           }
         } else {
@@ -125,8 +165,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
 
       if (data.user) {
-        const p = await getProfile(data.user.id);
-        setProfile(p || {
+        const synced = await syncProfileFromUser(data.user);
+        setProfile(synced || {
           id: data.user.id,
           full_name: data.user.user_metadata?.full_name || null,
           email: data.user.email || null,
@@ -163,7 +203,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
 
       if (data.user) {
-        // Explicitly update profile table to guarantee metadata persistence
+        // Explicitly create/update profile table record
         await supabaseUpdateProfile(data.user.id, {
           full_name: trimmedName,
           email: trimmedEmail,
@@ -187,6 +227,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const signInWithGoogle = async () => {
     return signInWithGoogleOAuth();
+  };
+
+  const signInWithPasskeyAuth = async (email: string) => {
+    const result = await authenticateWithPasskey(email);
+    if (!result.success) {
+      return { error: new Error(result.error || 'Passkey authentication failed.') };
+    }
+    return { error: null };
+  };
+
+  const registerDevicePasskey = async (email: string, fullName: string) => {
+    const result = await registerPasskey(email, fullName);
+    if (!result.success) {
+      return { error: new Error(result.error || 'Passkey registration failed.') };
+    }
+    return { error: null };
+  };
+
+  const hasPasskey = (email: string) => {
+    return hasRegisteredPasskey(email);
   };
 
   const signOut = async () => {
@@ -216,15 +276,32 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         console.warn('Warning deleting account data from Supabase:', dataError.message);
       }
 
-      // 2. Clear user-specific localStorage cache
+      // 2. Call backend /api/account/delete endpoint with JWT token for full admin clean up
+      if (session?.access_token) {
+        try {
+          await fetch('/api/account/delete', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ userId: currentUserId }),
+          });
+        } catch (e) {
+          console.warn('Server account delete notice:', e);
+        }
+      }
+
+      // 3. Clear user-specific localStorage cache
       try {
         localStorage.removeItem(`yaad_shopping_lists_u_${currentUserId}`);
         localStorage.removeItem('yaad_shopping_lists_guest');
+        localStorage.removeItem('yaad_user_language');
       } catch (e) {
         console.warn('Could not clear user localStorage:', e);
       }
 
-      // 3. Terminate Supabase session
+      // 4. Terminate Supabase session
       if (supabase) {
         try {
           await supabase.auth.signOut();
@@ -233,7 +310,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
       }
 
-      // 4. Clear local auth state
+      // 5. Clear local auth state
       setUser(null);
       setSession(null);
       setProfile(null);
@@ -245,7 +322,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const updateUserProfile = async (updates: { full_name?: string; avatar_url?: string; language?: AppLanguage }) => {
+  const updateUserProfile = async (updates: {
+    full_name?: string;
+    avatar_url?: string;
+    language?: AppLanguage;
+    usage_purpose?: string;
+    referral_source?: string;
+    has_completed_setup?: boolean;
+  }) => {
     if (!user) {
       return { error: new Error('No authenticated user') };
     }
@@ -255,6 +339,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         full_name: updates.full_name,
         avatar_url: updates.avatar_url,
         language: updates.language,
+        usage_purpose: updates.usage_purpose,
+        referral_source: updates.referral_source,
+        has_completed_setup: updates.has_completed_setup,
         email: user.email,
       });
 
@@ -265,7 +352,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (data) {
         setProfile(data);
       } else {
-        setProfile((prev) => prev ? { ...prev, ...updates } : null);
+        setProfile((prev) => (prev ? { ...prev, ...updates } : null));
       }
 
       return { error: null };
@@ -286,6 +373,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         signIn,
         signUp,
         signInWithGoogle,
+        signInWithPasskeyAuth,
+        registerDevicePasskey,
+        hasPasskey,
         signOut,
         deleteAccount,
         updateUserProfile,
