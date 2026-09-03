@@ -1233,3 +1233,84 @@ export function setupNetworkSyncListener(
     window.removeEventListener('online', handleOnline);
   };
 }
+
+/**
+ * Translates technical Supabase authentication errors, rate limits, and network
+ * failures into clean, friendly, reassuring messages for end users.
+ */
+export function formatAuthErrorMessage(error: unknown): string {
+  if (!error) return 'An unexpected error occurred. Please try again.';
+  const rawMsg = (error instanceof Error ? error.message : String(error)).trim();
+  const lower = rawMsg.toLowerCase();
+
+  // Rate limit / security throttle detection
+  if (
+    lower.includes('security purposes') ||
+    lower.includes('rate limit') ||
+    lower.includes('too many requests') ||
+    lower.includes('over_email_send_rate_limit')
+  ) {
+    const secondsMatch = rawMsg.match(/(\d+)\s*seconds?/i);
+    if (secondsMatch) {
+      return `Please wait ${secondsMatch[1]} seconds before trying again.`;
+    }
+    return 'Too many attempts. Please wait a moment before trying again.';
+  }
+
+  // Timeout or abort detection
+  if (lower.includes('timed out') || lower.includes('timeout') || lower.includes('aborted') || lower.includes('aborterror')) {
+    return 'The connection timed out. Please check your internet connection and try again.';
+  }
+
+  // Network / fetch failure detection
+  if (
+    lower.includes('failed to fetch') ||
+    lower.includes('network error') ||
+    lower.includes('networkrequestfailed') ||
+    lower.includes('err_internet_disconnected') ||
+    lower.includes('err_connection')
+  ) {
+    return 'Unable to reach the server. Please check your internet connection and try again.';
+  }
+
+  // Invalid credentials
+  if (
+    lower.includes('invalid login credentials') ||
+    lower.includes('invalid email or password') ||
+    lower.includes('invalid_grant')
+  ) {
+    return 'Incorrect email or password. Please check your credentials and try again.';
+  }
+
+  // Duplicate user signup
+  if (
+    lower.includes('user already registered') ||
+    lower.includes('already registered') ||
+    lower.includes('already exists') ||
+    lower.includes('email already in use')
+  ) {
+    return 'An account with this email already exists. Please sign in instead.';
+  }
+
+  // Password constraints
+  if (lower.includes('password should be at least') || lower.includes('password is too short')) {
+    return 'Password must be at least 6 characters long.';
+  }
+
+  // Invalid email
+  if (lower.includes('invalid email') || lower.includes('email is invalid') || lower.includes('unable to validate email')) {
+    return 'Please enter a valid email address.';
+  }
+
+  if (lower.includes('signup requires a valid password')) {
+    return 'Please provide a valid password.';
+  }
+
+  // Clean fallback without technical jargon
+  if (lower.includes('database error') || lower.includes('postgres') || lower.includes('postgrest') || lower.includes('500')) {
+    return 'A temporary service issue occurred. Please try again shortly.';
+  }
+
+  return rawMsg || 'Authentication failed. Please try again.';
+}
+

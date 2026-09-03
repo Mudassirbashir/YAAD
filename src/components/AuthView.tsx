@@ -12,6 +12,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { APP_IMAGES } from '../data/initialData';
+import { formatAuthErrorMessage } from '../lib/supabase';
 
 interface AuthViewProps {
   initialMode?: 'signin' | 'signup';
@@ -34,6 +35,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return; // Prevent duplicate rapid submissions
+
     setErrorMessage(null);
 
     const trimmedEmail = email.trim();
@@ -58,23 +61,14 @@ export const AuthView: React.FC<AuthViewProps> = ({
       if (mode === 'signup') {
         const { error } = await signUp(trimmedEmail, password, fullName.trim());
         if (error) {
-          // Format user-friendly error message
-          let friendly = error.message;
-          if (friendly.toLowerCase().includes('already registered')) {
-            friendly = 'An account with this email already exists. Please sign in instead.';
-          }
-          setErrorMessage(friendly);
+          setErrorMessage(formatAuthErrorMessage(error));
           setLoading(false);
           return;
         }
       } else {
         const { error } = await signIn(trimmedEmail, password);
         if (error) {
-          let friendly = error.message;
-          if (friendly.toLowerCase().includes('invalid login credentials')) {
-            friendly = 'Incorrect email or password. Please check your credentials and try again.';
-          }
-          setErrorMessage(friendly);
+          setErrorMessage(formatAuthErrorMessage(error));
           setLoading(false);
           return;
         }
@@ -82,8 +76,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
       if (onSuccess) onSuccess();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Authentication failed. Please try again.';
-      setErrorMessage(msg);
+      setErrorMessage(formatAuthErrorMessage(err));
     } finally {
       setLoading(false);
     }

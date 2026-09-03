@@ -9,9 +9,6 @@ import {
   Trash2,
   ChevronRight,
   Database,
-  UserX,
-  Loader2,
-  AlertTriangle,
   Volume2,
   VolumeX,
 } from 'lucide-react';
@@ -39,12 +36,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onDeleteAccount,
   onOpenAuth,
 }) => {
-  const { user, profile, isConfigured, signOut, deleteAccount } = useAuth();
+  const { user, profile, isConfigured, signOut } = useAuth();
   const { language, setLanguage, t } = useLanguage();
   const [showClearConfirm, setShowClearConfirm] = useState(false);
-  const [showDeleteAccountConfirm, setShowDeleteAccountConfirm] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [soundActive, setSoundActive] = useState<boolean>(() => isSoundEnabled());
 
   const handleToggleSound = () => {
@@ -318,29 +312,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
             <ChevronRight className="w-4 h-4 text-error" />
           </button>
-
-          {user && (
-            <button
-              onClick={() => {
-                setDeleteError(null);
-                setShowDeleteAccountConfirm(true);
-              }}
-              className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-error-container/20 hover:bg-error-container/40 transition-colors text-left"
-            >
-              <div className="flex items-center gap-3">
-                <UserX className="w-5 h-5 text-error" />
-                <div>
-                  <span className="font-['Manrope'] text-sm font-semibold text-error block">
-                    {t('settings.deleteAccount')}
-                  </span>
-                  <span className="font-['Manrope'] text-xs text-on-surface-variant">
-                    {t('settings.deleteAccountDesc')}
-                  </span>
-                </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-error" />
-            </button>
-          )}
         </div>
 
         {/* Done Button */}
@@ -384,85 +355,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 className="h-10 rounded-full bg-error text-on-error font-['Manrope'] text-xs font-semibold hover:opacity-90 transition-opacity"
               >
                 {t('delete')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Account Confirmation Modal */}
-      {showDeleteAccountConfirm && (
-        <div
-          onClick={() => {
-            if (!isDeleting) setShowDeleteAccountConfirm(false);
-          }}
-          className="fixed inset-0 z-60 flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-200"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="bg-surface-container-lowest rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-error/30 space-y-4"
-          >
-            <div className="flex items-center gap-2 text-error">
-              <AlertTriangle className="w-5 h-5" />
-              <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-lg">
-                {t('settings.deleteAccountConfirmTitle')}
-              </h3>
-            </div>
-            
-            <p className="font-['Manrope'] text-xs text-on-surface-variant leading-relaxed">
-              {t('settings.deleteAccountConfirmDesc')}
-            </p>
-
-            {deleteError && (
-              <div className="p-3 bg-error-container/30 border border-error/30 rounded-2xl text-xs text-error font-['Manrope']">
-                {deleteError}
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 gap-2 pt-2">
-              <button
-                type="button"
-                disabled={isDeleting}
-                onClick={() => setShowDeleteAccountConfirm(false)}
-                className="h-11 rounded-full bg-surface-container text-primary font-['Manrope'] text-xs font-semibold hover:bg-surface-container-high disabled:opacity-50 transition-colors"
-              >
-                {t('cancel')}
-              </button>
-              <button
-                type="button"
-                disabled={isDeleting}
-                onClick={async () => {
-                  setIsDeleting(true);
-                  setDeleteError(null);
-                  try {
-                    if (onDeleteAccount) {
-                      await onDeleteAccount();
-                    } else {
-                      const { error } = await deleteAccount();
-                      if (error) {
-                        setDeleteError(error.message);
-                        setIsDeleting(false);
-                        return;
-                      }
-                    }
-                    setShowDeleteAccountConfirm(false);
-                    onClose();
-                  } catch (err: unknown) {
-                    const msg = err instanceof Error ? err.message : 'Account deletion failed';
-                    setDeleteError(msg);
-                    setIsDeleting(false);
-                  }
-                }}
-                className="h-11 rounded-full bg-error text-on-error font-['Manrope'] text-xs font-bold hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center justify-center gap-1.5"
-              >
-                {isDeleting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>{t('settings.deletingAccount')}</span>
-                  </>
-                ) : (
-                  <span>{t('settings.deleteAccount')}</span>
-                )}
               </button>
             </div>
           </div>

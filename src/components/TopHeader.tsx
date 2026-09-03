@@ -67,13 +67,25 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
         <div id="top_header_title" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none px-4 max-w-[62%] sm:max-w-[70%]">
           <h1 className="text-lg sm:text-xl font-extrabold font-['Plus_Jakarta_Sans'] text-primary tracking-tight truncate flex items-center justify-center">
             {title === 'YAAD' || title === 'یاد' ? (
-              <span className="flex items-center gap-2 justify-center">
-                <span className="font-extrabold text-primary tracking-tight">YAAD</span>
-                <span className="text-primary/30 font-light text-xs">|</span>
-                <span className="font-urdu-brand text-2xl sm:text-[26px] leading-none font-bold text-primary pt-1 pb-0.5 tracking-normal">
+              <div
+                id="top_header_wordmark"
+                className="inline-flex items-center gap-2 justify-center select-none"
+                dir="ltr"
+              >
+                <span className="font-extrabold text-primary tracking-tight text-lg sm:text-xl font-['Plus_Jakarta_Sans'] leading-none">
+                  YAAD
+                </span>
+                <span className="text-primary/30 font-light text-xs leading-none select-none" aria-hidden="true">
+                  |
+                </span>
+                <span
+                  lang="ur"
+                  dir="rtl"
+                  className="font-urdu-wordmark text-xl sm:text-2xl font-bold text-primary leading-none select-none"
+                >
                   یاد
                 </span>
-              </span>
+              </div>
             ) : (
               <BidiText>{title}</BidiText>
             )}

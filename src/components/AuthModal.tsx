@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { APP_IMAGES } from '../data/initialData';
+import { formatAuthErrorMessage } from '../lib/supabase';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -47,6 +48,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
     setErrorMsg(null);
     setSuccessMsg(null);
 
@@ -71,27 +74,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       if (mode === 'signup') {
         const { error } = await signUp(email, password, fullName);
         if (error) {
-          setErrorMsg(error.message);
+          setErrorMsg(formatAuthErrorMessage(error));
         } else {
           setSuccessMsg('Account created successfully!');
           setTimeout(() => {
             onClose();
-          }, 800);
+          }, 400);
         }
       } else {
         const { error } = await signIn(email, password);
         if (error) {
-          setErrorMsg(error.message);
+          setErrorMsg(formatAuthErrorMessage(error));
         } else {
           setSuccessMsg('Signed in successfully!');
           setTimeout(() => {
             onClose();
-          }, 600);
+          }, 300);
         }
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'An unexpected error occurred';
-      setErrorMsg(msg);
+      setErrorMsg(formatAuthErrorMessage(err));
     } finally {
       setIsSubmitting(false);
     }

@@ -82,10 +82,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // Sign out & Account Deletion confirmation
+  // Sign out confirmation
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
   // Initialize Name from Profile/User
@@ -105,13 +103,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       if (e.key === 'Escape') {
         if (showAvatarPicker) setShowAvatarPicker(false);
         if (showSignOutConfirm && !isSigningOut) setShowSignOutConfirm(false);
-        if (showDeleteConfirm && !isDeleting) setShowDeleteConfirm(false);
         if (isEditingName) setIsEditingName(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showAvatarPicker, showSignOutConfirm, showDeleteConfirm, isEditingName, isSigningOut, isDeleting]);
+  }, [showAvatarPicker, showSignOutConfirm, isEditingName, isSigningOut]);
 
   // Play a simple synthesized audio chime for preview
   const playPreviewChime = () => {
@@ -256,17 +253,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     } finally {
       setIsSigningOut(false);
       setShowSignOutConfirm(false);
-    }
-  };
-
-  // Handle Account Deletion
-  const handleConfirmDeleteAccount = async () => {
-    setIsDeleting(true);
-    try {
-      await onDeleteAccount();
-    } finally {
-      setIsDeleting(false);
-      setShowDeleteConfirm(false);
     }
   };
 
@@ -804,30 +790,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   {t('settings.signOut')}
                 </button>
               </div>
-
-              {/* Danger Zone: Delete Account */}
-              <div className="pt-4 border-t border-error/20 space-y-2">
-                <div className="p-4 rounded-2xl bg-error-container/30 border border-error/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-error font-bold text-sm">
-                      <Trash2 className="w-4 h-4" />
-                      <h4>{t('settings.deleteAccount')}</h4>
-                    </div>
-                    <p className="text-xs text-on-surface-variant font-medium">
-                      {t('settings.deleteAccountWarning')}
-                    </p>
-                  </div>
-
-                  <button
-                    id="delete_account_trigger_btn"
-                    type="button"
-                    onClick={() => setShowDeleteConfirm(true)}
-                    className="px-4 py-2 text-xs font-bold text-error hover:bg-error/10 border border-error/30 rounded-xl transition-colors shrink-0"
-                  >
-                    {t('settings.deleteAccount')}
-                  </button>
-                </div>
-              </div>
             </div>
           </section>
         )}
@@ -892,54 +854,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 className="flex-1 py-2.5 text-xs font-bold text-on-primary bg-primary hover:bg-primary/90 rounded-2xl transition-colors disabled:opacity-50"
               >
                 {isSigningOut ? t('settings.saving') : t('settings.signOut')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ==================================================================== */}
-      {/* MODAL 3: Delete Account Explicit Confirmation */}
-      {/* ==================================================================== */}
-      {showDeleteConfirm && (
-        <div
-          onClick={() => !isDeleting && setShowDeleteConfirm(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-200"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="bg-surface-container-lowest rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-error/30 space-y-4 text-center animate-in zoom-in-95 duration-200"
-          >
-            <div className="w-14 h-14 rounded-full bg-error-container text-error flex items-center justify-center mx-auto shadow-sm">
-              <Trash2 className="w-7 h-7" />
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="text-lg font-bold text-on-surface font-['Manrope']">
-                {t('settings.deleteAccountConfirmTitle')}
-              </h3>
-              <p className="text-xs text-on-surface-variant leading-relaxed">
-                {t('settings.deleteAccountConfirmDesc')}
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-2 pt-2">
-              <button
-                id="confirm_delete_account_btn"
-                type="button"
-                onClick={handleConfirmDeleteAccount}
-                disabled={isDeleting}
-                className="w-full py-3 text-xs font-bold text-on-error bg-error hover:bg-error/90 rounded-2xl shadow-sm transition-all active:scale-98 disabled:opacity-50"
-              >
-                {isDeleting ? t('settings.deletingAccount') : t('settings.deleteAccountBtn')}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(false)}
-                disabled={isDeleting}
-                className="w-full py-2.5 text-xs font-semibold text-outline hover:text-on-surface bg-surface-container-low hover:bg-surface-container rounded-2xl transition-colors"
-              >
-                {t('settings.cancel')}
               </button>
             </div>
           </div>

@@ -19,13 +19,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   onDeleteAccount,
 }) => {
   const { t } = useLanguage();
-  const { user, profile, isConfigured, signOut, deleteAccount, updateUserProfile } = useAuth();
+  const { user, profile, isConfigured, signOut, updateUserProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
 
   useEffect(() => {
