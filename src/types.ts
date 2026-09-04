@@ -1,32 +1,45 @@
 import { Language } from './translations';
 
 export type CategoryId =
-  | 'fruits'
   | 'vegetables'
+  | 'fruits'
   | 'dairy'
   | 'meat'
+  | 'poultry'
   | 'seafood'
-  | 'eggs'
   | 'bakery'
-  | 'beverages'
-  | 'grocery'
+  | 'grains'
+  | 'rice'
+  | 'pulses'
   | 'spices'
   | 'herbs'
   | 'dry_fruits'
+  | 'beverages'
+  | 'snacks'
   | 'frozen'
+  | 'sauces_condiments'
+  | 'cooking_essentials'
   | 'household'
   | 'cleaning'
   | 'personal_care'
+  | 'baby_care'
   | 'health'
-  | 'baby'
   | 'stationery'
+  | 'kitchen'
   | 'electronics'
-  | 'snacks'
-  | 'clothing'
+  | 'uncategorized'
   | 'other'
   // Backward compatibility aliases:
+  | 'eggs'
+  | 'grocery'
+  | 'herbal'
+  | 'baby'
+  | 'pet_supplies'
+  | 'home'
+  | 'hardware'
+  | 'clothing'
+  | 'canned_food'
   | 'grains_staples'
-  | 'baby_care'
   | 'medicines';
 
 export interface CategoryInfo {
@@ -37,29 +50,34 @@ export interface CategoryInfo {
 }
 
 export const CATEGORIES_LIST: CategoryInfo[] = [
-  { id: 'fruits', icon: 'nutrition', defaultName: 'Fruits', order: 1 },
-  { id: 'vegetables', icon: 'eco', defaultName: 'Vegetables', order: 2 },
+  { id: 'vegetables', icon: 'eco', defaultName: 'Vegetables', order: 1 },
+  { id: 'fruits', icon: 'nutrition', defaultName: 'Fruits', order: 2 },
   { id: 'dairy', icon: 'water_drop', defaultName: 'Dairy', order: 3 },
   { id: 'meat', icon: 'set_meal', defaultName: 'Meat', order: 4 },
-  { id: 'seafood', icon: 'phishing', defaultName: 'Seafood', order: 5 },
-  { id: 'eggs', icon: 'egg', defaultName: 'Eggs', order: 6 },
+  { id: 'poultry', icon: 'egg', defaultName: 'Poultry & Eggs', order: 5 },
+  { id: 'seafood', icon: 'phishing', defaultName: 'Seafood', order: 6 },
   { id: 'bakery', icon: 'bakery_dining', defaultName: 'Bakery', order: 7 },
-  { id: 'beverages', icon: 'local_cafe', defaultName: 'Beverages', order: 8 },
-  { id: 'grocery', icon: 'inventory_2', defaultName: 'Grocery', order: 9 },
-  { id: 'spices', icon: 'local_fire_department', defaultName: 'Spices', order: 10 },
-  { id: 'herbs', icon: 'spa', defaultName: 'Herbs', order: 11 },
-  { id: 'dry_fruits', icon: 'grain', defaultName: 'Dry Fruits', order: 12 },
-  { id: 'frozen', icon: 'ac_unit', defaultName: 'Frozen', order: 13 },
-  { id: 'snacks', icon: 'cookie', defaultName: 'Snacks', order: 14 },
-  { id: 'household', icon: 'home', defaultName: 'Household', order: 15 },
-  { id: 'cleaning', icon: 'cleaning_services', defaultName: 'Cleaning', order: 16 },
-  { id: 'personal_care', icon: 'soap', defaultName: 'Personal Care', order: 17 },
-  { id: 'health', icon: 'medication', defaultName: 'Health', order: 18 },
-  { id: 'baby', icon: 'child_care', defaultName: 'Baby', order: 19 },
-  { id: 'stationery', icon: 'edit_note', defaultName: 'Stationery', order: 20 },
-  { id: 'electronics', icon: 'devices', defaultName: 'Electronics', order: 21 },
-  { id: 'clothing', icon: 'checkroom', defaultName: 'Clothing', order: 22 },
-  { id: 'other', icon: 'category', defaultName: 'Other', order: 23 },
+  { id: 'cooking_essentials', icon: 'inventory_2', defaultName: 'Cooking Essentials', order: 8 },
+  { id: 'rice', icon: 'grain', defaultName: 'Rice', order: 9 },
+  { id: 'grains', icon: 'grain', defaultName: 'Grains', order: 10 },
+  { id: 'pulses', icon: 'soup', defaultName: 'Pulses & Lentils', order: 11 },
+  { id: 'spices', icon: 'local_fire_department', defaultName: 'Spices', order: 12 },
+  { id: 'herbs', icon: 'spa', defaultName: 'Herbs', order: 13 },
+  { id: 'dry_fruits', icon: 'grain', defaultName: 'Dry Fruits', order: 14 },
+  { id: 'beverages', icon: 'local_cafe', defaultName: 'Beverages', order: 15 },
+  { id: 'snacks', icon: 'cookie', defaultName: 'Snacks', order: 16 },
+  { id: 'frozen', icon: 'ac_unit', defaultName: 'Frozen Food', order: 17 },
+  { id: 'sauces_condiments', icon: 'liquor', defaultName: 'Sauces & Condiments', order: 18 },
+  { id: 'household', icon: 'home', defaultName: 'Household', order: 19 },
+  { id: 'kitchen', icon: 'home', defaultName: 'Kitchen', order: 20 },
+  { id: 'cleaning', icon: 'cleaning_services', defaultName: 'Cleaning', order: 21 },
+  { id: 'personal_care', icon: 'soap', defaultName: 'Personal Care', order: 22 },
+  { id: 'baby_care', icon: 'child_care', defaultName: 'Baby Care', order: 23 },
+  { id: 'health', icon: 'medication', defaultName: 'Medicines / Health', order: 24 },
+  { id: 'stationery', icon: 'edit_note', defaultName: 'Stationery', order: 25 },
+  { id: 'electronics', icon: 'devices', defaultName: 'Electronics', order: 26 },
+  { id: 'uncategorized', icon: 'category', defaultName: 'Uncategorized', order: 27 },
+  { id: 'other', icon: 'category', defaultName: 'Other', order: 28 },
 ];
 
 export const CATEGORY_MAP: Record<CategoryId, CategoryInfo> = CATEGORIES_LIST.reduce(
@@ -69,9 +87,17 @@ export const CATEGORY_MAP: Record<CategoryId, CategoryInfo> = CATEGORIES_LIST.re
   },
   {
     // Aliases mapped to their primary targets
-    grains_staples: { id: 'grocery', icon: 'inventory_2', defaultName: 'Grocery', order: 9 },
-    baby_care: { id: 'baby', icon: 'child_care', defaultName: 'Baby', order: 19 },
-    medicines: { id: 'health', icon: 'medication', defaultName: 'Health', order: 18 },
+    eggs: { id: 'poultry', icon: 'egg', defaultName: 'Poultry & Eggs', order: 5 },
+    grocery: { id: 'cooking_essentials', icon: 'inventory_2', defaultName: 'Cooking Essentials', order: 8 },
+    herbal: { id: 'herbs', icon: 'spa', defaultName: 'Herbs', order: 13 },
+    baby: { id: 'baby_care', icon: 'child_care', defaultName: 'Baby Care', order: 23 },
+    pet_supplies: { id: 'household', icon: 'pets', defaultName: 'Pet Supplies', order: 29 },
+    home: { id: 'household', icon: 'home', defaultName: 'Household', order: 19 },
+    hardware: { id: 'household', icon: 'build', defaultName: 'Household', order: 19 },
+    clothing: { id: 'household', icon: 'checkroom', defaultName: 'Clothing', order: 30 },
+    canned_food: { id: 'cooking_essentials', icon: 'inventory_2', defaultName: 'Canned Food', order: 8 },
+    grains_staples: { id: 'cooking_essentials', icon: 'inventory_2', defaultName: 'Cooking Essentials', order: 8 },
+    medicines: { id: 'health', icon: 'medication', defaultName: 'Medicines / Health', order: 24 },
   } as Record<CategoryId, CategoryInfo>
 );
 
@@ -80,16 +106,109 @@ export type CategoryType = string;
 
 export interface CanonicalItem {
   id: string;
+  // Formal Canonical Spec
+  canonical_name?: string;
+  english_name?: string;
+  urdu_name?: string;
+  roman_urdu_names?: string[];
+  aliases: string[];
+  category?: CategoryId;
+  subcategory?: string;
+  common_spellings?: string[];
+  confidence?: number;
+  active?: boolean;
+  emoji?: string;
+
+  // CamelCase accessors for seamless backward compatibility
   canonicalName: string;
   nameUrdu: string;
   nameRomanUrdu: string;
   categoryId: CategoryId;
   defaultUnit?: string;
-  aliases: string[];
 }
+
+export interface CategoryRecord {
+  id: CategoryId;
+  name_en: string;
+  name_ur: string;
+  name_roman_urdu: string;
+  icon: string;
+  sort_order: number;
+  active: boolean;
+}
+
+export interface SubcategoryRecord {
+  id: string;
+  category_id: CategoryId;
+  name_en: string;
+  name_ur: string;
+  name_roman_urdu: string;
+  sort_order: number;
+  active: boolean;
+}
+
+export interface MasterCatalogItem {
+  id: string;
+  canonical_name: string;
+  english_name: string;
+  urdu_name: string;
+  roman_urdu_names: string[];
+  aliases: string[];
+  common_misspellings: string[];
+  category_id: CategoryId;
+  subcategory_id: string;
+  searchable_terms: string[];
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+  emoji?: string;
+  default_unit?: string;
+
+  // CamelCase accessors for backward compatibility
+  canonicalName?: string;
+  nameUrdu?: string;
+  nameRomanUrdu?: string;
+  categoryId?: CategoryId;
+  defaultUnit?: string;
+}
+
+export interface ItemAliasRecord {
+  id: string;
+  item_id: string;
+  alias: string;
+  language?: 'en' | 'ur' | 'roman' | 'misspelling' | 'mixed';
+  created_at?: string;
+}
+
+export interface UserItemPersonalization {
+  id: string;
+  user_id: string;
+  item_id: string;
+  purchase_count: number;
+  last_purchased_at: string;
+  purchase_frequency?: string;
+  preferred_quantity?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export type RecognitionMatchSource =
+  | 'exact_item'
+  | 'exact_alias'
+  | 'prefix_match'
+  | 'phonetic_match'
+  | 'common_spelling'
+  | 'token_match'
+  | 'fuzzy_match'
+  | 'user_override'
+  | 'keyword_rule'
+  | 'local_rule'
+  | 'ai'
+  | 'fallback';
 
 export interface SmartRecognitionResult {
   canonicalName: string;
+  englishName?: string;
   nameUrdu?: string;
   nameRomanUrdu?: string;
   quantity?: string;
@@ -97,8 +216,10 @@ export interface SmartRecognitionResult {
   categoryId: CategoryId;
   confidence: number;
   isRecognized: boolean;
+  unresolved?: boolean;
+  emoji?: string;
   rawInput: string;
-  matchedVia: 'exact_alias' | 'phonetic_match' | 'fuzzy_match' | 'user_override' | 'keyword_rule' | 'ai' | 'fallback';
+  matchedVia: RecognitionMatchSource;
 }
 
 export interface ShoppingItem {
@@ -113,12 +234,36 @@ export interface ShoppingItem {
   canonicalName?: string;
   nameUrdu?: string;
   nameRomanUrdu?: string;
+  emoji?: string;
   isRecognized?: boolean;
+  unresolved?: boolean;
   note?: string;
   userModifiedCategory?: boolean;
   confidence?: number;
   createdAt?: number;
   updatedAt?: number;
+
+  // Normalized Data Model (Step 6 Foundation)
+  original_input?: string;
+  original_name?: string;
+  originalName?: string;
+  normalized_item?: string;
+  normalized_name?: string;
+  normalizedName?: string;
+  canonical_name?: string;
+  subcategory?: string;
+  language?: string;
+  created_at?: string | number;
+
+  // Smart Quantity & Unit fields (Step 3)
+  planned_quantity?: string | number;
+  planned_unit?: string;
+  purchased_quantity?: string | number;
+  purchased_unit?: string;
+  plannedQuantity?: string | number;
+  plannedUnit?: string;
+  purchasedQuantity?: string | number;
+  purchasedUnit?: string;
 }
 
 export interface ShoppingList {
@@ -177,17 +322,28 @@ export interface FrequentlyBoughtItem {
   lastPurchasedAt: string;
 }
 
+/**
+ * Personalization & Recommendation Engine Data Structure (user_item_history)
+ */
+export interface UserItemHistory {
+  id: string;
+  user_id: string;
+  item_id?: string;
+  canonical_name: string;
+  original_name: string;
+  category_id: CategoryId;
+  purchase_count: number;
+  last_purchased_at: string;
+  purchase_frequency?: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'occasional';
+  preferred_quantity?: string;
+  preferred_unit?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface CategorizeResult {
   categoryId: CategoryId;
   confidence: number;
-  matchedVia:
-    | 'user_override'
-    | 'local_rule'
-    | 'exact_alias'
-    | 'phonetic_match'
-    | 'fuzzy_match'
-    | 'keyword_rule'
-    | 'ai'
-    | 'fallback';
+  matchedVia: RecognitionMatchSource;
   normalizedItemName?: string;
 }

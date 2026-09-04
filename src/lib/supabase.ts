@@ -434,6 +434,10 @@ export async function loadUserShoppingLists(
         const item: ShoppingItem = {
           id: row.id,
           name: row.item_name || row.name || '',
+          canonicalName: row.canonical_name || undefined,
+          nameUrdu: row.name_urdu || undefined,
+          nameRomanUrdu: row.name_roman_urdu || undefined,
+          emoji: row.emoji || undefined,
           categoryId: (row.category || 'other') as CategoryId,
           category: row.category,
           quantity: row.quantity || undefined,
@@ -441,6 +445,7 @@ export async function loadUserShoppingLists(
           completed: Boolean(row.is_completed ?? row.is_checked),
           rawInput: row.raw_input || undefined,
           note: row.note || row.unit || undefined,
+          isRecognized: Boolean(row.is_recognized),
         };
         const existing = itemsByListId.get(row.list_id) || [];
         existing.push(item);
@@ -451,10 +456,28 @@ export async function loadUserShoppingLists(
     // 4. Map database rows to Application ShoppingList model
     const remoteLists: ShoppingList[] = listsData.map((row) => {
       const relationalItems = itemsByListId.get(row.id) || [];
-      const fallbackItems = Array.isArray(row.items) ? row.items : [];
-      const allItems = relationalItems.length > 0 ? relationalItems : fallbackItems;
-      const isCompleted = allItems.length > 0 
-        ? allItems.every((i: ShoppingItem) => i.completed) 
+      const fallbackItems: ShoppingItem[] = Array.isArray(row.items) ? row.items : [];
+
+      let finalItems: ShoppingItem[] = relationalItems;
+      if (relationalItems.length > 0 && fallbackItems.length > 0) {
+        finalItems = relationalItems.map((rItem) => {
+          const fItem = fallbackItems.find((f) => f.id === rItem.id);
+          if (!fItem) return rItem;
+          return {
+            ...rItem,
+            canonicalName: rItem.canonicalName || fItem.canonicalName,
+            nameUrdu: rItem.nameUrdu || fItem.nameUrdu,
+            nameRomanUrdu: rItem.nameRomanUrdu || fItem.nameRomanUrdu,
+            emoji: rItem.emoji || fItem.emoji,
+            isRecognized: rItem.isRecognized ?? fItem.isRecognized,
+          };
+        });
+      } else if (relationalItems.length === 0) {
+        finalItems = fallbackItems;
+      }
+
+      const isCompleted = finalItems.length > 0 
+        ? finalItems.every((i: ShoppingItem) => i.completed) 
         : Boolean(row.is_completed);
 
       const createdTime = row.created_at 
@@ -474,7 +497,7 @@ export async function loadUserShoppingLists(
         completedAt: row.completed_at || (isCompleted ? 'Completed' : undefined),
         isCompleted,
         icon: row.icon || 'shopping_basket',
-        items: allItems,
+        items: finalItems,
         isSynced: true,
       };
     });
@@ -513,11 +536,31 @@ export async function loadUserShoppingLists(
   }
 }
 
+// Mutex queues per list to serialize rapid concurrent updates and prevent race conditions
+const listSaveQueues = new Map<string, Promise<{ success: boolean; error: Error | null; isOffline?: boolean }>>();
+
 /**
  * Save / persist shopping list and its items.
+ * Uses per-list serialization to guarantee strict sequential execution and zero race conditions.
  * Immediately saves to IndexedDB for offline capability, and syncs to Supabase.
  */
 export async function saveUserShoppingList(
+  userId: string,
+  list: ShoppingList
+): Promise<{ success: boolean; error: Error | null; isOffline?: boolean }> {
+  const safeListId = list.id || generateUUID();
+  const prevQueue = listSaveQueues.get(safeListId) || Promise.resolve({ success: true, error: null });
+
+  const currentTask = prevQueue.then(
+    () => executeInternalSaveUserShoppingList(userId, { ...list, id: safeListId }),
+    () => executeInternalSaveUserShoppingList(userId, { ...list, id: safeListId })
+  );
+
+  listSaveQueues.set(safeListId, currentTask);
+  return currentTask;
+}
+
+async function executeInternalSaveUserShoppingList(
   userId: string,
   list: ShoppingList
 ): Promise<{ success: boolean; error: Error | null; isOffline?: boolean }> {
@@ -579,32 +622,75 @@ export async function saveUserShoppingList(
       return { success: true, error: null, isOffline: true };
     }
 
-    // Synchronize child public.shopping_items table
+    // 3. Synchronize child public.shopping_items table
     if (list.items) {
       try {
-        await supabase
-          .from('shopping_items')
-          .delete()
-          .eq('list_id', safeListId)
-          .eq('user_id', verifiedUserId);
-
-        if (list.items.length > 0) {
+        if (list.items.length === 0) {
+          // List has no items, clear any existing rows
+          await supabase
+            .from('shopping_items')
+            .delete()
+            .eq('list_id', safeListId)
+            .eq('user_id', verifiedUserId);
+        } else {
           const itemRows = list.items.map((item, index) => ({
             id: ensureValidUUID(item.id),
             list_id: safeListId,
             user_id: verifiedUserId,
             item_name: item.name,
+            canonical_name: item.canonicalName || item.name,
+            name_urdu: item.nameUrdu || null,
+            name_roman_urdu: item.nameRomanUrdu || null,
+            emoji: item.emoji || null,
             category: item.categoryId || item.category || 'other',
             quantity: item.quantity || null,
             unit: item.unit || item.note || null,
             raw_input: item.rawInput || null,
             is_completed: Boolean(item.completed),
+            is_recognized: Boolean(item.isRecognized),
             sort_order: index,
             updated_at: new Date().toISOString(),
           }));
 
-          const { error: insertErr } = await supabase.from('shopping_items').insert(itemRows);
-          if (insertErr && isNetworkOrOfflineError(insertErr)) {
+          const currentItemIds = itemRows.map((r) => r.id);
+
+          // Delete rows that were removed from the list
+          await supabase
+            .from('shopping_items')
+            .delete()
+            .eq('list_id', safeListId)
+            .eq('user_id', verifiedUserId)
+            .not('id', 'in', `(${currentItemIds.join(',')})`);
+
+          // Upsert current items using onConflict on primary key 'id'
+          let { error: upsertErr } = await supabase
+            .from('shopping_items')
+            .upsert(itemRows, { onConflict: 'id' });
+
+          // Schema backward compatibility: if newer columns (canonical_name, etc.) aren't present yet, fallback to base schema
+          if (upsertErr && (
+            upsertErr.message.includes('column') ||
+            upsertErr.message.includes('canonical_name') ||
+            upsertErr.message.includes('emoji')
+          )) {
+            const basicRows = itemRows.map((r) => ({
+              id: r.id,
+              list_id: r.list_id,
+              user_id: r.user_id,
+              item_name: r.item_name,
+              category: r.category,
+              quantity: r.quantity,
+              unit: r.unit,
+              raw_input: r.raw_input,
+              is_completed: r.is_completed,
+              sort_order: r.sort_order,
+              updated_at: r.updated_at,
+            }));
+            const retry = await supabase.from('shopping_items').upsert(basicRows, { onConflict: 'id' });
+            upsertErr = retry.error;
+          }
+
+          if (upsertErr && isNetworkOrOfflineError(upsertErr)) {
             await enqueueOfflineOperation({
               type: 'SAVE_LIST',
               userId: verifiedUserId,

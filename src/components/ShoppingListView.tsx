@@ -6,9 +6,12 @@ import { CategoryIcon } from './CategoryIcon';
 import { useLanguage } from '../context/LanguageContext';
 import { BidiText, MixedQuantityBadge } from '../utils/bidi';
 import { categorizeItemLocally, smartCategorizeItem } from '../lib/categorizer';
-import { parseShoppingItem } from '../lib/itemParser';
+import { parseShoppingItem, parseMultiItemInput } from '../lib/recognition/engine';
+import { detectDuplicateItem, mergeQuantities } from '../lib/recognition';
+import { defaultCatalogSearchEngine, CatalogSearchResult } from '../lib/catalog';
 import { playCompletionSound, playItemCheckSound, triggerHaptic } from '../lib/sound';
 import { generateUUID } from '../lib/uuid';
+import { QuantityEditModal } from './QuantityEditModal';
 
 interface ShoppingListViewProps {
   list: ShoppingList;
@@ -30,12 +33,115 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
   const { t, getCategoryName } = useLanguage();
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
   const [newItemText, setNewItemText] = useState<string>('');
+  const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
+
+  const handleSaveQuantity = (itemId: string, newQty?: string, newUnit?: string) => {
+    const updatedList: ShoppingList = {
+      ...list,
+      items: list.items.map((it) =>
+        it.id === itemId
+          ? {
+              ...it,
+              quantity: newQty,
+              unit: newUnit,
+              planned_quantity: newQty,
+              planned_unit: newUnit,
+            }
+          : it
+      ),
+    };
+    onUpdateList(updatedList);
+  };
 
   const quickAddParsed = useMemo(() => {
     const trimmed = newItemText.trim();
     if (!trimmed) return null;
     return parseShoppingItem(trimmed);
   }, [newItemText]);
+
+  // Real-time catalog search suggestions
+  const searchSuggestions: CatalogSearchResult[] = useMemo(() => {
+    const trimmed = newItemText.trim();
+    if (!trimmed) return [];
+    return defaultCatalogSearchEngine.search(trimmed, 3);
+  }, [newItemText]);
+
+  const handleSelectSuggestion = (suggestion: CatalogSearchResult) => {
+    const canonical = suggestion.item;
+    const finalCategory = suggestion.categoryId;
+
+    const duplicateCheck = detectDuplicateItem(list.items, {
+      canonicalName: canonical.canonical_name,
+      englishName: canonical.english_name,
+      nameUrdu: canonical.urdu_name,
+      nameRomanUrdu: canonical.roman_urdu_names[0],
+      categoryId: finalCategory,
+      confidence: 1.0,
+      isRecognized: true,
+      unresolved: false,
+      rawInput: newItemText,
+      matchedVia: 'exact_item',
+      quantity: suggestion.parsedQuantity,
+      unit: suggestion.parsedUnit || canonical.default_unit,
+    });
+
+    if (duplicateCheck.isDuplicate && duplicateCheck.existingItem) {
+      const merged = mergeQuantities(
+        duplicateCheck.existingItem.quantity,
+        duplicateCheck.existingItem.unit,
+        suggestion.parsedQuantity,
+        suggestion.parsedUnit || canonical.default_unit
+      );
+      const updatedList: ShoppingList = {
+        ...list,
+        items: list.items.map((it) =>
+          it.id === duplicateCheck.existingItem!.id
+            ? {
+                ...it,
+                quantity: merged.quantity,
+                unit: merged.unit,
+                completed: false,
+              }
+            : it
+        ),
+        isCompleted: false,
+      };
+      onUpdateList(updatedList);
+      setNewItemText('');
+      return;
+    }
+
+    const newItemId = generateUUID();
+    const newItem: ShoppingItem = {
+      id: newItemId,
+      name: canonical.english_name,
+      canonicalName: canonical.canonical_name,
+      canonical_name: canonical.canonical_name,
+      original_name: newItemText,
+      normalized_name: newItemText.trim().toLowerCase(),
+      nameUrdu: canonical.urdu_name,
+      nameRomanUrdu: canonical.roman_urdu_names[0],
+      quantity: suggestion.parsedQuantity,
+      unit: suggestion.parsedUnit || canonical.default_unit,
+      rawInput: newItemText,
+      categoryId: finalCategory,
+      category: getCategoryName(finalCategory),
+      completed: false,
+      confidence: 1.0,
+      isRecognized: true,
+      unresolved: false,
+      emoji: suggestion.emoji,
+    };
+
+    const updatedList: ShoppingList = {
+      ...list,
+      items: [newItem, ...list.items],
+      isCompleted: false,
+    };
+
+    onUpdateList(updatedList);
+    setNewItemText('');
+  };
 
   const totalItems = list.items.length;
   const completedItemsCount = list.items.filter((i) => i.completed).length;
@@ -86,57 +192,86 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
     const trimmed = newItemText.trim();
     if (!trimmed) return;
 
-    const parsed = parseShoppingItem(trimmed);
-    const newItemId = generateUUID();
+    const parsedItems = parseMultiItemInput(trimmed);
+    if (parsedItems.length === 0) return;
 
-    const newItem: ShoppingItem = {
-      id: newItemId,
-      name: parsed.name,
-      canonicalName: parsed.canonicalName,
-      nameUrdu: parsed.nameUrdu,
-      nameRomanUrdu: parsed.nameRomanUrdu,
-      quantity: parsed.quantity,
-      unit: parsed.unit,
-      rawInput: parsed.rawInput,
-      categoryId: parsed.suggestedCategoryId,
-      category: getCategoryName(parsed.suggestedCategoryId),
-      completed: false,
-      confidence: parsed.confidence,
-      isRecognized: parsed.isRecognized,
-    };
+    let updatedItems = [...list.items];
+
+    for (const parsed of parsedItems) {
+      // Check if equivalent item already exists in the list (e.g. aloo vs potato)
+      const duplicateCheck = detectDuplicateItem(updatedItems, {
+        canonicalName: parsed.canonicalName || parsed.name,
+        englishName: parsed.canonicalName || parsed.name,
+        nameUrdu: parsed.nameUrdu,
+        nameRomanUrdu: parsed.nameRomanUrdu,
+        categoryId: parsed.suggestedCategoryId,
+        confidence: parsed.confidence || 0.9,
+        isRecognized: !!parsed.isRecognized,
+        unresolved: !!parsed.unresolved,
+        rawInput: parsed.rawInput,
+        matchedVia: 'exact_item',
+        quantity: parsed.quantity,
+        unit: parsed.unit,
+      });
+
+      if (duplicateCheck.isDuplicate && duplicateCheck.existingItem) {
+        const merged = mergeQuantities(
+          duplicateCheck.existingItem.quantity,
+          duplicateCheck.existingItem.unit,
+          parsed.quantity,
+          parsed.unit
+        );
+        updatedItems = updatedItems.map((it) =>
+          it.id === duplicateCheck.existingItem!.id
+            ? {
+                ...it,
+                quantity: merged.quantity,
+                unit: merged.unit,
+                planned_quantity: merged.quantity,
+                planned_unit: merged.unit,
+                completed: false,
+              }
+            : it
+        );
+      } else {
+        const newItemId = generateUUID();
+        const newItem: ShoppingItem = {
+          id: newItemId,
+          name: parsed.name,
+          canonicalName: parsed.canonicalName,
+          canonical_name: parsed.canonicalName || parsed.name,
+          original_input: trimmed,
+          original_name: parsed.rawInput || trimmed,
+          normalized_item: parsed.canonicalName || parsed.name,
+          normalized_name: parsed.rawInput || parsed.name.toLowerCase(),
+          nameUrdu: parsed.nameUrdu,
+          nameRomanUrdu: parsed.nameRomanUrdu,
+          quantity: parsed.quantity,
+          unit: parsed.unit,
+          planned_quantity: parsed.quantity,
+          planned_unit: parsed.unit,
+          rawInput: parsed.rawInput,
+          categoryId: parsed.suggestedCategoryId,
+          category: getCategoryName(parsed.suggestedCategoryId),
+          completed: false,
+          confidence: parsed.confidence,
+          isRecognized: parsed.isRecognized,
+          unresolved: parsed.unresolved,
+          emoji: parsed.emoji,
+        };
+
+        updatedItems = [newItem, ...updatedItems];
+      }
+    }
 
     const updatedList: ShoppingList = {
       ...list,
-      items: [newItem, ...list.items],
+      items: updatedItems,
       isCompleted: false,
     };
 
     onUpdateList(updatedList);
     setNewItemText('');
-
-    // If low confidence local categorizer match, refine with AI in background
-    const localResult = categorizeItemLocally(parsed.name);
-    if (localResult.confidence < 0.8) {
-      smartCategorizeItem(parsed.name)
-        .then((aiResult) => {
-          if (aiResult.categoryId && aiResult.categoryId !== parsed.suggestedCategoryId) {
-            const refinedList: ShoppingList = {
-              ...updatedList,
-              items: updatedList.items.map((it) =>
-                it.id === newItemId
-                  ? {
-                      ...it,
-                      categoryId: aiResult.categoryId,
-                      category: getCategoryName(aiResult.categoryId),
-                    }
-                  : it
-              ),
-            };
-            onUpdateList(refinedList);
-          }
-        })
-        .catch(() => {});
-    }
   };
 
   // Extract unique categoryIds in this list
@@ -225,6 +360,45 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
               <Plus className="w-5 h-5" />
             </button>
           </form>
+
+          {/* Real-time Catalog Search Suggestions */}
+          {searchSuggestions.length > 0 && newItemText.trim().length > 0 && (
+            <div className="space-y-1.5 pt-1 animate-in fade-in duration-150">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {searchSuggestions.map((sug) => (
+                  <button
+                    key={sug.item.id}
+                    type="button"
+                    onClick={() => handleSelectSuggestion(sug)}
+                    className="flex items-center gap-2.5 p-2 rounded-2xl bg-surface-container-low hover:bg-surface-container border border-surface-container-high/60 transition-all text-start group active:scale-[0.99] cursor-pointer"
+                  >
+                    <span className="w-8 h-8 rounded-xl bg-surface-container-lowest flex items-center justify-center text-lg shadow-2xs shrink-0 group-hover:scale-105 transition-transform">
+                      {sug.emoji}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1 truncate">
+                        <span className="font-['Manrope'] font-bold text-xs text-primary truncate">
+                          {sug.displayName}
+                        </span>
+                        {sug.item.urdu_name && (
+                          <span className="font-urdu text-[11px] text-on-surface-variant shrink-0">
+                            ({sug.item.urdu_name})
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-on-surface-variant font-['Manrope'] flex items-center gap-1">
+                        <CategoryIcon categoryId={sug.categoryId} className="w-2.5 h-2.5 text-primary/70" />
+                        <span>{getCategoryName(sug.categoryId)}</span>
+                      </span>
+                    </div>
+                    <span className="w-6 h-6 rounded-lg bg-surface-container flex items-center justify-center text-primary/70 group-hover:bg-primary group-hover:text-on-primary transition-colors shrink-0">
+                      <Plus className="w-3.5 h-3.5" />
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Real-time Recognition Badge */}
           {quickAddParsed && newItemText.trim().length > 0 && (
@@ -316,8 +490,10 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                 <div className="flex flex-col gap-2.5">
                   {categoryItems.map((item) => {
                     const isChecked = item.completed;
-                    const formattedQty = item.quantity
-                      ? `${item.quantity}${item.unit ? ' ' + item.unit : ''}`
+                    const plannedQty = item.planned_quantity || item.quantity;
+                    const plannedUnit = item.planned_unit || item.unit;
+                    const formattedQty = plannedQty
+                      ? `${plannedQty}${plannedUnit ? ' ' + plannedUnit : ''}`
                       : item.note || null;
 
                     return (
@@ -375,19 +551,36 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                           </span>
                         </div>
 
-                        {/* Quantity & Unit Badge */}
-                        {formattedQty && (
-                          <bdi
-                            dir="ltr"
-                            className={`font-['Manrope'] tabular-nums text-xs font-semibold px-2.5 py-1 rounded-lg shrink-0 ${
+                        {/* Quantity & Unit Badge (Tappable to modify) */}
+                        {formattedQty ? (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingItem(item);
+                            }}
+                            title="Tap to change quantity or unit"
+                            className={`font-['Manrope'] tabular-nums text-xs font-bold px-2.5 py-1 rounded-lg shrink-0 transition-all active:scale-95 cursor-pointer ${
                               isChecked
-                                ? 'bg-surface-container text-outline'
-                                : 'bg-surface-container-high text-primary border border-surface-dim'
+                                ? 'bg-surface-container text-outline hover:bg-surface-container-high'
+                                : 'bg-surface-container-high hover:bg-surface-container text-primary border border-surface-dim shadow-2xs'
                             }`}
                           >
-                            {formattedQty}
-                          </bdi>
-                        )}
+                            <bdi dir="ltr">{formattedQty}</bdi>
+                          </button>
+                        ) : !isChecked ? (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingItem(item);
+                            }}
+                            title="Add quantity"
+                            className="text-[11px] font-['Manrope'] font-semibold text-outline hover:text-primary px-2 py-0.5 rounded-md hover:bg-surface-container transition-colors shrink-0"
+                          >
+                            + qty
+                          </button>
+                        ) : null}
                       </div>
                     );
                   })}
@@ -410,6 +603,14 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
           </div>
         )}
       </main>
+
+      {/* Quantity Edit Modal */}
+      <QuantityEditModal
+        isOpen={!!editingItem}
+        item={editingItem}
+        onClose={() => setEditingItem(null)}
+        onSave={handleSaveQuantity}
+      />
     </div>
   );
 };

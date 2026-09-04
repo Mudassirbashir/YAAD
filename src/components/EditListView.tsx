@@ -8,8 +8,9 @@ import {
   categorizeItemLocally,
   saveUserCategoryOverride,
 } from '../lib/categorizer';
-import { parseShoppingItem } from '../lib/itemParser';
+import { parseShoppingItem, parseMultiItemInput } from '../lib/recognition/engine';
 import { generateUUID } from '../lib/uuid';
+import { QuantityEditModal } from './QuantityEditModal';
 
 interface EditListViewProps {
   list: ShoppingList;
@@ -29,33 +30,62 @@ export const EditListView: React.FC<EditListViewProps> = ({
   const [items, setItems] = useState<ShoppingItem[]>(list.items);
   const [newItemName, setNewItemName] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<CategoryId>('vegetables');
+  const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
 
   const handleAddItem = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const trimmed = newItemName.trim();
     if (!trimmed) return;
 
-    const parsed = parseShoppingItem(trimmed);
-    const catId = parsed.suggestedCategoryId || selectedCategory;
+    const parsedItems = parseMultiItemInput(trimmed);
+    if (parsedItems.length === 0) return;
 
-    const newItem: ShoppingItem = {
-      id: generateUUID(),
-      name: parsed.name,
-      canonicalName: parsed.canonicalName,
-      nameUrdu: parsed.nameUrdu,
-      nameRomanUrdu: parsed.nameRomanUrdu,
-      quantity: parsed.quantity,
-      unit: parsed.unit,
-      rawInput: parsed.rawInput,
-      categoryId: catId,
-      category: getCategoryName(catId),
-      completed: false,
-      confidence: parsed.confidence,
-      isRecognized: parsed.isRecognized,
-    };
+    const newShoppingItems: ShoppingItem[] = parsedItems.map((parsed) => {
+      const catId = parsed.suggestedCategoryId || selectedCategory;
+      return {
+        id: generateUUID(),
+        name: parsed.name,
+        canonicalName: parsed.canonicalName,
+        canonical_name: parsed.canonicalName || parsed.name,
+        original_input: trimmed,
+        original_name: parsed.rawInput || trimmed,
+        normalized_item: parsed.canonicalName || parsed.name,
+        normalized_name: parsed.rawInput || parsed.name.toLowerCase(),
+        nameUrdu: parsed.nameUrdu,
+        nameRomanUrdu: parsed.nameRomanUrdu,
+        quantity: parsed.quantity,
+        unit: parsed.unit,
+        planned_quantity: parsed.quantity,
+        planned_unit: parsed.unit,
+        rawInput: parsed.rawInput,
+        categoryId: catId,
+        category: getCategoryName(catId),
+        completed: false,
+        confidence: parsed.confidence,
+        isRecognized: parsed.isRecognized,
+        unresolved: parsed.unresolved,
+        emoji: parsed.emoji,
+      };
+    });
 
-    setItems((prev) => [newItem, ...prev]);
+    setItems((prev) => [...newShoppingItems, ...prev]);
     setNewItemName('');
+  };
+
+  const handleSaveQuantity = (itemId: string, newQty?: string, newUnit?: string) => {
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === itemId
+          ? {
+              ...item,
+              quantity: newQty,
+              unit: newUnit,
+              planned_quantity: newQty,
+              planned_unit: newUnit,
+            }
+          : item
+      )
+    );
   };
 
   const handleUpdateItemName = (id: string, newName: string) => {
@@ -274,23 +304,17 @@ export const EditListView: React.FC<EditListViewProps> = ({
                                   </option>
                                 ))}
                               </select>
-
-                              {item.quantity && (
-                                <bdi dir="ltr" className="text-[11px] font-['Manrope'] tabular-nums font-bold text-primary bg-surface-container px-2 py-0.5 rounded-md">
-                                  {item.quantity} {item.unit || ''}
-                                </bdi>
-                              )}
                             </div>
                           </div>
 
                           <div className="flex items-center gap-2 shrink-0">
                             <button
                               type="button"
-                              onClick={() => handleUpdateQuantity(item.id, item.quantity, item.unit)}
-                              className="text-outline font-['Manrope'] text-xs bg-surface-container-low px-2.5 py-1 rounded-full hover:bg-surface-container transition-colors"
-                              title="Click to adjust quantity"
+                              onClick={() => setEditingItem(item)}
+                              className="font-['Manrope'] text-xs font-bold bg-surface-container text-primary px-2.5 py-1 rounded-lg border border-surface-dim hover:bg-surface-container-high transition-colors active:scale-95 cursor-pointer"
+                              title="Tap to adjust quantity & unit"
                             >
-                              {item.quantity ? `${item.quantity}${item.unit ? ' ' + item.unit : ''}` : '1x'}
+                              <bdi dir="ltr">{item.quantity ? `${item.quantity}${item.unit ? ' ' + item.unit : ''}` : '1x'}</bdi>
                             </button>
 
                             <button
@@ -312,6 +336,14 @@ export const EditListView: React.FC<EditListViewProps> = ({
           )}
         </div>
       </main>
+
+      {/* Quantity Edit Modal */}
+      <QuantityEditModal
+        isOpen={!!editingItem}
+        item={editingItem}
+        onClose={() => setEditingItem(null)}
+        onSave={handleSaveQuantity}
+      />
 
       {/* Floating Save Action */}
       <div className="fixed bottom-0 left-0 right-0 w-full max-w-xl md:max-w-2xl lg:max-w-3xl mx-auto z-40 bg-gradient-to-t from-background via-background to-transparent pb-6 pt-8 px-5 flex justify-center pointer-events-none">

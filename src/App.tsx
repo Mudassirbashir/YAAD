@@ -29,7 +29,10 @@ import { NetworkStatusPill } from './components/NetworkStatusPill';
 import { PWAUpdateNotification } from './components/PWAUpdateNotification';
 import { useOnlineStatus } from './lib/useOnlineStatus';
 import { getOfflineLists, saveOfflineListsBatch, purgeAllUserOfflineData } from './lib/offlineDb';
+import { supabaseCatalog } from './lib/catalog';
 import { Loader2 } from 'lucide-react';
+import { recommendationService, RecommendationCandidate } from './lib/recommendations';
+import { detectDuplicateItem, mergeQuantities } from './lib/recognition';
 
 const STORAGE_ONBOARDED_KEY = 'yaad_has_onboarded_v2';
 const STORAGE_PROFILE_SETUP_KEY = 'yaad_profile_setup_done';
@@ -134,6 +137,16 @@ export default function App() {
 
     return cleanup;
   }, [user?.id, isConfigured, fetchShoppingLists]);
+
+  // Initialize Master Item Catalog on startup
+  useEffect(() => {
+    supabaseCatalog.initialize();
+  }, []);
+
+  // Initialize personalized recommendation behavior model for user
+  useEffect(() => {
+    recommendationService.initialize(user?.id || 'guest');
+  }, [user?.id]);
 
   // Save lists to IndexedDB whenever lists state changes
   useEffect(() => {
@@ -290,6 +303,7 @@ export default function App() {
       if (user && isConfigured) {
         await clearAllUserShoppingLists(user.id);
       }
+      await recommendationService.clearUserData(user?.id);
     } catch (e) {
       console.error('Error clearing data:', e);
     }
@@ -306,6 +320,7 @@ export default function App() {
         const storageKey = getStorageKey(user.id);
         localStorage.removeItem(storageKey);
         await purgeAllUserOfflineData(user.id);
+        await recommendationService.clearUserData(user.id);
       }
       localStorage.removeItem(STORAGE_ONBOARDED_KEY);
       localStorage.removeItem(STORAGE_PROFILE_SETUP_KEY);
@@ -325,6 +340,7 @@ export default function App() {
   const handleSignOut = async () => {
     if (user?.id) {
       await purgeAllUserOfflineData(user.id);
+      await recommendationService.clearUserData(user.id);
     }
     await signOut();
     setLists([]);
@@ -453,8 +469,24 @@ export default function App() {
     setActiveListId(targetId);
     setCurrentScreen('completion');
 
+    // Strong Purchase Signal: Record completed items in personal recommendation engine
+    if (completedList.items && completedList.items.length > 0) {
+      recommendationService.recordCompletedTrip(completedList.items).catch((err) => {
+        console.warn('Error recording trip to recommendation engine:', err);
+      });
+    }
+
     if (isConfigured) {
       await saveUserShoppingList(user.id, completedList);
+      // Asynchronously record items to user_item_history for future personalization
+      if (completedList.items && completedList.items.length > 0) {
+        completedList.items
+          .filter((it) => it.completed)
+          .forEach((it) => {
+            const itemId = it.canonicalName ? it.canonicalName.toLowerCase().replace(/\s+/g, '_') : it.name.toLowerCase().replace(/\s+/g, '_');
+            supabaseCatalog.recordUserPurchase(user.id, itemId, it.quantity);
+          });
+      }
     }
   };
 
@@ -525,6 +557,137 @@ export default function App() {
     }
     await handleUpdateList(savedList);
     setCurrentScreen('shopping_list');
+  };
+
+  // One-tap quick add from Personal Recommendations on Home Screen
+  const handleQuickAddRecommendation = async (
+    candidate: RecommendationCandidate,
+    targetListId?: string
+  ) => {
+    if (!user) {
+      setCurrentScreen('auth');
+      return;
+    }
+
+    const displayName = candidate.displayName || candidate.canonicalName;
+    const finalCategory = candidate.category || 'vegetables';
+
+    if (targetListId) {
+      const targetList = lists.find((l) => l.id === targetListId);
+      if (targetList) {
+        const existingItems = targetList.items || [];
+        const duplicateCheck = detectDuplicateItem(existingItems, {
+          canonicalName: candidate.canonicalName,
+          englishName: displayName,
+          nameUrdu: candidate.nameUrdu,
+          nameRomanUrdu: candidate.nameRomanUrdu,
+          categoryId: finalCategory,
+          confidence: 1.0,
+          isRecognized: true,
+          unresolved: false,
+          rawInput: displayName,
+          matchedVia: 'exact_item',
+          quantity: candidate.suggestedQuantity,
+          unit: candidate.suggestedUnit,
+        });
+
+        let updatedItems: ShoppingItem[];
+        if (duplicateCheck.isDuplicate && duplicateCheck.existingItem) {
+          const merged = mergeQuantities(
+            duplicateCheck.existingItem.quantity,
+            duplicateCheck.existingItem.unit,
+            candidate.suggestedQuantity,
+            candidate.suggestedUnit
+          );
+          updatedItems = existingItems.map((it) =>
+            it.id === duplicateCheck.existingItem!.id
+              ? {
+                  ...it,
+                  quantity: merged.quantity,
+                  unit: merged.unit,
+                  planned_quantity: merged.quantity,
+                  planned_unit: merged.unit,
+                  completed: false,
+                }
+              : it
+          );
+        } else {
+          const newItem: ShoppingItem = {
+            id: generateUUID(),
+            name: displayName,
+            canonicalName: candidate.canonicalName,
+            canonical_name: candidate.canonicalName,
+            original_input: displayName,
+            original_name: displayName,
+            normalized_item: candidate.canonicalName,
+            normalized_name: displayName.toLowerCase(),
+            nameUrdu: candidate.nameUrdu,
+            nameRomanUrdu: candidate.nameRomanUrdu,
+            quantity: candidate.suggestedQuantity,
+            unit: candidate.suggestedUnit,
+            planned_quantity: candidate.suggestedQuantity,
+            planned_unit: candidate.suggestedUnit,
+            rawInput: `${candidate.suggestedQuantity ? candidate.suggestedQuantity + ' ' : ''}${candidate.suggestedUnit ? candidate.suggestedUnit + ' ' : ''}${displayName}`.trim(),
+            categoryId: finalCategory,
+            category: finalCategory,
+            completed: false,
+            confidence: 1.0,
+            isRecognized: true,
+            unresolved: false,
+            emoji: candidate.emoji,
+          };
+          updatedItems = [newItem, ...existingItems];
+        }
+
+        const updatedList: ShoppingList = {
+          ...targetList,
+          items: updatedItems,
+        };
+        await handleUpdateList(updatedList);
+        return;
+      }
+    }
+
+    // If no active list exists, create a fresh list containing this item
+    const newListId = generateUUID();
+    const newItem: ShoppingItem = {
+      id: generateUUID(),
+      name: displayName,
+      canonicalName: candidate.canonicalName,
+      canonical_name: candidate.canonicalName,
+      original_input: displayName,
+      original_name: displayName,
+      normalized_item: candidate.canonicalName,
+      normalized_name: displayName.toLowerCase(),
+      nameUrdu: candidate.nameUrdu,
+      nameRomanUrdu: candidate.nameRomanUrdu,
+      quantity: candidate.suggestedQuantity,
+      unit: candidate.suggestedUnit,
+      planned_quantity: candidate.suggestedQuantity,
+      planned_unit: candidate.suggestedUnit,
+      rawInput: `${candidate.suggestedQuantity ? candidate.suggestedQuantity + ' ' : ''}${candidate.suggestedUnit ? candidate.suggestedUnit + ' ' : ''}${displayName}`.trim(),
+      categoryId: finalCategory,
+      category: finalCategory,
+      completed: false,
+      confidence: 1.0,
+      isRecognized: true,
+      unresolved: false,
+      emoji: candidate.emoji,
+    };
+
+    const newList: ShoppingList = {
+      id: newListId,
+      title: 'Shopping List',
+      createdAt: 'Today',
+      createdTimestamp: Date.now(),
+      isCompleted: false,
+      items: [newItem],
+    };
+
+    setLists((prev) => [newList, ...prev]);
+    if (isConfigured) {
+      await saveUserShoppingList(user.id, newList);
+    }
   };
 
   // Navigation tab switcher
@@ -616,6 +779,7 @@ export default function App() {
           onSelectList={handleOpenListInShoppingMode}
           onOpenProfile={handleOpenSettingsScreen}
           onOpenMenu={handleOpenSettingsScreen}
+          onQuickAddRecommendation={handleQuickAddRecommendation}
         />
       )}
 

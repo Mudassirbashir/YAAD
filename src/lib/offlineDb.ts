@@ -1,5 +1,6 @@
 import { ShoppingList, ShoppingItem } from '../types';
 import { generateUUID } from './uuid';
+import type { UserItemBehaviorProfile, CoPurchasePair } from './recommendations/types';
 
 export type OfflineMutationType =
   | 'CREATE_LIST'
@@ -26,12 +27,14 @@ export interface PendingOfflineOperation {
 }
 
 const DB_NAME = 'yaad_pwa_offline_db';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 const STORES = {
   LISTS: 'shopping_lists',
   QUEUE: 'offline_queue',
   METADATA: 'app_metadata',
+  BEHAVIOR_PROFILES: 'user_behavior_profiles',
+  CO_PURCHASE_PAIRS: 'user_co_purchases',
 } as const;
 
 let dbPromise: Promise<IDBDatabase> | null = null;
@@ -71,6 +74,22 @@ export function getOfflineDB(): Promise<IDBDatabase> {
           // 3. Metadata store (e.g. sync timestamps, offline preferences)
           if (!db.objectStoreNames.contains(STORES.METADATA)) {
             db.createObjectStore(STORES.METADATA, { keyPath: 'key' });
+          }
+
+          // 4. Recommendation Behavioral Profiles store (Step 4)
+          if (!db.objectStoreNames.contains(STORES.BEHAVIOR_PROFILES)) {
+            const profileStore = db.createObjectStore(STORES.BEHAVIOR_PROFILES, { keyPath: 'id' });
+            profileStore.createIndex('by_user', 'userId', { unique: false });
+            profileStore.createIndex('by_canonical', 'canonicalName', { unique: false });
+            profileStore.createIndex('by_purchases', 'purchaseCount', { unique: false });
+          }
+
+          // 5. Co-Purchase Pairs store (Step 4)
+          if (!db.objectStoreNames.contains(STORES.CO_PURCHASE_PAIRS)) {
+            const coStore = db.createObjectStore(STORES.CO_PURCHASE_PAIRS, { keyPath: 'id' });
+            coStore.createIndex('by_user', 'userId', { unique: false });
+            coStore.createIndex('by_item_a', 'itemA', { unique: false });
+            coStore.createIndex('by_item_b', 'itemB', { unique: false });
           }
         };
 
@@ -445,7 +464,7 @@ export async function clearUserOfflineQueue(userId: string): Promise<void> {
 // ============================================================================
 
 /**
- * Purges all private user data (shopping lists & queued mutations) from IndexedDB.
+ * Purges all private user data (shopping lists, queued mutations, and recommendation behavioral profiles) from IndexedDB.
  * Enforces strict user isolation so another user logging into the same device
  * cannot access previous cached lists or offline mutations.
  */
@@ -454,6 +473,7 @@ export async function purgeAllUserOfflineData(userId: string): Promise<void> {
   await Promise.allSettled([
     clearUserOfflineLists(userId),
     clearUserOfflineQueue(userId),
+    clearUserRecommendationData(userId),
   ]);
 }
 
@@ -508,3 +528,186 @@ export async function saveOfflineProfile(userId: string, profile: any): Promise<
 export async function getOfflineProfile<T = any>(userId: string): Promise<T | null> {
   return await getAppMetadata<T>(`profile_${userId}`);
 }
+
+// ============================================================================
+// 5. RECOMMENDATION ENGINE BEHAVIORAL STORES (OFFLINE-FIRST)
+// ============================================================================
+
+/**
+ * Retrieves all user behavior profiles scoped to the given userId
+ */
+export async function getAllUserBehaviorProfiles(
+  userId: string
+): Promise<UserItemBehaviorProfile[]> {
+  if (!userId) return [];
+  try {
+    const db = await getOfflineDB();
+    return new Promise<UserItemBehaviorProfile[]>((resolve) => {
+      const transaction = db.transaction([STORES.BEHAVIOR_PROFILES], 'readonly');
+      const store = transaction.objectStore(STORES.BEHAVIOR_PROFILES);
+      const index = store.index('by_user');
+      const req = index.getAll(IDBKeyRange.only(userId));
+
+      req.onsuccess = () => {
+        resolve(req.result || []);
+      };
+      req.onerror = () => {
+        console.warn('Failed to load user behavior profiles from IndexedDB:', req.error);
+        resolve([]);
+      };
+    });
+  } catch (err) {
+    console.warn('IndexedDB unavailable for behavior profiles:', err);
+    return [];
+  }
+}
+
+/**
+ * Saves or updates a single user behavior profile
+ */
+export async function saveUserBehaviorProfile(
+  profile: UserItemBehaviorProfile
+): Promise<void> {
+  if (!profile || !profile.userId || !profile.id) return;
+  try {
+    const db = await getOfflineDB();
+    return new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction([STORES.BEHAVIOR_PROFILES], 'readwrite');
+      const store = transaction.objectStore(STORES.BEHAVIOR_PROFILES);
+      const req = store.put(profile);
+
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  } catch (err) {
+    console.warn('Failed to save behavior profile in IndexedDB:', err);
+  }
+}
+
+/**
+ * Saves multiple user behavior profiles in a single atomic IndexedDB transaction
+ */
+export async function saveUserBehaviorProfilesBatch(
+  profiles: UserItemBehaviorProfile[]
+): Promise<void> {
+  if (!profiles || profiles.length === 0) return;
+  try {
+    const db = await getOfflineDB();
+    return new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction([STORES.BEHAVIOR_PROFILES], 'readwrite');
+      const store = transaction.objectStore(STORES.BEHAVIOR_PROFILES);
+
+      for (const profile of profiles) {
+        if (profile && profile.id) {
+          store.put(profile);
+        }
+      }
+
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  } catch (err) {
+    console.warn('Failed to batch save behavior profiles:', err);
+  }
+}
+
+/**
+ * Retrieves all co-purchase pairs for a specific user
+ */
+export async function getAllUserCoPurchases(userId: string): Promise<CoPurchasePair[]> {
+  if (!userId) return [];
+  try {
+    const db = await getOfflineDB();
+    return new Promise<CoPurchasePair[]>((resolve) => {
+      const transaction = db.transaction([STORES.CO_PURCHASE_PAIRS], 'readonly');
+      const store = transaction.objectStore(STORES.CO_PURCHASE_PAIRS);
+      const index = store.index('by_user');
+      const req = index.getAll(IDBKeyRange.only(userId));
+
+      req.onsuccess = () => {
+        resolve(req.result || []);
+      };
+      req.onerror = () => {
+        resolve([]);
+      };
+    });
+  } catch (err) {
+    return [];
+  }
+}
+
+/**
+ * Saves or updates co-purchase pairs in bulk
+ */
+export async function saveUserCoPurchasesBatch(
+  pairs: CoPurchasePair[]
+): Promise<void> {
+  if (!pairs || pairs.length === 0) return;
+  try {
+    const db = await getOfflineDB();
+    return new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction([STORES.CO_PURCHASE_PAIRS], 'readwrite');
+      const store = transaction.objectStore(STORES.CO_PURCHASE_PAIRS);
+
+      for (const pair of pairs) {
+        if (pair && pair.id) {
+          store.put(pair);
+        }
+      }
+
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  } catch (err) {
+    console.warn('Failed to batch save co-purchases:', err);
+  }
+}
+
+/**
+ * Completely purges all recommendation profiles and co-purchases for a given user
+ */
+export async function clearUserRecommendationData(userId: string): Promise<void> {
+  if (!userId) return;
+  try {
+    const db = await getOfflineDB();
+    await Promise.allSettled([
+      new Promise<void>((resolve) => {
+        const transaction = db.transaction([STORES.BEHAVIOR_PROFILES], 'readwrite');
+        const store = transaction.objectStore(STORES.BEHAVIOR_PROFILES);
+        const index = store.index('by_user');
+        const req = index.openKeyCursor(IDBKeyRange.only(userId));
+
+        req.onsuccess = () => {
+          const cursor = req.result;
+          if (cursor) {
+            store.delete(cursor.primaryKey);
+            cursor.continue();
+          } else {
+            resolve();
+          }
+        };
+        req.onerror = () => resolve();
+      }),
+      new Promise<void>((resolve) => {
+        const transaction = db.transaction([STORES.CO_PURCHASE_PAIRS], 'readwrite');
+        const store = transaction.objectStore(STORES.CO_PURCHASE_PAIRS);
+        const index = store.index('by_user');
+        const req = index.openKeyCursor(IDBKeyRange.only(userId));
+
+        req.onsuccess = () => {
+          const cursor = req.result;
+          if (cursor) {
+            store.delete(cursor.primaryKey);
+            cursor.continue();
+          } else {
+            resolve();
+          }
+        };
+        req.onerror = () => resolve();
+      }),
+    ]);
+  } catch (err) {
+    console.warn('Error clearing recommendation data:', err);
+  }
+}
+

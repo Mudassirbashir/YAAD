@@ -226,3 +226,125 @@ DROP TRIGGER IF EXISTS set_frequently_bought_timestamp ON public.frequently_boug
 CREATE TRIGGER set_frequently_bought_timestamp
   BEFORE UPDATE ON public.frequently_bought_items
   FOR EACH ROW EXECUTE FUNCTION public.update_timestamp_column();
+
+-- ====================================================================
+-- 13. MASTER ITEM CATALOG & CATEGORIES (STEP 2 FOUNDATIONAL ARCHITECTURE)
+-- ====================================================================
+
+-- Master Categories
+CREATE TABLE IF NOT EXISTS public.categories (
+  id TEXT PRIMARY KEY,
+  name_en TEXT NOT NULL,
+  name_ur TEXT NOT NULL,
+  name_roman_urdu TEXT NOT NULL,
+  icon TEXT NOT NULL DEFAULT 'category',
+  sort_order INT DEFAULT 0,
+  active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Master Subcategories
+CREATE TABLE IF NOT EXISTS public.subcategories (
+  id TEXT PRIMARY KEY,
+  category_id TEXT REFERENCES public.categories(id) ON DELETE CASCADE NOT NULL,
+  name_en TEXT NOT NULL,
+  name_ur TEXT NOT NULL,
+  name_roman_urdu TEXT NOT NULL,
+  sort_order INT DEFAULT 0,
+  active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Master Items
+CREATE TABLE IF NOT EXISTS public.items (
+  id TEXT PRIMARY KEY,
+  canonical_name TEXT NOT NULL,
+  english_name TEXT NOT NULL,
+  urdu_name TEXT NOT NULL,
+  roman_urdu_names TEXT[] NOT NULL DEFAULT '{}',
+  category_id TEXT REFERENCES public.categories(id) ON DELETE RESTRICT NOT NULL,
+  subcategory_id TEXT REFERENCES public.subcategories(id) ON DELETE SET NULL,
+  common_misspellings TEXT[] NOT NULL DEFAULT '{}',
+  searchable_terms TEXT[] NOT NULL DEFAULT '{}',
+  default_unit TEXT DEFAULT 'kg',
+  emoji TEXT,
+  active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Item Aliases
+CREATE TABLE IF NOT EXISTS public.item_aliases (
+  id TEXT PRIMARY KEY,
+  item_id TEXT REFERENCES public.items(id) ON DELETE CASCADE NOT NULL,
+  alias TEXT NOT NULL,
+  language TEXT DEFAULT 'mixed',
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- User Item History (Future Personalization)
+CREATE TABLE IF NOT EXISTS public.user_item_history (
+  id TEXT PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  item_id TEXT REFERENCES public.items(id) ON DELETE CASCADE NOT NULL,
+  purchase_count INT DEFAULT 1 NOT NULL,
+  last_purchased_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  purchase_frequency TEXT,
+  preferred_quantity TEXT,
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  CONSTRAINT uq_user_item_history UNIQUE (user_id, item_id)
+);
+
+-- Master Catalog Indexes
+CREATE INDEX IF NOT EXISTS idx_subcategories_category_id ON public.subcategories(category_id);
+CREATE INDEX IF NOT EXISTS idx_items_category_id ON public.items(category_id);
+CREATE INDEX IF NOT EXISTS idx_items_subcategory_id ON public.items(subcategory_id);
+CREATE INDEX IF NOT EXISTS idx_items_canonical_name ON public.items(canonical_name);
+CREATE INDEX IF NOT EXISTS idx_item_aliases_item_id ON public.item_aliases(item_id);
+CREATE INDEX IF NOT EXISTS idx_item_aliases_alias ON public.item_aliases(lower(alias));
+CREATE INDEX IF NOT EXISTS idx_user_item_history_user ON public.user_item_history(user_id, purchase_count DESC);
+CREATE INDEX IF NOT EXISTS idx_user_item_history_recent ON public.user_item_history(user_id, last_purchased_at DESC);
+
+-- Master Catalog RLS
+ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.subcategories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.item_aliases ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_item_history ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow public read access on categories"
+  ON public.categories FOR SELECT
+  USING (true);
+
+CREATE POLICY "Allow public read access on subcategories"
+  ON public.subcategories FOR SELECT
+  USING (true);
+
+CREATE POLICY "Allow public read access on items"
+  ON public.items FOR SELECT
+  USING (true);
+
+CREATE POLICY "Allow public read access on item_aliases"
+  ON public.item_aliases FOR SELECT
+  USING (true);
+
+CREATE POLICY "Users can view own item history"
+  ON public.user_item_history FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own item history"
+  ON public.user_item_history FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own item history"
+  ON public.user_item_history FOR UPDATE
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own item history"
+  ON public.user_item_history FOR DELETE
+  USING (auth.uid() = user_id);
+

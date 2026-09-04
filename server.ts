@@ -16,28 +16,41 @@ const ALLOWED_CATEGORIES = [
   'vegetables',
   'dairy',
   'meat',
+  'poultry',
   'seafood',
   'eggs',
   'bakery',
   'beverages',
   'grocery',
+  'cooking_essentials',
   'spices',
+  'herbal',
   'herbs',
   'dry_fruits',
   'frozen',
   'snacks',
   'household',
+  'kitchen',
+  'home',
   'cleaning',
   'personal_care',
   'health',
   'baby',
+  'baby_care',
+  'pet_supplies',
+  'hardware',
   'stationery',
   'electronics',
   'clothing',
+  'uncategorized',
   'other',
+  'grains',
+  'rice',
+  'pulses',
+  'canned_food',
+  'sauces_condiments',
   // Backward compatibility
   'grains_staples',
-  'baby_care',
   'medicines',
 ] as const;
 
@@ -48,12 +61,33 @@ const SERVER_LOCAL_RULES: Record<string, { categoryId: CategoryType; canonicalNa
   // Vegetables
   aloo: { categoryId: 'vegetables', canonicalName: 'Potato', nameUrdu: 'آلو' },
   alu: { categoryId: 'vegetables', canonicalName: 'Potato', nameUrdu: 'آلو' },
+  alo: { categoryId: 'vegetables', canonicalName: 'Potato', nameUrdu: 'آلو' },
+  aalu: { categoryId: 'vegetables', canonicalName: 'Potato', nameUrdu: 'آلو' },
   aluu: { categoryId: 'vegetables', canonicalName: 'Potato', nameUrdu: 'آلو' },
+  aluuu: { categoryId: 'vegetables', canonicalName: 'Potato', nameUrdu: 'آلو' },
   aaloo: { categoryId: 'vegetables', canonicalName: 'Potato', nameUrdu: 'آلو' },
   potato: { categoryId: 'vegetables', canonicalName: 'Potato', nameUrdu: 'آلو' },
   potatoes: { categoryId: 'vegetables', canonicalName: 'Potato', nameUrdu: 'آلو' },
   'آلو': { categoryId: 'vegetables', canonicalName: 'Potato', nameUrdu: 'آلو' },
   'الو': { categoryId: 'vegetables', canonicalName: 'Potato', nameUrdu: 'آلو' },
+  'پوٹاٹو': { categoryId: 'vegetables', canonicalName: 'Potato', nameUrdu: 'آلو' },
+  'پٹاٹو': { categoryId: 'vegetables', canonicalName: 'Potato', nameUrdu: 'آلو' },
+
+  // Herbal / Antiseptic
+  'فٹکری': { categoryId: 'herbs', canonicalName: 'Fitkari', nameUrdu: 'فٹکری' },
+  'پھٹکری': { categoryId: 'herbs', canonicalName: 'Fitkari', nameUrdu: 'فٹکری' },
+  phitkari: { categoryId: 'herbs', canonicalName: 'Fitkari', nameUrdu: 'فٹکری' },
+  phatkari: { categoryId: 'herbs', canonicalName: 'Fitkari', nameUrdu: 'فٹکری' },
+  phatakari: { categoryId: 'herbs', canonicalName: 'Fitkari', nameUrdu: 'فٹکری' },
+  fitkari: { categoryId: 'herbs', canonicalName: 'Fitkari', nameUrdu: 'فٹکری' },
+  alum: { categoryId: 'herbs', canonicalName: 'Fitkari', nameUrdu: 'فٹکری' },
+
+  // Household / Hardware
+  'lime stone': { categoryId: 'household', canonicalName: 'Lime Stone', nameUrdu: 'چونا' },
+  limestone: { categoryId: 'household', canonicalName: 'Lime Stone', nameUrdu: 'چونا' },
+  choona: { categoryId: 'household', canonicalName: 'Lime Stone', nameUrdu: 'چونا' },
+  chuna: { categoryId: 'household', canonicalName: 'Lime Stone', nameUrdu: 'چونا' },
+  'چونا': { categoryId: 'household', canonicalName: 'Lime Stone', nameUrdu: 'چونا' },
 
   pyaz: { categoryId: 'vegetables', canonicalName: 'Onion', nameUrdu: 'پیاز' },
   pyaaz: { categoryId: 'vegetables', canonicalName: 'Onion', nameUrdu: 'پیاز' },
@@ -147,15 +181,15 @@ const SERVER_LOCAL_RULES: Record<string, { categoryId: CategoryType; canonicalNa
   watermelon: { categoryId: 'fruits', canonicalName: 'Watermelon', nameUrdu: 'تربوز' },
   'تربوز': { categoryId: 'fruits', canonicalName: 'Watermelon', nameUrdu: 'تربوز' },
 
-  // Eggs
-  anda: { categoryId: 'eggs', canonicalName: 'Eggs', nameUrdu: 'انڈے' },
-  anday: { categoryId: 'eggs', canonicalName: 'Eggs', nameUrdu: 'انڈے' },
-  ande: { categoryId: 'eggs', canonicalName: 'Eggs', nameUrdu: 'انڈے' },
-  egg: { categoryId: 'eggs', canonicalName: 'Eggs', nameUrdu: 'انڈے' },
-  eggs: { categoryId: 'eggs', canonicalName: 'Eggs', nameUrdu: 'انڈے' },
-  'انڈا': { categoryId: 'eggs', canonicalName: 'Eggs', nameUrdu: 'انڈے' },
-  'انڈہ': { categoryId: 'eggs', canonicalName: 'Eggs', nameUrdu: 'انڈے' },
-  'انڈے': { categoryId: 'eggs', canonicalName: 'Eggs', nameUrdu: 'انڈے' },
+  // Poultry & Eggs
+  anda: { categoryId: 'poultry', canonicalName: 'Egg', nameUrdu: 'انڈے' },
+  anday: { categoryId: 'poultry', canonicalName: 'Egg', nameUrdu: 'انڈے' },
+  ande: { categoryId: 'poultry', canonicalName: 'Egg', nameUrdu: 'انڈے' },
+  egg: { categoryId: 'poultry', canonicalName: 'Egg', nameUrdu: 'انڈے' },
+  eggs: { categoryId: 'poultry', canonicalName: 'Egg', nameUrdu: 'انڈے' },
+  'انڈا': { categoryId: 'poultry', canonicalName: 'Egg', nameUrdu: 'انڈے' },
+  'انڈہ': { categoryId: 'poultry', canonicalName: 'Egg', nameUrdu: 'انڈے' },
+  'انڈے': { categoryId: 'poultry', canonicalName: 'Egg', nameUrdu: 'انڈے' },
 
   // Dairy
   doodh: { categoryId: 'dairy', canonicalName: 'Milk', nameUrdu: 'دودھ' },
@@ -205,10 +239,10 @@ const SERVER_LOCAL_RULES: Record<string, { categoryId: CategoryType; canonicalNa
   chawal: { categoryId: 'grocery', canonicalName: 'Rice', nameUrdu: 'چاول' },
   rice: { categoryId: 'grocery', canonicalName: 'Rice', nameUrdu: 'چاول' },
   'چاول': { categoryId: 'grocery', canonicalName: 'Rice', nameUrdu: 'چاول' },
-  cheeni: { categoryId: 'grocery', canonicalName: 'Sugar', nameUrdu: 'چینی' },
-  chini: { categoryId: 'grocery', canonicalName: 'Sugar', nameUrdu: 'چینی' },
-  sugar: { categoryId: 'grocery', canonicalName: 'Sugar', nameUrdu: 'چینی' },
-  'چینی': { categoryId: 'grocery', canonicalName: 'Sugar', nameUrdu: 'چینی' },
+  cheeni: { categoryId: 'cooking_essentials', canonicalName: 'Sugar', nameUrdu: 'چینی' },
+  chini: { categoryId: 'cooking_essentials', canonicalName: 'Sugar', nameUrdu: 'چینی' },
+  sugar: { categoryId: 'cooking_essentials', canonicalName: 'Sugar', nameUrdu: 'چینی' },
+  'چینی': { categoryId: 'cooking_essentials', canonicalName: 'Sugar', nameUrdu: 'چینی' },
   oil: { categoryId: 'grocery', canonicalName: 'Cooking Oil', nameUrdu: 'تیل' },
   'cooking oil': { categoryId: 'grocery', canonicalName: 'Cooking Oil', nameUrdu: 'تیل' },
   tail: { categoryId: 'grocery', canonicalName: 'Cooking Oil', nameUrdu: 'تیل' },
@@ -407,7 +441,7 @@ function serverLocalCategorize(input: string): {
     }
   }
 
-  return { categoryId: 'other', confidence: 0.3 };
+  return { categoryId: 'uncategorized', confidence: 0.35 };
 }
 
 // Lazy initialization for Gemini AI client
@@ -529,7 +563,15 @@ User Input: "${trimmed}" (may be in English, Roman Urdu, or Urdu script, possibl
 Task:
 1. Identify the canonical grocery item concept (in English title and Urdu script).
 2. Assign it to exactly ONE of the following valid category IDs:
-["fruits", "vegetables", "dairy", "meat", "seafood", "eggs", "bakery", "beverages", "grocery", "spices", "herbs", "dry_fruits", "frozen", "snacks", "household", "cleaning", "personal_care", "health", "baby", "stationery", "electronics", "clothing", "other"]
+["fruits", "vegetables", "dairy", "meat", "poultry", "seafood", "eggs", "bakery", "grains", "rice", "pulses", "beverages", "grocery", "cooking_essentials", "spices", "herbs", "herbal", "dry_fruits", "frozen", "snacks", "household", "kitchen", "cleaning", "personal_care", "health", "baby", "pet_supplies", "hardware", "stationery", "electronics", "clothing", "uncategorized", "other"]
+
+Rules:
+- Eggs, Chicken, Quail, Poultry items -> "poultry"
+- Sugar, Salt, Ghee, Cooking Oil, Vinegar -> "cooking_essentials"
+- Basmati, Sella, Rice -> "rice"
+- Dhania, Podina, Mint, Coriander, Fitkari -> "herbs"
+- Detergents, Surf, Harpic -> "cleaning"
+- If truly unknown, assign "uncategorized".
 
 Return JSON with:
 "categoryId": string (one of the valid categories above),

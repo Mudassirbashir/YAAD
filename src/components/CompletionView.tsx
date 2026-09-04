@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { Check, Star, CheckCircle2, Plus, Sparkles, Home, History } from 'lucide-react';
+import { motion } from 'motion/react';
+import { Check, Star, Sparkles, Home, History, Plus } from 'lucide-react';
 import { ShoppingList, CategoryId } from '../types';
 import { TopHeader } from './TopHeader';
 import { CategoryIcon } from './CategoryIcon';
@@ -24,7 +25,7 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
 }) => {
   const { t, getCategoryName, language } = useLanguage();
 
-  // Play crisp completion chime on entry
+  // Play acoustic completion chime once upon view load
   useEffect(() => {
     playCompletionSound();
   }, []);
@@ -45,47 +46,109 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
 
       {/* Main Container */}
       <main className="flex-1 px-4 sm:px-6 md:px-8 space-y-6 pt-2">
-        {/* Celebration Header with Smooth YAAD Logo Animation */}
+        {/* Celebration Header with Premium Motion Animation */}
         <section className="text-center py-5 space-y-3 flex flex-col items-center select-none">
-          {/* Animated YAAD Logo & Success Badge Container */}
-          <div className="relative mb-2">
-            {/* Outer Subtle Radiant Pulse (Gentle, warm glow) */}
-            <div className="absolute -inset-2 bg-gradient-to-tr from-secondary-fixed/40 to-primary-fixed/30 rounded-full blur-md opacity-60 animate-pulse pointer-events-none" />
-            
-            {/* Main Central Icon Container with smooth entry */}
-            <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-b from-primary to-primary-container flex items-center justify-center shadow-[0px_10px_28px_rgba(0,30,21,0.22)] border-2 border-primary-fixed/30 transform transition-all duration-500 ease-out hover:scale-105 animate-in zoom-in-75 duration-300">
-              
-              {/* YAAD Lettering / Logo Brandmark Background */}
-              <span className={`font-urdu-brand text-2xl text-primary-fixed/25 absolute select-none ${language === 'ur' ? 'text-3xl font-bold' : ''}`}>
+          {/* Animated Hero Badge Container */}
+          <div className="relative mb-2 flex items-center justify-center">
+            {/* Subtle Expanding Soft Ambient Halo (Non-blocking decorative) */}
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: [0.8, 1.25, 1.1], opacity: [0, 0.45, 0.25] }}
+              transition={{ duration: 1.2, ease: 'easeOut' }}
+              className="absolute -inset-4 bg-gradient-to-tr from-secondary-fixed/40 via-primary-fixed/30 to-secondary-container/20 rounded-full blur-xl pointer-events-none"
+            />
+
+            {/* Main Central Brand Badge */}
+            <motion.div
+              initial={{ scale: 0.6, opacity: 0, y: 16 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              transition={{
+                type: 'spring',
+                stiffness: 260,
+                damping: 18,
+              }}
+              whileHover={{ scale: 1.04 }}
+              className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-b from-primary to-primary-container flex items-center justify-center shadow-[0px_12px_32px_rgba(0,30,21,0.22)] border-2 border-primary-fixed/30"
+            >
+              {/* YAAD Lettering / Logo Brandmark Watermark */}
+              <span
+                className={`font-urdu-brand text-2xl text-primary-fixed/25 absolute select-none ${
+                  language === 'ur' ? 'text-3xl font-bold' : ''
+                }`}
+              >
                 یاد
               </span>
 
-              {/* Polished Checkmark */}
-              <Check className="w-10 h-10 sm:w-11 sm:h-11 text-primary-fixed stroke-[3.2] relative z-10 drop-shadow-sm" />
+              {/* Animated Polished Checkmark Icon */}
+              <motion.div
+                initial={{ scale: 0, rotate: -30 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 300,
+                  damping: 15,
+                  delay: 0.15,
+                }}
+              >
+                <Check className="w-10 h-10 sm:w-11 sm:h-11 text-primary-fixed stroke-[3.2] relative z-10 drop-shadow-sm" />
+              </motion.div>
 
-              {/* Floating Star Accent */}
-              <div className="absolute -top-2 -right-2 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center shadow-md border border-white/40 animate-in spin-in-90 duration-300">
+              {/* Floating Star Accent with Spring */}
+              <motion.div
+                initial={{ scale: 0, rotate: -45 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 350,
+                  damping: 14,
+                  delay: 0.28,
+                }}
+                className="absolute -top-2 -right-2 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center shadow-md border border-white/50"
+              >
                 <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-on-secondary-container fill-current" />
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           </div>
 
-          {/* Small Success Confirmation Badge */}
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-primary-fixed/30 border border-primary-fixed text-primary text-xs font-['Manrope'] font-bold tracking-tight shadow-xs animate-in fade-in slide-in-from-bottom-2 duration-300">
+          {/* Small Success Confirmation Pill */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.2 }}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-primary-fixed/30 border border-primary-fixed text-primary text-xs font-['Manrope'] font-bold tracking-tight shadow-xs"
+          >
             <Sparkles className="w-3.5 h-3.5 text-primary" />
             <span>{t('completion.badgeCompleted')}</span>
-          </div>
+          </motion.div>
 
-          <h2 className="font-['Plus_Jakarta_Sans'] text-2xl sm:text-3xl font-extrabold text-primary tracking-tight leading-tight">
+          {/* Heading */}
+          <motion.h2
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.26 }}
+            className="font-['Plus_Jakarta_Sans'] text-2xl sm:text-3xl font-extrabold text-primary tracking-tight leading-tight"
+          >
             {t('completion.title')}
-          </h2>
-          <p className="font-['Manrope'] text-sm sm:text-base text-on-surface-variant max-w-xs mx-auto leading-relaxed">
+          </motion.h2>
+
+          {/* Subtitle */}
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.32 }}
+            className="font-['Manrope'] text-sm sm:text-base text-on-surface-variant max-w-xs mx-auto leading-relaxed"
+          >
             {t('completion.subtitle')}
-          </p>
+          </motion.p>
         </section>
 
         {/* Completed List Container */}
-        <section className="bg-surface-container-lowest rounded-3xl shadow-[0px_6px_24px_rgba(0,30,21,0.04)] border border-surface-container-high/70 p-5 space-y-4">
+        <motion.section
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.38 }}
+          className="bg-surface-container-lowest rounded-3xl shadow-[0px_6px_24px_rgba(0,30,21,0.04)] border border-surface-container-high/70 p-5 space-y-4"
+        >
           <div className="flex justify-between items-center border-b border-surface-dim/60 pb-3">
             <BidiText as="h3" className="font-['Plus_Jakarta_Sans'] text-lg sm:text-xl font-bold text-primary truncate pe-2">
               {list.title}
@@ -144,13 +207,18 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
               );
             })}
           </div>
-        </section>
+        </motion.section>
 
-        {/* Action Buttons: Home, History, and Add More */}
-        <section className="flex flex-col gap-3 pt-2 pb-4">
+        {/* Action Buttons: Home, History, and Add More (Immediately clickable with zero blocking delay) */}
+        <motion.section
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.44 }}
+          className="flex flex-col gap-3 pt-2 pb-4"
+        >
           <button
             onClick={onReturnHome}
-            className="w-full h-[54px] rounded-full bg-primary text-on-primary font-['Manrope'] text-base font-bold shadow-[0px_8px_20px_rgba(0,30,21,0.18)] hover:bg-primary-container active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+            className="w-full h-[54px] rounded-full bg-primary text-on-primary font-['Manrope'] text-base font-bold shadow-[0px_8px_20px_rgba(0,30,21,0.18)] hover:bg-primary-container active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
             <Home className="w-4 h-4" />
             <span>{t('completion.completeTripBtn')}</span>
@@ -159,7 +227,7 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={onViewHistory}
-              className="h-[50px] rounded-full bg-surface-container text-primary font-['Manrope'] text-sm font-bold hover:bg-surface-container-high active:scale-[0.98] transition-all flex items-center justify-center gap-2 border border-surface-dim"
+              className="h-[50px] rounded-full bg-surface-container text-primary font-['Manrope'] text-sm font-bold hover:bg-surface-container-high active:scale-[0.98] transition-all flex items-center justify-center gap-2 border border-surface-dim cursor-pointer"
             >
               <History className="w-4 h-4" />
               <span>{t('navigation.history')}</span>
@@ -167,15 +235,16 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
 
             <button
               onClick={onAddMoreItems}
-              className="h-[50px] rounded-full bg-surface-container-low text-primary font-['Manrope'] text-sm font-bold hover:bg-surface-container-highest active:scale-[0.98] transition-all flex items-center justify-center gap-2 border border-surface-dim"
+              className="h-[50px] rounded-full bg-surface-container-low text-primary font-['Manrope'] text-sm font-bold hover:bg-surface-container-highest active:scale-[0.98] transition-all flex items-center justify-center gap-2 border border-surface-dim cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>{t('completion.addMoreBtn')}</span>
             </button>
           </div>
-        </section>
+        </motion.section>
       </main>
     </div>
   );
 };
+
 

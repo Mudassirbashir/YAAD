@@ -14,6 +14,8 @@ export interface ParsedItemResult {
   nameRomanUrdu?: string;
   confidence?: number;
   isRecognized?: boolean;
+  unresolved?: boolean;
+  emoji?: string;
 }
 
 /**
@@ -42,6 +44,8 @@ export function parseShoppingItem(rawInput: string): ParsedItemResult {
     nameRomanUrdu: result.nameRomanUrdu,
     confidence: result.confidence,
     isRecognized: result.isRecognized,
+    unresolved: result.unresolved,
+    emoji: result.emoji,
   };
 }
 
@@ -62,5 +66,7 @@ export async function parseShoppingItemWithAI(rawInput: string): Promise<ParsedI
     nameRomanUrdu: result.nameRomanUrdu,
     confidence: result.confidence,
     isRecognized: result.isRecognized,
+    unresolved: result.unresolved,
+    emoji: result.emoji,
   };
 }

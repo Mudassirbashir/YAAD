@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Plus, ChevronRight, Clock, AlertCircle, RefreshCw, ShoppingBag, CheckCircle2 } from 'lucide-react';
 import { ShoppingList } from '../types';
 import { TopHeader } from './TopHeader';
 import { useLanguage } from '../context/LanguageContext';
 import { isNetworkOrOfflineError } from '../lib/supabase';
 import { BidiText } from '../utils/bidi';
+import { useRecommendations, RecommendationCandidate } from '../lib/recommendations';
+import { RecommendationsSection } from './RecommendationsSection';
 
 interface HomeViewProps {
   lists: ShoppingList[];
@@ -15,6 +17,7 @@ interface HomeViewProps {
   isLoading?: boolean;
   error?: string | null;
   onRetry?: () => void;
+  onQuickAddRecommendation?: (item: RecommendationCandidate, targetListId?: string) => void;
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({
@@ -26,8 +29,28 @@ export const HomeView: React.FC<HomeViewProps> = ({
   isLoading = false,
   error = null,
   onRetry,
+  onQuickAddRecommendation,
 }) => {
   const { t } = useLanguage();
+
+  // Find most recent active (non-completed) list if available
+  const mostRecentActiveList = useMemo(() => {
+    return lists.find((l) => !l.isCompleted);
+  }, [lists]);
+
+  // Pass active list items to recommendations hook so items already in list are excluded!
+  const { recommendations, hasPersonalHistory, dismissRecommendation } = useRecommendations({
+    currentListItems: mostRecentActiveList?.items || [],
+    limit: 4,
+  });
+
+  const handleAddItem = (item: RecommendationCandidate) => {
+    if (onQuickAddRecommendation) {
+      onQuickAddRecommendation(item, mostRecentActiveList?.id);
+    } else {
+      onCreateList();
+    }
+  };
 
   return (
     <div className="w-full max-w-xl md:max-w-2xl lg:max-w-3xl mx-auto min-h-screen flex flex-col antialiased bg-background pb-32 selection:bg-primary-container selection:text-on-primary-container">
@@ -83,6 +106,15 @@ export const HomeView: React.FC<HomeViewProps> = ({
           {/* Subtle Decorative Ambient Background Glow */}
           <div className="absolute -right-8 -bottom-8 w-44 h-44 bg-primary-container/70 rounded-full blur-2xl opacity-60 pointer-events-none group-hover:scale-125 transition-transform duration-500" />
         </div>
+
+        {/* Smart Personal Shopping Recommendations ("Your Usual Items") */}
+        <RecommendationsSection
+          recommendations={recommendations}
+          hasPersonalHistory={hasPersonalHistory}
+          onAddItem={handleAddItem}
+          onDismissItem={dismissRecommendation}
+          activeListTitle={mostRecentActiveList?.title}
+        />
 
         {/* Active & Recent Lists Section */}
         <section id="home_lists_section" aria-label={t('home.yourListsTitle')} className="flex flex-col gap-3">
