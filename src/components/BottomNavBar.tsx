@@ -110,18 +110,19 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   };
 
   const isHomeActive = activeTab === 'home';
+  const isCreateActive = activeTab === 'create';
   const isSettingsActive = activeTab === 'settings';
 
   return (
     <div
-      className="fixed bottom-0 inset-x-0 z-40 pointer-events-none pb-[max(env(safe-area-inset-bottom,0px),0.625rem)] px-3 sm:px-4 flex justify-center items-end"
+      className="fixed bottom-0 inset-x-0 z-40 flex justify-center items-end pointer-events-none sm:pb-[max(env(safe-area-inset-bottom,0px),0.625rem)] sm:px-4"
       style={{ transform: 'translateZ(0)' }}
     >
       <nav
         id="bottom_navigation_bar"
         role="navigation"
         aria-label={t('nav.mainNavigation') || 'Main Navigation'}
-        className="pointer-events-auto w-full max-w-[340px] xs:max-w-[360px] sm:max-w-[400px] md:max-w-[440px] bg-surface-container-lowest/90 dark:bg-stone-900/90 backdrop-blur-2xl border border-surface-dim/70 dark:border-white/10 rounded-2xl sm:rounded-full p-1.5 shadow-[0_12px_36px_-6px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/[0.04] dark:ring-white/[0.06] select-none transition-all duration-200"
+        className="pointer-events-auto w-full sm:max-w-[400px] md:max-w-[440px] bg-surface-container-lowest/95 sm:bg-surface-container-lowest/90 dark:bg-stone-900/95 sm:dark:bg-stone-900/90 backdrop-blur-xl sm:backdrop-blur-2xl border-t sm:border border-surface-dim/60 sm:border-surface-dim/70 dark:border-white/10 rounded-none sm:rounded-full px-2 sm:px-1.5 pt-1.5 pb-[max(env(safe-area-inset-bottom,0px),0.375rem)] sm:pb-1.5 shadow-[0_-2px_12px_rgba(0,0,0,0.03)] sm:shadow-[0_12px_36px_-6px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.04)] sm:ring-1 sm:ring-black/[0.04] dark:sm:ring-white/[0.06] select-none transition-all duration-200"
       >
         <div
           role="tablist"
@@ -139,7 +140,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
             onKeyDown={(e) => handleTabKeyDown(e, 'home')}
             aria-selected={isHomeActive}
             aria-label={t('nav.home')}
-            className={`relative flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-1.5 sm:py-2 px-2 sm:px-3.5 rounded-xl sm:rounded-full text-center transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-stone-900 cursor-pointer ${
+            className={`relative flex-1 flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 py-1 sm:py-2 px-1 sm:px-3.5 rounded-xl sm:rounded-full text-center transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-stone-900 cursor-pointer min-h-[44px] sm:min-h-0 ${
               isHomeActive
                 ? 'text-primary dark:text-emerald-400 font-bold'
                 : 'text-on-surface-variant/70 hover:text-on-surface font-medium hover:bg-surface-container-high/40'
@@ -163,20 +164,13 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
                   : 'stroke-[2] opacity-80 group-hover:opacity-100'
               }`}
             />
-            <span className="text-[11px] sm:text-xs font-['Manrope'] tracking-tight whitespace-nowrap">
+            <span className="text-[10px] sm:text-xs font-['Manrope'] tracking-tight whitespace-nowrap leading-tight">
               {t('nav.home')}
-            </span>
-            <span
-              className="hidden md:inline-flex items-center text-[10px] font-mono text-outline/60 px-1 rounded bg-surface-container-high/50 ms-0.5 leading-none"
-              aria-hidden="true"
-              title="Keyboard shortcut: 1"
-            >
-              1
             </span>
           </button>
 
           {/* 2. CREATE BUTTON (PRIMARY ACTION) */}
-          <div className="flex-1 flex items-center justify-center px-1">
+          <div className="flex-1 flex items-center justify-center px-0.5 sm:px-1">
             <button
               ref={createBtnRef}
               id="nav_tab_create"
@@ -185,18 +179,24 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               onClick={handleCreateClick}
               onKeyDown={(e) => handleTabKeyDown(e, 'create')}
               aria-label={t('nav.create')}
-              className="w-full max-w-[130px] sm:max-w-[145px] flex items-center justify-center gap-1.5 sm:gap-2 py-2 px-3.5 sm:px-4 rounded-xl sm:rounded-full bg-primary text-on-primary hover:bg-[#14523e] active:bg-[#0a281e] dark:bg-emerald-600 dark:hover:bg-emerald-500 dark:active:bg-emerald-700 shadow-[0_2px_8px_rgba(15,61,46,0.25)] hover:shadow-[0_4px_14px_rgba(15,61,46,0.35)] transition-all duration-150 active:scale-[0.95] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-stone-900 cursor-pointer group"
+              className="w-full max-w-[110px] sm:max-w-[145px] flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 py-1 sm:py-2 px-1 sm:px-4 rounded-xl sm:rounded-full bg-transparent sm:bg-primary text-primary sm:text-on-primary hover:bg-surface-container-high/40 sm:hover:bg-[#14523e] active:bg-surface-container-high/60 sm:active:bg-[#0a281e] dark:sm:bg-emerald-600 dark:sm:hover:bg-emerald-500 dark:sm:active:bg-emerald-700 sm:shadow-[0_2px_8px_rgba(15,61,46,0.25)] sm:hover:shadow-[0_4px_14px_rgba(15,61,46,0.35)] transition-all duration-150 active:scale-[0.95] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-stone-900 cursor-pointer min-h-[44px] sm:min-h-0 group"
             >
-              <Plus className="w-4.5 h-4.5 sm:w-5 sm:h-5 stroke-[2.4] shrink-0 transition-transform duration-150 group-hover:scale-110" />
-              <span className="text-xs font-bold font-['Manrope'] tracking-tight text-on-primary whitespace-nowrap">
-                {t('nav.create')}
-              </span>
-              <span
-                className="hidden md:inline-flex items-center text-[10px] font-mono font-medium text-on-primary/70 px-1 rounded bg-white/20 ms-0.5 leading-none"
-                aria-hidden="true"
-                title="Keyboard shortcut: +"
+              {/* Mobile-only compact icon circle (Apple-style, lightweight, not oversized) */}
+              <div
+                className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-150 sm:hidden ${
+                  isCreateActive
+                    ? 'bg-primary text-on-primary dark:bg-emerald-500 ring-2 ring-primary/20 scale-105'
+                    : 'bg-primary text-on-primary dark:bg-emerald-600 shadow-2xs group-hover:scale-110'
+                }`}
               >
-                +
+                <Plus className="w-3.5 h-3.5 stroke-[2.8]" />
+              </div>
+
+              {/* Desktop-only direct Lucide Plus icon */}
+              <Plus className="hidden sm:inline-block w-4.5 h-4.5 sm:w-5 sm:h-5 stroke-[2.4] shrink-0 transition-transform duration-150 group-hover:scale-110" />
+
+              <span className="text-[10px] sm:text-xs font-bold font-['Manrope'] tracking-tight text-primary dark:text-emerald-400 sm:text-on-primary whitespace-nowrap leading-tight">
+                {t('nav.create')}
               </span>
             </button>
           </div>
@@ -212,7 +212,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
             onKeyDown={(e) => handleTabKeyDown(e, 'settings')}
             aria-selected={isSettingsActive}
             aria-label={t('nav.settings')}
-            className={`relative flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-1.5 sm:py-2 px-2 sm:px-3.5 rounded-xl sm:rounded-full text-center transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-stone-900 cursor-pointer ${
+            className={`relative flex-1 flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 py-1 sm:py-2 px-1 sm:px-3.5 rounded-xl sm:rounded-full text-center transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-stone-900 cursor-pointer min-h-[44px] sm:min-h-0 ${
               isSettingsActive
                 ? 'text-primary dark:text-emerald-400 font-bold'
                 : 'text-on-surface-variant/70 hover:text-on-surface font-medium hover:bg-surface-container-high/40'
@@ -236,15 +236,8 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
                   : 'stroke-[2] opacity-80 group-hover:opacity-100'
               }`}
             />
-            <span className="text-[11px] sm:text-xs font-['Manrope'] tracking-tight whitespace-nowrap">
+            <span className="text-[10px] sm:text-xs font-['Manrope'] tracking-tight whitespace-nowrap leading-tight">
               {t('nav.settings')}
-            </span>
-            <span
-              className="hidden md:inline-flex items-center text-[10px] font-mono text-outline/60 px-1 rounded bg-surface-container-high/50 ms-0.5 leading-none"
-              aria-hidden="true"
-              title="Keyboard shortcut: 3"
-            >
-              3
             </span>
           </button>
         </div>
