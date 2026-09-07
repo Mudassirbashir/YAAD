@@ -31,6 +31,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSubmittingRef = React.useRef(false);
 
   // Close modal when pressing Escape key
   useEffect(() => {
@@ -48,17 +49,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return;
+    if (isSubmittingRef.current || isSubmitting) return;
 
     setErrorMsg(null);
     setSuccessMsg(null);
 
-    if (!email.trim() || !password) {
+    const trimmedEmail = email.trim().toLowerCase();
+    const trimmedName = fullName.trim();
+
+    if (!trimmedEmail || !password) {
       setErrorMsg('Please enter your email and password.');
       return;
     }
 
-    if (mode === 'signup' && !fullName.trim()) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      setErrorMsg('Please enter a valid email address.');
+      return;
+    }
+
+    if (mode === 'signup' && !trimmedName) {
       setErrorMsg('Please enter your full name.');
       return;
     }
@@ -68,11 +78,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       return;
     }
 
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
 
     try {
       if (mode === 'signup') {
-        const { error } = await signUp(email, password, fullName);
+        const { error } = await signUp(trimmedEmail, password, trimmedName);
         if (error) {
           setErrorMsg(formatAuthErrorMessage(error));
         } else {
@@ -82,7 +93,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           }, 400);
         }
       } else {
-        const { error } = await signIn(email, password);
+        const { error } = await signIn(trimmedEmail, password);
         if (error) {
           setErrorMsg(formatAuthErrorMessage(error));
         } else {
@@ -95,6 +106,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     } catch (err: unknown) {
       setErrorMsg(formatAuthErrorMessage(err));
     } finally {
+      isSubmittingRef.current = false;
       setIsSubmitting(false);
     }
   };
@@ -197,7 +209,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="e.g. Elena Vance"
-                className="w-full h-12 bg-surface-container-lowest text-on-surface rounded-2xl px-4 text-sm border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline"
+                disabled={isSubmitting}
+                className="w-full h-12 bg-surface-container-lowest text-on-surface rounded-2xl px-4 text-sm border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline disabled:opacity-60"
                 required
               />
             </div>
@@ -212,7 +225,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className="w-full h-12 bg-surface-container-lowest text-on-surface rounded-2xl px-4 text-sm border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline"
+              disabled={isSubmitting}
+              className="w-full h-12 bg-surface-container-lowest text-on-surface rounded-2xl px-4 text-sm border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline disabled:opacity-60"
               required
             />
           </div>
@@ -226,7 +240,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full h-12 bg-surface-container-lowest text-on-surface rounded-2xl px-4 text-sm border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline"
+              disabled={isSubmitting}
+              className="w-full h-12 bg-surface-container-lowest text-on-surface rounded-2xl px-4 text-sm border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline disabled:opacity-60"
               required
             />
           </div>

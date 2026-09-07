@@ -181,7 +181,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const signIn = async (email: string, password: string): Promise<{ error: Error | null }> => {
     // Prevent duplicate concurrent requests
     if (isAuthenticatingRef.current) {
-      return { error: null };
+      return { error: new Error('An authentication request is already in progress.') };
     }
 
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
@@ -194,8 +194,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     isAuthenticatingRef.current = true;
 
     try {
+      const trimmedEmail = email.trim();
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email: trimmedEmail,
         password,
       });
 
@@ -218,15 +219,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         };
         setProfile(activeProfile);
         saveOfflineProfile(data.user.id, activeProfile).catch(() => {});
+        localStorage.setItem('yaad_profile_setup_done', 'true');
         localStorage.setItem('yaad_profile_setup_completed', 'true');
-
-        // Background sync non-blockingly
-        syncProfileFromUser(data.user).then((synced) => {
-          if (synced) {
-            setProfile(synced);
-            saveOfflineProfile(data.user.id, synced).catch(() => {});
-          }
-        }).catch(() => {});
       }
 
       return { error: null };
@@ -240,7 +234,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const signUp = async (email: string, password: string, fullName: string): Promise<{ error: Error | null }> => {
     // Prevent duplicate concurrent requests
     if (isAuthenticatingRef.current) {
-      return { error: null };
+      return { error: new Error('An authentication request is already in progress.') };
     }
 
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
@@ -250,12 +244,84 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return { error: new Error('Backend service is not configured.') };
     }
 
+    const trimmedEmail = email.trim().toLowerCase();
+    const trimmedName = fullName.trim();
+
+    if (!trimmedEmail) {
+      return { error: new Error('Please enter your email address.') };
+    }
+    if (!password || password.length < 6) {
+      return { error: new Error('Password must be at least 6 characters.') };
+    }
+    if (!trimmedName) {
+      return { error: new Error('Please enter your full name.') };
+    }
+
     isAuthenticatingRef.current = true;
 
     try {
-      const trimmedEmail = email.trim();
-      const trimmedName = fullName.trim();
+      // 1. First attempt fast server-side admin creation:
+      // This bypasses email-sending rate limits (429 over_email_send_rate_limit)
+      // and creates an already-confirmed account in Supabase.
+      let serverCreated = false;
+      try {
+        const resp = await fetch('/api/auth/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: trimmedEmail,
+            password,
+            fullName: trimmedName,
+          }),
+        });
 
+        const data = await resp.json().catch(() => ({}));
+        if (resp.ok && data.success) {
+          serverCreated = true;
+        } else if (resp.status >= 400 && resp.status < 500 && data.error) {
+          // Explicit business or validation error (e.g. duplicate email)
+          return { error: new Error(data.error) };
+        }
+      } catch (backendErr) {
+        console.warn('Notice calling /api/auth/signup, falling back to direct client signup:', backendErr);
+      }
+
+      // 2. If server created the account, establish client Supabase session via immediate signInWithPassword
+      if (serverCreated) {
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: trimmedEmail,
+          password,
+        });
+
+        if (signInError) {
+          return { error: new Error(formatAuthErrorMessage(signInError)) };
+        }
+
+        if (signInData.user && signInData.session) {
+          setSession(signInData.session);
+          setUser(signInData.user);
+
+          const activeProfile: UserProfile = {
+            id: signInData.user.id,
+            full_name: trimmedName,
+            email: trimmedEmail,
+            avatar_url: null,
+            language: 'en',
+            has_completed_setup: true,
+          };
+
+          setProfile(activeProfile);
+          await saveOfflineProfile(signInData.user.id, activeProfile);
+          localStorage.setItem('yaad_profile_setup_done', 'true');
+          localStorage.setItem('yaad_profile_setup_completed', 'true');
+          localStorage.setItem('yaad_has_onboarded_v2', 'true');
+          localStorage.setItem('yaad_has_onboarded', 'true');
+        }
+
+        return { error: null };
+      }
+
+      // 3. Fallback to client-side Supabase signup if server endpoint was unavailable
       const { data, error } = await supabase.auth.signUp({
         email: trimmedEmail,
         password,
@@ -280,22 +346,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           has_completed_setup: true,
         };
 
-        // Instantly establish authenticated user & profile
         if (data.session) {
           setSession(data.session);
           setUser(data.user);
         }
         setProfile(activeProfile);
         await saveOfflineProfile(data.user.id, activeProfile);
+        localStorage.setItem('yaad_profile_setup_done', 'true');
         localStorage.setItem('yaad_profile_setup_completed', 'true');
+        localStorage.setItem('yaad_has_onboarded_v2', 'true');
         localStorage.setItem('yaad_has_onboarded', 'true');
 
-        // Fire-and-forget background sync without holding up signup
-        supabaseUpdateProfile(data.user.id, {
-          full_name: trimmedName,
-          email: trimmedEmail,
-          has_completed_setup: true,
-        }).catch((e) => console.warn('Background profile create notice:', e));
+        if (!data.session) {
+          return {
+            error: new Error('Account created! Please check your email to confirm your account before signing in.'),
+          };
+        }
       }
 
       return { error: null };

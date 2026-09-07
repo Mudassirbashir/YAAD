@@ -32,16 +32,24 @@ export const AuthView: React.FC<AuthViewProps> = ({
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const isSubmittingRef = React.useRef(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loading) return; // Prevent duplicate rapid submissions
+    // Hardware/ref lock to strictly prevent duplicate rapid submissions or Enter key double-firing
+    if (isSubmittingRef.current || loading) return;
 
     setErrorMessage(null);
 
-    const trimmedEmail = email.trim();
+    const trimmedEmail = email.trim().toLowerCase();
     if (!trimmedEmail || !password) {
       setErrorMessage(t('auth.fillAllFields') || 'Please fill in all required fields.');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      setErrorMessage(t('auth.invalidEmail') || 'Please enter a valid email address.');
       return;
     }
 
@@ -55,6 +63,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
       return;
     }
 
+    isSubmittingRef.current = true;
     setLoading(true);
 
     try {
@@ -62,14 +71,12 @@ export const AuthView: React.FC<AuthViewProps> = ({
         const { error } = await signUp(trimmedEmail, password, fullName.trim());
         if (error) {
           setErrorMessage(formatAuthErrorMessage(error));
-          setLoading(false);
           return;
         }
       } else {
         const { error } = await signIn(trimmedEmail, password);
         if (error) {
           setErrorMessage(formatAuthErrorMessage(error));
-          setLoading(false);
           return;
         }
       }
@@ -78,6 +85,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
     } catch (err: unknown) {
       setErrorMessage(formatAuthErrorMessage(err));
     } finally {
+      isSubmittingRef.current = false;
       setLoading(false);
     }
   };
@@ -172,7 +180,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder={t('auth.fullNamePlaceholder') || 'Your full name'}
-                  className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-3.5 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope']"
+                  disabled={loading}
+                  className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-3.5 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope'] disabled:opacity-60"
                   required
                 />
               </div>
@@ -191,7 +200,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={t('auth.emailPlaceholder') || 'you@example.com'}
-                className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-3.5 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope']"
+                disabled={loading}
+                className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-3.5 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope'] disabled:opacity-60"
                 autoComplete="email"
                 required
               />
@@ -210,7 +220,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={t('auth.passwordPlaceholder') || '••••••••'}
-                className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-3.5 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope']"
+                disabled={loading}
+                className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-3.5 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope'] disabled:opacity-60"
                 autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
                 required
               />

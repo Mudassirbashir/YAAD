@@ -909,16 +909,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
 
               {/* Sign Out Trigger */}
-              <div className="pt-3 border-t border-surface-dim flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-surface-container flex items-center justify-center text-outline shrink-0">
+              <div className="pt-3 border-t border-surface-dim flex items-center justify-between gap-3 min-w-0">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="w-10 h-10 rounded-2xl bg-error-container/20 text-error flex items-center justify-center shrink-0">
                     <LogOut className="w-5 h-5" />
                   </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-on-surface">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-sm font-bold text-on-surface truncate">
                       {t('settings.signOut') || 'Sign Out'}
                     </h3>
-                    <p className="text-xs text-outline truncate max-w-[240px]">
+                    <p className="text-xs text-outline truncate">
                       {t('settings.signOutDesc') ||
                         'Sign out of your account on this device'}
                     </p>
@@ -929,7 +929,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   id="settings_signout_btn"
                   type="button"
                   onClick={() => setShowSignOutConfirm(true)}
-                  className="px-4 py-2 text-xs font-bold text-on-surface hover:bg-surface-container-low border border-surface-dim rounded-xl transition-all active:scale-95 shrink-0"
+                  className="px-3.5 py-1.5 text-xs font-semibold text-error bg-error-container/25 hover:bg-error-container/45 rounded-xl sm:rounded-full transition-colors active:scale-95 shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error"
                 >
                   <span id="sign_out_trigger_btn">
                     {t('settings.signOut') || 'Sign Out'}

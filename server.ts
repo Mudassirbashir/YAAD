@@ -468,6 +468,130 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Production-ready server-side signup endpoint:
+// Creates the user directly with Supabase Admin, auto-confirms email (email_confirm: true),
+// avoids triggering email send rate-limits (over_email_send_rate_limit / 429),
+// and ensures idempotent profile initialization.
+app.post('/api/auth/signup', async (req, res) => {
+  try {
+    const { email, password, fullName } = req.body || {};
+
+    const trimmedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+    const trimmedName = typeof fullName === 'string' ? fullName.trim() : '';
+    const plainPassword = typeof password === 'string' ? password : '';
+
+    if (!trimmedEmail) {
+      return res.status(400).json({ error: 'Email address is required.' });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      return res.status(400).json({ error: 'Please enter a valid email address.' });
+    }
+
+    if (!plainPassword || plainPassword.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters long.' });
+    }
+
+    if (!trimmedName) {
+      return res.status(400).json({ error: 'Please enter your full name.' });
+    }
+
+    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
+
+    if (!supabaseUrl || !serviceKey) {
+      return res.status(503).json({
+        error: 'Authentication service configuration unavailable.',
+      });
+    }
+
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    // Create user via Admin API with auto-confirmed email (bypasses email-sending rate limit)
+    const { data: createData, error: createError } = await supabaseAdmin.auth.admin.createUser({
+      email: trimmedEmail,
+      password: plainPassword,
+      email_confirm: true,
+      user_metadata: {
+        full_name: trimmedName,
+      },
+    });
+
+    if (createError) {
+      const errMsg = createError.message || '';
+      const code = (createError as any).code || '';
+
+      if (
+        code === 'email_exists' ||
+        errMsg.toLowerCase().includes('already registered') ||
+        errMsg.toLowerCase().includes('already exists')
+      ) {
+        return res.status(409).json({
+          error: 'An account with this email address already exists. Please sign in instead.',
+          code: 'email_exists',
+        });
+      }
+
+      if (errMsg.toLowerCase().includes('password') || code === 'weak_password') {
+        return res.status(400).json({
+          error: 'Password must be at least 6 characters long.',
+          code: 'weak_password',
+        });
+      }
+
+      if (errMsg.toLowerCase().includes('invalid email') || code === 'email_address_invalid') {
+        return res.status(400).json({
+          error: 'Please enter a valid email address.',
+          code: 'invalid_email',
+        });
+      }
+
+      return res.status(400).json({
+        error: errMsg || 'Unable to create account. Please try again.',
+      });
+    }
+
+    const createdUser = createData?.user;
+    if (!createdUser) {
+      return res.status(500).json({ error: 'Failed to create user account.' });
+    }
+
+    // Ensure user profile exists idempotently with full_name
+    try {
+      await supabaseAdmin.from('profiles').upsert(
+        {
+          id: createdUser.id,
+          full_name: trimmedName,
+          email: trimmedEmail,
+          language: 'en',
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'id' }
+      );
+    } catch (profileErr: any) {
+      console.warn('Notice ensuring profile on signup:', profileErr?.message);
+    }
+
+    return res.status(201).json({
+      success: true,
+      user: {
+        id: createdUser.id,
+        email: createdUser.email,
+        full_name: trimmedName,
+      },
+    });
+  } catch (err: any) {
+    console.error('Exception in /api/auth/signup:', err);
+    return res.status(500).json({
+      error: 'An unexpected server error occurred during account creation. Please try again.',
+    });
+  }
+});
+
 // Secure server-side account deletion endpoint
 app.post('/api/account/delete', async (req, res) => {
   try {
