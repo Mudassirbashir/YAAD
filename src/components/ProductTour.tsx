@@ -11,6 +11,12 @@ import {
   ListChecks,
   Settings,
   Compass,
+  ShoppingBag,
+  CheckCircle2,
+  Volume2,
+  Globe,
+  Smile,
+  ShieldCheck,
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -48,78 +54,138 @@ export const ProductTour: React.FC<ProductTourProps> = ({
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
   const tourCardRef = useRef<HTMLDivElement>(null);
 
-  // 6 Essential Tour Steps matching user requirements:
-  // 1. Header / Logo
-  // 2. Home
-  // 3. Create (Quick Action)
-  // 4. Create New List
-  // 5. Shopping list
-  // 6. Settings
+  // 11 Comprehensive Product Tour Steps matching user requirements:
+  // Step 1: YAAD branding / Home
+  // Step 2: Create New List
+  // Step 3: Add shopping items
+  // Step 4: Smart item recognition
+  // Step 5: Shopping mode
+  // Step 6: Completing items
+  // Step 7: Completion animation/sound
+  // Step 8: Settings
+  // Step 9: Language
+  // Step 10: Profile/avatar
+  // Step 11: Account/security
   const steps: TourStep[] = [
     {
-      id: 'step_header_logo',
+      id: 'step_1_brand_home',
       targetId: 'top_header_logo_area',
       fallbackTargetId: 'top_header_logo',
-      title: t('tour.logoTitle') || 'YAAD Header & Brand',
+      title: t('tour.step1Title') || 'YAAD Branding & Home',
       description:
-        t('tour.logoDesc') ||
-        'Your bilingual grocery companion with fast, smart organization in Urdu, Roman Urdu, and English.',
+        t('tour.step1Desc') ||
+        'Your clean, intelligent grocery companion with quick access to active trips and daily kitchen essentials.',
       icon: Sparkles,
       position: 'bottom',
     },
     {
-      id: 'step_home_tab',
-      targetId: 'nav_tab_home',
-      fallbackTargetId: 'home_greeting_section',
-      title: t('tour.homeTitle') || 'Home Dashboard',
-      description:
-        t('tour.homeDesc') ||
-        'Easily return to your active shopping trips, recent lists, and daily summary anytime.',
-      icon: Home,
-      position: 'top',
-    },
-    {
-      id: 'step_create_action',
-      targetId: 'nav_tab_create',
-      fallbackTargetId: 'home_create_list_btn',
-      title: t('tour.createBarTitle') || 'Quick Create Action',
-      description:
-        t('tour.createBarDesc') ||
-        'Tap this center action button from anywhere to instantly create a new list or add grocery items.',
-      icon: Plus,
-      position: 'top',
-    },
-    {
-      id: 'step_create_new_list',
+      id: 'step_2_create_list',
       targetId: 'home_create_list_btn',
-      fallbackTargetId: 'home_empty_state_create_btn',
-      title: t('tour.createNewListTitle') || 'Create New List',
+      fallbackTargetId: 'nav_tab_create',
+      title: t('tour.step2Title') || 'Create New List',
       description:
-        t('tour.createNewListDesc') ||
-        'Tap this card to start a fresh list with intelligent item sorting and Pakistani grocery suggestions.',
+        t('tour.step2Desc') ||
+        'Tap the prominent Create card or bottom center button to start a fresh shopping list in seconds.',
       icon: Plus,
       position: 'bottom',
     },
     {
-      id: 'step_shopping_lists',
+      id: 'step_3_add_items',
+      targetId: 'home_essentials_section',
+      fallbackTargetId: 'home_lists_section',
+      title: t('tour.step3Title') || 'Add Shopping Items',
+      description:
+        t('tour.step3Desc') ||
+        'Easily type or pick staples. Quantities, units, and custom notes can be configured effortlessly.',
+      icon: ShoppingBag,
+      position: 'top',
+    },
+    {
+      id: 'step_4_smart_recognition',
+      targetId: 'home_search_bar',
+      fallbackTargetId: 'home_quick_actions',
+      title: t('tour.step4Title') || 'Smart Item Recognition',
+      description:
+        t('tour.step4Desc') ||
+        'YAAD automatically detects items in English, Roman Urdu, and Urdu, organizing them into the right grocery aisle.',
+      icon: Sparkles,
+      position: 'bottom',
+    },
+    {
+      id: 'step_5_shopping_mode',
       targetId: 'home_lists_section',
       fallbackTargetId: 'active_list_card',
-      title: t('tour.listsTitle') || 'Your Shopping Lists',
+      title: t('tour.step5Title') || 'Active Shopping Mode',
       description:
-        t('tour.listsDesc') ||
-        'Active and completed shopping lists appear right here for instant access in the store aisle.',
+        t('tour.step5Desc') ||
+        'Take your phone down the supermarket aisle with focused one-handed tapping and live completion progress.',
       icon: ListChecks,
+      position: 'top',
+    },
+    {
+      id: 'step_6_completing_items',
+      targetId: 'home_lists_section',
+      fallbackTargetId: 'home_stats_bar',
+      title: t('tour.step6Title') || 'Checking & Completing Items',
+      description:
+        t('tour.step6Desc') ||
+        'Tap any item to mark it bought. Items instantly slide to completed with satisfying tactile feedback.',
+      icon: CheckCircle2,
+      position: 'top',
+    },
+    {
+      id: 'step_7_completion_sound',
+      targetId: 'home_sound_indicator',
+      fallbackTargetId: 'top_header_logo_area',
+      title: t('tour.step7Title') || 'Completion Chime & Sound',
+      description:
+        t('tour.step7Desc') ||
+        'When all items are bought, enjoy an acoustic completion chime celebrating your completed shopping trip.',
+      icon: Volume2,
       position: 'bottom',
     },
     {
-      id: 'step_settings_profile',
+      id: 'step_8_settings',
       targetId: 'nav_tab_settings',
       fallbackTargetId: 'top_header_settings_btn',
-      title: t('tour.settingsTitle') || 'Settings & Profile',
+      title: t('tour.step8Title') || 'Settings Hub',
       description:
-        t('tour.settingsDesc') ||
-        'Customize your emoji avatar, update full name, switch languages (English, Urdu, Roman Urdu), and sound effects.',
+        t('tour.step8Desc') ||
+        'Access your unified Settings page anytime to personalize your profile, account security, and preferences.',
       icon: Settings,
+      position: 'top',
+    },
+    {
+      id: 'step_9_language',
+      targetId: 'settings_language_section',
+      fallbackTargetId: 'nav_tab_settings',
+      title: t('tour.step9Title') || 'Bilingual Language System',
+      description:
+        t('tour.step9Desc') ||
+        'Switch seamlessly between English, Roman Urdu, and Urdu with full RTL and authentic Nastaliq typography.',
+      icon: Globe,
+      position: 'top',
+    },
+    {
+      id: 'step_10_profile_avatar',
+      targetId: 'settings_profile_card',
+      fallbackTargetId: 'settings_avatar_btn',
+      title: t('tour.step10Title') || 'Profile & Emoji Avatars',
+      description:
+        t('tour.step10Desc') ||
+        'Choose from curated emoji avatars across animals, food, nature, fun, travel, and sports.',
+      icon: Smile,
+      position: 'bottom',
+    },
+    {
+      id: 'step_11_security_sync',
+      targetId: 'settings_security_card',
+      fallbackTargetId: 'settings_signout_btn',
+      title: t('tour.step11Title') || 'Account Security & Sync',
+      description:
+        t('tour.step11Desc') ||
+        'Keep your shopping lists backed up and secure with real Supabase synchronization and easy password management.',
+      icon: ShieldCheck,
       position: 'top',
     },
   ];

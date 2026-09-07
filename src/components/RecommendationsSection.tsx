@@ -4,6 +4,7 @@ import { RecommendationCandidate } from '../lib/recommendations';
 import { useLanguage } from '../context/LanguageContext';
 import { BidiText } from '../utils/bidi';
 import { CategoryIcon } from './CategoryIcon';
+import { EssentialProductVisual } from './EssentialProductVisual';
 
 interface RecommendationsSectionProps {
   recommendations: RecommendationCandidate[];
@@ -138,9 +139,12 @@ export const RecommendationsSection: React.FC<RecommendationsSectionProps> = ({
               {/* Item Info */}
               <div>
                 <div className="flex items-center gap-2 mb-1.5">
-                  <span className="text-xl leading-none select-none">
-                    {item.emoji || <CategoryIcon categoryId={item.category} className="w-4 h-4 text-primary" />}
-                  </span>
+                  <EssentialProductVisual
+                    canonicalName={item.canonicalName}
+                    displayName={localizedName}
+                    categoryId={item.category}
+                    size={36}
+                  />
                   {hasQuantity && (
                     <span className="text-[11px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded">
                       {item.suggestedQuantity} {item.suggestedUnit || ''}

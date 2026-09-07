@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Home, Plus, Settings } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import { NavigationTab } from '../types';
 import { useLanguage } from '../context/LanguageContext';
+import { triggerHaptic } from '../lib/sound';
 
 interface BottomNavBarProps {
   activeTab: NavigationTab;
@@ -15,17 +16,87 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   onTabChange,
   onCreateClick,
 }) => {
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const prefersReducedMotion = useReducedMotion();
-  const [settingsRotated, setSettingsRotated] = useState(false);
 
-  const handleSettingsClick = () => {
-    setSettingsRotated(true);
-    setTimeout(() => setSettingsRotated(false), 400);
-    onTabChange('settings');
+  const homeBtnRef = useRef<HTMLButtonElement>(null);
+  const createBtnRef = useRef<HTMLButtonElement>(null);
+  const settingsBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Keyboard shortcut listener (1 / H for Home, 2 / C / + for Create, 3 / S for Settings)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept when user is typing into input, textarea, or contentEditable
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable ||
+          target.getAttribute('role') === 'textbox')
+      ) {
+        return;
+      }
+
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+      if (e.key === '1' || e.key.toLowerCase() === 'h') {
+        e.preventDefault();
+        triggerHaptic(10);
+        onTabChange('home');
+      } else if (e.key === '2' || e.key.toLowerCase() === 'c' || e.key === '+') {
+        e.preventDefault();
+        triggerHaptic(14);
+        if (onCreateClick) {
+          onCreateClick();
+        } else {
+          onTabChange('create');
+        }
+      } else if (e.key === '3' || e.key.toLowerCase() === 's' || e.key === ',') {
+        e.preventDefault();
+        triggerHaptic(10);
+        onTabChange('settings');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onTabChange, onCreateClick]);
+
+  // Arrow key navigation between navigation items
+  const handleTabKeyDown = (
+    e: React.KeyboardEvent<HTMLButtonElement>,
+    current: 'home' | 'create' | 'settings'
+  ) => {
+    const nextKey = isRTL ? 'ArrowLeft' : 'ArrowRight';
+    const prevKey = isRTL ? 'ArrowRight' : 'ArrowLeft';
+
+    if (e.key === nextKey) {
+      e.preventDefault();
+      if (current === 'home') createBtnRef.current?.focus();
+      else if (current === 'create') settingsBtnRef.current?.focus();
+      else if (current === 'settings') homeBtnRef.current?.focus();
+    } else if (e.key === prevKey) {
+      e.preventDefault();
+      if (current === 'home') settingsBtnRef.current?.focus();
+      else if (current === 'create') homeBtnRef.current?.focus();
+      else if (current === 'settings') createBtnRef.current?.focus();
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      homeBtnRef.current?.focus();
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      settingsBtnRef.current?.focus();
+    }
+  };
+
+  const handleHomeClick = () => {
+    triggerHaptic(10);
+    onTabChange('home');
   };
 
   const handleCreateClick = () => {
+    triggerHaptic(14);
     if (onCreateClick) {
       onCreateClick();
     } else {
@@ -33,173 +104,151 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
     }
   };
 
+  const handleSettingsClick = () => {
+    triggerHaptic(10);
+    onTabChange('settings');
+  };
+
+  const isHomeActive = activeTab === 'home';
+  const isSettingsActive = activeTab === 'settings';
+
   return (
-    <nav
-      id="bottom_navigation_bar"
-      role="tablist"
-      aria-label="Main Navigation"
-      className="fixed bottom-0 left-0 right-0 w-full z-40 pointer-events-none pb-4 pt-1 px-4 max-w-sm sm:max-w-md md:max-w-lg mx-auto select-none"
+    <div
+      className="fixed bottom-0 inset-x-0 z-40 pointer-events-none pb-[max(env(safe-area-inset-bottom,0px),0.625rem)] px-3 sm:px-4 flex justify-center items-end"
+      style={{ transform: 'translateZ(0)' }}
     >
-      {/* YAAD Original Soft-Glass Capsule Container */}
-      <div className="pointer-events-auto bg-surface-container-lowest/85 dark:bg-surface-container-lowest/90 backdrop-blur-xl border border-primary/10 shadow-[0px_8px_32px_rgba(0,35,24,0.08)] rounded-2xl p-1.5 flex items-center justify-between gap-1 transition-colors duration-200">
-        
-        {/* 1. Home Tab */}
-        <button
-          id="nav_tab_home"
-          role="tab"
-          type="button"
-          onClick={() => onTabChange('home')}
-          aria-selected={activeTab === 'home'}
-          aria-label={t('nav.home')}
-          className={`flex-1 relative flex flex-col items-center justify-center py-2 px-2 rounded-xl transition-all duration-150 active:scale-95 group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer ${
-            activeTab === 'home'
-              ? 'text-primary'
-              : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low/40'
-          }`}
+      <nav
+        id="bottom_navigation_bar"
+        role="navigation"
+        aria-label={t('nav.mainNavigation') || 'Main Navigation'}
+        className="pointer-events-auto w-full max-w-[340px] xs:max-w-[360px] sm:max-w-[400px] md:max-w-[440px] bg-surface-container-lowest/90 dark:bg-stone-900/90 backdrop-blur-2xl border border-surface-dim/70 dark:border-white/10 rounded-2xl sm:rounded-full p-1.5 shadow-[0_12px_36px_-6px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.04)] ring-1 ring-black/[0.04] dark:ring-white/[0.06] select-none transition-all duration-200"
+      >
+        <div
+          role="tablist"
+          aria-orientation="horizontal"
+          className="flex items-center justify-between gap-1 w-full"
         >
-          {/* YAAD Signature Soft Glass Pill Active Indicator */}
-          {activeTab === 'home' && (
-            <motion.div
-              layoutId="yaadActiveNavPill"
-              className="absolute inset-0 bg-primary/[0.08] dark:bg-primary/[0.18] border border-primary/20 dark:border-primary/30 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.7),0_2px_8px_rgba(0,40,25,0.05)] backdrop-blur-xs pointer-events-none"
-              transition={
-                prefersReducedMotion
-                  ? { duration: 0 }
-                  : { type: 'spring', stiffness: 420, damping: 32 }
-              }
-            />
-          )}
-
-          <div className="relative z-10 flex flex-col items-center gap-0.5">
-            <motion.div
-              animate={{
-                scale: activeTab === 'home' ? 1.05 : 1,
-                opacity: activeTab === 'home' ? 1 : 0.75,
-              }}
-              transition={{ duration: 0.18, ease: 'easeOut' }}
-            >
-              <Home
-                className={`w-5 h-5 transition-colors duration-200 ${
-                  activeTab === 'home' ? 'stroke-[2.3] text-primary' : 'stroke-[1.8]'
-                }`}
+          {/* 1. HOME TAB */}
+          <button
+            ref={homeBtnRef}
+            id="nav_tab_home"
+            role="tab"
+            type="button"
+            tabIndex={isHomeActive ? 0 : -1}
+            onClick={handleHomeClick}
+            onKeyDown={(e) => handleTabKeyDown(e, 'home')}
+            aria-selected={isHomeActive}
+            aria-label={t('nav.home')}
+            className={`relative flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-1.5 sm:py-2 px-2 sm:px-3.5 rounded-xl sm:rounded-full text-center transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-stone-900 cursor-pointer ${
+              isHomeActive
+                ? 'text-primary dark:text-emerald-400 font-bold'
+                : 'text-on-surface-variant/70 hover:text-on-surface font-medium hover:bg-surface-container-high/40'
+            }`}
+          >
+            {isHomeActive && (
+              <motion.div
+                layoutId="nav-active-indicator"
+                className="absolute inset-0 bg-primary/[0.08] dark:bg-emerald-500/15 rounded-xl sm:rounded-full -z-10"
+                transition={
+                  prefersReducedMotion
+                    ? { duration: 0 }
+                    : { type: 'spring', stiffness: 480, damping: 34 }
+                }
               />
-            </motion.div>
-            <span
-              className={`text-[11px] font-['Manrope'] tracking-tight transition-colors duration-200 flex items-center gap-1 ${
-                activeTab === 'home' ? 'font-bold text-primary' : 'font-medium text-on-surface-variant'
+            )}
+            <Home
+              className={`w-5 h-5 shrink-0 transition-transform duration-150 ${
+                isHomeActive
+                  ? 'stroke-[2.2] scale-105'
+                  : 'stroke-[2] opacity-80 group-hover:opacity-100'
               }`}
-            >
+            />
+            <span className="text-[11px] sm:text-xs font-['Manrope'] tracking-tight whitespace-nowrap">
               {t('nav.home')}
-              {activeTab === 'home' && (
-                <span className="w-1 h-1 rounded-full bg-primary inline-block" />
-              )}
             </span>
-          </div>
-        </button>
-
-        {/* 2. Create Tab */}
-        <button
-          id="nav_tab_create"
-          role="tab"
-          type="button"
-          onClick={handleCreateClick}
-          aria-selected={activeTab === 'create'}
-          aria-label={t('nav.create')}
-          className={`flex-1 relative flex flex-col items-center justify-center py-2 px-2 rounded-xl transition-all duration-150 active:scale-95 group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer ${
-            activeTab === 'create'
-              ? 'text-primary'
-              : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low/40'
-          }`}
-        >
-          {/* YAAD Signature Soft Glass Pill Active Indicator (if in create mode) */}
-          {activeTab === 'create' && (
-            <motion.div
-              layoutId="yaadActiveNavPill"
-              className="absolute inset-0 bg-primary/[0.08] dark:bg-primary/[0.18] border border-primary/20 dark:border-primary/30 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.7),0_2px_8px_rgba(0,40,25,0.05)] backdrop-blur-xs pointer-events-none"
-              transition={
-                prefersReducedMotion
-                  ? { duration: 0 }
-                  : { type: 'spring', stiffness: 420, damping: 32 }
-              }
-            />
-          )}
-
-          <div className="relative z-10 flex flex-col items-center gap-0.5">
-            <div className="w-8 h-8 rounded-xl bg-primary text-on-primary flex items-center justify-center shadow-[0_3px_10px_rgba(0,55,40,0.22)] group-hover:scale-105 active:scale-95 transition-all duration-150">
-              <Plus className="w-4 h-4 text-white stroke-[2.6] transition-transform duration-200 group-hover:rotate-90 group-active:rotate-90 motion-reduce:transform-none" />
-            </div>
             <span
-              className={`text-[11px] font-['Manrope'] tracking-tight transition-colors duration-200 flex items-center gap-1 ${
-                activeTab === 'create' ? 'font-bold text-primary' : 'font-medium text-on-surface-variant'
-              }`}
+              className="hidden md:inline-flex items-center text-[10px] font-mono text-outline/60 px-1 rounded bg-surface-container-high/50 ms-0.5 leading-none"
+              aria-hidden="true"
+              title="Keyboard shortcut: 1"
             >
-              {t('nav.create')}
-              {activeTab === 'create' && (
-                <span className="w-1 h-1 rounded-full bg-primary inline-block" />
-              )}
+              1
             </span>
-          </div>
-        </button>
+          </button>
 
-        {/* 3. Settings Tab */}
-        <button
-          id="nav_tab_settings"
-          role="tab"
-          type="button"
-          onClick={handleSettingsClick}
-          aria-selected={activeTab === 'settings'}
-          aria-label={t('nav.settings')}
-          className={`flex-1 relative flex flex-col items-center justify-center py-2 px-2 rounded-xl transition-all duration-150 active:scale-95 group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer ${
-            activeTab === 'settings'
-              ? 'text-primary'
-              : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-low/40'
-          }`}
-        >
-          {/* YAAD Signature Soft Glass Pill Active Indicator */}
-          {activeTab === 'settings' && (
-            <motion.div
-              layoutId="yaadActiveNavPill"
-              className="absolute inset-0 bg-primary/[0.08] dark:bg-primary/[0.18] border border-primary/20 dark:border-primary/30 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.7),0_2px_8px_rgba(0,40,25,0.05)] backdrop-blur-xs pointer-events-none"
-              transition={
-                prefersReducedMotion
-                  ? { duration: 0 }
-                  : { type: 'spring', stiffness: 420, damping: 32 }
-              }
-            />
-          )}
-
-          <div className="relative z-10 flex flex-col items-center gap-0.5">
-            <motion.div
-              animate={{
-                scale: activeTab === 'settings' ? 1.05 : 1,
-                opacity: activeTab === 'settings' ? 1 : 0.75,
-                rotate: settingsRotated ? 60 : 0,
-              }}
-              transition={{
-                duration: 0.3,
-                ease: [0.25, 1, 0.5, 1],
-              }}
+          {/* 2. CREATE BUTTON (PRIMARY ACTION) */}
+          <div className="flex-1 flex items-center justify-center px-1">
+            <button
+              ref={createBtnRef}
+              id="nav_tab_create"
+              type="button"
+              tabIndex={0}
+              onClick={handleCreateClick}
+              onKeyDown={(e) => handleTabKeyDown(e, 'create')}
+              aria-label={t('nav.create')}
+              className="w-full max-w-[130px] sm:max-w-[145px] flex items-center justify-center gap-1.5 sm:gap-2 py-2 px-3.5 sm:px-4 rounded-xl sm:rounded-full bg-primary text-on-primary hover:bg-[#14523e] active:bg-[#0a281e] dark:bg-emerald-600 dark:hover:bg-emerald-500 dark:active:bg-emerald-700 shadow-[0_2px_8px_rgba(15,61,46,0.25)] hover:shadow-[0_4px_14px_rgba(15,61,46,0.35)] transition-all duration-150 active:scale-[0.95] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-stone-900 cursor-pointer group"
             >
-              <Settings
-                className={`w-5 h-5 transition-colors duration-200 ${
-                  activeTab === 'settings' ? 'stroke-[2.3] text-primary' : 'stroke-[1.8]'
-                }`}
+              <Plus className="w-4.5 h-4.5 sm:w-5 sm:h-5 stroke-[2.4] shrink-0 transition-transform duration-150 group-hover:scale-110" />
+              <span className="text-xs font-bold font-['Manrope'] tracking-tight text-on-primary whitespace-nowrap">
+                {t('nav.create')}
+              </span>
+              <span
+                className="hidden md:inline-flex items-center text-[10px] font-mono font-medium text-on-primary/70 px-1 rounded bg-white/20 ms-0.5 leading-none"
+                aria-hidden="true"
+                title="Keyboard shortcut: +"
+              >
+                +
+              </span>
+            </button>
+          </div>
+
+          {/* 3. SETTINGS TAB */}
+          <button
+            ref={settingsBtnRef}
+            id="nav_tab_settings"
+            role="tab"
+            type="button"
+            tabIndex={isSettingsActive ? 0 : -1}
+            onClick={handleSettingsClick}
+            onKeyDown={(e) => handleTabKeyDown(e, 'settings')}
+            aria-selected={isSettingsActive}
+            aria-label={t('nav.settings')}
+            className={`relative flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-1.5 sm:py-2 px-2 sm:px-3.5 rounded-xl sm:rounded-full text-center transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-stone-900 cursor-pointer ${
+              isSettingsActive
+                ? 'text-primary dark:text-emerald-400 font-bold'
+                : 'text-on-surface-variant/70 hover:text-on-surface font-medium hover:bg-surface-container-high/40'
+            }`}
+          >
+            {isSettingsActive && (
+              <motion.div
+                layoutId="nav-active-indicator"
+                className="absolute inset-0 bg-primary/[0.08] dark:bg-emerald-500/15 rounded-xl sm:rounded-full -z-10"
+                transition={
+                  prefersReducedMotion
+                    ? { duration: 0 }
+                    : { type: 'spring', stiffness: 480, damping: 34 }
+                }
               />
-            </motion.div>
-            <span
-              className={`text-[11px] font-['Manrope'] tracking-tight transition-colors duration-200 flex items-center gap-1 ${
-                activeTab === 'settings' ? 'font-bold text-primary' : 'font-medium text-on-surface-variant'
+            )}
+            <Settings
+              className={`w-5 h-5 shrink-0 transition-transform duration-150 ${
+                isSettingsActive
+                  ? 'stroke-[2.2] scale-105'
+                  : 'stroke-[2] opacity-80 group-hover:opacity-100'
               }`}
-            >
+            />
+            <span className="text-[11px] sm:text-xs font-['Manrope'] tracking-tight whitespace-nowrap">
               {t('nav.settings')}
-              {activeTab === 'settings' && (
-                <span className="w-1 h-1 rounded-full bg-primary inline-block" />
-              )}
             </span>
-          </div>
-        </button>
-
-      </div>
-    </nav>
+            <span
+              className="hidden md:inline-flex items-center text-[10px] font-mono text-outline/60 px-1 rounded bg-surface-container-high/50 ms-0.5 leading-none"
+              aria-hidden="true"
+              title="Keyboard shortcut: 3"
+            >
+              3
+            </span>
+          </button>
+        </div>
+      </nav>
+    </div>
   );
 };

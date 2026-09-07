@@ -88,6 +88,10 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
         return t('settings.avatarObjects') || 'Objects';
       case 'fun':
         return t('settings.avatarFun') || 'Fun';
+      case 'travel':
+        return t('settings.avatarTravel') || 'Travel';
+      case 'sports':
+        return t('settings.avatarSports') || 'Sports';
       case 'symbols':
         return t('settings.avatarSymbols') || 'Symbols';
       default:

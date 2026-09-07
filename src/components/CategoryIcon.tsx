@@ -85,5 +85,5 @@ export const CategoryIcon: React.FC<CategoryIconProps> = ({
   className = 'w-4 h-4',
 }) => {
   const IconComponent = ICON_MAP[categoryId as CategoryId] || Tag;
-  return <IconComponent className={className} />;
+  return <IconComponent className={className} strokeWidth={2} />;
 };

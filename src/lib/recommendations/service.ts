@@ -438,12 +438,14 @@ export class RecommendationService {
    * Gets personalized recommendations (or gracefully falls back to starter popular items for new users)
    */
   public getRecommendations(options?: {
+    listTitle?: string;
     currentListItems?: ShoppingItem[];
     limit?: number;
     forcePersonalOnly?: boolean;
   }): RecommendationCandidate[] {
     const limit = options?.limit ?? this.config.maxRecommendationsHome;
     const currentItems = options?.currentListItems || [];
+    const listTitle = options?.listTitle;
 
     const currentListCanonicals: string[] = currentItems.map((item) => {
       const meta = this.resolveItemMetadata(item);
@@ -459,7 +461,9 @@ export class RecommendationService {
       coPurchases,
       currentListCanonicals,
       limit,
-      this.config
+      this.config,
+      Date.now(),
+      listTitle
     );
 
     // If user has enough personal recommendations, return them immediately
@@ -489,10 +493,40 @@ export class RecommendationService {
   }
 
   /**
+   * User Acceptance Feedback:
+   * When user adds a recommendation to their list, reinforce confidence
+   * and increase contextual affinity for that user and context.
+   */
+  public async acceptRecommendation(canonicalName: string, contextId?: string): Promise<void> {
+    const key = canonicalName.toLowerCase();
+    let profile = this.profilesMap.get(key);
+
+    if (!profile) {
+      return;
+    }
+
+    const updatedAffinities = { ...(profile.contextAffinities || {}) };
+    if (contextId && contextId !== 'general') {
+      updatedAffinities[contextId] = (updatedAffinities[contextId] || 0) + 1;
+    }
+
+    const updatedProfile: UserItemBehaviorProfile = {
+      ...profile,
+      acceptedCount: (profile.acceptedCount || 0) + 1,
+      contextAffinities: updatedAffinities,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.profilesMap.set(key, updatedProfile);
+    await saveUserBehaviorProfile(updatedProfile);
+    this.notifyListeners();
+  }
+
+  /**
    * User Dismissal Feedback:
    * Dampens the recommendation score for this item without permanent blacklisting
    */
-  public async dismissRecommendation(canonicalName: string): Promise<void> {
+  public async dismissRecommendation(canonicalName: string, contextId?: string): Promise<void> {
     const key = canonicalName.toLowerCase();
     const profile = this.profilesMap.get(key);
     if (!profile) return;

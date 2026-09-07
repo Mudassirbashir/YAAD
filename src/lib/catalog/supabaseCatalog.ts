@@ -7,6 +7,7 @@ import { defaultItemCatalog } from '../recognition/catalog';
 
 const CACHE_KEY_ITEMS = 'yaad_cached_master_items_v1';
 const CACHE_KEY_CATEGORIES = 'yaad_cached_master_categories_v1';
+const CACHE_KEY_ALIASES = 'yaad_cached_master_aliases_v1';
 
 class SupabaseCatalogService {
   private isSyncing = false;
@@ -14,7 +15,7 @@ class SupabaseCatalogService {
 
   /**
    * Initializes the catalog:
-   * 1. Hydrates immediately from cached storage if available
+   * 1. Hydrates immediately from cached storage if available (100% offline-ready)
    * 2. Synchronizes remotely from Supabase if connected
    */
   public async initialize(): Promise<void> {
@@ -30,11 +31,26 @@ class SupabaseCatalogService {
           defaultCatalogSearchEngine.indexItems(cachedItems);
         }
       }
+
+      // 2. Load cached master aliases from localStorage if available
+      const cachedAliasesRaw = localStorage.getItem(CACHE_KEY_ALIASES);
+      if (cachedAliasesRaw) {
+        const cachedAliases = JSON.parse(cachedAliasesRaw);
+        if (Array.isArray(cachedAliases)) {
+          for (const row of cachedAliases) {
+            const aliasText = (row.alias || row.alias_name || row.raw_alias || row.name || '').trim();
+            const targetItemId = row.item_id || row.canonical_id || row.canonical_item_id;
+            if (aliasText && targetItemId) {
+              defaultItemCatalog.registerCustomAlias(aliasText, targetItemId);
+            }
+          }
+        }
+      }
     } catch {
       // Ignore cache read errors
     }
 
-    // 2. Fetch updates from Supabase asynchronously in background (non-blocking)
+    // 3. Fetch updates from Supabase asynchronously in background (non-blocking)
     this.syncFromSupabase().catch(() => {
       // Silently continue with local seed items on offline or unconfigured instances
     });
@@ -136,6 +152,32 @@ class SupabaseCatalogService {
           // ignore cache write error
         }
 
+        // Fetch public master aliases from Supabase item_aliases table
+        try {
+          if (supabase) {
+            const { data: aliasData, error: aliasError } = await supabase
+              .from('item_aliases')
+              .select('*');
+
+            if (!aliasError && aliasData && Array.isArray(aliasData) && aliasData.length > 0) {
+              for (const row of aliasData) {
+                const aliasText = (row.alias || row.alias_name || row.raw_alias || row.name || '').trim();
+                const targetItemId = row.item_id || row.canonical_id || row.canonical_item_id;
+                if (aliasText && targetItemId) {
+                  defaultItemCatalog.registerCustomAlias(aliasText, targetItemId);
+                }
+              }
+              try {
+                localStorage.setItem(CACHE_KEY_ALIASES, JSON.stringify(aliasData));
+              } catch {
+                // ignore cache write error
+              }
+            }
+          }
+        } catch {
+          // Graceful offline fallback
+        }
+
         return true;
       }
     } catch {
@@ -157,6 +199,7 @@ class SupabaseCatalogService {
     preferredQuantity?: string
   ): Promise<void> {
     if (!userId || !itemId) return;
+    if (!supabase || (typeof navigator !== 'undefined' && !navigator.onLine)) return;
 
     try {
       // Upsert into user_item_history

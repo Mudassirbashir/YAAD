@@ -161,12 +161,13 @@ const CORE_CANONICAL_ITEMS: CanonicalItemRecord[] = [
     roman_urdu_names: ['Hari Mirch', 'Hari Mirchi', 'Sabz Mirch'],
     aliases: [
       'green chili', 'green chilli', 'green chillies', 'green chilies', 'green chilly',
-      'hari mirch', 'hari mirchi', 'haree mirch', 'harimirch', 'sabz mirch', 'hari mir',
+      'hari mirch', 'hari mirchh', 'hari mirchhh', 'hari mirchi', 'haree mirch', 'haree mirchh',
+      'harimirch', 'harimirchh', 'sabz mirch', 'hari mir',
       'ہری مرچ', 'ہری مرچی', 'سبز مرچ',
     ],
     category: 'vegetables',
     subcategory: 'Fresh Herbs & Chilis',
-    common_spellings: ['green chili', 'green chilli', 'hari mirche', 'harimirch', 'hari mirchi', 'hari mir'],
+    common_spellings: ['green chili', 'green chilli', 'green chillies', 'hari mirch', 'hari mirchh', 'hari mirche', 'harimirch', 'hari mirchi', 'hari mir'],
     confidence: 0.98,
     active: true,
     emoji: '🌶️',
@@ -555,6 +556,54 @@ const CORE_CANONICAL_ITEMS: CanonicalItemRecord[] = [
     nameRomanUrdu: 'Chawal',
     categoryId: 'rice',
   },
+  {
+    id: 'spices_general',
+    canonical_name: 'Spices',
+    english_name: 'Spices',
+    urdu_name: 'مصالحہ جات',
+    roman_urdu_names: ['Masalay', 'Spices', 'Masala'],
+    aliases: [
+      'spices', 'spice', 'masala', 'masalay', 'masale', 'garam masala', 'chaat masala',
+      'biryani masala', 'qorma masala', 'shan masala', 'national masala',
+      'pisa masala', 'sabut masala', 'spice mix', 'spices mix',
+      'مصالحہ', 'مصالحہ جات', 'گرم مصالحہ', 'چاٹ مصالحہ',
+    ],
+    category: 'spices',
+    subcategory: 'Mixed Spices',
+    common_spellings: ['spices', 'spice', 'masala', 'masalay', 'garam masala'],
+    confidence: 0.98,
+    active: true,
+    emoji: '🌶️',
+    defaultUnit: 'packet',
+    canonicalName: 'Spices',
+    nameUrdu: 'مصالحہ جات',
+    nameRomanUrdu: 'Masalay',
+    categoryId: 'spices',
+  },
+  {
+    id: 'drinks_general',
+    canonical_name: 'Drinks / Beverages',
+    english_name: 'Drinks',
+    urdu_name: 'مشروبات',
+    roman_urdu_names: ['Cold Drinks', 'Drinks', 'Mashroobat'],
+    aliases: [
+      'drinks', 'drink', 'cold drink', 'cold drinks', 'soft drink', 'soft drinks',
+      'beverage', 'beverages', 'pepsi', 'coke', 'coca cola', 'sprite', 'fanta',
+      '7up', 'pakola', 'soda', 'juices', 'juice', 'sharbat',
+      'کولڈ ڈرنک', 'مشروب', 'مشروبات', 'سافٹ ڈرنک', 'شربت',
+    ],
+    category: 'beverages',
+    subcategory: 'Cold Drinks',
+    common_spellings: ['drinks', 'drink', 'cold drink', 'beverages', 'beverage'],
+    confidence: 0.98,
+    active: true,
+    emoji: '🥤',
+    defaultUnit: 'bottle',
+    canonicalName: 'Drinks / Beverages',
+    nameUrdu: 'مشروبات',
+    nameRomanUrdu: 'Drinks',
+    categoryId: 'beverages',
+  },
 ];
 
 /**
@@ -690,6 +739,49 @@ export class ItemCatalog implements ItemCatalogProvider {
 
   public findById(id: string): CanonicalItemRecord | undefined {
     return this.itemMap.get(id);
+  }
+
+  public registerCustomAlias(alias: string, targetItemIdOrCanonical: string): void {
+    const item =
+      this.itemMap.get(targetItemIdOrCanonical) ||
+      this.exactMap.get(normalizeBaseText(targetItemIdOrCanonical));
+    if (!item) return;
+
+    const norm = normalizeBaseText(alias);
+    if (norm) {
+      this.exactMap.set(norm, item);
+      const phon = normalizePhonetic(norm);
+      if (phon) {
+        this.phoneticMap.set(phon, item);
+      }
+      if (!item.aliases) {
+        item.aliases = [];
+      }
+      if (!item.aliases.includes(alias)) {
+        item.aliases.push(alias);
+      }
+    }
+  }
+
+  public registerMasterItem(item: CanonicalItemRecord): void {
+    this.itemMap.set(item.id, item);
+    if (!this.allItems.some((existing) => existing.id === item.id)) {
+      this.allItems.push(item);
+    }
+    const normName = normalizeBaseText(item.canonical_name);
+    if (normName) this.exactMap.set(normName, item);
+    if (item.english_name) {
+      const normEn = normalizeBaseText(item.english_name);
+      if (normEn) this.exactMap.set(normEn, item);
+    }
+    for (const alias of item.aliases || []) {
+      const normAlias = normalizeBaseText(alias);
+      if (normAlias) {
+        this.exactMap.set(normAlias, item);
+        const phon = normalizePhonetic(normAlias);
+        if (phon) this.phoneticMap.set(phon, item);
+      }
+    }
   }
 
   public getAllItems(): CanonicalItemRecord[] {

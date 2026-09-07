@@ -13,6 +13,7 @@ import { ListHistoryView } from './components/ListHistoryView';
 import { ListDetailsView } from './components/ListDetailsView';
 import { EditListView } from './components/EditListView';
 import { SettingsView } from './components/SettingsView';
+import { StatisticsView } from './components/StatisticsView';
 import { BottomNavBar } from './components/BottomNavBar';
 import { AuthModal } from './components/AuthModal';
 import { ProductTour } from './components/ProductTour';
@@ -33,6 +34,7 @@ import { supabaseCatalog } from './lib/catalog';
 import { Loader2 } from 'lucide-react';
 import { recommendationService, RecommendationCandidate } from './lib/recommendations';
 import { detectDuplicateItem, mergeQuantities } from './lib/recognition';
+import { getFriendlyErrorMessage } from './utils/errorFormatting';
 
 const STORAGE_ONBOARDED_KEY = 'yaad_has_onboarded_v2';
 const STORAGE_PROFILE_SETUP_KEY = 'yaad_profile_setup_done';
@@ -96,12 +98,13 @@ export default function App() {
       const { lists: freshLists, error } = await loadUserShoppingLists(userId);
       if (error) {
         console.warn('Notice loading shopping lists:', error);
-        setListsFetchError(error.message);
+        setListsFetchError(getFriendlyErrorMessage(error));
       } else if (freshLists) {
         setLists(freshLists);
       }
     } catch (err: any) {
       console.warn('Error loading shopping lists:', err);
+      setListsFetchError(getFriendlyErrorMessage(err));
     } finally {
       setIsLoadingLists(false);
     }
@@ -459,10 +462,12 @@ export default function App() {
     const target = typeof listOrId === 'object' ? listOrId : lists.find((l) => l.id === targetId);
     if (!target) return;
 
+    const nowTimestamp = Date.now();
     const completedList: ShoppingList = {
       ...target,
       isCompleted: true,
-      completedAt: target.completedAt || new Date().toISOString(),
+      completedAt: target.completedAt || new Date(nowTimestamp).toISOString(),
+      completedTimestamp: target.completedTimestamp || nowTimestamp,
     };
 
     setLists((prev) => prev.map((l) => (l.id === targetId ? completedList : l)));
@@ -500,12 +505,13 @@ export default function App() {
     setActiveTab('lists');
   };
 
-  const handleReuseList = async (listId: string) => {
+  const handleReuseList = async (listOrId: ShoppingList | string) => {
     if (!user) {
       setCurrentScreen('auth');
       return;
     }
-    const target = lists.find((l) => l.id === listId);
+    const targetId = typeof listOrId === 'string' ? listOrId : listOrId.id;
+    const target = typeof listOrId === 'object' ? listOrId : lists.find((l) => l.id === targetId);
     if (!target) return;
 
     const duplicatedId = generateUUID();
@@ -734,7 +740,7 @@ export default function App() {
 
   // Determine if bottom navigation bar should be visible
   const showBottomNav =
-    (currentScreen === 'home' || currentScreen === 'history' || currentScreen === 'settings') && !!user;
+    (currentScreen === 'home' || currentScreen === 'history' || currentScreen === 'settings' || currentScreen === 'statistics') && !!user;
 
   // Loading state while auth is being resolved on launch
   if (isAuthLoading && currentScreen !== 'splash') {
@@ -779,7 +785,14 @@ export default function App() {
           onSelectList={handleOpenListInShoppingMode}
           onOpenProfile={handleOpenSettingsScreen}
           onOpenMenu={handleOpenSettingsScreen}
+          onOpenHistory={() => {
+            setCurrentScreen('history');
+            setActiveTab('lists');
+          }}
+          onEditList={handleEditList}
+          onDeleteList={handleDeleteList}
           onQuickAddRecommendation={handleQuickAddRecommendation}
+          onOpenStatistics={() => setCurrentScreen('statistics')}
         />
       )}
 
@@ -833,6 +846,11 @@ export default function App() {
           onCreateNewList={handleStartCreateList}
           onOpenProfile={handleOpenSettingsScreen}
           onOpenMenu={handleOpenSettingsScreen}
+          onBack={() => {
+            setCurrentScreen('home');
+            setActiveTab('home');
+          }}
+          isOnline={isOnline}
         />
       )}
 
@@ -868,6 +886,21 @@ export default function App() {
           onOpenAuth={handleOpenAuth}
           onRestartTour={handleRestartTour}
           onReplayOnboarding={handleResetOnboarding}
+        />
+      )}
+
+      {currentScreen === 'statistics' && user && (
+        <StatisticsView
+          lists={lists}
+          isLoading={isLoadingLists}
+          error={listsFetchError}
+          onRetry={() => fetchShoppingLists(user?.id || null)}
+          onBack={() => {
+            setCurrentScreen('home');
+            setActiveTab('home');
+          }}
+          onCreateList={handleStartCreateList}
+          onSelectList={handleOpenListInShoppingMode}
         />
       )}
 

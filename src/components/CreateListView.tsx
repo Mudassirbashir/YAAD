@@ -81,7 +81,7 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
 
             {/* Suggested quick list names */}
             <div className="mt-6 flex flex-wrap items-center gap-2">
-              <span className="text-xs text-outline font-semibold uppercase tracking-wider py-1">
+              <span className="text-xs text-outline font-medium py-1">
                 {t('createList.suggestionsLabel')}
               </span>
               {suggestions.map((suggestion) => (

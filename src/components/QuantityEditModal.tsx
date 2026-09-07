@@ -3,6 +3,7 @@ import { ShoppingItem } from '../types';
 import { UNIT_MAP } from '../lib/recognition/quantityExtractor';
 import { Minus, Plus, X, Check, Trash2 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import { CategoryIcon } from './CategoryIcon';
 
 interface QuantityEditModalProps {
   isOpen: boolean;
@@ -89,15 +90,17 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between pb-2 border-b border-surface-container-high/60">
-          <div className="flex items-center gap-2.5 min-w-0">
-            {item.emoji && <span className="text-2xl shrink-0">{item.emoji}</span>}
+        <div className="flex items-center justify-between pb-3 border-b border-surface-container-high/60">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center text-primary shrink-0 border border-surface-dim">
+              <CategoryIcon categoryId={item.categoryId} className="w-5 h-5" />
+            </div>
             <div className="min-w-0">
-              <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-lg text-primary truncate">
+              <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-lg text-primary truncate leading-tight">
                 {item.name}
               </h3>
               {item.nameUrdu && (
-                <p className="font-urdu text-xs text-on-surface-variant">
+                <p className="font-urdu text-xs text-on-surface-variant mt-0.5">
                   {item.nameUrdu}
                 </p>
               )}
@@ -109,13 +112,13 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
             aria-label="Close quantity editor"
             className="w-8 h-8 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface-variant flex items-center justify-center transition-colors"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4 stroke-[2]" />
           </button>
         </div>
 
         {/* Stepper + Manual Input */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-['Manrope'] font-bold text-outline uppercase tracking-wider">
+          <label className="text-xs font-['Manrope'] font-medium text-outline">
             {t('quantity') || 'Quantity'}
           </label>
           <div className="flex items-center gap-2">

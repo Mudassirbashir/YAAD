@@ -431,6 +431,7 @@ export async function loadUserShoppingLists(
     const itemsByListId = new Map<string, ShoppingItem[]>();
     if (itemsData && itemsData.length > 0) {
       itemsData.forEach((row) => {
+        const itemCreatedAt = row.created_at ? new Date(row.created_at).getTime() : undefined;
         const item: ShoppingItem = {
           id: row.id,
           name: row.item_name || row.name || '',
@@ -446,6 +447,8 @@ export async function loadUserShoppingLists(
           rawInput: row.raw_input || undefined,
           note: row.note || row.unit || undefined,
           isRecognized: Boolean(row.is_recognized),
+          createdAt: itemCreatedAt,
+          created_at: row.created_at || undefined,
         };
         const existing = itemsByListId.get(row.list_id) || [];
         existing.push(item);
@@ -470,6 +473,7 @@ export async function loadUserShoppingLists(
             nameRomanUrdu: rItem.nameRomanUrdu || fItem.nameRomanUrdu,
             emoji: rItem.emoji || fItem.emoji,
             isRecognized: rItem.isRecognized ?? fItem.isRecognized,
+            createdAt: rItem.createdAt || (fItem.createdAt ?? (fItem.created_at ? new Date(fItem.created_at).getTime() : undefined)),
           };
         });
       } else if (relationalItems.length === 0) {
@@ -488,6 +492,10 @@ export async function loadUserShoppingLists(
         ? new Date(row.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
         : 'Today');
 
+      const completedTimestamp = row.completed_at
+        ? new Date(row.completed_at).getTime()
+        : undefined;
+
       return {
         id: row.id,
         userId: row.user_id,
@@ -495,6 +503,7 @@ export async function loadUserShoppingLists(
         createdAt: createdAtFormatted,
         createdTimestamp: createdTime,
         completedAt: row.completed_at || (isCompleted ? 'Completed' : undefined),
+        completedTimestamp,
         isCompleted,
         icon: row.icon || 'shopping_basket',
         items: finalItems,
@@ -504,21 +513,38 @@ export async function loadUserShoppingLists(
 
     // 5. Conflict-Safe Merge with Pending Offline Changes
     const pendingOps = await getPendingOfflineOperations(verifiedUserId);
-    const pendingListIds = new Set(pendingOps.map((op) => op.listId));
+    const pendingDeleteListIds = new Set(
+      pendingOps.filter((op) => op.type === 'DELETE_LIST').map((op) => op.listId)
+    );
+    const pendingSaveOps = pendingOps.filter((op) => op.type !== 'DELETE_LIST');
+    const pendingSaveListIds = new Set(pendingSaveOps.map((op) => op.listId));
 
-    const mergedLists: ShoppingList[] = remoteLists.map((remoteList) => {
-      if (pendingListIds.has(remoteList.id)) {
+    // Filter out lists that were deleted locally while offline so they aren't resurrected
+    const activeRemoteLists = remoteLists.filter((rl) => !pendingDeleteListIds.has(rl.id));
+
+    const mergedLists: ShoppingList[] = activeRemoteLists.map((remoteList) => {
+      if (pendingSaveListIds.has(remoteList.id)) {
         const localVersion = cachedOfflineLists.find((cl) => cl.id === remoteList.id);
         if (localVersion) {
-          return { ...localVersion, isSynced: false };
+          // Merge local modifications with remote so local edits are preserved without losing remote additions
+          const localItemIds = new Set(localVersion.items.map((i) => i.id));
+          const nonConflictingRemoteItems = remoteList.items.filter((ri) => !localItemIds.has(ri.id));
+          return {
+            ...localVersion,
+            items: [...localVersion.items, ...nonConflictingRemoteItems],
+            isSynced: false,
+          };
         }
       }
       return remoteList;
     });
 
-    // Include any locally-created lists that have not yet reached Supabase
+    // Include any locally-created lists that have not yet reached Supabase (excluding any pending deletions)
     cachedOfflineLists.forEach((localList) => {
-      if (!remoteLists.some((rl) => rl.id === localList.id)) {
+      if (
+        !pendingDeleteListIds.has(localList.id) &&
+        !activeRemoteLists.some((rl) => rl.id === localList.id)
+      ) {
         mergedLists.push({ ...localList, isSynced: false });
       }
     });
@@ -843,7 +869,7 @@ export async function deleteUserShoppingList(
 export async function clearAllUserShoppingLists(
   userId: string
 ): Promise<{ success: boolean; error: Error | null }> {
-  const verifiedUserId = await getVerifiedUserId(userId);
+  const verifiedUserId = (await getVerifiedUserId(userId)) || userId;
   if (!verifiedUserId) {
     return { success: false, error: new Error('Authentication required to clear shopping lists') };
   }
@@ -896,7 +922,7 @@ export async function getFrequentlyBoughtItems(
   }
 
   try {
-    const verifiedUserId = await getVerifiedUserId(userId);
+    const verifiedUserId = (await getVerifiedUserId(userId)) || userId;
     if (!verifiedUserId) {
       return { items: [], error: null };
     }
@@ -1017,7 +1043,7 @@ export async function deleteFrequentlyBoughtItem(
   if (!supabase) return { success: false, error: new Error('Supabase not configured') };
 
   try {
-    const verifiedUserId = await getVerifiedUserId(userId);
+    const verifiedUserId = (await getVerifiedUserId(userId)) || userId;
     if (!verifiedUserId) {
       return { success: false, error: new Error('Authentication required to delete frequently bought item') };
     }
@@ -1055,7 +1081,7 @@ export async function deleteUserAccountData(
   }
 
   try {
-    const verifiedUserId = await getVerifiedUserId(userId);
+    const verifiedUserId = (await getVerifiedUserId(userId)) || userId;
     if (!verifiedUserId) {
       return { success: false, error: new Error('Authentication required to delete account data') };
     }
@@ -1235,7 +1261,7 @@ export async function syncPendingOfflineChanges(
                   sort_order: idx,
                   updated_at: new Date().toISOString(),
                 }));
-                await supabase.from('shopping_items').insert(itemRows);
+                await supabase.from('shopping_items').upsert(itemRows, { onConflict: 'id' });
               }
             }
 
@@ -1392,9 +1418,26 @@ export function formatAuthErrorMessage(error: unknown): string {
     return 'Please provide a valid password.';
   }
 
-  // Clean fallback without technical jargon
-  if (lower.includes('database error') || lower.includes('postgres') || lower.includes('postgrest') || lower.includes('500')) {
+  // Clean fallback without technical jargon or database errors
+  if (
+    lower.includes('database error') ||
+    lower.includes('postgres') ||
+    lower.includes('postgrest') ||
+    lower.includes('column') ||
+    lower.includes('relation') ||
+    lower.includes('syntax') ||
+    lower.includes('violates') ||
+    lower.includes('constraint') ||
+    lower.includes('500') ||
+    lower.includes('502') ||
+    lower.includes('503')
+  ) {
     return 'A temporary service issue occurred. Please try again shortly.';
+  }
+
+  // Sanitize stack traces or internal errors
+  if (lower.includes('error:') || lower.includes('at ') || lower.includes('uncaught') || lower.includes('object')) {
+    return 'Unable to complete sign-in. Please verify your credentials and try again.';
   }
 
   return rawMsg || 'Authentication failed. Please try again.';

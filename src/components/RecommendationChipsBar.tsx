@@ -3,6 +3,7 @@ import { Plus, Sparkles } from 'lucide-react';
 import { RecommendationCandidate } from '../lib/recommendations';
 import { useLanguage } from '../context/LanguageContext';
 import { BidiText } from '../utils/bidi';
+import { EssentialProductVisual } from './EssentialProductVisual';
 
 interface RecommendationChipsBarProps {
   recommendations: RecommendationCandidate[];
@@ -54,9 +55,15 @@ export const RecommendationChipsBar: React.FC<RecommendationChipsBarProps> = ({
               key={item.canonicalName}
               type="button"
               onClick={() => onSelectItem(item)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-surface-container-low border border-outline-variant/60 hover:border-primary hover:bg-primary/5 active:scale-95 transition-all text-on-surface whitespace-nowrap shadow-2xs"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-surface-container-low border border-outline-variant/60 hover:border-primary hover:bg-primary/5 active:scale-95 transition-all text-on-surface whitespace-nowrap shadow-2xs"
             >
-              <span className="text-sm leading-none">{item.emoji || '🛒'}</span>
+              <EssentialProductVisual
+                canonicalName={item.canonicalName}
+                displayName={localizedName}
+                categoryId={item.category}
+                size={22}
+                className="rounded-full"
+              />
               <span className="font-semibold text-primary">
                 <BidiText text={localizedName} />
               </span>

@@ -20,7 +20,7 @@ import {
 } from '../lib/categorizer';
 import { parseShoppingItem, parseMultiItemInput } from '../lib/recognition/engine';
 import { detectDuplicateItem, mergeQuantities } from '../lib/recognition';
-import { saveUserCustomAlias } from '../lib/recognition/userAliases';
+import { saveUserCustomAlias, recordLearnedAlias } from '../lib/recognition/userAliases';
 import { normalizeBaseText } from '../lib/recognition/normalizer';
 import { defaultCatalogSearchEngine, CatalogSearchResult } from '../lib/catalog';
 import { generateUUID } from '../lib/uuid';
@@ -430,6 +430,14 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
 
   const handleItemCategoryChange = (itemId: string, newCategoryId: CategoryId, itemName: string) => {
     saveUserCategoryOverride(itemName, newCategoryId);
+    const existing = items.find((i) => i.id === itemId);
+    if (existing) {
+      recordLearnedAlias(existing.rawInput || existing.name, {
+        canonicalName: existing.canonicalName || existing.name,
+        categoryId: newCategoryId,
+        isExplicitOverride: true,
+      }).catch(() => {});
+    }
     setItems((prev) =>
       prev.map((item) =>
         item.id === itemId
@@ -438,6 +446,8 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
               categoryId: newCategoryId,
               category: getCategoryName(newCategoryId),
               userModifiedCategory: true,
+              unresolved: false,
+              confidence: 1.0,
             }
           : item
       )

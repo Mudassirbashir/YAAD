@@ -33,7 +33,11 @@ export interface UserItemBehaviorProfile {
   // Day of Week Habits (Index 0 = Sunday, 1 = Monday, ..., 6 = Saturday)
   weekdayDistribution: number[];
 
-  // User Dismissal / Feedback signals
+  // Contextual Affinities (e.g. 'bbq': 3, 'supermarket': 5)
+  contextAffinities?: Record<string, number>;
+
+  // User Acceptance / Feedback signals
+  acceptedCount?: number;
   dismissalCount: number;
   lastDismissedAt?: string;
 
@@ -52,24 +56,33 @@ export interface CoPurchasePair {
 }
 
 export type ExplanationType =
+  | 'interval_due'
+  | 'context_match'
+  | 'frequency_staple'
+  | 'co_purchase'
+  | 'category_affinity'
+  | 'popular_starter'
   | 'due_date'
   | 'frequency_cycle'
-  | 'recent_repeat'
-  | 'co_purchase'
-  | 'popular_starter';
+  | 'recent_repeat';
 
 export interface RecommendationExplanation {
   type: ExplanationType;
   textKey: string;
+  displayReason?: string;
   params?: Record<string, string | number>;
 }
 
 export interface ScoringFactors {
   frequencyScore: number;
-  cycleUrgencyScore: number;
-  regularityScore: number;
-  coPurchaseScore: number;
-  weekdayScore: number;
+  recencyScore?: number;
+  intervalScore?: number;
+  categoryScore?: number;
+  contextScore?: number;
+  cycleUrgencyScore?: number;
+  regularityScore?: number;
+  coPurchaseScore?: number;
+  weekdayScore?: number;
   dismissalPenalty: number;
   confidence: number;
   totalScore: number;
@@ -98,24 +111,40 @@ export interface RecommendationEngineConfig {
   maxRecommendationsList: number;
   confidenceThreshold: number;
   weights: {
-    frequency: number;
-    cycleUrgency: number;
-    regularity: number;
-    coPurchase: number;
-    weekday: number;
+    frequency: number; // 0.25
+    recency: number;   // 0.15
+    interval: number;  // 0.30 (peak for periodic items like Milk every 7 days)
+    category: number;  // 0.15
+    context: number;   // 0.15 (list title like Weekend BBQ, Supermarket)
   };
 }
 
 export const DEFAULT_RECOMMENDATION_CONFIG: RecommendationEngineConfig = {
-  minPurchasesForPersonal: 2,
+  minPurchasesForPersonal: 1,
   maxRecommendationsHome: 4,
-  maxRecommendationsList: 5,
-  confidenceThreshold: 0.55,
+  maxRecommendationsList: 6,
+  confidenceThreshold: 0.35,
   weights: {
-    frequency: 0.30,
-    cycleUrgency: 0.35,
-    regularity: 0.15,
-    coPurchase: 0.15,
-    weekday: 0.05,
+    frequency: 0.25,
+    recency: 0.15,
+    interval: 0.30,
+    category: 0.15,
+    context: 0.15,
   },
 };
+
+/**
+ * Clean architecture interface allowing future ML / AI models to plug in
+ * seamlessly without rewriting data persistence or user interfaces.
+ */
+export interface ISuggestionEngine {
+  generateRecommendations(
+    profiles: UserItemBehaviorProfile[],
+    options: {
+      listTitle?: string;
+      currentListItems?: string[];
+      limit?: number;
+      now?: number;
+    }
+  ): RecommendationCandidate[];
+}

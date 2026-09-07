@@ -88,6 +88,7 @@ export function getUserCustomAlias(rawInput: string): UserCustomAlias | undefine
  * Saves or updates a user-specific alias mapping.
  * Tracks usage_count and last_used_at.
  * Updates local cache, localStorage, and synchronizes to Supabase when authenticated.
+ * NOTE: Never modifies public global catalog tables (keeps global data clean).
  */
 export async function saveUserCustomAlias(
   rawInput: string,
@@ -96,6 +97,7 @@ export async function saveUserCustomAlias(
     categoryId: CategoryId;
     canonicalId?: string;
     userId?: string;
+    confidence?: number;
   }
 ): Promise<UserCustomAlias> {
   const norm = normalizeBaseText(rawInput);
@@ -104,6 +106,7 @@ export async function saveUserCustomAlias(
 
   const existing = map.get(norm);
   const newUsageCount = (existing?.usageCount || 0) + 1;
+  const assignedConfidence = mapping.confidence !== undefined ? mapping.confidence : 1.0;
 
   const aliasRecord: UserCustomAlias = {
     id: existing?.id || `alias_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
@@ -113,7 +116,7 @@ export async function saveUserCustomAlias(
     canonicalId: mapping.canonicalId || existing?.canonicalId,
     canonicalName: mapping.canonicalName,
     categoryId: mapping.categoryId,
-    confidence: 1.0,
+    confidence: assignedConfidence,
     usageCount: newUsageCount,
     lastUsedAt: now,
     createdAt: existing?.createdAt || now,
@@ -125,7 +128,7 @@ export async function saveUserCustomAlias(
 
   // Sync with Supabase asynchronously if online
   const isOnline = typeof navigator !== 'undefined' && navigator.onLine;
-  if (isOnline) {
+  if (supabase && isOnline) {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -137,7 +140,7 @@ export async function saveUserCustomAlias(
           canonical_id: aliasRecord.canonicalId || null,
           canonical_name: aliasRecord.canonicalName,
           category_id: aliasRecord.categoryId,
-          confidence: 1.0,
+          confidence: assignedConfidence,
           usage_count: newUsageCount,
           last_used_at: now,
           updated_at: now,
@@ -153,10 +156,47 @@ export async function saveUserCustomAlias(
 }
 
 /**
+ * Learns new user aliases carefully based on repeated entries and explicit user confirmations.
+ *
+ * Core Directives:
+ * 1. If a user repeatedly enters a specific spelling (usageCount >= 2) and consistently maps it,
+ *    promote it to a verified local alias.
+ * 2. Do not automatically insert low-confidence aliases into the global alias database.
+ *    Keeps global canonical data clean.
+ * 3. Operates completely offline using client localStorage cache.
+ */
+export async function recordLearnedAlias(
+  rawInput: string,
+  mapping: {
+    canonicalName: string;
+    categoryId: CategoryId;
+    canonicalId?: string;
+    userId?: string;
+    isExplicitOverride?: boolean;
+  }
+): Promise<UserCustomAlias> {
+  const norm = normalizeBaseText(rawInput);
+  if (!norm) {
+    throw new Error('Cannot save alias for empty input');
+  }
+
+  const map = getAliasMap();
+  const existing = map.get(norm);
+  const currentCount = existing?.usageCount || 0;
+  const isPromoted = mapping.isExplicitOverride || currentCount >= 1; // will become >= 2 on save
+  const confidence = isPromoted ? 1.0 : 0.85;
+
+  return saveUserCustomAlias(rawInput, {
+    ...mapping,
+    confidence,
+  });
+}
+
+/**
  * Syncs user custom aliases from Supabase on login or reconnect.
  */
 export async function syncUserCustomAliasesFromCloud(userId: string): Promise<void> {
-  if (!navigator.onLine || !userId) return;
+  if (!supabase || !navigator.onLine || !userId) return;
 
   try {
     const { data, error } = await supabase

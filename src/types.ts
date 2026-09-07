@@ -272,9 +272,13 @@ export interface ShoppingList {
   createdAt: string;
   createdTimestamp?: number;
   completedAt?: string;
+  completedTimestamp?: number;
   icon?: string;
   items: ShoppingItem[];
   isCompleted: boolean;
+  // Backward compatibility aliases
+  completed?: boolean;
+  is_completed?: boolean;
   userId?: string;
   isSynced?: boolean;
 }
@@ -292,7 +296,8 @@ export type ScreenType =
   | 'history'
   | 'list_details'
   | 'edit_list'
-  | 'settings';
+  | 'settings'
+  | 'statistics';
 
 export type ViewState = ScreenType;
 
