@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   full_name TEXT,
   email TEXT,
   avatar_url TEXT,
+  phone_number TEXT,
   language TEXT DEFAULT 'en' CHECK (language IN ('en', 'roman-urdu', 'ur')),
   usage_purpose TEXT,
   referral_source TEXT,
@@ -22,8 +23,9 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- Ensure has_completed_setup column exists on pre-existing installations
+-- Ensure has_completed_setup & phone_number columns exist on pre-existing installations
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS has_completed_setup BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS phone_number TEXT;
 
 -- 2. SHOPPING_LISTS TABLE (Parent List Entity)
 CREATE TABLE IF NOT EXISTS public.shopping_lists (
@@ -175,19 +177,38 @@ CREATE POLICY "Users can delete their own frequently bought items"
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, full_name, email, avatar_url, language, has_completed_setup)
+  INSERT INTO public.profiles (
+    id,
+    full_name,
+    email,
+    avatar_url,
+    phone_number,
+    language,
+    has_completed_setup,
+    created_at,
+    updated_at
+  )
   VALUES (
     NEW.id,
-    COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
+    COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'name', ''),
     NEW.email,
-    COALESCE(NEW.raw_user_meta_data->>'avatar_url', ''),
+    COALESCE(NEW.raw_user_meta_data->>'avatar_url', NEW.raw_user_meta_data->>'picture', ''),
+    COALESCE(NEW.raw_user_meta_data->>'phone_number', NEW.raw_user_meta_data->>'phone', NEW.phone, NULL),
     'en',
-    FALSE
+    TRUE,
+    timezone('utc'::text, now()),
+    timezone('utc'::text, now())
   )
   ON CONFLICT (id) DO UPDATE
   SET
-    full_name = COALESCE(EXCLUDED.full_name, public.profiles.full_name),
+    full_name = CASE 
+      WHEN public.profiles.full_name IS NULL OR public.profiles.full_name = '' 
+      THEN COALESCE(EXCLUDED.full_name, public.profiles.full_name)
+      ELSE public.profiles.full_name
+    END,
     email = COALESCE(EXCLUDED.email, public.profiles.email),
+    phone_number = COALESCE(EXCLUDED.phone_number, public.profiles.phone_number),
+    has_completed_setup = TRUE,
     updated_at = timezone('utc'::text, now());
   RETURN NEW;
 END;

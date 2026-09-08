@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   full_name TEXT,
   email TEXT,
   avatar_url TEXT,
+  phone_number TEXT,
   language TEXT DEFAULT 'en' CHECK (language IN ('en', 'roman-urdu', 'ur')),
   usage_purpose TEXT,
   referral_source TEXT,
@@ -22,8 +23,10 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- Ensure has_completed_setup column exists on pre-existing installations
+-- Ensure has_completed_setup, phone_number, and phone columns exist on pre-existing installations
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS has_completed_setup BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS phone_number TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS phone TEXT;
 
 -- 2. SHOPPING_LISTS TABLE (Parent List Entity)
 CREATE TABLE IF NOT EXISTS public.shopping_lists (
@@ -67,7 +70,20 @@ CREATE TABLE IF NOT EXISTS public.frequently_bought_items (
   CONSTRAINT uq_user_frequently_bought UNIQUE (user_id, item_name)
 );
 
--- 5. PERFORMANCE INDEXES
+-- 5. USER_PASSKEYS TABLE (WebAuthn / Passkey Public Metadata)
+CREATE TABLE IF NOT EXISTS public.user_passkeys (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  credential_id TEXT UNIQUE NOT NULL,
+  public_key TEXT NOT NULL,
+  counter BIGINT DEFAULT 0 NOT NULL,
+  device_name TEXT,
+  transports TEXT[] DEFAULT '{}',
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  last_used_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 6. PERFORMANCE INDEXES
 CREATE INDEX IF NOT EXISTS idx_shopping_lists_user_id ON public.shopping_lists(user_id);
 CREATE INDEX IF NOT EXISTS idx_shopping_lists_created_at ON public.shopping_lists(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_shopping_lists_is_completed ON public.shopping_lists(is_completed);
@@ -76,12 +92,15 @@ CREATE INDEX IF NOT EXISTS idx_shopping_items_user_id ON public.shopping_items(u
 CREATE INDEX IF NOT EXISTS idx_shopping_items_category ON public.shopping_items(category);
 CREATE INDEX IF NOT EXISTS idx_frequently_bought_user_id ON public.frequently_bought_items(user_id);
 CREATE INDEX IF NOT EXISTS idx_frequently_bought_count ON public.frequently_bought_items(user_id, purchase_count DESC);
+CREATE INDEX IF NOT EXISTS idx_user_passkeys_user_id ON public.user_passkeys(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_passkeys_credential_id ON public.user_passkeys(credential_id);
 
--- 6. ENABLE ROW LEVEL SECURITY (RLS)
+-- 7. ENABLE ROW LEVEL SECURITY (RLS)
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.shopping_lists ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.shopping_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.frequently_bought_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_passkeys ENABLE ROW LEVEL SECURITY;
 
 -- 7. ROW LEVEL SECURITY POLICIES: PROFILES
 DROP POLICY IF EXISTS "Users can view their own profile" ON public.profiles;
@@ -171,23 +190,72 @@ CREATE POLICY "Users can delete their own frequently bought items"
   ON public.frequently_bought_items FOR DELETE
   USING (auth.uid() = user_id);
 
--- 11. AUTOMATIC TRIGGER: Create Profile on User Signup
+-- 11. ROW LEVEL SECURITY POLICIES: USER_PASSKEYS
+DROP POLICY IF EXISTS "Users can view their own passkeys" ON public.user_passkeys;
+CREATE POLICY "Users can view their own passkeys"
+  ON public.user_passkeys FOR SELECT
+  USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can insert their own passkeys" ON public.user_passkeys;
+CREATE POLICY "Users can insert their own passkeys"
+  ON public.user_passkeys FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update their own passkeys" ON public.user_passkeys;
+CREATE POLICY "Users can update their own passkeys"
+  ON public.user_passkeys FOR UPDATE
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can delete their own passkeys" ON public.user_passkeys;
+CREATE POLICY "Users can delete their own passkeys"
+  ON public.user_passkeys FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- 12. AUTOMATIC TRIGGER: Create Profile on User Signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, full_name, email, avatar_url, language, has_completed_setup)
+  INSERT INTO public.profiles (
+    id,
+    full_name,
+    email,
+    avatar_url,
+    phone_number,
+    phone,
+    language,
+    has_completed_setup,
+    created_at,
+    updated_at
+  )
   VALUES (
     NEW.id,
-    COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
+    COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'name', ''),
     NEW.email,
-    COALESCE(NEW.raw_user_meta_data->>'avatar_url', ''),
+    COALESCE(NEW.raw_user_meta_data->>'avatar_url', NEW.raw_user_meta_data->>'picture', ''),
+    COALESCE(NEW.raw_user_meta_data->>'phone_number', NEW.raw_user_meta_data->>'phone', NEW.phone, NULL),
+    COALESCE(NEW.raw_user_meta_data->>'phone_number', NEW.raw_user_meta_data->>'phone', NEW.phone, NULL),
     'en',
-    FALSE
+    TRUE,
+    timezone('utc'::text, now()),
+    timezone('utc'::text, now())
   )
   ON CONFLICT (id) DO UPDATE
   SET
-    full_name = COALESCE(EXCLUDED.full_name, public.profiles.full_name),
+    full_name = CASE 
+      WHEN public.profiles.full_name IS NULL OR public.profiles.full_name = '' 
+      THEN COALESCE(EXCLUDED.full_name, public.profiles.full_name)
+      ELSE public.profiles.full_name
+    END,
+    avatar_url = CASE
+      WHEN public.profiles.avatar_url IS NULL OR public.profiles.avatar_url = ''
+      THEN COALESCE(EXCLUDED.avatar_url, public.profiles.avatar_url)
+      ELSE public.profiles.avatar_url
+    END,
     email = COALESCE(EXCLUDED.email, public.profiles.email),
+    phone_number = COALESCE(public.profiles.phone_number, EXCLUDED.phone_number),
+    phone = COALESCE(public.profiles.phone, EXCLUDED.phone),
+    has_completed_setup = TRUE,
     updated_at = timezone('utc'::text, now());
   RETURN NEW;
 END;

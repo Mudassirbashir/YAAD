@@ -10,7 +10,13 @@ import {
   formatAuthErrorMessage,
 } from '../lib/supabase';
 import { purgeAllUserOfflineData, getOfflineProfile, saveOfflineProfile } from '../lib/offlineDb';
-import { UserProfile, AppLanguage } from '../types';
+import { UserProfile, AppLanguage, PasskeyCredentialInfo } from '../types';
+import {
+  authenticateWithPasskey,
+  registerPasskey as clientRegisterPasskey,
+  listUserPasskeys as clientListPasskeys,
+  deleteUserPasskey as clientDeletePasskey,
+} from '../lib/passkey';
 
 interface AuthContextType {
   user: User | null;
@@ -19,12 +25,18 @@ interface AuthContextType {
   isLoading: boolean;
   isConfigured: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, fullName: string, phoneNumber?: string) => Promise<{ error: Error | null }>;
+  signInWithGoogle: () => Promise<{ error: Error | null }>;
+  signInWithPasskey: () => Promise<{ error: Error | null }>;
+  registerPasskey: (deviceName?: string) => Promise<{ success: boolean; passkey?: PasskeyCredentialInfo; error: Error | null }>;
+  listPasskeys: () => Promise<PasskeyCredentialInfo[]>;
+  removePasskey: (passkeyId: string) => Promise<{ success: boolean; error: Error | null }>;
   signOut: () => Promise<void>;
   deleteAccount: () => Promise<{ error: Error | null }>;
   updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
   updateUserProfile: (updates: {
     full_name?: string;
+    phone_number?: string | null;
     avatar_url?: string | null;
     language?: AppLanguage;
     usage_purpose?: string;
@@ -42,30 +54,56 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const isAuthenticatingRef = useRef<boolean>(false);
+  const syncingUserIdsRef = useRef<Set<string>>(new Set());
 
   // Helper to sync user metadata (Google OAuth or email) into profiles table non-blockingly
   const syncProfileFromUser = async (authUser: User): Promise<UserProfile | null> => {
+    if (syncingUserIdsRef.current.has(authUser.id)) return null;
+    syncingUserIdsRef.current.add(authUser.id);
+
     try {
-      const existingProfile = await getProfile(authUser.id);
+      let existingProfile = await getProfile(authUser.id);
+      
+      // Account linking check: If no profile by ID but user has email, check for existing profile by email
+      if (!existingProfile && authUser.email && supabase) {
+        const { data: matchedProfile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('email', authUser.email.toLowerCase())
+          .maybeSingle();
+        if (matchedProfile) {
+          existingProfile = matchedProfile;
+        }
+      }
+
       const meta = authUser.user_metadata || {};
       const metaFullName = meta.full_name || meta.name || '';
+      const metaPhone = meta.phone_number || meta.phone || authUser.phone || '';
       const metaAvatar = meta.avatar_url || meta.picture || '';
 
-      if (!existingProfile || !existingProfile.full_name) {
-        if (metaFullName || metaAvatar) {
-          const { data } = await supabaseUpdateProfile(authUser.id, {
-            full_name: metaFullName || existingProfile?.full_name || undefined,
-            avatar_url: metaAvatar || existingProfile?.avatar_url || undefined,
-            email: authUser.email,
-            has_completed_setup: true,
-          });
-          if (data) return data;
-        }
+      const needsSync =
+        !existingProfile ||
+        !existingProfile.full_name ||
+        (!existingProfile.phone_number && metaPhone) ||
+        (!existingProfile.avatar_url && metaAvatar);
+
+      if (needsSync) {
+        const { data } = await supabaseUpdateProfile(authUser.id, {
+          full_name: metaFullName || existingProfile?.full_name || undefined,
+          phone_number: metaPhone || existingProfile?.phone_number || undefined,
+          phone: metaPhone || existingProfile?.phone || existingProfile?.phone_number || undefined,
+          avatar_url: metaAvatar || existingProfile?.avatar_url || undefined,
+          email: authUser.email,
+          has_completed_setup: true,
+        });
+        if (data) return data;
       }
       return existingProfile;
     } catch (e) {
       console.warn('Notice syncing profile from user metadata:', e);
       return null;
+    } finally {
+      syncingUserIdsRef.current.delete(authUser.id);
     }
   };
 
@@ -77,65 +115,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     let isMounted = true;
-
-    async function initAuth() {
-      try {
-        // Fast local session restoration from storage
-        const { data: { session: initialSession }, error: sessionError } = await supabase!.auth.getSession();
-        if (sessionError) {
-          console.warn('Session retrieval notice:', sessionError.message);
-        }
-
-        if (!isMounted) return;
-
-        if (initialSession?.user) {
-          const activeUser = initialSession.user;
-          setSession(initialSession);
-          setUser(activeUser);
-
-          // 1. Immediately hydrate profile from local IndexedDB cache
-          const cachedProfile = await getOfflineProfile<UserProfile>(activeUser.id);
-          if (cachedProfile && isMounted) {
-            setProfile(cachedProfile);
-          } else if (isMounted) {
-            const fallbackProfile: UserProfile = {
-              id: activeUser.id,
-              full_name: activeUser.user_metadata?.full_name || activeUser.user_metadata?.name || null,
-              email: activeUser.email || null,
-              avatar_url: activeUser.user_metadata?.avatar_url || activeUser.user_metadata?.picture || null,
-              has_completed_setup: true,
-            };
-            setProfile(fallbackProfile);
-            saveOfflineProfile(activeUser.id, fallbackProfile).catch(() => {});
-          }
-
-          // 2. Unblock rendering immediately!
-          setIsLoading(false);
-
-          // 3. Perform background verification & sync without freezing the UI
-          const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
-          if (!isOffline) {
-            syncProfileFromUser(activeUser).then(async (synced) => {
-              if (synced && isMounted) {
-                setProfile(synced);
-                await saveOfflineProfile(activeUser.id, synced);
-              }
-            }).catch(() => {});
-          }
-          return;
-        } else {
-          setSession(null);
-          setUser(null);
-          setProfile(null);
-        }
-      } catch (err) {
-        console.warn('Auth initialization notice:', err);
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    }
-
-    initAuth();
 
     // Listen to Supabase auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -150,19 +129,45 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           return;
         }
 
+        // For token refreshes, simply update tokens without triggering profile refetches
+        if (event === 'TOKEN_REFRESHED') {
+          setSession(currentSession);
+          setUser(currentSession.user);
+          return;
+        }
+
         setSession(currentSession);
         setUser(currentSession.user);
 
-        // Deduplicate: If we already have a loaded profile matching this user, perform non-blocking sync
-        if (currentSession.user) {
-          syncProfileFromUser(currentSession.user).then((synced) => {
+        // 1. Immediately hydrate profile from local IndexedDB cache
+        const cachedProfile = await getOfflineProfile<UserProfile>(currentSession.user.id);
+        if (cachedProfile && isMounted) {
+          setProfile(cachedProfile);
+        } else if (isMounted) {
+          const fallbackProfile: UserProfile = {
+            id: currentSession.user.id,
+            full_name: currentSession.user.user_metadata?.full_name || currentSession.user.user_metadata?.name || null,
+            email: currentSession.user.email || null,
+            phone_number: currentSession.user.user_metadata?.phone_number || currentSession.user.user_metadata?.phone || null,
+            avatar_url: currentSession.user.user_metadata?.avatar_url || currentSession.user.user_metadata?.picture || null,
+            has_completed_setup: true,
+          };
+          setProfile(fallbackProfile);
+          saveOfflineProfile(currentSession.user.id, fallbackProfile).catch(() => {});
+        }
+
+        setIsLoading(false);
+
+        // 2. Perform background synchronization without freezing the UI
+        const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+        if (!isOffline && currentSession.user) {
+          syncProfileFromUser(currentSession.user).then(async (synced) => {
             if (synced && isMounted) {
               setProfile(synced);
-              saveOfflineProfile(currentSession.user.id, synced).catch(() => {});
+              await saveOfflineProfile(currentSession.user.id, synced);
             }
           }).catch(() => {});
         }
-        setIsLoading(false);
       }
     );
 
@@ -185,7 +190,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
 
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      return { error: new Error('You are currently offline. Please check your internet connection.') };
+      return { error: new Error('Internet connection is unavailable. Please check your connection and try again.') };
     }
     if (!supabase) {
       return { error: new Error('Backend service is not configured.') };
@@ -194,7 +199,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     isAuthenticatingRef.current = true;
 
     try {
-      const trimmedEmail = email.trim();
+      const trimmedEmail = email.trim().toLowerCase();
       const { data, error } = await supabase.auth.signInWithPassword({
         email: trimmedEmail,
         password,
@@ -214,6 +219,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           id: data.user.id,
           full_name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || null,
           email: data.user.email || null,
+          phone_number: data.user.user_metadata?.phone_number || data.user.user_metadata?.phone || null,
           avatar_url: data.user.user_metadata?.avatar_url || null,
           has_completed_setup: true,
         };
@@ -221,6 +227,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         saveOfflineProfile(data.user.id, activeProfile).catch(() => {});
         localStorage.setItem('yaad_profile_setup_done', 'true');
         localStorage.setItem('yaad_profile_setup_completed', 'true');
+        localStorage.setItem('yaad_has_onboarded_v2', 'true');
+        localStorage.setItem('yaad_has_onboarded', 'true');
       }
 
       return { error: null };
@@ -231,14 +239,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const signUp = async (email: string, password: string, fullName: string): Promise<{ error: Error | null }> => {
-    // Prevent duplicate concurrent requests
+  const signUp = async (
+    email: string,
+    password: string,
+    fullName: string,
+    phoneNumber?: string
+  ): Promise<{ error: Error | null }> => {
+    // Prevent duplicate concurrent requests (double clicks)
     if (isAuthenticatingRef.current) {
       return { error: new Error('An authentication request is already in progress.') };
     }
 
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      return { error: new Error('You are currently offline. Please check your internet connection.') };
+      return { error: new Error('Internet connection is unavailable. Please check your connection and try again.') };
     }
     if (!supabase) {
       return { error: new Error('Backend service is not configured.') };
@@ -246,88 +259,34 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const trimmedEmail = email.trim().toLowerCase();
     const trimmedName = fullName.trim();
+    const trimmedPhone = (phoneNumber || '').trim();
 
     if (!trimmedEmail) {
-      return { error: new Error('Please enter your email address.') };
-    }
-    if (!password || password.length < 6) {
-      return { error: new Error('Password must be at least 6 characters.') };
+      return { error: new Error('Please enter a valid email address.') };
     }
     if (!trimmedName) {
       return { error: new Error('Please enter your full name.') };
+    }
+    if (!trimmedPhone) {
+      return { error: new Error('Please enter your phone number.') };
+    }
+    if (!password || password.length < 6) {
+      return { error: new Error('Please choose a stronger password.') };
     }
 
     isAuthenticatingRef.current = true;
 
     try {
-      // 1. First attempt fast server-side admin creation:
-      // This bypasses email-sending rate limits (429 over_email_send_rate_limit)
-      // and creates an already-confirmed account in Supabase.
-      let serverCreated = false;
-      try {
-        const resp = await fetch('/api/auth/signup', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: trimmedEmail,
-            password,
-            fullName: trimmedName,
-          }),
-        });
-
-        const data = await resp.json().catch(() => ({}));
-        if (resp.ok && data.success) {
-          serverCreated = true;
-        } else if (resp.status >= 400 && resp.status < 500 && data.error) {
-          // Explicit business or validation error (e.g. duplicate email)
-          return { error: new Error(data.error) };
-        }
-      } catch (backendErr) {
-        console.warn('Notice calling /api/auth/signup, falling back to direct client signup:', backendErr);
-      }
-
-      // 2. If server created the account, establish client Supabase session via immediate signInWithPassword
-      if (serverCreated) {
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email: trimmedEmail,
-          password,
-        });
-
-        if (signInError) {
-          return { error: new Error(formatAuthErrorMessage(signInError)) };
-        }
-
-        if (signInData.user && signInData.session) {
-          setSession(signInData.session);
-          setUser(signInData.user);
-
-          const activeProfile: UserProfile = {
-            id: signInData.user.id,
-            full_name: trimmedName,
-            email: trimmedEmail,
-            avatar_url: null,
-            language: 'en',
-            has_completed_setup: true,
-          };
-
-          setProfile(activeProfile);
-          await saveOfflineProfile(signInData.user.id, activeProfile);
-          localStorage.setItem('yaad_profile_setup_done', 'true');
-          localStorage.setItem('yaad_profile_setup_completed', 'true');
-          localStorage.setItem('yaad_has_onboarded_v2', 'true');
-          localStorage.setItem('yaad_has_onboarded', 'true');
-        }
-
-        return { error: null };
-      }
-
-      // 3. Fallback to client-side Supabase signup if server endpoint was unavailable
+      // 1. Direct standard Supabase signup with user metadata
       const { data, error } = await supabase.auth.signUp({
         email: trimmedEmail,
         password,
         options: {
           data: {
             full_name: trimmedName,
+            name: trimmedName,
+            phone: trimmedPhone,
+            phone_number: trimmedPhone,
           },
         },
       });
@@ -336,32 +295,84 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return { error: new Error(formatAuthErrorMessage(error)) };
       }
 
-      if (data.user) {
+      // If Supabase returned an already-registered user without identities
+      if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+        return { error: new Error('This email is already registered. Please sign in instead.') };
+      }
+
+      let activeSession = data.session;
+      let activeUser = data.user;
+
+      // 2. Immediate session recovery if "Confirm email" was still enabled in Supabase project
+      if (!activeSession && activeUser) {
+        try {
+          const confirmResp = await fetch('/api/auth/confirm-user', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: activeUser.id, email: trimmedEmail }),
+          });
+
+          if (confirmResp.ok) {
+            const { data: signInData } = await supabase.auth.signInWithPassword({
+              email: trimmedEmail,
+              password,
+            });
+            if (signInData?.session) {
+              activeSession = signInData.session;
+              activeUser = signInData.user;
+            }
+          }
+        } catch (confirmErr) {
+          console.warn('Auto-confirm attempt notice:', confirmErr);
+        }
+      }
+
+      // 3. Authenticated session successfully established
+      if (activeSession && activeUser) {
+        setSession(activeSession);
+        setUser(activeUser);
+
         const activeProfile: UserProfile = {
-          id: data.user.id,
+          id: activeUser.id,
           full_name: trimmedName,
           email: trimmedEmail,
+          phone_number: trimmedPhone || null,
           avatar_url: null,
           language: 'en',
           has_completed_setup: true,
+          updated_at: new Date().toISOString(),
         };
 
-        if (data.session) {
-          setSession(data.session);
-          setUser(data.user);
-        }
         setProfile(activeProfile);
-        await saveOfflineProfile(data.user.id, activeProfile);
+
+        // Synchronize profile row into public.profiles
+        try {
+          await supabaseUpdateProfile(activeUser.id, {
+            full_name: trimmedName,
+            phone_number: trimmedPhone,
+            email: trimmedEmail,
+            has_completed_setup: true,
+          });
+        } catch (profileErr) {
+          console.warn('Profile synchronization notice:', profileErr);
+        }
+
+        // Cache locally for instant offline availability
+        await saveOfflineProfile(activeUser.id, activeProfile);
         localStorage.setItem('yaad_profile_setup_done', 'true');
         localStorage.setItem('yaad_profile_setup_completed', 'true');
         localStorage.setItem('yaad_has_onboarded_v2', 'true');
         localStorage.setItem('yaad_has_onboarded', 'true');
 
-        if (!data.session) {
-          return {
-            error: new Error('Account created! Please check your email to confirm your account before signing in.'),
-          };
-        }
+        return { error: null };
+      }
+
+      if (!activeSession && activeUser) {
+        return {
+          error: new Error(
+            'Account created, but verification is required by your Supabase project settings. Please turn off "Confirm email" in your Supabase Dashboard (Authentication → Providers → Email) to enable instant signup.'
+          ),
+        };
       }
 
       return { error: null };
@@ -370,6 +381,133 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } finally {
       isAuthenticatingRef.current = false;
     }
+  };
+
+  const signInWithGoogle = async (): Promise<{ error: Error | null }> => {
+    if (isAuthenticatingRef.current) {
+      return { error: new Error('An authentication request is already in progress.') };
+    }
+
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      return { error: new Error("You're offline. Please reconnect to sign in.") };
+    }
+    if (!supabase) {
+      return { error: new Error('Backend service is not configured.') };
+    }
+
+    isAuthenticatingRef.current = true;
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'select_account',
+          },
+        },
+      });
+
+      if (error) {
+        return { error: new Error(formatAuthErrorMessage(error)) };
+      }
+      return { error: null };
+    } catch (err: unknown) {
+      return { error: new Error(formatAuthErrorMessage(err)) };
+    } finally {
+      isAuthenticatingRef.current = false;
+    }
+  };
+
+  const signInWithPasskey = async (): Promise<{ error: Error | null }> => {
+    if (isAuthenticatingRef.current) {
+      return { error: new Error('An authentication request is already in progress.') };
+    }
+
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      return { error: new Error("You're offline. Please reconnect to sign in.") };
+    }
+    if (!supabase) {
+      return { error: new Error('Backend service is not configured.') };
+    }
+
+    isAuthenticatingRef.current = true;
+    try {
+      const result = await authenticateWithPasskey();
+      if (result.error || !result.tokenHash) {
+        return { error: new Error(result.error || 'Passkey authentication failed.') };
+      }
+
+      // Establish Supabase session using verified token hash
+      const { data, error } = await supabase.auth.verifyOtp({
+        token_hash: result.tokenHash,
+        type: 'email',
+      });
+
+      if (error) {
+        return { error: new Error(formatAuthErrorMessage(error)) };
+      }
+
+      if (data.session && data.user) {
+        setSession(data.session);
+        setUser(data.user);
+
+        const cached = await getOfflineProfile<UserProfile>(data.user.id);
+        const activeProfile: UserProfile = cached || {
+          id: data.user.id,
+          full_name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || null,
+          email: data.user.email || null,
+          phone_number: data.user.user_metadata?.phone_number || data.user.user_metadata?.phone || null,
+          avatar_url: data.user.user_metadata?.avatar_url || null,
+          has_completed_setup: true,
+        };
+        setProfile(activeProfile);
+        saveOfflineProfile(data.user.id, activeProfile).catch(() => {});
+        localStorage.setItem('yaad_profile_setup_done', 'true');
+        localStorage.setItem('yaad_profile_setup_completed', 'true');
+        localStorage.setItem('yaad_has_onboarded_v2', 'true');
+        localStorage.setItem('yaad_has_onboarded', 'true');
+      }
+
+      return { error: null };
+    } catch (err: unknown) {
+      return { error: new Error(formatAuthErrorMessage(err)) };
+    } finally {
+      isAuthenticatingRef.current = false;
+    }
+  };
+
+  const registerPasskey = async (
+    deviceName?: string
+  ): Promise<{ success: boolean; passkey?: PasskeyCredentialInfo; error: Error | null }> => {
+    if (!session?.access_token) {
+      return { success: false, error: new Error('You must be signed in to register a passkey.') };
+    }
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      return { success: false, error: new Error("You're offline. Please reconnect to register a passkey.") };
+    }
+
+    const res = await clientRegisterPasskey(session.access_token, deviceName);
+    if (!res.success) {
+      return { success: false, error: new Error(res.error || 'Failed to register passkey.') };
+    }
+    return { success: true, passkey: res.passkey, error: null };
+  };
+
+  const listPasskeys = async (): Promise<PasskeyCredentialInfo[]> => {
+    if (!session?.access_token) return [];
+    return clientListPasskeys(session.access_token);
+  };
+
+  const removePasskey = async (passkeyId: string): Promise<{ success: boolean; error: Error | null }> => {
+    if (!session?.access_token) {
+      return { success: false, error: new Error('You must be signed in.') };
+    }
+    const res = await clientDeletePasskey(session.access_token, passkeyId);
+    if (!res.success) {
+      return { success: false, error: new Error(res.error || 'Failed to remove passkey.') };
+    }
+    return { success: true, error: null };
   };
 
   const signOut = async () => {
@@ -477,6 +615,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const updateUserProfile = async (updates: {
     full_name?: string;
+    phone_number?: string | null;
     avatar_url?: string | null;
     language?: AppLanguage;
     usage_purpose?: string;
@@ -495,6 +634,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         id: currentUserId,
         full_name: updates.full_name !== undefined ? (updates.full_name || null) : (profile?.full_name ?? null),
         email: user.email || profile?.email || null,
+        phone_number: updates.phone_number !== undefined ? (updates.phone_number || null) : (profile?.phone_number ?? null),
         avatar_url: updates.avatar_url !== undefined ? (updates.avatar_url || null) : (profile?.avatar_url ?? null),
         language: updates.language !== undefined ? updates.language : (profile?.language ?? 'en'),
         usage_purpose: updates.usage_purpose !== undefined ? updates.usage_purpose : profile?.usage_purpose,
@@ -506,14 +646,37 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       await saveOfflineProfile(currentUserId, optimisticMerged);
 
       // 2. Keep Supabase Auth user_metadata in sync so auth session restores correctly
-      if (supabase && (updates.full_name !== undefined || updates.avatar_url !== undefined)) {
+      if (supabase && (updates.full_name !== undefined || updates.avatar_url !== undefined || updates.phone_number !== undefined)) {
         try {
           const metadataUpdates: Record<string, unknown> = {};
           if (updates.full_name !== undefined) metadataUpdates.full_name = updates.full_name;
           if (updates.avatar_url !== undefined) metadataUpdates.avatar_url = updates.avatar_url;
+          if (updates.phone_number !== undefined) {
+            metadataUpdates.phone_number = updates.phone_number;
+            metadataUpdates.phone = updates.phone_number;
+          }
           await supabase.auth.updateUser({ data: metadataUpdates });
         } catch (authMetaErr) {
           console.warn('Notice updating user metadata in Supabase Auth:', authMetaErr);
+        }
+      }
+
+      // Also call /api/account/phone for verified server-side persistence
+      if (updates.phone_number !== undefined && session?.access_token) {
+        try {
+          await fetch('/api/account/phone', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({
+              userId: currentUserId,
+              phoneNumber: updates.phone_number,
+            }),
+          });
+        } catch (phoneApiErr) {
+          console.warn('Notice updating phone via server endpoint:', phoneApiErr);
         }
       }
 
@@ -546,6 +709,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isConfigured: isSupabaseConfigured,
         signIn,
         signUp,
+        signInWithGoogle,
+        signInWithPasskey,
+        registerPasskey,
+        listPasskeys,
+        removePasskey,
         signOut,
         deleteAccount,
         updatePassword,

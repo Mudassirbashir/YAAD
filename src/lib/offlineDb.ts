@@ -199,7 +199,8 @@ export async function saveOfflineList(userId: string, list: ShoppingList): Promi
 }
 
 /**
- * Bulk save shopping lists into IndexedDB (e.g. after cloud fetch)
+ * Bulk save shopping lists into IndexedDB (e.g. after cloud fetch),
+ * and prune any cached lists for this user that no longer exist in the authoritative lists array.
  */
 export async function saveOfflineListsBatch(userId: string, lists: ShoppingList[]): Promise<void> {
   try {
@@ -207,15 +208,30 @@ export async function saveOfflineListsBatch(userId: string, lists: ShoppingList[
     return new Promise<void>((resolve, reject) => {
       const transaction = db.transaction([STORES.LISTS], 'readwrite');
       const store = transaction.objectStore(STORES.LISTS);
+      const activeIds = new Set(lists.map((l) => l.id));
 
-      lists.forEach((list) => {
-        const record = {
-          ...list,
-          userId,
-          updated_at: new Date().toISOString(),
-        };
-        store.put(record);
-      });
+      const index = store.index('by_user');
+      const request = index.getAll(IDBKeyRange.only(userId));
+
+      request.onsuccess = () => {
+        const existing = (request.result || []) as (ShoppingList & { id: string })[];
+        // Prune lists that are not in the active lists
+        existing.forEach((item) => {
+          if (!activeIds.has(item.id)) {
+            store.delete(item.id);
+          }
+        });
+
+        // Put active lists
+        lists.forEach((list) => {
+          const record = {
+            ...list,
+            userId,
+            updated_at: new Date().toISOString(),
+          };
+          store.put(record);
+        });
+      };
 
       transaction.oncomplete = () => resolve();
       transaction.onerror = () => reject(transaction.error);

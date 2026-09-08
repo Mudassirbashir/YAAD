@@ -303,6 +303,7 @@ export async function updateProfile(
     id: verifiedUserId,
     full_name: updates.full_name !== undefined ? (updates.full_name || null) : (existingProfile?.full_name ?? null),
     email: updates.email !== undefined ? (updates.email || null) : (existingProfile?.email ?? null),
+    phone_number: updates.phone_number !== undefined ? (updates.phone_number || null) : (existingProfile?.phone_number ?? null),
     avatar_url: updates.avatar_url !== undefined ? (updates.avatar_url || null) : (existingProfile?.avatar_url ?? null),
     language: updates.language !== undefined ? updates.language : (existingProfile?.language ?? 'en'),
     usage_purpose: updates.usage_purpose !== undefined ? updates.usage_purpose : (existingProfile?.usage_purpose ?? null),
@@ -323,11 +324,21 @@ export async function updateProfile(
       updated_at: new Date().toISOString(),
     };
 
-    const { data: upsertData, error: upsertError, isOffline } = await resilientUpsert(
+    let { data: upsertData, error: upsertError, isOffline } = await resilientUpsert(
       'profiles',
       payload,
       { onConflict: 'id' }
     );
+
+    // If phone_number column doesn't exist yet in remote Postgres schema, retry without it
+    if (upsertError && upsertError.message.includes('phone_number')) {
+      const fallbackPayload = { ...payload };
+      delete fallbackPayload.phone_number;
+      const retry = await resilientUpsert('profiles', fallbackPayload, { onConflict: 'id' });
+      upsertData = retry.data;
+      upsertError = retry.error;
+      isOffline = retry.isOffline;
+    }
 
     if (isOffline || (upsertError && isNetworkOrOfflineError(upsertError))) {
       return { data: mergedProfile, error: null };
@@ -539,11 +550,16 @@ export async function loadUserShoppingLists(
       return remoteList;
     });
 
-    // Include any locally-created lists that have not yet reached Supabase (excluding any pending deletions)
+    // Include only genuinely new, unsynced local drafts that have not yet reached Supabase
+    // If a list was previously synced (isSynced !== false) and is missing from activeRemoteLists,
+    // it was deleted from Supabase and must NOT be resurrected as a ghost card!
     cachedOfflineLists.forEach((localList) => {
+      const isPendingSave = pendingSaveListIds.has(localList.id);
+      const isUnsyncedDraft = localList.isSynced === false;
       if (
         !pendingDeleteListIds.has(localList.id) &&
-        !activeRemoteLists.some((rl) => rl.id === localList.id)
+        !activeRemoteLists.some((rl) => rl.id === localList.id) &&
+        (isPendingSave || isUnsyncedDraft)
       ) {
         mergedLists.push({ ...localList, isSynced: false });
       }
@@ -1351,41 +1367,76 @@ export function setupNetworkSyncListener(
  * failures into clean, friendly, reassuring messages for end users.
  */
 export function formatAuthErrorMessage(error: unknown): string {
-  if (!error) return 'An unexpected error occurred. Please try again.';
+  if (!error) return 'Something went wrong while creating your account. Please try again.';
+
+  // Log the raw technical error to developer console in development mode
+  if (typeof window !== 'undefined' && (import.meta.env?.DEV || process.env.NODE_ENV !== 'production')) {
+    console.error('[Auth Error Technical Log]:', error);
+  }
+
   const rawMsg = (error instanceof Error ? error.message : String(error)).trim();
   const lower = rawMsg.toLowerCase();
 
-  // Rate limit / security throttle detection
+  // 1. NETWORK ERROR
+  if (
+    (typeof navigator !== 'undefined' && !navigator.onLine) ||
+    lower.includes('failed to fetch') ||
+    lower.includes('fetch failed') ||
+    lower.includes('network error') ||
+    lower.includes('networkrequestfailed') ||
+    lower.includes('err_internet_disconnected') ||
+    lower.includes('err_connection') ||
+    lower.includes('timed out') ||
+    lower.includes('timeout') ||
+    lower.includes('aborterror') ||
+    lower.includes('abort')
+  ) {
+    return "You're offline. Please reconnect to continue.";
+  }
+
+  // 2. EMAIL ALREADY REGISTERED
+  if (
+    lower.includes('user already registered') ||
+    lower.includes('already registered') ||
+    lower.includes('already exists') ||
+    lower.includes('email already in use') ||
+    lower.includes('email_exists')
+  ) {
+    return 'This email is already registered. Please sign in instead.';
+  }
+
+  // 3. INVALID EMAIL
+  if (
+    lower.includes('invalid email') ||
+    lower.includes('email is invalid') ||
+    lower.includes('unable to validate email') ||
+    lower.includes('email_address_invalid')
+  ) {
+    return 'Please enter a valid email address.';
+  }
+
+  // 4. WEAK PASSWORD
+  if (
+    lower.includes('password should be at least') ||
+    lower.includes('password is too short') ||
+    lower.includes('weak_password') ||
+    lower.includes('signup requires a valid password')
+  ) {
+    return 'Please choose a stronger password.';
+  }
+
+  // 5. RATE LIMIT
   if (
     lower.includes('security purposes') ||
     lower.includes('rate limit') ||
     lower.includes('too many requests') ||
-    lower.includes('over_email_send_rate_limit')
+    lower.includes('over_email_send_rate_limit') ||
+    lower.includes('429')
   ) {
-    const secondsMatch = rawMsg.match(/(\d+)\s*seconds?/i);
-    if (secondsMatch) {
-      return `Please wait ${secondsMatch[1]} seconds before trying again.`;
-    }
-    return 'Too many attempts. Please wait a moment before trying again.';
+    return 'Please wait a moment and try again.';
   }
 
-  // Timeout or abort detection
-  if (lower.includes('timed out') || lower.includes('timeout') || lower.includes('aborted') || lower.includes('aborterror')) {
-    return 'The connection timed out. Please check your internet connection and try again.';
-  }
-
-  // Network / fetch failure detection
-  if (
-    lower.includes('failed to fetch') ||
-    lower.includes('network error') ||
-    lower.includes('networkrequestfailed') ||
-    lower.includes('err_internet_disconnected') ||
-    lower.includes('err_connection')
-  ) {
-    return 'Unable to reach the server. Please check your internet connection and try again.';
-  }
-
-  // Invalid credentials
+  // 6. INVALID CREDENTIALS (for sign-in)
   if (
     lower.includes('invalid login credentials') ||
     lower.includes('invalid email or password') ||
@@ -1394,35 +1445,15 @@ export function formatAuthErrorMessage(error: unknown): string {
     return 'Incorrect email or password. Please check your credentials and try again.';
   }
 
-  // Duplicate user signup
+  // 7. TECHNICAL / DATABASE / UNKNOWN JARGON
+  // Strictly filter out technical jargon like AuthApiError, JWT, PostgREST, relation does not exist
   if (
-    lower.includes('user already registered') ||
-    lower.includes('already registered') ||
-    lower.includes('already exists') ||
-    lower.includes('email already in use')
-  ) {
-    return 'An account with this email already exists. Please sign in instead.';
-  }
-
-  // Password constraints
-  if (lower.includes('password should be at least') || lower.includes('password is too short')) {
-    return 'Password must be at least 6 characters long.';
-  }
-
-  // Invalid email
-  if (lower.includes('invalid email') || lower.includes('email is invalid') || lower.includes('unable to validate email')) {
-    return 'Please enter a valid email address.';
-  }
-
-  if (lower.includes('signup requires a valid password')) {
-    return 'Please provide a valid password.';
-  }
-
-  // Clean fallback without technical jargon or database errors
-  if (
+    lower.includes('authapierror') ||
+    lower.includes('jwt') ||
+    lower.includes('postgrest') ||
+    lower.includes('relation does not exist') ||
     lower.includes('database error') ||
     lower.includes('postgres') ||
-    lower.includes('postgrest') ||
     lower.includes('column') ||
     lower.includes('relation') ||
     lower.includes('syntax') ||
@@ -1430,16 +1461,20 @@ export function formatAuthErrorMessage(error: unknown): string {
     lower.includes('constraint') ||
     lower.includes('500') ||
     lower.includes('502') ||
-    lower.includes('503')
+    lower.includes('503') ||
+    lower.includes('error:') ||
+    lower.includes('at ') ||
+    lower.includes('uncaught') ||
+    lower.includes('object')
   ) {
-    return 'A temporary service issue occurred. Please try again shortly.';
+    return 'Something went wrong while creating your account. Please try again.';
   }
 
-  // Sanitize stack traces or internal errors
-  if (lower.includes('error:') || lower.includes('at ') || lower.includes('uncaught') || lower.includes('object')) {
-    return 'Unable to complete sign-in. Please verify your credentials and try again.';
+  // If the message is already clean user text (e.g. from local validation), return it
+  if (rawMsg && !rawMsg.includes('{') && rawMsg.length < 120) {
+    return rawMsg;
   }
 
-  return rawMsg || 'Authentication failed. Please try again.';
+  return 'Something went wrong while creating your account. Please try again.';
 }
 

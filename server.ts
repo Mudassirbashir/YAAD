@@ -1,8 +1,15 @@
 import express from 'express';
 import path from 'path';
+import crypto from 'crypto';
 import dotenv from 'dotenv';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Type } from '@google/genai';
+import {
+  generateRegistrationOptions,
+  verifyRegistrationResponse,
+  generateAuthenticationOptions,
+  verifyAuthenticationResponse,
+} from '@simplewebauthn/server';
 
 dotenv.config();
 
@@ -474,11 +481,12 @@ app.get('/api/health', (req, res) => {
 // and ensures idempotent profile initialization.
 app.post('/api/auth/signup', async (req, res) => {
   try {
-    const { email, password, fullName } = req.body || {};
+    const { email, password, fullName, phoneNumber, phone_number } = req.body || {};
 
     const trimmedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
     const trimmedName = typeof fullName === 'string' ? fullName.trim() : '';
     const plainPassword = typeof password === 'string' ? password : '';
+    const rawPhone = typeof phoneNumber === 'string' ? phoneNumber : (typeof phone_number === 'string' ? phone_number : '');
 
     if (!trimmedEmail) {
       return res.status(400).json({ error: 'Email address is required.' });
@@ -495,6 +503,27 @@ app.post('/api/auth/signup', async (req, res) => {
 
     if (!trimmedName) {
       return res.status(400).json({ error: 'Please enter your full name.' });
+    }
+
+    // Phone number validation (optional for legacy backward-compat, but if provided must follow E.164)
+    let cleanedPhone: string | null = null;
+    if (rawPhone.trim()) {
+      const trimmedPhone = rawPhone.trim();
+      if (/[a-zA-Z]/.test(trimmedPhone)) {
+        return res.status(400).json({ error: 'Phone number must not contain letters.' });
+      }
+      if (/[^0-9+\s\-().]/.test(trimmedPhone)) {
+        return res.status(400).json({ error: 'Phone number contains invalid characters.' });
+      }
+      const digits = trimmedPhone.replace(/\D/g, '');
+      if (digits.length < 7) {
+        return res.status(400).json({ error: 'Phone number is too short (at least 7 digits required).' });
+      }
+      if (digits.length > 15) {
+        return res.status(400).json({ error: 'Phone number is too long (maximum 15 digits allowed).' });
+      }
+      const hasPlus = trimmedPhone.startsWith('+') || trimmedPhone.startsWith('00');
+      cleanedPhone = hasPlus ? `+${digits}` : `+${digits}`;
     }
 
     const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
@@ -518,6 +547,8 @@ app.post('/api/auth/signup', async (req, res) => {
       email_confirm: true,
       user_metadata: {
         full_name: trimmedName,
+        phone_number: cleanedPhone,
+        phone: cleanedPhone,
       },
     });
 
@@ -560,18 +591,29 @@ app.post('/api/auth/signup', async (req, res) => {
       return res.status(500).json({ error: 'Failed to create user account.' });
     }
 
-    // Ensure user profile exists idempotently with full_name
+    // Ensure user profile exists idempotently with full_name & phone_number
     try {
-      await supabaseAdmin.from('profiles').upsert(
-        {
-          id: createdUser.id,
-          full_name: trimmedName,
-          email: trimmedEmail,
-          language: 'en',
-          updated_at: new Date().toISOString(),
-        },
+      const profilePayload: Record<string, any> = {
+        id: createdUser.id,
+        full_name: trimmedName,
+        email: trimmedEmail,
+        language: 'en',
+        updated_at: new Date().toISOString(),
+      };
+      if (cleanedPhone) {
+        profilePayload.phone_number = cleanedPhone;
+      }
+
+      const { error: upsertErr } = await supabaseAdmin.from('profiles').upsert(
+        profilePayload,
         { onConflict: 'id' }
       );
+
+      // If profiles table does not yet have phone_number column in Postgres schema cache, retry without it
+      if (upsertErr && upsertErr.message.includes('phone_number')) {
+        delete profilePayload.phone_number;
+        await supabaseAdmin.from('profiles').upsert(profilePayload, { onConflict: 'id' });
+      }
     } catch (profileErr: any) {
       console.warn('Notice ensuring profile on signup:', profileErr?.message);
     }
@@ -582,6 +624,7 @@ app.post('/api/auth/signup', async (req, res) => {
         id: createdUser.id,
         email: createdUser.email,
         full_name: trimmedName,
+        phone_number: cleanedPhone,
       },
     });
   } catch (err: any) {
@@ -589,6 +632,191 @@ app.post('/api/auth/signup', async (req, res) => {
     return res.status(500).json({
       error: 'An unexpected server error occurred during account creation. Please try again.',
     });
+  }
+});
+
+// Trusted server-side endpoint to confirm a newly created user if Supabase project still has "Confirm email" enabled
+app.post('/api/auth/confirm-user', async (req, res) => {
+  try {
+    const { userId, email } = req.body || {};
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+
+    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
+
+    if (!supabaseUrl || !serviceKey) {
+      return res.status(503).json({ error: 'Server authentication admin service unavailable.' });
+    }
+
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const { data: updatedUser, error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+      email_confirm: true,
+    });
+
+    if (updateErr) {
+      console.warn('Notice confirming user email via admin:', updateErr.message);
+      return res.status(400).json({ error: updateErr.message });
+    }
+
+    // Ensure has_completed_setup is true in profiles table
+    try {
+      await supabaseAdmin.from('profiles').update({
+        has_completed_setup: true,
+        updated_at: new Date().toISOString(),
+      }).eq('id', userId);
+    } catch (profErr: any) {
+      console.warn('Notice updating profile setup flag:', profErr?.message);
+    }
+
+    return res.json({ success: true, user: updatedUser?.user });
+  } catch (err: any) {
+    console.error('Exception in /api/auth/confirm-user:', err);
+    return res.status(500).json({ error: 'Failed to confirm user.' });
+  }
+});
+
+// Safe administrative endpoint to confirm all existing users who are "Waiting for Verification"
+app.post('/api/admin/confirm-existing-users', async (req, res) => {
+  try {
+    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
+
+    if (!supabaseUrl || !serviceKey) {
+      return res.status(503).json({ error: 'Server service role credentials unavailable' });
+    }
+
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const { data: usersData, error: listErr } = await supabaseAdmin.auth.admin.listUsers();
+    if (listErr) {
+      return res.status(500).json({ error: listErr.message });
+    }
+
+    const unconfirmedUsers = (usersData?.users || []).filter((u: any) => !u.email_confirmed_at);
+    let confirmedCount = 0;
+
+    for (const u of unconfirmedUsers) {
+      const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(u.id, {
+        email_confirm: true,
+      });
+      if (!updErr) {
+        confirmedCount++;
+      }
+    }
+
+    // Mark existing profiles as has_completed_setup = true
+    try {
+      await supabaseAdmin.from('profiles').update({
+        has_completed_setup: true,
+      }).eq('has_completed_setup', false);
+    } catch (pErr: any) {
+      console.warn('Notice updating uncompleted setup profiles:', pErr?.message);
+    }
+
+    return res.json({
+      success: true,
+      totalUsersFound: usersData?.users?.length || 0,
+      unconfirmedFound: unconfirmedUsers.length,
+      successfullyConfirmed: confirmedCount,
+    });
+  } catch (err: any) {
+    console.error('Exception in /api/admin/confirm-existing-users:', err);
+    return res.status(500).json({ error: err?.message || 'Failed to confirm existing users' });
+  }
+});
+
+// Update user phone number endpoint
+app.post('/api/account/phone', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+    const { userId, phoneNumber } = req.body || {};
+
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required.' });
+    }
+
+    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
+
+    if (!supabaseUrl || !serviceKey) {
+      return res.status(503).json({ error: 'Backend service unavailable.' });
+    }
+
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    // If token provided, verify ownership
+    if (token) {
+      const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
+      if (userError || !userData?.user || userData.user.id !== userId) {
+        return res.status(401).json({ error: 'Unauthorized user verification.' });
+      }
+    }
+
+    // Validate phone number
+    const trimmedPhone = typeof phoneNumber === 'string' ? phoneNumber.trim() : '';
+    let cleanedPhone: string | null = null;
+    if (trimmedPhone) {
+      if (/[a-zA-Z]/.test(trimmedPhone)) {
+        return res.status(400).json({ error: 'Phone number must not contain letters.' });
+      }
+      if (/[^0-9+\s\-().]/.test(trimmedPhone)) {
+        return res.status(400).json({ error: 'Phone number contains invalid characters.' });
+      }
+      const digits = trimmedPhone.replace(/\D/g, '');
+      if (digits.length < 7) {
+        return res.status(400).json({ error: 'Phone number is too short (at least 7 digits required).' });
+      }
+      if (digits.length > 15) {
+        return res.status(400).json({ error: 'Phone number is too long (maximum 15 digits allowed).' });
+      }
+      cleanedPhone = trimmedPhone.startsWith('+') ? `+${digits}` : `+${digits}`;
+    }
+
+    // Update user auth metadata
+    await supabaseAdmin.auth.admin.updateUserById(userId, {
+      user_metadata: {
+        phone_number: cleanedPhone,
+        phone: cleanedPhone,
+      },
+    });
+
+    // Update profiles table
+    try {
+      const updateData: Record<string, any> = {
+        updated_at: new Date().toISOString(),
+      };
+      if (cleanedPhone !== null) {
+        updateData.phone_number = cleanedPhone;
+      }
+      const { error: profileErr } = await supabaseAdmin
+        .from('profiles')
+        .update(updateData)
+        .eq('id', userId);
+
+      if (profileErr) {
+        console.warn('Notice updating profile phone number:', profileErr.message);
+      }
+    } catch (dbErr: any) {
+      console.warn('Exception updating profile phone:', dbErr?.message);
+    }
+
+    return res.json({ success: true, phone_number: cleanedPhone });
+  } catch (err: any) {
+    console.error('Exception in /api/account/phone:', err);
+    return res.status(500).json({ error: 'Failed to update phone number.' });
   }
 });
 
@@ -643,6 +871,396 @@ app.post('/api/account/delete', async (req, res) => {
   } catch (err: any) {
     console.error('Error handling /api/account/delete:', err?.message || err);
     return res.json({ success: true }); // Graceful fallback
+  }
+});
+
+// ====================================================================
+// WEBAUTHN / PASSKEY AUTHENTICATION ENDPOINTS
+// ====================================================================
+
+function getRpId(req: express.Request): string {
+  const hostHeader = req.headers['x-forwarded-host'] || req.headers.host || 'localhost';
+  const host = Array.isArray(hostHeader) ? hostHeader[0] : hostHeader;
+  return host.split(':')[0];
+}
+
+function getExpectedOrigins(req: express.Request): string[] {
+  const origins = new Set<string>();
+  const originHeader = req.headers.origin;
+  if (originHeader) origins.add(originHeader);
+  const host = req.headers['x-forwarded-host'] || req.headers.host;
+  if (host) {
+    origins.add(`https://${host}`);
+    origins.add(`http://${host}`);
+  }
+  origins.add('http://localhost:3000');
+  origins.add('http://127.0.0.1:3000');
+  if (process.env.APP_URL) {
+    origins.add(process.env.APP_URL.replace(/\/$/, ''));
+  }
+  return Array.from(origins);
+}
+
+// In-memory challenge store with automatic cleanup
+const passkeyChallenges = new Map<string, { challenge: string; userId?: string; expiresAt: number }>();
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, val] of passkeyChallenges.entries()) {
+    if (val.expiresAt < now) {
+      passkeyChallenges.delete(key);
+    }
+  }
+}, 60000);
+
+// Helper to get Supabase Admin client
+async function getSupabaseAdmin() {
+  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
+  if (!supabaseUrl || !serviceKey) {
+    return null;
+  }
+  const { createClient } = await import('@supabase/supabase-js');
+  return createClient(supabaseUrl, serviceKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+}
+
+// 1. Passkey Registration: Generate Registration Options
+app.post('/api/passkey/register-options', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ error: 'Authentication required to register passkey' });
+    }
+
+    const supabaseAdmin = await getSupabaseAdmin();
+    if (!supabaseAdmin) {
+      return res.status(503).json({ error: 'Backend auth service is not configured' });
+    }
+
+    const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
+    if (userError || !userData?.user) {
+      return res.status(401).json({ error: 'Invalid authentication session' });
+    }
+
+    const user = userData.user;
+    const rpID = getRpId(req);
+
+    // Fetch existing passkeys for user to prevent registering the same authenticator twice
+    const { data: existingKeys } = await supabaseAdmin
+      .from('user_passkeys')
+      .select('credential_id, transports')
+      .eq('user_id', user.id);
+
+    const excludeCredentials = (existingKeys || []).map((k: any) => ({
+      id: k.credential_id,
+      transports: k.transports || [],
+    }));
+
+    const options = await generateRegistrationOptions({
+      rpName: 'YAAD',
+      rpID,
+      userID: new Uint8Array(Buffer.from(user.id)),
+      userName: user.email || 'user',
+      userDisplayName: user.user_metadata?.full_name || user.email || 'YAAD User',
+      attestationType: 'none',
+      excludeCredentials,
+      authenticatorSelection: {
+        residentKey: 'preferred',
+        userVerification: 'preferred',
+      },
+    });
+
+    const challengeId = crypto.randomUUID();
+    passkeyChallenges.set(challengeId, {
+      challenge: options.challenge,
+      userId: user.id,
+      expiresAt: Date.now() + 300000, // 5 minutes
+    });
+
+    return res.json({ options, challengeId });
+  } catch (err: any) {
+    console.error('Error generating passkey registration options:', err);
+    return res.status(500).json({ error: err?.message || 'Failed to start passkey registration' });
+  }
+});
+
+// 2. Passkey Registration: Verify and Save Credential
+app.post('/api/passkey/register-verify', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const { response, challengeId, deviceName } = req.body;
+    if (!response || !challengeId) {
+      return res.status(400).json({ error: 'Missing registration response or challenge' });
+    }
+
+    const challengeObj = passkeyChallenges.get(challengeId);
+    if (!challengeObj || challengeObj.expiresAt < Date.now()) {
+      return res.status(400).json({ error: 'Passkey registration timed out. Please try again.' });
+    }
+
+    const supabaseAdmin = await getSupabaseAdmin();
+    if (!supabaseAdmin) {
+      return res.status(503).json({ error: 'Backend auth service is not configured' });
+    }
+
+    const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
+    if (userError || !userData?.user || userData.user.id !== challengeObj.userId) {
+      return res.status(401).json({ error: 'User mismatch or session expired' });
+    }
+
+    const rpID = getRpId(req);
+    const expectedOrigin = getExpectedOrigins(req);
+
+    const verification = await verifyRegistrationResponse({
+      response,
+      expectedChallenge: challengeObj.challenge,
+      expectedOrigin,
+      expectedRPID: rpID,
+      requireUserVerification: false,
+    });
+
+    if (!verification.verified || !verification.registrationInfo) {
+      return res.status(400).json({ error: 'Passkey verification failed' });
+    }
+
+    // Clean up used challenge
+    passkeyChallenges.delete(challengeId);
+
+    const { credential } = verification.registrationInfo;
+    const publicKeyBase64 = Buffer.from(credential.publicKey).toString('base64url');
+
+    // Save to user_passkeys table
+    const { data: savedKey, error: saveErr } = await supabaseAdmin
+      .from('user_passkeys')
+      .insert({
+        user_id: userData.user.id,
+        credential_id: credential.id,
+        public_key: publicKeyBase64,
+        counter: credential.counter,
+        device_name: deviceName || 'Passkey Device',
+        transports: credential.transports || [],
+        created_at: new Date().toISOString(),
+        last_used_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (saveErr) {
+      console.error('Error saving passkey record to database:', saveErr);
+      return res.status(500).json({ error: 'Failed to record passkey in database' });
+    }
+
+    return res.json({
+      verified: true,
+      passkey: {
+        id: savedKey.id,
+        device_name: savedKey.device_name,
+        created_at: savedKey.created_at,
+        last_used_at: savedKey.last_used_at,
+      },
+    });
+  } catch (err: any) {
+    console.error('Error verifying passkey registration:', err);
+    return res.status(500).json({ error: err?.message || 'Passkey registration verification failed' });
+  }
+});
+
+// 3. Passkey Login: Generate Authentication Options
+app.post('/api/passkey/login-options', async (req, res) => {
+  try {
+    const rpID = getRpId(req);
+    const options = await generateAuthenticationOptions({
+      rpID,
+      userVerification: 'preferred',
+    });
+
+    const challengeId = crypto.randomUUID();
+    passkeyChallenges.set(challengeId, {
+      challenge: options.challenge,
+      expiresAt: Date.now() + 300000,
+    });
+
+    return res.json({ options, challengeId });
+  } catch (err: any) {
+    console.error('Error generating passkey login options:', err);
+    return res.status(500).json({ error: err?.message || 'Unable to generate passkey login options' });
+  }
+});
+
+// 4. Passkey Login: Verify Assertion & Generate Supabase Session Link
+app.post('/api/passkey/login-verify', async (req, res) => {
+  try {
+    const { response, challengeId } = req.body;
+    if (!response || !challengeId) {
+      return res.status(400).json({ error: 'Missing passkey authentication response or challenge' });
+    }
+
+    const challengeObj = passkeyChallenges.get(challengeId);
+    if (!challengeObj || challengeObj.expiresAt < Date.now()) {
+      return res.status(400).json({ error: 'Passkey login session timed out. Please try again.' });
+    }
+
+    const supabaseAdmin = await getSupabaseAdmin();
+    if (!supabaseAdmin) {
+      return res.status(503).json({ error: 'Backend auth service is not configured' });
+    }
+
+    // Find passkey record by credential_id
+    const { data: passkey, error: findErr } = await supabaseAdmin
+      .from('user_passkeys')
+      .select('*')
+      .eq('credential_id', response.id)
+      .maybeSingle();
+
+    if (findErr || !passkey) {
+      return res.status(404).json({
+        error: 'Passkey was not found on this account. Please sign in with email or register your passkey first.',
+      });
+    }
+
+    const rpID = getRpId(req);
+    const expectedOrigin = getExpectedOrigins(req);
+
+    const verification = await verifyAuthenticationResponse({
+      response,
+      expectedChallenge: challengeObj.challenge,
+      expectedOrigin,
+      expectedRPID: rpID,
+      credential: {
+        id: passkey.credential_id,
+        publicKey: Buffer.from(passkey.public_key, 'base64url'),
+        counter: Number(passkey.counter || 0),
+        transports: passkey.transports,
+      },
+      requireUserVerification: false,
+    });
+
+    if (!verification.verified) {
+      return res.status(400).json({ error: 'Passkey verification failed. Invalid credentials.' });
+    }
+
+    // Clean up challenge
+    passkeyChallenges.delete(challengeId);
+
+    // Update counter and last_used_at on the passkey
+    await supabaseAdmin
+      .from('user_passkeys')
+      .update({
+        counter: verification.authenticationInfo.newCounter,
+        last_used_at: new Date().toISOString(),
+      })
+      .eq('id', passkey.id);
+
+    // Retrieve user from auth.users to get email
+    const { data: userData, error: userErr } = await supabaseAdmin.auth.admin.getUserById(passkey.user_id);
+    if (userErr || !userData?.user?.email) {
+      return res.status(404).json({ error: 'Associated user account not found.' });
+    }
+
+    // Generate Supabase session link/token for the user
+    const { data: linkData, error: linkErr } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'magiclink',
+      email: userData.user.email,
+    });
+
+    if (linkErr || !linkData?.properties?.hashed_token) {
+      console.warn('Notice generating Supabase session link for passkey user:', linkErr?.message);
+      return res.status(500).json({ error: 'Unable to establish authenticated session.' });
+    }
+
+    return res.json({
+      verified: true,
+      token_hash: linkData.properties.hashed_token,
+      email: userData.user.email,
+    });
+  } catch (err: any) {
+    console.error('Error verifying passkey login:', err);
+    return res.status(500).json({ error: err?.message || 'Passkey authentication failed' });
+  }
+});
+
+// 5. Passkey Management: List Registered Passkeys for User
+app.get('/api/passkey/list', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const supabaseAdmin = await getSupabaseAdmin();
+    if (!supabaseAdmin) {
+      return res.status(503).json({ error: 'Auth service unavailable' });
+    }
+
+    const { data: userData, error: userErr } = await supabaseAdmin.auth.getUser(token);
+    if (userErr || !userData?.user) {
+      return res.status(401).json({ error: 'Invalid session' });
+    }
+
+    const { data: passkeys, error: listErr } = await supabaseAdmin
+      .from('user_passkeys')
+      .select('id, device_name, created_at, last_used_at')
+      .eq('user_id', userData.user.id)
+      .order('created_at', { ascending: false });
+
+    if (listErr) {
+      console.warn('Notice querying user_passkeys:', listErr.message);
+      return res.json({ passkeys: [] });
+    }
+
+    return res.json({ passkeys: passkeys || [] });
+  } catch (err: any) {
+    console.error('Error listing passkeys:', err);
+    return res.status(500).json({ error: 'Failed to retrieve passkeys' });
+  }
+});
+
+// 6. Passkey Management: Delete Passkey
+app.post('/api/passkey/delete', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    const { passkeyId } = req.body;
+    if (!passkeyId) {
+      return res.status(400).json({ error: 'passkeyId is required' });
+    }
+
+    const supabaseAdmin = await getSupabaseAdmin();
+    if (!supabaseAdmin) {
+      return res.status(503).json({ error: 'Auth service unavailable' });
+    }
+
+    const { data: userData, error: userErr } = await supabaseAdmin.auth.getUser(token);
+    if (userErr || !userData?.user) {
+      return res.status(401).json({ error: 'Invalid session' });
+    }
+
+    const { error: delErr } = await supabaseAdmin
+      .from('user_passkeys')
+      .delete()
+      .eq('id', passkeyId)
+      .eq('user_id', userData.user.id);
+
+    if (delErr) {
+      return res.status(500).json({ error: delErr.message });
+    }
+
+    return res.json({ success: true });
+  } catch (err: any) {
+    console.error('Error deleting passkey:', err);
+    return res.status(500).json({ error: 'Failed to delete passkey' });
   }
 });
 

@@ -309,6 +309,8 @@ export interface UserProfile {
   id: string;
   email?: string;
   full_name?: string;
+  phone_number?: string | null;
+  phone?: string | null;
   avatar_url?: string;
   language?: Language;
   usage_purpose?: string;
@@ -316,6 +318,13 @@ export interface UserProfile {
   has_completed_setup?: boolean;
   updated_at?: string;
   created_at?: string;
+}
+
+export interface PasskeyCredentialInfo {
+  id: string;
+  deviceName?: string;
+  createdAt: string;
+  lastUsedAt: string;
 }
 
 export interface FrequentlyBoughtItem {

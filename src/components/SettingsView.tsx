@@ -4,6 +4,7 @@ import {
   ArrowRight,
   User,
   Mail,
+  Phone,
   Shield,
   KeyRound,
   Eye,
@@ -26,12 +27,22 @@ import {
   HelpCircle,
   ChevronRight,
   ChevronLeft,
+  Fingerprint,
+  Trash2,
+  Loader2,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { Language } from '../translations';
 import { Avatar } from './Avatar';
 import { AvatarPickerModal } from './AvatarPickerModal';
+import { isPasskeySupported } from '../lib/passkey';
+import { PasskeyCredentialInfo } from '../types';
+import {
+  validatePhoneNumber,
+  formatPhoneNumber,
+  cleanPhoneNumber,
+} from '../utils/phone';
 
 interface SettingsViewProps {
   onBack: () => void;
@@ -49,11 +60,77 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   onRestartTour,
 }) => {
   const { t, language, setLanguage, isRTL } = useLanguage();
-  const { user, profile, updateUserProfile, updatePassword } = useAuth();
+  const {
+    user,
+    profile,
+    updateUserProfile,
+    updatePassword,
+    registerPasskey,
+    listPasskeys,
+    removePasskey,
+  } = useAuth();
 
-  // Local state for Name Editing
+  // Passkey Management State
+  const [passkeys, setPasskeys] = useState<PasskeyCredentialInfo[]>([]);
+  const [loadingPasskeys, setLoadingPasskeys] = useState(false);
+  const [isRegisteringPasskey, setIsRegisteringPasskey] = useState(false);
+  const [passkeyMessage, setPasskeyMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (user && isPasskeySupported()) {
+      setLoadingPasskeys(true);
+      listPasskeys()
+        .then(setPasskeys)
+        .catch(() => {})
+        .finally(() => setLoadingPasskeys(false));
+    }
+  }, [user]);
+
+  const handleRegisterPasskey = async () => {
+    setIsRegisteringPasskey(true);
+    setPasskeyMessage(null);
+    try {
+      const res = await registerPasskey();
+      if (res.error) {
+        setPasskeyMessage({ type: 'error', text: res.error.message });
+      } else {
+        setPasskeyMessage({ type: 'success', text: 'Passkey registered successfully!' });
+        const updated = await listPasskeys();
+        setPasskeys(updated);
+      }
+    } catch (err: unknown) {
+      setPasskeyMessage({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Registration failed',
+      });
+    } finally {
+      setIsRegisteringPasskey(false);
+    }
+  };
+
+  const handleRemovePasskey = async (id: string) => {
+    try {
+      const res = await removePasskey(id);
+      if (res.error) {
+        setPasskeyMessage({ type: 'error', text: res.error.message });
+      } else {
+        setPasskeyMessage({ type: 'success', text: 'Passkey removed.' });
+        setPasskeys((prev) => prev.filter((p) => p.id !== id));
+      }
+    } catch {
+      setPasskeyMessage({ type: 'error', text: 'Failed to remove passkey.' });
+    }
+  };
+
+  // Local state for Name & Phone Editing
   const [isEditingName, setIsEditingName] = useState(false);
   const [fullNameInput, setFullNameInput] = useState('');
+  const [isEditingPhone, setIsEditingPhone] = useState(false);
+  const [phoneInput, setPhoneInput] = useState('');
+  const [phoneError, setPhoneError] = useState<string | null>(null);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileMessage, setProfileMessage] = useState<{
     type: 'success' | 'error';
@@ -103,6 +180,21 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     }
   }, [profile, user]);
 
+  // Initialize Phone from Profile/User
+  useEffect(() => {
+    if (profile?.phone_number) {
+      setPhoneInput(profile.phone_number);
+    } else if (user?.user_metadata?.phone_number) {
+      setPhoneInput(user.user_metadata.phone_number);
+    } else if (user?.user_metadata?.phone) {
+      setPhoneInput(user.user_metadata.phone);
+    } else if (user?.phone) {
+      setPhoneInput(user.phone);
+    } else {
+      setPhoneInput('');
+    }
+  }, [profile, user]);
+
   // Close modals on Escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -110,6 +202,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         if (showAvatarPicker) setShowAvatarPicker(false);
         if (showSignOutConfirm && !isSigningOut) setShowSignOutConfirm(false);
         if (isEditingName) setIsEditingName(false);
+        if (isEditingPhone) setIsEditingPhone(false);
         if (activeModal) setActiveModal(null);
       }
     };
@@ -119,6 +212,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     showAvatarPicker,
     showSignOutConfirm,
     isEditingName,
+    isEditingPhone,
     isSigningOut,
     activeModal,
   ]);
@@ -222,6 +316,46 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     }
   };
 
+  // Save Phone Number
+  const handleSavePhone = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    setPhoneError(null);
+
+    const trimmedPhone = phoneInput.trim();
+    if (trimmedPhone) {
+      const validation = validatePhoneNumber(trimmedPhone);
+      if (!validation.isValid) {
+        setPhoneError(validation.error || 'Please enter a valid phone number (e.g. +92 300 1234567).');
+        return;
+      }
+    }
+
+    setIsSavingProfile(true);
+    setProfileMessage(null);
+
+    const cleanVal = trimmedPhone ? cleanPhoneNumber(trimmedPhone) : null;
+    const { error } = await updateUserProfile({
+      phone_number: cleanVal,
+    });
+
+    setIsSavingProfile(false);
+
+    if (error) {
+      setProfileMessage({
+        type: 'error',
+        text: error.message || 'Unable to update phone number',
+      });
+    } else {
+      setProfileMessage({
+        type: 'success',
+        text: t('settings.saved') || 'Saved successfully',
+      });
+      setIsEditingPhone(false);
+      setTimeout(() => setProfileMessage(null), 3000);
+    }
+  };
+
   // Select Avatar (Emoji or Initials)
   const handleSelectAvatar = async (avatarValue: string | null) => {
     setIsSavingProfile(true);
@@ -308,6 +442,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     (user ? 'Account User' : t('settings.guestUser'));
   const displayEmail =
     user?.email || (user ? 'Authenticated user' : t('settings.guestSubtitle'));
+  const displayPhone =
+    profile?.phone_number ||
+    user?.user_metadata?.phone_number ||
+    user?.user_metadata?.phone ||
+    user?.phone ||
+    null;
 
   const Chevron = isRTL ? ChevronLeft : ChevronRight;
 
@@ -443,6 +583,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       </span>
                     </p>
 
+                    {/* Phone Number Display */}
+                    <p className="text-sm text-outline flex items-center justify-center sm:justify-start gap-1.5 font-['Plus_Jakarta_Sans']">
+                      <Phone className="w-3.5 h-3.5 shrink-0" />
+                      <span className="truncate max-w-[280px]" dir="ltr">
+                        {displayPhone
+                          ? formatPhoneNumber(displayPhone)
+                          : (t('settings.noPhone') || 'No phone number added')}
+                      </span>
+                    </p>
+
                     <div className="pt-2 flex flex-wrap items-center justify-center sm:justify-start gap-2">
                       {!isEditingName ? (
                         <button
@@ -459,6 +609,23 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         >
                           <Edit2 className="w-3 h-3" />
                           {t('settings.editName') || 'Edit Name'}
+                        </button>
+                      ) : null}
+
+                      {!isEditingPhone ? (
+                        <button
+                          id="edit_phone_toggle_btn"
+                          onClick={() => {
+                            setIsEditingPhone(true);
+                            setPhoneInput(displayPhone || '');
+                            setPhoneError(null);
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-primary bg-primary-fixed/30 hover:bg-primary-fixed/50 rounded-xl transition-colors active:scale-95"
+                        >
+                          <Phone className="w-3 h-3" />
+                          {displayPhone
+                            ? (t('settings.editPhone') || 'Edit Phone')
+                            : (t('settings.addPhone') || 'Add Phone')}
                         </button>
                       ) : null}
 
@@ -513,6 +680,93 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       >
                         {t('settings.cancel') || 'Cancel'}
                       </button>
+                    </div>
+                  </form>
+                )}
+
+                {/* Edit Phone Inline Form */}
+                {isEditingPhone && (
+                  <form
+                    onSubmit={handleSavePhone}
+                    className="p-4 bg-surface-container-lowest rounded-2xl border border-primary/20 space-y-3 animate-in fade-in duration-200"
+                  >
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-on-surface-variant">
+                        {t('settings.phone') || 'Phone Number'}
+                      </label>
+                      <span className="text-[11px] text-outline">
+                        e.g. +92 300 1234567
+                      </span>
+                    </div>
+
+                    {phoneError && (
+                      <div className="p-2.5 rounded-xl bg-error-container text-on-error-container text-xs flex items-center gap-1.5">
+                        <AlertCircle className="w-4 h-4 shrink-0 text-error" />
+                        <span>{phoneError}</span>
+                      </div>
+                    )}
+
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <div className="relative flex-1">
+                        <Phone className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                        <input
+                          id="settings_input_phone"
+                          type="tel"
+                          dir="ltr"
+                          value={phoneInput}
+                          onChange={(e) => {
+                            setPhoneInput(e.target.value);
+                            if (phoneError) setPhoneError(null);
+                          }}
+                          placeholder="+92 300 1234567"
+                          className="w-full ps-10 pe-3.5 py-2 text-sm rounded-xl bg-surface border border-surface-dim focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-['Manrope']"
+                          autoFocus
+                          autoComplete="tel"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          type="submit"
+                          disabled={isSavingProfile}
+                          className="px-4 py-2 text-xs font-bold text-on-primary bg-primary hover:bg-primary/90 rounded-xl transition-colors disabled:opacity-50 active:scale-95 shrink-0"
+                        >
+                          {isSavingProfile
+                            ? t('settings.saving') || 'Saving...'
+                            : t('settings.savePhone') || 'Save Phone'}
+                        </button>
+                        {displayPhone && (
+                          <button
+                            type="button"
+                            disabled={isSavingProfile}
+                            onClick={async () => {
+                              setPhoneInput('');
+                              setPhoneError(null);
+                              setIsSavingProfile(true);
+                              await updateUserProfile({ phone_number: null });
+                              setIsSavingProfile(false);
+                              setIsEditingPhone(false);
+                              setProfileMessage({
+                                type: 'success',
+                                text: t('settings.phoneRemoved') || 'Phone number removed',
+                              });
+                              setTimeout(() => setProfileMessage(null), 3000);
+                            }}
+                            className="px-3 py-2 text-xs font-semibold text-error hover:bg-error/10 bg-surface-container-low rounded-xl transition-colors shrink-0"
+                          >
+                            {t('settings.removePhone') || 'Remove'}
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsEditingPhone(false);
+                            setPhoneError(null);
+                          }}
+                          className="px-3 py-2 text-xs font-semibold text-outline hover:text-on-surface bg-surface-container-low rounded-xl transition-colors shrink-0"
+                        >
+                          {t('settings.cancel') || 'Cancel'}
+                        </button>
+                      </div>
                     </div>
                   </form>
                 )}
@@ -906,6 +1160,92 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     </div>
                   </form>
                 )}
+              </div>
+
+              {/* Passkeys & Biometric Authentication Section */}
+              <div className="pt-3 border-t border-surface-dim space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-secondary-fixed/40 text-primary flex items-center justify-center shrink-0">
+                      <Fingerprint className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-on-surface">
+                        Passkeys & Biometrics
+                      </h3>
+                      <p className="text-xs text-outline">
+                        Sign in instantly using Touch ID, Face ID, or your device lock
+                      </p>
+                    </div>
+                  </div>
+
+                  {isPasskeySupported() && (
+                    <button
+                      id="settings_register_passkey_btn"
+                      type="button"
+                      disabled={isRegisteringPasskey}
+                      onClick={handleRegisterPasskey}
+                      className="px-3.5 py-1.5 text-xs font-semibold text-primary bg-primary-fixed/30 hover:bg-primary-fixed/50 rounded-xl transition-colors active:scale-95 shrink-0 flex items-center gap-1.5 disabled:opacity-50"
+                    >
+                      {isRegisteringPasskey ? (
+                        <>
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                          <span>Registering...</span>
+                        </>
+                      ) : (
+                        <span>{t('auth.passkeyRegister') || 'Register Device'}</span>
+                      )}
+                    </button>
+                  )}
+                </div>
+
+                {passkeyMessage && (
+                  <div
+                    className={`p-2.5 rounded-xl text-xs flex items-center gap-2 ${
+                      passkeyMessage.type === 'success'
+                        ? 'bg-secondary-fixed/50 text-primary font-bold'
+                        : 'bg-error-container text-on-error-container'
+                    }`}
+                  >
+                    {passkeyMessage.type === 'success' ? (
+                      <CheckCircle2 className="w-4 h-4 shrink-0 text-primary" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 shrink-0 text-error" />
+                    )}
+                    <span>{passkeyMessage.text}</span>
+                  </div>
+                )}
+
+                {!isPasskeySupported() ? (
+                  <p className="text-xs text-outline bg-surface-container-low p-2.5 rounded-xl">
+                    {t('auth.passkeyNotSupported') ||
+                      'Passkeys are not supported on this device/browser.'}
+                  </p>
+                ) : passkeys.length > 0 ? (
+                  <div className="space-y-1.5 pt-1">
+                    {passkeys.map((pk) => (
+                      <div
+                        key={pk.id}
+                        className="flex items-center justify-between p-2.5 bg-surface-container-low rounded-xl text-xs"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Fingerprint className="w-4 h-4 text-primary" />
+                          <span className="font-semibold text-on-surface">
+                            {pk.device_name || 'Passkey Device'}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemovePasskey(pk.id)}
+                          className="p-1.5 text-error hover:bg-error/10 rounded-lg transition-colors"
+                          title="Remove Passkey"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
               </div>
 
               {/* Sign Out Trigger */}

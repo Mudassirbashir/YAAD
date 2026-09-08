@@ -1,18 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Mail,
   Lock,
   User as UserIcon,
+  Phone,
   LogIn,
   UserPlus,
   Loader2,
   AlertCircle,
   ShieldCheck,
+  Fingerprint,
+  Globe,
+  KeyRound,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { APP_IMAGES } from '../data/initialData';
 import { formatAuthErrorMessage } from '../lib/supabase';
+import { isPasskeySupported } from '../lib/passkey';
+import { validatePhoneNumber } from '../utils/phone';
 
 interface AuthViewProps {
   initialMode?: 'signin' | 'signup';
@@ -24,43 +30,154 @@ export const AuthView: React.FC<AuthViewProps> = ({
   onSuccess,
 }) => {
   const { t } = useLanguage();
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, signInWithGoogle, signInWithPasskey } = useAuth();
 
   const [mode, setMode] = useState<'signin' | 'signup'>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [passkeyLoading, setPasskeyLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const isSubmittingRef = React.useRef(false);
+  const isSubmittingRef = useRef(false);
+
+  const isAnyLoading = loading || googleLoading || passkeyLoading;
+
+  const handleGoogleSignIn = async () => {
+    if (isSubmittingRef.current || isAnyLoading) return;
+    setErrorMessage(null);
+
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      setErrorMessage(
+        mode === 'signup'
+          ? "You're offline. Please reconnect to create your account."
+          : "You're offline. Please reconnect to sign in."
+      );
+      return;
+    }
+
+    isSubmittingRef.current = true;
+    setGoogleLoading(true);
+
+    try {
+      const { error } = await signInWithGoogle();
+      if (error) {
+        setErrorMessage(formatAuthErrorMessage(error));
+      }
+      // Note: In browser, OAuth redirects the page to Google auth endpoint
+    } catch (err: unknown) {
+      setErrorMessage(formatAuthErrorMessage(err));
+    } finally {
+      isSubmittingRef.current = false;
+      setGoogleLoading(false);
+    }
+  };
+
+  const handlePasskeySignIn = async () => {
+    if (isSubmittingRef.current || isAnyLoading) return;
+    setErrorMessage(null);
+
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      setErrorMessage(
+        mode === 'signup'
+          ? "You're offline. Please reconnect to create your account."
+          : "You're offline. Please reconnect to sign in."
+      );
+      return;
+    }
+
+    if (!isPasskeySupported()) {
+      setErrorMessage(
+        t('auth.passkeyNotSupported') ||
+          'Passkeys are not supported on this browser or device. Please continue with Email or Google.'
+      );
+      return;
+    }
+
+    isSubmittingRef.current = true;
+    setPasskeyLoading(true);
+
+    try {
+      const { error } = await signInWithPasskey();
+      if (error) {
+        setErrorMessage(formatAuthErrorMessage(error));
+        return;
+      }
+
+      if (onSuccess) onSuccess();
+    } catch (err: unknown) {
+      setErrorMessage(formatAuthErrorMessage(err));
+    } finally {
+      isSubmittingRef.current = false;
+      setPasskeyLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // Hardware/ref lock to strictly prevent duplicate rapid submissions or Enter key double-firing
-    if (isSubmittingRef.current || loading) return;
+    if (isSubmittingRef.current || isAnyLoading) return;
 
     setErrorMessage(null);
 
+    // Pre-flight offline verification
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      setErrorMessage(
+        mode === 'signup'
+          ? "You're offline. Please reconnect to create your account."
+          : "You're offline. Please reconnect to sign in."
+      );
+      return;
+    }
+
     const trimmedEmail = email.trim().toLowerCase();
-    if (!trimmedEmail || !password) {
-      setErrorMessage(t('auth.fillAllFields') || 'Please fill in all required fields.');
-      return;
-    }
+    const trimmedName = fullName.trim();
+    const trimmedPhone = phoneNumber.trim();
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(trimmedEmail)) {
-      setErrorMessage(t('auth.invalidEmail') || 'Please enter a valid email address.');
-      return;
-    }
-
-    if (mode === 'signup' && !fullName.trim()) {
-      setErrorMessage(t('profileSetup.nameRequired') || 'Please enter your full name.');
-      return;
-    }
-
-    if (password.length < 6) {
-      setErrorMessage(t('auth.passwordLength') || 'Password must be at least 6 characters.');
-      return;
+    if (mode === 'signup') {
+      if (!trimmedName) {
+        setErrorMessage(t('profileSetup.nameRequired') || 'Please enter your full name.');
+        return;
+      }
+      if (!trimmedEmail) {
+        setErrorMessage(t('auth.invalidEmail') || 'Please enter a valid email address.');
+        return;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(trimmedEmail)) {
+        setErrorMessage(t('auth.invalidEmail') || 'Please enter a valid email address.');
+        return;
+      }
+      if (!trimmedPhone) {
+        setErrorMessage(t('auth.phoneRequired') || 'Please enter your phone number.');
+        return;
+      }
+      const validation = validatePhoneNumber(trimmedPhone);
+      if (!validation.valid) {
+        setErrorMessage(validation.reason || t('auth.invalidPhone') || 'Please enter a valid phone number (e.g. +92 300 1234567).');
+        return;
+      }
+      if (!password || password.length < 6) {
+        setErrorMessage(t('auth.weakPassword') || 'Please choose a stronger password (at least 6 characters).');
+        return;
+      }
+      if (password !== confirmPassword) {
+        setErrorMessage('Passwords do not match. Please verify both password fields.');
+        return;
+      }
+    } else {
+      if (!trimmedEmail || !password) {
+        setErrorMessage(t('auth.fillAllFields') || 'Please fill in all required fields.');
+        return;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(trimmedEmail)) {
+        setErrorMessage(t('auth.invalidEmail') || 'Please enter a valid email address.');
+        return;
+      }
     }
 
     isSubmittingRef.current = true;
@@ -68,7 +185,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
     try {
       if (mode === 'signup') {
-        const { error } = await signUp(trimmedEmail, password, fullName.trim());
+        const { error } = await signUp(trimmedEmail, password, trimmedName, trimmedPhone);
         if (error) {
           setErrorMessage(formatAuthErrorMessage(error));
           return;
@@ -112,7 +229,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
           </h1>
           <p className="font-['Manrope'] text-xs text-on-surface-variant leading-relaxed">
             {mode === 'signin'
-              ? t('auth.signInSubtitle') || 'Sign in with your email to access and sync your shopping lists.'
+              ? t('auth.signInSubtitle') || 'Sign in to access and sync your shopping lists.'
               : t('auth.signUpSubtitle') || 'Join YAAD to keep your grocery lists organized and synchronized.'}
           </p>
         </div>
@@ -164,6 +281,49 @@ export const AuthView: React.FC<AuthViewProps> = ({
           </div>
         )}
 
+        {/* Quick Auth Providers (Google & Passkey) */}
+        <div className="space-y-2.5">
+          {/* Continue with Google */}
+          <button
+            id="auth_google_btn"
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={isAnyLoading}
+            className="w-full h-11 rounded-2xl bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface font-['Manrope'] text-xs font-bold transition-all flex items-center justify-center gap-2.5 shadow-2xs hover:shadow-xs active:scale-[0.99] disabled:opacity-60"
+          >
+            {googleLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin text-primary" />
+            ) : (
+              <Globe className="w-4 h-4 text-primary" />
+            )}
+            <span>{t('auth.googleBtn') || 'Continue with Google'}</span>
+          </button>
+
+          {/* Continue with Passkey */}
+          <button
+            id="auth_passkey_btn"
+            type="button"
+            onClick={handlePasskeySignIn}
+            disabled={isAnyLoading}
+            className="w-full h-11 rounded-2xl bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface font-['Manrope'] text-xs font-bold transition-all flex items-center justify-center gap-2.5 shadow-2xs hover:shadow-xs active:scale-[0.99] disabled:opacity-60"
+          >
+            {passkeyLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin text-primary" />
+            ) : (
+              <Fingerprint className="w-4 h-4 text-primary" />
+            )}
+            <span>{t('auth.passkeyBtn') || 'Continue with Passkey'}</span>
+          </button>
+        </div>
+
+        {/* Visual Divider */}
+        <div className="relative flex items-center justify-center">
+          <div className="border-t border-surface-dim w-full" />
+          <span className="bg-surface-container-lowest px-3 text-[11px] font-['Manrope'] font-medium text-outline uppercase tracking-wider shrink-0">
+            {t('auth.orDivider') || 'or continue with email'}
+          </span>
+        </div>
+
         {/* Email & Password Authentication Form */}
         <form onSubmit={handleSubmit} className="space-y-3.5">
           {mode === 'signup' && (
@@ -180,7 +340,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder={t('auth.fullNamePlaceholder') || 'Your full name'}
-                  disabled={loading}
+                  disabled={isAnyLoading}
                   className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-3.5 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope'] disabled:opacity-60"
                   required
                 />
@@ -200,13 +360,36 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={t('auth.emailPlaceholder') || 'you@example.com'}
-                disabled={loading}
+                disabled={isAnyLoading}
                 className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-3.5 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope'] disabled:opacity-60"
                 autoComplete="email"
                 required
               />
             </div>
           </div>
+
+          {mode === 'signup' && (
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-on-surface-variant block font-['Manrope']">
+                {t('auth.phoneLabel') || 'Phone Number'}
+              </label>
+              <div className="relative">
+                <Phone className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  id="auth_input_phone"
+                  type="tel"
+                  dir="ltr"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder={t('auth.phonePlaceholder') || '+92 300 1234567'}
+                  disabled={isAnyLoading}
+                  className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-3.5 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope'] disabled:opacity-60"
+                  autoComplete="tel"
+                  required
+                />
+              </div>
+            </div>
+          )}
 
           <div className="space-y-1">
             <label className="text-xs font-bold text-on-surface-variant block font-['Manrope']">
@@ -220,7 +403,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={t('auth.passwordPlaceholder') || '••••••••'}
-                disabled={loading}
+                disabled={isAnyLoading}
                 className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-3.5 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope'] disabled:opacity-60"
                 autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
                 required
@@ -228,10 +411,32 @@ export const AuthView: React.FC<AuthViewProps> = ({
             </div>
           </div>
 
+          {mode === 'signup' && (
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-on-surface-variant block font-['Manrope']">
+                Confirm Password
+              </label>
+              <div className="relative">
+                <KeyRound className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  id="auth_input_confirm_password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Re-enter your password"
+                  disabled={isAnyLoading}
+                  className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-3.5 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope'] disabled:opacity-60"
+                  autoComplete="new-password"
+                  required
+                />
+              </div>
+            </div>
+          )}
+
           <button
             id="auth_submit_btn"
             type="submit"
-            disabled={loading}
+            disabled={isAnyLoading}
             className="w-full h-12 rounded-full bg-primary text-on-primary font-['Manrope'] text-sm font-bold shadow-md hover:bg-primary-container hover:shadow-lg disabled:opacity-50 transition-all flex items-center justify-center gap-2 active:scale-[0.99] mt-2"
           >
             {loading ? (
@@ -259,3 +464,4 @@ export const AuthView: React.FC<AuthViewProps> = ({
     </main>
   );
 };
+

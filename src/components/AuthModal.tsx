@@ -7,10 +7,12 @@ import {
   ArrowRight,
   UserPlus,
   Loader2,
+  Phone,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { APP_IMAGES } from '../data/initialData';
 import { formatAuthErrorMessage } from '../lib/supabase';
+import { validatePhoneNumber } from '../utils/phone';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -26,6 +28,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const { signIn, signUp, isConfigured } = useAuth();
   const [mode, setMode] = useState<'signin' | 'signup'>(initialMode);
   const [fullName, setFullName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -56,26 +59,45 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     const trimmedEmail = email.trim().toLowerCase();
     const trimmedName = fullName.trim();
+    const trimmedPhone = phoneNumber.trim();
 
-    if (!trimmedEmail || !password) {
-      setErrorMsg('Please enter your email and password.');
-      return;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(trimmedEmail)) {
-      setErrorMsg('Please enter a valid email address.');
-      return;
-    }
-
-    if (mode === 'signup' && !trimmedName) {
-      setErrorMsg('Please enter your full name.');
-      return;
-    }
-
-    if (password.length < 6) {
-      setErrorMsg('Password must be at least 6 characters.');
-      return;
+    if (mode === 'signup') {
+      if (!trimmedName) {
+        setErrorMsg('Please enter your full name.');
+        return;
+      }
+      if (!trimmedEmail) {
+        setErrorMsg('Please enter a valid email address.');
+        return;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(trimmedEmail)) {
+        setErrorMsg('Please enter a valid email address.');
+        return;
+      }
+      if (!trimmedPhone) {
+        setErrorMsg('Please enter your phone number.');
+        return;
+      }
+      const validation = validatePhoneNumber(trimmedPhone);
+      if (!validation.valid) {
+        setErrorMsg(validation.reason || 'Please enter a valid phone number (e.g. +92 300 1234567).');
+        return;
+      }
+      if (!password || password.length < 6) {
+        setErrorMsg('Please choose a stronger password.');
+        return;
+      }
+    } else {
+      if (!trimmedEmail || !password) {
+        setErrorMsg('Please enter your email and password.');
+        return;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(trimmedEmail)) {
+        setErrorMsg('Please enter a valid email address.');
+        return;
+      }
     }
 
     isSubmittingRef.current = true;
@@ -83,7 +105,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     try {
       if (mode === 'signup') {
-        const { error } = await signUp(trimmedEmail, password, trimmedName);
+        const { error } = await signUp(trimmedEmail, password, trimmedName, trimmedPhone);
         if (error) {
           setErrorMsg(formatAuthErrorMessage(error));
         } else {
@@ -230,6 +252,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               required
             />
           </div>
+
+          {mode === 'signup' && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider block">
+                Phone Number
+              </label>
+              <div className="relative">
+                <Phone className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="tel"
+                  dir="ltr"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="+92 300 1234567"
+                  disabled={isSubmitting}
+                  className="w-full h-12 bg-surface-container-lowest text-on-surface rounded-2xl ps-10 pe-4 text-sm border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline disabled:opacity-60"
+                  autoComplete="tel"
+                  required
+                />
+              </div>
+            </div>
+          )}
 
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider block">
