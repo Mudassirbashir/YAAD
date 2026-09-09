@@ -30,6 +30,8 @@ import {
   Fingerprint,
   Trash2,
   Loader2,
+  Share2,
+  ExternalLink,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -51,6 +53,7 @@ interface SettingsViewProps {
   onOpenAuth?: (mode?: 'signin' | 'signup') => void;
   onRestartTour?: () => void;
   onReplayOnboarding?: () => void;
+  onOpenLegalPage?: (page: 'terms' | 'privacy' | 'about' | 'help' | 'legal') => void;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
@@ -58,6 +61,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   onSignOut,
   onOpenAuth,
   onRestartTour,
+  onOpenLegalPage,
 }) => {
   const { t, language, setLanguage, isRTL } = useLanguage();
   const {
@@ -168,6 +172,22 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [activeModal, setActiveModal] = useState<
     'privacy' | 'terms' | 'help' | null
   >(null);
+  const [copiedLegalPath, setCopiedLegalPath] = useState<string | null>(null);
+
+  const handleCopyPath = async (e: React.MouseEvent, path: string) => {
+    e.stopPropagation();
+    try {
+      const origin = typeof window !== 'undefined' ? window.location.origin : '';
+      const fullUrl = `${origin}${path}`;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(fullUrl);
+        setCopiedLegalPath(path);
+        setTimeout(() => setCopiedLegalPath(null), 2500);
+      }
+    } catch (err) {
+      console.warn('Failed to copy URL:', err);
+    }
+  };
 
   // Initialize Name from Profile/User
   useEffect(() => {
@@ -1306,93 +1326,207 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             id="settings_about_card"
             className="bg-surface rounded-3xl border border-surface-dim shadow-xs divide-y divide-surface-dim overflow-hidden"
           >
-            {/* About YAAD row */}
-            <div className="p-4 sm:p-5 flex items-start gap-3.5">
-              <div className="w-10 h-10 rounded-2xl bg-primary-fixed/30 text-primary flex items-center justify-center shrink-0">
-                <Sparkles className="w-5 h-5" />
+            {/* About YAAD Separate Link Page */}
+            <div
+              id="settings_link_about"
+              onClick={() => {
+                if (onOpenLegalPage) onOpenLegalPage('about');
+                else setActiveModal('help');
+              }}
+              className="p-4 sm:p-5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-lowest/60 transition-colors cursor-pointer group"
+            >
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="w-10 h-10 rounded-2xl bg-primary-fixed/30 text-primary flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-on-surface font-['Manrope']">
+                      {t('settings.aboutYaad') || 'About YAAD'}
+                    </h3>
+                    <code className="text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-primary font-mono font-medium">
+                      /about
+                    </code>
+                  </div>
+                  <p className="text-xs text-outline leading-relaxed truncate max-w-[220px] sm:max-w-xs">
+                    {t('settings.aboutYaadDesc') ||
+                      'YAAD is a minimalist, smart shopping memory app built to organize grocery lists effortlessly.'}
+                  </p>
+                </div>
               </div>
-              <div className="flex-1 space-y-1">
-                <h3 className="text-sm font-bold text-on-surface font-['Manrope']">
-                  {t('settings.aboutYaad') || 'About YAAD'}
-                </h3>
-                <p className="text-xs text-outline leading-relaxed">
-                  {t('settings.aboutYaadDesc') ||
-                    'YAAD is a minimalist, smart shopping memory app built to organize grocery lists effortlessly.'}
-                </p>
+
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={(e) => handleCopyPath(e, '/about')}
+                  title="Copy link to /about"
+                  className="p-2 rounded-xl text-outline hover:text-primary hover:bg-surface-container transition-colors"
+                >
+                  {copiedLegalPath === '/about' ? (
+                    <Check className="w-4 h-4 text-primary" />
+                  ) : (
+                    <Share2 className="w-4 h-4" />
+                  )}
+                </button>
+                <Chevron className="w-4 h-4 text-outline group-hover:translate-x-0.5 transition-transform" />
               </div>
             </div>
 
-            {/* Privacy Policy */}
-            <button
-              id="settings_privacy_btn"
-              type="button"
-              onClick={() => setActiveModal('privacy')}
-              className="w-full p-4 sm:p-5 flex items-center justify-between text-start hover:bg-surface-container-lowest/60 transition-colors"
+            {/* Privacy Policy Separate Link Page */}
+            <div
+              id="settings_link_privacy"
+              onClick={() => {
+                if (onOpenLegalPage) onOpenLegalPage('privacy');
+                else setActiveModal('privacy');
+              }}
+              className="p-4 sm:p-5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-lowest/60 transition-colors cursor-pointer group"
             >
-              <div className="flex items-center gap-3.5">
-                <div className="w-8 h-8 rounded-xl bg-surface-container text-outline flex items-center justify-center shrink-0">
-                  <Shield className="w-4 h-4" />
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="w-10 h-10 rounded-2xl bg-secondary-fixed/40 text-secondary flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <Shield className="w-5 h-5" />
                 </div>
-                <div>
-                  <h4 className="text-sm font-semibold text-on-surface">
-                    {t('settings.privacyPolicy') || 'Privacy Policy'}
-                  </h4>
-                  <p className="text-xs text-outline">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-semibold text-on-surface">
+                      {t('settings.privacyPolicy') || 'Privacy Policy'}
+                    </h4>
+                    <code className="text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-primary font-mono font-medium">
+                      /privacy
+                    </code>
+                  </div>
+                  <p className="text-xs text-outline truncate max-w-[220px] sm:max-w-xs">
                     {t('settings.privacyPolicyDesc') ||
                       'Your personal list data is securely encrypted.'}
                   </p>
                 </div>
               </div>
-              <Chevron className="w-4 h-4 text-outline shrink-0" />
-            </button>
 
-            {/* Terms of Service */}
-            <button
-              id="settings_terms_btn"
-              type="button"
-              onClick={() => setActiveModal('terms')}
-              className="w-full p-4 sm:p-5 flex items-center justify-between text-start hover:bg-surface-container-lowest/60 transition-colors"
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={(e) => handleCopyPath(e, '/privacy')}
+                  title="Copy link to /privacy"
+                  className="p-2 rounded-xl text-outline hover:text-primary hover:bg-surface-container transition-colors"
+                >
+                  {copiedLegalPath === '/privacy' ? (
+                    <Check className="w-4 h-4 text-primary" />
+                  ) : (
+                    <Share2 className="w-4 h-4" />
+                  )}
+                </button>
+                <Chevron className="w-4 h-4 text-outline group-hover:translate-x-0.5 transition-transform" />
+              </div>
+            </div>
+
+            {/* Terms of Service Separate Link Page */}
+            <div
+              id="settings_link_terms"
+              onClick={() => {
+                if (onOpenLegalPage) onOpenLegalPage('terms');
+                else setActiveModal('terms');
+              }}
+              className="p-4 sm:p-5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-lowest/60 transition-colors cursor-pointer group"
             >
-              <div className="flex items-center gap-3.5">
-                <div className="w-8 h-8 rounded-xl bg-surface-container text-outline flex items-center justify-center shrink-0">
-                  <FileText className="w-4 h-4" />
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="w-10 h-10 rounded-2xl bg-surface-container text-outline flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <FileText className="w-5 h-5" />
                 </div>
-                <div>
-                  <h4 className="text-sm font-semibold text-on-surface">
-                    {t('settings.termsOfService') || 'Terms of Service'}
-                  </h4>
-                  <p className="text-xs text-outline">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-semibold text-on-surface">
+                      {t('settings.termsOfService') || 'Terms of Service'}
+                    </h4>
+                    <code className="text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-primary font-mono font-medium">
+                      /terms
+                    </code>
+                  </div>
+                  <p className="text-xs text-outline truncate max-w-[220px] sm:max-w-xs">
                     {t('settings.termsOfServiceDesc') ||
                       'Simple, fair terms to help you organize shopping safely.'}
                   </p>
                 </div>
               </div>
-              <Chevron className="w-4 h-4 text-outline shrink-0" />
-            </button>
 
-            {/* Help & Support */}
-            <button
-              id="settings_help_btn"
-              type="button"
-              onClick={() => setActiveModal('help')}
-              className="w-full p-4 sm:p-5 flex items-center justify-between text-start hover:bg-surface-container-lowest/60 transition-colors"
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={(e) => handleCopyPath(e, '/terms')}
+                  title="Copy link to /terms"
+                  className="p-2 rounded-xl text-outline hover:text-primary hover:bg-surface-container transition-colors"
+                >
+                  {copiedLegalPath === '/terms' ? (
+                    <Check className="w-4 h-4 text-primary" />
+                  ) : (
+                    <Share2 className="w-4 h-4" />
+                  )}
+                </button>
+                <Chevron className="w-4 h-4 text-outline group-hover:translate-x-0.5 transition-transform" />
+              </div>
+            </div>
+
+            {/* Help & Support Separate Link Page */}
+            <div
+              id="settings_link_help"
+              onClick={() => {
+                if (onOpenLegalPage) onOpenLegalPage('help');
+                else setActiveModal('help');
+              }}
+              className="p-4 sm:p-5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-lowest/60 transition-colors cursor-pointer group"
             >
-              <div className="flex items-center gap-3.5">
-                <div className="w-8 h-8 rounded-xl bg-surface-container text-outline flex items-center justify-center shrink-0">
-                  <HelpCircle className="w-4 h-4" />
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="w-10 h-10 rounded-2xl bg-surface-container text-outline flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <HelpCircle className="w-5 h-5" />
                 </div>
-                <div>
-                  <h4 className="text-sm font-semibold text-on-surface">
-                    {t('settings.helpSupport') || 'Help & Support'}
-                  </h4>
-                  <p className="text-xs text-outline">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-semibold text-on-surface">
+                      {t('settings.helpSupport') || 'Help & Support'}
+                    </h4>
+                    <code className="text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-primary font-mono font-medium">
+                      /help
+                    </code>
+                  </div>
+                  <p className="text-xs text-outline truncate max-w-[220px] sm:max-w-xs">
                     {t('settings.helpSupportDesc') ||
                       'Need help or have suggestions? Reach out to our team anytime.'}
                   </p>
                 </div>
               </div>
-              <Chevron className="w-4 h-4 text-outline shrink-0" />
-            </button>
+
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={(e) => handleCopyPath(e, '/help')}
+                  title="Copy link to /help"
+                  className="p-2 rounded-xl text-outline hover:text-primary hover:bg-surface-container transition-colors"
+                >
+                  {copiedLegalPath === '/help' ? (
+                    <Check className="w-4 h-4 text-primary" />
+                  ) : (
+                    <Share2 className="w-4 h-4" />
+                  )}
+                </button>
+                <Chevron className="w-4 h-4 text-outline group-hover:translate-x-0.5 transition-transform" />
+              </div>
+            </div>
+
+            {/* All Legal Links Hub */}
+            <div
+              id="settings_link_all_hub"
+              onClick={() => {
+                if (onOpenLegalPage) onOpenLegalPage('legal');
+              }}
+              className="p-3.5 sm:p-4 bg-surface-container-lowest/40 flex items-center justify-between gap-3 text-start hover:bg-surface-container-lowest transition-colors cursor-pointer group"
+            >
+              <div className="flex items-center gap-2.5 text-xs text-outline group-hover:text-on-surface transition-colors">
+                <ExternalLink className="w-3.5 h-3.5 text-primary shrink-0" />
+                <span>View All Separate Legal & Info Pages</span>
+                <code className="text-[10px] px-1 rounded bg-surface-container text-outline font-mono">
+                  /legal
+                </code>
+              </div>
+              <Chevron className="w-3.5 h-3.5 text-outline group-hover:translate-x-0.5 transition-transform shrink-0" />
+            </div>
           </div>
         </section>
 

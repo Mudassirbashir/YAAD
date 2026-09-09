@@ -18,12 +18,14 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialMode?: 'signin' | 'signup';
+  onOpenLegalPage?: (page: 'terms' | 'privacy' | 'about' | 'help' | 'legal') => void;
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({
   isOpen,
   onClose,
   initialMode = 'signin',
+  onOpenLegalPage,
 }) => {
   const { signIn, signUp, isConfigured } = useAuth();
   const [mode, setMode] = useState<'signin' | 'signup'>(initialMode);
@@ -345,6 +347,42 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </>
           )}
         </p>
+
+        {/* Separate Legal Links */}
+        <div className="pt-2 text-center text-[11px] text-outline space-x-2">
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              onOpenLegalPage?.('terms');
+            }}
+            className="hover:text-primary hover:underline"
+          >
+            Terms & Conditions
+          </button>
+          <span>•</span>
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              onOpenLegalPage?.('privacy');
+            }}
+            className="hover:text-primary hover:underline"
+          >
+            Privacy Policy
+          </button>
+          <span>•</span>
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              onOpenLegalPage?.('about');
+            }}
+            className="hover:text-primary hover:underline"
+          >
+            About
+          </button>
+        </div>
       </div>
     </div>
   );

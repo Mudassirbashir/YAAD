@@ -23,11 +23,13 @@ import { validatePhoneNumber } from '../utils/phone';
 interface AuthViewProps {
   initialMode?: 'signin' | 'signup';
   onSuccess?: () => void;
+  onOpenLegalPage?: (page: 'terms' | 'privacy' | 'about' | 'help' | 'legal') => void;
 }
 
 export const AuthView: React.FC<AuthViewProps> = ({
   initialMode = 'signin',
   onSuccess,
+  onOpenLegalPage,
 }) => {
   const { t } = useLanguage();
   const { signIn, signUp, signInWithGoogle, signInWithPasskey, oauthError, clearOauthError } = useAuth();
@@ -288,6 +290,11 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   Choose <strong>Continue with Google</strong> or enter your email below.
                 </p>
               )}
+              {(errorMessage || oauthError)?.includes('Google sign-in is not enabled') && (
+                <p className="text-[11px] text-on-surface-variant pt-0.5">
+                  You can immediately create your account or sign in with <strong>Email</strong> below.
+                </p>
+              )}
             </div>
           </div>
         )}
@@ -470,6 +477,46 @@ export const AuthView: React.FC<AuthViewProps> = ({
         <div className="pt-2 flex items-center justify-center gap-1.5 text-[11px] text-on-surface-variant font-['Manrope'] text-center">
           <ShieldCheck className="w-3.5 h-3.5 text-primary shrink-0" />
           <span>{t('auth.secureNote') || 'Securely authenticated via Supabase.'}</span>
+        </div>
+
+        {/* Separate Legal Links */}
+        <div className="pt-2 border-t border-surface-dim/60 text-center space-y-1.5 text-[11px] text-outline">
+          <p>
+            By continuing, you agree to YAAD's{' '}
+            <button
+              type="button"
+              onClick={() => onOpenLegalPage?.('terms')}
+              className="font-bold text-primary hover:underline inline"
+            >
+              Terms & Conditions
+            </button>{' '}
+            and{' '}
+            <button
+              type="button"
+              onClick={() => onOpenLegalPage?.('privacy')}
+              className="font-bold text-primary hover:underline inline"
+            >
+              Privacy Policy
+            </button>
+            .
+          </p>
+          <div className="flex items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => onOpenLegalPage?.('about')}
+              className="hover:text-on-surface transition-colors hover:underline"
+            >
+              About YAAD (/about)
+            </button>
+            <span>•</span>
+            <button
+              type="button"
+              onClick={() => onOpenLegalPage?.('help')}
+              className="hover:text-on-surface transition-colors hover:underline"
+            >
+              Help & FAQ (/help)
+            </button>
+          </div>
         </div>
       </div>
     </main>

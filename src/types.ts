@@ -297,7 +297,12 @@ export type ScreenType =
   | 'list_details'
   | 'edit_list'
   | 'settings'
-  | 'statistics';
+  | 'statistics'
+  | 'terms'
+  | 'privacy'
+  | 'about'
+  | 'help'
+  | 'legal';
 
 export type ViewState = ScreenType;
 

@@ -1442,7 +1442,22 @@ export function formatAuthErrorMessage(error: unknown): string {
     console.error('[Auth Error Technical Log]:', error);
   }
 
-  const rawMsg = (error instanceof Error ? error.message : String(error)).trim();
+  let rawMsg = '';
+  if (error instanceof Error) {
+    rawMsg = error.message;
+  } else if (typeof error === 'object' && error !== null) {
+    const errObj = error as Record<string, any>;
+    rawMsg =
+      errObj.msg ||
+      errObj.message ||
+      errObj.error_description ||
+      (typeof errObj.toString === 'function' && errObj.toString() !== '[object Object]'
+        ? errObj.toString()
+        : JSON.stringify(error));
+  } else {
+    rawMsg = String(error || '');
+  }
+  rawMsg = rawMsg.trim();
   const lower = rawMsg.toLowerCase();
 
   // 1. NETWORK ERROR
@@ -1552,7 +1567,33 @@ export function formatAuthErrorMessage(error: unknown): string {
     return 'Passkey is configured for yaad-mudassirbashir530-creators-projects.vercel.app. On this preview/dev domain, please continue with Email or Google.';
   }
 
-  // 8. OAUTH CANCELLATION & ERRORS
+  // 8. OAUTH PROVIDER, CANCELLATION & ERRORS
+  if (
+    lower.includes('unsupported provider') ||
+    lower.includes('provider is not enabled') ||
+    lower.includes('provider_not_enabled') ||
+    lower.includes('validation_failed') ||
+    (lower.includes('provider') && lower.includes('not enabled'))
+  ) {
+    return 'Google sign-in is not enabled in your Supabase project. Please enable Google in your Supabase Dashboard (Authentication → Providers → Google) or sign in with Email.';
+  }
+
+  if (
+    lower.includes('redirect_uri_mismatch') ||
+    lower.includes('redirect uri') ||
+    lower.includes('redirect_uri')
+  ) {
+    return 'Google OAuth redirect URI mismatch. Please ensure your site URL and redirect URLs are configured in your Supabase Dashboard (Authentication → URL Configuration).';
+  }
+
+  if (
+    lower.includes('invalid_client') ||
+    lower.includes('client secret') ||
+    lower.includes('bad_client_id')
+  ) {
+    return 'Google OAuth credentials are invalid. Please check your Google Client ID and Secret in your Supabase Dashboard (Authentication → Providers → Google).';
+  }
+
   if (
     lower.includes('access_denied') ||
     lower.includes('oauth cancelled') ||

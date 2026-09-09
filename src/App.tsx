@@ -35,6 +35,8 @@ import { Loader2 } from 'lucide-react';
 import { recommendationService, RecommendationCandidate } from './lib/recommendations';
 import { detectDuplicateItem, mergeQuantities } from './lib/recognition';
 import { getFriendlyErrorMessage } from './utils/errorFormatting';
+import { LegalPageView } from './components/legal/LegalPageView';
+import { LegalPageType } from './components/legal/legalContent';
 
 const STORAGE_ONBOARDED_KEY = 'yaad_has_onboarded_v2';
 const STORAGE_PROFILE_SETUP_KEY = 'yaad_profile_setup_done';
@@ -43,11 +45,28 @@ const getStorageKey = (userId?: string | null) => {
   return userId ? `yaad_shopping_lists_u_${userId}` : 'yaad_shopping_lists_guest';
 };
 
+const LEGAL_SCREENS: ScreenType[] = ['terms', 'privacy', 'about', 'help', 'legal'];
+
+function parseScreenFromUrl(): ScreenType | null {
+  if (typeof window === 'undefined') return null;
+  const path = window.location.pathname.toLowerCase();
+  const hash = window.location.hash.toLowerCase();
+
+  if (path === '/terms' || path === '/terms-and-conditions' || hash === '#terms' || hash === '#/terms') return 'terms';
+  if (path === '/privacy' || path === '/privacy-policy' || hash === '#privacy' || hash === '#/privacy') return 'privacy';
+  if (path === '/about' || path === '/about-us' || hash === '#about' || hash === '#/about') return 'about';
+  if (path === '/help' || path === '/support' || path === '/contact' || hash === '#help' || hash === '#/help') return 'help';
+  if (path === '/legal' || hash === '#legal' || hash === '#/legal') return 'legal';
+  return null;
+}
+
 export default function App() {
   const { user, profile, isLoading: isAuthLoading, isConfigured, deleteAccount, signOut } = useAuth();
 
   // Screen and navigation state
-  const [currentScreen, setCurrentScreen] = useState<ScreenType>('splash');
+  const initialUrlScreen = parseScreenFromUrl();
+  const [currentScreen, setCurrentScreen] = useState<ScreenType>(initialUrlScreen || 'splash');
+  const [previousScreenBeforeLegal, setPreviousScreenBeforeLegal] = useState<ScreenType>('home');
   const [activeTab, setActiveTab] = useState<NavigationTab>('home');
 
   // Active working list
@@ -159,11 +178,58 @@ export default function App() {
     });
   }, [lists, user?.id]);
 
+  // Synchronize browser URL bar and back/forward history for legal pages
+  useEffect(() => {
+    const handleUrlChange = () => {
+      const urlScreen = parseScreenFromUrl();
+      if (urlScreen) {
+        setCurrentScreen(urlScreen);
+      } else if (LEGAL_SCREENS.includes(currentScreen)) {
+        setCurrentScreen(user ? 'home' : 'auth');
+      }
+    };
+
+    window.addEventListener('popstate', handleUrlChange);
+    window.addEventListener('hashchange', handleUrlChange);
+    return () => {
+      window.removeEventListener('popstate', handleUrlChange);
+      window.removeEventListener('hashchange', handleUrlChange);
+    };
+  }, [user, currentScreen]);
+
+  const handleOpenLegalPage = useCallback((page: LegalPageType) => {
+    if (!LEGAL_SCREENS.includes(currentScreen)) {
+      setPreviousScreenBeforeLegal(currentScreen);
+    }
+    setCurrentScreen(page);
+    try {
+      window.history.pushState({ page }, '', `/${page}`);
+    } catch {
+      window.location.hash = `#/${page}`;
+    }
+  }, [currentScreen]);
+
+  const handleBackFromLegal = useCallback(() => {
+    if (previousScreenBeforeLegal && !LEGAL_SCREENS.includes(previousScreenBeforeLegal)) {
+      setCurrentScreen(previousScreenBeforeLegal);
+    } else {
+      setCurrentScreen(user ? 'home' : 'auth');
+    }
+    try {
+      window.history.pushState(null, '', '/');
+    } catch {
+      window.location.hash = '';
+    }
+  }, [previousScreenBeforeLegal, user]);
+
   // Authentication Gate Router: Enforce protected screen flow
   useEffect(() => {
     if (isAuthLoading) return; // Wait until auth state is resolved to avoid flicker
 
     if (currentScreen === 'splash') return;
+
+    // Public legal & information pages are always accessible without auth!
+    if (LEGAL_SCREENS.includes(currentScreen)) return;
 
     // 1. If user is NOT authenticated, redirect to auth screen
     if (!user) {
@@ -208,6 +274,12 @@ export default function App() {
 
   // Handle splash completion
   const handleSplashFinish = () => {
+    const urlScreen = parseScreenFromUrl();
+    if (urlScreen) {
+      setCurrentScreen(urlScreen);
+      return;
+    }
+
     if (!user) {
       setCurrentScreen('auth');
       return;
@@ -758,20 +830,32 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-background text-on-background flex flex-col justify-between selection:bg-primary-container selection:text-on-primary-container">
+      {/* Public Dedicated Legal & Information Pages (Terms, Privacy, About, Help, Legal Hub) */}
+      {LEGAL_SCREENS.includes(currentScreen) && (
+        <LegalPageView
+          initialPage={currentScreen as LegalPageType}
+          onBack={handleBackFromLegal}
+          onNavigate={handleOpenLegalPage}
+        />
+      )}
+
       {/* Screen Routing: Gated strictly by authentication status */}
-      {currentScreen === 'splash' && (
+      {currentScreen === 'splash' && !LEGAL_SCREENS.includes(currentScreen) && (
         <SplashView onFinish={handleSplashFinish} />
       )}
 
-      {!user && currentScreen !== 'splash' && (
-        <AuthView onSuccess={handleAuthSuccess} />
+      {!user && currentScreen !== 'splash' && !LEGAL_SCREENS.includes(currentScreen) && (
+        <AuthView
+          onSuccess={handleAuthSuccess}
+          onOpenLegalPage={handleOpenLegalPage}
+        />
       )}
 
-      {user && currentScreen === 'profile_setup' && (
+      {user && currentScreen === 'profile_setup' && !LEGAL_SCREENS.includes(currentScreen) && (
         <ProfileSetupView onComplete={handleProfileSetupComplete} />
       )}
 
-      {user && currentScreen === 'onboarding' && (
+      {user && currentScreen === 'onboarding' && !LEGAL_SCREENS.includes(currentScreen) && (
         <OnboardingView onComplete={handleOnboardingComplete} />
       )}
 
@@ -886,6 +970,7 @@ export default function App() {
           onOpenAuth={handleOpenAuth}
           onRestartTour={handleRestartTour}
           onReplayOnboarding={handleResetOnboarding}
+          onOpenLegalPage={handleOpenLegalPage}
         />
       )}
 
@@ -925,6 +1010,7 @@ export default function App() {
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         initialMode={authModalMode}
+        onOpenLegalPage={handleOpenLegalPage}
       />
 
       {/* Apple-style Network Status Pill */}

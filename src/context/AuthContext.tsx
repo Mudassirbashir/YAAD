@@ -449,10 +449,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     isAuthenticatingRef.current = true;
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const isInIframe = typeof window !== 'undefined' && window.self !== window.top;
+      const redirectUrl = typeof window !== 'undefined'
+        ? `${window.location.origin}${window.location.pathname}`
+        : undefined;
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin,
+          redirectTo: redirectUrl,
+          skipBrowserRedirect: isInIframe,
           queryParams: {
             access_type: 'offline',
             prompt: 'select_account',
@@ -463,6 +469,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (error) {
         return { error: new Error(formatAuthErrorMessage(error)) };
       }
+
+      if (isInIframe && data?.url) {
+        // When running inside an iframe (such as AI Studio preview), opening in a top or popup tab prevents
+        // Google OAuth from being blocked by X-Frame-Options: SAMEORIGIN
+        const opened = window.open(data.url, '_blank');
+        if (!opened) {
+          window.location.href = data.url;
+        }
+      }
+
       return { error: null };
     } catch (err: unknown) {
       return { error: new Error(formatAuthErrorMessage(err)) };
