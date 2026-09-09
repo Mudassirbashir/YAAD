@@ -37,6 +37,9 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
+        experimental: {
+          passkey: true,
+        },
       },
     })
   : null;
@@ -274,11 +277,32 @@ export async function getProfile(userId: string): Promise<UserProfile | null> {
       }
       return cached;
     }
-    if (data) {
-      await saveOfflineProfile(verifiedUserId, data);
-      return data as UserProfile;
-    }
-    return cached;
+
+    // Retrieve user_metadata from Supabase Auth to merge phone_number & setup flags
+    let userMeta: Record<string, any> = {};
+    try {
+      const { data: authUserData } = await supabase.auth.getUser();
+      if (authUserData?.user?.id === verifiedUserId) {
+        userMeta = authUserData.user.user_metadata || {};
+      }
+    } catch {}
+
+    const fullProfile: UserProfile = {
+      id: verifiedUserId,
+      full_name: data?.full_name ?? userMeta.full_name ?? cached?.full_name ?? null,
+      email: data?.email ?? userMeta.email ?? cached?.email ?? null,
+      phone_number: userMeta.phone_number ?? userMeta.phone ?? cached?.phone_number ?? null,
+      avatar_url: data?.avatar_url ?? userMeta.avatar_url ?? cached?.avatar_url ?? null,
+      language: data?.language ?? userMeta.language ?? cached?.language ?? 'en',
+      usage_purpose: userMeta.usage_purpose ?? cached?.usage_purpose ?? null,
+      referral_source: userMeta.referral_source ?? cached?.referral_source ?? null,
+      has_completed_setup: userMeta.has_completed_setup ?? cached?.has_completed_setup ?? true,
+      created_at: data?.created_at ?? cached?.created_at,
+      updated_at: data?.updated_at ?? cached?.updated_at,
+    };
+
+    await saveOfflineProfile(verifiedUserId, fullProfile);
+    return fullProfile;
   } catch (err) {
     if (!isNetworkOrOfflineError(err)) {
       console.warn('Exception fetching profile:', err);
@@ -289,6 +313,10 @@ export async function getProfile(userId: string): Promise<UserProfile | null> {
 
 /**
  * Update or insert user profile in Supabase public.profiles table
+ * Live database schema constraint:
+ * public.profiles contains ONLY: id, full_name, email, avatar_url, language, created_at, updated_at
+ * Additional user attributes (phone_number, has_completed_setup, usage_purpose, referral_source)
+ * are persisted safely via Supabase Auth user_metadata to avoid PGRST204 errors.
  */
 export async function updateProfile(
   userId: string,
@@ -319,26 +347,22 @@ export async function updateProfile(
   }
 
   try {
-    const payload: Record<string, unknown> = {
-      ...mergedProfile,
+    // 1. Send ONLY valid columns supported by public.profiles:
+    // id, full_name, email, avatar_url, language, updated_at
+    const validProfilePayload = {
+      id: verifiedUserId,
+      full_name: mergedProfile.full_name,
+      email: mergedProfile.email,
+      avatar_url: mergedProfile.avatar_url,
+      language: mergedProfile.language,
       updated_at: new Date().toISOString(),
     };
 
-    let { data: upsertData, error: upsertError, isOffline } = await resilientUpsert(
+    const { data: upsertData, error: upsertError, isOffline } = await resilientUpsert(
       'profiles',
-      payload,
+      validProfilePayload,
       { onConflict: 'id' }
     );
-
-    // If phone_number column doesn't exist yet in remote Postgres schema, retry without it
-    if (upsertError && upsertError.message.includes('phone_number')) {
-      const fallbackPayload = { ...payload };
-      delete fallbackPayload.phone_number;
-      const retry = await resilientUpsert('profiles', fallbackPayload, { onConflict: 'id' });
-      upsertData = retry.data;
-      upsertError = retry.error;
-      isOffline = retry.isOffline;
-    }
 
     if (isOffline || (upsertError && isNetworkOrOfflineError(upsertError))) {
       return { data: mergedProfile, error: null };
@@ -346,14 +370,58 @@ export async function updateProfile(
 
     if (upsertError) {
       console.warn('Supabase updateProfile notice:', upsertError.message);
-      return {
-        data: mergedProfile,
-        error: null,
-      };
     }
 
-    const savedProfile = Array.isArray(upsertData) ? upsertData[0] : upsertData;
-    const finalProfile = (savedProfile ? { ...mergedProfile, ...savedProfile } : mergedProfile) as UserProfile;
+    // 2. Persist additional user attributes into Supabase Auth user_metadata
+    try {
+      const { data: authUserData } = await supabase.auth.getUser();
+      if (authUserData?.user) {
+        const currentMeta = authUserData.user.user_metadata || {};
+        const metaUpdates: Record<string, unknown> = {};
+
+        if (updates.phone_number !== undefined) {
+          metaUpdates.phone_number = updates.phone_number;
+          metaUpdates.phone = updates.phone_number;
+        }
+        if (updates.has_completed_setup !== undefined) {
+          metaUpdates.has_completed_setup = updates.has_completed_setup;
+        }
+        if (updates.usage_purpose !== undefined) {
+          metaUpdates.usage_purpose = updates.usage_purpose;
+        }
+        if (updates.referral_source !== undefined) {
+          metaUpdates.referral_source = updates.referral_source;
+        }
+        if (updates.full_name !== undefined) {
+          metaUpdates.full_name = updates.full_name;
+        }
+        if (updates.avatar_url !== undefined) {
+          metaUpdates.avatar_url = updates.avatar_url;
+        }
+
+        if (Object.keys(metaUpdates).length > 0) {
+          await supabase.auth.updateUser({
+            data: {
+              ...currentMeta,
+              ...metaUpdates,
+            },
+          });
+        }
+      }
+    } catch (metaErr) {
+      console.warn('Notice syncing user_metadata in Supabase Auth:', metaErr);
+    }
+
+    const savedRow = Array.isArray(upsertData) ? upsertData[0] : upsertData;
+    const finalProfile: UserProfile = {
+      ...mergedProfile,
+      ...(savedRow || {}),
+      phone_number: mergedProfile.phone_number,
+      has_completed_setup: mergedProfile.has_completed_setup,
+      usage_purpose: mergedProfile.usage_purpose,
+      referral_source: mergedProfile.referral_source,
+    };
+
     await saveOfflineProfile(verifiedUserId, finalProfile);
     return { data: finalProfile, error: null };
   } catch (err: unknown) {
@@ -1445,12 +1513,68 @@ export function formatAuthErrorMessage(error: unknown): string {
     return 'Incorrect email or password. Please check your credentials and try again.';
   }
 
-  // 7. TECHNICAL / DATABASE / UNKNOWN JARGON
+  // 7. WEBAUTHN / PASSKEY ERRORS
+  if (
+    lower.includes('notallowederror') ||
+    lower.includes('operation either timed out or was not allowed') ||
+    lower.includes('user cancelled') ||
+    lower.includes('user canceled') ||
+    lower.includes('passkey request was cancelled') ||
+    lower.includes('ceremony was cancelled')
+  ) {
+    return 'Passkey sign-in was cancelled. You can try again or continue with another sign-in method.';
+  }
+
+  if (
+    lower.includes('notsupportederror') ||
+    lower.includes('does not support webauthn') ||
+    lower.includes('passkeys are not supported') ||
+    lower.includes('authenticator is not available')
+  ) {
+    return 'Passkeys are not supported on this browser or device. Please continue with Email or Google.';
+  }
+
+  if (
+    lower.includes('no passkey') ||
+    lower.includes('no credentials') ||
+    lower.includes('not found on this account') ||
+    lower.includes('passkey was not found')
+  ) {
+    return 'No passkey was found for this YAAD account on this device. Please continue with Email or Google to sign in or create your account.';
+  }
+
+  if (
+    lower.includes('securityerror') ||
+    lower.includes('relying party id') ||
+    lower.includes('rp id') ||
+    lower.includes('not a valid domain string')
+  ) {
+    return 'Passkey is configured for yaad-mudassirbashir530-creators-projects.vercel.app. On this preview/dev domain, please continue with Email or Google.';
+  }
+
+  // 8. OAUTH CANCELLATION & ERRORS
+  if (
+    lower.includes('access_denied') ||
+    lower.includes('oauth cancelled') ||
+    lower.includes('user denied access') ||
+    lower.includes('flow was cancelled') ||
+    lower.includes('cancelled')
+  ) {
+    return 'Google sign-in was cancelled. You can try again or continue with another sign-in method.';
+  }
+
+  if (lower.includes('oauth') && (lower.includes('error') || lower.includes('failed'))) {
+    return 'Google sign-in could not be completed. Please try again or sign in with Email.';
+  }
+
+  // 9. TECHNICAL / DATABASE / UNKNOWN JARGON
   // Strictly filter out technical jargon like AuthApiError, JWT, PostgREST, relation does not exist
   if (
     lower.includes('authapierror') ||
     lower.includes('jwt') ||
     lower.includes('postgrest') ||
+    lower.includes('pgrst') ||
+    lower.includes('schema cache') ||
     lower.includes('relation does not exist') ||
     lower.includes('database error') ||
     lower.includes('postgres') ||
@@ -1467,7 +1591,7 @@ export function formatAuthErrorMessage(error: unknown): string {
     lower.includes('uncaught') ||
     lower.includes('object')
   ) {
-    return 'Something went wrong while creating your account. Please try again.';
+    return 'Something went wrong while completing authentication. Please try again.';
   }
 
   // If the message is already clean user text (e.g. from local validation), return it
@@ -1475,6 +1599,6 @@ export function formatAuthErrorMessage(error: unknown): string {
     return rawMsg;
   }
 
-  return 'Something went wrong while creating your account. Please try again.';
+  return 'Something went wrong while completing authentication. Please try again.';
 }
 

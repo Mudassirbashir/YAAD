@@ -12,7 +12,7 @@ import {
 import { purgeAllUserOfflineData, getOfflineProfile, saveOfflineProfile } from '../lib/offlineDb';
 import { UserProfile, AppLanguage, PasskeyCredentialInfo } from '../types';
 import {
-  authenticateWithPasskey,
+  signInWithPasskey as clientSignInWithPasskey,
   registerPasskey as clientRegisterPasskey,
   listUserPasskeys as clientListPasskeys,
   deleteUserPasskey as clientDeletePasskey,
@@ -24,6 +24,8 @@ interface AuthContextType {
   profile: UserProfile | null;
   isLoading: boolean;
   isConfigured: boolean;
+  oauthError: string | null;
+  clearOauthError: () => void;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string, phoneNumber?: string) => Promise<{ error: Error | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
@@ -53,6 +55,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [oauthError, setOauthError] = useState<string | null>(null);
+  const clearOauthError = () => setOauthError(null);
   const isAuthenticatingRef = useRef<boolean>(false);
   const syncingUserIdsRef = useRef<Set<string>>(new Set());
 
@@ -116,10 +120,58 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     let isMounted = true;
 
+    // Check for OAuth cancellation or errors in URL parameters on mount
+    if (typeof window !== 'undefined') {
+      try {
+        const searchParams = new URLSearchParams(window.location.search);
+        const hashStr = window.location.hash.startsWith('#')
+          ? window.location.hash.substring(1)
+          : window.location.hash;
+        const hashParams = new URLSearchParams(hashStr);
+
+        const errorParam = searchParams.get('error') || hashParams.get('error');
+        const errorDesc =
+          searchParams.get('error_description') || hashParams.get('error_description') || '';
+
+        if (errorParam) {
+          const lowerDesc = errorDesc.toLowerCase();
+          if (
+            errorParam === 'access_denied' ||
+            lowerDesc.includes('access_denied') ||
+            lowerDesc.includes('denied') ||
+            lowerDesc.includes('cancel')
+          ) {
+            setOauthError(
+              'Google sign-in was cancelled. You can try again or continue with another sign-in method.'
+            );
+          } else {
+            setOauthError(
+              'Google sign-in could not be completed. Please try again or sign in with Email.'
+            );
+          }
+          // Clean up error parameters from visible URL bar safely without reloading
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      } catch (e) {
+        console.warn('Notice parsing OAuth URL parameters on mount:', e);
+      }
+    }
+
     // Listen to Supabase auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
         if (!isMounted) return;
+
+        // Clean up OAuth callback tokens/code from browser URL bar safely without reloading
+        if (typeof window !== 'undefined') {
+          if (
+            window.location.hash.includes('access_token') ||
+            window.location.hash.includes('refresh_token') ||
+            window.location.search.includes('code=')
+          ) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        }
 
         if (event === 'SIGNED_OUT' || !currentSession?.user) {
           setSession(null);
@@ -433,36 +485,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     isAuthenticatingRef.current = true;
     try {
-      const result = await authenticateWithPasskey();
-      if (result.error || !result.tokenHash) {
-        return { error: new Error(result.error || 'Passkey authentication failed.') };
+      const result = await clientSignInWithPasskey();
+      if (result.error) {
+        return { error: result.error };
       }
 
-      // Establish Supabase session using verified token hash
-      const { data, error } = await supabase.auth.verifyOtp({
-        token_hash: result.tokenHash,
-        type: 'email',
-      });
+      if (result.data?.session && result.data?.user) {
+        setSession(result.data.session);
+        setUser(result.data.user);
 
-      if (error) {
-        return { error: new Error(formatAuthErrorMessage(error)) };
-      }
-
-      if (data.session && data.user) {
-        setSession(data.session);
-        setUser(data.user);
-
-        const cached = await getOfflineProfile<UserProfile>(data.user.id);
+        const cached = await getOfflineProfile<UserProfile>(result.data.user.id);
         const activeProfile: UserProfile = cached || {
-          id: data.user.id,
-          full_name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || null,
-          email: data.user.email || null,
-          phone_number: data.user.user_metadata?.phone_number || data.user.user_metadata?.phone || null,
-          avatar_url: data.user.user_metadata?.avatar_url || null,
+          id: result.data.user.id,
+          full_name: result.data.user.user_metadata?.full_name || result.data.user.user_metadata?.name || null,
+          email: result.data.user.email || null,
+          phone_number: result.data.user.user_metadata?.phone_number || result.data.user.user_metadata?.phone || null,
+          avatar_url: result.data.user.user_metadata?.avatar_url || null,
           has_completed_setup: true,
         };
         setProfile(activeProfile);
-        saveOfflineProfile(data.user.id, activeProfile).catch(() => {});
+        saveOfflineProfile(result.data.user.id, activeProfile).catch(() => {});
         localStorage.setItem('yaad_profile_setup_done', 'true');
         localStorage.setItem('yaad_profile_setup_completed', 'true');
         localStorage.setItem('yaad_has_onboarded_v2', 'true');
@@ -487,25 +529,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return { success: false, error: new Error("You're offline. Please reconnect to register a passkey.") };
     }
 
-    const res = await clientRegisterPasskey(session.access_token, deviceName);
+    const res = await clientRegisterPasskey(deviceName);
     if (!res.success) {
-      return { success: false, error: new Error(res.error || 'Failed to register passkey.') };
+      return { success: false, error: res.error || new Error('Failed to register passkey.') };
     }
     return { success: true, passkey: res.passkey, error: null };
   };
 
   const listPasskeys = async (): Promise<PasskeyCredentialInfo[]> => {
     if (!session?.access_token) return [];
-    return clientListPasskeys(session.access_token);
+    return clientListPasskeys();
   };
 
   const removePasskey = async (passkeyId: string): Promise<{ success: boolean; error: Error | null }> => {
     if (!session?.access_token) {
       return { success: false, error: new Error('You must be signed in.') };
     }
-    const res = await clientDeletePasskey(session.access_token, passkeyId);
+    const res = await clientDeletePasskey(passkeyId);
     if (!res.success) {
-      return { success: false, error: new Error(res.error || 'Failed to remove passkey.') };
+      return { success: false, error: res.error || new Error('Failed to remove passkey.') };
     }
     return { success: true, error: null };
   };
@@ -719,6 +761,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         updatePassword,
         updateUserProfile,
         refreshProfile,
+        oauthError,
+        clearOauthError,
       }}
     >
       {children}

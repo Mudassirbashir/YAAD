@@ -30,7 +30,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
   onSuccess,
 }) => {
   const { t } = useLanguage();
-  const { signIn, signUp, signInWithGoogle, signInWithPasskey } = useAuth();
+  const { signIn, signUp, signInWithGoogle, signInWithPasskey, oauthError, clearOauthError } = useAuth();
 
   const [mode, setMode] = useState<'signin' | 'signup'>(initialMode);
   const [email, setEmail] = useState('');
@@ -49,6 +49,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
   const handleGoogleSignIn = async () => {
     if (isSubmittingRef.current || isAnyLoading) return;
     setErrorMessage(null);
+    clearOauthError();
 
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       setErrorMessage(
@@ -79,6 +80,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
   const handlePasskeySignIn = async () => {
     if (isSubmittingRef.current || isAnyLoading) return;
     setErrorMessage(null);
+    clearOauthError();
 
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       setErrorMessage(
@@ -242,6 +244,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
             onClick={() => {
               setMode('signin');
               setErrorMessage(null);
+              clearOauthError();
             }}
             className={`py-2.5 rounded-xl font-['Manrope'] text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
               mode === 'signin'
@@ -258,6 +261,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
             onClick={() => {
               setMode('signup');
               setErrorMessage(null);
+              clearOauthError();
             }}
             className={`py-2.5 rounded-xl font-['Manrope'] text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
               mode === 'signup'
@@ -271,13 +275,20 @@ export const AuthView: React.FC<AuthViewProps> = ({
         </div>
 
         {/* User-friendly Error Alert */}
-        {errorMessage && (
+        {(errorMessage || oauthError) && (
           <div
             id="auth_error_alert"
-            className="p-3 bg-error-container/40 border border-error/30 rounded-2xl text-xs text-error font-['Manrope'] flex items-center gap-2 animate-in fade-in duration-150"
+            className="p-3 bg-error-container/40 border border-error/30 rounded-2xl text-xs text-error font-['Manrope'] flex items-start gap-2.5 animate-in fade-in duration-150"
           >
-            <AlertCircle className="w-4 h-4 shrink-0 text-error" />
-            <span className="leading-snug">{errorMessage}</span>
+            <AlertCircle className="w-4 h-4 shrink-0 text-error mt-0.5" />
+            <div className="flex-1 leading-snug space-y-1">
+              <span>{errorMessage || oauthError}</span>
+              {(errorMessage || oauthError)?.includes('No passkey was found') && (
+                <p className="text-[11px] text-on-surface-variant pt-0.5">
+                  Choose <strong>Continue with Google</strong> or enter your email below.
+                </p>
+              )}
+            </div>
           </div>
         )}
 
