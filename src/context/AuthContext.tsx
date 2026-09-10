@@ -151,6 +151,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           }
           // Clean up error parameters from visible URL bar safely without reloading
           window.history.replaceState({}, document.title, window.location.pathname);
+        } else if (window.location.hash === '#' || window.location.hash.startsWith('#_=_')) {
+          window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+        }
+
+        // Clean up access_token hash after Supabase finishes processing OAuth callback
+        if (window.location.hash.includes('access_token')) {
+          setTimeout(() => {
+            if (typeof window !== 'undefined' && (window.location.hash.includes('access_token') || window.location.hash === '#')) {
+              window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+            }
+          }, 300);
         }
       } catch (e) {
         console.warn('Notice parsing OAuth URL parameters on mount:', e);
@@ -162,14 +173,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       async (event, currentSession) => {
         if (!isMounted) return;
 
-        // Clean up OAuth callback tokens/code from browser URL bar safely without reloading
+        // Clean up OAuth callback tokens/code/trailing hash from browser URL bar safely without reloading
         if (typeof window !== 'undefined') {
           if (
             window.location.hash.includes('access_token') ||
             window.location.hash.includes('refresh_token') ||
-            window.location.search.includes('code=')
+            window.location.search.includes('code=') ||
+            window.location.hash === '#' ||
+            window.location.hash.startsWith('#_=_') ||
+            window.location.href.endsWith('/#')
           ) {
-            window.history.replaceState({}, document.title, window.location.pathname);
+            window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
           }
         }
 
