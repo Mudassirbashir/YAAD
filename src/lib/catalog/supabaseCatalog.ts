@@ -4,6 +4,7 @@ import { INITIAL_MASTER_CATALOG } from './items';
 import { MASTER_CATEGORIES } from './categories';
 import { defaultCatalogSearchEngine } from './searchEngine';
 import { defaultItemCatalog } from '../recognition/catalog';
+import { generateUUID } from '../uuid';
 
 const CACHE_KEY_ITEMS = 'yaad_cached_master_items_v1';
 const CACHE_KEY_CATEGORIES = 'yaad_cached_master_categories_v1';
@@ -202,25 +203,19 @@ class SupabaseCatalogService {
     if (!supabase || (typeof navigator !== 'undefined' && !navigator.onLine)) return;
 
     try {
-      // Upsert into user_item_history
-      const { data: existing } = await supabase
-        .from('user_item_history')
-        .select('id, purchase_count')
-        .eq('user_id', userId)
-        .eq('item_id', itemId)
-        .maybeSingle();
+      // Find item in catalog to resolve canonical name
+      const catalogItem = defaultItemCatalog.findItemByName(itemId);
+      const itemName = catalogItem?.english_name || catalogItem?.canonicalName || itemId;
 
-      const newCount = (existing?.purchase_count || 0) + 1;
-      const historyId = existing?.id || `hist_${userId}_${itemId}`;
-
-      await supabase.from('user_item_history').upsert({
-        id: historyId,
+      await supabase.from('shopping_history').insert({
+        id: generateUUID(),
         user_id: userId,
-        item_id: itemId,
-        purchase_count: newCount,
-        last_purchased_at: new Date().toISOString(),
-        preferred_quantity: preferredQuantity || undefined,
-        updated_at: new Date().toISOString(),
+        item_name: itemName,
+        canonical_name: catalogItem?.canonicalName || itemName,
+        quantity: preferredQuantity ? parseFloat(preferredQuantity) || null : null,
+        unit: catalogItem?.defaultUnit || null,
+        purchased_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
       });
     } catch {
       // Fail silently without disrupting user flow

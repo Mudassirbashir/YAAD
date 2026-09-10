@@ -54,6 +54,7 @@ interface SettingsViewProps {
   onRestartTour?: () => void;
   onReplayOnboarding?: () => void;
   onOpenLegalPage?: (page: 'terms' | 'privacy' | 'about' | 'help' | 'legal') => void;
+  initialEditPhone?: boolean;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
@@ -62,6 +63,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   onOpenAuth,
   onRestartTour,
   onOpenLegalPage,
+  initialEditPhone = false,
 }) => {
   const { t, language, setLanguage, isRTL } = useLanguage();
   const {
@@ -132,7 +134,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   // Local state for Name & Phone Editing
   const [isEditingName, setIsEditingName] = useState(false);
   const [fullNameInput, setFullNameInput] = useState('');
-  const [isEditingPhone, setIsEditingPhone] = useState(false);
+  const [isEditingPhone, setIsEditingPhone] = useState(initialEditPhone);
   const [phoneInput, setPhoneInput] = useState('');
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
@@ -140,6 +142,26 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     type: 'success' | 'error';
     text: string;
   } | null>(null);
+
+  // Auto-expand and scroll/focus phone field if navigated from phone reminder
+  useEffect(() => {
+    if (initialEditPhone) {
+      setIsEditingPhone(true);
+      const timer = setTimeout(() => {
+        const inputEl = document.getElementById('settings_input_phone');
+        if (inputEl) {
+          inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          inputEl.focus();
+        } else {
+          const editBtn = document.getElementById('edit_phone_toggle_btn');
+          if (editBtn) {
+            editBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [initialEditPhone]);
 
   // Avatar Picker Modal
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);

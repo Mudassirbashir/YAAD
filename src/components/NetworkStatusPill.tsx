@@ -52,7 +52,7 @@ export const NetworkStatusPill: React.FC<NetworkStatusPillProps> = ({
             </span>
             <WifiOff className="w-3.5 h-3.5 text-amber-300" />
             <span className="font-['Manrope']">
-              {isUrdu ? 'آف لائن • تبدیلیاں محفوظ ہیں' : 'Offline • Changes saved'}
+              {isUrdu ? 'آف لائن • مطابقت پذیری باقی ہے' : 'Offline • Sync pending'}
             </span>
             {pendingCount > 0 && (
               <span className="ml-0.5 px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/30 text-amber-200">

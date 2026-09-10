@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   ArrowLeft,
   Plus,
@@ -12,6 +12,7 @@ import {
 import { CategoryId, CATEGORIES_LIST, ShoppingItem } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { CategoryIcon } from './CategoryIcon';
+import { ItemVisualIcon } from './ItemVisualIcon';
 import { BidiText } from '../utils/bidi';
 import {
   categorizeItemLocally,
@@ -33,6 +34,7 @@ interface AddItemsViewProps {
   initialItems?: ShoppingItem[];
   onBack: () => void;
   onStartShopping: (items: ShoppingItem[]) => void;
+  onItemsChange?: (items: ShoppingItem[]) => void;
 }
 
 export const AddItemsView: React.FC<AddItemsViewProps> = ({
@@ -40,6 +42,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
   initialItems = [],
   onBack,
   onStartShopping,
+  onItemsChange,
 }) => {
   const { t, getCategoryName } = useLanguage();
   const [items, setItems] = useState<ShoppingItem[]>(initialItems);
@@ -49,6 +52,16 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
   const [inputError, setInputError] = useState<string>('');
   const [isCategorizing, setIsCategorizing] = useState<boolean>(false);
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
+
+  // Guard against accidental double taps creating duplicate records
+  const lastActionTimestampRef = useRef<number>(0);
+  const lastAddedKeyRef = useRef<string>('');
+
+  // Helper to keep both local state and parent persistence synchronized
+  const updateItems = (newItems: ShoppingItem[]) => {
+    setItems(newItems);
+    onItemsChange?.(newItems);
+  };
 
   // Live parsed recognition object
   const currentRecognition = useMemo(() => {
@@ -75,10 +88,11 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
     }
   }, [inputVal, userManuallySelectedCategory]);
 
-  // Dynamic personal & co-purchase recommendations based on current draft items
+  // Dynamic personal & co-purchase recommendations based on current draft items and list context
   const { recommendations } = useRecommendations({
+    listTitle,
     currentListItems: items,
-    limit: 6,
+    limit: 8,
   });
 
   // Real-time catalog search suggestions (Local search first: Exact -> Alias -> Prefix -> Phonetic -> Fuzzy -> Personal boost)
@@ -116,18 +130,17 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
         candidate.suggestedQuantity,
         candidate.suggestedUnit
       );
-      setItems((prev) =>
-        prev.map((item) =>
-          item.id === duplicateCheck.existingItem!.id
-            ? {
-                ...item,
-                quantity: merged.quantity,
-                unit: merged.unit,
-                completed: false,
-              }
-            : item
-        )
+      const updated = items.map((item) =>
+        item.id === duplicateCheck.existingItem!.id
+          ? {
+              ...item,
+              quantity: merged.quantity,
+              unit: merged.unit,
+              completed: false,
+            }
+          : item
       );
+      updateItems(updated);
       return;
     }
 
@@ -158,12 +171,59 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
       emoji: candidate.emoji,
     };
 
-    setItems((prev) => [newItem, ...prev]);
+    updateItems([newItem, ...items]);
+  };
+
+  const handleAddCustomItem = (customName: string) => {
+    const trimmed = customName.trim();
+    if (!trimmed) return;
+
+    // Guard against rapid accidental double tap
+    const now = Date.now();
+    const actionKey = `custom_${trimmed.toLowerCase()}`;
+    if (now - lastActionTimestampRef.current < 450 && lastAddedKeyRef.current === actionKey) {
+      return;
+    }
+    lastActionTimestampRef.current = now;
+    lastAddedKeyRef.current = actionKey;
+
+    const chosenCat = userManuallySelectedCategory ? selectedCategory : 'uncategorized';
+    const newItemId = generateUUID();
+    const newItem: ShoppingItem = {
+      id: newItemId,
+      name: trimmed,
+      canonicalName: undefined,
+      canonical_name: undefined,
+      original_name: trimmed,
+      normalized_name: trimmed.toLowerCase(),
+      categoryId: chosenCat,
+      category: chosenCat === 'uncategorized' ? 'Uncategorized' : getCategoryName(chosenCat),
+      completed: false,
+      userModifiedCategory: userManuallySelectedCategory,
+      confidence: 0.3,
+      isRecognized: false,
+      unresolved: true,
+      rawInput: trimmed,
+    };
+
+    updateItems([newItem, ...items]);
+    setInputVal('');
+    setInputError('');
+    setUserManuallySelectedCategory(false);
   };
 
   const handleSelectSuggestion = (suggestion: CatalogSearchResult) => {
     const canonical = suggestion.item;
     const finalCategory = suggestion.categoryId;
+
+    // Guard against rapid accidental double tap
+    const now = Date.now();
+    const actionKey = `sug_${canonical.id}`;
+    if (now - lastActionTimestampRef.current < 450 && lastAddedKeyRef.current === actionKey) {
+      return;
+    }
+    lastActionTimestampRef.current = now;
+    lastAddedKeyRef.current = actionKey;
 
     const duplicateCheck = detectDuplicateItem(items, {
       canonicalName: canonical.canonical_name,
@@ -195,18 +255,17 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
         suggestion.parsedQuantity,
         suggestion.parsedUnit || canonical.default_unit
       );
-      setItems((prev) =>
-        prev.map((item) =>
-          item.id === duplicateCheck.existingItem!.id
-            ? {
-                ...item,
-                quantity: merged.quantity,
-                unit: merged.unit,
-                completed: false,
-              }
-            : item
-        )
+      const updated = items.map((item) =>
+        item.id === duplicateCheck.existingItem!.id
+          ? {
+              ...item,
+              quantity: merged.quantity,
+              unit: merged.unit,
+              completed: false,
+            }
+          : item
       );
+      updateItems(updated);
       setInputVal('');
       setInputError('');
       setUserManuallySelectedCategory(false);
@@ -236,7 +295,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
       emoji: suggestion.emoji,
     };
 
-    setItems((prev) => [newItem, ...prev]);
+    updateItems([newItem, ...items]);
     setInputVal('');
     setInputError('');
     setUserManuallySelectedCategory(false);
@@ -347,8 +406,8 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
             smartCategorizeItem(parsed.name)
               .then((aiResult) => {
                 if (aiResult.categoryId && aiResult.categoryId !== finalCategory) {
-                  setItems((currentItems) =>
-                    currentItems.map((item) =>
+                  setItems((currentItems) => {
+                    const refined = currentItems.map((item) =>
                       item.id === newItemId && !item.userModifiedCategory
                         ? {
                             ...item,
@@ -356,8 +415,10 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                             category: getCategoryName(aiResult.categoryId),
                           }
                         : item
-                    )
-                  );
+                    );
+                    onItemsChange?.(refined);
+                    return refined;
+                  });
                 }
               })
               .catch(() => {})
@@ -367,30 +428,30 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
       }
     }
 
-    setItems(updatedList);
+    updateItems(updatedList);
     setInputVal('');
     setInputError('');
     setUserManuallySelectedCategory(false);
   };
 
   const handleSaveQuantity = (itemId: string, newQty?: string, newUnit?: string) => {
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === itemId
-          ? {
-              ...item,
-              quantity: newQty,
-              unit: newUnit,
-              planned_quantity: newQty,
-              planned_unit: newUnit,
-            }
-          : item
-      )
+    const updated = items.map((item) =>
+      item.id === itemId
+        ? {
+            ...item,
+            quantity: newQty,
+            unit: newUnit,
+            planned_quantity: newQty,
+            planned_unit: newUnit,
+          }
+        : item
     );
+    updateItems(updated);
   };
 
   const handleRemoveItem = (id: string) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
+    const updated = items.filter((i) => i.id !== id);
+    updateItems(updated);
   };
 
   const handleQuantityCycle = (id: string, currentQty?: string, currentUnit?: string) => {
@@ -415,17 +476,16 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
       nextUnit = undefined;
     }
 
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              quantity: nextQty || undefined,
-              unit: nextUnit || undefined,
-            }
-          : item
-      )
+    const updated = items.map((item) =>
+      item.id === id
+        ? {
+            ...item,
+            quantity: nextQty || undefined,
+            unit: nextUnit || undefined,
+          }
+        : item
     );
+    updateItems(updated);
   };
 
   const handleItemCategoryChange = (itemId: string, newCategoryId: CategoryId, itemName: string) => {
@@ -438,20 +498,19 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
         isExplicitOverride: true,
       }).catch(() => {});
     }
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === itemId
-          ? {
-              ...item,
-              categoryId: newCategoryId,
-              category: getCategoryName(newCategoryId),
-              userModifiedCategory: true,
-              unresolved: false,
-              confidence: 1.0,
-            }
-          : item
-      )
+    const updated = items.map((item) =>
+      item.id === itemId
+        ? {
+            ...item,
+            categoryId: newCategoryId,
+            category: getCategoryName(newCategoryId),
+            userModifiedCategory: true,
+            unresolved: false,
+            confidence: 1.0,
+          }
+        : item
     );
+    updateItems(updated);
   };
 
   return (
@@ -521,10 +580,10 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
             )}
 
             {/* Real-time Catalog Search Suggestions */}
-            {searchSuggestions.length > 0 && inputVal.trim().length > 0 && (
+            {inputVal.trim().length > 0 && (
               <div className="space-y-1.5 pt-1 animate-in fade-in duration-150">
                 <span className="text-[11px] font-['Manrope'] font-bold text-outline uppercase tracking-wider block">
-                  {t('searchSuggestions') || 'Catalog Suggestions'}
+                  {searchSuggestions.length > 0 ? (t('searchSuggestions') || 'Catalog Suggestions') : 'Custom Item'}
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {searchSuggestions.map((sug) => (
@@ -534,16 +593,21 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                       onClick={() => handleSelectSuggestion(sug)}
                       className="flex items-center gap-3 p-2.5 rounded-2xl bg-surface-container-low hover:bg-surface-container border border-surface-container-high/60 transition-all text-start group active:scale-[0.99] cursor-pointer"
                     >
-                      <span className="w-10 h-10 rounded-xl bg-surface-container-lowest flex items-center justify-center text-xl shadow-2xs shrink-0 group-hover:scale-110 transition-transform">
-                        {sug.emoji}
-                      </span>
+                      <ItemVisualIcon
+                        name={sug.displayName}
+                        canonicalName={sug.item.canonical_name}
+                        displayName={sug.displayName}
+                        categoryId={sug.categoryId}
+                        size={40}
+                        className="w-10 h-10 rounded-xl shrink-0 group-hover:scale-105 transition-transform"
+                      />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 truncate">
                           <span className="font-['Manrope'] font-bold text-sm text-primary truncate">
                             {sug.displayName}
                           </span>
                           {sug.item.urdu_name && (
-                            <span className="font-['Noto_Nastaliq_Urdu','Jameel_Noori_Nastaleeq',serif] text-xs text-on-surface-variant shrink-0">
+                            <span className="font-urdu text-xs text-on-surface-variant shrink-0">
                               ({sug.item.urdu_name})
                             </span>
                           )}
@@ -568,6 +632,30 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                       </span>
                     </button>
                   ))}
+
+                  {/* If no exact match or unrecognized search, provide explicit Custom Item option */}
+                  {(!searchSuggestions.some((s) => s.displayName.toLowerCase() === inputVal.trim().toLowerCase()) || searchSuggestions.length === 0) && (
+                    <button
+                      type="button"
+                      onClick={() => handleAddCustomItem(inputVal)}
+                      className="flex items-center gap-3 p-2.5 rounded-2xl bg-surface-container-low hover:bg-surface-container border border-dashed border-outline-variant/80 transition-all text-start group active:scale-[0.99] cursor-pointer"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center text-outline shrink-0">
+                        <Package className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="font-['Manrope'] font-bold text-sm text-primary block truncate">
+                          Add: "{inputVal.trim()}"
+                        </span>
+                        <span className="text-xs text-on-surface-variant font-['Manrope']">
+                          Custom Item • Tap to add
+                        </span>
+                      </div>
+                      <span className="w-7 h-7 rounded-lg bg-surface-container flex items-center justify-center text-primary/70 group-hover:bg-primary group-hover:text-on-primary transition-colors shrink-0">
+                        <Plus className="w-4 h-4" />
+                      </span>
+                    </button>
+                  )}
                 </div>
               </div>
             )}
@@ -685,9 +773,14 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                     className="bg-surface-container-lowest p-3 sm:p-3.5 rounded-2xl border border-surface-dim/70 flex items-center justify-between gap-2 shadow-xs group transition-all"
                   >
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                      <span className="w-8 h-8 rounded-xl bg-surface-container flex items-center justify-center text-primary shrink-0">
-                        <CategoryIcon categoryId={itemCatId} className="w-4 h-4" />
-                      </span>
+                      <ItemVisualIcon
+                        name={item.name}
+                        canonicalName={item.canonicalName || item.canonical_name}
+                        displayName={item.name}
+                        categoryId={itemCatId}
+                        size={36}
+                        className="w-9 h-9 rounded-xl shrink-0"
+                      />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 flex-wrap" dir="auto">
                           <BidiText className="font-['Manrope'] text-sm font-semibold text-primary truncate">

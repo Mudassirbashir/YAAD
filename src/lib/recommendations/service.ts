@@ -11,6 +11,7 @@ import {
   generatePersonalRecommendations,
 } from './engine';
 import { getStarterRecommendations } from './starterCatalog';
+import { detectListContext } from './context';
 import {
   getAllUserBehaviorProfiles,
   saveUserBehaviorProfilesBatch,
@@ -474,7 +475,8 @@ export class RecommendationService {
     // 2. Cold-Start / Hybrid Transition:
     // If user is brand new or only has 1 personal item, blend in popular starter items
     // (clearly labeled with isStarterCatalog: true)
-    const starterItems = getStarterRecommendations(limit);
+    const detected = detectListContext(listTitle, currentItems);
+    const starterItems = getStarterRecommendations(limit, detected.contextId);
     const existingKeys = new Set([
       ...currentListCanonicals,
       ...personal.map((p) => p.canonicalName.toLowerCase()),

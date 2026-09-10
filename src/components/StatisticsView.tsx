@@ -24,6 +24,7 @@ import { motion, useReducedMotion } from 'motion/react';
 import { ShoppingList, CategoryId } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { CategoryIcon } from './CategoryIcon';
+import { ItemVisualIcon } from './ItemVisualIcon';
 
 interface StatisticsViewProps {
   lists: ShoppingList[];
@@ -188,6 +189,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
       peakDayKey: weekdayActivity[peakDayIdx].key,
       hasActivity: maxActivity > 0,
       topStaple,
+      topStaples: sortedItems.slice(0, 4),
       recentLists,
       hasData: totalLists > 0,
     };
@@ -778,7 +780,66 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
             </div>
 
             {/* ================================================================ */}
-            {/* 5. RECENT SHOPPING LISTS                                          */}
+            {/* 5. TOP HOUSEHOLD STAPLES                                          */}
+            {/* ================================================================ */}
+            {analytics.topStaples && analytics.topStaples.length > 0 && (
+              <motion.section
+                id="statistics_top_staples_section"
+                initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.26, delay: 0.11, ease: 'easeOut' }}
+                className="bg-white rounded-3xl p-5 sm:p-6 border border-surface-dim/70 shadow-xs space-y-4"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <h3
+                      className={`text-base font-bold text-on-surface ${
+                        language === 'ur' ? 'font-urdu text-lg' : "font-['Manrope']"
+                      }`}
+                    >
+                      {language === 'ur' ? 'اہم گھریلو سودا سلف' : 'Top Household Staples'}
+                    </h3>
+                    <p className="text-xs text-outline font-medium font-['Manrope']">
+                      {language === 'ur'
+                        ? 'آپ کی لسٹوں میں سب سے زیادہ شامل کی گئی اشیاء'
+                        : 'Most frequently added items across your shopping lists'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  {analytics.topStaples.map((staple) => (
+                    <div
+                      key={staple.name}
+                      className="flex items-center gap-3 p-3 rounded-2xl bg-surface-container-low/70 border border-surface-dim/60"
+                    >
+                      <ItemVisualIcon
+                        name={staple.name}
+                        canonicalName={staple.name}
+                        displayName={staple.name}
+                        categoryId={staple.category}
+                        size={40}
+                        className="w-10 h-10 rounded-xl shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <span className="font-['Manrope'] font-bold text-sm text-on-surface block truncate capitalize">
+                          {staple.name}
+                        </span>
+                        <span className="text-xs text-outline font-['Manrope'] truncate block">
+                          {getCategoryLabel(staple.category)}
+                        </span>
+                      </div>
+                      <span className="text-xs font-bold text-[#0F3D2E] bg-emerald-50 px-2.5 py-1 rounded-full shrink-0">
+                        {staple.count}×
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </motion.section>
+            )}
+
+            {/* ================================================================ */}
+            {/* 6. RECENT SHOPPING LISTS                                          */}
             {/* ================================================================ */}
             {analytics.recentLists.length > 0 && (
               <motion.section

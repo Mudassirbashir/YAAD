@@ -1,59 +1,42 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { CategoryId } from '../types';
-import { getItemEmoji } from '../lib/catalog/iconMap';
-import { CategoryIcon } from './CategoryIcon';
-import { getProductImageUrl } from '../lib/catalog/productImages';
+import { EssentialItemVisual } from './EssentialItemVisual';
 
-interface ItemVisualIconProps {
+export interface ItemVisualIconProps {
   name?: string;
+  canonicalName?: string;
+  displayName?: string;
   categoryId?: CategoryId | string;
   emoji?: string;
+  size?: number;
   className?: string;
   iconClassName?: string;
   useImage?: boolean;
 }
 
+/**
+ * Unified canonical visual representation for any grocery item in YAAD.
+ * Directly maps canonical item identity (Potato, Sugar, Chicken, Onion, etc.)
+ * to high-definition, system-quality, offline-first vector visuals.
+ * Reused identically across Search Results, Added Item Cards, Shopping Session,
+ * History, and Stats.
+ */
 export const ItemVisualIcon: React.FC<ItemVisualIconProps> = ({
-  name,
-  categoryId,
-  emoji,
-  className = 'w-8 h-8 rounded-xl bg-surface-container flex items-center justify-center shrink-0 text-base',
-  iconClassName = 'w-4 h-4 text-primary',
-  useImage = true,
+  name = '',
+  canonicalName,
+  displayName,
+  categoryId = 'other',
+  size = 36,
+  className = 'w-9 h-9 rounded-xl shrink-0',
 }) => {
-  const [imageError, setImageError] = useState(false);
-
-  if (useImage && !imageError) {
-    const imageUrl = getProductImageUrl(name, categoryId);
-    if (imageUrl) {
-      return (
-        <div className={`${className} overflow-hidden relative shadow-2xs border border-surface-dim/60`}>
-          <img
-            src={imageUrl}
-            alt={name || 'item'}
-            referrerPolicy="no-referrer"
-            loading="lazy"
-            onError={() => setImageError(true)}
-            className="w-full h-full object-cover rounded-[inherit]"
-          />
-        </div>
-      );
-    }
-  }
-
-  const resolvedEmoji = getItemEmoji(name, categoryId, emoji);
-
-  if (resolvedEmoji) {
-    return (
-      <span className={className} role="img" aria-label={name || 'item'}>
-        {resolvedEmoji}
-      </span>
-    );
-  }
-
   return (
-    <span className={className}>
-      <CategoryIcon categoryId={categoryId || 'other'} className={iconClassName} />
-    </span>
+    <EssentialItemVisual
+      canonicalName={canonicalName || name}
+      displayName={displayName || name}
+      name={name}
+      categoryId={categoryId}
+      size={size}
+      className={className}
+    />
   );
 };

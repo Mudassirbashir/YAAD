@@ -1,9 +1,12 @@
-import React, { useState, useMemo } from 'react';
-import { Plus, Check, Edit3, CheckCheck, Sparkles, ShoppingBag } from 'lucide-react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { Plus, Check, Edit3, CheckCheck, Sparkles, ShoppingBag, Loader2, AlertCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { ShoppingList, ShoppingItem, CategoryId, CATEGORIES_LIST } from '../types';
 import { TopHeader } from './TopHeader';
 import { CategoryIcon } from './CategoryIcon';
+import { ItemVisualIcon } from './ItemVisualIcon';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import { BidiText, MixedQuantityBadge } from '../utils/bidi';
 import { categorizeItemLocally, smartCategorizeItem } from '../lib/categorizer';
 import { parseShoppingItem, parseMultiItemInput } from '../lib/recognition/engine';
@@ -11,9 +14,11 @@ import { detectDuplicateItem, mergeQuantities } from '../lib/recognition';
 import { recordLearnedAlias } from '../lib/recognition/userAliases';
 import { defaultCatalogSearchEngine, CatalogSearchResult } from '../lib/catalog';
 import { playCompletionSound, playItemCheckSound, triggerHaptic } from '../lib/sound';
+import { updateShoppingItemCompletionStatus } from '../lib/supabase';
 import { generateUUID } from '../lib/uuid';
 import { QuantityEditModal } from './QuantityEditModal';
 import { SmartSuggestionsSection } from './SmartSuggestionsSection';
+import { SwipeableShoppingItemCard } from './SwipeableShoppingItemCard';
 
 interface ShoppingListViewProps {
   list: ShoppingList;
@@ -22,6 +27,9 @@ interface ShoppingListViewProps {
   onCompleteTrip: (completedList: ShoppingList) => void;
   onEditList: (list: ShoppingList) => void;
   onOpenProfile: () => void;
+  isCompletingTrip?: boolean;
+  completionError?: string | null;
+  onClearCompletionError?: () => void;
 }
 
 export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
@@ -31,11 +39,32 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
   onCompleteTrip,
   onEditList,
   onOpenProfile,
+  isCompletingTrip = false,
+  completionError = null,
+  onClearCompletionError,
 }) => {
-  const { t, getCategoryName } = useLanguage();
+  const { user } = useAuth();
+  const { t, getCategoryName, language } = useLanguage();
+  const isUrdu = language === 'ur';
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
   const [newItemText, setNewItemText] = useState<string>('');
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
+
+  // Gesture, anti-duplicate & undo state tracking
+  const listRef = useRef<ShoppingList>(list);
+  listRef.current = list;
+  const inFlightItemIdsRef = useRef<Set<string>>(new Set());
+  const lastActionTimeRef = useRef<Map<string, number>>(new Map());
+  const localActionItemIdsRef = useRef<Set<string>>(new Set());
+  const undoTimerRef = useRef<any>(null);
+  const [undoToast, setUndoToast] = useState<{ item: ShoppingItem; listId: string } | null>(null);
+  const [recentLocalCompletedId, setRecentLocalCompletedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    };
+  }, []);
 
   const handleSaveQuantity = (itemId: string, newQty?: string, newUnit?: string) => {
     const updatedList: ShoppingList = {
@@ -158,43 +187,111 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
   const completedItemsCount = list.items.filter((i) => i.completed).length;
   const percentComplete = totalItems > 0 ? Math.round((completedItemsCount / totalItems) * 100) : 0;
 
-  // Toggle item completed state with instant haptic & sound feedback
-  const handleToggleItem = (itemId: string) => {
-    let willBeChecked = false;
+  /**
+   * Unified Item Completion Handler
+   * Used identically by BOTH Method 1 (Tap) and Method 2 (Swipe).
+   * Ensures identical completion logic, optimistic state update,
+   * audio & haptic feedback, Supabase database mutation, and realtime broadcast.
+   */
+  const completeShoppingItem = async (itemId: string, forcePurchased?: boolean) => {
+    const currentList = listRef.current;
+    const currentItem = currentList.items.find((it) => it.id === itemId);
+    if (!currentItem) return;
 
-    const updatedItems = list.items.map((item) => {
-      if (item.id === itemId) {
-        const nextState = !item.completed;
-        if (nextState) willBeChecked = true;
-        return { ...item, completed: nextState };
-      }
-      return item;
-    });
+    const nextCompleted = forcePurchased !== undefined ? forcePurchased : !currentItem.completed;
 
+    // Prevent duplicate state triggers (e.g. repeated swipe on already completed item)
+    if (currentItem.completed === nextCompleted) {
+      return;
+    }
+
+    // Debounce rapid repeated taps or gestures on the same item (e.g. within 350ms)
+    const now = Date.now();
+    const lastAction = lastActionTimeRef.current.get(itemId) || 0;
+    if (now - lastAction < 350) {
+      return;
+    }
+
+    // Prevent duplicate database requests in flight
+    if (inFlightItemIdsRef.current.has(itemId)) {
+      return;
+    }
+
+    // Lock item against concurrent duplicate requests
+    inFlightItemIdsRef.current.add(itemId);
+    lastActionTimeRef.current.set(itemId, now);
+
+    // Track local completion origin to prevent animation replay on passive incoming realtime sync
+    if (nextCompleted) {
+      localActionItemIdsRef.current.add(itemId);
+      setRecentLocalCompletedId(itemId);
+      setTimeout(() => {
+        setRecentLocalCompletedId((prev) => (prev === itemId ? null : prev));
+      }, 700);
+    }
+
+    const updatedItems = currentList.items.map((item) =>
+      item.id === itemId ? { ...item, completed: nextCompleted } : item
+    );
     const isAllCompleted = updatedItems.length > 0 && updatedItems.every((i) => i.completed);
 
     const updatedList: ShoppingList = {
-      ...list,
+      ...currentList,
       items: updatedItems,
       isCompleted: isAllCompleted,
     };
 
+    // 1. Immediate optimistic UI update
     onUpdateList(updatedList);
 
-    // Haptic & Sound Feedback
-    if (willBeChecked) {
+    // 2. Sound & Haptic Feedback (Fast & Premium)
+    if (nextCompleted) {
       triggerHaptic(15);
       if (isAllCompleted) {
-        // Final item completed -> sequence completion chime!
         playCompletionSound();
         setTimeout(() => {
           onCompleteTrip(updatedList);
-        }, 400);
+        }, 500);
       } else {
-        // Individual item tap
         playItemCheckSound();
       }
+
+      // Show sleek Undo toast for accidental swipe/tap
+      setUndoToast({ item: currentItem, listId: currentList.id });
+      if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+      undoTimerRef.current = setTimeout(() => {
+        setUndoToast((prev) => (prev?.item.id === itemId ? null : prev));
+      }, 4500);
+    } else {
+      // Un-marking item
+      triggerHaptic(8);
+      setUndoToast(null);
     }
+
+    // 3. Supabase Database Update (is_completed = true/false, updated_at = current timestamp)
+    try {
+      if (user?.id) {
+        await updateShoppingItemCompletionStatus(
+          user.id,
+          currentList.id,
+          itemId,
+          nextCompleted,
+          updatedList
+        );
+      }
+    } catch (dbErr) {
+      console.warn('Notice syncing item completion to Supabase:', dbErr);
+    } finally {
+      setTimeout(() => {
+        inFlightItemIdsRef.current.delete(itemId);
+      }, 300);
+    }
+  };
+
+  const handleUndoPurchase = (itemId: string) => {
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    setUndoToast(null);
+    completeShoppingItem(itemId, false);
   };
 
   // Add new inline item using natural language parser and smart categorizer
@@ -457,12 +554,18 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
             />
           </div>
 
-          <div className="flex justify-between font-['Manrope'] text-xs font-semibold text-outline">
+          <div className="flex justify-between items-center font-['Manrope'] text-xs font-semibold text-outline">
             <span>
               {t('shoppingList.boughtSummary', { done: completedItemsCount, total: totalItems })}
             </span>
             <span>{t('shoppingList.percentComplete', { percent: percentComplete })}</span>
           </div>
+
+          {totalItems > 0 && (
+            <div className="flex items-center gap-1.5 text-[11px] font-['Manrope'] font-medium text-outline/80">
+              <span>{t('shoppingList.tapOrSwipeHint')}</span>
+            </div>
+          )}
         </div>
 
         {/* Add Item Input Bar */}
@@ -499,9 +602,14 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                     onClick={() => handleSelectSuggestion(sug)}
                     className="flex items-center gap-2.5 p-2 rounded-2xl bg-surface-container-low hover:bg-surface-container border border-surface-container-high/60 transition-all text-start group active:scale-[0.99] cursor-pointer"
                   >
-                    <span className="w-8 h-8 rounded-xl bg-surface-container-lowest flex items-center justify-center shadow-2xs shrink-0 group-hover:scale-105 transition-transform text-primary">
-                      <CategoryIcon categoryId={sug.categoryId} className="w-4 h-4" />
-                    </span>
+                    <ItemVisualIcon
+                      name={sug.displayName}
+                      canonicalName={sug.item.canonical_name}
+                      displayName={sug.displayName}
+                      categoryId={sug.categoryId}
+                      size={32}
+                      className="w-8 h-8 rounded-lg shrink-0 group-hover:scale-105 transition-transform"
+                    />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1 truncate">
                         <span className="font-['Manrope'] font-bold text-xs text-primary truncate">
@@ -647,111 +755,18 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                         : item.note || null;
 
                       return (
-                        <div
+                        <SwipeableShoppingItemCard
                           key={item.id}
-                          onClick={() => handleToggleItem(item.id)}
-                          className={`flex items-center justify-between gap-3.5 p-3 rounded-2xl cursor-pointer select-none transition-all duration-200 ${
-                            isChecked
-                              ? 'bg-surface-container-low/60 opacity-60'
-                              : 'bg-surface-bright hover:bg-surface-container-low border border-surface-dim/50'
-                          }`}
-                        >
-                          {/* Custom Round Checkbox */}
-                          <div
-                            className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200 shrink-0 ${
-                              isChecked
-                                ? 'bg-[#0F3D2E] border-2 border-[#0F3D2E] shadow-2xs scale-105'
-                                : 'border-2 border-outline/70 hover:border-[#0F3D2E] bg-transparent'
-                            }`}
-                          >
-                            {isChecked && (
-                              <Check className="w-3.5 h-3.5 text-white stroke-[3]" />
-                            )}
-                          </div>
-
-                          {/* Item Details */}
-                          <div className="flex flex-col min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5 flex-wrap" dir="auto">
-                              <BidiText
-                                className={`font-['Manrope'] text-base transition-all truncate ${
-                                  isChecked
-                                    ? 'line-through text-outline font-normal'
-                                    : 'text-on-surface font-semibold group-hover:text-primary'
-                                }`}
-                              >
-                                {item.name}
-                              </BidiText>
-                              {item.nameUrdu && (
-                                <span
-                                  className={`font-urdu text-xs transition-opacity ${
-                                    isChecked ? 'opacity-50 text-outline' : 'text-on-surface-variant font-normal'
-                                  }`}
-                                >
-                                  ({item.nameUrdu})
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex items-center gap-1.5 flex-wrap mt-0.5" onClick={(e) => e.stopPropagation()}>
-                              <select
-                                value={item.categoryId || 'uncategorized'}
-                                onChange={(e) => handleItemCategoryChange(item.id, e.target.value as CategoryId)}
-                                aria-label={`Change category for ${item.name}`}
-                                className={`text-[10px] font-['Manrope'] font-medium px-1.5 py-0.5 rounded-md border outline-none cursor-pointer transition-colors ${
-                                  item.categoryId === 'uncategorized'
-                                    ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30 font-semibold'
-                                    : 'bg-surface-container-low hover:bg-surface-container text-on-surface-variant border-surface-dim/80'
-                                }`}
-                              >
-                                {CATEGORIES_LIST.map((c) => (
-                                  <option key={c.id} value={c.id}>
-                                    {getCategoryName(c.id)}
-                                  </option>
-                                ))}
-                              </select>
-                              {item.categoryId === 'uncategorized' && (
-                                <span className="text-[10px] font-['Manrope'] text-amber-600 dark:text-amber-400 font-semibold">
-                                  Tap to assign
-                                </span>
-                              )}
-                              {item.rawInput && item.rawInput.trim().toLowerCase() !== item.name.trim().toLowerCase() && (
-                                <span className="text-[10px] font-['Manrope'] text-outline opacity-70 truncate max-w-[120px]">
-                                  • typed: "<bdi>{item.rawInput}</bdi>"
-                                </span>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Quantity & Unit Badge (Tappable to modify) */}
-                          {formattedQty ? (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditingItem(item);
-                              }}
-                              title="Tap to change quantity or unit"
-                              className={`font-['Manrope'] tabular-nums text-xs font-bold px-2.5 py-1 rounded-lg shrink-0 transition-all active:scale-95 cursor-pointer ${
-                                isChecked
-                                  ? 'bg-surface-container text-outline hover:bg-surface-container-high'
-                                  : 'bg-surface-container-high hover:bg-surface-container text-primary border border-surface-dim shadow-2xs'
-                              }`}
-                            >
-                              <bdi dir="ltr">{formattedQty}</bdi>
-                            </button>
-                          ) : !isChecked ? (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditingItem(item);
-                              }}
-                              title="Add quantity"
-                              className="text-[11px] font-['Manrope'] font-semibold text-outline hover:text-primary px-2 py-0.5 rounded-md hover:bg-surface-container transition-colors shrink-0"
-                            >
-                              + qty
-                            </button>
-                          ) : null}
-                        </div>
+                          item={item}
+                          isChecked={isChecked}
+                          formattedQty={formattedQty || undefined}
+                          justCompletedLocally={recentLocalCompletedId === item.id}
+                          onComplete={completeShoppingItem}
+                          onEditQuantity={setEditingItem}
+                          onCategoryChange={handleItemCategoryChange}
+                          getCategoryName={getCategoryName}
+                          isUrdu={isUrdu}
+                        />
                       );
                     })}
                   </div>
@@ -761,19 +776,87 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
           </div>
         )}
 
+        {/* Error banner if database persistence failed */}
+        {completionError && (
+          <div className="p-3.5 bg-red-50 border border-red-200 rounded-2xl flex items-center justify-between gap-3 text-red-700 text-xs font-['Manrope'] mb-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+              <span className="font-medium">{completionError}</span>
+            </div>
+            {onClearCompletionError && (
+              <button
+                onClick={onClearCompletionError}
+                className="p-1 rounded-full hover:bg-red-100 text-red-700 font-bold shrink-0"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Finish Shopping Trip Button */}
         {completedItemsCount > 0 && (
           <div className="pt-2 pb-4">
             <button
-              onClick={() => onCompleteTrip(list)}
-              className="w-full h-[52px] rounded-full bg-primary text-on-primary font-['Manrope'] text-sm font-bold hover:bg-primary-container shadow-sm transition-all flex items-center justify-center gap-2 active:scale-95"
+              id="finish_shopping_trip_btn"
+              onClick={() => !isCompletingTrip && onCompleteTrip(list)}
+              disabled={isCompletingTrip}
+              className={`w-full h-[52px] rounded-full bg-primary text-on-primary font-['Manrope'] text-sm font-bold shadow-sm transition-all flex items-center justify-center gap-2 ${
+                isCompletingTrip
+                  ? 'opacity-70 cursor-wait'
+                  : 'hover:bg-primary-container active:scale-95 cursor-pointer'
+              }`}
             >
-              <span>{t('shoppingList.finishTrip')}</span>
-              <CheckCheck className="w-4 h-4" />
+              {isCompletingTrip ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>{isUrdu ? 'ٹرپ مکمل ہو رہا ہے...' : 'Completing trip...'}</span>
+                </>
+              ) : (
+                <>
+                  <span>{t('shoppingList.finishTrip')}</span>
+                  <CheckCheck className="w-4 h-4" />
+                </>
+              )}
             </button>
           </div>
         )}
       </main>
+
+      {/* Undo Floating Toast for Accidental Swipes / Taps */}
+      <AnimatePresence>
+        {undoToast && (
+          <motion.div
+            id="shopping-undo-toast"
+            initial={{ opacity: 0, y: 24, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-[#0F3D2E] text-white shadow-[0_10px_25px_rgba(0,30,21,0.35)] border border-emerald-500/30 max-w-sm w-[92vw] sm:w-auto min-w-[290px]"
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-white shrink-0">
+                <Check className="w-3.5 h-3.5 stroke-[3]" />
+              </span>
+              <span className="text-xs sm:text-sm font-['Manrope'] font-medium truncate">
+                {isUrdu ? (
+                  <span className="font-urdu">{undoToast.item.name} خریدا گیا</span>
+                ) : (
+                  `${undoToast.item.name} ${t('shoppingList.markedPurchased') || 'purchased'}`
+                )}
+              </span>
+            </div>
+            <button
+              id="shopping-undo-btn"
+              type="button"
+              onClick={() => handleUndoPurchase(undoToast.item.id)}
+              className="px-3 py-1 bg-white/20 hover:bg-white/30 active:scale-95 rounded-lg text-xs font-bold text-white uppercase tracking-wider transition-all cursor-pointer shrink-0"
+            >
+              {t('shoppingList.undo') || (isUrdu ? 'واپس کریں' : 'Undo')}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Quantity Edit Modal */}
       <QuantityEditModal

@@ -18,6 +18,7 @@ import {
 import { ShoppingList, CategoryId } from '../types';
 import { TopHeader } from './TopHeader';
 import { CategoryIcon } from './CategoryIcon';
+import { ItemVisualIcon } from './ItemVisualIcon';
 import { useLanguage } from '../context/LanguageContext';
 import { BidiText } from '../utils/bidi';
 import { ListIcon } from './ListIcon';
@@ -299,6 +300,18 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
                                 <Circle className="w-2.5 h-2.5 text-outline/40" />
                               </div>
                             )}
+
+                            {/* Item Visual Asset */}
+                            <ItemVisualIcon
+                              name={item.name}
+                              canonicalName={item.canonicalName || item.canonical_name}
+                              displayName={item.name}
+                              categoryId={item.categoryId}
+                              size={36}
+                              className={`w-9 h-9 rounded-xl shrink-0 transition-opacity ${
+                                item.completed ? 'opacity-60' : 'opacity-100'
+                              }`}
+                            />
 
                             {/* Item Name & Details */}
                             <div className="flex flex-col min-w-0 flex-1">

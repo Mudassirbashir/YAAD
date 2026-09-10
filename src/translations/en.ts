@@ -64,11 +64,12 @@ export const en = {
 
   // Interactive Product Tour
   tour: {
-    skip: 'Skip Tour',
+    skip: 'Skip',
     next: 'Next',
     back: 'Back',
-    finish: 'Finish',
-    stepOf: 'Step {current} of {total}',
+    done: 'Done',
+    finish: 'Done',
+    stepOf: '{current} of {total}',
     logoTitle: 'YAAD Header & Brand',
     logoDesc: 'Your bilingual grocery companion with fast, smart organization in Urdu, Roman Urdu, and English.',
     homeTitle: 'Home Dashboard',
@@ -82,30 +83,24 @@ export const en = {
     settingsTitle: 'Settings & Profile',
     settingsDesc: 'Customize your emoji avatar, update full name, switch languages (English, Urdu, Roman Urdu), and sound effects.',
     replayTour: 'Restart Product Tour',
-    replayTourDesc: 'Replay the interactive walkthrough of YAAD features.',
+    replayTourDesc: 'Replay the 4-step quick walkthrough of YAAD core experience.',
     tourCompleted: 'Tour finished! You are ready to create your first list.',
-    step1Title: 'YAAD Branding & Home',
-    step1Desc: 'Your clean, intelligent grocery companion with quick access to active trips and daily kitchen essentials.',
-    step2Title: 'Create New List',
-    step2Desc: 'Tap the prominent Create card or bottom center button to start a fresh shopping list in seconds.',
-    step3Title: 'Add Shopping Items',
-    step3Desc: 'Easily type or pick staples. Quantities, units, and custom notes can be configured effortlessly.',
-    step4Title: 'Smart Item Recognition',
-    step4Desc: 'YAAD automatically detects items in English, Roman Urdu, and Urdu, organizing them into the right grocery aisle.',
-    step5Title: 'Active Shopping Mode',
-    step5Desc: 'Take your phone down the supermarket aisle with focused one-handed tapping and live completion progress.',
-    step6Title: 'Checking & Completing Items',
-    step6Desc: 'Tap any item to mark it bought. Items instantly slide to completed with satisfying tactile feedback.',
-    step7Title: 'Completion Chime & Sound',
-    step7Desc: 'When all items are bought, enjoy an acoustic completion chime celebrating your completed shopping trip.',
-    step8Title: 'Settings Hub',
-    step8Desc: 'Access your unified Settings page anytime to personalize your profile, account security, and preferences.',
-    step9Title: 'Bilingual Language System',
-    step9Desc: 'Switch seamlessly between English, Roman Urdu, and Urdu with full RTL and authentic Nastaliq typography.',
-    step10Title: 'Profile & Emoji Avatars',
-    step10Desc: 'Choose from curated emoji avatars across animals, food, nature, fun, travel, and sports.',
-    step11Title: 'Account Security & Sync',
-    step11Desc: 'Keep your shopping lists backed up and secure with real Supabase synchronization and easy password management.',
+    step1Title: 'Home',
+    step1Desc: 'This is your YAAD home. See your lists and quickly start shopping.',
+    step2Title: 'Create List',
+    step2Desc: 'Create a list in seconds.',
+    step3Title: 'Add & Complete Items',
+    step3Desc: 'Add what you need, then tap or swipe when you buy it.',
+    step4Title: 'History & Stats',
+    step4Desc: 'See what you bought before and understand your shopping habits.',
+  },
+
+  // Phone Number Completion Reminder
+  phoneReminder: {
+    title: 'Add your phone number',
+    description: 'Add your phone number to complete your account.',
+    addNumber: 'Add Number',
+    notNow: 'Not Now',
   },
 
   // Home Screen
@@ -219,18 +214,63 @@ export const en = {
 
   // Create List Screen
   createList: {
-    title: "What's this list for?",
+    title: 'Create New List',
+    subtitle: 'Choose a suggested list type or enter your own custom name.',
+    customSectionTitle: 'Custom List',
+    customPlaceholder: 'Enter custom list name (e.g. Dawat, Eid Shopping)...',
+    continueBtn: 'Continue',
+    suggestedSectionTitle: 'Suggested Lists',
+    suggestedSubtitle: 'Tap any to start adding items immediately',
+    errorEmpty: 'Please enter a list name first.',
+    types: {
+      weekly_grocery: {
+        title: 'Weekly Grocery',
+        desc: 'Milk, eggs, bread & kitchen essentials',
+      },
+      bbq: {
+        title: 'BBQ',
+        desc: 'Chicken, charcoal, tikka masala & drinks',
+      },
+      pharmacy: {
+        title: 'Pharmacy',
+        desc: 'Panadol, medicines, first aid & health care',
+      },
+      party: {
+        title: 'Party',
+        desc: 'Cold drinks, chips, juices, cake & cups',
+      },
+      monthly_shopping: {
+        title: 'Monthly Shopping',
+        desc: 'Atta, rice, oil, ghee, sugar & bulk rashan',
+      },
+      supermarket: {
+        title: 'Supermarket',
+        desc: 'General grocery store & packaged goods',
+      },
+      household: {
+        title: 'Home Essentials',
+        desc: 'Detergent, dish soap, tissues & cleaning',
+      },
+      fruits_vegetables: {
+        title: 'Fruits & Vegetables',
+        desc: 'Fresh seasonal fruits, potatoes, onions & sabzi',
+      },
+      other: {
+        title: 'Other',
+        desc: 'Type your own custom list name',
+      },
+    },
+    // Backward compatibility
     placeholder: 'e.g. Grocery Shopping',
-    errorEmpty: 'Give your list a name first.',
     suggestionsLabel: 'Suggestions:',
     suggestions: [
-      'Weekly Groceries',
-      'Supermarket Run',
-      'Weekend BBQ',
-      'Party Snacks',
+      'Weekly Grocery',
+      'Supermarket',
+      'BBQ',
+      'Party',
       'Pharmacy',
     ],
-    submitBtn: 'Save and Start Adding Items',
+    submitBtn: 'Continue to Add Items',
   },
 
   // Add Items Screen
@@ -244,7 +284,7 @@ export const en = {
     quantityHint: 'Tap quantity to change',
     emptyItemsTitle: 'No items added yet',
     emptyItemsDesc: 'Type an item name above and tap + to add items to your list.',
-    startShoppingBtn: 'Save & Start Shopping',
+    startShoppingBtn: 'Start Shopping',
     autoDetected: 'Auto-detected',
   },
 
@@ -258,15 +298,25 @@ export const en = {
     editList: 'Edit',
     emptyTitle: 'No items in this list yet',
     emptySubtitle: 'Type an item name above to start building your shopping list.',
+    purchased: 'Purchased',
+    markedPurchased: 'Marked as purchased',
+    undo: 'Undo',
+    tapOrSwipeHint: 'Tap or swipe item to mark purchased',
   },
 
   // Completion Screen
   completion: {
-    title: 'All done!',
-    subtitle: "You've grabbed everything on your list. Time to complete the trip.",
-    completeTripBtn: 'Complete Trip',
+    title: 'Shopping Complete',
+    subtitle: 'All purchased items have been saved to your shopping history.',
+    completeTripBtn: 'Back to Home',
     addMoreBtn: 'Add more items',
-    badgeCompleted: 'Completed',
+    badgeCompleted: 'Shopping Complete',
+    purchasedSummary: '{bought} of {total} items purchased',
+    completedAt: 'Completed {time}',
+    sessionDetails: 'Trip Summary',
+    saveError: 'Could not save completed shopping session. Please check your connection and try again.',
+    viewHistoryBtn: 'View in History',
+    itemsPurchasedHeading: 'Purchased Items',
   },
 
   // History & Details Screen

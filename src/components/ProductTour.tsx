@@ -1,22 +1,14 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { motion, useReducedMotion } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import {
   X,
   ArrowRight,
   ArrowLeft,
   Check,
-  Sparkles,
   Home,
   Plus,
-  ListChecks,
-  Settings,
-  Compass,
   ShoppingBag,
-  CheckCircle2,
-  Volume2,
-  Globe,
-  Smile,
-  ShieldCheck,
+  TrendingUp,
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -27,7 +19,6 @@ export interface TourStep {
   title: string;
   description: string;
   icon: React.ComponentType<{ className?: string }>;
-  position?: 'top' | 'bottom' | 'center';
 }
 
 export interface ProductTourProps {
@@ -38,6 +29,14 @@ export interface ProductTourProps {
   onComplete: () => void;
 }
 
+interface TooltipGeometry {
+  placement: 'top' | 'bottom';
+  cardTop: number;
+  cardLeft: number;
+  cardWidth: number;
+  arrowOffsetLeft: number;
+}
+
 export const ProductTour: React.FC<ProductTourProps> = ({
   isOpen,
   isActive,
@@ -46,153 +45,73 @@ export const ProductTour: React.FC<ProductTourProps> = ({
   onComplete,
 }) => {
   const isTourOpen = Boolean(isOpen ?? isActive);
-  const handleDismiss = onClose || onSkip || onComplete;
+  const handleDismiss = onSkip || onClose || onComplete;
 
   const { t, isRTL } = useLanguage();
   const prefersReducedMotion = useReducedMotion();
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
-  const tourCardRef = useRef<HTMLDivElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [measuredCardHeight, setMeasuredCardHeight] = useState(200);
 
-  // 11 Comprehensive Product Tour Steps matching user requirements:
-  // Step 1: YAAD branding / Home
-  // Step 2: Create New List
-  // Step 3: Add shopping items
-  // Step 4: Smart item recognition
-  // Step 5: Shopping mode
-  // Step 6: Completing items
-  // Step 7: Completion animation/sound
-  // Step 8: Settings
-  // Step 9: Language
-  // Step 10: Profile/avatar
-  // Step 11: Account/security
+  // Exactly 4 HIGH-VALUE Core Steps matching user requirements:
+  // Step 1: Home
+  // Step 2: Create List
+  // Step 3: Add/Complete Items
+  // Step 4: History/Stats
   const steps: TourStep[] = [
     {
-      id: 'step_1_brand_home',
-      targetId: 'top_header_logo_area',
-      fallbackTargetId: 'top_header_logo',
-      title: t('tour.step1Title') || 'YAAD Branding & Home',
+      id: 'tour_step_home',
+      targetId: 'home_greeting_section',
+      fallbackTargetId: 'top_header_logo_area',
+      title: t('tour.step1Title') || 'Home',
       description:
         t('tour.step1Desc') ||
-        'Your clean, intelligent grocery companion with quick access to active trips and daily kitchen essentials.',
-      icon: Sparkles,
-      position: 'bottom',
+        'This is your YAAD home. See your lists and quickly start shopping.',
+      icon: Home,
     },
     {
-      id: 'step_2_create_list',
+      id: 'tour_step_create_list',
       targetId: 'home_create_list_btn',
       fallbackTargetId: 'nav_tab_create',
-      title: t('tour.step2Title') || 'Create New List',
+      title: t('tour.step2Title') || 'Create List',
       description:
         t('tour.step2Desc') ||
-        'Tap the prominent Create card or bottom center button to start a fresh shopping list in seconds.',
+        'Create a list in seconds.',
       icon: Plus,
-      position: 'bottom',
     },
     {
-      id: 'step_3_add_items',
+      id: 'tour_step_add_complete',
       targetId: 'home_essentials_section',
       fallbackTargetId: 'home_lists_section',
-      title: t('tour.step3Title') || 'Add Shopping Items',
+      title: t('tour.step3Title') || 'Add & Complete Items',
       description:
         t('tour.step3Desc') ||
-        'Easily type or pick staples. Quantities, units, and custom notes can be configured effortlessly.',
+        'Add what you need, then tap or swipe when you buy it.',
       icon: ShoppingBag,
-      position: 'top',
     },
     {
-      id: 'step_4_smart_recognition',
-      targetId: 'home_search_bar',
-      fallbackTargetId: 'home_quick_actions',
-      title: t('tour.step4Title') || 'Smart Item Recognition',
+      id: 'tour_step_history_stats',
+      targetId: 'home_quick_actions',
+      fallbackTargetId: 'quick_action_recent_lists',
+      title: t('tour.step4Title') || 'History & Stats',
       description:
         t('tour.step4Desc') ||
-        'YAAD automatically detects items in English, Roman Urdu, and Urdu, organizing them into the right grocery aisle.',
-      icon: Sparkles,
-      position: 'bottom',
-    },
-    {
-      id: 'step_5_shopping_mode',
-      targetId: 'home_lists_section',
-      fallbackTargetId: 'active_list_card',
-      title: t('tour.step5Title') || 'Active Shopping Mode',
-      description:
-        t('tour.step5Desc') ||
-        'Take your phone down the supermarket aisle with focused one-handed tapping and live completion progress.',
-      icon: ListChecks,
-      position: 'top',
-    },
-    {
-      id: 'step_6_completing_items',
-      targetId: 'home_lists_section',
-      fallbackTargetId: 'home_stats_bar',
-      title: t('tour.step6Title') || 'Checking & Completing Items',
-      description:
-        t('tour.step6Desc') ||
-        'Tap any item to mark it bought. Items instantly slide to completed with satisfying tactile feedback.',
-      icon: CheckCircle2,
-      position: 'top',
-    },
-    {
-      id: 'step_7_completion_sound',
-      targetId: 'home_sound_indicator',
-      fallbackTargetId: 'top_header_logo_area',
-      title: t('tour.step7Title') || 'Completion Chime & Sound',
-      description:
-        t('tour.step7Desc') ||
-        'When all items are bought, enjoy an acoustic completion chime celebrating your completed shopping trip.',
-      icon: Volume2,
-      position: 'bottom',
-    },
-    {
-      id: 'step_8_settings',
-      targetId: 'nav_tab_settings',
-      fallbackTargetId: 'top_header_settings_btn',
-      title: t('tour.step8Title') || 'Settings Hub',
-      description:
-        t('tour.step8Desc') ||
-        'Access your unified Settings page anytime to personalize your profile, account security, and preferences.',
-      icon: Settings,
-      position: 'top',
-    },
-    {
-      id: 'step_9_language',
-      targetId: 'settings_language_section',
-      fallbackTargetId: 'nav_tab_settings',
-      title: t('tour.step9Title') || 'Bilingual Language System',
-      description:
-        t('tour.step9Desc') ||
-        'Switch seamlessly between English, Roman Urdu, and Urdu with full RTL and authentic Nastaliq typography.',
-      icon: Globe,
-      position: 'top',
-    },
-    {
-      id: 'step_10_profile_avatar',
-      targetId: 'settings_profile_card',
-      fallbackTargetId: 'settings_avatar_btn',
-      title: t('tour.step10Title') || 'Profile & Emoji Avatars',
-      description:
-        t('tour.step10Desc') ||
-        'Choose from curated emoji avatars across animals, food, nature, fun, travel, and sports.',
-      icon: Smile,
-      position: 'bottom',
-    },
-    {
-      id: 'step_11_security_sync',
-      targetId: 'settings_security_card',
-      fallbackTargetId: 'settings_signout_btn',
-      title: t('tour.step11Title') || 'Account Security & Sync',
-      description:
-        t('tour.step11Desc') ||
-        'Keep your shopping lists backed up and secure with real Supabase synchronization and easy password management.',
-      icon: ShieldCheck,
-      position: 'top',
+        'See what you bought before and understand your shopping habits.',
+      icon: TrendingUp,
     },
   ];
 
+  // Reset to Step 1 whenever the tour is triggered or restarted
+  useEffect(() => {
+    if (isTourOpen) {
+      setCurrentStepIndex(0);
+    }
+  }, [isTourOpen]);
+
   const currentStep = steps[currentStepIndex] || steps[0];
 
-  // Update target rect based on active step target element
+  // Locate the target element and measure its viewport position
   const updateTargetRect = useCallback(() => {
     if (!isTourOpen || !currentStep) return;
 
@@ -203,12 +122,17 @@ export const ProductTour: React.FC<ProductTourProps> = ({
 
     if (el) {
       const rect = el.getBoundingClientRect();
-      // Scroll smoothly into view if offscreen
-      if (rect.top < 60 || rect.bottom > window.innerHeight - 80) {
+      // Scroll into view if element is offscreen or obscured
+      const isOffscreen =
+        rect.top < 70 || rect.bottom > window.innerHeight - 80;
+      if (isOffscreen) {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        setTimeout(() => {
-          if (el) setTargetRect(el.getBoundingClientRect());
+        const timer = setTimeout(() => {
+          if (el) {
+            setTargetRect(el.getBoundingClientRect());
+          }
         }, 220);
+        return () => clearTimeout(timer);
       } else {
         setTargetRect(rect);
       }
@@ -217,24 +141,41 @@ export const ProductTour: React.FC<ProductTourProps> = ({
     }
   }, [isTourOpen, currentStep]);
 
+  // Update position on step changes, window resize, and scroll
   useEffect(() => {
     if (!isTourOpen) return;
 
     updateTargetRect();
-    const handleResize = () => updateTargetRect();
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('scroll', handleResize, true);
+    const handleReposition = () => {
+      updateTargetRect();
+      if (cardRef.current) {
+        setMeasuredCardHeight(cardRef.current.offsetHeight || 200);
+      }
+    };
 
-    const timer = setTimeout(updateTargetRect, 120);
+    window.addEventListener('resize', handleReposition);
+    window.addEventListener('scroll', handleReposition, true);
+
+    const timer = setTimeout(handleReposition, 120);
 
     return () => {
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('scroll', handleResize, true);
+      window.removeEventListener('resize', handleReposition);
+      window.removeEventListener('scroll', handleReposition, true);
       clearTimeout(timer);
     };
   }, [isTourOpen, currentStepIndex, updateTargetRect]);
 
-  // Keyboard navigation
+  // Measure card height when step changes
+  useEffect(() => {
+    if (cardRef.current) {
+      const h = cardRef.current.offsetHeight;
+      if (h > 100) {
+        setMeasuredCardHeight(h);
+      }
+    }
+  }, [currentStepIndex]);
+
+  // Keyboard navigation: Escape to skip, Arrow keys/Enter to step
   useEffect(() => {
     if (!isTourOpen) return;
 
@@ -274,14 +215,73 @@ export const ProductTour: React.FC<ProductTourProps> = ({
     }
   };
 
+  const isLastStep = currentStepIndex === steps.length - 1;
   const StepIcon = currentStep.icon;
 
-  // Determine whether card should sit at the top or bottom of viewport
-  const isBottomTarget = targetRect ? targetRect.top > window.innerHeight * 0.52 : false;
+  // Responsive Tooltip & Directional Arrow Math
+  const computeTooltipGeometry = (): TooltipGeometry => {
+    const vw = typeof window !== 'undefined' ? window.innerWidth : 380;
+    const vh = typeof window !== 'undefined' ? window.innerHeight : 640;
 
-  // Compute horizontal arrow position pointing toward target center
-  const targetCenterX = targetRect ? targetRect.left + targetRect.width / 2 : window.innerWidth / 2;
-  const clampedArrowLeft = Math.max(28, Math.min(window.innerWidth - 28, targetCenterX));
+    // Card width adapts fluidly to mobile, tablet, iPad, and desktop
+    const cardWidth = Math.max(280, Math.min(380, vw - 32));
+    const cardHeight = measuredCardHeight;
+
+    if (!targetRect) {
+      return {
+        placement: 'bottom',
+        cardTop: Math.max(20, (vh - cardHeight) / 2),
+        cardLeft: Math.max(16, (vw - cardWidth) / 2),
+        cardWidth,
+        arrowOffsetLeft: cardWidth / 2 - 8,
+      };
+    }
+
+    const targetCenterX = targetRect.left + targetRect.width / 2;
+    // Space calculation with 6px spotlight padding and 10px arrow gap
+    const spaceAbove = targetRect.top - 6;
+    const spaceBelow = vh - (targetRect.bottom + 6);
+
+    let placement: 'top' | 'bottom' = 'bottom';
+    let cardTop = 0;
+
+    // Determine optimal vertical position without covering target
+    if (spaceBelow >= cardHeight + 16) {
+      placement = 'bottom';
+      cardTop = targetRect.bottom + 16;
+    } else if (spaceAbove >= cardHeight + 16) {
+      placement = 'top';
+      cardTop = targetRect.top - cardHeight - 16;
+    } else {
+      // For tight screens (e.g. landscape phone), choose side with more room
+      if (spaceBelow >= spaceAbove) {
+        placement = 'bottom';
+        cardTop = Math.min(vh - cardHeight - 12, targetRect.bottom + 14);
+      } else {
+        placement = 'top';
+        cardTop = Math.max(12, targetRect.top - cardHeight - 14);
+      }
+    }
+
+    // Horizontal centering relative to target center, clamped to screen viewport
+    const idealCardLeft = targetCenterX - cardWidth / 2;
+    const cardLeft = Math.max(16, Math.min(vw - cardWidth - 16, idealCardLeft));
+
+    // Dynamic arrow position relative to card left, pointing directly at target center
+    const targetXInCard = targetCenterX - cardLeft;
+    // Keep arrow safely inside the card's 16px rounded corners
+    const arrowOffsetLeft = Math.max(24, Math.min(cardWidth - 40, targetXInCard - 8));
+
+    return {
+      placement,
+      cardTop,
+      cardLeft,
+      cardWidth,
+      arrowOffsetLeft,
+    };
+  };
+
+  const geometry = computeTooltipGeometry();
 
   return (
     <div
@@ -290,151 +290,174 @@ export const ProductTour: React.FC<ProductTourProps> = ({
       aria-label="Interactive Product Tour"
       aria-modal="true"
       dir={isRTL ? 'rtl' : 'ltr'}
-      className="fixed inset-0 z-50 pointer-events-auto select-none overflow-hidden"
+      className="fixed inset-0 z-50 select-none overflow-hidden"
     >
-      {/* Dimmed backdrop with gentle blur */}
+      {/* Dimmed backdrop - clicking outside skips the tour */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
         onClick={handleDismiss}
-        className="absolute inset-0 bg-black/65 backdrop-blur-[2px] transition-opacity"
+        className="fixed inset-0 bg-[#0A1A14]/65 backdrop-blur-[2px] cursor-pointer"
         aria-hidden="true"
       />
 
-      {/* Target Element Spotlight Highlight Box with glowing pulse */}
+      {/* Target Element Spotlight Highlight Box with smooth glow */}
       {targetRect && (
         <motion.div
           key={`spotlight-${currentStep.id}`}
-          initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96 }}
+          initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.25, ease: 'easeOut' }}
-          className="absolute pointer-events-none rounded-2xl ring-4 ring-primary ring-offset-3 ring-offset-black/50 shadow-[0_0_35px_rgba(0,106,75,0.45)]"
+          transition={{ duration: 0.22, ease: 'easeOut' }}
+          className="fixed pointer-events-none rounded-2xl"
           style={{
-            top: Math.max(6, targetRect.top - 6),
-            left: Math.max(6, targetRect.left - 6),
+            top: Math.max(4, targetRect.top - 6),
+            left: Math.max(4, targetRect.left - 6),
             width: targetRect.width + 12,
             height: targetRect.height + 12,
+            boxShadow:
+              '0 0 0 9999px rgba(10, 26, 20, 0.65), 0 0 24px rgba(15, 61, 46, 0.4)',
+            border: '2px solid rgba(16, 185, 129, 0.9)',
+            zIndex: 55,
           }}
         />
       )}
 
-      {/* Target Directional Pointer Arrow Pin (at the spotlight edge) */}
-      {targetRect && (
-        <motion.div
-          key={`spotlight-pin-${currentStep.id}`}
-          initial={{ opacity: 0, y: isBottomTarget ? 6 : -6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25 }}
-          className="absolute pointer-events-none z-10 flex items-center justify-center"
-          style={{
-            left: clampedArrowLeft - 14,
-            top: isBottomTarget ? Math.max(8, targetRect.top - 28) : targetRect.bottom + 8,
-          }}
-        >
-          <div className="w-7 h-7 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-lg animate-bounce border-2 border-white">
-            {isBottomTarget ? (
-              <ArrowRight className="w-3.5 h-3.5 rotate-90" />
-            ) : (
-              <ArrowRight className="w-3.5 h-3.5 -rotate-90" />
-            )}
-          </div>
-        </motion.div>
-      )}
-
-      {/* Full screen layout container */}
-      <div className="absolute inset-0 flex flex-col justify-between p-4 sm:p-6 pointer-events-none">
-        {/* Top bar with quick Skip Tour button */}
-        <div className="w-full flex justify-end pointer-events-auto">
-          <button
-            id="tour_skip_top_btn"
-            type="button"
-            onClick={handleDismiss}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black/50 hover:bg-black/75 text-white text-xs font-semibold backdrop-blur-md border border-white/20 transition-all active:scale-95 shadow-md cursor-pointer"
-            aria-label={t('tour.skip')}
-          >
-            <span>{t('tour.skip')}</span>
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        {/* Floating Tooltip Card positioned optically opposite the target */}
-        <div
-          className={`w-full max-w-sm sm:max-w-md mx-auto pointer-events-auto relative ${
-            isBottomTarget ? 'mb-24 sm:mb-28' : 'mt-14 sm:mt-18'
-          }`}
-        >
-          {/* Card-Connected Directional Arrow pointing toward the target */}
-          <div
-            className={`absolute pointer-events-none left-1/2 -translate-x-1/2 ${
-              isBottomTarget ? '-bottom-2' : '-top-2'
-            }`}
-          >
-            <div
-              className={`w-4 h-4 bg-surface-container-lowest border-surface-dim transform rotate-45 ${
-                isBottomTarget
-                  ? 'border-b border-r shadow-xs'
-                  : 'border-t border-l shadow-xs'
-              }`}
-            />
-          </div>
-
+      {/* Responsive Floating Tooltip Card with Accurate Directional Arrow */}
+      <div
+        style={{
+          position: 'fixed',
+          top: `${geometry.cardTop}px`,
+          left: `${geometry.cardLeft}px`,
+          width: `${geometry.cardWidth}px`,
+          zIndex: 60,
+        }}
+        className="pointer-events-auto"
+      >
+        <AnimatePresence mode="wait">
           <motion.div
-            ref={tourCardRef}
             key={`tour-card-${currentStep.id}`}
+            ref={cardRef}
             onClick={(e) => e.stopPropagation()}
-            initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: isBottomTarget ? -10 : 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: isBottomTarget ? -10 : 10 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="bg-surface-container-lowest text-on-surface rounded-3xl p-5 sm:p-6 shadow-[0_20px_50px_rgba(0,30,21,0.28)] border border-surface-dim relative overflow-hidden"
+            initial={
+              prefersReducedMotion
+                ? { opacity: 0 }
+                : {
+                    opacity: 0,
+                    scale: 0.97,
+                    y: geometry.placement === 'bottom' ? -8 : 8,
+                  }
+            }
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={
+              prefersReducedMotion
+                ? { opacity: 0 }
+                : { opacity: 0, scale: 0.97 }
+            }
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="bg-white text-slate-900 rounded-2xl p-5 shadow-[0_20px_45px_rgba(0,0,0,0.24)] border border-slate-200/90 relative"
           >
-            {/* Top Bar with Step Tag and Progress Dots */}
-            <div className="flex items-center justify-between gap-3 mb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20 shrink-0">
-                  <StepIcon className="w-5 h-5" />
+            {/* ACCURATE DIRECTIONAL ARROW */}
+            {targetRect && (
+              geometry.placement === 'bottom' ? (
+                // Arrow at top edge pointing UP to target
+                <svg
+                  width="18"
+                  height="9"
+                  viewBox="0 0 18 9"
+                  className="absolute -top-[8px] pointer-events-none drop-shadow-xs"
+                  style={{ left: `${geometry.arrowOffsetLeft}px` }}
+                >
+                  <path
+                    d="M0,9 L9,0 L18,9"
+                    fill="#FFFFFF"
+                    stroke="#E2E8F0"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              ) : (
+                // Arrow at bottom edge pointing DOWN to target
+                <svg
+                  width="18"
+                  height="9"
+                  viewBox="0 0 18 9"
+                  className="absolute -bottom-[8px] pointer-events-none drop-shadow-xs"
+                  style={{ left: `${geometry.arrowOffsetLeft}px` }}
+                >
+                  <path
+                    d="M0,0 L9,9 L18,0"
+                    fill="#FFFFFF"
+                    stroke="#E2E8F0"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              )
+            )}
+
+            {/* Header: System Icon, Progress Badge (e.g. 1 of 4), and Close X Button */}
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-[#0F3D2E] border border-emerald-200/60 flex items-center justify-center shrink-0">
+                  <StepIcon className="w-4 h-4 stroke-[2.2]" />
                 </div>
-                <div>
-                  <span className="text-[11px] font-bold tracking-wider uppercase text-primary font-['Manrope'] bg-primary-fixed/40 px-2.5 py-0.5 rounded-full inline-block">
-                    {t('tour.stepOf', { current: currentStepIndex + 1, total: steps.length })}
-                  </span>
-                </div>
+                <span className="text-[11px] font-bold tracking-wide text-emerald-800 bg-emerald-50 border border-emerald-200/50 px-2.5 py-0.5 rounded-full font-['Manrope']">
+                  {t('tour.stepOf', {
+                    current: currentStepIndex + 1,
+                    total: steps.length,
+                  })}
+                </span>
               </div>
 
-              {/* Progress indicator dots */}
-              <div className="flex items-center gap-1.5">
-                {steps.map((_, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setCurrentStepIndex(idx)}
-                    aria-label={`Go to step ${idx + 1}`}
-                    className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
-                      idx === currentStepIndex
-                        ? 'w-5 bg-primary'
-                        : 'w-1.5 bg-surface-dim hover:bg-outline-variant'
-                    }`}
-                  />
-                ))}
+              <div className="flex items-center gap-2">
+                {/* 4 progress dots */}
+                <div className="flex items-center gap-1.5" aria-hidden="true">
+                  {steps.map((_, idx) => (
+                    <div
+                      key={idx}
+                      className={`h-1.5 rounded-full transition-all duration-300 ${
+                        idx === currentStepIndex
+                          ? 'w-4 bg-[#0F3D2E]'
+                          : 'w-1.5 bg-slate-200'
+                      }`}
+                    />
+                  ))}
+                </div>
+
+                {/* Direct Close Button */}
+                <button
+                  type="button"
+                  id="tour_close_btn"
+                  onClick={handleDismiss}
+                  aria-label={t('tour.skip')}
+                  className="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
             </div>
 
-            {/* Title & Description */}
-            <h3 className="text-lg font-bold font-['Plus_Jakarta_Sans'] text-on-surface mb-1.5 tracking-tight">
+            {/* Clear Title */}
+            <h3 className="text-base sm:text-lg font-bold font-['Plus_Jakarta_Sans'] text-slate-900 mb-1 tracking-tight">
               {currentStep.title}
             </h3>
-            <p className="text-sm font-['Manrope'] text-on-surface-variant leading-relaxed mb-5">
+
+            {/* Short Description */}
+            <p className="text-xs sm:text-sm font-['Manrope'] text-slate-600 leading-relaxed mb-4">
               {currentStep.description}
             </p>
 
-            {/* Action Buttons: Skip, Back, Next / Finish */}
-            <div className="flex items-center justify-between gap-2 pt-3 border-t border-surface-dim/60">
+            {/* Footer Buttons: Skip, Back, Next / Done */}
+            <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-100">
               <button
-                id="tour_skip_bottom_btn"
+                id="tour_skip_btn"
                 type="button"
                 onClick={handleDismiss}
-                className="text-xs font-semibold font-['Manrope'] text-on-surface-variant hover:text-on-surface px-3 py-2 rounded-xl hover:bg-surface-container-low transition-colors cursor-pointer"
+                className="text-xs font-semibold font-['Manrope'] text-slate-500 hover:text-slate-800 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 {t('tour.skip')}
               </button>
@@ -442,13 +465,17 @@ export const ProductTour: React.FC<ProductTourProps> = ({
               <div className="flex items-center gap-2">
                 {currentStepIndex > 0 && (
                   <button
-                    id="tour_prev_btn"
+                    id="tour_back_btn"
                     type="button"
                     onClick={handleBack}
-                    className="h-9 px-3.5 rounded-xl border border-surface-dim text-on-surface hover:bg-surface-container-low text-xs font-bold font-['Manrope'] transition-all flex items-center gap-1 active:scale-95 cursor-pointer"
+                    className="h-8 sm:h-9 px-3 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold font-['Manrope'] transition-all flex items-center gap-1 active:scale-95 cursor-pointer"
                     aria-label={t('tour.back')}
                   >
-                    {isRTL ? <ArrowRight className="w-3.5 h-3.5" /> : <ArrowLeft className="w-3.5 h-3.5" />}
+                    {isRTL ? (
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    ) : (
+                      <ArrowLeft className="w-3.5 h-3.5" />
+                    )}
                     <span>{t('tour.back')}</span>
                   </button>
                 )}
@@ -457,14 +484,14 @@ export const ProductTour: React.FC<ProductTourProps> = ({
                   id="tour_next_btn"
                   type="button"
                   onClick={handleNext}
-                  className="h-9 px-4 rounded-xl bg-primary text-on-primary text-xs font-bold font-['Manrope'] hover:bg-primary/90 active:scale-95 transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+                  className="h-8 sm:h-9 px-4 rounded-xl bg-[#0F3D2E] text-white hover:bg-[#134e3a] text-xs font-bold font-['Manrope'] active:scale-95 transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
                 >
                   <span>
-                    {currentStepIndex === steps.length - 1
-                      ? t('tour.finish')
+                    {isLastStep
+                      ? t('tour.done') || t('tour.finish')
                       : t('tour.next')}
                   </span>
-                  {currentStepIndex === steps.length - 1 ? (
+                  {isLastStep ? (
                     <Check className="w-3.5 h-3.5 stroke-[2.5]" />
                   ) : isRTL ? (
                     <ArrowLeft className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -475,7 +502,7 @@ export const ProductTour: React.FC<ProductTourProps> = ({
               </div>
             </div>
           </motion.div>
-        </div>
+        </AnimatePresence>
       </div>
     </div>
   );

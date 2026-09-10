@@ -17,6 +17,8 @@ import { StatisticsView } from './components/StatisticsView';
 import { BottomNavBar } from './components/BottomNavBar';
 import { AuthModal } from './components/AuthModal';
 import { ProductTour } from './components/ProductTour';
+import { PhoneNumberReminderModal } from './components/PhoneNumberReminderModal';
+import { usePhoneNumberReminder } from './hooks/usePhoneNumberReminder';
 import { useAuth } from './context/AuthContext';
 import { generateUUID } from './lib/uuid';
 import {
@@ -25,7 +27,10 @@ import {
   deleteUserShoppingList,
   clearAllUserShoppingLists,
   setupNetworkSyncListener,
+  recordCompletedShoppingTrip,
+  persistCompletedShoppingSession,
 } from './lib/supabase';
+import { subscribeToCrossDeviceSync } from './lib/realtimeSync';
 import { NetworkStatusPill } from './components/NetworkStatusPill';
 import { PWAUpdateNotification } from './components/PWAUpdateNotification';
 import { useOnlineStatus } from './lib/useOnlineStatus';
@@ -40,7 +45,7 @@ import { LegalPageType } from './components/legal/legalContent';
 
 const STORAGE_ONBOARDED_KEY = 'yaad_has_onboarded_v2';
 const STORAGE_PROFILE_SETUP_KEY = 'yaad_profile_setup_done';
-const STORAGE_TOUR_KEY = 'yaad_tour_completed_v1';
+const STORAGE_TOUR_KEY = 'yaad_tour_completed_v2';
 const getStorageKey = (userId?: string | null) => {
   return userId ? `yaad_shopping_lists_u_${userId}` : 'yaad_shopping_lists_guest';
 };
@@ -80,9 +85,40 @@ export default function App() {
   // Interactive Product Tour state
   const [isTourActive, setIsTourActive] = useState<boolean>(false);
 
+  // Phone Number reminder state (auto-navigate to Settings with phone input open)
+  const [focusPhoneInSettings, setFocusPhoneInSettings] = useState<boolean>(false);
+
+  const handleOpenPhoneInSettings = useCallback(() => {
+    setFocusPhoneInSettings(true);
+    setCurrentScreen('settings');
+    setActiveTab('settings');
+  }, []);
+
+  const hasOnboardedFlag = typeof window !== 'undefined'
+    ? localStorage.getItem(STORAGE_ONBOARDED_KEY) === 'true'
+    : true;
+
+  // Smart Phone-Number Completion Reminder (intelligently reminds email users without phone)
+  const {
+    isOpen: isPhoneReminderOpen,
+    handleDismiss: handleDismissPhoneReminder,
+    handleAddNumber: handleAddNumberReminder,
+  } = usePhoneNumberReminder({
+    user,
+    profile,
+    currentScreen,
+    isTourActive,
+    isAuthModalOpen,
+    hasOnboarded: hasOnboardedFlag,
+    onOpenPhoneSettings: handleOpenPhoneInSettings,
+  });
+
   // Loading & error state for shopping lists
   const [isLoadingLists, setIsLoadingLists] = useState<boolean>(false);
   const [listsFetchError, setListsFetchError] = useState<string | null>(null);
+  const [isCompletingTrip, setIsCompletingTrip] = useState<boolean>(false);
+  const [completionError, setCompletionError] = useState<string | null>(null);
+  const isCompletingTripRef = React.useRef<boolean>(false);
 
   // Shopping lists collection scoped by authenticated user
   const [lists, setLists] = useState<ShoppingList[]>([]);
@@ -158,6 +194,34 @@ export default function App() {
     });
 
     return cleanup;
+  }, [user?.id, isConfigured, fetchShoppingLists]);
+
+  // Cross-device realtime broadcast listener (instant cross-device sync)
+  useEffect(() => {
+    if (!user?.id || !isConfigured) return;
+
+    const unsubscribe = subscribeToCrossDeviceSync(user.id, (event) => {
+      if (event.type === 'LIST_UPSERT' && event.list) {
+        setLists((prev) => {
+          const index = prev.findIndex((l) => l.id === event.list!.id);
+          if (index >= 0) {
+            const next = [...prev];
+            next[index] = event.list!;
+            return next;
+          }
+          return [event.list!, ...prev];
+        });
+      } else if (event.type === 'LIST_DELETE' && event.listId) {
+        setLists((prev) => prev.filter((l) => l.id !== event.listId));
+        setActiveListId((prevActive) => (prevActive === event.listId ? null : prevActive));
+      } else if (event.type === 'REFRESH_ALL') {
+        fetchShoppingLists(user.id);
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, [user?.id, isConfigured, fetchShoppingLists]);
 
   // Initialize Master Item Catalog on startup
@@ -439,13 +503,34 @@ export default function App() {
     setCurrentScreen('create_list');
   };
 
-  const handleCreateListTitleSubmitted = (title: string) => {
+  const handleCreateListTitleSubmitted = async (title: string, icon?: string) => {
     if (!user) {
       setCurrentScreen('auth');
       return;
     }
-    setTempNewListTitle(title);
+    const cleanTitle = title.trim() || 'Shopping List';
+    const newListId = generateUUID();
+    const newList: ShoppingList = {
+      id: newListId,
+      userId: user.id,
+      title: cleanTitle,
+      icon: icon || 'shopping_basket',
+      createdAt: 'Today',
+      createdTimestamp: Date.now(),
+      isCompleted: false,
+      items: [],
+    };
+
+    // Update local state immediately
+    setLists((prev) => [newList, ...prev]);
+    setActiveListId(newListId);
+    setTempNewListTitle(cleanTitle);
     setCurrentScreen('add_items');
+
+    // Persist to Supabase immediately through existing persistence architecture
+    if (isConfigured) {
+      await saveUserShoppingList(user.id, newList);
+    }
   };
 
   const handleStartShoppingFromNewItems = async (items: ShoppingItem[]) => {
@@ -453,13 +538,16 @@ export default function App() {
       setCurrentScreen('auth');
       return;
     }
-    const newListId = generateUUID();
-    const newList: ShoppingList = {
-      id: newListId,
+    const targetId = activeListId || generateUUID();
+    const existingList = lists.find((l) => l.id === targetId);
+
+    const updatedList: ShoppingList = {
+      id: targetId,
       userId: user.id,
-      title: tempNewListTitle.trim() || 'Shopping List',
-      createdAt: 'Today',
-      createdTimestamp: Date.now(),
+      title: existingList?.title || tempNewListTitle.trim() || 'Shopping List',
+      icon: existingList?.icon || 'shopping_basket',
+      createdAt: existingList?.createdAt || 'Today',
+      createdTimestamp: existingList?.createdTimestamp || Date.now(),
       isCompleted: false,
       items: items.map((it) => ({
         ...it,
@@ -469,14 +557,33 @@ export default function App() {
     };
 
     // Update local state immediately
-    setLists((prev) => [newList, ...prev]);
-    setActiveListId(newListId);
+    setLists((prev) => {
+      const exists = prev.some((l) => l.id === targetId);
+      if (exists) {
+        return prev.map((l) => (l.id === targetId ? updatedList : l));
+      }
+      return [updatedList, ...prev];
+    });
+    setActiveListId(targetId);
     setTempNewListTitle('');
     setCurrentScreen('shopping_list');
 
     // Persist to Supabase if authenticated
     if (isConfigured) {
-      await saveUserShoppingList(user.id, newList);
+      await saveUserShoppingList(user.id, updatedList);
+    }
+  };
+
+  const handleItemsChangeInAddView = async (newItems: ShoppingItem[]) => {
+    if (!user || !activeListId) return;
+    setLists((prev) =>
+      prev.map((l) => (l.id === activeListId ? { ...l, items: newItems } : l))
+    );
+    if (isConfigured) {
+      const targetList = lists.find((l) => l.id === activeListId);
+      if (targetList) {
+        await saveUserShoppingList(user.id, { ...targetList, items: newItems });
+      }
     }
   };
 
@@ -534,29 +641,48 @@ export default function App() {
     const target = typeof listOrId === 'object' ? listOrId : lists.find((l) => l.id === targetId);
     if (!target) return;
 
+    // Prevent duplicate triggers if animation or tap occurs twice
+    if (isCompletingTripRef.current) return;
+    isCompletingTripRef.current = true;
+    setIsCompletingTrip(true);
+    setCompletionError(null);
+
     const nowTimestamp = Date.now();
+    const stableSessionId = target.completionSessionId || generateUUID();
+    const completedAtIso = target.completedAt || new Date(nowTimestamp).toISOString();
+
     const completedList: ShoppingList = {
       ...target,
       isCompleted: true,
-      completedAt: target.completedAt || new Date(nowTimestamp).toISOString(),
+      completedAt: completedAtIso,
       completedTimestamp: target.completedTimestamp || nowTimestamp,
+      completionSessionId: stableSessionId,
     };
 
-    setLists((prev) => prev.map((l) => (l.id === targetId ? completedList : l)));
-    setActiveListId(targetId);
-    setCurrentScreen('completion');
+    try {
+      // 1. CRITICAL: Persist to Supabase BEFORE treating as permanently completed
+      const persistResult = await persistCompletedShoppingSession(user.id, completedList, stableSessionId);
 
-    // Strong Purchase Signal: Record completed items in personal recommendation engine
-    if (completedList.items && completedList.items.length > 0) {
-      recommendationService.recordCompletedTrip(completedList.items).catch((err) => {
-        console.warn('Error recording trip to recommendation engine:', err);
-      });
-    }
+      if (!persistResult.success) {
+        // If database write fails: DO NOT falsely show successful completion!
+        console.error('Failed to persist completed shopping session to Supabase:', persistResult.error);
+        setCompletionError(
+          persistResult.error?.message || 'Unable to save completed shopping session. Please check your connection and try again.'
+        );
+        return;
+      }
 
-    if (isConfigured) {
-      await saveUserShoppingList(user.id, completedList);
-      // Asynchronously record items to user_item_history for future personalization
+      // 2. Database write succeeded! Update state with real persisted data
+      setLists((prev) => prev.map((l) => (l.id === targetId ? completedList : l)));
+      setActiveListId(targetId);
+
+      // Strong Purchase Signal: Record completed items in personal recommendation engine
       if (completedList.items && completedList.items.length > 0) {
+        recommendationService.recordCompletedTrip(completedList.items).catch((err) => {
+          console.warn('Error recording trip to recommendation engine:', err);
+        });
+
+        // Asynchronously record items to user_item_history for future personalization
         completedList.items
           .filter((it) => it.completed)
           .forEach((it) => {
@@ -564,6 +690,17 @@ export default function App() {
             supabaseCatalog.recordUserPurchase(user.id, itemId, it.quantity);
           });
       }
+
+      // 3. Smoothly transition to the completion screen
+      setCurrentScreen('completion');
+    } catch (err: any) {
+      console.error('Exception completing trip:', err);
+      setCompletionError(
+        err?.message || 'Unable to save completed shopping session. Please check your connection and try again.'
+      );
+    } finally {
+      setIsCompletingTrip(false);
+      isCompletingTripRef.current = false;
     }
   };
 
@@ -777,11 +914,14 @@ export default function App() {
     setActiveTab(tab);
     if (tab === 'home') {
       setCurrentScreen('home');
+      setFocusPhoneInSettings(false);
     } else if (tab === 'create') {
       handleStartCreateList();
     } else if (tab === 'lists') {
       setCurrentScreen('history');
+      setFocusPhoneInSettings(false);
     } else if (tab === 'settings') {
+      setFocusPhoneInSettings(false);
       setCurrentScreen('settings');
     }
   };
@@ -791,6 +931,7 @@ export default function App() {
       setCurrentScreen('auth');
       return;
     }
+    setFocusPhoneInSettings(false);
     setCurrentScreen('settings');
     setActiveTab('settings');
   };
@@ -883,15 +1024,18 @@ export default function App() {
       {currentScreen === 'create_list' && user && (
         <CreateListView
           onBack={() => setCurrentScreen('home')}
+          onCreateList={handleCreateListTitleSubmitted}
           onContinue={handleCreateListTitleSubmitted}
         />
       )}
 
       {currentScreen === 'add_items' && user && (
         <AddItemsView
-          listTitle={tempNewListTitle || 'Shopping List'}
-          onBack={() => setCurrentScreen('create_list')}
+          listTitle={tempNewListTitle || currentActiveList?.title || 'Shopping List'}
+          initialItems={currentActiveList?.items || []}
+          onBack={() => setCurrentScreen('home')}
           onStartShopping={handleStartShoppingFromNewItems}
+          onItemsChange={handleItemsChangeInAddView}
         />
       )}
 
@@ -903,6 +1047,9 @@ export default function App() {
           onCompleteTrip={handleCompleteTrip}
           onEditList={handleEditList}
           onOpenProfile={handleOpenSettingsScreen}
+          isCompletingTrip={isCompletingTrip}
+          completionError={completionError}
+          onClearCompletionError={() => setCompletionError(null)}
         />
       )}
 
@@ -961,7 +1108,9 @@ export default function App() {
 
       {currentScreen === 'settings' && user && (
         <SettingsView
+          initialEditPhone={focusPhoneInSettings}
           onBack={() => {
+            setFocusPhoneInSettings(false);
             setCurrentScreen('home');
             setActiveTab('home');
           }}
@@ -1003,6 +1152,13 @@ export default function App() {
         isActive={isTourActive && currentScreen === 'home'}
         onComplete={handleTourComplete}
         onSkip={handleTourSkip}
+      />
+
+      {/* Smart Phone Number Completion Reminder Modal */}
+      <PhoneNumberReminderModal
+        isOpen={isPhoneReminderOpen}
+        onAddNumber={handleAddNumberReminder}
+        onDismiss={handleDismissPhoneReminder}
       />
 
       {/* Auth Modal (Sign in / Sign up) */}

@@ -158,16 +158,16 @@ const CORE_CANONICAL_ITEMS: CanonicalItemRecord[] = [
     canonical_name: 'Green Chilli',
     english_name: 'Green Chilli',
     urdu_name: 'ہری مرچ',
-    roman_urdu_names: ['Hari Mirch', 'Hari Mirchi', 'Sabz Mirch'],
+    roman_urdu_names: ['Hari Mirch', 'Hri Mirch', 'Hari Mirchi', 'Sabz Mirch'],
     aliases: [
       'green chili', 'green chilli', 'green chillies', 'green chilies', 'green chilly',
-      'hari mirch', 'hari mirchh', 'hari mirchhh', 'hari mirchi', 'haree mirch', 'haree mirchh',
+      'hari mirch', 'hri mirch', 'hari mirchh', 'hari mirchhh', 'hari mirchi', 'hri mirchi', 'haree mirch', 'haree mirchh',
       'harimirch', 'harimirchh', 'sabz mirch', 'hari mir',
       'ہری مرچ', 'ہری مرچی', 'سبز مرچ',
     ],
     category: 'vegetables',
     subcategory: 'Fresh Herbs & Chilis',
-    common_spellings: ['green chili', 'green chilli', 'green chillies', 'hari mirch', 'hari mirchh', 'hari mirche', 'harimirch', 'hari mirchi', 'hari mir'],
+    common_spellings: ['hri mirch', 'hri mirchi', 'green chili', 'green chilli', 'green chillies', 'hari mirch', 'hari mirchh', 'hari mirche', 'harimirch', 'hari mirchi', 'hari mir'],
     confidence: 0.98,
     active: true,
     emoji: '🌶️',
@@ -315,15 +315,15 @@ const CORE_CANONICAL_ITEMS: CanonicalItemRecord[] = [
     canonical_name: 'Sugar',
     english_name: 'Sugar',
     urdu_name: 'چینی',
-    roman_urdu_names: ['Cheeni', 'Chini'],
+    roman_urdu_names: ['Cheeni', 'Chini', 'Chinni'],
     aliases: [
       'sugar', 'sugr', 'white sugar', 'refined sugar',
-      'cheeni', 'chini', 'cheni', 'shakar', 'shakkar',
+      'cheeni', 'chini', 'cheni', 'chinni', 'chenni', 'chinii', 'shakar', 'shakkar',
       'چینی', 'شکر', 'سفید چینی',
     ],
     category: 'cooking_essentials',
     subcategory: 'Sweeteners & Staples',
-    common_spellings: ['sugr', 'cheni', 'cheeni', 'shakar'],
+    common_spellings: ['chinni', 'chenni', 'chinii', 'sugr', 'cheni', 'cheeni', 'shakar'],
     confidence: 0.98,
     active: true,
     emoji: '🧂',
@@ -810,6 +810,11 @@ export class ItemCatalog implements ItemCatalogProvider {
   public findCommonSpelling(spelling: string): CanonicalItemRecord | undefined {
     const norm = normalizeBaseText(spelling);
     return this.commonSpellingMap.get(norm);
+  }
+
+  public findItemByName(term?: string): CanonicalItemRecord | undefined {
+    if (!term) return undefined;
+    return this.findExact(term) || this.findFuzzy(term, 0.8)?.item;
   }
 
   /**

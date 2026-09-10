@@ -320,7 +320,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </section>
 
         {/* 4. QUICK ACTIONS SHORTCUTS GRID (4 cards) */}
-        <section aria-label={t('home.quickActions.title')}>
+        <section id="home_quick_actions" aria-label={t('home.quickActions.title')}>
           <div className="grid grid-cols-4 gap-2 sm:gap-3 md:gap-4 select-none">
             {/* 1. Recent Lists */}
             <button

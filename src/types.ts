@@ -273,6 +273,7 @@ export interface ShoppingList {
   createdTimestamp?: number;
   completedAt?: string;
   completedTimestamp?: number;
+  completionSessionId?: string;
   icon?: string;
   items: ShoppingItem[];
   isCompleted: boolean;

@@ -67,11 +67,12 @@ export const romanUrdu: typeof en = {
   // Interactive Product Tour
   // Interactive Product Tour
   tour: {
-    skip: 'Tour Skip Karein',
+    skip: 'Skip',
     next: 'Agay Barhein',
     back: 'Peechay',
+    done: 'Mukammal',
     finish: 'Mukammal',
-    stepOf: 'Step {current} of {total}',
+    stepOf: '{current} of {total}',
     logoTitle: 'YAAD Header aur Brand',
     logoDesc: 'Aapka ba-asar grocery saathi, Urdu, Roman Urdu aur English mein tayyar.',
     homeTitle: 'Home Dashboard',
@@ -85,30 +86,24 @@ export const romanUrdu: typeof en = {
     settingsTitle: 'Settings aur Profile',
     settingsDesc: 'Apna avatar emoji chunein, zubaan badlein, naam edit karein aur preferences sambhalein.',
     replayTour: 'Product Tour Dobara Dekhein',
-    replayTourDesc: 'YAAD k features ka interactive tour dubara shuru karein.',
+    replayTourDesc: 'YAAD ke basic features ka 4-step tour dobara dekhein.',
     tourCompleted: 'Tour mukammal! Ab aap pehli list bana saktay hain.',
-    step1Title: 'YAAD Branding aur Home',
-    step1Desc: 'Aapka saaf suthra aur zaheen grocery saathi, rozmarrah k jaize aur kitchen zarooriat k sath.',
-    step2Title: 'Nayi List Banayein',
-    step2Desc: 'Nayi shopping list shuru karne k liye darmiyani create button ya card dabayein.',
-    step3Title: 'Shopping Items Shamil Karein',
-    step3Desc: 'Bari aasani se items type ya select karein. Quantities aur units set karna nihayat asaan hai.',
-    step4Title: 'Smart Item Pehchan',
-    step4Desc: 'YAAD khud-ba-khud Roman Urdu, Urdu aur English items pehchan kar sahi category mein rakhta hai.',
-    step5Title: 'Active Shopping Mode',
-    step5Desc: 'Supermarket mein ek haath se focused shopping karein aur live progress dekhein.',
-    step6Title: 'Items Check aur Mukammal',
-    step6Desc: 'Kharidi gayi item par tap karein, item foran kharidari list mein muntaqil ho jaye gi.',
-    step7Title: 'Completion Chime aur Awaaz',
-    step7Desc: 'Tamam items kharidne par kamyabi ki dilkash acoustic chime bajti hai.',
-    step8Title: 'Settings Hub',
-    step8Desc: 'Apna profile, security aur preferences kisi bhi waqt Settings page par set karein.',
-    step9Title: 'Bilingual Zubaan System',
-    step9Desc: 'English, Roman Urdu aur Urdu (Nastaliq) k darmiyan ba-asani switch karein.',
-    step10Title: 'Profile aur Emoji Avatars',
-    step10Desc: 'Janwar, khana, qudrat, safar aur khel k curated emoji avatars chunein.',
-    step11Title: 'Account Security aur Sync',
-    step11Desc: 'Supabase sync aur password management k zariye apna data hamesha mehfooz rakhein.',
+    step1Title: 'Home',
+    step1Desc: 'Yeh aapka YAAD home hai. Apni lists dekhein aur foran shopping shuru karein.',
+    step2Title: 'List Banayein',
+    step2Desc: 'Chand seconds mein list banayein.',
+    step3Title: 'Items Shamil aur Mukammal Karein',
+    step3Desc: 'Zaroori cheezein shamil karein, phir khareedtay waqt tap ya swipe karein.',
+    step4Title: 'History aur Stats',
+    step4Desc: 'Dekhein aapne pehle kya khareeda aur shopping ki aadatein samjhein.',
+  },
+
+  // Phone Number Completion Reminder
+  phoneReminder: {
+    title: 'Apna phone number shamil karein',
+    description: 'Apna account mukammal karne k liye phone number darj karein.',
+    addNumber: 'Number Shamil Karein',
+    notNow: 'Abhi Nahi',
   },
 
   // Home Screen
@@ -222,18 +217,63 @@ export const romanUrdu: typeof en = {
 
   // Create List Screen
   createList: {
-    title: 'Yeh list kis cheez ki hai?',
-    placeholder: 'Maslan: Hafte ka Sauda',
+    title: 'Nayi List Banayein',
+    subtitle: 'Koi suggested list type chunein ya apna custom naam likhein.',
+    customSectionTitle: 'Custom List',
+    customPlaceholder: 'List ka naam likhein (e.g. Dawat, Eid Shopping)...',
+    continueBtn: 'Aage Barhein',
+    suggestedSectionTitle: 'Suggested Lists',
+    suggestedSubtitle: 'Kisi bhi list par tap karein aur fauran shuru karein',
     errorEmpty: 'Pehle list ka naam likhein.',
+    types: {
+      weekly_grocery: {
+        title: 'Hafte Ka Sauda',
+        desc: 'Doodh, anday, double roti aur kitchen rashan',
+      },
+      bbq: {
+        title: 'BBQ / Tikka',
+        desc: 'Chicken, koyla, tikka masala aur cold drinks',
+      },
+      pharmacy: {
+        title: 'Medical / Pharmacy',
+        desc: 'Panadol, dawaiyan, patti aur health care',
+      },
+      party: {
+        title: 'Party / Dawat',
+        desc: 'Cold drinks, chips, juices, cake aur glasses',
+      },
+      monthly_shopping: {
+        title: 'Mahana Rashan',
+        desc: 'Atta, chawal, cooking oil, ghee aur cheeni',
+      },
+      supermarket: {
+        title: 'Supermarket',
+        desc: 'General grocery store aur packed samaan',
+      },
+      household: {
+        title: 'Ghar Ka Samaan',
+        desc: 'Surf, saban, tissue box aur safai ka samaan',
+      },
+      fruits_vegetables: {
+        title: 'Taza Sabzi & Phal',
+        desc: 'Taza mosami phal, aloo, pyaz aur sabzi',
+      },
+      other: {
+        title: 'Other / Custom',
+        desc: 'Apna man pasand list naam likhein',
+      },
+    },
+    // Backward compatibility
+    placeholder: 'Maslan: Hafte ka Sauda',
     suggestionsLabel: 'Mashwaray:',
     suggestions: [
       'Hafte ka Sauda',
-      'Supermarket Run',
+      'Supermarket',
       'Weekend BBQ',
-      'Snacks & Chai',
+      'Party Snacks',
       'Medical Store',
     ],
-    submitBtn: 'Save karein aur cheezein dalein',
+    submitBtn: 'Aage Barhein',
   },
 
   // Add Items Screen
@@ -261,15 +301,25 @@ export const romanUrdu: typeof en = {
     editList: 'Tabdeel',
     emptyTitle: 'Is list mein abhi koi item nahi hai',
     emptySubtitle: 'Item shamil karne ke liye ooper naam likhein ya bolein.',
+    purchased: 'Khareed lia',
+    markedPurchased: 'Khareed lia gya',
+    undo: 'Wapas karein',
+    tapOrSwipeHint: 'Item ko tap ya swipe kar k khareeda mark karein',
   },
 
   // Completion Screen
   completion: {
-    title: 'Zabardast! Sab khareed lia!',
-    subtitle: 'Aapne list ki saari cheezein le lein. Shopping trip mukammal karein.',
-    completeTripBtn: 'Trip Mukammal Karein',
+    title: 'Shopping Mukammal Ho Gayi',
+    subtitle: 'Tamam khareedi hui cheezein aapki shopping history mein save ho gayi hain.',
+    completeTripBtn: 'Home par wapis jayein',
     addMoreBtn: 'Aur cheezein dalein',
-    badgeCompleted: 'Mukammal',
+    badgeCompleted: 'Shopping Mukammal',
+    purchasedSummary: '{total} mein se {bought} cheezein khareedi gayin',
+    completedAt: 'Mukammal waqt: {time}',
+    sessionDetails: 'Trip ka Khulasa',
+    saveError: 'Shopping session save nahi ho saka. Connection check karein aur dobara koshish karein.',
+    viewHistoryBtn: 'History mein dekhein',
+    itemsPurchasedHeading: 'Khareedi hui cheezein',
   },
 
   // History & Details Screen
