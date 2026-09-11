@@ -514,14 +514,14 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
   };
 
   return (
-    <div className="w-full max-w-xl md:max-w-2xl lg:max-w-3xl mx-auto min-h-screen flex flex-col antialiased bg-background">
+    <div className="w-full max-w-6xl mx-auto min-h-screen flex flex-col antialiased bg-background">
       {/* Header */}
       <header className="sticky top-0 w-full z-40 bg-background/95 backdrop-blur-md border-b border-surface-dim/40">
-        <div className="flex justify-between items-center px-4 sm:px-6 md:px-8 h-14 w-full">
+        <div className="flex justify-between items-center px-4 sm:px-6 md:px-8 h-14 w-full max-w-6xl mx-auto">
           <button
             onClick={onBack}
             aria-label="Go back"
-            className="w-10 h-10 -ms-2 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors text-primary active:scale-95"
+            className="w-10 h-10 -ms-2 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors text-primary active:scale-95 cursor-pointer"
           >
             <ArrowLeft className="w-5 h-5 rtl:rotate-180 text-primary" />
           </button>
@@ -532,10 +532,13 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 px-4 sm:px-6 md:px-8 pt-4 pb-28 flex flex-col gap-5">
-        {/* Input Card */}
-        <div className="bg-surface-container-lowest p-4 sm:p-5 rounded-3xl border border-surface-dim shadow-xs space-y-4">
+      {/* Main Content: 1 col on mobile, 2 cols on iPad/desktop */}
+      <main className="flex-1 px-4 sm:px-6 md:px-8 pt-4 pb-28 lg:pb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Left Column: Input Form, Category Chips, Recommendations */}
+          <div className="lg:col-span-7 flex flex-col gap-5">
+            {/* Input Card */}
+            <div className="bg-surface-container-lowest p-4 sm:p-5 rounded-3xl border border-surface-dim shadow-xs space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-primary text-xl">
               {t('addItems.title')}
@@ -739,19 +742,33 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
             </div>
           </form>
         </div>
+      </div>
 
-        {/* Current Items List */}
-        <div className="flex-1 flex flex-col gap-3">
-          <div className="flex justify-between items-center">
-            <h4 className="font-['Plus_Jakarta_Sans'] font-bold text-primary text-base">
-              {t('addItems.listItemsHeader', { count: items.length })}
-            </h4>
-            {items.length > 0 && (
-              <span className="text-xs font-['Manrope'] text-on-surface-variant font-medium">
-                {t('addItems.quantityHint')}
-              </span>
-            )}
-          </div>
+      {/* Right Column: Current Items List + Embedded Desktop Start Shopping Action */}
+      <div className="lg:col-span-5 flex flex-col gap-3 lg:sticky lg:top-20">
+        {/* Desktop embedded primary action button */}
+        <div className="hidden lg:block">
+          <button
+            type="button"
+            onClick={() => onStartShopping(items)}
+            className="w-full h-12 rounded-2xl bg-primary text-on-primary font-['Manrope'] text-sm font-bold shadow-sm hover:bg-primary-container active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <span>{t('addItems.startShoppingBtn')} ({items.length})</span>
+            <ShoppingCart className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Current Items Header */}
+        <div className="flex justify-between items-center px-1">
+          <h4 className="font-['Plus_Jakarta_Sans'] font-bold text-primary text-base">
+            {t('addItems.listItemsHeader', { count: items.length })}
+          </h4>
+          {items.length > 0 && (
+            <span className="text-xs font-['Manrope'] text-on-surface-variant font-medium">
+              {t('addItems.quantityHint')}
+            </span>
+          )}
+        </div>
 
           {items.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center p-8 bg-surface-container-lowest rounded-3xl border border-surface-dim text-center my-auto min-h-[180px]">
@@ -858,27 +875,28 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
             </div>
           )}
         </div>
-      </main>
-
-      {/* Quantity Edit Modal */}
-      <QuantityEditModal
-        isOpen={!!editingItem}
-        item={editingItem}
-        onClose={() => setEditingItem(null)}
-        onSave={handleSaveQuantity}
-      />
-
-      {/* Floating Bottom Action */}
-      <div className="fixed bottom-0 left-0 right-0 w-full max-w-xl md:max-w-2xl lg:max-w-3xl mx-auto p-4 bg-background/95 backdrop-blur-md border-t border-surface-dim/40 z-40">
-        <button
-          onClick={() => onStartShopping(items)}
-          className="w-full h-14 rounded-full bg-primary text-on-primary font-['Manrope'] text-base font-bold shadow-md hover:bg-primary-container active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-        >
-          <span>{t('addItems.startShoppingBtn')}</span>
-          <ShoppingCart className="w-5 h-5" />
-        </button>
       </div>
+    </main>
+
+    {/* Quantity Edit Modal */}
+    <QuantityEditModal
+      isOpen={!!editingItem}
+      item={editingItem}
+      onClose={() => setEditingItem(null)}
+      onSave={handleSaveQuantity}
+    />
+
+    {/* Floating Bottom Action (Mobile/Tablet only; hidden on lg desktop because embedded in right column) */}
+    <div className="lg:hidden fixed bottom-0 left-0 right-0 w-full max-w-xl md:max-w-2xl mx-auto p-4 bg-background/95 backdrop-blur-md border-t border-surface-dim/40 z-40">
+      <button
+        onClick={() => onStartShopping(items)}
+        className="w-full h-14 rounded-full bg-primary text-on-primary font-['Manrope'] text-base font-bold shadow-md hover:bg-primary-container active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
+      >
+        <span>{t('addItems.startShoppingBtn')} ({items.length})</span>
+        <ShoppingCart className="w-5 h-5" />
+      </button>
     </div>
+  </div>
   );
 };
 

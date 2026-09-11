@@ -66,7 +66,15 @@ function parseScreenFromUrl(): ScreenType | null {
 }
 
 export default function App() {
-  const { user, profile, isLoading: isAuthLoading, isConfigured, deleteAccount, signOut } = useAuth();
+  const {
+    user,
+    profile,
+    isLoading: isAuthLoading,
+    isConfigured,
+    isPasswordRecovery,
+    deleteAccount,
+    signOut,
+  } = useAuth();
 
   // Screen and navigation state
   const initialUrlScreen = parseScreenFromUrl();
@@ -294,6 +302,14 @@ export default function App() {
 
     // Public legal & information pages are always accessible without auth!
     if (LEGAL_SCREENS.includes(currentScreen)) return;
+
+    // 0. If in password recovery mode, ensure auth screen is active
+    if (isPasswordRecovery) {
+      if (currentScreen !== 'auth') {
+        setCurrentScreen('auth');
+      }
+      return;
+    }
 
     // 1. If user is NOT authenticated, redirect to auth screen
     if (!user) {
@@ -985,22 +1001,22 @@ export default function App() {
         <SplashView onFinish={handleSplashFinish} />
       )}
 
-      {!user && currentScreen !== 'splash' && !LEGAL_SCREENS.includes(currentScreen) && (
+      {(!user || isPasswordRecovery) && currentScreen !== 'splash' && !LEGAL_SCREENS.includes(currentScreen) && (
         <AuthView
           onSuccess={handleAuthSuccess}
           onOpenLegalPage={handleOpenLegalPage}
         />
       )}
 
-      {user && currentScreen === 'profile_setup' && !LEGAL_SCREENS.includes(currentScreen) && (
+      {user && !isPasswordRecovery && currentScreen === 'profile_setup' && !LEGAL_SCREENS.includes(currentScreen) && (
         <ProfileSetupView onComplete={handleProfileSetupComplete} />
       )}
 
-      {user && currentScreen === 'onboarding' && !LEGAL_SCREENS.includes(currentScreen) && (
+      {user && !isPasswordRecovery && currentScreen === 'onboarding' && !LEGAL_SCREENS.includes(currentScreen) && (
         <OnboardingView onComplete={handleOnboardingComplete} />
       )}
 
-      {currentScreen === 'home' && user && (
+      {currentScreen === 'home' && user && !isPasswordRecovery && (
         <HomeView
           lists={lists}
           isLoading={isLoadingLists}

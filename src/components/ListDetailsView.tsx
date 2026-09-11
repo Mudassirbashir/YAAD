@@ -84,7 +84,7 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
   const percentComplete = totalItems > 0 ? Math.round((completedItemsCount / totalItems) * 100) : 0;
 
   return (
-    <div className="w-full max-w-xl md:max-w-3xl lg:max-w-4xl mx-auto min-h-screen flex flex-col antialiased bg-background pb-28 selection:bg-emerald-100 selection:text-emerald-900">
+    <div className="w-full max-w-5xl mx-auto min-h-screen flex flex-col antialiased bg-background pb-28 selection:bg-emerald-100 selection:text-emerald-900">
       {/* Top Header */}
       <TopHeader
         title={t('appName')}
@@ -244,7 +244,7 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
           </div>
 
           {/* Grouped Associated Items by Category */}
-          <div className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
             {categoryIds.map((catId) => {
               const categoryItems = list.items.filter(
                 (i) => (i.categoryId || 'other') === catId
@@ -386,41 +386,41 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
         </section>
 
         {/* PRIMARY ACTIONS */}
-        <div className="mt-2 flex flex-col gap-3 pb-6">
-          {/* Continue Shopping (if list is active / incomplete) */}
-          {!isAllCompleted && (
-            <button
-              type="button"
-              id="history_continue_shopping_btn"
-              onClick={() => onContinueShopping(list)}
-              className="w-full min-h-[52px] rounded-full bg-[#0F3D2E] hover:bg-[#145B3A] text-white font-['Manrope'] text-sm sm:text-base font-bold flex items-center justify-center gap-2 shadow-xs active:scale-[0.98] transition-all cursor-pointer"
-            >
-              <ShoppingCart className="w-5 h-5" />
-              <span>{t('history.continueShopping')}</span>
-            </button>
-          )}
+        <div className="mt-2 flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 pb-6">
+          {/* Delete History Session */}
+          <button
+            type="button"
+            id="history_delete_btn"
+            onClick={() => setShowDeleteConfirm(true)}
+            className="w-full sm:w-auto sm:me-auto min-h-[46px] rounded-full bg-transparent text-rose-700 font-['Manrope'] text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 hover:bg-rose-50 px-4 transition-colors active:scale-95 cursor-pointer"
+          >
+            <Trash2 className="w-4 h-4" />
+            <span>{t('history.deleteHistory')}</span>
+          </button>
 
           {/* Reuse as New List (Always preserves original historical list immutable) */}
           <button
             type="button"
             id="history_reuse_list_btn"
             onClick={() => onReuseList(list)}
-            className="w-full min-h-[52px] rounded-full bg-emerald-50 text-[#0F3D2E] border border-emerald-200/80 hover:bg-emerald-100/70 font-['Manrope'] text-sm sm:text-base font-bold flex items-center justify-center gap-2 transition-all shadow-2xs active:scale-[0.98] cursor-pointer"
+            className="w-full sm:w-auto sm:min-w-[170px] min-h-[50px] px-5 rounded-full bg-emerald-50 text-[#0F3D2E] border border-emerald-200/80 hover:bg-emerald-100/70 font-['Manrope'] text-sm sm:text-base font-bold flex items-center justify-center gap-2 transition-all shadow-2xs active:scale-[0.98] cursor-pointer"
           >
-            <RotateCcw className="w-5 h-5 text-[#0F3D2E]" />
+            <RotateCcw className="w-4 h-4 text-[#0F3D2E]" />
             <span>{t('history.reuseList')}</span>
           </button>
 
-          {/* Delete History Session */}
-          <button
-            type="button"
-            id="history_delete_btn"
-            onClick={() => setShowDeleteConfirm(true)}
-            className="w-full min-h-[46px] rounded-full bg-transparent text-rose-700 font-['Manrope'] text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 hover:bg-rose-50 transition-colors active:scale-95 cursor-pointer"
-          >
-            <Trash2 className="w-4 h-4" />
-            <span>{t('history.deleteHistory')}</span>
-          </button>
+          {/* Continue Shopping (if list is active / incomplete) */}
+          {!isAllCompleted && (
+            <button
+              type="button"
+              id="history_continue_shopping_btn"
+              onClick={() => onContinueShopping(list)}
+              className="w-full sm:w-auto sm:min-w-[190px] min-h-[50px] px-6 rounded-full bg-[#0F3D2E] hover:bg-[#145B3A] text-white font-['Manrope'] text-sm sm:text-base font-bold flex items-center justify-center gap-2 shadow-xs active:scale-[0.98] transition-all cursor-pointer"
+            >
+              <ShoppingCart className="w-4 h-4" />
+              <span>{t('history.continueShopping')}</span>
+            </button>
+          )}
         </div>
       </main>
 

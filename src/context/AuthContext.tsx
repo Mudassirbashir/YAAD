@@ -8,6 +8,8 @@ import {
   deleteUserAccountData,
   isNetworkOrOfflineError,
   formatAuthErrorMessage,
+  cleanAuthUrlParams,
+  sendPasswordResetEmail as supabaseSendPasswordResetEmail,
 } from '../lib/supabase';
 import { purgeAllUserOfflineData, getOfflineProfile, saveOfflineProfile } from '../lib/offlineDb';
 import { UserProfile, AppLanguage, PasskeyCredentialInfo } from '../types';
@@ -26,6 +28,9 @@ interface AuthContextType {
   isConfigured: boolean;
   oauthError: string | null;
   clearOauthError: () => void;
+  isPasswordRecovery: boolean;
+  clearPasswordRecovery: () => void;
+  sendPasswordResetEmail: (email: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string, phoneNumber?: string) => Promise<{ error: Error | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
@@ -56,7 +61,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [oauthError, setOauthError] = useState<string | null>(null);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState<boolean>(false);
   const clearOauthError = () => setOauthError(null);
+  const clearPasswordRecovery = () => setIsPasswordRecovery(false);
   const isAuthenticatingRef = useRef<boolean>(false);
   const syncingUserIdsRef = useRef<Set<string>>(new Set());
 
@@ -120,7 +127,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     let isMounted = true;
 
-    // Check for OAuth cancellation or errors in URL parameters on mount
+    // Check for OAuth cancellation, errors, or password recovery in URL parameters on mount
     if (typeof window !== 'undefined') {
       try {
         const searchParams = new URLSearchParams(window.location.search);
@@ -128,6 +135,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           ? window.location.hash.substring(1)
           : window.location.hash;
         const hashParams = new URLSearchParams(hashStr);
+
+        // Check if user clicked a password reset / recovery link
+        const typeParam = searchParams.get('type') || hashParams.get('type');
+        if (typeParam === 'recovery') {
+          setIsPasswordRecovery(true);
+        }
 
         const errorParam = searchParams.get('error') || hashParams.get('error');
         const errorDesc =
@@ -149,19 +162,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               'Google sign-in could not be completed. Please try again or sign in with Email.'
             );
           }
-          // Clean up error parameters from visible URL bar safely without reloading
-          window.history.replaceState({}, document.title, window.location.pathname);
-        } else if (window.location.hash === '#' || window.location.hash.startsWith('#_=_')) {
-          window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
-        }
-
-        // Clean up access_token hash after Supabase finishes processing OAuth callback
-        if (window.location.hash.includes('access_token')) {
+          cleanAuthUrlParams();
+        } else if (window.location.hash.includes('access_token') || window.location.search.includes('code=')) {
+          // Allow Supabase OAuth listener to process token, then clean URL
           setTimeout(() => {
-            if (typeof window !== 'undefined' && (window.location.hash.includes('access_token') || window.location.hash === '#')) {
-              window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
-            }
-          }, 300);
+            cleanAuthUrlParams();
+          }, 350);
+        } else if (window.location.hash === '#' || window.location.hash.startsWith('#_=_')) {
+          cleanAuthUrlParams();
         }
       } catch (e) {
         console.warn('Notice parsing OAuth URL parameters on mount:', e);
@@ -174,17 +182,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (!isMounted) return;
 
         // Clean up OAuth callback tokens/code/trailing hash from browser URL bar safely without reloading
-        if (typeof window !== 'undefined') {
-          if (
-            window.location.hash.includes('access_token') ||
-            window.location.hash.includes('refresh_token') ||
-            window.location.search.includes('code=') ||
-            window.location.hash === '#' ||
-            window.location.hash.startsWith('#_=_') ||
-            window.location.href.endsWith('/#')
-          ) {
-            window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
-          }
+        cleanAuthUrlParams();
+
+        if (event === 'PASSWORD_RECOVERY') {
+          setIsPasswordRecovery(true);
         }
 
         if (event === 'SIGNED_OUT' || !currentSession?.user) {
@@ -663,25 +664,29 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const sendPasswordResetEmail = async (email: string): Promise<{ error: Error | null }> => {
+    return await supabaseSendPasswordResetEmail(email);
+  };
+
   const updatePassword = async (newPassword: string): Promise<{ error: Error | null }> => {
     if (!supabase) {
-      return { error: new Error('Backend is not available') };
+      return { error: new Error('Backend service is not available.') };
     }
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      return { error: new Error('Unable to change password while offline. Please check your internet connection.') };
+      return { error: new Error("You're offline. Please reconnect to update your password.") };
     }
     try {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) {
-        return { error: new Error(error.message) };
+        return { error: new Error(formatAuthErrorMessage(error)) };
       }
+      setIsPasswordRecovery(false);
       return { error: null };
     } catch (err: unknown) {
       if (isNetworkOrOfflineError(err)) {
-        return { error: new Error('Unable to reach server. Please check your internet connection and try again.') };
+        return { error: new Error("You're offline. Please reconnect to update your password.") };
       }
-      const msg = err instanceof Error ? err.message : 'Failed to update password';
-      return { error: new Error(msg) };
+      return { error: new Error(formatAuthErrorMessage(err)) };
     }
   };
 
@@ -793,6 +798,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         refreshProfile,
         oauthError,
         clearOauthError,
+        isPasswordRecovery,
+        clearPasswordRecovery,
+        sendPasswordResetEmail,
       }}
     >
       {children}

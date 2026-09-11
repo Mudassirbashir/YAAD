@@ -8,6 +8,10 @@ import {
   UserPlus,
   Loader2,
   Phone,
+  Eye,
+  EyeOff,
+  Lock,
+  KeyRound,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { APP_IMAGES } from '../data/initialData';
@@ -33,6 +37,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [phoneNumber, setPhoneNumber] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -87,7 +94,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         return;
       }
       if (!password || password.length < 6) {
-        setErrorMsg('Please choose a stronger password.');
+        setErrorMsg('Please choose a stronger password (at least 6 characters).');
+        return;
+      }
+      if (password !== confirmPassword) {
+        setErrorMsg('Passwords do not match. Please verify both password fields.');
         return;
       }
     } else {
@@ -281,16 +292,57 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider block">
               Password
             </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              disabled={isSubmitting}
-              className="w-full h-12 bg-surface-container-lowest text-on-surface rounded-2xl px-4 text-sm border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline disabled:opacity-60"
-              required
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                disabled={isSubmitting}
+                className="w-full h-12 bg-surface-container-lowest text-on-surface rounded-2xl ps-4 pe-11 text-sm border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline disabled:opacity-60"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                className="absolute end-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface p-1 transition-colors"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
+
+          {mode === 'signup' && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider block">
+                Confirm Password
+              </label>
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Re-enter your password"
+                  disabled={isSubmitting}
+                  className={`w-full h-12 bg-surface-container-lowest text-on-surface rounded-2xl ps-4 pe-11 text-sm border focus:ring-2 outline-none transition-all placeholder:text-outline disabled:opacity-60 ${
+                    confirmPassword && password !== confirmPassword
+                      ? 'border-error/60 focus:border-error focus:ring-error/20'
+                      : 'border-outline-variant focus:border-primary focus:ring-primary/20'
+                  }`}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                  className="absolute end-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface p-1 transition-colors"
+                >
+                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+          )}
 
           <button
             type="submit"

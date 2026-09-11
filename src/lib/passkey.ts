@@ -84,9 +84,10 @@ export function formatPasskeyError(err: unknown): string {
     msg.includes('not found') ||
     msg.includes('not recognized') ||
     msg.includes('no passkey') ||
-    msg.includes('no credentials')
+    msg.includes('no credentials') ||
+    msg.includes('failed to find')
   ) {
-    return 'No passkey was found for this YAAD account on this device. Please continue with Email or Google to sign in or create your account.';
+    return 'No passkey found. Continue with Email or Google to create/sign into your account.';
   }
 
   if (
@@ -95,14 +96,14 @@ export function formatPasskeyError(err: unknown): string {
     msg.includes('rp id') ||
     msg.includes('not a valid domain string')
   ) {
-    return 'Passkey is configured for yaad-mudassirbashir530-creators-projects.vercel.app. On this preview/dev domain, please continue with Email or Google.';
+    return 'Passkeys are configured for the production domain. On this preview environment, please continue with Email or Google.';
   }
 
   if (msg.includes('offline') || msg.includes('network') || msg.includes('failed to fetch')) {
-    return "You're offline. Please reconnect to sign in.";
+    return "You're offline. Please reconnect to continue.";
   }
 
-  return 'Passkey authentication could not be completed. Please continue with Email or Google.';
+  return 'No passkey found. Continue with Email or Google to create/sign into your account.';
 }
 
 /**

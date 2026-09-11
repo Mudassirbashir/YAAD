@@ -1911,12 +1911,14 @@ export function formatAuthErrorMessage(error: unknown): string {
   }
 
   // 9. TECHNICAL / DATABASE / UNKNOWN JARGON
-  // Strictly filter out technical jargon like AuthApiError, JWT, PostgREST, relation does not exist
+  // Strictly filter out any technical jargon: PGRST, PostgREST, Supabase, JWT, WebAuthn, stack traces
   if (
-    lower.includes('authapierror') ||
-    lower.includes('jwt') ||
-    lower.includes('postgrest') ||
     lower.includes('pgrst') ||
+    lower.includes('postgrest') ||
+    lower.includes('supabase') ||
+    lower.includes('jwt') ||
+    lower.includes('webauthn') ||
+    lower.includes('authapierror') ||
     lower.includes('schema cache') ||
     lower.includes('relation does not exist') ||
     lower.includes('database error') ||
@@ -1932,16 +1934,107 @@ export function formatAuthErrorMessage(error: unknown): string {
     lower.includes('error:') ||
     lower.includes('at ') ||
     lower.includes('uncaught') ||
+    lower.includes('stack') ||
+    lower.includes('trace') ||
+    lower.includes('typeerror') ||
+    lower.includes('referenceerror') ||
     lower.includes('object')
   ) {
+    if (lower.includes('jwt')) {
+      return 'Your authentication session has expired. Please sign in again.';
+    }
+    if (lower.includes('webauthn')) {
+      return 'Passkey authentication could not be completed on this device. Please continue with Email or Google.';
+    }
     return 'Something went wrong while completing authentication. Please try again.';
   }
 
+  // 10. PASSWORD RESET RATE LIMITS & FEEDBACK
+  if (lower.includes('for security purposes') || lower.includes('over_email_send_rate_limit')) {
+    return 'For security purposes, please wait a moment before requesting another password reset email.';
+  }
+
   // If the message is already clean user text (e.g. from local validation), return it
-  if (rawMsg && !rawMsg.includes('{') && rawMsg.length < 120) {
+  if (rawMsg && !rawMsg.includes('{') && !rawMsg.includes(';') && !rawMsg.includes('\n') && rawMsg.length < 120) {
     return rawMsg;
   }
 
   return 'Something went wrong while completing authentication. Please try again.';
+}
+
+/**
+ * Clean OAuth callback tokens, code, and error parameters from URL bar
+ * without reloading the page.
+ */
+export function cleanAuthUrlParams(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const url = new URL(window.location.href);
+    let modified = false;
+
+    // Parameters to remove from search query
+    const searchKeysToRemove = ['code', 'state', 'error', 'error_description', 'error_code'];
+    for (const key of searchKeysToRemove) {
+      if (url.searchParams.has(key)) {
+        url.searchParams.delete(key);
+        modified = true;
+      }
+    }
+
+    // Parameters in URL hash (fragment)
+    if (url.hash) {
+      const hashContent = url.hash.startsWith('#') ? url.hash.substring(1) : url.hash;
+      if (
+        hashContent.includes('access_token') ||
+        hashContent.includes('refresh_token') ||
+        hashContent.includes('error') ||
+        hashContent.includes('type=') ||
+        hashContent === '' ||
+        hashContent === '/' ||
+        hashContent === '_=_'
+      ) {
+        url.hash = '';
+        modified = true;
+      }
+    }
+
+    if (modified) {
+      const cleanPath = url.pathname + (url.search ? url.search : '') + (url.hash ? url.hash : '');
+      window.history.replaceState({}, document.title, cleanPath || '/');
+    }
+  } catch (e) {
+    console.warn('Notice cleaning auth URL parameters:', e);
+  }
+}
+
+/**
+ * Send password reset email via Supabase Auth
+ */
+export async function sendPasswordResetEmail(email: string): Promise<{ error: Error | null }> {
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    return { error: new Error("You're offline. Please reconnect to reset your password.") };
+  }
+  if (!supabase) {
+    return { error: new Error('Backend service is not configured.') };
+  }
+
+  try {
+    const trimmedEmail = email.trim().toLowerCase();
+    const redirectUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}${window.location.pathname}`
+      : undefined;
+
+    const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
+      redirectTo: redirectUrl,
+    });
+
+    if (error) {
+      return { error: new Error(formatAuthErrorMessage(error)) };
+    }
+
+    return { error: null };
+  } catch (err: unknown) {
+    return { error: new Error(formatAuthErrorMessage(err)) };
+  }
 }
 

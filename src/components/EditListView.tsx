@@ -166,7 +166,7 @@ export const EditListView: React.FC<EditListViewProps> = ({
   );
 
   return (
-    <div className="w-full max-w-xl md:max-w-2xl lg:max-w-3xl mx-auto min-h-screen flex flex-col antialiased bg-background pb-32">
+    <div className="w-full max-w-5xl mx-auto min-h-screen flex flex-col antialiased bg-background pb-32">
       {/* TopAppBar */}
       <TopHeader
         title={t('appName')}
@@ -346,7 +346,7 @@ export const EditListView: React.FC<EditListViewProps> = ({
       />
 
       {/* Floating Save Action */}
-      <div className="fixed bottom-0 left-0 right-0 w-full max-w-xl md:max-w-2xl lg:max-w-3xl mx-auto z-40 bg-gradient-to-t from-background via-background to-transparent pb-6 pt-8 px-5 flex justify-center pointer-events-none">
+      <div className="fixed bottom-0 left-0 right-0 w-full max-w-5xl mx-auto z-40 bg-gradient-to-t from-background via-background to-transparent pb-6 pt-8 px-5 flex justify-center pointer-events-none">
         <button
           onClick={handleSave}
           className="pointer-events-auto bg-primary text-on-primary font-['Manrope'] font-bold rounded-full h-[56px] px-8 w-full max-w-md shadow-[0px_8px_24px_rgba(0,30,21,0.2)] hover:bg-primary-container active:scale-[0.98] transition-all flex items-center justify-center gap-2"

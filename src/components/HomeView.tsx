@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Plus,
   ChevronRight,
@@ -19,6 +19,9 @@ import {
   ClipboardList,
   Package,
   Sparkles,
+  Fingerprint,
+  X,
+  Loader2,
 } from 'lucide-react';
 import { ShoppingList, CategoryId } from '../types';
 import { TopHeader } from './TopHeader';
@@ -26,6 +29,7 @@ import { Avatar } from './Avatar';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { isNetworkOrOfflineError } from '../lib/supabase';
+import { isPasskeySupported } from '../lib/passkey';
 import { BidiText } from '../utils/bidi';
 import { RecommendationCandidate } from '../lib/recommendations';
 import { GroceryBasketIllustration } from './GroceryBasketIllustration';
@@ -75,12 +79,53 @@ export const HomeView: React.FC<HomeViewProps> = ({
   onOpenStatistics,
 }) => {
   const { t, language, getCategoryName } = useLanguage();
-  const { user, profile } = useAuth();
+  const { user, profile, registerPasskey, listPasskeys } = useAuth();
 
   // Modal visibility states
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
   const [isFavoritesModalOpen, setIsFavoritesModalOpen] = useState(false);
   const [isCategoryBrowserOpen, setIsCategoryBrowserOpen] = useState(false);
+
+  // Post-auth Passkey prompt state
+  const [showPasskeyBanner, setShowPasskeyBanner] = useState(false);
+  const [isRegisteringPasskey, setIsRegisteringPasskey] = useState(false);
+  const [passkeySuccess, setPasskeySuccess] = useState(false);
+
+  useEffect(() => {
+    if (user && isPasskeySupported()) {
+      const dismissed = localStorage.getItem('yaad_passkey_prompt_dismissed');
+      if (dismissed !== 'true') {
+        listPasskeys()
+          .then((keys) => {
+            if (keys.length === 0) {
+              setShowPasskeyBanner(true);
+            }
+          })
+          .catch(() => {});
+      }
+    }
+  }, [user]);
+
+  const handleRegisterPasskeyFromHome = async () => {
+    setIsRegisteringPasskey(true);
+    try {
+      const { error } = await registerPasskey();
+      if (!error) {
+        setPasskeySuccess(true);
+        localStorage.setItem('yaad_passkey_prompt_dismissed', 'true');
+        setTimeout(() => setShowPasskeyBanner(false), 2500);
+      }
+    } catch (e) {
+      console.warn('Error registering passkey from home:', e);
+    } finally {
+      setIsRegisteringPasskey(false);
+    }
+  };
+
+  const handleDismissPasskeyBanner = () => {
+    localStorage.setItem('yaad_passkey_prompt_dismissed', 'true');
+    setShowPasskeyBanner(false);
+  };
 
   // Added items micro-feedback tracker: canonicalName -> boolean
   const [addedItemsMap, setAddedItemsMap] = useState<Record<string, boolean>>({});
@@ -276,6 +321,57 @@ export const HomeView: React.FC<HomeViewProps> = ({
             />
           </button>
         </section>
+
+        {/* POST-AUTH PASSKEY PROMPT BANNER */}
+        {showPasskeyBanner && (
+          <section
+            id="home_passkey_prompt_banner"
+            className="p-4 rounded-2xl bg-surface-container-lowest border border-primary/20 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-200"
+          >
+            <div className="flex items-start gap-3 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
+                <Fingerprint className="w-5 h-5" />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <h4 className="font-['Plus_Jakarta_Sans'] text-xs sm:text-sm font-bold text-on-surface flex items-center gap-1.5">
+                  <span>Fast, password-free sign in</span>
+                  {passkeySuccess && (
+                    <span className="text-primary font-medium text-xs flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Passkey saved!
+                    </span>
+                  )}
+                </h4>
+                <p className="font-['Manrope'] text-xs text-outline leading-relaxed mt-0.5">
+                  Enable biometric authentication (Touch ID, Face ID, or Windows Hello) on this device.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+              <button
+                type="button"
+                onClick={handleRegisterPasskeyFromHome}
+                disabled={isRegisteringPasskey || passkeySuccess}
+                className="h-8 px-3.5 rounded-full bg-primary text-on-primary font-['Manrope'] text-xs font-bold shadow-2xs hover:bg-primary-container transition-all flex items-center gap-1.5 active:scale-95 disabled:opacity-60"
+              >
+                {isRegisteringPasskey ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Fingerprint className="w-3.5 h-3.5" />
+                )}
+                <span>{passkeySuccess ? 'Enabled' : 'Register Passkey'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleDismissPasskeyBanner}
+                aria-label="Dismiss passkey prompt"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </section>
+        )}
 
         {/* 3. PRIMARY ACTION: CREATE NEW LIST CARD */}
         <section aria-label={t('home.createListTitle')}>
