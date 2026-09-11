@@ -329,6 +329,7 @@ export interface UserProfile {
 export interface PasskeyCredentialInfo {
   id: string;
   deviceName?: string;
+  device_name?: string;
   createdAt: string;
   lastUsedAt: string;
 }

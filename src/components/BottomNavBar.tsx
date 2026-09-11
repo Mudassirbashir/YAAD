@@ -179,14 +179,14 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               onClick={handleCreateClick}
               onKeyDown={(e) => handleTabKeyDown(e, 'create')}
               aria-label={t('nav.create')}
-              className="w-full max-w-[110px] sm:max-w-[145px] flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 py-1 sm:py-2 px-1 sm:px-4 rounded-xl sm:rounded-full bg-transparent sm:bg-primary text-primary sm:text-on-primary hover:bg-surface-container-high/40 sm:hover:bg-[#14523e] active:bg-surface-container-high/60 sm:active:bg-[#0a281e] dark:sm:bg-emerald-600 dark:sm:hover:bg-emerald-500 dark:sm:active:bg-emerald-700 sm:shadow-[0_2px_8px_rgba(15,61,46,0.25)] sm:hover:shadow-[0_4px_14px_rgba(15,61,46,0.35)] transition-all duration-150 active:scale-[0.95] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-stone-900 cursor-pointer min-h-[44px] sm:min-h-0 group"
+              className="w-full max-w-[110px] sm:max-w-[145px] flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 py-1 sm:py-2 px-1 sm:px-4 rounded-xl sm:rounded-full bg-transparent sm:bg-primary text-primary sm:text-on-primary hover:bg-surface-container-high/40 sm:hover:bg-primary-container active:bg-surface-container-high/60 sm:active:bg-primary sm:shadow-[0_2px_8px_rgba(15,61,46,0.22)] sm:hover:shadow-[0_4px_14px_rgba(15,61,46,0.32)] transition-all duration-150 active:scale-[0.95] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-stone-900 cursor-pointer min-h-[44px] sm:min-h-0 group"
             >
               {/* Mobile-only compact icon circle (Apple-style, lightweight, not oversized) */}
               <div
                 className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-150 sm:hidden ${
                   isCreateActive
-                    ? 'bg-primary text-on-primary dark:bg-emerald-500 ring-2 ring-primary/20 scale-105'
-                    : 'bg-primary text-on-primary dark:bg-emerald-600 shadow-2xs group-hover:scale-110'
+                    ? 'bg-primary text-on-primary ring-2 ring-primary/20 scale-105'
+                    : 'bg-primary text-on-primary shadow-2xs group-hover:scale-110'
                 }`}
               >
                 <Plus className="w-3.5 h-3.5 stroke-[2.8]" />
@@ -195,7 +195,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               {/* Desktop-only direct Lucide Plus icon */}
               <Plus className="hidden sm:inline-block w-4.5 h-4.5 sm:w-5 sm:h-5 stroke-[2.4] shrink-0 transition-transform duration-150 group-hover:scale-110" />
 
-              <span className="text-[10px] sm:text-xs font-bold font-['Manrope'] tracking-tight text-primary dark:text-emerald-400 sm:text-on-primary whitespace-nowrap leading-tight">
+              <span className="text-[10px] sm:text-xs font-bold font-['Manrope'] tracking-tight text-primary sm:text-on-primary whitespace-nowrap leading-tight">
                 {t('nav.create')}
               </span>
             </button>

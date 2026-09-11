@@ -134,7 +134,7 @@ export const LIST_THEMES: Record<ListThemeType, ListVisualConfig> = {
     type: 'default',
     icon: ShoppingBag,
     bgColor: 'bg-emerald-50',
-    textColor: 'text-[#0F3D2E]',
+    textColor: 'text-primary',
     borderColor: 'border-emerald-200/60',
     hoverBg: 'group-hover:bg-emerald-100',
     label: 'Shopping',

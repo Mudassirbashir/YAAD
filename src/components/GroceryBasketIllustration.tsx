@@ -163,8 +163,8 @@ export const GroceryBasketIllustration: React.FC<GroceryBasketIllustrationProps>
       </div>
 
       {/* 3. Floating Golden Sparkle Badge */}
-      <div className="absolute -top-1.5 -right-1.5 flex items-center gap-1 bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-300 text-[#0F3D2E] text-[10px] font-extrabold px-1.5 py-0.5 rounded-full shadow-[0_3px_8px_rgba(0,0,0,0.25)] border border-white/90 tracking-wide z-20 group-hover:rotate-6 transition-transform">
-        <Sparkles className="w-2.5 h-2.5 fill-[#0F3D2E] stroke-[1.5]" />
+      <div className="absolute -top-1.5 -right-1.5 flex items-center gap-1 bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-300 text-primary text-[10px] font-extrabold px-1.5 py-0.5 rounded-full shadow-[0_3px_8px_rgba(0,0,0,0.25)] border border-white/90 tracking-wide z-20 group-hover:rotate-6 transition-transform">
+        <Sparkles className="w-2.5 h-2.5 fill-primary stroke-[1.5]" />
         <span className="text-[9px] uppercase font-bold leading-none">Fresh</span>
       </div>
     </div>

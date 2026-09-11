@@ -1,4 +1,13 @@
-import React, { createContext, useContext, useEffect, useState, useRef, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  useMemo,
+  ReactNode,
+} from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import {
   supabase,
@@ -20,7 +29,15 @@ import {
   deleteUserPasskey as clientDeletePasskey,
 } from '../lib/passkey';
 
-interface AuthContextType {
+export type AuthState =
+  | 'AUTH_LOADING'
+  | 'PASSWORD_RESET'
+  | 'AUTHENTICATED'
+  | 'UNAUTHENTICATED'
+  | 'AUTH_ERROR';
+
+export interface AuthContextType {
+  authState: AuthState;
   user: User | null;
   session: Session | null;
   profile: UserProfile | null;
@@ -29,6 +46,8 @@ interface AuthContextType {
   oauthError: string | null;
   clearOauthError: () => void;
   isPasswordRecovery: boolean;
+  passwordResetError: string | null;
+  clearPasswordResetError: () => void;
   clearPasswordRecovery: () => void;
   sendPasswordResetEmail: (email: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
@@ -61,9 +80,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [oauthError, setOauthError] = useState<string | null>(null);
-  const [isPasswordRecovery, setIsPasswordRecovery] = useState<boolean>(false);
-  const clearOauthError = () => setOauthError(null);
-  const clearPasswordRecovery = () => setIsPasswordRecovery(false);
+  const [passwordResetError, setPasswordResetError] = useState<string | null>(null);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        return sessionStorage.getItem('yaad_password_recovery_active') === 'true';
+      } catch {
+        return false;
+      }
+    }
+    return false;
+  });
+
+  const clearOauthError = useCallback(() => setOauthError(null), []);
+  const clearPasswordResetError = useCallback(() => setPasswordResetError(null), []);
+  const clearPasswordRecovery = useCallback(() => {
+    setIsPasswordRecovery(false);
+    setPasswordResetError(null);
+    if (typeof window !== 'undefined') {
+      try {
+        sessionStorage.removeItem('yaad_password_recovery_active');
+      } catch {}
+    }
+  }, []);
+
   const isAuthenticatingRef = useRef<boolean>(false);
   const syncingUserIdsRef = useRef<Set<string>>(new Set());
 
@@ -138,17 +178,43 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         // Check if user clicked a password reset / recovery link
         const typeParam = searchParams.get('type') || hashParams.get('type');
-        if (typeParam === 'recovery') {
+        const isRecoveryHash =
+          window.location.hash.includes('type=recovery') ||
+          typeParam === 'recovery' ||
+          searchParams.get('type') === 'recovery';
+
+        if (isRecoveryHash) {
           setIsPasswordRecovery(true);
+          try {
+            sessionStorage.setItem('yaad_password_recovery_active', 'true');
+          } catch {}
         }
 
         const errorParam = searchParams.get('error') || hashParams.get('error');
+        const errorCode = searchParams.get('error_code') || hashParams.get('error_code');
         const errorDesc =
           searchParams.get('error_description') || hashParams.get('error_description') || '';
 
-        if (errorParam) {
+        if (errorParam || errorCode) {
           const lowerDesc = errorDesc.toLowerCase();
+          const lowerCode = (errorCode || '').toLowerCase();
+
+          // Check if this error relates to password reset / recovery token expiration or invalidity
           if (
+            lowerCode === 'otp_expired' ||
+            lowerCode === 'token_expired' ||
+            lowerDesc.includes('expired') ||
+            lowerDesc.includes('otp') ||
+            lowerDesc.includes('recovery') ||
+            lowerDesc.includes('invalid') ||
+            lowerDesc.includes('already been used')
+          ) {
+            setPasswordResetError('This password reset link is invalid or has expired. Please request a new one.');
+            setIsPasswordRecovery(false);
+            try {
+              sessionStorage.removeItem('yaad_password_recovery_active');
+            } catch {}
+          } else if (
             errorParam === 'access_denied' ||
             lowerDesc.includes('access_denied') ||
             lowerDesc.includes('denied') ||
@@ -186,6 +252,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         if (event === 'PASSWORD_RECOVERY') {
           setIsPasswordRecovery(true);
+          try {
+            sessionStorage.setItem('yaad_password_recovery_active', 'true');
+          } catch {}
         }
 
         if (event === 'SIGNED_OUT' || !currentSession?.user) {
@@ -681,6 +750,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return { error: new Error(formatAuthErrorMessage(error)) };
       }
       setIsPasswordRecovery(false);
+      setPasswordResetError(null);
+      if (typeof window !== 'undefined') {
+        try {
+          sessionStorage.removeItem('yaad_password_recovery_active');
+        } catch {}
+      }
+      // Refresh current session to ensure clean authenticated state
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData?.session) {
+          setSession(sessionData.session);
+          setUser(sessionData.session.user);
+        }
+      } catch (e) {
+        console.warn('Notice refreshing session after password update:', e);
+      }
       return { error: null };
     } catch (err: unknown) {
       if (isNetworkOrOfflineError(err)) {
@@ -776,9 +861,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const authState: AuthState = useMemo(() => {
+    if (isLoading) return 'AUTH_LOADING';
+    if (isPasswordRecovery) return 'PASSWORD_RESET';
+    if (user) return 'AUTHENTICATED';
+    if (oauthError || passwordResetError) return 'AUTH_ERROR';
+    return 'UNAUTHENTICATED';
+  }, [isLoading, isPasswordRecovery, user, oauthError, passwordResetError]);
+
   return (
     <AuthContext.Provider
       value={{
+        authState,
         user,
         session,
         profile,
@@ -799,6 +893,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         oauthError,
         clearOauthError,
         isPasswordRecovery,
+        passwordResetError,
+        clearPasswordResetError,
         clearPasswordRecovery,
         sendPasswordResetEmail,
       }}

@@ -219,9 +219,25 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
         {/* Error and Success alerts */}
         {errorMsg && (
-          <div className="p-3 bg-error-container/30 border border-error/20 rounded-2xl text-xs font-['Manrope'] text-error flex items-center gap-2 animate-in fade-in duration-200">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{errorMsg}</span>
+          <div className="p-3 bg-error-container/30 border border-error/20 rounded-2xl text-xs font-['Manrope'] text-error flex items-start gap-2 animate-in fade-in duration-200">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            <div className="flex-1 space-y-2">
+              <div>{errorMsg}</div>
+              {errorMsg.includes('already registered') && (
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode('signin');
+                      setErrorMsg(null);
+                    }}
+                    className="px-3 py-1 bg-primary text-on-primary text-xs font-bold font-['Manrope'] rounded-xl shadow-2xs hover:bg-primary-container transition-all active:scale-95"
+                  >
+                    Switch to Sign In
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         )}
 

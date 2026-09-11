@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   Mail,
   Lock,
@@ -48,6 +49,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
     oauthError,
     clearOauthError,
     isPasswordRecovery,
+    passwordResetError,
+    clearPasswordResetError,
     clearPasswordRecovery,
     sendPasswordResetEmail,
     updatePassword,
@@ -86,6 +89,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [resetEmailSent, setResetEmailSent] = useState<boolean>(false);
+  const [resetSuccess, setResetSuccess] = useState<boolean>(false);
 
   // Synchronous hardware ref to prevent double submissions, duplicate clicks, or enter-key races
   const isSubmittingRef = useRef(false);
@@ -330,16 +334,17 @@ export const AuthView: React.FC<AuthViewProps> = ({
         setErrorMessage(formatAuthErrorMessage(error));
         return;
       }
-      clearPasswordRecovery();
-      setSuccessMessage('Password updated successfully! Redirecting to your lists...');
+      setResetSuccess(true);
+      setSuccessMessage('Your password has been successfully changed.');
       setTimeout(() => {
+        clearPasswordRecovery();
         if (onSuccess) {
           onSuccess();
         } else {
           setMode('signin');
           setShowEmailForm(true);
         }
-      }, 1000);
+      }, 1200);
     } catch (err: unknown) {
       setErrorMessage(formatAuthErrorMessage(err));
     } finally {
@@ -355,6 +360,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
     setSuccessMessage(null);
     setResetEmailSent(false);
     clearOauthError();
+    clearPasswordResetError?.();
   };
 
   // Return to Sign In
@@ -363,6 +369,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
     setErrorMessage(null);
     setSuccessMessage(null);
     clearOauthError();
+    clearPasswordResetError?.();
     clearPasswordRecovery();
   };
 
@@ -372,13 +379,14 @@ export const AuthView: React.FC<AuthViewProps> = ({
     setErrorMessage(null);
     setSuccessMessage(null);
     clearOauthError();
+    clearPasswordResetError?.();
     if (newMode === 'signin') {
       setShowEmailForm(false);
     }
   };
 
-  // Display error message (combining local errorMessage and oauthError)
-  const displayedError = errorMessage || oauthError;
+  // Display error message (combining local errorMessage, oauthError, and passwordResetError)
+  const displayedError = errorMessage || oauthError || passwordResetError;
 
   return (
     <main
@@ -402,7 +410,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
             {mode === 'signin' && (t('auth.signInTitle') || 'Welcome to YAAD')}
             {mode === 'signup' && (t('auth.signUpTitle') || 'Create Account')}
             {mode === 'forgot_password' && 'Reset Password'}
-            {mode === 'reset_password' && 'Set New Password'}
+            {mode === 'reset_password' && 'Create Your New Password'}
           </h1>
           <p className="font-['Manrope'] text-xs text-on-surface-variant leading-relaxed">
             {mode === 'signin' &&
@@ -412,7 +420,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
             {mode === 'forgot_password' &&
               'Enter your email address and we will send you a link to reset your password.'}
             {mode === 'reset_password' &&
-              'Choose a secure new password for your YAAD account.'}
+              'Enter and confirm your new password below to regain full access to YAAD.'}
           </p>
         </div>
 
@@ -450,26 +458,123 @@ export const AuthView: React.FC<AuthViewProps> = ({
           </div>
         )}
 
-        {/* User-friendly Error Alert */}
-        {displayedError && (
+        {/* Passkey Cancellation Alert (Soft, Non-scary) */}
+        {displayedError === 'Passkey sign-in was cancelled.' && !resetSuccess ? (
+          <div
+            id="auth_passkey_cancelled_note"
+            className="p-3.5 bg-surface-container-high border border-outline-variant/70 rounded-2xl text-xs text-on-surface-variant font-['Manrope'] flex items-center justify-between gap-2.5 animate-in fade-in duration-200"
+          >
+            <div className="flex items-center gap-2.5">
+              <Fingerprint className="w-4 h-4 text-primary shrink-0" />
+              <span>Passkey sign-in was cancelled.</span>
+            </div>
+            <button
+              type="button"
+              onClick={handlePasskeySignIn}
+              className="text-xs font-bold text-primary hover:underline shrink-0"
+            >
+              Try again
+            </button>
+          </div>
+        ) : displayedError && displayedError.includes('No passkey found') && !resetSuccess ? (
+          /* No Passkey Found: Clear, helpful note with one-tap alternative options */
+          <div
+            id="auth_no_passkey_notice"
+            className="p-4 bg-surface-container-high/80 border border-outline-variant rounded-2xl text-xs font-['Manrope'] space-y-3 animate-in fade-in duration-200"
+          >
+            <div className="flex items-start gap-2.5">
+              <KeyRound className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-bold text-on-surface">No passkey found</p>
+                <p className="text-[12px] text-on-surface-variant leading-relaxed">
+                  No passkey was found for this account/device. Use Email or Google to sign in.
+                </p>
+              </div>
+            </div>
+            <div className="pt-0.5 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={handleGoogleSignIn}
+                disabled={isAnyLoading}
+                className="px-3.5 py-1.5 bg-surface-container-lowest border border-outline-variant hover:border-primary text-on-surface text-xs font-bold font-['Manrope'] rounded-xl transition-all flex items-center gap-1.5 active:scale-95 shadow-2xs"
+              >
+                <Globe className="w-3.5 h-3.5 text-primary" />
+                <span>Continue with Google</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowEmailForm(true);
+                  setErrorMessage(null);
+                }}
+                disabled={isAnyLoading}
+                className="px-3.5 py-1.5 bg-surface-container-lowest border border-outline-variant hover:border-primary text-on-surface text-xs font-bold font-['Manrope'] rounded-xl transition-all flex items-center gap-1.5 active:scale-95 shadow-2xs"
+              >
+                <Mail className="w-3.5 h-3.5 text-primary" />
+                <span>Continue with Email</span>
+              </button>
+            </div>
+          </div>
+        ) : displayedError && !resetSuccess ? (
+          /* Standard Error Alert */
           <div
             id="auth_error_alert"
             className="p-3.5 bg-error-container/30 border border-error/30 rounded-2xl text-xs text-error font-['Manrope'] flex items-start gap-2.5 animate-in fade-in duration-150"
           >
             <AlertCircle className="w-4 h-4 shrink-0 text-error mt-0.5" />
-            <div className="flex-1 leading-snug space-y-1">
-              <span>{displayedError}</span>
-              {displayedError.includes('No passkey') && (
-                <p className="text-[11px] text-on-surface-variant font-medium pt-1">
-                  Tip: Choose <strong>Continue with Google</strong> or <strong>Continue with Email</strong> to proceed.
-                </p>
+            <div className="flex-1 leading-snug space-y-2">
+              <div>{displayedError}</div>
+
+              {/* Obvious paths when email is already registered */}
+              {displayedError.includes('already registered') && (
+                <div className="pt-1 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode('signin');
+                      setShowEmailForm(true);
+                      setErrorMessage(null);
+                    }}
+                    className="px-3 py-1.5 bg-primary text-on-primary text-xs font-bold font-['Manrope'] rounded-xl shadow-2xs hover:bg-primary-container transition-all active:scale-95"
+                  >
+                    Sign In
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode('forgot_password');
+                      setErrorMessage(null);
+                    }}
+                    className="px-3 py-1.5 bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface text-xs font-bold font-['Manrope'] rounded-xl transition-all active:scale-95"
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+              )}
+
+              {/* Recovery link expired or invalid token path */}
+              {(displayedError.includes('expired') || displayedError.includes('invalid or has expired')) && (
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      clearPasswordResetError?.();
+                      clearPasswordRecovery();
+                      setMode('forgot_password');
+                      setErrorMessage(null);
+                    }}
+                    className="px-3 py-1.5 bg-primary text-on-primary text-xs font-bold font-['Manrope'] rounded-xl shadow-2xs hover:bg-primary-container transition-all active:scale-95"
+                  >
+                    Request New Reset Link
+                  </button>
+                </div>
               )}
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Friendly Success Alert */}
-        {successMessage && (
+        {successMessage && !resetSuccess && (
           <div
             id="auth_success_alert"
             className="p-3.5 bg-primary/10 border border-primary/20 rounded-2xl text-xs text-primary font-['Manrope'] flex items-start gap-2.5 animate-in fade-in duration-150"
@@ -487,52 +592,64 @@ export const AuthView: React.FC<AuthViewProps> = ({
             {/* Primary Options in Clean Hierarchy */}
             <div className="space-y-2.5">
               {/* Option 1: Continue with Google */}
-              <button
+              <motion.button
                 id="auth_google_btn"
                 type="button"
+                whileTap={{ scale: 0.99 }}
                 onClick={handleGoogleSignIn}
                 disabled={isAnyLoading}
-                className="w-full h-12 rounded-2xl bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface font-['Manrope'] text-xs font-bold transition-all flex items-center justify-center gap-2.5 shadow-2xs hover:shadow-xs active:scale-[0.99] disabled:opacity-60"
+                className="w-full h-12 rounded-2xl bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface font-['Manrope'] text-xs font-bold transition-all flex items-center justify-center gap-2.5 shadow-2xs hover:shadow-xs disabled:opacity-60"
               >
                 {googleLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin text-primary" />
                 ) : (
                   <Globe className="w-4 h-4 text-primary" />
                 )}
-                <span>1. {t('auth.googleBtn') || 'Continue with Google'}</span>
-              </button>
+                <span>{t('auth.googleBtn') || 'Continue with Google'}</span>
+              </motion.button>
 
               {/* Option 2: Continue with Passkey */}
-              <button
+              <motion.button
                 id="auth_passkey_btn"
                 type="button"
+                whileTap={{ scale: 0.99 }}
                 onClick={handlePasskeySignIn}
                 disabled={isAnyLoading}
-                className="w-full h-12 rounded-2xl bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface font-['Manrope'] text-xs font-bold transition-all flex items-center justify-center gap-2.5 shadow-2xs hover:shadow-xs active:scale-[0.99] disabled:opacity-60"
+                className={`w-full h-12 rounded-2xl border font-['Manrope'] text-xs font-bold transition-all flex items-center justify-center gap-2.5 shadow-2xs hover:shadow-xs disabled:opacity-60 relative overflow-hidden ${
+                  passkeyLoading
+                    ? 'bg-primary/10 border-primary/40 text-primary ring-2 ring-primary/20'
+                    : 'bg-surface-container hover:bg-surface-container-high border-outline-variant text-on-surface'
+                }`}
               >
                 {passkeyLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                  <div className="flex items-center gap-2">
+                    <Fingerprint className="w-4 h-4 text-primary animate-pulse" />
+                    <span>Authenticating with Passkey...</span>
+                  </div>
                 ) : (
-                  <Fingerprint className="w-4 h-4 text-primary" />
+                  <>
+                    <Fingerprint className="w-4 h-4 text-primary" />
+                    <span>{t('auth.passkeyBtn') || 'Continue with Passkey'}</span>
+                  </>
                 )}
-                <span>2. {t('auth.passkeyBtn') || 'Continue with Passkey'}</span>
-              </button>
+              </motion.button>
 
               {/* Option 3: Continue with Email */}
               {!showEmailForm && (
-                <button
+                <motion.button
                   id="auth_email_toggle_btn"
                   type="button"
+                  whileTap={{ scale: 0.99 }}
                   onClick={() => {
                     setShowEmailForm(true);
                     setErrorMessage(null);
                   }}
                   disabled={isAnyLoading}
-                  className="w-full h-12 rounded-2xl bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface font-['Manrope'] text-xs font-bold transition-all flex items-center justify-center gap-2.5 shadow-2xs hover:shadow-xs active:scale-[0.99] disabled:opacity-60"
+                  className="w-full h-12 rounded-2xl bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface font-['Manrope'] text-xs font-bold transition-all flex items-center justify-center gap-2.5 shadow-2xs hover:shadow-xs disabled:opacity-60"
                 >
                   <Mail className="w-4 h-4 text-primary" />
-                  <span>3. Continue with Email</span>
-                </button>
+                  <span>Continue with Email</span>
+                </motion.button>
               )}
             </div>
 
@@ -938,115 +1055,167 @@ export const AuthView: React.FC<AuthViewProps> = ({
         {/* ----------------- RESET PASSWORD VIEW ----------------- */}
         {mode === 'reset_password' && (
           <div className="space-y-4">
-            <form onSubmit={handleResetPasswordSubmit} className="space-y-3.5">
-              {/* New Password */}
-              <div className="space-y-1">
-                <div className="flex justify-between items-center">
-                  <label
-                    htmlFor="auth_input_new_password"
-                    className="text-xs font-bold text-on-surface-variant block font-['Manrope']"
-                  >
-                    New Password
-                  </label>
-                  {newPassword.length >= 6 && (
-                    <span className="text-[11px] font-semibold text-primary flex items-center gap-1">
-                      <Check className="w-3 h-3" /> Valid length
-                    </span>
-                  )}
-                </div>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <input
-                    id="auth_input_new_password"
-                    type={showNewPassword ? 'text' : 'password'}
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="At least 6 characters"
-                    disabled={isAnyLoading}
-                    className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-11 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope'] disabled:opacity-60"
-                    autoComplete="new-password"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
-                    className="absolute end-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface p-1 transition-colors"
-                  >
-                    {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Confirm New Password */}
-              <div className="space-y-1">
-                <div className="flex justify-between items-center">
-                  <label
-                    htmlFor="auth_input_confirm_new_password"
-                    className="text-xs font-bold text-on-surface-variant block font-['Manrope']"
-                  >
-                    Confirm New Password
-                  </label>
-                  {confirmNewPassword && newPassword === confirmNewPassword && (
-                    <span className="text-[11px] font-semibold text-primary flex items-center gap-1">
-                      <Check className="w-3 h-3" /> Passwords match
-                    </span>
-                  )}
-                </div>
-                <div className="relative">
-                  <KeyRound className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <input
-                    id="auth_input_confirm_new_password"
-                    type={showConfirmNewPassword ? 'text' : 'password'}
-                    value={confirmNewPassword}
-                    onChange={(e) => setConfirmNewPassword(e.target.value)}
-                    placeholder="Re-enter new password"
-                    disabled={isAnyLoading}
-                    className={`w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-11 border focus:ring-2 outline-none transition-all placeholder:text-outline font-['Manrope'] disabled:opacity-60 ${
-                      confirmNewPassword && newPassword !== confirmNewPassword
-                        ? 'border-error/60 focus:border-error focus:ring-error/20'
-                        : 'border-outline-variant focus:border-primary focus:ring-primary/20'
-                    }`}
-                    autoComplete="new-password"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
-                    aria-label={showConfirmNewPassword ? 'Hide confirm password' : 'Show confirm password'}
-                    className="absolute end-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface p-1 transition-colors"
-                  >
-                    {showConfirmNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              <button
-                id="auth_update_password_btn"
-                type="submit"
-                disabled={isAnyLoading}
-                className="w-full h-12 rounded-full bg-primary text-on-primary font-['Manrope'] text-sm font-bold shadow-md hover:bg-primary-container hover:shadow-lg disabled:opacity-50 transition-all flex items-center justify-center gap-2 active:scale-[0.99] mt-2"
+            {resetSuccess ? (
+              <div
+                id="auth_reset_success_card"
+                className="p-6 bg-surface-container rounded-3xl border border-surface-dim text-center space-y-4 animate-in fade-in zoom-in-95 duration-200"
               >
-                {loading ? (
+                <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto ring-8 ring-primary/5 animate-pulse">
+                  <CheckCircle2 className="w-7 h-7" />
+                </div>
+                <div className="space-y-1.5">
+                  <h2 className="font-['Plus_Jakarta_Sans'] font-extrabold text-lg text-primary">
+                    Password Updated
+                  </h2>
+                  <p className="font-['Manrope'] text-xs text-on-surface-variant leading-relaxed">
+                    Your password has been successfully changed.
+                  </p>
+                </div>
+                <div className="flex items-center justify-center gap-2 text-xs font-semibold text-primary font-['Manrope'] pt-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    <KeyRound className="w-4 h-4" />
-                    <span>Update Password</span>
-                  </>
-                )}
-              </button>
-            </form>
+                  <span>Opening your YAAD lists...</span>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleResetPasswordSubmit} className="space-y-3.5">
+                {/* New Password */}
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center">
+                    <label
+                      htmlFor="auth_input_new_password"
+                      className="text-xs font-bold text-on-surface-variant block font-['Manrope']"
+                    >
+                      New Password
+                    </label>
+                    {newPassword.length >= 6 && (
+                      <span className="text-[11px] font-semibold text-primary flex items-center gap-1">
+                        <Check className="w-3 h-3" /> Valid length
+                      </span>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      id="auth_input_new_password"
+                      type={showNewPassword ? 'text' : 'password'}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="At least 6 characters"
+                      disabled={isAnyLoading}
+                      className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-11 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope'] disabled:opacity-60"
+                      autoComplete="new-password"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
+                      className="absolute end-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface p-1 transition-colors"
+                    >
+                      {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
 
-            <button
-              type="button"
-              onClick={handleBackToSignIn}
-              disabled={isAnyLoading}
-              className="w-full h-10 rounded-2xl text-xs font-['Manrope'] font-semibold text-outline hover:text-on-surface flex items-center justify-center gap-1.5 transition-colors"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Back to Sign In</span>
-            </button>
+                {/* Confirm New Password */}
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center">
+                    <label
+                      htmlFor="auth_input_confirm_new_password"
+                      className="text-xs font-bold text-on-surface-variant block font-['Manrope']"
+                    >
+                      Confirm New Password
+                    </label>
+                    {confirmNewPassword && newPassword === confirmNewPassword && (
+                      <span className="text-[11px] font-semibold text-primary flex items-center gap-1">
+                        <Check className="w-3 h-3" /> Passwords match
+                      </span>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <KeyRound className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      id="auth_input_confirm_new_password"
+                      type={showConfirmNewPassword ? 'text' : 'password'}
+                      value={confirmNewPassword}
+                      onChange={(e) => setConfirmNewPassword(e.target.value)}
+                      placeholder="Re-enter new password"
+                      disabled={isAnyLoading}
+                      className={`w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-11 border focus:ring-2 outline-none transition-all placeholder:text-outline font-['Manrope'] disabled:opacity-60 ${
+                        confirmNewPassword && newPassword !== confirmNewPassword
+                          ? 'border-error/60 focus:border-error focus:ring-error/20'
+                          : 'border-outline-variant focus:border-primary focus:ring-primary/20'
+                      }`}
+                      autoComplete="new-password"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
+                      aria-label={showConfirmNewPassword ? 'Hide confirm password' : 'Show confirm password'}
+                      className="absolute end-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface p-1 transition-colors"
+                    >
+                      {showConfirmNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Password Requirements Checklist */}
+                <div className="p-3 bg-surface-container/60 rounded-2xl border border-surface-dim space-y-1.5 text-[11px] font-['Manrope']">
+                  <div className="font-semibold text-on-surface-variant text-[11px]">
+                    Password Requirements:
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {newPassword.length >= 6 ? (
+                      <Check className="w-3.5 h-3.5 text-primary shrink-0" />
+                    ) : (
+                      <span className="w-3.5 h-3.5 rounded-full border border-outline shrink-0 flex items-center justify-center text-[9px] text-outline">•</span>
+                    )}
+                    <span className={newPassword.length >= 6 ? 'text-primary font-medium' : 'text-on-surface-variant'}>
+                      At least 6 characters
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {confirmNewPassword && newPassword === confirmNewPassword ? (
+                      <Check className="w-3.5 h-3.5 text-primary shrink-0" />
+                    ) : (
+                      <span className="w-3.5 h-3.5 rounded-full border border-outline shrink-0 flex items-center justify-center text-[9px] text-outline">•</span>
+                    )}
+                    <span className={confirmNewPassword && newPassword === confirmNewPassword ? 'text-primary font-medium' : 'text-on-surface-variant'}>
+                      Passwords match
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  id="auth_update_password_btn"
+                  type="submit"
+                  disabled={isAnyLoading || newPassword.length < 6 || newPassword !== confirmNewPassword}
+                  className="w-full h-12 rounded-full bg-primary text-on-primary font-['Manrope'] text-sm font-bold shadow-md hover:bg-primary-container hover:shadow-lg disabled:opacity-50 transition-all flex items-center justify-center gap-2 active:scale-[0.99] mt-2"
+                >
+                  {loading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <KeyRound className="w-4 h-4" />
+                      <span>Create New Password</span>
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
+
+            {!resetSuccess && (
+              <button
+                type="button"
+                onClick={handleBackToSignIn}
+                disabled={isAnyLoading}
+                className="w-full h-10 rounded-2xl text-xs font-['Manrope'] font-semibold text-outline hover:text-on-surface flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Back to Sign In</span>
+              </button>
+            )}
           </div>
         )}
 

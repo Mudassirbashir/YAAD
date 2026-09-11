@@ -73,7 +73,7 @@ export const ShoppingStatisticsModal: React.FC<ShoppingStatisticsModalProps> = (
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-surface-dim/40">
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-[#0F3D2E] flex items-center justify-center shadow-xs">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-primary flex items-center justify-center shadow-xs">
               <TrendingUp className="w-5 h-5 stroke-[2.2]" />
             </div>
             <div>
@@ -117,7 +117,7 @@ export const ShoppingStatisticsModal: React.FC<ShoppingStatisticsModalProps> = (
         ) : totalLists === 0 ? (
           /* Clean Empty State */
           <div className="py-8 text-center space-y-3">
-            <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-[#0F3D2E] flex items-center justify-center mx-auto">
+            <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-primary flex items-center justify-center mx-auto">
               <ShoppingBag className="w-7 h-7 stroke-[2]" />
             </div>
             <div className="space-y-1">
@@ -164,11 +164,11 @@ export const ShoppingStatisticsModal: React.FC<ShoppingStatisticsModalProps> = (
 
             {/* Completed Trips */}
             <div className="p-4 rounded-2xl bg-surface-container-lowest border border-surface-dim/60 shadow-xs flex flex-col justify-between">
-              <div className="w-8 h-8 rounded-xl bg-emerald-50 text-[#0F3D2E] flex items-center justify-center mb-2">
+              <div className="w-8 h-8 rounded-xl bg-emerald-50 text-primary flex items-center justify-center mb-2">
                 <CheckCircle2 className="w-4 h-4 stroke-[2.2]" />
               </div>
               <div>
-                <div className="text-2xl font-extrabold text-[#0F3D2E] font-['Plus_Jakarta_Sans']">
+                <div className="text-2xl font-extrabold text-primary font-['Plus_Jakarta_Sans']">
                   {completedTrips}
                 </div>
                 <div className="text-xs font-medium text-outline font-['Manrope']">
@@ -179,7 +179,7 @@ export const ShoppingStatisticsModal: React.FC<ShoppingStatisticsModalProps> = (
 
             {/* Items Purchased */}
             <div className="p-4 rounded-2xl bg-surface-container-lowest border border-surface-dim/60 shadow-xs flex flex-col justify-between">
-              <div className="w-8 h-8 rounded-xl bg-emerald-50 text-[#0F3D2E] flex items-center justify-center mb-2">
+              <div className="w-8 h-8 rounded-xl bg-emerald-50 text-primary flex items-center justify-center mb-2">
                 <Sparkles className="w-4 h-4 stroke-[2.2]" />
               </div>
               <div>
@@ -196,7 +196,7 @@ export const ShoppingStatisticsModal: React.FC<ShoppingStatisticsModalProps> = (
 
         {/* Offline & Security Guarantee */}
         <div className="p-3.5 rounded-2xl bg-emerald-50/80 border border-emerald-100 flex items-center gap-3 mb-4">
-          <div className="w-8 h-8 rounded-xl bg-[#0F3D2E] text-white flex items-center justify-center shrink-0">
+          <div className="w-8 h-8 rounded-xl bg-primary text-white flex items-center justify-center shrink-0">
             <ShieldCheck className="w-4 h-4 stroke-[2.2]" />
           </div>
           <p className="text-xs text-emerald-950 leading-relaxed font-['Manrope']">
@@ -212,7 +212,7 @@ export const ShoppingStatisticsModal: React.FC<ShoppingStatisticsModalProps> = (
               onClose();
               onViewFullStatistics();
             }}
-            className="w-full mb-2.5 py-3 px-4 rounded-2xl bg-[#0F3D2E] hover:bg-[#145B3A] text-white text-sm font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.99]"
+            className="w-full mb-2.5 py-3 px-4 rounded-2xl bg-primary hover:bg-primary/90 text-white text-sm font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.99]"
           >
             <span>{t('statistics.title')}</span>
             <Chevron className="w-4 h-4" />

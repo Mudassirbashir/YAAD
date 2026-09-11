@@ -13,12 +13,12 @@ export interface UsePhoneNumberReminderOptions {
 }
 
 // Sensible timing constants:
-// Initial wait for new email user: ~5 minutes (300,000 ms)
-// Cooldown between reminders when dismissed ("Not Now"): ~7 minutes (420,000 ms, within 5-10 min range)
-// Minimum buffer after fresh page reload: 30 seconds (prevents modal flash on refresh)
-const INITIAL_DELAY_MS = 5 * 60 * 1000;
-const COOLDOWN_MS = 7 * 60 * 1000;
-const PAGE_LOAD_BUFFER_MS = 30 * 1000;
+// Immediate appearance on Home for email users without phone: 1.2 seconds
+// Cooldown between reminders when dismissed ("Not Now"): 10 minutes (600,000 ms)
+// Minimum buffer on fresh page reload: 1.2 seconds
+const INITIAL_DELAY_MS = 1200;
+const COOLDOWN_MS = 10 * 60 * 1000;
+const PAGE_LOAD_BUFFER_MS = 1200;
 
 export function checkUserHasPhone(
   profile: UserProfile | null,
@@ -61,22 +61,13 @@ export function usePhoneNumberReminder({
   // Check if user has a verified/persisted phone number
   const hasPhone = checkUserHasPhone(profile, user);
 
-  // Screens and states where reminder must NEVER interfere:
-  // - Shopping list aisle mode
-  // - Checkout/completion celebration
-  // - Settings & profile hub
-  // - List editing
-  // - Active interactive product tour
-  // - Active authentication modals
-  // - Initial onboarding
+  // Screens and states where reminder should appear:
+  // ONLY when user is on Home screen, not in a tour, not in auth modal, and has completed onboarding
   const isSafeScreen =
     !isTourActive &&
     !isAuthModalOpen &&
     hasOnboarded &&
-    currentScreen !== 'shopping_list' &&
-    currentScreen !== 'completion' &&
-    currentScreen !== 'settings' &&
-    currentScreen !== 'edit_list';
+    currentScreen === 'home';
 
   const storageKey = user?.id ? `yaad_phone_reminder_cooldown_${user.id}` : null;
 

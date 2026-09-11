@@ -96,7 +96,7 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
             <button
               type="button"
               onClick={() => onEditList(list)}
-              className="font-['Manrope'] text-xs sm:text-sm font-bold text-[#0F3D2E] hover:bg-emerald-50 px-3 py-1.5 rounded-full transition-colors active:scale-95 flex items-center gap-1 cursor-pointer"
+              className="font-['Manrope'] text-xs sm:text-sm font-bold text-primary hover:bg-emerald-50 px-3 py-1.5 rounded-full transition-colors active:scale-95 flex items-center gap-1 cursor-pointer"
             >
               <Edit3 className="w-3.5 h-3.5" />
               <span>{t('edit')}</span>
@@ -124,7 +124,7 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
                 className="shadow-2xs"
               />
               <div className="flex flex-col">
-                <span className="font-['Manrope'] text-[11px] font-extrabold uppercase tracking-widest text-[#0F3D2E]/80">
+                <span className="font-['Manrope'] text-[11px] font-extrabold uppercase tracking-widest text-primary/80">
                   {t('history.sessionLabel')}
                 </span>
                 <BidiText
@@ -156,7 +156,7 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 p-4 bg-surface-container/50 rounded-2xl border border-surface-dim/60">
             {/* DATE */}
             <div className="flex items-start gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-[#0F3D2E] border border-surface-dim/70 shrink-0 shadow-2xs">
+              <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-primary border border-surface-dim/70 shrink-0 shadow-2xs">
                 <Calendar className="w-4 h-4" />
               </div>
               <div className="flex flex-col">
@@ -171,7 +171,7 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
 
             {/* TIME */}
             <div className="flex items-start gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-[#0F3D2E] border border-surface-dim/70 shrink-0 shadow-2xs">
+              <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-primary border border-surface-dim/70 shrink-0 shadow-2xs">
                 <Clock className="w-4 h-4" />
               </div>
               <div className="flex flex-col">
@@ -186,7 +186,7 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
 
             {/* COMPLETION TIME / STATUS */}
             <div className="flex items-start gap-2.5 sm:col-span-2 md:col-span-1">
-              <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-[#0F3D2E] border border-surface-dim/70 shrink-0 shadow-2xs">
+              <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-primary border border-surface-dim/70 shrink-0 shadow-2xs">
                 <ShieldCheck className="w-4 h-4" />
               </div>
               <div className="flex flex-col">
@@ -213,11 +213,11 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
                   total: totalItems,
                 })}
               </span>
-              <span className="font-extrabold text-[#0F3D2E]">{percentComplete}%</span>
+              <span className="font-extrabold text-primary">{percentComplete}%</span>
             </div>
             <div className="w-full bg-surface-container rounded-full h-2 overflow-hidden shadow-inner">
               <div
-                className="bg-[#0F3D2E] h-2 rounded-full transition-all duration-500 ease-out"
+                className="bg-primary h-2 rounded-full transition-all duration-500 ease-out"
                 style={{ width: `${percentComplete}%` }}
               />
             </div>
@@ -258,8 +258,8 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
                 >
                   {/* Category Header */}
                   <div className="px-4 py-2.5 bg-surface-container-low/60 border-b border-surface-dim/60 flex items-center justify-between">
-                    <span className="font-['Manrope'] text-xs font-bold text-[#0F3D2E] uppercase tracking-wider flex items-center gap-2">
-                      <CategoryIcon categoryId={catId} className="w-4 h-4 text-[#0F3D2E]" />
+                    <span className="font-['Manrope'] text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
+                      <CategoryIcon categoryId={catId} className="w-4 h-4 text-primary" />
                       <span>{getCategoryName(catId)}</span>
                     </span>
                     <span className="font-['Manrope'] text-[11px] font-semibold text-outline">
@@ -403,9 +403,9 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
             type="button"
             id="history_reuse_list_btn"
             onClick={() => onReuseList(list)}
-            className="w-full sm:w-auto sm:min-w-[170px] min-h-[50px] px-5 rounded-full bg-emerald-50 text-[#0F3D2E] border border-emerald-200/80 hover:bg-emerald-100/70 font-['Manrope'] text-sm sm:text-base font-bold flex items-center justify-center gap-2 transition-all shadow-2xs active:scale-[0.98] cursor-pointer"
+            className="w-full sm:w-auto sm:min-w-[170px] min-h-[50px] px-5 rounded-full bg-emerald-50 text-primary border border-emerald-200/80 hover:bg-emerald-100/70 font-['Manrope'] text-sm sm:text-base font-bold flex items-center justify-center gap-2 transition-all shadow-2xs active:scale-[0.98] cursor-pointer"
           >
-            <RotateCcw className="w-4 h-4 text-[#0F3D2E]" />
+            <RotateCcw className="w-4 h-4 text-primary" />
             <span>{t('history.reuseList')}</span>
           </button>
 
@@ -415,7 +415,7 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
               type="button"
               id="history_continue_shopping_btn"
               onClick={() => onContinueShopping(list)}
-              className="w-full sm:w-auto sm:min-w-[190px] min-h-[50px] px-6 rounded-full bg-[#0F3D2E] hover:bg-[#145B3A] text-white font-['Manrope'] text-sm sm:text-base font-bold flex items-center justify-center gap-2 shadow-xs active:scale-[0.98] transition-all cursor-pointer"
+              className="w-full sm:w-auto sm:min-w-[190px] min-h-[50px] px-6 rounded-full bg-primary hover:bg-primary/90 text-white font-['Manrope'] text-sm sm:text-base font-bold flex items-center justify-center gap-2 shadow-xs active:scale-[0.98] transition-all cursor-pointer"
             >
               <ShoppingCart className="w-4 h-4" />
               <span>{t('history.continueShopping')}</span>

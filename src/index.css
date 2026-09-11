@@ -21,18 +21,18 @@
   
   --color-outline: #717974;
   --color-outline-variant: #c0c8c3;
-  --color-surface-tint: #396756;
+  --color-surface-tint: #0F3D2E;
   
-  --color-primary: #001e15;
+  --color-primary: #0F3D2E;
   --color-on-primary: #ffffff;
-  --color-primary-container: #003527;
-  --color-on-primary-container: #709f8c;
+  --color-primary-container: #14523e;
+  --color-on-primary-container: #bcedd8;
   --color-inverse-primary: #a0d1bc;
   
   --color-primary-fixed: #bcedd8;
   --color-primary-fixed-dim: #a0d1bc;
   --color-on-primary-fixed: #002117;
-  --color-on-primary-fixed-variant: #204f3f;
+  --color-on-primary-fixed-variant: #0F3D2E;
   
   --color-secondary: #7a5900;
   --color-on-secondary: #ffffff;

@@ -1787,7 +1787,19 @@ export function formatAuthErrorMessage(error: unknown): string {
     lower.includes('email already in use') ||
     lower.includes('email_exists')
   ) {
-    return 'This email is already registered. Please sign in instead.';
+    return 'This email is already registered.';
+  }
+
+  // 2b. PASSWORD RESET TOKEN / LINK ERRORS
+  if (
+    lower.includes('otp_expired') ||
+    lower.includes('token_expired') ||
+    lower.includes('token has expired') ||
+    lower.includes('email link is invalid') ||
+    (lower.includes('recovery link') && lower.includes('expired')) ||
+    (lower.includes('invalid') && (lower.includes('token') || lower.includes('otp') || lower.includes('recovery')))
+  ) {
+    return 'This password reset link is invalid or has expired. Please request a new one.';
   }
 
   // 3. INVALID EMAIL
@@ -1839,7 +1851,7 @@ export function formatAuthErrorMessage(error: unknown): string {
     lower.includes('passkey request was cancelled') ||
     lower.includes('ceremony was cancelled')
   ) {
-    return 'Passkey sign-in was cancelled. You can try again or continue with another sign-in method.';
+    return 'Passkey sign-in was cancelled.';
   }
 
   if (
@@ -1855,9 +1867,10 @@ export function formatAuthErrorMessage(error: unknown): string {
     lower.includes('no passkey') ||
     lower.includes('no credentials') ||
     lower.includes('not found on this account') ||
-    lower.includes('passkey was not found')
+    lower.includes('passkey was not found') ||
+    lower.includes('failed to find')
   ) {
-    return 'No passkey was found for this YAAD account on this device. Please continue with Email or Google to sign in or create your account.';
+    return 'No passkey found for this account/device. Use Email or Google to sign in.';
   }
 
   if (

@@ -119,7 +119,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
             <button
               type="button"
               onClick={onBack}
-              className="text-xs sm:text-sm font-semibold text-[#0F3D2E] hover:bg-emerald-50 px-3 py-1.5 rounded-full transition-colors active:scale-95"
+              className="text-xs sm:text-sm font-semibold text-primary hover:bg-emerald-50 px-3 py-1.5 rounded-full transition-colors active:scale-95"
             >
               {t('history.backToHome')}
             </button>
@@ -145,7 +145,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
               type="button"
               id="history_create_new_btn"
               onClick={onCreateNewList}
-              className="self-start sm:self-auto px-4 py-2 rounded-full bg-[#0F3D2E] hover:bg-[#145B3A] text-white text-xs sm:text-sm font-semibold transition-all shadow-xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
+              className="self-start sm:self-auto px-4 py-2 rounded-full bg-primary hover:bg-primary/90 text-white text-xs sm:text-sm font-semibold transition-all shadow-xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
             >
               <Plus className="w-4 h-4 stroke-[2.4]" />
               <span>{t('history.createListBtn')}</span>
@@ -198,7 +198,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t('history.searchPlaceholder')}
-                className="w-full h-11 pl-10 pr-4 bg-white border border-surface-dim/80 rounded-xl text-xs sm:text-sm font-['Manrope'] text-on-surface placeholder:text-outline/70 focus:outline-none focus:border-[#0F3D2E] focus:ring-1 focus:ring-[#0F3D2E] shadow-2xs transition-all"
+                className="w-full h-11 pl-10 pr-4 bg-white border border-surface-dim/80 rounded-xl text-xs sm:text-sm font-['Manrope'] text-on-surface placeholder:text-outline/70 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-2xs transition-all"
               />
               {searchQuery && (
                 <button
@@ -218,7 +218,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
                 onClick={() => setFilterTab('all')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-['Manrope'] font-semibold transition-all flex items-center gap-1.5 ${
                   filterTab === 'all'
-                    ? 'bg-white text-[#0F3D2E] shadow-xs'
+                    ? 'bg-white text-primary shadow-xs'
                     : 'text-outline hover:text-on-surface'
                 }`}
               >
@@ -283,8 +283,8 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
         ) : lists.length === 0 ? (
           /* Clean Empty State (When no history exists) */
           <div className="flex-1 flex flex-col items-center justify-center p-8 sm:p-12 bg-white rounded-3xl border border-surface-dim/70 my-6 text-center shadow-xs">
-            <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-[#0F3D2E] mb-4">
-              <ShoppingBag className="w-8 h-8 text-[#0F3D2E] stroke-[2]" />
+            <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-primary mb-4">
+              <ShoppingBag className="w-8 h-8 text-primary stroke-[2]" />
             </div>
             <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-on-surface text-lg sm:text-xl">
               {t('history.emptyTitle')}
@@ -296,7 +296,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
               type="button"
               id="history_empty_create_btn"
               onClick={onCreateNewList}
-              className="bg-[#0F3D2E] hover:bg-[#145B3A] text-white font-['Manrope'] text-xs sm:text-sm font-semibold px-6 py-3 rounded-full shadow-xs transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
+              className="bg-primary hover:bg-primary/90 text-white font-['Manrope'] text-xs sm:text-sm font-semibold px-6 py-3 rounded-full shadow-xs transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
             >
               <Plus className="w-4 h-4 stroke-[2.4]" />
               <span>{t('history.createListBtn')}</span>
@@ -318,7 +318,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
                 setSearchQuery('');
                 setFilterTab('all');
               }}
-              className="mt-3 px-3 py-1.5 bg-surface-container rounded-lg text-xs font-semibold text-[#0F3D2E] hover:bg-surface-container-high transition-colors"
+              className="mt-3 px-3 py-1.5 bg-surface-container rounded-lg text-xs font-semibold text-primary hover:bg-surface-container-high transition-colors"
             >
               Reset Filters
             </button>
@@ -344,7 +344,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
                   key={list.id}
                   id={`history_card_${list.id}`}
                   onClick={() => onSelectList(list)}
-                  className="bg-white rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-xs border border-surface-dim/70 hover:border-[#0F3D2E]/40 hover:shadow-sm cursor-pointer transition-all active:scale-[0.99] group select-none"
+                  className="bg-white rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-xs border border-surface-dim/70 hover:border-primary/40 hover:shadow-sm cursor-pointer transition-all active:scale-[0.99] group select-none"
                 >
                   <div className="flex items-center gap-3.5 sm:gap-4 flex-1 min-w-0 pe-3">
                     {/* List Icon */}
@@ -362,7 +362,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
                       <div className="flex items-center gap-2 flex-wrap mb-0.5">
                         <BidiText
                           as="h3"
-                          className="font-['Plus_Jakarta_Sans'] text-base sm:text-lg text-on-surface font-bold group-hover:text-[#0F3D2E] transition-colors truncate"
+                          className="font-['Plus_Jakarta_Sans'] text-base sm:text-lg text-on-surface font-bold group-hover:text-primary transition-colors truncate"
                         >
                           {list.title}
                         </BidiText>
@@ -431,7 +431,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
                   </div>
 
                   {/* Navigation Arrow */}
-                  <div className="w-9 h-9 rounded-full bg-surface-container-low border border-surface-dim/60 flex items-center justify-center text-outline group-hover:text-[#0F3D2E] group-hover:bg-emerald-50 group-hover:border-emerald-200/60 group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-all shrink-0 rtl:rotate-180">
+                  <div className="w-9 h-9 rounded-full bg-surface-container-low border border-surface-dim/60 flex items-center justify-center text-outline group-hover:text-primary group-hover:bg-emerald-50 group-hover:border-emerald-200/60 group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-all shrink-0 rtl:rotate-180">
                     <ChevronRight className="w-4 h-4" />
                   </div>
                 </article>

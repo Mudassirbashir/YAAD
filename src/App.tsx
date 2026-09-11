@@ -313,40 +313,59 @@ export default function App() {
 
     // 1. If user is NOT authenticated, redirect to auth screen
     if (!user) {
-      if (currentScreen !== 'auth') {
+      if (currentScreen !== 'auth' && !LEGAL_SCREENS.includes(currentScreen)) {
         setCurrentScreen('auth');
       }
       return;
     }
 
-    // 2. User is authenticated -> check first-time profile setup
-    const hasSetupLocal = localStorage.getItem(STORAGE_PROFILE_SETUP_KEY) === 'true';
-    const isSetupComplete = profile?.has_completed_setup || (hasSetupLocal && !!profile?.full_name);
+    // If authenticated, wait until profile has settled before routing decisions
+    if (!profile) return;
 
-    if (!isSetupComplete && (!profile?.full_name || profile.full_name.trim() === '')) {
-      if (currentScreen !== 'profile_setup') {
+    // 2. User is authenticated -> check if profile setup is complete
+    const hasSetupLocal = localStorage.getItem(STORAGE_PROFILE_SETUP_KEY) === 'true';
+    const isSetupComplete =
+      Boolean(profile.has_completed_setup) ||
+      Boolean(profile.full_name?.trim()) ||
+      Boolean(user.user_metadata?.has_completed_setup) ||
+      Boolean(user.user_metadata?.full_name?.trim()) ||
+      Boolean(user.user_metadata?.name?.trim()) ||
+      hasSetupLocal;
+
+    if (!isSetupComplete && (!profile.full_name || profile.full_name.trim() === '')) {
+      if (currentScreen !== 'profile_setup' && !LEGAL_SCREENS.includes(currentScreen)) {
         setCurrentScreen('profile_setup');
       }
       return;
     }
 
-    // 3. User is authenticated & profile setup complete -> Check First-Time Onboarding
-    const hasOnboarded = localStorage.getItem(STORAGE_ONBOARDED_KEY) === 'true';
-    if (!hasOnboarded) {
-      if (currentScreen !== 'onboarding') {
+    // Sync setup flag
+    localStorage.setItem(STORAGE_PROFILE_SETUP_KEY, 'true');
+
+    // 3. Check onboarding: existing accounts with name or setup do not need onboarding
+    const hasOnboardedLocal = localStorage.getItem(STORAGE_ONBOARDED_KEY) === 'true';
+    const isExistingAccount =
+      isSetupComplete ||
+      Boolean(user.user_metadata?.has_completed_onboarding) ||
+      Boolean(user.created_at && user.last_sign_in_at && user.created_at !== user.last_sign_in_at);
+
+    if (!hasOnboardedLocal && !isExistingAccount) {
+      if (currentScreen !== 'onboarding' && !LEGAL_SCREENS.includes(currentScreen)) {
         setCurrentScreen('onboarding');
       }
       return;
     }
 
+    localStorage.setItem(STORAGE_ONBOARDED_KEY, 'true');
+
     // 4. Authenticated, profile set up & onboarded -> if currently on auth/onboarding/profile_setup, go to home
-    if (currentScreen === 'auth' || currentScreen === 'onboarding' || currentScreen === 'profile_setup') {
+    if (currentScreen === 'auth' || currentScreen === 'profile_setup' || (currentScreen === 'onboarding' && isExistingAccount)) {
       setCurrentScreen('home');
       setActiveTab('home');
 
       // Check if product tour has been completed before
       const tourDone = localStorage.getItem(STORAGE_TOUR_KEY) === 'true';
-      if (!tourDone) {
+      if (!tourDone && !isExistingAccount) {
         setIsTourActive(true);
       }
     }
@@ -364,16 +383,22 @@ export default function App() {
       setCurrentScreen('auth');
       return;
     }
-    const hasSetup = profile?.has_completed_setup || localStorage.getItem(STORAGE_PROFILE_SETUP_KEY) === 'true';
-    if (!hasSetup && (!profile?.full_name || profile.full_name.trim() === '')) {
+
+    const isSetupComplete =
+      Boolean(profile?.has_completed_setup) ||
+      Boolean(profile?.full_name?.trim()) ||
+      Boolean(user?.user_metadata?.has_completed_setup) ||
+      Boolean(user?.user_metadata?.full_name?.trim()) ||
+      Boolean(user?.user_metadata?.name?.trim()) ||
+      localStorage.getItem(STORAGE_PROFILE_SETUP_KEY) === 'true';
+
+    if (!isSetupComplete) {
       setCurrentScreen('profile_setup');
       return;
     }
-    const hasOnboarded = localStorage.getItem(STORAGE_ONBOARDED_KEY) === 'true';
-    if (!hasOnboarded) {
-      setCurrentScreen('onboarding');
-      return;
-    }
+
+    localStorage.setItem(STORAGE_PROFILE_SETUP_KEY, 'true');
+    localStorage.setItem(STORAGE_ONBOARDED_KEY, 'true');
     setCurrentScreen('home');
     const tourDone = localStorage.getItem(STORAGE_TOUR_KEY) === 'true';
     if (!tourDone) {
@@ -415,17 +440,23 @@ export default function App() {
 
   // Handle successful login/signup from AuthView
   const handleAuthSuccess = () => {
-    const hasSetup = profile?.has_completed_setup || localStorage.getItem(STORAGE_PROFILE_SETUP_KEY) === 'true';
-    if (!hasSetup && (!profile?.full_name || profile.full_name.trim() === '')) {
+    const isSetupComplete =
+      Boolean(profile?.has_completed_setup) ||
+      Boolean(profile?.full_name?.trim()) ||
+      Boolean(user?.user_metadata?.has_completed_setup) ||
+      Boolean(user?.user_metadata?.full_name?.trim()) ||
+      Boolean(user?.user_metadata?.name?.trim()) ||
+      localStorage.getItem(STORAGE_PROFILE_SETUP_KEY) === 'true';
+
+    if (!isSetupComplete) {
       setCurrentScreen('profile_setup');
       return;
     }
-    const hasOnboarded = localStorage.getItem(STORAGE_ONBOARDED_KEY) === 'true';
-    if (!hasOnboarded) {
-      setCurrentScreen('onboarding');
-      return;
-    }
+
+    localStorage.setItem(STORAGE_PROFILE_SETUP_KEY, 'true');
+    localStorage.setItem(STORAGE_ONBOARDED_KEY, 'true');
     setCurrentScreen('home');
+    setActiveTab('home');
   };
 
   // Handle profile setup completion
@@ -969,7 +1000,9 @@ export default function App() {
 
   // Determine if bottom navigation bar should be visible
   const showBottomNav =
-    (currentScreen === 'home' || currentScreen === 'history' || currentScreen === 'settings' || currentScreen === 'statistics') && !!user;
+    (currentScreen === 'home' || currentScreen === 'history' || currentScreen === 'settings' || currentScreen === 'statistics') &&
+    !!user &&
+    !isPasswordRecovery;
 
   // Loading state while auth is being resolved on launch
   if (isAuthLoading && currentScreen !== 'splash') {
@@ -1026,6 +1059,7 @@ export default function App() {
           onSelectList={handleOpenListInShoppingMode}
           onOpenProfile={handleOpenSettingsScreen}
           onOpenMenu={handleOpenSettingsScreen}
+          onOpenPhoneSettings={handleOpenPhoneInSettings}
           onOpenHistory={() => {
             setCurrentScreen('history');
             setActiveTab('lists');
@@ -1037,7 +1071,7 @@ export default function App() {
         />
       )}
 
-      {currentScreen === 'create_list' && user && (
+      {currentScreen === 'create_list' && user && !isPasswordRecovery && (
         <CreateListView
           onBack={() => setCurrentScreen('home')}
           onCreateList={handleCreateListTitleSubmitted}
@@ -1045,7 +1079,7 @@ export default function App() {
         />
       )}
 
-      {currentScreen === 'add_items' && user && (
+      {currentScreen === 'add_items' && user && !isPasswordRecovery && (
         <AddItemsView
           listTitle={tempNewListTitle || currentActiveList?.title || 'Shopping List'}
           initialItems={currentActiveList?.items || []}
@@ -1055,7 +1089,7 @@ export default function App() {
         />
       )}
 
-      {currentScreen === 'shopping_list' && user && currentActiveList && (
+      {currentScreen === 'shopping_list' && user && !isPasswordRecovery && currentActiveList && (
         <ShoppingListView
           list={currentActiveList}
           onBack={() => setCurrentScreen('home')}
@@ -1069,7 +1103,7 @@ export default function App() {
         />
       )}
 
-      {currentScreen === 'completion' && user && currentActiveList && (
+      {currentScreen === 'completion' && user && !isPasswordRecovery && currentActiveList && (
         <CompletionView
           list={currentActiveList}
           onReturnHome={() => {
@@ -1083,7 +1117,7 @@ export default function App() {
         />
       )}
 
-      {currentScreen === 'history' && user && (
+      {currentScreen === 'history' && user && !isPasswordRecovery && (
         <ListHistoryView
           lists={lists}
           isLoading={isLoadingLists}
@@ -1101,7 +1135,7 @@ export default function App() {
         />
       )}
 
-      {currentScreen === 'list_details' && user && currentActiveList && (
+      {currentScreen === 'list_details' && user && !isPasswordRecovery && currentActiveList && (
         <ListDetailsView
           list={currentActiveList}
           onBack={() => setCurrentScreen('history')}
@@ -1113,7 +1147,7 @@ export default function App() {
         />
       )}
 
-      {currentScreen === 'edit_list' && user && currentActiveList && (
+      {currentScreen === 'edit_list' && user && !isPasswordRecovery && currentActiveList && (
         <EditListView
           list={currentActiveList}
           onBack={() => setCurrentScreen('shopping_list')}
@@ -1122,7 +1156,7 @@ export default function App() {
         />
       )}
 
-      {currentScreen === 'settings' && user && (
+      {currentScreen === 'settings' && user && !isPasswordRecovery && (
         <SettingsView
           initialEditPhone={focusPhoneInSettings}
           onBack={() => {
@@ -1139,7 +1173,7 @@ export default function App() {
         />
       )}
 
-      {currentScreen === 'statistics' && user && (
+      {currentScreen === 'statistics' && user && !isPasswordRecovery && (
         <StatisticsView
           lists={lists}
           isLoading={isLoadingLists}

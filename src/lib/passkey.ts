@@ -69,7 +69,7 @@ export function formatPasskeyError(err: unknown): string {
     msg.includes('the operation was aborted') ||
     msg.includes('notallowederror')
   ) {
-    return 'Passkey sign-in was cancelled. You can try again or continue with Email or Google.';
+    return 'Passkey sign-in was cancelled.';
   }
 
   if (
@@ -87,7 +87,7 @@ export function formatPasskeyError(err: unknown): string {
     msg.includes('no credentials') ||
     msg.includes('failed to find')
   ) {
-    return 'No passkey found. Continue with Email or Google to create/sign into your account.';
+    return 'No passkey found for this account/device. Use Email or Google to sign in.';
   }
 
   if (
@@ -103,7 +103,7 @@ export function formatPasskeyError(err: unknown): string {
     return "You're offline. Please reconnect to continue.";
   }
 
-  return 'No passkey found. Continue with Email or Google to create/sign into your account.';
+  return 'No passkey found for this account/device. Use Email or Google to sign in.';
 }
 
 /**

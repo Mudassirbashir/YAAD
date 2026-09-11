@@ -180,7 +180,7 @@ export const CategoryBrowserModal: React.FC<CategoryBrowserModalProps> = ({
             onClick={() => setSelectedCategory('all')}
             className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
               selectedCategory === 'all'
-                ? 'bg-[#0F3D2E] text-white shadow-xs'
+                ? 'bg-primary text-white shadow-xs'
                 : 'bg-surface-container text-outline hover:text-on-surface'
             }`}
           >
@@ -193,7 +193,7 @@ export const CategoryBrowserModal: React.FC<CategoryBrowserModalProps> = ({
               onClick={() => setSelectedCategory(cat.id)}
               className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap flex items-center gap-1.5 transition-all ${
                 selectedCategory === cat.id
-                  ? 'bg-[#0F3D2E] text-white shadow-xs'
+                  ? 'bg-primary text-white shadow-xs'
                   : 'bg-surface-container text-outline hover:text-on-surface'
               }`}
             >
@@ -237,7 +237,7 @@ export const CategoryBrowserModal: React.FC<CategoryBrowserModalProps> = ({
                   className={`px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shrink-0 transition-all duration-200 active:scale-95 ${
                     isAdded
                       ? 'bg-emerald-600 text-white'
-                      : 'bg-[#0F3D2E] hover:bg-[#145B3A] text-white'
+                      : 'bg-primary hover:bg-primary/90 text-white'
                   }`}
                 >
                   {isAdded ? (
@@ -261,7 +261,7 @@ export const CategoryBrowserModal: React.FC<CategoryBrowserModalProps> = ({
         <div className="pt-3 border-t border-surface-dim/40 shrink-0">
           <button
             onClick={onClose}
-            className="w-full py-2.5 px-4 rounded-xl bg-[#0F3D2E] hover:bg-[#145B3A] text-white text-sm font-semibold transition-all shadow-sm active:scale-[0.99]"
+            className="w-full py-2.5 px-4 rounded-xl bg-primary hover:bg-primary/90 text-white text-sm font-semibold transition-all shadow-sm active:scale-[0.99]"
           >
             {t('home.categoriesModal.close')}
           </button>

@@ -585,7 +585,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
             <button
               type="submit"
               aria-label="Add item"
-              className="absolute end-1.5 top-1/2 -translate-y-1/2 w-10 h-10 bg-[#0F3D2E] text-white rounded-full flex items-center justify-center hover:bg-[#145B3A] active:scale-95 transition-all shadow-xs"
+              className="absolute end-1.5 top-1/2 -translate-y-1/2 w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center hover:bg-primary/90 active:scale-95 transition-all shadow-xs"
             >
               <Plus className="w-5 h-5 stroke-[2.4]" />
             </button>
@@ -832,7 +832,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.22, ease: 'easeOut' }}
-            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-[#0F3D2E] text-white shadow-[0_10px_25px_rgba(0,30,21,0.35)] border border-emerald-500/30 max-w-sm w-[92vw] sm:w-auto min-w-[290px]"
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-primary text-white shadow-[0_10px_25px_rgba(15,61,46,0.35)] border border-emerald-500/30 max-w-sm w-[92vw] sm:w-auto min-w-[290px]"
           >
             <div className="flex items-center gap-2.5 min-w-0">
               <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-white shrink-0">
