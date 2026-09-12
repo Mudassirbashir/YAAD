@@ -2005,9 +2005,11 @@ export function formatAuthErrorMessage(error: unknown): string {
     lower.includes('securityerror') ||
     lower.includes('relying party id') ||
     lower.includes('rp id') ||
-    lower.includes('not a valid domain string')
+    lower.includes('not a valid domain string') ||
+    lower.includes('domain-bound') ||
+    lower.includes('yaad-mudassirbashir530-creators-projects.vercel.app')
   ) {
-    return 'Passkey is configured for yaad-mudassirbashir530-creators-projects.vercel.app. On this preview/dev domain, please continue with Email or Google.';
+    return 'Passkey authentication is domain-bound to production (yaad-mudassirbashir530-creators-projects.vercel.app). On this preview environment, please continue with Email or Google.';
   }
 
   // 8. OAUTH PROVIDER, CANCELLATION & ERRORS

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Fingerprint, CheckCircle2, AlertCircle, Loader2, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { isPasskeySupported } from '../../lib/passkey';
@@ -12,7 +12,7 @@ const PASSKEY_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000; // 7 days cooldown when dis
 
 export const PasskeyCard: React.FC<PasskeyCardProps> = ({ onOpenSecuritySettings }) => {
   const { user, registerPasskey, listPasskeys } = useAuth();
-  const { language } = useLanguage();
+  const { language, isRTL } = useLanguage();
 
   const [hasActivePasskey, setHasActivePasskey] = useState<boolean>(false);
   const [isDismissed, setIsDismissed] = useState<boolean>(false);
@@ -23,7 +23,31 @@ export const PasskeyCard: React.FC<PasskeyCardProps> = ({ onOpenSecuritySettings
   const isSupported = isPasskeySupported();
   const storageKey = user?.id ? `yaad_passkey_home_cooldown_${user.id}` : null;
 
-  // Query actual native Supabase/WebAuthn passkey status
+  // Real passkey detection from account state & Supabase credentials
+  const refreshPasskeyStatus = useCallback(async () => {
+    if (!user || !isSupported) return;
+
+    // First check user metadata / identities for immediate sync
+    if (user.user_metadata?.has_passkey === true) {
+      setHasActivePasskey(true);
+      return;
+    }
+
+    try {
+      const keys = await listPasskeys();
+      if (keys && keys.length > 0) {
+        setHasActivePasskey(true);
+      } else {
+        setHasActivePasskey(false);
+      }
+    } catch {
+      // Fallback to user metadata check
+      if (user.user_metadata?.has_passkey === true) {
+        setHasActivePasskey(true);
+      }
+    }
+  }, [user, isSupported, listPasskeys]);
+
   useEffect(() => {
     if (!user || !isSupported) return;
 
@@ -39,16 +63,8 @@ export const PasskeyCard: React.FC<PasskeyCardProps> = ({ onOpenSecuritySettings
       } catch {}
     }
 
-    listPasskeys()
-      .then((keys) => {
-        if (keys && keys.length > 0) {
-          setHasActivePasskey(true);
-        } else {
-          setHasActivePasskey(false);
-        }
-      })
-      .catch(() => {});
-  }, [user, isSupported, storageKey, listPasskeys]);
+    refreshPasskeyStatus();
+  }, [user, isSupported, storageKey, refreshPasskeyStatus]);
 
   if (!user || !isSupported) {
     return null;
@@ -94,16 +110,17 @@ export const PasskeyCard: React.FC<PasskeyCardProps> = ({ onOpenSecuritySettings
     }
   };
 
-  // State 1: User has an active Passkey ("Passkey Active") - subtle, calm, non-intrusive status
+  // State 1: User has an active Passkey ("Passkey Active") - calm, reassuring, matches Phone card shape & styling
   if (hasActivePasskey) {
     return (
       <section
         id="home_passkey_ready_card"
         aria-label="Passkey Status"
-        className="p-3 sm:p-3.5 rounded-2xl bg-surface-container-lowest border border-surface-dim/70 shadow-2xs flex items-center justify-between gap-3 animate-in fade-in duration-200 select-none"
+        dir={isRTL ? 'rtl' : 'ltr'}
+        className="p-3.5 sm:p-4 rounded-2xl bg-surface-container-lowest border border-surface-dim/70 shadow-2xs flex items-center justify-between gap-3 animate-in fade-in duration-200 select-none"
       >
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-primary/15">
+          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-primary/15 shadow-2xs">
             <Fingerprint className="w-4 h-4 sm:w-4.5 sm:h-4.5 stroke-[2.2]" />
           </div>
           <div className="flex flex-col min-w-0">
@@ -116,7 +133,7 @@ export const PasskeyCard: React.FC<PasskeyCardProps> = ({ onOpenSecuritySettings
                 <span>{language === 'ur' ? 'فعال' : 'Active'}</span>
               </span>
             </div>
-            <span className="font-['Manrope'] text-[11px] sm:text-xs text-outline truncate mt-0.5">
+            <span className="font-['Manrope'] text-[11px] sm:text-xs text-outline leading-snug truncate mt-0.5">
               {justRegistered
                 ? language === 'ur'
                   ? 'اس ڈیوائس پر پاس کی کامیابی سے فعال ہو گئی!'
@@ -139,28 +156,29 @@ export const PasskeyCard: React.FC<PasskeyCardProps> = ({ onOpenSecuritySettings
     );
   }
 
-  // State 2: User does not have a Passkey ("Set up Passkey") - calm security setup
+  // State 2: User does not have a Passkey ("Add Passkey") - exact twin layout of Phone card
   return (
     <section
       id="home_passkey_setup_card"
       aria-label="Set up Passkey"
-      className="p-3 sm:p-3.5 rounded-2xl bg-surface-container-lowest border border-surface-dim/70 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in duration-200 select-none"
+      dir={isRTL ? 'rtl' : 'ltr'}
+      className="p-3.5 sm:p-4 rounded-2xl bg-surface-container-lowest border border-surface-dim/70 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in duration-200 select-none"
     >
       <div className="flex items-start sm:items-center gap-3 min-w-0">
-        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5 sm:mt-0 border border-primary/15">
+        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5 sm:mt-0 border border-primary/15 shadow-2xs">
           <Fingerprint className="w-4 h-4 sm:w-4.5 sm:h-4.5 stroke-[2.2]" />
         </div>
         <div className="flex flex-col min-w-0">
           <span className="font-['Plus_Jakarta_Sans'] text-xs sm:text-sm font-bold text-on-surface">
-            {language === 'ur' ? 'پاس کی سیٹ اپ کریں' : 'Set up Passkey'}
+            {language === 'ur' ? 'پاس کی سیٹ اپ کریں' : 'Add Passkey'}
           </span>
-          <span className="font-['Manrope'] text-[11px] sm:text-xs text-outline truncate mt-0.5">
+          <span className="font-['Manrope'] text-[11px] sm:text-xs text-outline leading-snug truncate mt-0.5">
             {language === 'ur'
               ? 'اس ڈیوائس پر تیز اور بغیر پاسورڈ سائن ان کے لیے۔'
               : 'Fast, password-free sign-in on this device.'}
           </span>
           {setupError && (
-            <span className="text-[11px] text-error font-medium flex items-center gap-1 mt-1">
+            <span className="text-[11px] text-red-600 dark:text-red-400 font-medium flex items-center gap-1 mt-1">
               <AlertCircle className="w-3 h-3 shrink-0" />
               <span>{setupError}</span>
             </span>
@@ -168,7 +186,15 @@ export const PasskeyCard: React.FC<PasskeyCardProps> = ({ onOpenSecuritySettings
         </div>
       </div>
 
-      <div className="flex items-center gap-1.5 self-end sm:self-center shrink-0">
+      <div className="flex items-center gap-1.5 sm:gap-2 self-end sm:self-center shrink-0">
+        <button
+          type="button"
+          onClick={handleDismiss}
+          className="text-xs font-semibold text-outline hover:text-on-surface hover:bg-surface-container px-2.5 py-1.5 rounded-full transition-colors cursor-pointer"
+        >
+          {language === 'ur' ? 'ابھی نہیں' : 'Not now'}
+        </button>
+
         <button
           type="button"
           id="home_passkey_setup_btn"
@@ -188,7 +214,7 @@ export const PasskeyCard: React.FC<PasskeyCardProps> = ({ onOpenSecuritySettings
           type="button"
           onClick={handleDismiss}
           aria-label="Dismiss passkey setup"
-          className="w-7 h-7 rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container active:scale-95 transition-colors cursor-pointer"
+          className="w-7 h-7 rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container active:scale-95 transition-colors cursor-pointer ms-0.5"
         >
           <X className="w-3.5 h-3.5" />
         </button>

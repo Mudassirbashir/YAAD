@@ -765,24 +765,48 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
             {/* Smart Co-Purchase Suggestions Bar */}
             {recommendations.length > 0 && !inputVal.trim() && (
               <div className="bg-surface-container-lowest p-4 rounded-2xl border border-surface-dim/80 shadow-2xs space-y-2">
-                <div className="flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-primary" />
-                  <span className="text-xs font-['Manrope'] font-bold text-primary uppercase tracking-wider">
-                    Frequently Bought Together
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-primary" />
+                    <span className="text-xs font-['Manrope'] font-bold text-primary uppercase tracking-wider">
+                      Frequently Bought Together
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-['Manrope'] text-outline uppercase tracking-wider">
+                    Smart Suggestions
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  {recommendations.map((rec) => (
-                    <button
-                      key={rec.canonicalName}
-                      type="button"
-                      onClick={() => handleSelectRecommendation(rec)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-['Manrope'] font-medium bg-surface-container hover:bg-surface-container-high text-on-surface border border-surface-dim/70 active:scale-95 transition-all cursor-pointer"
-                    >
-                      <Plus className="w-3.5 h-3.5 text-primary/70" />
-                      <span>{rec.displayName || rec.canonicalName}</span>
-                    </button>
-                  ))}
+                  {recommendations.map((rec) => {
+                    const inList = findItemInList(rec.canonicalName);
+                    const isAdded = !!inList;
+
+                    return (
+                      <button
+                        key={rec.canonicalName}
+                        type="button"
+                        onClick={() => handleSelectRecommendation(rec)}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-['Manrope'] font-medium transition-all active:scale-95 cursor-pointer ${
+                          isAdded
+                            ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30'
+                            : 'bg-surface-container hover:bg-surface-container-high text-on-surface border border-surface-dim/70'
+                        }`}
+                      >
+                        {isAdded ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" strokeWidth={3} />
+                            <span>{rec.displayName || rec.canonicalName}</span>
+                            <span className="text-[10px] opacity-75">({inList.quantity || '1'})</span>
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="w-3.5 h-3.5 text-primary/70" />
+                            <span>{rec.displayName || rec.canonicalName}</span>
+                          </>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}

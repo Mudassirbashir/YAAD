@@ -4,6 +4,7 @@ import { SplashView } from './components/SplashView';
 import { OnboardingView } from './components/OnboardingView';
 import { AuthView } from './components/AuthView';
 import { ProfileSetupView } from './components/ProfileSetupView';
+import { ResetPasswordView } from './components/ResetPasswordView';
 import { HomeView } from './components/HomeView';
 import { CreateListView } from './components/CreateListView';
 import { AddItemsView } from './components/AddItemsView';
@@ -72,13 +73,24 @@ export default function App() {
     isLoading: isAuthLoading,
     isConfigured,
     isPasswordRecovery,
+    isPasswordResetRequired,
+    authState,
     deleteAccount,
     signOut,
   } = useAuth();
 
+  const isPasswordResetRequiredActive = Boolean(
+    isPasswordRecovery ||
+    isPasswordResetRequired ||
+    authState === 'PASSWORD_RESET_REQUIRED' ||
+    user?.user_metadata?.password_reset_required === true
+  );
+
   // Screen and navigation state
   const initialUrlScreen = parseScreenFromUrl();
-  const [currentScreen, setCurrentScreen] = useState<ScreenType>(initialUrlScreen || 'splash');
+  const [currentScreen, setCurrentScreen] = useState<ScreenType>(
+    initialUrlScreen || 'splash'
+  );
   const [previousScreenBeforeLegal, setPreviousScreenBeforeLegal] = useState<ScreenType>('home');
   const [activeTab, setActiveTab] = useState<NavigationTab>('home');
 
@@ -301,16 +313,16 @@ export default function App() {
 
     if (currentScreen === 'splash') return;
 
-    // Public legal & information pages are always accessible without auth!
-    if (LEGAL_SCREENS.includes(currentScreen)) return;
-
-    // 0. If in password recovery mode, ensure auth screen is active
-    if (isPasswordRecovery) {
-      if (currentScreen !== 'auth') {
-        setCurrentScreen('auth');
+    // 0. HIGHEST PRIORITY ROUTE GUARD: If password reset is required, strict route guard blocks all other screens
+    if (isPasswordResetRequiredActive) {
+      if (currentScreen !== 'reset_password') {
+        setCurrentScreen('reset_password');
       }
       return;
     }
+
+    // Public legal & information pages are always accessible without auth!
+    if (LEGAL_SCREENS.includes(currentScreen)) return;
 
     // 1. If user is NOT authenticated, redirect to auth screen
     if (!user) {
@@ -374,6 +386,11 @@ export default function App() {
 
   // Handle splash completion
   const handleSplashFinish = () => {
+    if (isPasswordResetRequiredActive) {
+      setCurrentScreen('reset_password');
+      return;
+    }
+
     const urlScreen = parseScreenFromUrl();
     if (urlScreen) {
       setCurrentScreen(urlScreen);
@@ -1017,7 +1034,7 @@ export default function App() {
   const showBottomNav =
     (currentScreen === 'home' || currentScreen === 'history' || currentScreen === 'settings' || currentScreen === 'statistics') &&
     !!user &&
-    !isPasswordRecovery;
+    !isPasswordResetRequiredActive;
 
   // Loading state while auth is being resolved on launch
   if (isAuthLoading && currentScreen !== 'splash') {
@@ -1049,22 +1066,35 @@ export default function App() {
         <SplashView onFinish={handleSplashFinish} />
       )}
 
-      {(!user || isPasswordRecovery) && currentScreen !== 'splash' && !LEGAL_SCREENS.includes(currentScreen) && (
+      {/* Password Reset Screen - Strict Gate */}
+      {isPasswordResetRequiredActive && currentScreen !== 'splash' && (
+        <ResetPasswordView
+          onSuccess={() => {
+            setCurrentScreen('home');
+            setActiveTab('home');
+          }}
+          onRequestNewLink={() => {
+            setCurrentScreen('auth');
+          }}
+        />
+      )}
+
+      {!isPasswordResetRequiredActive && !user && currentScreen !== 'splash' && !LEGAL_SCREENS.includes(currentScreen) && (
         <AuthView
           onSuccess={handleAuthSuccess}
           onOpenLegalPage={handleOpenLegalPage}
         />
       )}
 
-      {user && !isPasswordRecovery && currentScreen === 'profile_setup' && !LEGAL_SCREENS.includes(currentScreen) && (
+      {user && !isPasswordResetRequiredActive && currentScreen === 'profile_setup' && !LEGAL_SCREENS.includes(currentScreen) && (
         <ProfileSetupView onComplete={handleProfileSetupComplete} />
       )}
 
-      {user && !isPasswordRecovery && currentScreen === 'onboarding' && !LEGAL_SCREENS.includes(currentScreen) && (
+      {user && !isPasswordResetRequiredActive && currentScreen === 'onboarding' && !LEGAL_SCREENS.includes(currentScreen) && (
         <OnboardingView onComplete={handleOnboardingComplete} />
       )}
 
-      {currentScreen === 'home' && user && !isPasswordRecovery && (
+      {currentScreen === 'home' && user && !isPasswordResetRequiredActive && (
         <HomeView
           lists={lists}
           isLoading={isLoadingLists}
@@ -1086,7 +1116,7 @@ export default function App() {
         />
       )}
 
-      {currentScreen === 'create_list' && user && !isPasswordRecovery && (
+      {currentScreen === 'create_list' && user && !isPasswordResetRequiredActive && (
         <CreateListView
           onBack={() => setCurrentScreen('home')}
           onCreateList={handleCreateListTitleSubmitted}
@@ -1094,7 +1124,7 @@ export default function App() {
         />
       )}
 
-      {currentScreen === 'add_items' && user && !isPasswordRecovery && (
+      {currentScreen === 'add_items' && user && !isPasswordResetRequiredActive && (
         <AddItemsView
           listTitle={tempNewListTitle || currentActiveList?.title || 'Shopping List'}
           initialItems={currentActiveList?.items || []}
@@ -1105,7 +1135,7 @@ export default function App() {
         />
       )}
 
-      {currentScreen === 'shopping_list' && user && !isPasswordRecovery && currentActiveList && (
+      {currentScreen === 'shopping_list' && user && !isPasswordResetRequiredActive && currentActiveList && (
         <ShoppingListView
           list={currentActiveList}
           onBack={() => setCurrentScreen('home')}
@@ -1119,7 +1149,7 @@ export default function App() {
         />
       )}
 
-      {currentScreen === 'completion' && user && !isPasswordRecovery && currentActiveList && (
+      {currentScreen === 'completion' && user && !isPasswordResetRequiredActive && currentActiveList && (
         <CompletionView
           list={currentActiveList}
           onReturnHome={() => {
@@ -1133,7 +1163,7 @@ export default function App() {
         />
       )}
 
-      {currentScreen === 'history' && user && !isPasswordRecovery && (
+      {currentScreen === 'history' && user && !isPasswordResetRequiredActive && (
         <ListHistoryView
           lists={lists}
           isLoading={isLoadingLists}
@@ -1151,7 +1181,7 @@ export default function App() {
         />
       )}
 
-      {currentScreen === 'list_details' && user && !isPasswordRecovery && currentActiveList && (
+      {currentScreen === 'list_details' && user && !isPasswordResetRequiredActive && currentActiveList && (
         <ListDetailsView
           list={currentActiveList}
           onBack={() => setCurrentScreen('history')}
@@ -1163,7 +1193,7 @@ export default function App() {
         />
       )}
 
-      {currentScreen === 'edit_list' && user && !isPasswordRecovery && currentActiveList && (
+      {currentScreen === 'edit_list' && user && !isPasswordResetRequiredActive && currentActiveList && (
         <EditListView
           list={currentActiveList}
           onBack={() => setCurrentScreen('shopping_list')}
@@ -1172,7 +1202,7 @@ export default function App() {
         />
       )}
 
-      {currentScreen === 'settings' && user && !isPasswordRecovery && (
+      {currentScreen === 'settings' && user && !isPasswordResetRequiredActive && (
         <SettingsView
           initialEditPhone={focusPhoneInSettings}
           onBack={() => {
@@ -1189,7 +1219,7 @@ export default function App() {
         />
       )}
 
-      {currentScreen === 'statistics' && user && !isPasswordRecovery && (
+      {currentScreen === 'statistics' && user && !isPasswordResetRequiredActive && (
         <StatisticsView
           lists={lists}
           isLoading={isLoadingLists}
@@ -1215,21 +1245,21 @@ export default function App() {
 
       {/* Interactive Product Tour (Spotlight on Home view) */}
       <ProductTour
-        isActive={isTourActive && currentScreen === 'home'}
+        isActive={isTourActive && currentScreen === 'home' && !isPasswordResetRequiredActive}
         onComplete={handleTourComplete}
         onSkip={handleTourSkip}
       />
 
       {/* Smart Phone Number Completion Reminder Modal */}
       <PhoneNumberReminderModal
-        isOpen={isPhoneReminderOpen}
+        isOpen={isPhoneReminderOpen && !isPasswordResetRequiredActive}
         onAddNumber={handleAddNumberReminder}
         onDismiss={handleDismissPhoneReminder}
       />
 
       {/* Auth Modal (Sign in / Sign up) */}
       <AuthModal
-        isOpen={isAuthModalOpen}
+        isOpen={isAuthModalOpen && !isPasswordResetRequiredActive}
         onClose={() => setIsAuthModalOpen(false)}
         initialMode={authModalMode}
         onOpenLegalPage={handleOpenLegalPage}

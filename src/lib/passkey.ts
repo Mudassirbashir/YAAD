@@ -20,6 +20,8 @@
 import { supabase } from './supabase';
 import { PasskeyCredentialInfo } from '../types';
 
+export const PRODUCTION_PASSKEY_RP_ID = 'yaad-mudassirbashir530-creators-projects.vercel.app';
+
 /**
  * Detects if the current browser and operating system support WebAuthn / Passkeys
  */
@@ -29,6 +31,84 @@ export function isPasskeySupported(): boolean {
     window.PublicKeyCredential &&
     typeof window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === 'function'
   );
+}
+
+/**
+ * Validates whether passkey authentication is supported on the current domain environment.
+ * WebAuthn security specifications strictly bind credentials to the Relying Party ID.
+ */
+export function isPasskeySupportedOnCurrentDomain(): { supported: boolean; reason?: string } {
+  if (!isPasskeySupported()) {
+    return {
+      supported: false,
+      reason: 'Passkeys are not supported on this browser or device. Please continue with Email or Google.',
+    };
+  }
+
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname.toLowerCase();
+    // Allow exact production domain, subdomains, or localhost for local testing
+    const isProductionMatch =
+      hostname === PRODUCTION_PASSKEY_RP_ID ||
+      hostname.endsWith('.' + PRODUCTION_PASSKEY_RP_ID);
+    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+
+    if (!isProductionMatch && !isLocalhost) {
+      return {
+        supported: false,
+        reason: `Passkey authentication is domain-bound to production (${PRODUCTION_PASSKEY_RP_ID}). On this preview environment, please continue with Email or Google.`,
+      };
+    }
+  }
+
+  return { supported: true };
+}
+
+let cachedPasskeyDomainCheck: { supported: boolean; reason?: string } | null = null;
+let passkeyConfigFetchPromise: Promise<{ supported: boolean; reason?: string }> | null = null;
+
+/**
+ * Checks passkey domain support dynamically via backend API, caching the result
+ */
+export async function checkPasskeyDomainSupport(): Promise<{ supported: boolean; reason?: string }> {
+  if (!isPasskeySupported()) {
+    return {
+      supported: false,
+      reason: 'Passkeys are not supported on this browser or device. Please continue with Email or Google.',
+    };
+  }
+
+  if (cachedPasskeyDomainCheck) {
+    return cachedPasskeyDomainCheck;
+  }
+
+  if (passkeyConfigFetchPromise) {
+    return passkeyConfigFetchPromise;
+  }
+
+  passkeyConfigFetchPromise = (async () => {
+    try {
+      const res = await fetch('/api/auth/passkey-config');
+      if (res.ok) {
+        const data = await res.json();
+        const result = {
+          supported: Boolean(data.supported),
+          reason: data.reason,
+        };
+        cachedPasskeyDomainCheck = result;
+        return result;
+      }
+    } catch (err) {
+      console.warn('Notice checking server passkey configuration:', err);
+    }
+    const fallback = isPasskeySupportedOnCurrentDomain();
+    cachedPasskeyDomainCheck = fallback;
+    return fallback;
+  })().finally(() => {
+    passkeyConfigFetchPromise = null;
+  });
+
+  return passkeyConfigFetchPromise;
 }
 
 /**
@@ -59,47 +139,59 @@ export function getDefaultDeviceName(): string {
  */
 export function formatPasskeyError(err: unknown): string {
   if (!err) return 'Passkey sign-in was not completed. Please try again.';
-  const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
+
+  let raw = '';
+  if (err instanceof Error) {
+    raw = err.message;
+  } else if (typeof err === 'object' && err !== null) {
+    const o = err as any;
+    raw = o.message || o.error_description || o.msg || (o.name ? `${o.name}: ${o.message}` : JSON.stringify(err));
+  } else {
+    raw = String(err);
+  }
+
+  const lower = raw.toLowerCase();
 
   if (
-    msg.includes('abort') ||
-    msg.includes('user cancelled') ||
-    msg.includes('user canceled') ||
-    msg.includes('the operation either timed out or was not allowed') ||
-    msg.includes('the operation was aborted') ||
-    msg.includes('notallowederror')
+    lower.includes('securityerror') ||
+    lower.includes('relying party id') ||
+    lower.includes('rp id') ||
+    lower.includes('not a valid domain string') ||
+    lower.includes('domain-bound')
+  ) {
+    return `Passkey authentication is domain-bound to production (${PRODUCTION_PASSKEY_RP_ID}). On this preview environment, please continue with Email or Google.`;
+  }
+
+  if (
+    lower.includes('abort') ||
+    lower.includes('user cancelled') ||
+    lower.includes('user canceled') ||
+    lower.includes('the operation either timed out or was not allowed') ||
+    lower.includes('the operation was aborted') ||
+    lower.includes('notallowederror')
   ) {
     return 'Passkey sign-in was cancelled.';
   }
 
   if (
-    msg.includes('not supported') ||
-    msg.includes('not available') ||
-    msg.includes('notsupportederror')
+    lower.includes('not supported') ||
+    lower.includes('not available') ||
+    lower.includes('notsupportederror')
   ) {
     return 'Passkeys are not supported on this browser or device. Please continue with Email or Google.';
   }
 
   if (
-    msg.includes('not found') ||
-    msg.includes('not recognized') ||
-    msg.includes('no passkey') ||
-    msg.includes('no credentials') ||
-    msg.includes('failed to find')
+    lower.includes('not found') ||
+    lower.includes('not recognized') ||
+    lower.includes('no passkey') ||
+    lower.includes('no credentials') ||
+    lower.includes('failed to find')
   ) {
     return 'No passkey found for this account/device. Use Email or Google to sign in.';
   }
 
-  if (
-    msg.includes('securityerror') ||
-    msg.includes('relying party id') ||
-    msg.includes('rp id') ||
-    msg.includes('not a valid domain string')
-  ) {
-    return 'Passkeys are configured for the production domain. On this preview environment, please continue with Email or Google.';
-  }
-
-  if (msg.includes('offline') || msg.includes('network') || msg.includes('failed to fetch')) {
+  if (lower.includes('offline') || lower.includes('network') || lower.includes('failed to fetch')) {
     return "You're offline. Please reconnect to continue.";
   }
 
@@ -113,10 +205,12 @@ export async function signInWithPasskey(): Promise<{
   data: any | null;
   error: Error | null;
 }> {
-  if (!isPasskeySupported()) {
+  // 1. Check dynamic domain environment binding
+  const domainCheck = await checkPasskeyDomainSupport();
+  if (!domainCheck.supported) {
     return {
       data: null,
-      error: new Error('Passkeys are not supported on this browser or device. Please continue with Email or Google.'),
+      error: new Error(domainCheck.reason || 'Passkeys are not supported in this environment.'),
     };
   }
 
@@ -155,10 +249,15 @@ export async function registerPasskey(
   // Support both (deviceName) and legacy (authToken, deviceName) signatures
   const deviceName = arg2 || (arg1 && !arg1.includes('.') ? arg1 : getDefaultDeviceName());
 
-  if (!isPasskeySupported()) {
+  // 1. Check dynamic domain environment binding
+  const domainCheck = await checkPasskeyDomainSupport();
+  if (!domainCheck.supported) {
     return {
       success: false,
-      error: new Error('Passkeys are not supported on this browser or device.'),
+      error: new Error(
+        domainCheck.reason ||
+          `Passkey registration is domain-bound to production (${PRODUCTION_PASSKEY_RP_ID}). On this preview environment, please use Email or Google authentication.`
+      ),
     };
   }
 

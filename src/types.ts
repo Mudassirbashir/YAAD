@@ -309,6 +309,7 @@ export type ScreenType =
   | 'splash'
   | 'onboarding'
   | 'auth'
+  | 'reset_password'
   | 'profile_setup'
   | 'home'
   | 'create_list'

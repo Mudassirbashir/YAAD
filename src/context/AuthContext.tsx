@@ -31,6 +31,7 @@ import {
 
 export type AuthState =
   | 'AUTH_LOADING'
+  | 'PASSWORD_RESET_REQUIRED'
   | 'PASSWORD_RESET'
   | 'AUTHENTICATED'
   | 'UNAUTHENTICATED'
@@ -46,6 +47,7 @@ export interface AuthContextType {
   oauthError: string | null;
   clearOauthError: () => void;
   isPasswordRecovery: boolean;
+  isPasswordResetRequired: boolean;
   passwordResetError: string | null;
   clearPasswordResetError: () => void;
   clearPasswordRecovery: () => void;
@@ -187,6 +189,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setIsPasswordRecovery(true);
           try {
             sessionStorage.setItem('yaad_password_recovery_active', 'true');
+            localStorage.setItem('yaad_password_reset_required', 'true');
           } catch {}
         }
 
@@ -213,6 +216,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             setIsPasswordRecovery(false);
             try {
               sessionStorage.removeItem('yaad_password_recovery_active');
+              localStorage.removeItem('yaad_password_reset_required');
             } catch {}
           } else if (
             errorParam === 'access_denied' ||
@@ -254,7 +258,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setIsPasswordRecovery(true);
           try {
             sessionStorage.setItem('yaad_password_recovery_active', 'true');
+            localStorage.setItem('yaad_password_reset_required', 'true');
           } catch {}
+
+          if (currentSession?.user?.id) {
+            fetch('/api/auth/mark-reset-required', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(currentSession.access_token ? { Authorization: `Bearer ${currentSession.access_token}` } : {}),
+              },
+              body: JSON.stringify({ userId: currentSession.user.id }),
+            }).catch(() => {});
+          }
         }
 
         if (event === 'SIGNED_OUT' || !currentSession?.user) {
@@ -274,6 +290,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         setSession(currentSession);
         setUser(currentSession.user);
+
+        if (currentSession.user.user_metadata?.password_reset_required === true) {
+          setIsPasswordRecovery(true);
+          try {
+            localStorage.setItem('yaad_password_reset_required', 'true');
+          } catch {}
+        }
 
         // 1. Immediately hydrate profile from local IndexedDB cache
         const cachedProfile = await getOfflineProfile<UserProfile>(currentSession.user.id);
@@ -306,6 +329,41 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
       }
     );
+
+    // Synchronously check getSession() to immediately hydrate active session from storage upon browser reopen
+    supabase.auth.getSession().then(({ data: { session: initialSession }, error: sessionError }) => {
+      if (!isMounted) return;
+      if (sessionError) {
+        console.warn('Notice retrieving initial session:', sessionError);
+      }
+      if (initialSession?.user) {
+        setSession(initialSession);
+        setUser(initialSession.user);
+        const isResetRequired =
+          initialSession.user.user_metadata?.password_reset_required === true ||
+          (typeof window !== 'undefined' && localStorage.getItem('yaad_password_reset_required') === 'true');
+
+        if (isResetRequired) {
+          setIsPasswordRecovery(true);
+        }
+        // Hydrate profile
+        getOfflineProfile<UserProfile>(initialSession.user.id).then((cached) => {
+          if (cached && isMounted) {
+            setProfile(cached);
+          }
+        });
+        getProfile(initialSession.user.id).then((serverProfile) => {
+          if (serverProfile && isMounted) {
+            setProfile(serverProfile);
+            saveOfflineProfile(initialSession.user.id, serverProfile).catch(() => {});
+          }
+        });
+      }
+      setIsLoading(false);
+    }).catch((err) => {
+      console.warn('Error in getSession:', err);
+      if (isMounted) setIsLoading(false);
+    });
 
     return () => {
       isMounted = false;
@@ -653,6 +711,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const signOut = async () => {
+    setIsPasswordRecovery(false);
+    setPasswordResetError(null);
+    if (typeof window !== 'undefined') {
+      try {
+        sessionStorage.removeItem('yaad_password_recovery_active');
+        localStorage.removeItem('yaad_password_reset_required');
+      } catch {}
+      cleanAuthUrlParams();
+    }
     if (user?.id) {
       try {
         await purgeAllUserOfflineData(user.id);
@@ -734,7 +801,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const sendPasswordResetEmail = async (email: string): Promise<{ error: Error | null }> => {
-    return await supabaseSendPasswordResetEmail(email);
+    const trimmed = email.trim().toLowerCase();
+    // Notify backend to mark password reset required for this email
+    fetch('/api/auth/mark-reset-required', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: trimmed }),
+    }).catch((err) => {
+      console.warn('Notice marking password reset required on server:', err);
+    });
+
+    return await supabaseSendPasswordResetEmail(trimmed);
   };
 
   const updatePassword = async (newPassword: string): Promise<{ error: Error | null }> => {
@@ -745,16 +822,37 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return { error: new Error("You're offline. Please reconnect to update your password.") };
     }
     try {
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      const { data: updateData, error } = await supabase.auth.updateUser({
+        password: newPassword,
+        data: { password_reset_required: false },
+      });
       if (error) {
         return { error: new Error(formatAuthErrorMessage(error)) };
       }
+
+      // Clear server-side reset requirement
+      const targetUserId = updateData?.user?.id || user?.id;
+      if (targetUserId) {
+        fetch('/api/auth/clear-reset-required', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+          },
+          body: JSON.stringify({ userId: targetUserId }),
+        }).catch((err) => {
+          console.warn('Notice clearing password reset required on server:', err);
+        });
+      }
+
       setIsPasswordRecovery(false);
       setPasswordResetError(null);
       if (typeof window !== 'undefined') {
         try {
           sessionStorage.removeItem('yaad_password_recovery_active');
+          localStorage.removeItem('yaad_password_reset_required');
         } catch {}
+        cleanAuthUrlParams();
       }
       // Refresh current session to ensure clean authenticated state
       try {
@@ -861,13 +959,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const isPasswordResetRequired = Boolean(
+    isPasswordRecovery ||
+    user?.user_metadata?.password_reset_required === true
+  );
+
   const authState: AuthState = useMemo(() => {
     if (isLoading) return 'AUTH_LOADING';
-    if (isPasswordRecovery) return 'PASSWORD_RESET';
+    if (isPasswordResetRequired) return 'PASSWORD_RESET_REQUIRED';
     if (user) return 'AUTHENTICATED';
     if (oauthError || passwordResetError) return 'AUTH_ERROR';
     return 'UNAUTHENTICATED';
-  }, [isLoading, isPasswordRecovery, user, oauthError, passwordResetError]);
+  }, [isLoading, isPasswordResetRequired, user, oauthError, passwordResetError]);
 
   return (
     <AuthContext.Provider
@@ -893,6 +996,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         oauthError,
         clearOauthError,
         isPasswordRecovery,
+        isPasswordResetRequired,
         passwordResetError,
         clearPasswordResetError,
         clearPasswordRecovery,

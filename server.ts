@@ -681,6 +681,121 @@ app.post('/api/auth/confirm-user', async (req, res) => {
   }
 });
 
+// Mark user as requiring password reset (persisted in Supabase Auth user_metadata)
+app.post('/api/auth/mark-reset-required', async (req, res) => {
+  try {
+    const { userId, email } = req.body || {};
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
+
+    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
+
+    if (!supabaseUrl || !serviceKey) {
+      return res.status(503).json({ error: 'Server authentication admin service unavailable.' });
+    }
+
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    let targetUserId = userId;
+
+    if (!targetUserId && token) {
+      const { data: userData } = await supabaseAdmin.auth.getUser(token);
+      targetUserId = userData?.user?.id;
+    }
+
+    if (!targetUserId && email) {
+      const { data: listData } = await supabaseAdmin.auth.admin.listUsers();
+      const matched = (listData?.users || []).find(
+        (u) => u.email?.toLowerCase() === String(email).trim().toLowerCase()
+      );
+      if (matched) {
+        targetUserId = matched.id;
+      }
+    }
+
+    if (!targetUserId) {
+      // Security best practice: avoid account enumeration
+      return res.json({ success: true, message: 'Password reset request acknowledged.' });
+    }
+
+    const { data: currentTarget } = await supabaseAdmin.auth.admin.getUserById(targetUserId);
+    const existingMeta = currentTarget?.user?.user_metadata || {};
+
+    const { data: updated, error: updErr } = await supabaseAdmin.auth.admin.updateUserById(targetUserId, {
+      user_metadata: {
+        ...existingMeta,
+        password_reset_required: true,
+        password_reset_requested_at: new Date().toISOString(),
+      },
+    });
+
+    if (updErr) {
+      return res.status(400).json({ error: updErr.message });
+    }
+
+    return res.json({ success: true, userId: targetUserId });
+  } catch (err: any) {
+    console.error('Exception in /api/auth/mark-reset-required:', err);
+    return res.status(500).json({ error: 'Failed to mark reset required.' });
+  }
+});
+
+// Clear password reset required requirement after successful password update
+app.post('/api/auth/clear-reset-required', async (req, res) => {
+  try {
+    const { userId } = req.body || {};
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : null;
+
+    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
+
+    if (!supabaseUrl || !serviceKey) {
+      return res.status(503).json({ error: 'Server authentication admin service unavailable.' });
+    }
+
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    let targetUserId = userId;
+
+    if (!targetUserId && token) {
+      const { data: userData } = await supabaseAdmin.auth.getUser(token);
+      targetUserId = userData?.user?.id;
+    }
+
+    if (!targetUserId) {
+      return res.status(400).json({ error: 'Valid user identification is required.' });
+    }
+
+    const { data: currentTarget } = await supabaseAdmin.auth.admin.getUserById(targetUserId);
+    const existingMeta = currentTarget?.user?.user_metadata || {};
+
+    const { error: updErr } = await supabaseAdmin.auth.admin.updateUserById(targetUserId, {
+      user_metadata: {
+        ...existingMeta,
+        password_reset_required: false,
+        password_reset_completed_at: new Date().toISOString(),
+      },
+    });
+
+    if (updErr) {
+      return res.status(400).json({ error: updErr.message });
+    }
+
+    return res.json({ success: true, userId: targetUserId });
+  } catch (err: any) {
+    console.error('Exception in /api/auth/clear-reset-required:', err);
+    return res.status(500).json({ error: 'Failed to clear reset required.' });
+  }
+});
+
 // Safe administrative endpoint to confirm all existing users who are "Waiting for Verification"
 app.post('/api/admin/confirm-existing-users', async (req, res) => {
   try {
@@ -877,6 +992,39 @@ app.post('/api/account/delete', async (req, res) => {
 // ====================================================================
 // WEBAUTHN / PASSKEY AUTHENTICATION ENDPOINTS
 // ====================================================================
+
+app.get('/api/auth/passkey-config', (req, res) => {
+  try {
+    const hostHeader = req.headers['x-forwarded-host'] || req.headers.host || 'localhost';
+    const rawHost = Array.isArray(hostHeader) ? hostHeader[0] : hostHeader;
+    const host = rawHost.split(':')[0].toLowerCase();
+
+    const configuredRpId = (
+      process.env.PASSKEY_RP_ID ||
+      'yaad-mudassirbashir530-creators-projects.vercel.app'
+    ).toLowerCase().trim();
+
+    const isProductionMatch = host === configuredRpId || host.endsWith('.' + configuredRpId);
+    const isLocalhost = host === 'localhost' || host === '127.0.0.1';
+    const supported = isProductionMatch || isLocalhost;
+
+    return res.json({
+      supported,
+      rpId: configuredRpId,
+      currentHost: host,
+      isProduction: isProductionMatch,
+      reason: supported
+        ? undefined
+        : `Passkey authentication is domain-bound to production (${configuredRpId}). On this preview environment, please continue with Email or Google.`,
+    });
+  } catch (err: any) {
+    return res.status(500).json({
+      supported: false,
+      rpId: 'yaad-mudassirbashir530-creators-projects.vercel.app',
+      reason: 'Failed to retrieve passkey configuration.',
+    });
+  }
+});
 
 function getRpId(req: express.Request): string {
   const hostHeader = req.headers['x-forwarded-host'] || req.headers.host || 'localhost';

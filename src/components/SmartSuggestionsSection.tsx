@@ -148,7 +148,13 @@ export const SmartSuggestionsSection: React.FC<SmartSuggestionsSectionProps> = (
       <div className="flex gap-2 overflow-x-auto pb-1.5 pt-0.5 no-scrollbar -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8">
         {recommendations.map((candidate) => {
           const key = candidate.canonicalName.toLowerCase();
-          const isAdded = !!addedMap[key];
+          const isAlreadyInList = currentItems.some(
+            (item) =>
+              (item.canonicalName && item.canonicalName.toLowerCase() === key) ||
+              item.name?.toLowerCase() === key ||
+              item.name?.toLowerCase() === candidate.displayName.toLowerCase()
+          );
+          const isAdded = isAlreadyInList || !!addedMap[key];
 
           const displayName =
             language === 'ur' && candidate.nameUrdu
