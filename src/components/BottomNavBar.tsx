@@ -115,21 +115,21 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
 
   return (
     <div
-      className="fixed bottom-0 inset-x-0 z-40 flex justify-center items-end pointer-events-none sm:pb-[max(env(safe-area-inset-bottom,0px),0.625rem)] sm:px-4"
+      className="fixed bottom-0 inset-x-0 z-40 flex justify-center items-end pointer-events-none sm:px-4"
       style={{ transform: 'translateZ(0)' }}
     >
       <nav
         id="bottom_navigation_bar"
         role="navigation"
         aria-label={t('nav.mainNavigation') || 'Main Navigation'}
-        className="pointer-events-auto w-full sm:max-w-[400px] md:max-w-[440px] bg-surface-container-lowest/95 sm:bg-surface-container-lowest/90 dark:bg-stone-900/95 sm:dark:bg-stone-900/90 backdrop-blur-xl sm:backdrop-blur-2xl border-t sm:border border-surface-dim/60 sm:border-surface-dim/70 dark:border-white/10 rounded-none sm:rounded-full px-2 sm:px-1.5 pt-1.5 pb-[max(env(safe-area-inset-bottom,0px),0.375rem)] sm:pb-1.5 shadow-[0_-2px_12px_rgba(0,0,0,0.03)] sm:shadow-[0_12px_36px_-6px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.04)] sm:ring-1 sm:ring-black/[0.04] dark:sm:ring-white/[0.06] select-none transition-all duration-200"
+        className="pointer-events-auto w-full sm:w-auto sm:min-w-[440px] sm:max-w-[500px] lg:min-w-[540px] lg:max-w-[620px] bg-surface-container-lowest/95 backdrop-blur-xl border-t sm:border border-surface-dim/70 rounded-none sm:rounded-full lg:rounded-2xl px-3 sm:px-3 lg:px-4 pt-1.5 pb-[max(env(safe-area-inset-bottom,0px),0.5rem)] sm:py-1.5 lg:py-2 sm:mb-2.5 lg:mb-4 shadow-[0_-2px_12px_rgba(0,0,0,0.03)] sm:shadow-[0_8px_28px_-6px_rgba(0,0,0,0.1)] select-none transition-all duration-200"
       >
         <div
           role="tablist"
           aria-orientation="horizontal"
-          className="flex items-center justify-between gap-1 w-full"
+          className="flex items-center justify-between sm:justify-center gap-1 sm:gap-2 lg:gap-3 w-full"
         >
-          {/* 1. HOME TAB */}
+          {/* Home Tab */}
           <button
             ref={homeBtnRef}
             id="nav_tab_home"
@@ -140,16 +140,16 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
             onKeyDown={(e) => handleTabKeyDown(e, 'home')}
             aria-selected={isHomeActive}
             aria-label={t('nav.home')}
-            className={`relative flex-1 flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 py-1 sm:py-2 px-1 sm:px-3.5 rounded-xl sm:rounded-full text-center transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-stone-900 cursor-pointer min-h-[44px] sm:min-h-0 ${
+            className={`relative flex-1 sm:flex-initial sm:min-w-[120px] lg:min-w-[140px] flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-1.5 sm:py-2 px-2 sm:px-4 rounded-xl sm:rounded-full lg:rounded-xl text-center transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-pointer min-h-[48px] ${
               isHomeActive
-                ? 'text-primary dark:text-emerald-400 font-bold'
-                : 'text-on-surface-variant/70 hover:text-on-surface font-medium hover:bg-surface-container-high/40'
+                ? 'text-primary font-bold'
+                : 'text-on-surface-variant/80 hover:text-on-surface font-medium hover:bg-surface-container'
             }`}
           >
             {isHomeActive && (
               <motion.div
                 layoutId="nav-active-indicator"
-                className="absolute inset-0 bg-primary/[0.08] dark:bg-emerald-500/15 rounded-xl sm:rounded-full -z-10"
+                className="absolute inset-0 bg-primary/10 rounded-xl sm:rounded-full lg:rounded-xl -z-10"
                 transition={
                   prefersReducedMotion
                     ? { duration: 0 }
@@ -159,49 +159,53 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
             )}
             <Home
               className={`w-5 h-5 shrink-0 transition-transform duration-150 ${
-                isHomeActive
-                  ? 'stroke-[2.2] scale-105'
-                  : 'stroke-[2] opacity-80 group-hover:opacity-100'
+                isHomeActive ? 'stroke-[2.3] scale-105' : 'stroke-[1.8]'
               }`}
             />
-            <span className="text-[10px] sm:text-xs font-['Manrope'] tracking-tight whitespace-nowrap leading-tight">
+            <span className="text-[11px] sm:text-xs lg:text-[13px] font-['Manrope'] font-semibold tracking-tight whitespace-nowrap leading-tight">
               {t('nav.home')}
             </span>
           </button>
 
-          {/* 2. CREATE BUTTON (PRIMARY ACTION) */}
-          <div className="flex-1 flex items-center justify-center px-0.5 sm:px-1">
-            <button
-              ref={createBtnRef}
-              id="nav_tab_create"
-              type="button"
-              tabIndex={0}
-              onClick={handleCreateClick}
-              onKeyDown={(e) => handleTabKeyDown(e, 'create')}
-              aria-label={t('nav.create')}
-              className="w-full max-w-[110px] sm:max-w-[145px] flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 py-1 sm:py-2 px-1 sm:px-4 rounded-xl sm:rounded-full bg-transparent sm:bg-primary text-primary sm:text-on-primary hover:bg-surface-container-high/40 sm:hover:bg-primary-container active:bg-surface-container-high/60 sm:active:bg-primary sm:shadow-[0_2px_8px_rgba(15,61,46,0.22)] sm:hover:shadow-[0_4px_14px_rgba(15,61,46,0.32)] transition-all duration-150 active:scale-[0.95] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-stone-900 cursor-pointer min-h-[44px] sm:min-h-0 group"
-            >
-              {/* Mobile-only compact icon circle (Apple-style, lightweight, not oversized) */}
-              <div
-                className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-150 sm:hidden ${
-                  isCreateActive
-                    ? 'bg-primary text-on-primary ring-2 ring-primary/20 scale-105'
-                    : 'bg-primary text-on-primary shadow-2xs group-hover:scale-110'
-                }`}
-              >
-                <Plus className="w-3.5 h-3.5 stroke-[2.8]" />
-              </div>
+          {/* Create Tab */}
+          <button
+            ref={createBtnRef}
+            id="nav_tab_create"
+            role="tab"
+            type="button"
+            tabIndex={isCreateActive ? 0 : -1}
+            onClick={handleCreateClick}
+            onKeyDown={(e) => handleTabKeyDown(e, 'create')}
+            aria-selected={isCreateActive}
+            aria-label={t('nav.create')}
+            className={`relative flex-1 sm:flex-initial sm:min-w-[120px] lg:min-w-[140px] flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-1.5 sm:py-2 px-2 sm:px-4 rounded-xl sm:rounded-full lg:rounded-xl text-center transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-pointer min-h-[48px] ${
+              isCreateActive
+                ? 'text-primary font-bold'
+                : 'text-on-surface-variant/80 hover:text-on-surface font-medium hover:bg-surface-container'
+            }`}
+          >
+            {isCreateActive && (
+              <motion.div
+                layoutId="nav-active-indicator"
+                className="absolute inset-0 bg-primary/10 rounded-xl sm:rounded-full lg:rounded-xl -z-10"
+                transition={
+                  prefersReducedMotion
+                    ? { duration: 0 }
+                    : { type: 'spring', stiffness: 480, damping: 34 }
+                }
+              />
+            )}
+            <Plus
+              className={`w-5 h-5 shrink-0 transition-transform duration-150 ${
+                isCreateActive ? 'stroke-[2.5] scale-105' : 'stroke-[2]'
+              }`}
+            />
+            <span className="text-[11px] sm:text-xs lg:text-[13px] font-['Manrope'] font-semibold tracking-tight whitespace-nowrap leading-tight">
+              {t('nav.create')}
+            </span>
+          </button>
 
-              {/* Desktop-only direct Lucide Plus icon */}
-              <Plus className="hidden sm:inline-block w-4.5 h-4.5 sm:w-5 sm:h-5 stroke-[2.4] shrink-0 transition-transform duration-150 group-hover:scale-110" />
-
-              <span className="text-[10px] sm:text-xs font-bold font-['Manrope'] tracking-tight text-primary sm:text-on-primary whitespace-nowrap leading-tight">
-                {t('nav.create')}
-              </span>
-            </button>
-          </div>
-
-          {/* 3. SETTINGS TAB */}
+          {/* Settings Tab */}
           <button
             ref={settingsBtnRef}
             id="nav_tab_settings"
@@ -212,16 +216,16 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
             onKeyDown={(e) => handleTabKeyDown(e, 'settings')}
             aria-selected={isSettingsActive}
             aria-label={t('nav.settings')}
-            className={`relative flex-1 flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 py-1 sm:py-2 px-1 sm:px-3.5 rounded-xl sm:rounded-full text-center transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-stone-900 cursor-pointer min-h-[44px] sm:min-h-0 ${
+            className={`relative flex-1 sm:flex-initial sm:min-w-[120px] lg:min-w-[140px] flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-1.5 sm:py-2 px-2 sm:px-4 rounded-xl sm:rounded-full lg:rounded-xl text-center transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-pointer min-h-[48px] ${
               isSettingsActive
-                ? 'text-primary dark:text-emerald-400 font-bold'
-                : 'text-on-surface-variant/70 hover:text-on-surface font-medium hover:bg-surface-container-high/40'
+                ? 'text-primary font-bold'
+                : 'text-on-surface-variant/80 hover:text-on-surface font-medium hover:bg-surface-container'
             }`}
           >
             {isSettingsActive && (
               <motion.div
                 layoutId="nav-active-indicator"
-                className="absolute inset-0 bg-primary/[0.08] dark:bg-emerald-500/15 rounded-xl sm:rounded-full -z-10"
+                className="absolute inset-0 bg-primary/10 rounded-xl sm:rounded-full lg:rounded-xl -z-10"
                 transition={
                   prefersReducedMotion
                     ? { duration: 0 }
@@ -231,12 +235,10 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
             )}
             <Settings
               className={`w-5 h-5 shrink-0 transition-transform duration-150 ${
-                isSettingsActive
-                  ? 'stroke-[2.2] scale-105'
-                  : 'stroke-[2] opacity-80 group-hover:opacity-100'
+                isSettingsActive ? 'stroke-[2.3] scale-105' : 'stroke-[1.8]'
               }`}
             />
-            <span className="text-[10px] sm:text-xs font-['Manrope'] tracking-tight whitespace-nowrap leading-tight">
+            <span className="text-[11px] sm:text-xs lg:text-[13px] font-['Manrope'] font-semibold tracking-tight whitespace-nowrap leading-tight">
               {t('nav.settings')}
             </span>
           </button>

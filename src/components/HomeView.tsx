@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Plus, ChevronRight } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Plus, ChevronRight, Check, ArrowRight, X } from 'lucide-react';
 import { ShoppingList, CategoryId } from '../types';
 import { TopHeader } from './TopHeader';
 import { Avatar } from './Avatar';
@@ -16,6 +16,7 @@ import { PasskeyCard } from './home/PasskeyCard';
 import { QuickActionsGrid } from './home/QuickActionsGrid';
 import { FrequentEssentialsSection } from './home/FrequentEssentialsSection';
 import { HomeListsSection } from './home/HomeListsSection';
+import { NoActiveListModal } from './home/NoActiveListModal';
 
 interface HomeViewProps {
   lists: ShoppingList[];
@@ -29,7 +30,11 @@ interface HomeViewProps {
   isLoading?: boolean;
   error?: string | null;
   onRetry?: () => void;
-  onQuickAddRecommendation?: (item: RecommendationCandidate, targetListId?: string) => void;
+  onQuickAddRecommendation?: (
+    item: RecommendationCandidate,
+    targetListId?: string,
+    openShoppingMode?: boolean
+  ) => void;
   onOpenStatistics?: () => void;
   onOpenPhoneSettings?: () => void;
 }
@@ -57,6 +62,25 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
   const [isFavoritesModalOpen, setIsFavoritesModalOpen] = useState(false);
   const [isCategoryBrowserOpen, setIsCategoryBrowserOpen] = useState(false);
+
+  // Frequent essential item awaiting target list choice if no active list exists
+  const [pendingEssentialItem, setPendingEssentialItem] = useState<EssentialDisplayItem | null>(null);
+
+  // Quick feedback toast when item is added to active list
+  const [addedItemToast, setAddedItemToast] = useState<{
+    message: string;
+    listTitle: string;
+    targetList: ShoppingList;
+  } | null>(null);
+
+  // Auto-dismiss toast after 4 seconds
+  useEffect(() => {
+    if (!addedItemToast) return;
+    const timer = setTimeout(() => {
+      setAddedItemToast(null);
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [addedItemToast]);
 
   // Find most recent active (non-completed) list
   const mostRecentActiveList = useMemo(() => {
@@ -88,9 +112,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
     return `${timeGreeting} 👋`;
   }, [profile, user, t, language]);
 
-  // Handle adding an essential item to the current list or creating a new list
-  const handleAddEssentialItem = (item: EssentialDisplayItem) => {
-    const candidate: RecommendationCandidate = {
+  const buildCandidate = (item: EssentialDisplayItem): RecommendationCandidate => {
+    return {
       profile: {
         id: `essential_${item.canonicalName}`,
         userId: user?.id || '',
@@ -138,12 +161,39 @@ export const HomeView: React.FC<HomeViewProps> = ({
         totalScore: 1,
       },
     };
+  };
 
-    if (onQuickAddRecommendation) {
-      onQuickAddRecommendation(candidate, mostRecentActiveList?.id);
-    } else {
-      onCreateList();
+  // Handle adding an essential item to the current list or prompting for new list
+  const handleAddEssentialItem = (item: EssentialDisplayItem) => {
+    if (!mostRecentActiveList) {
+      setPendingEssentialItem(item);
+      return;
     }
+
+    const candidate = buildCandidate(item);
+    if (onQuickAddRecommendation) {
+      onQuickAddRecommendation(candidate, mostRecentActiveList.id, false);
+    }
+
+    const itemLabel = language === 'ur' && item.nameUrdu ? item.nameUrdu : item.displayName;
+    setAddedItemToast({
+      message: `${itemLabel} (${item.quantity} ${item.unit})`,
+      listTitle: mostRecentActiveList.title,
+      targetList: mostRecentActiveList,
+    });
+  };
+
+  const handleAddToNewList = (item: EssentialDisplayItem) => {
+    const candidate = buildCandidate(item);
+    if (onQuickAddRecommendation) {
+      onQuickAddRecommendation(candidate, undefined, true);
+    }
+    setPendingEssentialItem(null);
+  };
+
+  const handleCreateListFirst = () => {
+    setPendingEssentialItem(null);
+    onCreateList();
   };
 
   return (
@@ -240,6 +290,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
         {/* 6. QUICK ACTIONS SHORTCUTS GRID */}
         <QuickActionsGrid
+          lists={lists}
           onOpenRecentLists={onOpenHistory || (() => onSelectList('recent'))}
           onOpenFavorites={() => setIsFavoritesModalOpen(true)}
           onOpenCategories={() => setIsCategoryBrowserOpen(true)}
@@ -311,6 +362,63 @@ export const HomeView: React.FC<HomeViewProps> = ({
         }}
         activeListTitle={mostRecentActiveList?.title}
       />
+
+      {/* 4. No Active List Modal for Frequent Essentials */}
+      <NoActiveListModal
+        isOpen={!!pendingEssentialItem}
+        item={pendingEssentialItem}
+        onClose={() => setPendingEssentialItem(null)}
+        onAddToNewList={handleAddToNewList}
+        onCreateListFirst={handleCreateListFirst}
+      />
+
+      {/* 5. Quick Add Success Toast */}
+      {addedItemToast && (
+        <aside
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 max-w-sm sm:max-w-md w-[calc(100%-2rem)] p-3 rounded-2xl bg-white dark:bg-stone-900 border border-primary/20 shadow-lg flex items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-2 duration-200"
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <Check className="w-4 h-4 stroke-[2.5]" />
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="font-['Plus_Jakarta_Sans'] text-xs font-bold text-on-surface truncate">
+                {language === 'ur' ? 'شامل کر دیا گیا:' : 'Added to list:'}{' '}
+                <span className="text-primary">{addedItemToast.message}</span>
+              </span>
+              <span className="font-['Manrope'] text-[11px] text-outline truncate">
+                {addedItemToast.listTitle}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              type="button"
+              id="toast_shop_now_btn"
+              onClick={() => {
+                onSelectList(addedItemToast.targetList);
+                setAddedItemToast(null);
+              }}
+              className="h-7 px-3 rounded-full bg-primary text-on-primary text-[11px] font-bold font-['Manrope'] flex items-center gap-1 active:scale-95 transition-transform cursor-pointer shadow-xs"
+            >
+              <span>{language === 'ur' ? 'خریداری' : 'Shop Now'}</span>
+              <ArrowRight className="w-3 h-3 stroke-[2.5]" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setAddedItemToast(null)}
+              aria-label="Dismiss toast"
+              className="w-6 h-6 rounded-full flex items-center justify-center text-outline hover:text-on-surface cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </aside>
+      )}
     </div>
   );
 };

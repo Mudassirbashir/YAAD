@@ -502,12 +502,11 @@ export async function loadUserShoppingLists(
   }
 
   try {
-    // 2. Query public.shopping_lists
+    // 2. Query public.shopping_lists (RLS server-side authorization returns personal + shared household lists)
     let listsData: any[] | null = null;
     const { data: orderedData, error: listsError } = await supabase
       .from('shopping_lists')
       .select('*')
-      .eq('user_id', verifiedUserId)
       .order('created_at', { ascending: false });
 
     if (listsError) {
@@ -517,8 +516,7 @@ export async function loadUserShoppingLists(
       console.warn('Note on ordered lists query, attempting general select:', listsError.message);
       const { data: fallbackData, error: fallbackError } = await supabase
         .from('shopping_lists')
-        .select('*')
-        .eq('user_id', verifiedUserId);
+        .select('*');
 
       if (fallbackError) {
         if (!isNetworkOrOfflineError(fallbackError)) {
@@ -537,16 +535,18 @@ export async function loadUserShoppingLists(
       if (pendingOps.length > 0) {
         return { lists: cachedOfflineLists, error: null };
       }
+      // If user has 0 lists on remote Supabase and no pending offline ops, synchronize local IndexedDB
+      await saveOfflineListsBatch(verifiedUserId, []);
       return { lists: [], error: null };
     }
 
     // 3. Query child public.shopping_items table for normalized list items
+    // RLS authorizes access based on parent list membership
     const listIds = listsData.map((l) => l.id);
     const { data: itemsData, error: itemsError } = await supabase
       .from('shopping_items')
       .select('*')
-      .in('list_id', listIds)
-      .eq('user_id', verifiedUserId);
+      .in('list_id', listIds);
 
     if (itemsError) {
       console.warn('Note loading child shopping_items (falling back to embedded JSON):', itemsError.message);
@@ -626,6 +626,8 @@ export async function loadUserShoppingLists(
       return {
         id: row.id,
         userId: row.user_id,
+        householdId: row.household_id || null,
+        household_id: row.household_id || null,
         title: row.title || 'Shopping List',
         createdAt: createdAtFormatted,
         createdTimestamp: createdTime,
@@ -755,7 +757,8 @@ async function executeInternalSaveUserShoppingList(
 
     const listPayload: Record<string, unknown> = {
       id: safeListId,
-      user_id: verifiedUserId,
+      user_id: list.userId || verifiedUserId,
+      household_id: list.householdId || list.household_id || null,
       title: list.title || 'Shopping List',
       icon: list.icon || 'shopping_basket',
       is_completed: isCompleted,
@@ -781,12 +784,11 @@ async function executeInternalSaveUserShoppingList(
     if (list.items) {
       try {
         if (list.items.length === 0) {
-          // List has no items, clear any existing rows
+          // List has no items, clear any existing rows (RLS verifies list access)
           await supabase
             .from('shopping_items')
             .delete()
-            .eq('list_id', safeListId)
-            .eq('user_id', verifiedUserId);
+            .eq('list_id', safeListId);
         } else {
           const itemRows = list.items.map((item) => {
             const numericQty = parseNumericQuantity(item.quantity);
@@ -810,12 +812,11 @@ async function executeInternalSaveUserShoppingList(
 
           const currentItemIds = itemRows.map((r) => r.id);
 
-          // Delete rows that were removed from the list
+          // Delete rows that were removed from the list (RLS verifies list access)
           await supabase
             .from('shopping_items')
             .delete()
             .eq('list_id', safeListId)
-            .eq('user_id', verifiedUserId)
             .not('id', 'in', `(${currentItemIds.join(',')})`);
 
           // Upsert current items using onConflict on primary key 'id'
@@ -926,30 +927,28 @@ export async function updateShoppingItemCompletionStatus(
   }
 
   try {
-    // 1. Direct targeted atomic update on public.shopping_items table
+    // 1. Direct targeted atomic update on public.shopping_items table (RLS authorizes based on parent list)
     const { error: itemUpdateErr } = await supabase
       .from('shopping_items')
       .update({
         is_completed: isCompleted,
         updated_at: nowIso,
       })
-      .eq('id', safeItemId)
-      .eq('user_id', verifiedUserId);
+      .eq('id', safeItemId);
 
     if (itemUpdateErr) {
       console.warn('Notice updating individual shopping_item, attempting fallback update:', itemUpdateErr.message);
     }
 
-    // 2. Update the parent shopping_list row (with embedded items, completion flag and updated_at)
+    // 2. Update the parent shopping_list row (completion flag and updated_at)
     await supabase
       .from('shopping_lists')
       .update({
-        items: updatedList.items,
         is_completed: Boolean(updatedList.isCompleted),
+        completed_at: updatedList.isCompleted ? (updatedList.completedAt || nowIso) : null,
         updated_at: nowIso,
       })
-      .eq('id', safeListId)
-      .eq('user_id', verifiedUserId);
+      .eq('id', safeListId);
 
     // 3. Keep local cache in IndexedDB in sync
     await saveOfflineList(verifiedUserId, { ...updatedList, isSynced: true });
@@ -969,6 +968,99 @@ export async function updateShoppingItemCompletionStatus(
         userId: verifiedUserId,
         listId: safeListId,
         payload: updatedList,
+      });
+      return { success: true, error: null, isOffline: true };
+    }
+    return { success: false, error: err instanceof Error ? err : new Error(String(err)) };
+  }
+}
+
+/**
+ * Delete a single shopping item from Supabase and IndexedDB.
+ */
+export async function deleteShoppingListItem(
+  userId: string,
+  listId: string,
+  itemId: string
+): Promise<{ success: boolean; error: Error | null; isOffline?: boolean }> {
+  const verifiedUserId = (await getVerifiedUserId(userId)) || userId;
+  if (!verifiedUserId) {
+    return { success: false, error: new Error('Authentication required to delete item') };
+  }
+
+  const safeListId = ensureValidUUID(listId);
+  const safeItemId = ensureValidUUID(itemId);
+
+  // 1. Immediately update IndexedDB cached list
+  try {
+    const cachedLists = await getOfflineLists(verifiedUserId);
+    const target = cachedLists.find((l) => l.id === safeListId);
+    if (target) {
+      const remainingItems = target.items.filter((i) => i.id !== safeItemId);
+      const isCompleted = remainingItems.length > 0 && remainingItems.every((i) => i.completed);
+      await saveOfflineList(verifiedUserId, {
+        ...target,
+        items: remainingItems,
+        isCompleted,
+        isSynced: false,
+      });
+    }
+  } catch (e) {
+    console.warn('Notice updating local item in IndexedDB:', e);
+  }
+
+  // 2. If offline, enqueue DELETE_ITEM
+  const isCurrentlyOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+  if (!supabase || isCurrentlyOffline) {
+    await enqueueOfflineOperation({
+      type: 'DELETE_ITEM',
+      userId: verifiedUserId,
+      listId: safeListId,
+      itemId: safeItemId,
+      payload: { itemId: safeItemId, listId: safeListId },
+    });
+    return { success: true, error: null, isOffline: true };
+  }
+
+  // 3. Perform database deletion on public.shopping_items (RLS verifies access)
+  try {
+    const { error } = await supabase
+      .from('shopping_items')
+      .delete()
+      .eq('id', safeItemId)
+      .eq('list_id', safeListId);
+
+    if (error) {
+      if (isNetworkOrOfflineError(error)) {
+        await enqueueOfflineOperation({
+          type: 'DELETE_ITEM',
+          userId: verifiedUserId,
+          listId: safeListId,
+          itemId: safeItemId,
+          payload: { itemId: safeItemId, listId: safeListId },
+        });
+        return { success: true, error: null, isOffline: true };
+      }
+      console.warn('Error deleting item from Supabase:', error.message);
+      return { success: false, error: new Error(error.message) };
+    }
+
+    // Broadcast cross-device update
+    broadcastCrossDeviceSync(verifiedUserId, {
+      type: 'ITEM_DELETE',
+      listId: safeListId,
+      itemId: safeItemId,
+    }).catch(() => {});
+
+    return { success: true, error: null };
+  } catch (err: unknown) {
+    if (isNetworkOrOfflineError(err)) {
+      await enqueueOfflineOperation({
+        type: 'DELETE_ITEM',
+        userId: verifiedUserId,
+        listId: safeListId,
+        itemId: safeItemId,
+        payload: { itemId: safeItemId, listId: safeListId },
       });
       return { success: true, error: null, isOffline: true };
     }
@@ -1007,8 +1099,7 @@ export async function deleteUserShoppingList(
     const { error: itemsError } = await supabase
       .from('shopping_items')
       .delete()
-      .eq('list_id', listId)
-      .eq('user_id', verifiedUserId);
+      .eq('list_id', listId);
 
     if (itemsError && isNetworkOrOfflineError(itemsError)) {
       await enqueueOfflineOperation({
@@ -1023,8 +1114,7 @@ export async function deleteUserShoppingList(
     const { error: listError } = await supabase
       .from('shopping_lists')
       .delete()
-      .eq('id', listId)
-      .eq('user_id', verifiedUserId);
+      .eq('id', listId);
 
     if (listError) {
       if (isNetworkOrOfflineError(listError)) {
@@ -1604,7 +1694,8 @@ export async function syncPendingOfflineChanges(
 
           const listPayload: Record<string, unknown> = {
             id: list.id,
-            user_id: verifiedUserId,
+            user_id: list.userId || verifiedUserId,
+            household_id: list.householdId || list.household_id || null,
             title: list.title || 'Shopping List',
             icon: list.icon || 'shopping_basket',
             is_completed: isCompleted,
@@ -1624,8 +1715,7 @@ export async function syncPendingOfflineChanges(
               await supabase
                 .from('shopping_items')
                 .delete()
-                .eq('list_id', list.id)
-                .eq('user_id', verifiedUserId);
+                .eq('list_id', list.id);
 
               if (list.items.length > 0) {
                 const itemRows = list.items.map((it: ShoppingItem) => {
@@ -1655,11 +1745,18 @@ export async function syncPendingOfflineChanges(
             await removePendingOfflineOperation(item.id);
             syncedCount++;
           } else {
-            await updatePendingOperationStatus(item.id, {
-              retryCount: item.retryCount + 1,
-              lastError: listErr.message,
-              syncStatus: 'failed',
-            });
+            const errCode = (listErr as any)?.code;
+            const isTerminalError = item.retryCount >= 5 || errCode === '23503' || errCode === '42501';
+            if (isTerminalError) {
+              console.warn('Terminal error syncing list mutation, dropping from queue:', listErr.message);
+              await removePendingOfflineOperation(item.id);
+            } else {
+              await updatePendingOperationStatus(item.id, {
+                retryCount: item.retryCount + 1,
+                lastError: listErr.message,
+                syncStatus: 'failed',
+              });
+            }
           }
         }
       } else if (item.type === 'DELETE_LIST') {
@@ -1668,14 +1765,12 @@ export async function syncPendingOfflineChanges(
           await supabase
             .from('shopping_items')
             .delete()
-            .eq('list_id', listId)
-            .eq('user_id', verifiedUserId);
+            .eq('list_id', listId);
 
           const { error: delErr } = await supabase
             .from('shopping_lists')
             .delete()
-            .eq('id', listId)
-            .eq('user_id', verifiedUserId);
+            .eq('id', listId);
 
           if (delErr && isNetworkOrOfflineError(delErr)) {
             break;
@@ -1685,11 +1780,44 @@ export async function syncPendingOfflineChanges(
             await removePendingOfflineOperation(item.id);
             syncedCount++;
           } else {
-            await updatePendingOperationStatus(item.id, {
-              retryCount: item.retryCount + 1,
-              lastError: delErr.message,
-              syncStatus: 'failed',
-            });
+            const isTerminalError = item.retryCount >= 5 || delErr.code === '42501';
+            if (isTerminalError) {
+              await removePendingOfflineOperation(item.id);
+            } else {
+              await updatePendingOperationStatus(item.id, {
+                retryCount: item.retryCount + 1,
+                lastError: delErr.message,
+                syncStatus: 'failed',
+              });
+            }
+          }
+        }
+      } else if (item.type === 'DELETE_ITEM') {
+        const itemId = item.payload?.itemId || item.itemId;
+        if (itemId) {
+          const { error: delItemErr } = await supabase
+            .from('shopping_items')
+            .delete()
+            .eq('id', itemId);
+
+          if (delItemErr && isNetworkOrOfflineError(delItemErr)) {
+            break;
+          }
+
+          if (!delItemErr) {
+            await removePendingOfflineOperation(item.id);
+            syncedCount++;
+          } else {
+            const isTerminalError = item.retryCount >= 5 || delItemErr.code === '42501';
+            if (isTerminalError) {
+              await removePendingOfflineOperation(item.id);
+            } else {
+              await updatePendingOperationStatus(item.id, {
+                retryCount: item.retryCount + 1,
+                lastError: delItemErr.message,
+                syncStatus: 'failed',
+              });
+            }
           }
         }
       }

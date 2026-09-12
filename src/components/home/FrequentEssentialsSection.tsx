@@ -142,7 +142,7 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
                 className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all active:scale-95 cursor-pointer ${
                   isSelected
                     ? 'bg-primary text-on-primary shadow-2xs'
-                    : 'bg-white dark:bg-stone-900 text-on-surface hover:bg-surface-container border border-surface-dim/70'
+                    : 'bg-surface-container-lowest text-on-surface hover:bg-surface-container border border-surface-dim/70 shadow-2xs'
                 }`}
               >
                 {label}
@@ -164,7 +164,7 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
             <div
               key={item.canonicalName}
               id={`essential_card_${item.canonicalName}`}
-              className="rounded-2xl bg-white dark:bg-stone-900 border border-surface-dim/70 shadow-2xs hover:border-primary/30 hover:shadow-xs transition-all p-3 flex flex-col justify-between gap-2.5 group"
+              className="rounded-2xl bg-surface-container-lowest border border-surface-dim/70 shadow-2xs hover:border-primary/40 hover:shadow-xs transition-all p-3 flex flex-col justify-between gap-2.5 group"
             >
               <div className="flex items-start justify-between gap-2">
                 <EssentialItemVisual
@@ -174,7 +174,7 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
                   size={44}
                 />
                 <div className="flex flex-col items-end gap-1 shrink-0">
-                  <span className="text-[10px] font-semibold tracking-wide px-1.5 py-0.5 rounded-md bg-surface-container-low text-outline max-w-[85px] truncate border border-surface-dim/40">
+                  <span className="text-[10px] sm:text-[11px] font-semibold tracking-normal px-2 py-0.5 rounded-md bg-surface-container text-on-surface-variant max-w-[100px] truncate border border-surface-dim/60">
                     {getCategoryName(item.category)}
                   </span>
                   {activeStatus.inList && (
@@ -187,7 +187,7 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
               </div>
 
               <div className="flex flex-col min-w-0">
-                <span className="font-['Plus_Jakarta_Sans'] text-sm font-bold text-on-surface truncate leading-tight">
+                <span className="font-['Plus_Jakarta_Sans'] text-sm sm:text-[15px] font-bold text-on-surface truncate leading-tight">
                   {displayName}
                 </span>
                 <span className="font-['Manrope'] text-xs text-outline font-medium mt-0.5 truncate">
@@ -200,10 +200,10 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
                 disabled={isAdding}
                 onClick={() => handleAddClick(item)}
                 aria-label={`Add ${displayName} ${item.quantity} ${item.unit} to shopping list`}
-                className={`w-full py-2 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 shrink-0 transition-all duration-200 active:scale-95 cursor-pointer select-none ${
+                className={`w-full py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shrink-0 transition-all duration-200 active:scale-95 cursor-pointer select-none ${
                   isAdded
                     ? 'bg-emerald-600 text-white shadow-xs scale-[1.02]'
-                    : 'bg-primary hover:bg-primary-container text-on-primary shadow-2xs hover:shadow-xs'
+                    : 'bg-primary hover:bg-primary-hover text-on-primary shadow-2xs hover:shadow-xs'
                 }`}
               >
                 {isAdded ? (

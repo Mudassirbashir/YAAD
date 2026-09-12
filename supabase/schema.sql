@@ -27,10 +27,32 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS has_completed_setup BOOLEAN DEFAULT FALSE;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS phone_number TEXT;
 
--- 2. SHOPPING_LISTS TABLE (Parent List Entity)
+-- 2. HOUSEHOLDS TABLE (Shared Household Entity)
+CREATE TABLE IF NOT EXISTS public.households (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  created_by UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 2b. HOUSEHOLD_MEMBERS TABLE
+CREATE TABLE IF NOT EXISTS public.household_members (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  household_id UUID REFERENCES public.households(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  role TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('owner', 'admin', 'member')),
+  status TEXT NOT NULL DEFAULT 'accepted' CHECK (status IN ('invited', 'accepted', 'rejected')),
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  CONSTRAINT uq_household_member UNIQUE (household_id, user_id)
+);
+
+-- 2c. SHOPPING_LISTS TABLE (Parent List Entity)
 CREATE TABLE IF NOT EXISTS public.shopping_lists (
   id TEXT PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  household_id UUID REFERENCES public.households(id) ON DELETE SET NULL,
   title TEXT NOT NULL,
   icon TEXT DEFAULT 'shopping_basket',
   is_completed BOOLEAN DEFAULT FALSE NOT NULL,
@@ -107,49 +129,272 @@ CREATE POLICY "Users can delete their own profile"
   ON public.profiles FOR DELETE
   USING (auth.uid() = id);
 
--- 8. ROW LEVEL SECURITY POLICIES: SHOPPING_LISTS
+-- 7b. HELPER FUNCTIONS FOR RLS (SECURITY DEFINER STABLE)
+CREATE OR REPLACE FUNCTION public.is_household_member(lookup_household_id UUID, lookup_user_id UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+  IF lookup_household_id IS NULL OR lookup_user_id IS NULL THEN
+    RETURN FALSE;
+  END IF;
+  RETURN EXISTS (
+    SELECT 1 FROM public.household_members
+    WHERE household_id = lookup_household_id
+      AND user_id = lookup_user_id
+      AND status = 'accepted'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
+
+CREATE OR REPLACE FUNCTION public.can_access_shopping_list(lookup_list_id TEXT, lookup_user_id UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+  IF lookup_list_id IS NULL OR lookup_user_id IS NULL THEN
+    RETURN FALSE;
+  END IF;
+  RETURN EXISTS (
+    SELECT 1 FROM public.shopping_lists sl
+    WHERE sl.id = lookup_list_id
+      AND (
+        sl.user_id = lookup_user_id
+        OR (
+          sl.household_id IS NOT NULL
+          AND public.is_household_member(sl.household_id, lookup_user_id)
+        )
+      )
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
+
+-- Trigger to automatically add household creator as accepted owner
+CREATE OR REPLACE FUNCTION public.handle_new_household()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.household_members (household_id, user_id, role, status)
+  VALUES (NEW.id, NEW.created_by, 'owner', 'accepted')
+  ON CONFLICT (household_id, user_id) DO NOTHING;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_household_created ON public.households;
+CREATE TRIGGER on_household_created
+  AFTER INSERT ON public.households
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_household();
+
+-- 7c. ROW LEVEL SECURITY: HOUSEHOLDS & MEMBERS
+ALTER TABLE public.households ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.household_members ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view households they belong to" ON public.households;
+CREATE POLICY "Users can view households they belong to"
+  ON public.households FOR SELECT
+  USING (
+    created_by = auth.uid() OR public.is_household_member(id, auth.uid())
+  );
+
+DROP POLICY IF EXISTS "Users can create households" ON public.households;
+CREATE POLICY "Users can create households"
+  ON public.households FOR INSERT
+  WITH CHECK (
+    created_by = auth.uid()
+  );
+
+DROP POLICY IF EXISTS "Admins can update household" ON public.households;
+CREATE POLICY "Admins can update household"
+  ON public.households FOR UPDATE
+  USING (
+    created_by = auth.uid() OR EXISTS (
+      SELECT 1 FROM public.household_members hm
+      WHERE hm.household_id = id
+        AND hm.user_id = auth.uid()
+        AND hm.role IN ('owner', 'admin')
+        AND hm.status = 'accepted'
+    )
+  )
+  WITH CHECK (
+    created_by = auth.uid() OR EXISTS (
+      SELECT 1 FROM public.household_members hm
+      WHERE hm.household_id = id
+        AND hm.user_id = auth.uid()
+        AND hm.role IN ('owner', 'admin')
+        AND hm.status = 'accepted'
+    )
+  );
+
+DROP POLICY IF EXISTS "Owners can delete household" ON public.households;
+CREATE POLICY "Owners can delete household"
+  ON public.households FOR DELETE
+  USING (
+    created_by = auth.uid()
+  );
+
+DROP POLICY IF EXISTS "Members can view household member lists" ON public.household_members;
+CREATE POLICY "Members can view household member lists"
+  ON public.household_members FOR SELECT
+  USING (
+    user_id = auth.uid() OR public.is_household_member(household_id, auth.uid())
+  );
+
+DROP POLICY IF EXISTS "Admins can add household members" ON public.household_members;
+CREATE POLICY "Admins can add household members"
+  ON public.household_members FOR INSERT
+  WITH CHECK (
+    EXISTS (SELECT 1 FROM public.households h WHERE h.id = household_id AND h.created_by = auth.uid())
+    OR EXISTS (
+      SELECT 1 FROM public.household_members hm
+      WHERE hm.household_id = household_id
+        AND hm.user_id = auth.uid()
+        AND hm.role IN ('owner', 'admin')
+        AND hm.status = 'accepted'
+    )
+    OR (user_id = auth.uid())
+  );
+
+DROP POLICY IF EXISTS "Admins or self can update membership" ON public.household_members;
+CREATE POLICY "Admins or self can update membership"
+  ON public.household_members FOR UPDATE
+  USING (
+    user_id = auth.uid()
+    OR EXISTS (
+      SELECT 1 FROM public.household_members hm
+      WHERE hm.household_id = household_id
+        AND hm.user_id = auth.uid()
+        AND hm.role IN ('owner', 'admin')
+        AND hm.status = 'accepted'
+    )
+  )
+  WITH CHECK (
+    user_id = auth.uid()
+    OR EXISTS (
+      SELECT 1 FROM public.household_members hm
+      WHERE hm.household_id = household_id
+        AND hm.user_id = auth.uid()
+        AND hm.role IN ('owner', 'admin')
+        AND hm.status = 'accepted'
+    )
+  );
+
+DROP POLICY IF EXISTS "Admins or self can remove members" ON public.household_members;
+CREATE POLICY "Admins or self can remove members"
+  ON public.household_members FOR DELETE
+  USING (
+    user_id = auth.uid()
+    OR EXISTS (SELECT 1 FROM public.households h WHERE h.id = household_id AND h.created_by = auth.uid())
+    OR EXISTS (
+      SELECT 1 FROM public.household_members hm
+      WHERE hm.household_id = household_id
+        AND hm.user_id = auth.uid()
+        AND hm.role IN ('owner', 'admin')
+        AND hm.status = 'accepted'
+    )
+  );
+
+-- 8. ROW LEVEL SECURITY POLICIES: SHOPPING_LISTS (Parent Entity)
+DROP POLICY IF EXISTS "Users can view accessible shopping lists" ON public.shopping_lists;
 DROP POLICY IF EXISTS "Users can view their own shopping lists" ON public.shopping_lists;
-CREATE POLICY "Users can view their own shopping lists"
+CREATE POLICY "Users can view accessible shopping lists"
   ON public.shopping_lists FOR SELECT
-  USING (auth.uid() = user_id);
+  USING (
+    auth.uid() = user_id
+    OR (
+      household_id IS NOT NULL
+      AND public.is_household_member(household_id, auth.uid())
+    )
+  );
 
+DROP POLICY IF EXISTS "Users can insert shopping lists" ON public.shopping_lists;
 DROP POLICY IF EXISTS "Users can insert their own shopping lists" ON public.shopping_lists;
-CREATE POLICY "Users can insert their own shopping lists"
+CREATE POLICY "Users can insert shopping lists"
   ON public.shopping_lists FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+  WITH CHECK (
+    auth.uid() = user_id
+    AND (
+      household_id IS NULL
+      OR public.is_household_member(household_id, auth.uid())
+    )
+  );
 
+DROP POLICY IF EXISTS "Users can update accessible shopping lists" ON public.shopping_lists;
 DROP POLICY IF EXISTS "Users can update their own shopping lists" ON public.shopping_lists;
-CREATE POLICY "Users can update their own shopping lists"
+CREATE POLICY "Users can update accessible shopping lists"
   ON public.shopping_lists FOR UPDATE
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+  USING (
+    auth.uid() = user_id
+    OR (
+      household_id IS NOT NULL
+      AND public.is_household_member(household_id, auth.uid())
+    )
+  )
+  WITH CHECK (
+    (
+      (auth.uid() = user_id)
+      OR (
+        household_id IS NOT NULL
+        AND public.is_household_member(household_id, auth.uid())
+        AND user_id = (SELECT sl.user_id FROM public.shopping_lists sl WHERE sl.id = shopping_lists.id)
+      )
+    )
+    AND (
+      household_id IS NULL
+      OR public.is_household_member(household_id, auth.uid())
+    )
+  );
 
+DROP POLICY IF EXISTS "Users can delete authorized shopping lists" ON public.shopping_lists;
 DROP POLICY IF EXISTS "Users can delete their own shopping lists" ON public.shopping_lists;
-CREATE POLICY "Users can delete their own shopping lists"
+CREATE POLICY "Users can delete authorized shopping lists"
   ON public.shopping_lists FOR DELETE
-  USING (auth.uid() = user_id);
+  USING (
+    auth.uid() = user_id
+    OR (
+      household_id IS NOT NULL
+      AND EXISTS (
+        SELECT 1 FROM public.household_members hm
+        WHERE hm.household_id = shopping_lists.household_id
+          AND hm.user_id = auth.uid()
+          AND hm.role IN ('owner', 'admin')
+          AND hm.status = 'accepted'
+      )
+    )
+  );
 
--- 9. ROW LEVEL SECURITY POLICIES: SHOPPING_ITEMS
+-- 9. ROW LEVEL SECURITY POLICIES: SHOPPING_ITEMS (Child Entity)
+-- Access is strictly authorized based on the parent shopping list
+DROP POLICY IF EXISTS "Users can view items in accessible lists" ON public.shopping_items;
 DROP POLICY IF EXISTS "Users can view their own shopping items" ON public.shopping_items;
-CREATE POLICY "Users can view their own shopping items"
+CREATE POLICY "Users can view items in accessible lists"
   ON public.shopping_items FOR SELECT
-  USING (auth.uid() = user_id);
+  USING (
+    public.can_access_shopping_list(list_id, auth.uid())
+  );
 
+DROP POLICY IF EXISTS "Users can insert items in accessible lists" ON public.shopping_items;
 DROP POLICY IF EXISTS "Users can insert their own shopping items" ON public.shopping_items;
-CREATE POLICY "Users can insert their own shopping items"
+CREATE POLICY "Users can insert items in accessible lists"
   ON public.shopping_items FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+  WITH CHECK (
+    public.can_access_shopping_list(list_id, auth.uid())
+    AND auth.uid() = user_id
+  );
 
+DROP POLICY IF EXISTS "Users can update items in accessible lists" ON public.shopping_items;
 DROP POLICY IF EXISTS "Users can update their own shopping items" ON public.shopping_items;
-CREATE POLICY "Users can update their own shopping items"
+CREATE POLICY "Users can update items in accessible lists"
   ON public.shopping_items FOR UPDATE
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+  USING (
+    public.can_access_shopping_list(list_id, auth.uid())
+  )
+  WITH CHECK (
+    public.can_access_shopping_list(list_id, auth.uid())
+  );
 
+DROP POLICY IF EXISTS "Users can delete items in accessible lists" ON public.shopping_items;
 DROP POLICY IF EXISTS "Users can delete their own shopping items" ON public.shopping_items;
-CREATE POLICY "Users can delete their own shopping items"
+CREATE POLICY "Users can delete items in accessible lists"
   ON public.shopping_items FOR DELETE
-  USING (auth.uid() = user_id);
+  USING (
+    public.can_access_shopping_list(list_id, auth.uid())
+  );
 
 -- 10. ROW LEVEL SECURITY POLICIES: FREQUENTLY_BOUGHT_ITEMS
 DROP POLICY IF EXISTS "Users can view their own frequently bought items" ON public.frequently_bought_items;

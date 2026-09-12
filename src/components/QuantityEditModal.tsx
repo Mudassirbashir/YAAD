@@ -10,6 +10,7 @@ interface QuantityEditModalProps {
   item: ShoppingItem | null;
   onClose: () => void;
   onSave: (itemId: string, quantity?: string, unit?: string) => void;
+  onDeleteItem?: (itemId: string) => void;
 }
 
 const QUICK_QUANTITIES = [
@@ -44,6 +45,7 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
   item,
   onClose,
   onSave,
+  onDeleteItem,
 }) => {
   const { t } = useLanguage();
   const [quantity, setQuantity] = useState<string>('');
@@ -77,6 +79,13 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
 
   const handleClear = () => {
     onSave(item.id, undefined, undefined);
+    onClose();
+  };
+
+  const handleDelete = () => {
+    if (onDeleteItem) {
+      onDeleteItem(item.id);
+    }
     onClose();
   };
 
@@ -218,28 +227,42 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-between gap-3 pt-2 border-t border-surface-container-high/60 mt-1">
-          <button
-            type="button"
-            onClick={handleClear}
-            className="px-3.5 py-2.5 rounded-2xl text-xs font-['Manrope'] font-bold text-error bg-error/10 hover:bg-error/20 flex items-center gap-1.5 transition-colors"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-            <span>Remove Quantity</span>
-          </button>
+        <div className="flex items-center justify-between gap-2 pt-2 border-t border-surface-container-high/60 mt-1 flex-wrap">
+          <div className="flex items-center gap-1.5">
+            {onDeleteItem && (
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="px-3 py-2 rounded-xl text-xs font-['Manrope'] font-bold text-error bg-error/10 hover:bg-error/20 flex items-center gap-1.5 transition-colors cursor-pointer"
+                title="Delete this item from the list"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete Item</span>
+              </button>
+            )}
+            {(quantity || unit) && (
+              <button
+                type="button"
+                onClick={handleClear}
+                className="px-2.5 py-2 rounded-xl text-xs font-['Manrope'] font-medium text-on-surface-variant hover:bg-surface-container transition-colors cursor-pointer"
+              >
+                <span>Clear Qty</span>
+              </button>
+            )}
+          </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 ms-auto">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 rounded-2xl text-xs font-['Manrope'] font-bold text-on-surface-variant bg-surface-container hover:bg-surface-container-high transition-colors"
+              className="px-3.5 py-2 rounded-xl text-xs font-['Manrope'] font-bold text-on-surface-variant bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={handleSave}
-              className="px-5 py-2.5 rounded-2xl text-xs font-['Manrope'] font-bold text-on-primary bg-primary hover:bg-primary/90 shadow-xs flex items-center gap-1.5 transition-colors active:scale-95"
+              className="px-4 py-2 rounded-xl text-xs font-['Manrope'] font-bold text-on-primary bg-primary hover:bg-primary/90 shadow-xs flex items-center gap-1.5 transition-colors active:scale-95 cursor-pointer"
             >
               <Check className="w-4 h-4" />
               <span>Save</span>

@@ -1,26 +1,28 @@
 import React, { useState, useEffect } from 'react';
-import { Phone, X, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Phone, X } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { User } from '@supabase/supabase-js';
 import { UserProfile } from '../../types';
 import { checkUserHasPhone } from '../../hooks/usePhoneNumberReminder';
+import { AddPhoneNumberModal } from './AddPhoneNumberModal';
 
 interface PhoneNumberNotificationProps {
   user: User | null;
   profile: UserProfile | null;
-  onOpenPhoneSettings: () => void;
 }
+
+const COOLDOWN_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours cooldown after "Not now"
 
 export const PhoneNumberNotification: React.FC<PhoneNumberNotificationProps> = ({
   user,
   profile,
-  onOpenPhoneSettings,
 }) => {
-  const { language, isRTL } = useLanguage();
+  const { language } = useLanguage();
   const [isDismissed, setIsDismissed] = useState<boolean>(true);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
-  // Storage key per user so dismissal is remembered on this device
-  const storageKey = user?.id ? `yaad_home_phone_notice_dismissed_${user.id}` : null;
+  // Storage key per user so dismissal is remembered with expiration
+  const storageKey = user?.id ? `yaad_home_phone_notice_cooldown_${user.id}` : null;
   const hasPhone = checkUserHasPhone(profile, user);
 
   useEffect(() => {
@@ -31,8 +33,15 @@ export const PhoneNumberNotification: React.FC<PhoneNumberNotificationProps> = (
 
     if (storageKey) {
       try {
-        const stored = localStorage.getItem(storageKey);
-        setIsDismissed(stored === 'true');
+        const storedExpiration = localStorage.getItem(storageKey);
+        if (storedExpiration) {
+          const expTime = parseInt(storedExpiration, 10);
+          if (!isNaN(expTime) && Date.now() < expTime) {
+            setIsDismissed(true);
+            return;
+          }
+        }
+        setIsDismissed(false);
       } catch {
         setIsDismissed(false);
       }
@@ -45,69 +54,95 @@ export const PhoneNumberNotification: React.FC<PhoneNumberNotificationProps> = (
     setIsDismissed(true);
     if (storageKey) {
       try {
-        localStorage.setItem(storageKey, 'true');
+        const nextTime = Date.now() + COOLDOWN_DURATION_MS;
+        localStorage.setItem(storageKey, nextTime.toString());
+      } catch {}
+    }
+  };
+
+  const handleOpenModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleSuccess = () => {
+    setIsDismissed(true);
+    if (storageKey) {
+      try {
+        localStorage.removeItem(storageKey);
       } catch {}
     }
   };
 
   if (hasPhone || isDismissed) {
-    return null;
+    return (
+      <AddPhoneNumberModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={handleSuccess}
+      />
+    );
   }
 
   return (
-    <section
-      id="home_phone_number_notification"
-      role="region"
-      aria-label="Account completion reminder"
-      className="p-3 sm:p-3.5 rounded-2xl bg-white dark:bg-stone-900 border border-surface-dim/70 shadow-2xs flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-1 duration-200 select-none"
-    >
-      <div className="flex items-center gap-3 min-w-0">
-        <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-          <Phone className="w-4 h-4 stroke-[2.2]" />
+    <>
+      <section
+        id="home_phone_number_notification"
+        role="region"
+        aria-label="Account completion reminder"
+        className="p-3 sm:p-3.5 rounded-2xl bg-surface-container-lowest border border-surface-dim/70 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in slide-in-from-top-1 duration-200 select-none"
+      >
+        <div className="flex items-start sm:items-center gap-3 min-w-0">
+          <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5 sm:mt-0 border border-primary/15">
+            <Phone className="w-4 h-4 stroke-[2.2]" />
+          </div>
+          <div className="flex flex-col min-w-0">
+            <span className="font-['Plus_Jakarta_Sans'] text-xs sm:text-sm font-bold text-on-surface">
+              {language === 'ur' ? 'اپنا اکاؤنٹ مکمل کریں' : 'Complete your account'}
+            </span>
+            <span className="font-['Manrope'] text-[11px] sm:text-xs text-outline mt-0.5">
+              {language === 'ur'
+                ? 'اپنے یاد اکاؤنٹ کو محفوظ رکھنے اور آسانی سے بازیافت کرنے کے لیے اپنا فون نمبر شامل کریں۔'
+                : 'Add your phone number to make your YAAD account easier to recover and manage.'}
+            </span>
+          </div>
         </div>
-        <div className="flex flex-col min-w-0">
-          <span className="font-['Plus_Jakarta_Sans'] text-xs sm:text-sm font-bold text-on-surface truncate">
-            {language === 'ur'
-              ? 'اپنا فون نمبر شامل کریں'
-              : language === 'roman-urdu'
-              ? 'Apna phone number shamil karein'
-              : 'Add your phone number'}
-          </span>
-          <span className="font-['Manrope'] text-[11px] sm:text-xs text-outline truncate">
-            {language === 'ur'
-              ? 'فہرستیں شیئر کرنے اور اکاؤنٹ کی بحالی کے لیے'
-              : language === 'roman-urdu'
-              ? 'List share karnay aur account recovery ke liye'
-              : 'For easy list sharing and account recovery.'}
-          </span>
+
+        <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+          <button
+            type="button"
+            id="home_phone_notice_dismiss_btn"
+            onClick={handleDismiss}
+            className="text-xs font-semibold text-outline hover:text-on-surface hover:bg-surface-container px-2.5 py-1.5 rounded-full transition-colors cursor-pointer"
+          >
+            {language === 'ur' ? 'ابھی نہیں' : 'Not now'}
+          </button>
+
+          <button
+            type="button"
+            id="home_phone_notice_add_btn"
+            onClick={handleOpenModal}
+            className="h-8 px-3.5 rounded-full bg-primary hover:bg-primary-container active:scale-95 text-on-primary text-xs font-bold font-['Manrope'] transition-all shadow-2xs flex items-center gap-1 cursor-pointer"
+          >
+            <span>{language === 'ur' ? 'فون نمبر شامل کریں' : 'Add Phone Number'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleDismiss}
+            aria-label="Dismiss notification"
+            className="w-7 h-7 rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container active:scale-95 transition-colors cursor-pointer ml-0.5"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
-      </div>
+      </section>
 
-      <div className="flex items-center gap-1.5 shrink-0">
-        <button
-          type="button"
-          id="home_phone_notice_add_btn"
-          onClick={onOpenPhoneSettings}
-          className="h-8 px-3.5 rounded-full bg-primary hover:bg-primary-container active:scale-95 text-on-primary text-xs font-bold font-['Manrope'] transition-all shadow-2xs flex items-center gap-1 cursor-pointer"
-        >
-          <span>{language === 'ur' ? 'شامل کریں' : 'Add Phone'}</span>
-          {isRTL ? (
-            <ArrowLeft className="w-3.5 h-3.5 stroke-[2.2]" />
-          ) : (
-            <ArrowRight className="w-3.5 h-3.5 stroke-[2.2]" />
-          )}
-        </button>
-
-        <button
-          type="button"
-          id="home_phone_notice_dismiss_btn"
-          onClick={handleDismiss}
-          aria-label="Dismiss phone reminder"
-          className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container active:scale-95 transition-colors cursor-pointer"
-        >
-          <X className="w-3.5 h-3.5" />
-        </button>
-      </div>
-    </section>
+      {/* Modal */}
+      <AddPhoneNumberModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={handleSuccess}
+      />
+    </>
   );
 };

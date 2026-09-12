@@ -81,6 +81,8 @@ export const UNIT_MAP: Record<string, { standard: string; label: string; urduLab
   doz: { standard: 'dozen', label: 'dozen', urduLabel: 'درجن' },
   darjan: { standard: 'dozen', label: 'dozen', urduLabel: 'درجن' },
   darzn: { standard: 'dozen', label: 'dozen', urduLabel: 'درجن' },
+  dazan: { standard: 'dozen', label: 'dozen', urduLabel: 'درجن' },
+  darzan: { standard: 'dozen', label: 'dozen', urduLabel: 'درجن' },
   'درجن': { standard: 'dozen', label: 'dozen', urduLabel: 'درجن' },
 
   // Packaging - Pack / Packet
@@ -105,6 +107,8 @@ export const UNIT_MAP: Record<string, { standard: string; label: string; urduLab
   boxes: { standard: 'box', label: 'box', urduLabel: 'ڈبے' },
   dabba: { standard: 'box', label: 'box', urduLabel: 'ڈبہ' },
   dabbe: { standard: 'box', label: 'box', urduLabel: 'ڈبے' },
+  dabbi: { standard: 'box', label: 'box', urduLabel: 'ڈبی' },
+  dabi: { standard: 'box', label: 'box', urduLabel: 'ڈبی' },
   'ڈبہ': { standard: 'box', label: 'box', urduLabel: 'ڈبہ' },
   'ڈبے': { standard: 'box', label: 'box', urduLabel: 'ڈبے' },
 
@@ -140,8 +144,14 @@ export const UNIT_MAP: Record<string, { standard: string; label: string; urduLab
   bunches: { standard: 'bundle', label: 'bundle', urduLabel: 'گڈی' },
   gaddi: { standard: 'bundle', label: 'bundle', urduLabel: 'گڈی' },
   gatti: { standard: 'bundle', label: 'bundle', urduLabel: 'گڈی' },
+  gucchi: { standard: 'bundle', label: 'bundle', urduLabel: 'گچھی' },
+  guchi: { standard: 'bundle', label: 'bundle', urduLabel: 'گچھی' },
+  gutthi: { standard: 'bundle', label: 'bundle', urduLabel: 'گٹھی' },
+  guthi: { standard: 'bundle', label: 'bundle', urduLabel: 'گٹھی' },
+  tali: { standard: 'bundle', label: 'bundle', urduLabel: 'گڈی' },
   'گڈی': { standard: 'bundle', label: 'bundle', urduLabel: 'گڈی' },
   'گڈیاں': { standard: 'bundle', label: 'bundle', urduLabel: 'گڈی' },
+  'گچھی': { standard: 'bundle', label: 'bundle', urduLabel: 'گچھی' },
 
   // Pairs
   pair: { standard: 'pair', label: 'pair', urduLabel: 'جوڑا' },
@@ -163,6 +173,7 @@ export const UNIT_MAP: Record<string, { standard: string; label: string; urduLab
   'دانہ': { standard: 'piece', label: 'piece', urduLabel: 'دانہ' },
 
   // Traditional South Asian Specific
+  pau: { standard: 'pao', label: 'pao', urduLabel: 'پاؤ' },
   pao: { standard: 'pao', label: 'pao', urduLabel: 'پاؤ' },
   paao: { standard: 'pao', label: 'pao', urduLabel: 'پاؤ' },
   pow: { standard: 'pao', label: 'pao', urduLabel: 'پاؤ' },

@@ -295,7 +295,24 @@ class CatalogSearchEngine {
     }
 
     // 6. Fuzzy Match (Levenshtein / Dice similarity) for typos like "poteto"
+    const hasHighConfidence = results.some((r) => r.confidence >= 0.9);
+    const minScore = hasHighConfidence ? 0.85 : FUZZY_MIN_ACCEPTABLE_SCORE;
+
     if (results.length < maxResults && norm.length >= 3) {
+      const isStartCompatible = (s1: string, s2: string) => {
+        if (!s1 || !s2) return false;
+        const c1 = s1[0];
+        const c2 = s2[0];
+        if (c1 === c2) return true;
+        // Transliteration variants at start
+        if ((c1 === 'k' && c2 === 'c') || (c1 === 'c' && c2 === 'k')) return true;
+        if ((c1 === 'f' && c2 === 'p') || (c1 === 'p' && c2 === 'f')) return true;
+        if ((c1 === 's' && c2 === 'c') || (c1 === 'c' && c2 === 's')) return true;
+        if ((c1 === 'j' && c2 === 'z') || (c1 === 'z' && c2 === 'j')) return true;
+        // Longer words can permit slight variance
+        return s1.length >= 7 && s2.length >= 7;
+      };
+
       for (const item of this.items) {
         if (results.length >= maxResults) break;
         if (seenItemIds.has(item.id)) continue;
@@ -303,25 +320,25 @@ class CatalogSearchEngine {
         let bestScore = 0;
         const normCanonical = normalizeBaseText(item.canonical_name);
 
-        if (Math.abs(normCanonical.length - norm.length) <= 3) {
+        if (Math.abs(normCanonical.length - norm.length) <= 3 && isStartCompatible(norm, normCanonical)) {
           bestScore = Math.max(bestScore, stringSimilarity(norm, normCanonical));
         }
 
         for (const alias of item.aliases || []) {
           const na = normalizeBaseText(alias);
-          if (Math.abs(na.length - norm.length) <= 3) {
+          if (Math.abs(na.length - norm.length) <= 3 && isStartCompatible(norm, na)) {
             bestScore = Math.max(bestScore, stringSimilarity(norm, na));
           }
         }
 
         for (const misspelling of item.common_misspellings || []) {
           const nm = normalizeBaseText(misspelling);
-          if (Math.abs(nm.length - norm.length) <= 3) {
+          if (Math.abs(nm.length - norm.length) <= 3 && isStartCompatible(norm, nm)) {
             bestScore = Math.max(bestScore, stringSimilarity(norm, nm));
           }
         }
 
-        if (bestScore >= FUZZY_MIN_ACCEPTABLE_SCORE) {
+        if (bestScore >= minScore) {
           addResult(item, item.canonical_name, 'fuzzy', bestScore * 0.9);
         }
       }

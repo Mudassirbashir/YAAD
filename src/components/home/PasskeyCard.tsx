@@ -8,6 +8,8 @@ interface PasskeyCardProps {
   onOpenSecuritySettings: () => void;
 }
 
+const PASSKEY_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000; // 7 days cooldown when dismissed
+
 export const PasskeyCard: React.FC<PasskeyCardProps> = ({ onOpenSecuritySettings }) => {
   const { user, registerPasskey, listPasskeys } = useAuth();
   const { language } = useLanguage();
@@ -19,16 +21,21 @@ export const PasskeyCard: React.FC<PasskeyCardProps> = ({ onOpenSecuritySettings
   const [justRegistered, setJustRegistered] = useState<boolean>(false);
 
   const isSupported = isPasskeySupported();
-  const storageKey = user?.id ? `yaad_passkey_home_dismissed_${user.id}` : null;
+  const storageKey = user?.id ? `yaad_passkey_home_cooldown_${user.id}` : null;
 
-  // Query passkey status on mount
+  // Query actual native Supabase/WebAuthn passkey status
   useEffect(() => {
     if (!user || !isSupported) return;
 
     if (storageKey) {
       try {
-        const dismissed = localStorage.getItem(storageKey);
-        setIsDismissed(dismissed === 'true');
+        const stored = localStorage.getItem(storageKey);
+        if (stored) {
+          const expTime = parseInt(stored, 10);
+          if (!isNaN(expTime) && Date.now() < expTime) {
+            setIsDismissed(true);
+          }
+        }
       } catch {}
     }
 
@@ -47,7 +54,7 @@ export const PasskeyCard: React.FC<PasskeyCardProps> = ({ onOpenSecuritySettings
     return null;
   }
 
-  // If user has no passkey and dismissed the prompt, hide the card
+  // If user has no passkey and dismissed the prompt within the cooldown window, hide the card
   if (!hasActivePasskey && isDismissed && !justRegistered) {
     return null;
   }
@@ -81,41 +88,42 @@ export const PasskeyCard: React.FC<PasskeyCardProps> = ({ onOpenSecuritySettings
     setIsDismissed(true);
     if (storageKey) {
       try {
-        localStorage.setItem(storageKey, 'true');
+        const nextTime = Date.now() + PASSKEY_COOLDOWN_MS;
+        localStorage.setItem(storageKey, nextTime.toString());
       } catch {}
     }
   };
 
-  // State 1: User has an active Passkey ("Passkey Ready")
+  // State 1: User has an active Passkey ("Passkey Active") - subtle, calm, non-intrusive status
   if (hasActivePasskey) {
     return (
       <section
         id="home_passkey_ready_card"
         aria-label="Passkey Status"
-        className="p-3 sm:p-3.5 rounded-2xl bg-white dark:bg-stone-900 border border-primary/20 shadow-2xs flex items-center justify-between gap-3 animate-in fade-in duration-200 select-none"
+        className="p-3 sm:p-3.5 rounded-2xl bg-surface-container-lowest border border-surface-dim/70 shadow-2xs flex items-center justify-between gap-3 animate-in fade-in duration-200 select-none"
       >
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-            <Fingerprint className="w-4 h-4" />
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-primary/15">
+            <Fingerprint className="w-4 h-4 sm:w-4.5 sm:h-4.5 stroke-[2.2]" />
           </div>
           <div className="flex flex-col min-w-0">
-            <div className="flex items-center gap-1.5 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="font-['Plus_Jakarta_Sans'] text-xs sm:text-sm font-bold text-on-surface">
-                {language === 'ur' ? 'پاس کی فعال ہے' : 'Passkey Ready'}
+                {language === 'ur' ? 'پاس کی فعال ہے' : 'Passkey Active'}
               </span>
-              <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
+              <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
                 <CheckCircle2 className="w-3 h-3 stroke-[2.5]" />
-                <span>{language === 'ur' ? 'محفوظ' : 'Active'}</span>
+                <span>{language === 'ur' ? 'فعال' : 'Active'}</span>
               </span>
             </div>
             <span className="font-['Manrope'] text-[11px] sm:text-xs text-outline truncate mt-0.5">
               {justRegistered
                 ? language === 'ur'
-                  ? 'بائیو میٹرک لاگ ان کامیابی سے فعال ہو گیا'
-                  : 'Biometric sign-in successfully enabled on this device!'
+                  ? 'اس ڈیوائس پر پاس کی کامیابی سے فعال ہو گئی!'
+                  : 'Passkey successfully enabled on this device!'
                 : language === 'ur'
-                ? 'اس ڈیوائس پر تیز اور محفوظ لاگ ان فعال ہے'
-                : 'Fast, password-free sign-in active on this device.'}
+                ? 'اس ڈیوائس پر تیز اور بغیر پاسورڈ سائن ان فعال ہے۔'
+                : 'Fast, password-free sign-in on this device.'}
             </span>
           </div>
         </div>
@@ -123,7 +131,7 @@ export const PasskeyCard: React.FC<PasskeyCardProps> = ({ onOpenSecuritySettings
         <button
           type="button"
           onClick={onOpenSecuritySettings}
-          className="text-xs font-semibold text-primary hover:underline px-2.5 py-1 shrink-0 cursor-pointer"
+          className="text-xs font-semibold text-primary hover:text-primary-container px-2.5 py-1.5 rounded-lg hover:bg-primary/5 transition-colors shrink-0 cursor-pointer"
         >
           {language === 'ur' ? 'ترتیبات' : 'Manage'}
         </button>
@@ -131,25 +139,25 @@ export const PasskeyCard: React.FC<PasskeyCardProps> = ({ onOpenSecuritySettings
     );
   }
 
-  // State 2: User does not have a Passkey ("Set Up")
+  // State 2: User does not have a Passkey ("Set up Passkey") - calm security setup
   return (
     <section
       id="home_passkey_setup_card"
       aria-label="Set up Passkey"
-      className="p-3 sm:p-3.5 rounded-2xl bg-white dark:bg-stone-900 border border-surface-dim/80 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in duration-200 select-none"
+      className="p-3 sm:p-3.5 rounded-2xl bg-surface-container-lowest border border-surface-dim/70 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in duration-200 select-none"
     >
       <div className="flex items-start sm:items-center gap-3 min-w-0">
-        <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
-          <Fingerprint className="w-4 h-4" />
+        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5 sm:mt-0 border border-primary/15">
+          <Fingerprint className="w-4 h-4 sm:w-4.5 sm:h-4.5 stroke-[2.2]" />
         </div>
         <div className="flex flex-col min-w-0">
           <span className="font-['Plus_Jakarta_Sans'] text-xs sm:text-sm font-bold text-on-surface">
-            {language === 'ur' ? 'تیز، پاس ورڈ فری لاگ ان' : 'Fast, password-free sign in'}
+            {language === 'ur' ? 'پاس کی سیٹ اپ کریں' : 'Set up Passkey'}
           </span>
           <span className="font-['Manrope'] text-[11px] sm:text-xs text-outline truncate mt-0.5">
             {language === 'ur'
-              ? 'ٹچ آئی ڈی، فیس آئی ڈی یا ونڈوز ہیلو سیٹ اپ کریں'
-              : 'Set up Touch ID, Face ID, or Windows Hello.'}
+              ? 'اس ڈیوائس پر تیز اور بغیر پاسورڈ سائن ان کے لیے۔'
+              : 'Fast, password-free sign-in on this device.'}
           </span>
           {setupError && (
             <span className="text-[11px] text-error font-medium flex items-center gap-1 mt-1">
@@ -171,7 +179,7 @@ export const PasskeyCard: React.FC<PasskeyCardProps> = ({ onOpenSecuritySettings
           {isRegistering ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
           ) : (
-            <Fingerprint className="w-3.5 h-3.5" />
+            <Fingerprint className="w-3.5 h-3.5 stroke-[2.2]" />
           )}
           <span>{language === 'ur' ? 'سیٹ اپ' : 'Set Up'}</span>
         </button>
@@ -180,7 +188,7 @@ export const PasskeyCard: React.FC<PasskeyCardProps> = ({ onOpenSecuritySettings
           type="button"
           onClick={handleDismiss}
           aria-label="Dismiss passkey setup"
-          className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container active:scale-95 transition-colors cursor-pointer"
+          className="w-7 h-7 rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container active:scale-95 transition-colors cursor-pointer"
         >
           <X className="w-3.5 h-3.5" />
         </button>

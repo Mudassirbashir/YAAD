@@ -26,17 +26,26 @@ export function detectDuplicateItem(
     if (excludeCompleted && item.completed) continue;
 
     // 1. Same Canonical Name (e.g. both resolved to "Potato")
+    const existingCanonical = item.canonicalName || item.canonical_name || item.normalized_item;
     if (
       candidate.isRecognized &&
-      item.canonicalName &&
-      normalizeBaseText(item.canonicalName) === normCandidateCanonical
+      existingCanonical &&
+      normCandidateCanonical &&
+      normalizeBaseText(existingCanonical) === normCandidateCanonical
     ) {
       return { isDuplicate: true, existingItem: item, reason: 'canonical_match' };
     }
 
     // 2. Same Raw or Display Name
     const normItemName = normalizeBaseText(item.name);
-    if (normItemName && (normItemName === normCandidateRaw || normItemName === normCandidateCanonical)) {
+    const normOrigName = item.original_name ? normalizeBaseText(item.original_name) : '';
+    if (
+      normItemName &&
+      (normItemName === normCandidateRaw ||
+        normItemName === normCandidateCanonical ||
+        normOrigName === normCandidateRaw ||
+        normOrigName === normCandidateCanonical)
+    ) {
       return { isDuplicate: true, existingItem: item, reason: 'exact_name' };
     }
 
@@ -86,6 +95,31 @@ export function mergeQuantities(
     return {
       quantity: `${existingQty}${existingUnit ? ' ' + existingUnit : ''} + ${newQty}${newUnit ? ' ' + newUnit : ''}`.trim(),
       unit: undefined,
+    };
+  }
+
+  // If user tapped again without specifying quantity, increment existing count
+  if (existingQty && !newQty) {
+    const num1 = parseFloat(existingQty);
+    if (!isNaN(num1)) {
+      const sum = num1 + 1;
+      const formattedSum = Number.isInteger(sum) ? sum.toString() : sum.toFixed(1).replace(/\.0$/, '');
+      return {
+        quantity: formattedSum,
+        unit: existingUnit,
+      };
+    }
+    return {
+      quantity: `${existingQty} + 1`,
+      unit: existingUnit,
+    };
+  }
+
+  // If both lacked quantity, tapping duplicate item means 2x
+  if (!existingQty && !newQty) {
+    return {
+      quantity: '2',
+      unit: existingUnit || newUnit,
     };
   }
 

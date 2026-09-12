@@ -41,7 +41,7 @@ export const HomeListsSection: React.FC<HomeListsSectionProps> = ({
   onEditList,
   onDeleteList,
 }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
   return (
@@ -93,7 +93,7 @@ export const HomeListsSection: React.FC<HomeListsSectionProps> = ({
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="bg-white dark:bg-stone-900 rounded-2xl p-4 flex items-center justify-between shadow-2xs border border-surface-dim/70 animate-pulse"
+              className="bg-surface-container-lowest rounded-2xl p-4 flex items-center justify-between shadow-2xs border border-surface-dim/70 animate-pulse"
             >
               <div className="flex items-center gap-3 flex-1 min-w-0">
                 <div className="w-11 h-11 rounded-xl bg-surface-container shrink-0" />
@@ -108,15 +108,17 @@ export const HomeListsSection: React.FC<HomeListsSectionProps> = ({
         </div>
       ) : lists.length === 0 ? (
         /* Friendly Empty State */
-        <div className="bg-white dark:bg-stone-900 rounded-2xl p-6 sm:p-8 flex flex-col items-center justify-center text-center shadow-2xs border border-surface-dim/70 my-1">
+        <div className="bg-surface-container-lowest rounded-2xl p-6 sm:p-8 flex flex-col items-center justify-center text-center shadow-2xs border border-surface-dim/70 my-1">
           <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-3 border border-primary/20">
             <ShoppingBag className="w-7 h-7 text-primary stroke-[1.8]" />
           </div>
           <h4 className="font-['Plus_Jakarta_Sans'] text-base sm:text-lg font-bold text-on-surface">
-            {t('home.emptyTitle') || 'No shopping lists yet'}
+            {language === 'ur' ? 'جب آپ تیار ہوں، یاد حاضر ہے۔' : 'Ready when you are.'}
           </h4>
           <p className="font-['Manrope'] text-xs sm:text-sm text-outline max-w-xs mt-1 leading-relaxed">
-            {t('home.emptyDesc') || 'Create your first list or tap an essential item above to get started instantly.'}
+            {language === 'ur'
+              ? 'اپنی پہلی خریداری کی فہرست بنائیں، یاد آپ کو یاد دلائے گا کہ کیا خریدنا ہے۔'
+              : 'Create your first shopping list and YAAD will help you remember what to buy.'}
           </p>
           <button
             type="button"
@@ -125,7 +127,7 @@ export const HomeListsSection: React.FC<HomeListsSectionProps> = ({
             className="mt-4 px-5 py-2.5 rounded-full bg-primary hover:bg-primary-container active:scale-95 text-on-primary font-['Manrope'] text-xs sm:text-sm font-semibold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
           >
             <Plus className="w-4 h-4 stroke-[2.4]" />
-            <span>{t('home.createFirstList') || 'Create First List'}</span>
+            <span>{language === 'ur' ? 'فہرست بنائیں' : 'Create List'}</span>
           </button>
         </div>
       ) : (
@@ -148,7 +150,7 @@ export const HomeListsSection: React.FC<HomeListsSectionProps> = ({
                 key={list.id}
                 id={`home_list_card_${list.id}`}
                 onClick={() => onSelectList(list)}
-                className="bg-white dark:bg-stone-900 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between shadow-2xs border border-surface-dim/70 hover:border-primary/30 hover:shadow-xs transition-all active:scale-[0.99] group select-none cursor-pointer relative"
+                className="bg-surface-container-lowest rounded-2xl p-3.5 sm:p-4 flex items-center justify-between shadow-2xs border border-surface-dim/70 hover:border-primary/40 hover:shadow-xs transition-all active:scale-[0.99] group select-none cursor-pointer relative"
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0 pe-2">
                   <ListIcon
@@ -222,7 +224,7 @@ export const HomeListsSection: React.FC<HomeListsSectionProps> = ({
 
                     {isMenuOpen && (
                       <div
-                        className="absolute right-0 top-9 z-30 w-40 rounded-xl bg-white dark:bg-stone-900 border border-surface-dim shadow-lg p-1 animate-in fade-in text-xs font-['Manrope']"
+                        className="absolute right-0 top-9 z-30 w-40 rounded-xl bg-surface-container-lowest border border-surface-dim/80 shadow-lg p-1 animate-in fade-in text-xs font-['Manrope']"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <button
@@ -256,7 +258,7 @@ export const HomeListsSection: React.FC<HomeListsSectionProps> = ({
                               setActiveMenuId(null);
                               onDeleteList(list.id);
                             }}
-                            className="w-full px-2.5 py-1.5 rounded-lg text-left hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center gap-2 text-rose-600 font-medium cursor-pointer"
+                            className="w-full px-2.5 py-1.5 rounded-lg text-left hover:bg-rose-50 flex items-center gap-2 text-rose-600 font-medium cursor-pointer"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                             <span>{t('home.deleteList') || 'Delete List'}</span>

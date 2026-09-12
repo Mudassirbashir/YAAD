@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "test": "tsx tests/recognition.test.ts"
+    "test": "tsx tests/recognition.test.ts && tsx tests/rls-logic.test.ts && tsx tests/offline-queue.test.ts && tsx tests/pakistani-units.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

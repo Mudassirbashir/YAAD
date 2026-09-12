@@ -84,6 +84,17 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
     onUpdateList(updatedList);
   };
 
+  const handleDeleteItem = (itemId: string) => {
+    const updatedItems = list.items.filter((it) => it.id !== itemId);
+    const isCompleted = updatedItems.length > 0 && updatedItems.every((i) => i.completed);
+    const updatedList: ShoppingList = {
+      ...list,
+      items: updatedItems,
+      isCompleted,
+    };
+    onUpdateList(updatedList);
+  };
+
   const quickAddParsed = useMemo(() => {
     const trimmed = newItemText.trim();
     if (!trimmed) return null;
@@ -864,6 +875,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
         item={editingItem}
         onClose={() => setEditingItem(null)}
         onSave={handleSaveQuantity}
+        onDeleteItem={handleDeleteItem}
       />
     </div>
   );

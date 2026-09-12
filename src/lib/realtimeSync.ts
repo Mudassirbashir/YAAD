@@ -18,6 +18,7 @@ export function getClientDeviceId(): string {
 export type RealtimeSyncBroadcastPayload =
   | { type: 'LIST_UPSERT'; list: ShoppingList }
   | { type: 'LIST_DELETE'; listId: string }
+  | { type: 'ITEM_DELETE'; listId: string; itemId: string }
   | { type: 'PROFILE_UPDATE'; profile: Partial<UserProfile> }
   | { type: 'SYNC_REQUIRED' }
   | { type: 'REFRESH_ALL' };
@@ -30,6 +31,7 @@ export type RealtimeSyncPayload = RealtimeSyncBroadcastPayload & {
 export interface CrossDeviceSyncCallbacks {
   onListUpsert?: (list: ShoppingList) => void;
   onListDelete?: (listId: string) => void;
+  onItemDelete?: (listId: string, itemId: string) => void;
   onProfileUpdate?: (profile: Partial<UserProfile>) => void;
   onSyncRequired?: () => void;
 }
@@ -124,6 +126,8 @@ export function subscribeToCrossDeviceSync(
           callbacks.onListUpsert?.(payload.list);
         } else if (payload.type === 'LIST_DELETE' && payload.listId) {
           callbacks.onListDelete?.(payload.listId);
+        } else if (payload.type === 'ITEM_DELETE' && payload.listId && payload.itemId) {
+          callbacks.onItemDelete?.(payload.listId, payload.itemId);
         } else if (payload.type === 'PROFILE_UPDATE' && payload.profile) {
           callbacks.onProfileUpdate?.(payload.profile);
         } else if (payload.type === 'SYNC_REQUIRED' || payload.type === 'REFRESH_ALL') {

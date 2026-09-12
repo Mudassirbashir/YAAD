@@ -281,7 +281,28 @@ export interface ShoppingList {
   completed?: boolean;
   is_completed?: boolean;
   userId?: string;
+  householdId?: string | null;
+  household_id?: string | null;
   isSynced?: boolean;
+}
+
+export interface Household {
+  id: string;
+  name: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface HouseholdMember {
+  id: string;
+  householdId: string;
+  userId: string;
+  role: 'owner' | 'admin' | 'member';
+  status: 'invited' | 'accepted' | 'rejected';
+  createdAt: string;
+  userEmail?: string;
+  userName?: string;
 }
 
 export type ScreenType =

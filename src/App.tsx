@@ -85,6 +85,7 @@ export default function App() {
   // Active working list
   const [activeListId, setActiveListId] = useState<string | null>(null);
   const [tempNewListTitle, setTempNewListTitle] = useState<string>('');
+  const [activeListContext, setActiveListContext] = useState<string | undefined>(undefined);
 
   // Modals state
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
@@ -548,14 +549,16 @@ export default function App() {
       return;
     }
     setCurrentScreen('create_list');
+    setActiveTab('create');
   };
 
-  const handleCreateListTitleSubmitted = async (title: string, icon?: string) => {
+  const handleCreateListTitleSubmitted = async (title: string, icon?: string, contextId?: string) => {
     if (!user) {
       setCurrentScreen('auth');
       return;
     }
     const cleanTitle = title.trim() || 'Shopping List';
+    setActiveListContext(contextId);
     const newListId = generateUUID();
     const newList: ShoppingList = {
       id: newListId,
@@ -824,7 +827,8 @@ export default function App() {
   // One-tap quick add from Personal Recommendations on Home Screen
   const handleQuickAddRecommendation = async (
     candidate: RecommendationCandidate,
-    targetListId?: string
+    targetListId?: string,
+    openShoppingMode?: boolean
   ) => {
     if (!user) {
       setCurrentScreen('auth');
@@ -906,6 +910,11 @@ export default function App() {
           items: updatedItems,
         };
         await handleUpdateList(updatedList);
+
+        if (openShoppingMode) {
+          setActiveListId(targetList.id);
+          setCurrentScreen('shopping_list');
+        }
         return;
       }
     }
@@ -939,6 +948,7 @@ export default function App() {
 
     const newList: ShoppingList = {
       id: newListId,
+      userId: user.id,
       title: 'Shopping List',
       createdAt: 'Today',
       createdTimestamp: Date.now(),
@@ -949,6 +959,11 @@ export default function App() {
     setLists((prev) => [newList, ...prev]);
     if (isConfigured) {
       await saveUserShoppingList(user.id, newList);
+    }
+
+    if (openShoppingMode) {
+      setActiveListId(newListId);
+      setCurrentScreen('shopping_list');
     }
   };
 
@@ -1083,6 +1098,7 @@ export default function App() {
         <AddItemsView
           listTitle={tempNewListTitle || currentActiveList?.title || 'Shopping List'}
           initialItems={currentActiveList?.items || []}
+          contextId={activeListContext}
           onBack={() => setCurrentScreen('home')}
           onStartShopping={handleStartShoppingFromNewItems}
           onItemsChange={handleItemsChangeInAddView}
