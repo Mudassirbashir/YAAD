@@ -12,6 +12,7 @@ import {
 } from './engine';
 import { getStarterRecommendations } from './starterCatalog';
 import { detectListContext } from './context';
+import { isCandidateInList } from './filter';
 import {
   getAllUserBehaviorProfiles,
   saveUserBehaviorProfilesBatch,
@@ -440,13 +441,17 @@ export class RecommendationService {
    */
   public getRecommendations(options?: {
     listTitle?: string;
+    contextId?: string;
     currentListItems?: ShoppingItem[];
     limit?: number;
     forcePersonalOnly?: boolean;
+    includeAlreadyAdded?: boolean;
   }): RecommendationCandidate[] {
     const limit = options?.limit ?? this.config.maxRecommendationsHome;
     const currentItems = options?.currentListItems || [];
     const listTitle = options?.listTitle;
+    const contextId = options?.contextId;
+    const includeAlreadyAdded = options?.includeAlreadyAdded ?? false;
 
     const currentListCanonicals: string[] = currentItems.map((item) => {
       const meta = this.resolveItemMetadata(item);
@@ -464,30 +469,47 @@ export class RecommendationService {
       limit,
       this.config,
       Date.now(),
-      listTitle
+      listTitle,
+      contextId,
+      this.userId,
+      includeAlreadyAdded
     );
 
+    // Thoroughly verify isAlreadyAdded on all personal recommendations
+    for (const p of personal) {
+      if (isCandidateInList(p, currentItems)) {
+        p.isAlreadyAdded = true;
+      }
+    }
+
+    const filteredPersonal = includeAlreadyAdded
+      ? personal
+      : personal.filter((p) => !p.isAlreadyAdded && !isCandidateInList(p, currentItems));
+
     // If user has enough personal recommendations, return them immediately
-    if (personal.length >= 2 || options?.forcePersonalOnly) {
-      return personal;
+    if (filteredPersonal.length >= 2 || options?.forcePersonalOnly) {
+      return filteredPersonal;
     }
 
     // 2. Cold-Start / Hybrid Transition:
     // If user is brand new or only has 1 personal item, blend in popular starter items
-    // (clearly labeled with isStarterCatalog: true)
-    const detected = detectListContext(listTitle, currentItems);
+    // (clearly labeled with isStarterCatalog: true, isBaseline: true)
+    const detected = detectListContext(listTitle, currentItems, contextId);
     const starterItems = getStarterRecommendations(limit, detected.contextId);
-    const existingKeys = new Set([
-      ...currentListCanonicals,
-      ...personal.map((p) => p.canonicalName.toLowerCase()),
-    ]);
+    const existingKeys = new Set(filteredPersonal.map((p) => p.canonicalName.toLowerCase()));
 
-    const blended = [...personal];
+    const blended = [...filteredPersonal];
     for (const starter of starterItems) {
       if (blended.length >= limit) break;
-      if (!existingKeys.has(starter.canonicalName.toLowerCase())) {
-        blended.push(starter);
-        existingKeys.add(starter.canonicalName.toLowerCase());
+      const key = starter.canonicalName.toLowerCase();
+      const inList = isCandidateInList(starter, currentItems) || currentListCanonicals.includes(key);
+
+      starter.isAlreadyAdded = inList;
+      if (!existingKeys.has(key)) {
+        if (!inList || includeAlreadyAdded) {
+          blended.push(starter);
+          existingKeys.add(key);
+        }
       }
     }
 

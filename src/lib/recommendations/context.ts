@@ -45,14 +45,18 @@ export const CONTEXT_DEFINITIONS: ContextDefinition[] = [
     preferredCategories: ['meat', 'poultry', 'beverages', 'bakery', 'cooking_essentials', 'household'],
     affinityCanonicalNames: [
       'chicken',
+      'tikka',
+      'tikka_masala',
+      'charcoal',
+      'coal',
+      'paratha',
+      'kebab',
+      'spices',
+      'bbq_sauce',
+      'cold_drink',
       'beef',
       'mutton',
-      'charcoal',
-      'bbq_sauce',
       'sauce',
-      'spices',
-      'tikka_masala',
-      'cold_drink',
       'coke',
       'pepsi',
       'sprite',
@@ -400,13 +404,46 @@ function tokenize(text: string): string[] {
 }
 
 /**
- * Detects shopping list context from list title, optional tags, and existing items.
+ * Maps frontend context ids to internal recommendation context ids
+ */
+export function normalizeContextId(contextId?: string): string {
+  if (!contextId) return 'general';
+  const c = contextId.toLowerCase().trim();
+  if (c === 'weekly' || c === 'hafta') return 'weekly_grocery';
+  if (c === 'home' || c === 'cleaning' || c === 'safai') return 'household';
+  if (c === 'grocery' || c === 'rashan') return 'monthly_shopping';
+  if (c === 'fruits_vegetables' || c === 'sabzi') return 'fruits_vegetables';
+  if (c === 'personal') return 'household';
+  return c;
+}
+
+/**
+ * Detects shopping list context from list title, optional tags, existing items, or explicit contextId.
  * Fast, deterministic, and 100% client-side (no network calls, 0 latency).
  */
 export function detectListContext(
   title?: string,
-  items: ShoppingItem[] = []
+  items: ShoppingItem[] = [],
+  explicitContextId?: string
 ): DetectedContext {
+  // 1. Direct explicit context match (e.g. user tapped BBQ, Weekly, Supermarket)
+  if (explicitContextId) {
+    const normalizedCtxId = normalizeContextId(explicitContextId);
+    const directMatch = CONTEXT_DEFINITIONS.find(
+      (d) => d.id === normalizedCtxId || d.id === explicitContextId
+    );
+    if (directMatch) {
+      return {
+        contextId: directMatch.id,
+        name: directMatch.name,
+        confidence: 1.0,
+        matchingKeywords: [directMatch.id],
+        preferredCategories: directMatch.preferredCategories,
+        affinityItems: new Set(directMatch.affinityCanonicalNames),
+      };
+    }
+  }
+
   const normalizedTitle = (title || '').trim().toLowerCase();
   const titleTokens = tokenize(normalizedTitle);
 

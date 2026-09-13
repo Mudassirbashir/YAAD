@@ -1,9 +1,10 @@
 import React from 'react';
-import { X, Shield, FileText, HelpCircle } from 'lucide-react';
+import { X, Shield, FileText, HelpCircle, Info } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { APP_VERSION } from '../../version';
 
 interface LegalDocModalProps {
-  activeModal: 'privacy' | 'terms' | 'help' | null;
+  activeModal: 'privacy' | 'terms' | 'help' | 'about' | null;
   onClose: () => void;
 }
 
@@ -17,17 +18,21 @@ export const LegalDocModal: React.FC<LegalDocModalProps> = ({
 
   const getTitle = () => {
     switch (activeModal) {
+      case 'about':
+        return t('settings.aboutYaad') || 'About YAAD';
       case 'privacy':
         return t('settings.privacyPolicy') || 'Privacy Policy';
       case 'terms':
         return t('settings.termsOfService') || 'Terms of Service';
       case 'help':
-        return t('settings.helpSupport') || 'Help & Support';
+        return t('settings.helpFeedback') || t('settings.helpSupport') || 'Help & Feedback';
     }
   };
 
   const getIcon = () => {
     switch (activeModal) {
+      case 'about':
+        return <Info className="w-5 h-5 text-primary" />;
       case 'privacy':
         return <Shield className="w-5 h-5 text-primary" />;
       case 'terms':
@@ -71,6 +76,26 @@ export const LegalDocModal: React.FC<LegalDocModalProps> = ({
         </div>
 
         <div className="text-sm text-on-surface-variant space-y-3.5 leading-relaxed max-h-80 overflow-y-auto pr-1">
+          {activeModal === 'about' && (
+            <>
+              <p>
+                <strong>YAAD</strong> is a minimalist, smart shopping memory
+                application designed to make grocery and bazaar shopping
+                effortless and organized.
+              </p>
+              <p>
+                Engineered with full bilingual support for Pakistani grocery
+                staples in English, Urdu (اردو), and friendly Roman Urdu, YAAD
+                understands local units (pao, darjan, gucchi) and automatically
+                organizes your trip by category.
+              </p>
+              <div className="p-3.5 bg-surface-container-low rounded-2xl border border-surface-dim/70 flex items-center justify-between text-xs">
+                <span className="text-outline font-medium">Application Version</span>
+                <span className="font-mono font-bold text-primary">v{APP_VERSION}</span>
+              </div>
+            </>
+          )}
+
           {activeModal === 'privacy' && (
             <>
               <p>

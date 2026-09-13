@@ -11,6 +11,7 @@ import {
   ISuggestionEngine,
 } from './types';
 import { detectListContext, calculateItemContextScore, DetectedContext } from './context';
+import { getRecentlySearchedCanonicals, getRecentlySearchedCategories } from './searchHistory';
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
@@ -105,10 +106,13 @@ export function computeRecommendationScore(
   coPurchaseMap: Map<string, number>,
   detectedContext: DetectedContext,
   categoryUserFrequencyMap: Map<CategoryId, number>,
-  config: RecommendationEngineConfig = DEFAULT_RECOMMENDATION_CONFIG
+  config: RecommendationEngineConfig = DEFAULT_RECOMMENDATION_CONFIG,
+  recentlySearchedCanonicals?: Map<string, { count: number; lastSearchedAt: number; category?: CategoryId }>,
+  recentlySearchedCategories?: Map<CategoryId, { count: number; lastSearchedAt: number }>
 ): ScoringFactors {
   const lastPurchasedTime = profile.lastPurchasedAt ? Date.parse(profile.lastPurchasedAt) : now;
   const daysSinceLastPurchase = Math.max(0, (now - lastPurchasedTime) / MS_PER_DAY);
+  const canonicalLower = profile.canonicalName.toLowerCase();
 
   // 1. FREQUENCY SCORE
   // Combines overall purchase count and recent purchase momentum in the last 60 days
@@ -123,8 +127,6 @@ export function computeRecommendationScore(
   const recencyScore = Math.round(Math.max(0.05, Math.exp(-daysSinceLastPurchase / 45)) * 100) / 100;
 
   // 3. PURCHASE INTERVAL SCORE (Expected Replenishment Cycle)
-  // e.g. If user buys Milk every 7 days, and 6-8 days have passed -> peak urgency (1.0)
-  // If bought yesterday -> heavily discounted (0.05) to avoid spamming
   let intervalScore = 0.5;
   const avgInterval = profile.averageIntervalDays;
 
@@ -132,21 +134,16 @@ export function computeRecommendationScore(
     const cycleProgress = daysSinceLastPurchase / avgInterval;
 
     if (cycleProgress < 0.35) {
-      // Very recently purchased compared to its rhythm
       intervalScore = Math.max(0.05, cycleProgress * 0.4);
     } else if (cycleProgress >= 0.7 && cycleProgress <= 1.35) {
-      // In the expected recurring purchase window! (Peak relevance)
       intervalScore = 1.0 - Math.abs(1.0 - cycleProgress) * 0.35;
     } else if (cycleProgress > 1.35) {
-      // Past typical replenishment window: remains relevant (overdue), but slowly decays
       const overtime = cycleProgress - 1.35;
       intervalScore = Math.max(0.2, 1.0 / (1.0 + overtime * 0.6));
     } else {
-      // 0.35 <= cycleProgress < 0.70
       intervalScore = 0.35 + (cycleProgress - 0.35) * 1.85;
     }
   } else {
-    // Fewer than 2 purchases or unknown interval: use typical grocery window
     if (daysSinceLastPurchase >= 4 && daysSinceLastPurchase <= 14) {
       intervalScore = 0.75;
     } else if (daysSinceLastPurchase <= 3) {
@@ -159,8 +156,56 @@ export function computeRecommendationScore(
   }
   intervalScore = Math.round(intervalScore * 100) / 100;
 
-  // 4. CATEGORY FREQUENCY SCORE
-  // How often user shops in this category across their history
+  // 4. REPEAT PATTERN & WEEKLY BEHAVIOR SCORE
+  // If user bought this item ~5-11 days ago (last week) and selected a weekly/recurring context, boost priority
+  let repeatPatternScore = 0.5;
+  const isWeeklyWindow = daysSinceLastPurchase >= 5 && daysSinceLastPurchase <= 11;
+  const isWeeklyContext =
+    detectedContext.contextId === 'weekly_grocery' || detectedContext.contextId === 'supermarket';
+
+  if (isWeeklyWindow && (isWeeklyContext || profile.purchaseFrequency === 'weekly')) {
+    repeatPatternScore = 0.95;
+  } else if (avgInterval > 0 && profile.purchaseCount >= 2) {
+    const cycleProgress = daysSinceLastPurchase / avgInterval;
+    if (cycleProgress >= 0.75 && cycleProgress <= 1.25) {
+      repeatPatternScore = 0.90;
+    } else if (cycleProgress > 1.25 && cycleProgress <= 2.0) {
+      repeatPatternScore = 0.75;
+    } else if (cycleProgress < 0.35) {
+      repeatPatternScore = 0.15;
+    }
+  } else if (isWeeklyWindow) {
+    repeatPatternScore = 0.75;
+  }
+  repeatPatternScore = Math.round(repeatPatternScore * 100) / 100;
+
+  // 5. RECENT SEARCH BEHAVIOR SCORE
+  // If user searched for this item or category in the last few days
+  let recentSearchScore = 0;
+  if (recentlySearchedCanonicals) {
+    const itemSearch = recentlySearchedCanonicals.get(canonicalLower);
+    if (itemSearch) {
+      const daysSinceSearch = (now - itemSearch.lastSearchedAt) / MS_PER_DAY;
+      if (daysSinceSearch <= 7) {
+        recentSearchScore = Math.min(
+          1.0,
+          0.55 * Math.exp(-daysSinceSearch / 3) + Math.min(0.20, (itemSearch.count - 1) * 0.1)
+        );
+      }
+    }
+  }
+  if (recentSearchScore < 0.3 && recentlySearchedCategories) {
+    const catSearch = recentlySearchedCategories.get(profile.category);
+    if (catSearch) {
+      const daysSinceCatSearch = (now - catSearch.lastSearchedAt) / MS_PER_DAY;
+      if (daysSinceCatSearch <= 7) {
+        recentSearchScore = Math.max(recentSearchScore, 0.35 * Math.exp(-daysSinceCatSearch / 3));
+      }
+    }
+  }
+  recentSearchScore = Math.round(recentSearchScore * 100) / 100;
+
+  // 6. CATEGORY FREQUENCY SCORE
   const catCount = categoryUserFrequencyMap.get(profile.category) || 0;
   const totalUserPurchases = Array.from(categoryUserFrequencyMap.values()).reduce((a, b) => a + b, 0);
   let categoryScore = 0.5;
@@ -170,18 +215,25 @@ export function computeRecommendationScore(
   }
   categoryScore = Math.round(categoryScore * 100) / 100;
 
-  // 5. CONTEXT SCORE (List Title & Type context, e.g. Weekend BBQ, Supermarket)
+  // 7. CONTEXT SCORE (List Category / Theme context, e.g. BBQ, Fruits & Veg, Weekly)
   const contextResult = calculateItemContextScore(
     profile.canonicalName,
     profile.category,
     detectedContext,
     profile
   );
-  const contextScore = contextResult.score;
+  let contextScore = contextResult.score;
+
+  // Historical reinforcement for this context
+  if (profile.contextAffinities && profile.contextAffinities[detectedContext.contextId]) {
+    const affinityCount = profile.contextAffinities[detectedContext.contextId];
+    contextScore = Math.min(1.0, contextScore + Math.min(0.25, affinityCount * 0.08));
+  }
+  contextScore = Math.round(contextScore * 100) / 100;
 
   // Secondary signals: Co-purchase and Weekday
   let coPurchaseScore = 0;
-  const coCount = coPurchaseMap.get(profile.canonicalName.toLowerCase()) || 0;
+  const coCount = coPurchaseMap.get(canonicalLower) || 0;
   if (coCount > 0 && profile.purchaseCount > 0) {
     coPurchaseScore = Math.min(1.0, (coCount / Math.max(1, profile.purchaseCount)) * 1.5);
   }
@@ -198,11 +250,10 @@ export function computeRecommendationScore(
     }
   }
 
-  // 6. USER FEEDBACK: Dismissal Penalty & Acceptance Boost
+  // 8. USER FEEDBACK: Dismissal Penalty & Acceptance Boost
   let dismissalPenalty = 1.0;
   if (profile.dismissalCount > 0 && profile.lastDismissedAt) {
     const daysSinceDismissal = (now - Date.parse(profile.lastDismissedAt)) / MS_PER_DAY;
-    // Gradual recovery over time so accidental dismissal isn't permanent
     if (daysSinceDismissal < 3) {
       dismissalPenalty = Math.max(0.2, 1.0 / (1.0 + profile.dismissalCount * 0.5));
     } else if (daysSinceDismissal < 14) {
@@ -212,35 +263,35 @@ export function computeRecommendationScore(
     }
   }
 
-  // Acceptance boost: user previously accepted this suggestion
   let acceptanceBoost = 0;
   if (profile.acceptedCount && profile.acceptedCount > 0) {
     acceptanceBoost = Math.min(0.12, profile.acceptedCount * 0.04);
   }
 
-  // 7. CONFIDENCE SCORE
+  // 9. CONFIDENCE SCORE
   const purchaseConfidence = Math.min(1.0, profile.purchaseCount / 3.0);
   const confidence = Math.round(
     Math.max(
       0.15,
-      (0.4 * purchaseConfidence +
-        0.3 * (avgInterval > 0 ? 0.9 : 0.4) +
-        0.3 * (contextResult.score >= 0.7 ? 0.9 : 0.5)) *
+      (0.35 * purchaseConfidence +
+        0.25 * (avgInterval > 0 ? 0.9 : 0.4) +
+        0.25 * (contextScore >= 0.7 ? 0.95 : 0.5) +
+        0.15 * (recentSearchScore > 0 ? 0.9 : 0.4)) *
         dismissalPenalty
     ) * 100
   ) / 100;
 
-  // 8. TOTAL WEIGHTED SCORE
-  const weights = config.weights;
+  // 10. TOTAL WEIGHTED SCORE
+  // Formula: score = recency + frequency + context relevance + recent search behavior + repeat pattern
   let rawScore =
-    weights.frequency * frequencyScore +
-    weights.recency * recencyScore +
-    weights.interval * intervalScore +
-    weights.category * categoryScore +
-    weights.context * contextScore +
+    0.25 * frequencyScore +
+    0.20 * recencyScore +
+    0.25 * contextScore +
+    0.15 * repeatPatternScore +
+    0.15 * intervalScore +
+    (recentSearchScore >= 0.25 ? 0.20 * recentSearchScore : 0) +
     acceptanceBoost;
 
-  // Modulate slightly by co-purchase and weekday if present
   if (coPurchaseScore > 0) {
     rawScore += 0.05 * coPurchaseScore;
   }
@@ -254,6 +305,9 @@ export function computeRecommendationScore(
     intervalScore,
     categoryScore,
     contextScore,
+    recentSearchScore,
+    repeatPatternScore,
+    contextRelevanceScore: contextScore,
     coPurchaseScore: Math.round(coPurchaseScore * 100) / 100,
     weekdayScore: Math.round(weekdayScore * 100) / 100,
     dismissalPenalty: Math.round(dismissalPenalty * 100) / 100,
@@ -271,8 +325,26 @@ export function buildExplanation(
   detectedContext: DetectedContext,
   coPurchaseContextItem?: string
 ): RecommendationExplanation {
-  // 1. Context Match (e.g. "Matches Weekend BBQ list")
-  if (factors.contextScore >= 0.75 && detectedContext.contextId !== 'general') {
+  // 1. Recent Search Match
+  if (factors.recentSearchScore && factors.recentSearchScore >= 0.35) {
+    return {
+      type: 'recent_search',
+      textKey: 'recommendations.reasons.recentSearch',
+      displayReason: 'Based on your recent searches',
+    };
+  }
+
+  // 2. Weekly Repeat Pattern
+  if (factors.repeatPatternScore && factors.repeatPatternScore >= 0.85) {
+    return {
+      type: 'weekly_repeat',
+      textKey: 'recommendations.reasons.weeklyRepeat',
+      displayReason: 'Purchased last week • Weekly staple',
+    };
+  }
+
+  // 3. Context Match (e.g. "Matches BBQ list")
+  if (factors.contextScore >= 0.70 && detectedContext.contextId !== 'general') {
     return {
       type: 'context_match',
       textKey: 'recommendations.reasons.contextMatch',
@@ -281,7 +353,7 @@ export function buildExplanation(
     };
   }
 
-  // 2. Replenishment Interval Due (e.g. "Restock due: bought every ~7 days")
+  // 4. Replenishment Interval Due
   if (factors.intervalScore >= 0.78 && profile.purchaseCount >= 2 && profile.averageIntervalDays > 0) {
     const days = Math.round(profile.averageIntervalDays);
     return {
@@ -292,7 +364,7 @@ export function buildExplanation(
     };
   }
 
-  // 3. Co-purchase affinity (bought with an item currently on the list)
+  // 5. Co-purchase affinity
   if (factors.coPurchaseScore && factors.coPurchaseScore >= 0.5 && coPurchaseContextItem) {
     return {
       type: 'co_purchase',
@@ -302,7 +374,7 @@ export function buildExplanation(
     };
   }
 
-  // 4. Regular staple in user's lists
+  // 6. Regular staple in user's lists
   if (factors.frequencyScore >= 0.65 || profile.purchaseCount >= 3) {
     return {
       type: 'frequency_staple',
@@ -312,7 +384,7 @@ export function buildExplanation(
     };
   }
 
-  // 5. Category affinity
+  // 7. Category affinity
   if (factors.categoryScore >= 0.7) {
     return {
       type: 'category_affinity',
@@ -321,7 +393,6 @@ export function buildExplanation(
     };
   }
 
-  // Default fallback
   return {
     type: 'interval_due',
     textKey: 'recommendations.reasons.dueSoon',
@@ -344,18 +415,26 @@ export class DeterministicSuggestionEngine implements ISuggestionEngine {
     profiles: UserItemBehaviorProfile[],
     options: {
       listTitle?: string;
+      contextId?: string;
+      userId?: string;
       currentListItems?: string[];
       coPurchasePairs?: CoPurchasePair[];
       limit?: number;
       now?: number;
+      recentlySearchedCanonicals?: Map<string, { count: number; lastSearchedAt: number; category?: CategoryId }>;
+      recentlySearchedCategories?: Map<CategoryId, { count: number; lastSearchedAt: number }>;
+      includeAlreadyAdded?: boolean;
     } = {}
   ): RecommendationCandidate[] {
     const {
       listTitle,
+      contextId,
+      userId = 'guest',
       currentListItems = [],
       coPurchasePairs = [],
       limit = this.config.maxRecommendationsList,
       now = Date.now(),
+      includeAlreadyAdded = false,
     } = options;
 
     if (!profiles || profiles.length === 0) {
@@ -366,14 +445,20 @@ export class DeterministicSuggestionEngine implements ISuggestionEngine {
       currentListItems.map((n) => n.trim().toLowerCase())
     );
 
-    // Detect Context from list title & active items
+    // Retrieve search history signals if not explicitly passed
+    const searchedCanonicals =
+      options.recentlySearchedCanonicals || getRecentlySearchedCanonicals(userId, 7);
+    const searchedCategories =
+      options.recentlySearchedCategories || getRecentlySearchedCategories(userId, 7);
+
+    // Detect Context from list title, active items, or explicit context category
     const pseudoItems: ShoppingItem[] = currentListItems.map((name) => ({
       id: name,
       name,
       categoryId: 'uncategorized' as CategoryId,
       completed: false,
     }));
-    const detectedContext = detectListContext(listTitle, pseudoItems);
+    const detectedContext = detectListContext(listTitle, pseudoItems, contextId);
 
     // Build user category frequency map
     const categoryUserFrequencyMap = new Map<CategoryId, number>();
@@ -417,18 +502,36 @@ export class DeterministicSuggestionEngine implements ISuggestionEngine {
 
     for (const profile of profiles) {
       const canonicalLower = profile.canonicalName.toLowerCase();
+      const isAlreadyAdded = activeNamesSet.has(canonicalLower);
 
-      // 1. Never recommend items already on the active list
-      if (activeNamesSet.has(canonicalLower)) {
+      // Unless explicitly requested to keep already added for subtle state display, skip them
+      if (isAlreadyAdded && !includeAlreadyAdded) {
         continue;
       }
 
-      // 2. Minimum purchase threshold
+      // Minimum purchase threshold
       if (profile.purchaseCount < this.config.minPurchasesForPersonal) {
         continue;
       }
 
-      // 3. Compute 5-factor scoring model
+      // Strict Context Filtering: If user selected a specific context (e.g. BBQ, Fruits & Vegetables),
+      // only include items that belong to that context (affinities, category, or personal context history).
+      // Never mix unrelated suggestions (e.g. office supplies when BBQ is selected).
+      if (detectedContext.contextId !== 'general') {
+        const isAffinity = detectedContext.affinityItems.has(canonicalLower);
+        const isCategoryMatch = detectedContext.preferredCategories.includes(profile.category);
+        const hasUserContextHistory = Boolean(
+          profile.contextAffinities &&
+            profile.contextAffinities[detectedContext.contextId] &&
+            profile.contextAffinities[detectedContext.contextId] > 0
+        );
+
+        if (!isAffinity && !isCategoryMatch && !hasUserContextHistory) {
+          continue; // Strictly skip unrelated item
+        }
+      }
+
+      // Compute multi-factor explainable scoring model
       const factors = computeRecommendationScore(
         profile,
         now,
@@ -436,19 +539,21 @@ export class DeterministicSuggestionEngine implements ISuggestionEngine {
         coPurchaseMap,
         detectedContext,
         categoryUserFrequencyMap,
-        this.config
+        this.config,
+        searchedCanonicals,
+        searchedCategories
       );
 
-      // 4. Confidence filter
+      // Confidence filter
       if (factors.confidence < this.config.confidenceThreshold) {
         continue;
       }
 
-      // 5. Build transparent explanation
+      // Build transparent explanation
       const contextItem = coPurchaseContextMap.get(canonicalLower);
       const explanation = buildExplanation(profile, factors, detectedContext, contextItem);
 
-      // 6. Retrieve learned preferred quantity and unit
+      // Retrieve learned preferred quantity and unit
       const { preferredQuantity, preferredUnit } = getPreferredQuantityAndUnit(
         profile.quantityFrequencies,
         profile.unitFrequencies
@@ -469,11 +574,15 @@ export class DeterministicSuggestionEngine implements ISuggestionEngine {
         explanation,
         scoringFactors: factors,
         isStarterCatalog: false,
+        isAlreadyAdded,
       });
     }
 
-    // Sort descending by totalScore, then confidence
+    // Sort: un-added items first, descending by totalScore, then confidence
     candidates.sort((a, b) => {
+      if (a.isAlreadyAdded !== b.isAlreadyAdded) {
+        return a.isAlreadyAdded ? 1 : -1;
+      }
       if (b.score !== a.score) {
         return b.score - a.score;
       }
@@ -497,14 +606,20 @@ export function generatePersonalRecommendations(
   limit: number = 4,
   config: RecommendationEngineConfig = DEFAULT_RECOMMENDATION_CONFIG,
   now: number = Date.now(),
-  listTitle?: string
+  listTitle?: string,
+  contextId?: string,
+  userId?: string,
+  includeAlreadyAdded?: boolean
 ): RecommendationCandidate[] {
   const engine = new DeterministicSuggestionEngine(config);
   return engine.generateRecommendations(profiles, {
     listTitle,
+    contextId,
+    userId,
     currentListItems: currentListCanonicalNames,
     coPurchasePairs,
     limit,
     now,
+    includeAlreadyAdded,
   });
 }

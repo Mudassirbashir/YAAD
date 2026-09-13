@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Plus, Check, X, Sparkles, Flame, ShoppingCart, Coffee, HeartPulse, Home, Cake, Info } from 'lucide-react';
 import { ShoppingItem, CategoryId } from '../types';
-import { useRecommendations, RecommendationCandidate } from '../lib/recommendations';
+import { useRecommendations, RecommendationCandidate, isCandidateInList } from '../lib/recommendations';
 import { useLanguage } from '../context/LanguageContext';
 import { CategoryIcon } from './CategoryIcon';
 import { BidiText, MixedQuantityBadge } from '../utils/bidi';
@@ -44,8 +44,15 @@ export const SmartSuggestionsSection: React.FC<SmartSuggestionsSectionProps> = (
     limit: 6,
   });
 
+  // Strictly exclude any candidate already present in the active list
+  const activeSuggestions = (recommendations || []).filter(
+    (candidate) =>
+      !isCandidateInList(candidate, currentItems) &&
+      !addedMap[candidate.canonicalName.toLowerCase()]
+  );
+
   // If there are no recommendations available for this context, do not clutter screen
-  if (!recommendations || recommendations.length === 0) {
+  if (activeSuggestions.length === 0) {
     return null;
   }
 
@@ -146,15 +153,9 @@ export const SmartSuggestionsSection: React.FC<SmartSuggestionsSectionProps> = (
 
       {/* Horizontal scroll container */}
       <div className="flex gap-2 overflow-x-auto pb-1.5 pt-0.5 no-scrollbar -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8">
-        {recommendations.map((candidate) => {
+        {activeSuggestions.map((candidate) => {
           const key = candidate.canonicalName.toLowerCase();
-          const isAlreadyInList = currentItems.some(
-            (item) =>
-              (item.canonicalName && item.canonicalName.toLowerCase() === key) ||
-              item.name?.toLowerCase() === key ||
-              item.name?.toLowerCase() === candidate.displayName.toLowerCase()
-          );
-          const isAdded = isAlreadyInList || !!addedMap[key];
+          const isAdded = !!addedMap[key];
 
           const displayName =
             language === 'ur' && candidate.nameUrdu

@@ -103,8 +103,8 @@ export const PhoneNumberNotification: React.FC<PhoneNumberNotificationProps> = (
             </span>
             <span className="font-['Manrope'] text-[11px] sm:text-xs text-outline leading-snug mt-0.5">
               {language === 'ur'
-                ? 'اپنے اکاؤنٹ کو محفوظ رکھنے اور آسانی سے بازیافت کرنے کے لیے نمبر شامل کریں۔'
-                : 'Add your number to make your account easier to manage and recover.'}
+                ? 'اپنے اکاؤنٹ کو محفوظ رکھنے اور آسانی سے بازیافت کرنے کے لیے فون نمبر شامل کریں۔'
+                : 'Add your phone number to help secure your account and make recovery easier.'}
             </span>
           </div>
         </div>
@@ -123,9 +123,10 @@ export const PhoneNumberNotification: React.FC<PhoneNumberNotificationProps> = (
             type="button"
             id="home_phone_notice_add_btn"
             onClick={handleOpenModal}
-            className="h-8 px-3.5 rounded-full bg-primary hover:bg-primary-container active:scale-95 text-on-primary text-xs font-bold font-['Manrope'] transition-all shadow-2xs flex items-center gap-1 cursor-pointer"
+            className="h-8 px-3.5 rounded-full bg-primary hover:bg-primary-container active:scale-95 text-on-primary text-xs font-bold font-['Manrope'] transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer"
           >
-            <span>{language === 'ur' ? 'نمبر شامل کریں' : 'Add Number'}</span>
+            <Phone className="w-3.5 h-3.5 stroke-[2.2]" />
+            <span>{language === 'ur' ? 'فون نمبر شامل کریں' : 'Add Phone Number'}</span>
           </button>
 
           <button

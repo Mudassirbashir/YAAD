@@ -3,6 +3,7 @@ import { CategoryId } from '../types';
 import { CategoryIcon } from './CategoryIcon';
 import { normalizeBaseText } from '../lib/recognition/normalizer';
 import { Package } from 'lucide-react';
+import { resolveItemVisual } from '../utils/itemIconResolver';
 
 interface EssentialItemVisualProps {
   canonicalName?: string;
@@ -1061,44 +1062,25 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
     );
   }
 
-  // 30. CLEAN CATEGORY-BASED FALLBACK
+  // 30. CENTRALIZED ICON RESOLVER FALLBACK (Tiers 2, 3, 4)
   // Used for recognized catalog items that don't have a dedicated staple vector illustration.
-  // Never shows random emoji or mismatched pictures.
-  const categoryColorStyles: Record<string, { bg: string; border: string; icon: string }> = {
-    vegetables: { bg: 'bg-emerald-50', border: 'border-emerald-200/70', icon: 'text-emerald-700' },
-    fruits: { bg: 'bg-orange-50', border: 'border-orange-200/70', icon: 'text-orange-700' },
-    dairy: { bg: 'bg-sky-50', border: 'border-sky-200/70', icon: 'text-sky-700' },
-    meat: { bg: 'bg-rose-50', border: 'border-rose-200/70', icon: 'text-rose-700' },
-    poultry: { bg: 'bg-amber-50', border: 'border-amber-200/70', icon: 'text-amber-700' },
-    bakery: { bg: 'bg-amber-50', border: 'border-amber-200/70', icon: 'text-amber-800' },
-    cooking_essentials: { bg: 'bg-yellow-50', border: 'border-yellow-200/70', icon: 'text-yellow-800' },
-    rice: { bg: 'bg-amber-50', border: 'border-amber-200/70', icon: 'text-amber-800' },
-    grains: { bg: 'bg-amber-50', border: 'border-amber-200/70', icon: 'text-amber-800' },
-    pulses: { bg: 'bg-orange-50', border: 'border-orange-200/70', icon: 'text-orange-800' },
-    beverages: { bg: 'bg-teal-50', border: 'border-teal-200/70', icon: 'text-teal-700' },
-    snacks: { bg: 'bg-indigo-50', border: 'border-indigo-200/70', icon: 'text-indigo-700' },
-    household: { bg: 'bg-blue-50', border: 'border-blue-200/70', icon: 'text-blue-700' },
-    cleaning: { bg: 'bg-cyan-50', border: 'border-cyan-200/70', icon: 'text-cyan-700' },
-    personal_care: { bg: 'bg-purple-50', border: 'border-purple-200/70', icon: 'text-purple-700' },
-    health: { bg: 'bg-red-50', border: 'border-red-200/70', icon: 'text-red-700' },
-    uncategorized: { bg: 'bg-surface-container', border: 'border-outline-variant/60', icon: 'text-outline' },
-    other: { bg: 'bg-surface-container', border: 'border-outline-variant/60', icon: 'text-outline' },
-  };
+  // Never shows random emoji, blank spaces, or mismatched pictures.
+  const resolved = resolveItemVisual({
+    canonicalName,
+    displayName,
+    name,
+    categoryId,
+  });
 
-  const style = categoryColorStyles[categoryId as string] || categoryColorStyles.other;
-  const isCustomOrUncategorized = categoryId === 'uncategorized' || categoryId === 'other' || !categoryId;
+  const IconComp = resolved.icon;
 
   return (
     <div
-      className={`relative flex items-center justify-center rounded-xl ${style.bg} border ${style.border} shadow-2xs shrink-0 overflow-hidden ${className}`}
+      className={`relative flex items-center justify-center rounded-xl ${resolved.bgGradient} border ${resolved.borderColor} shadow-2xs shrink-0 overflow-hidden ${className}`}
       style={{ width: size, height: size }}
-      aria-label={`${displayName || canonicalName || name || 'item'} icon`}
+      aria-label={`${displayName || canonicalName || name || resolved.label} icon`}
     >
-      {isCustomOrUncategorized ? (
-        <Package className={`w-5 h-5 ${style.icon}`} />
-      ) : (
-        <CategoryIcon categoryId={(categoryId as CategoryId) || 'other'} className={`w-5 h-5 ${style.icon}`} />
-      )}
+      <IconComp className={`w-5 h-5 ${resolved.iconColor}`} strokeWidth={2} />
     </div>
   );
 };

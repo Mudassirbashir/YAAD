@@ -64,7 +64,11 @@ export type ExplanationType =
   | 'popular_starter'
   | 'due_date'
   | 'frequency_cycle'
-  | 'recent_repeat';
+  | 'recent_repeat'
+  | 'recent_search'
+  | 'weekly_repeat'
+  | 'recently_purchased'
+  | 'context_staple';
 
 export interface RecommendationExplanation {
   type: ExplanationType;
@@ -79,6 +83,9 @@ export interface ScoringFactors {
   intervalScore?: number;
   categoryScore?: number;
   contextScore?: number;
+  contextRelevanceScore?: number;
+  recentSearchScore?: number;
+  repeatPatternScore?: number;
   cycleUrgencyScore?: number;
   regularityScore?: number;
   coPurchaseScore?: number;
@@ -103,6 +110,8 @@ export interface RecommendationCandidate {
   explanation: RecommendationExplanation;
   scoringFactors: ScoringFactors;
   isStarterCatalog?: boolean;
+  isBaseline?: boolean;
+  isAlreadyAdded?: boolean;
 }
 
 export interface RecommendationEngineConfig {

@@ -277,6 +277,7 @@ export interface ShoppingList {
   icon?: string;
   items: ShoppingItem[];
   isCompleted: boolean;
+  contextId?: string;
   // Backward compatibility aliases
   completed?: boolean;
   is_completed?: boolean;
@@ -325,7 +326,8 @@ export type ScreenType =
   | 'privacy'
   | 'about'
   | 'help'
-  | 'legal';
+  | 'legal'
+  | 'not_found';
 
 export type ViewState = ScreenType;
 

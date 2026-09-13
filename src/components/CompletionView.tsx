@@ -1,9 +1,20 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { motion } from 'motion/react';
-import { Check, CheckCircle2, Home, History, Plus, Clock, ShoppingBag } from 'lucide-react';
+import {
+  Check,
+  CheckCircle2,
+  Home,
+  PlusCircle,
+  FileEdit,
+  Clock,
+  ShoppingBag,
+  Layers,
+  History,
+} from 'lucide-react';
 import { ShoppingList, CategoryId } from '../types';
 import { TopHeader } from './TopHeader';
 import { CategoryIcon } from './CategoryIcon';
+import { ItemVisualIcon } from './ItemVisualIcon';
 import { useLanguage } from '../context/LanguageContext';
 import { playCompletionSound, triggerHaptic } from '../lib/sound';
 import { BidiText } from '../utils/bidi';
@@ -16,6 +27,8 @@ interface CompletionViewProps {
   onViewHistory: () => void;
   onAddMoreItems: () => void;
   onOpenProfile: () => void;
+  onStartNewList?: () => void;
+  onReviewTrip?: () => void;
 }
 
 export const CompletionView: React.FC<CompletionViewProps> = ({
@@ -24,19 +37,21 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
   onViewHistory,
   onAddMoreItems,
   onOpenProfile,
+  onStartNewList,
+  onReviewTrip,
 }) => {
   const { t, getCategoryName, language } = useLanguage();
   const isUrdu = language === 'ur';
 
-  // Synchronized Sound & Haptic Playback based on tuned config timings
+  // Sound and gentle haptic feedback on entrance
   useEffect(() => {
     const soundTimer = setTimeout(() => {
       playCompletionSound();
-    }, YAAD_COMPLETION_CONFIG.timing.soundDelayMs);
+    }, 120);
 
     const hapticTimer = setTimeout(() => {
-      triggerHaptic(YAAD_COMPLETION_CONFIG.sound.hapticPattern);
-    }, YAAD_COMPLETION_CONFIG.timing.hapticDelayMs);
+      triggerHaptic(20);
+    }, 150);
 
     return () => {
       clearTimeout(soundTimer);
@@ -44,356 +59,301 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
     };
   }, []);
 
-  // Compute real session metrics
+  // Compute session metrics
   const totalItemsCount = list.items ? list.items.length : 0;
-  const purchasedItems = list.items ? list.items.filter((i) => i.completed) : [];
+  const purchasedItems = useMemo(
+    () => (list.items ? list.items.filter((i) => i.completed) : []),
+    [list.items]
+  );
   const purchasedCount = purchasedItems.length;
-  const isAllPurchased = totalItemsCount > 0 && purchasedCount === totalItemsCount;
 
-  // Real completion timestamp from Supabase / list session
-  const completedDateObj = list.completedAt
-    ? new Date(list.completedAt)
-    : list.completedTimestamp
-    ? new Date(list.completedTimestamp)
-    : new Date();
+  // Real completion timestamp
+  const completedDateObj = useMemo(() => {
+    if (list.completedAt) return new Date(list.completedAt);
+    if (list.completedTimestamp) return new Date(list.completedTimestamp);
+    return new Date();
+  }, [list.completedAt, list.completedTimestamp]);
 
   const formattedDate = formatExactDate(completedDateObj, { includeWeekday: true });
   const formattedTime = formatExactTime(completedDateObj);
 
-  // Group purchased items by Category for clean summary
-  const purchasedCategoryIds: CategoryId[] = Array.from(
-    new Set(purchasedItems.map((i) => (i.categoryId || 'other') as CategoryId))
-  );
+  // Trip duration calculation
+  const tripDurationText = useMemo(() => {
+    const startMs = list.createdTimestamp;
+    const endMs = list.completedTimestamp || completedDateObj.getTime();
+    if (startMs && endMs > startMs) {
+      const minutes = Math.round((endMs - startMs) / (1000 * 60));
+      if (minutes <= 1) return isUrdu ? '1 منٹ سے کم' : '< 1 min';
+      if (minutes < 60) return `${minutes} ${isUrdu ? 'منٹ' : 'mins'}`;
+      const hours = Math.floor(minutes / 60);
+      const remainingMins = minutes % 60;
+      return `${hours}h ${remainingMins}m`;
+    }
+    return isUrdu ? 'کامیاب ٹرپ' : 'Fast trip';
+  }, [list.createdTimestamp, list.completedTimestamp, completedDateObj, isUrdu]);
+
+  // Unique categories in purchased items
+  const purchasedCategoryIds: CategoryId[] = useMemo(() => {
+    return Array.from(
+      new Set(purchasedItems.map((i) => (i.categoryId || 'uncategorized') as CategoryId))
+    );
+  }, [purchasedItems]);
+
+  const handleReviewTrip = () => {
+    if (onReviewTrip) {
+      onReviewTrip();
+    } else {
+      onAddMoreItems();
+    }
+  };
+
+  const handleStartNewList = () => {
+    if (onStartNewList) {
+      onStartNewList();
+    } else {
+      onReturnHome();
+    }
+  };
 
   return (
-    <div className="w-full max-w-xl md:max-w-2xl lg:max-w-3xl mx-auto min-h-screen flex flex-col antialiased bg-background pb-24 selection:bg-primary-container selection:text-on-primary-container">
-      {/* TopAppBar */}
+    <div className="w-full max-w-2xl mx-auto min-h-screen flex flex-col antialiased bg-background pb-12 selection:bg-primary-container selection:text-on-primary-container">
+      {/* Top Header */}
       <TopHeader
         title={t('appName')}
         onSettingsClick={onOpenProfile}
         onAvatarClick={onOpenProfile}
       />
 
-      {/* Main Content Area */}
-      <main className="flex-1 px-4 sm:px-6 md:px-8 space-y-6 pt-2">
-        {/* Polished Completion Moment Header */}
-        <section className="text-center py-4 space-y-3 flex flex-col items-center select-none">
-          {/* Animated Hero Badge Container */}
-          <div className="relative mb-1 flex items-center justify-center">
-            {/* Subtle Expanding Ambient Halo (Subtle, non-childish luxury aura) */}
-            <motion.div
-              initial={{ scale: YAAD_COMPLETION_CONFIG.motion.haloScaleRange[0], opacity: 0 }}
-              animate={{
-                scale: [
-                  YAAD_COMPLETION_CONFIG.motion.haloScaleRange[0],
-                  YAAD_COMPLETION_CONFIG.motion.haloScaleRange[1],
-                  YAAD_COMPLETION_CONFIG.motion.haloScaleRange[2],
-                ],
-                opacity: [
-                  YAAD_COMPLETION_CONFIG.motion.haloOpacityRange[0],
-                  YAAD_COMPLETION_CONFIG.motion.haloOpacityRange[1],
-                  YAAD_COMPLETION_CONFIG.motion.haloOpacityRange[2],
-                ],
-              }}
-              transition={{
-                duration: YAAD_COMPLETION_CONFIG.timing.heroBadgeDuration * 1.5,
-                ease: 'easeOut',
-              }}
-              className="absolute -inset-5 rounded-full blur-2xl pointer-events-none"
+      {/* Main Container */}
+      <main className="flex-1 px-4 sm:px-6 md:px-8 space-y-5 pt-2">
+        {/* Compact, Calm Brand Moment */}
+        <section className="text-center py-2 flex flex-col items-center select-none">
+          {/* Brand Emerald Badge */}
+          <div className="relative my-2 flex items-center justify-center">
+            {/* Subtle atmospheric glow */}
+            <div
+              className="absolute -inset-4 rounded-full blur-xl opacity-30 pointer-events-none"
               style={{
-                background: `radial-gradient(circle, ${YAAD_COMPLETION_CONFIG.visual.brandEmerald}55 0%, ${YAAD_COMPLETION_CONFIG.visual.brandAmberDot}25 60%, transparent 80%)`,
+                background: `radial-gradient(circle, ${YAAD_COMPLETION_CONFIG.visual.brandEmerald} 0%, transparent 70%)`,
               }}
             />
 
-            {/* Central Luxury Emerald Brand Badge */}
             <motion.div
-              initial={{
-                scale: YAAD_COMPLETION_CONFIG.motion.initialBadgeScale,
-                opacity: 0,
-                y: 12,
-              }}
-              animate={{
-                scale: YAAD_COMPLETION_CONFIG.motion.restingBadgeScale,
-                opacity: 1,
-                y: 0,
-              }}
-              transition={{
-                type: 'spring',
-                stiffness: YAAD_COMPLETION_CONFIG.timing.badgeSpring.stiffness,
-                damping: YAAD_COMPLETION_CONFIG.timing.badgeSpring.damping,
-                mass: YAAD_COMPLETION_CONFIG.timing.badgeSpring.mass,
-                delay: YAAD_COMPLETION_CONFIG.timing.heroBadgeDelay,
-              }}
-              className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-3xl flex items-center justify-center shadow-[0px_16px_36px_rgba(10,46,34,0.32)] border border-emerald-500/20 overflow-hidden"
+              initial={{ scale: 0.85, opacity: 0, y: 8 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 28 }}
+              className="relative w-18 h-18 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center shadow-[0px_12px_30px_rgba(10,46,34,0.25)] border border-emerald-500/25 overflow-hidden"
               style={{
                 background: `linear-gradient(135deg, ${YAAD_COMPLETION_CONFIG.visual.brandEmerald} 0%, ${YAAD_COMPLETION_CONFIG.visual.brandEmeraldDeep} 100%)`,
               }}
             >
-              {/* Authentic Urdu Brand Script Watermark ("یاد" with signature Amber Dot) */}
-              {YAAD_COMPLETION_CONFIG.visual.showBrandWatermark && (
-                <div
-                  className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20 select-none"
-                  aria-hidden="true"
-                >
-                  <span
-                    className={`font-urdu-brand text-3xl sm:text-4xl text-emerald-200 tracking-wider font-bold ${
-                      isUrdu ? 'scale-110' : ''
-                    }`}
-                  >
-                    یاد
-                  </span>
-                </div>
-              )}
+              {/* YAAD Urdu brand script subtle watermark */}
+              <span
+                className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20 select-none font-urdu-brand text-2xl text-emerald-200"
+                aria-hidden="true"
+              >
+                یاد
+              </span>
 
               {/* Animated Stroke Checkmark */}
               <motion.div
                 initial={{ scale: 0, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                transition={{
-                  type: 'spring',
-                  stiffness: YAAD_COMPLETION_CONFIG.timing.checkSpring.stiffness,
-                  damping: YAAD_COMPLETION_CONFIG.timing.checkSpring.damping,
-                  delay: YAAD_COMPLETION_CONFIG.timing.checkMarkDelay,
-                }}
+                transition={{ type: 'spring', stiffness: 450, damping: 26, delay: 0.12 }}
                 className="relative z-10"
               >
-                <svg
-                  className="w-12 h-12 sm:w-14 sm:h-14 text-emerald-100 drop-shadow-[0_2px_8px_rgba(0,0,0,0.3)]"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="3.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <motion.path
-                    d="M20 6L9 17l-5-5"
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
-                    transition={{
-                      duration: 0.38,
-                      ease: 'easeInOut',
-                      delay: YAAD_COMPLETION_CONFIG.timing.checkMarkDelay + 0.05,
-                    }}
-                  />
-                </svg>
+                <Check className="w-9 h-9 sm:w-10 sm:h-10 text-emerald-100 stroke-[3.2] drop-shadow-xs" />
               </motion.div>
 
-              {/* Signature YAAD Golden Accent Dot (Subtle homage to the YAAD brand dot) */}
+              {/* Signature YAAD Golden Accent Dot */}
               <div
-                className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full shadow-sm"
+                className="absolute top-2 right-2 w-2 h-2 rounded-full shadow-xs"
                 style={{ backgroundColor: YAAD_COMPLETION_CONFIG.visual.brandAmberDot }}
               />
             </motion.div>
           </div>
 
-          {/* Clear "Shopping Complete" Status Pill */}
+          {/* Heading & Subtitle with Newsreader and Manrope Typography */}
           <motion.div
-            initial={{ opacity: 0, y: 8 }}
+            initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.35,
-              delay: YAAD_COMPLETION_CONFIG.timing.metricsFadeDelay - 0.1,
-            }}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-['Manrope'] font-bold tracking-tight shadow-2xs"
+            transition={{ duration: 0.28, delay: 0.15 }}
+            className="space-y-1 mt-1"
           >
-            <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
-            <span>{t('completion.badgeCompleted')}</span>
+            <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-300 text-xs font-['Manrope'] font-bold tracking-tight">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>{isUrdu ? 'شاپنگ مکمل ہو گئی' : 'Shopping Completed'}</span>
+            </div>
+
+            <h1 className="font-['Newsreader'] text-2xl sm:text-3xl font-bold text-primary tracking-tight">
+              {list.title}
+            </h1>
+
+            <p className="font-['Manrope'] text-xs sm:text-sm text-on-surface-variant max-w-xs sm:max-w-sm mx-auto">
+              {isUrdu
+                ? 'تمام منتخب کردہ اشیاء کامیابی سے حاصل کر لی گئیں'
+                : 'All marked items collected. Your trip is saved.'}
+            </p>
           </motion.div>
-
-          {/* Primary Clear Heading: "Shopping Complete" */}
-          <motion.h2
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.38,
-              delay: YAAD_COMPLETION_CONFIG.timing.metricsFadeDelay,
-            }}
-            className="font-['Plus_Jakarta_Sans'] text-2xl sm:text-3xl font-extrabold text-primary tracking-tight leading-tight"
-          >
-            {t('completion.title')}
-          </motion.h2>
-
-          {/* Clear Subtitle */}
-          <motion.p
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.38,
-              delay: YAAD_COMPLETION_CONFIG.timing.metricsFadeDelay + 0.06,
-            }}
-            className="font-['Manrope'] text-sm sm:text-base text-on-surface-variant max-w-sm mx-auto leading-relaxed"
-          >
-            {t('completion.subtitle')}
-          </motion.p>
         </section>
 
-        {/* Real Session Data Summary Card */}
-        <motion.section
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{
-            duration: 0.45,
-            delay: YAAD_COMPLETION_CONFIG.timing.metricsFadeDelay + 0.12,
-          }}
-          className="bg-surface-container-lowest rounded-3xl shadow-[0px_6px_24px_rgba(10,46,34,0.06)] border border-surface-container-high/80 p-5 space-y-4"
-        >
-          {/* Header Row: Real List Name & Item Count Badge */}
-          <div className="flex justify-between items-center border-b border-surface-dim/60 pb-3">
-            <div className="min-w-0 pe-2">
-              <span className="text-[11px] uppercase tracking-wider font-['Manrope'] font-bold text-outline">
-                {t('completion.sessionDetails')}
-              </span>
-              <BidiText as="h3" className="font-['Plus_Jakarta_Sans'] text-lg sm:text-xl font-bold text-primary truncate">
-                {list.title}
-              </BidiText>
+        {/* Clear Summary Metrics Grid */}
+        <section className="grid grid-cols-3 gap-2.5 sm:gap-3">
+          {/* 1. Items Completed */}
+          <div className="bg-surface-container-lowest rounded-2xl p-3 sm:p-3.5 border border-surface-container-high/80 shadow-2xs flex flex-col justify-between">
+            <div className="flex items-center gap-1.5 text-outline text-[11px] font-['Manrope'] font-semibold">
+              <ShoppingBag className="w-3.5 h-3.5 text-primary" />
+              <span className="truncate">{isUrdu ? 'اشیاء' : 'Items'}</span>
             </div>
-
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/80 shrink-0">
-              <ShoppingBag className="w-3.5 h-3.5 text-emerald-700" />
-              <span className="font-['Manrope'] text-xs font-bold">
-                {purchasedCount} / {totalItemsCount}
+            <div className="mt-1.5 flex items-baseline gap-1">
+              <span className="font-['Newsreader'] text-xl sm:text-2xl font-bold text-primary tabular-nums">
+                {purchasedCount}
+              </span>
+              <span className="text-[11px] text-outline font-['Manrope'] font-medium">
+                /{totalItemsCount}
               </span>
             </div>
           </div>
 
-          {/* Progress & Timestamp Strip */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-0.5">
-            {/* Real Purchased Ratio */}
-            <div className="p-3 bg-surface-container-low rounded-2xl border border-surface-dim/50 flex flex-col justify-between">
-              <span className="text-xs font-['Manrope'] text-on-surface-variant font-medium">
-                {t('completion.purchasedSummary', { bought: purchasedCount, total: totalItemsCount })}
-              </span>
-              <div className="mt-2 w-full bg-surface-container-high rounded-full h-2 overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{
-                    width: totalItemsCount > 0 ? `${(purchasedCount / totalItemsCount) * 100}%` : '100%',
-                  }}
-                  transition={{ duration: 0.6, ease: 'easeOut', delay: 0.4 }}
-                  className="h-full bg-primary rounded-full"
-                />
-              </div>
+          {/* 2. Trip Duration & Time */}
+          <div className="bg-surface-container-lowest rounded-2xl p-3 sm:p-3.5 border border-surface-container-high/80 shadow-2xs flex flex-col justify-between">
+            <div className="flex items-center gap-1.5 text-outline text-[11px] font-['Manrope'] font-semibold">
+              <Clock className="w-3.5 h-3.5 text-primary" />
+              <span className="truncate">{isUrdu ? 'دورانیہ' : 'Duration'}</span>
             </div>
-
-            {/* Real Completion Timestamp */}
-            <div className="p-3 bg-surface-container-low rounded-2xl border border-surface-dim/50 flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-surface-container flex items-center justify-center shrink-0 text-primary">
-                <Clock className="w-4 h-4" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-[11px] font-['Manrope'] text-on-surface-variant font-medium">
-                  {formattedDate}
-                </div>
-                <div className="text-xs font-['Manrope'] font-bold text-primary tabular-nums">
-                  {formattedTime}
-                </div>
-              </div>
+            <div className="mt-1.5">
+              <span className="font-['Newsreader'] text-lg sm:text-xl font-bold text-primary tabular-nums">
+                {tripDurationText}
+              </span>
             </div>
           </div>
 
-          {/* Purchased Items Breakdown */}
-          {purchasedItems.length > 0 && (
-            <div className="pt-2 space-y-3">
-              <span className="text-xs font-['Manrope'] font-bold text-primary">
-                {t('completion.itemsPurchasedHeading')}
+          {/* 3. Categories Covered */}
+          <div className="bg-surface-container-lowest rounded-2xl p-3 sm:p-3.5 border border-surface-container-high/80 shadow-2xs flex flex-col justify-between">
+            <div className="flex items-center gap-1.5 text-outline text-[11px] font-['Manrope'] font-semibold">
+              <Layers className="w-3.5 h-3.5 text-primary" />
+              <span className="truncate">{isUrdu ? 'اقسام' : 'Categories'}</span>
+            </div>
+            <div className="mt-1.5">
+              <span className="font-['Newsreader'] text-xl sm:text-2xl font-bold text-primary tabular-nums">
+                {purchasedCategoryIds.length}
               </span>
+            </div>
+          </div>
+        </section>
 
-              <div className="space-y-3 max-h-[220px] overflow-y-auto pe-1">
-                {purchasedCategoryIds.map((catId) => {
-                  const categoryItems = purchasedItems.filter(
-                    (i) => (i.categoryId || 'other') === catId
-                  );
-                  if (categoryItems.length === 0) return null;
+        {/* Completed Items Preview (Compact, responsive, space-efficient) */}
+        {purchasedItems.length > 0 && (
+          <section className="bg-surface-container-lowest rounded-3xl p-4 sm:p-5 border border-surface-container-high/80 shadow-2xs space-y-3">
+            <div className="flex items-center justify-between border-b border-surface-dim/60 pb-2.5">
+              <div className="flex items-center gap-2">
+                <span className="font-['Manrope'] text-xs font-bold text-primary uppercase tracking-wider">
+                  {isUrdu ? 'خریدی گئی اشیاء' : 'Purchased Items'}
+                </span>
+                <span className="text-[11px] font-['Manrope'] px-2 py-0.2 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 font-bold border border-emerald-200/60 dark:border-emerald-800/40">
+                  {purchasedCount}
+                </span>
+              </div>
+              <span className="text-[11px] font-['Manrope'] text-outline">
+                {formattedTime}
+              </span>
+            </div>
 
-                  return (
-                    <div key={catId} className="space-y-1.5">
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border border-outline-variant/50 bg-surface-bright">
-                        <CategoryIcon categoryId={catId} className="w-3.5 h-3.5 text-primary/70" />
-                        <span className="font-['Manrope'] text-[11px] font-semibold text-primary">
-                          {getCategoryName(catId)}
-                        </span>
+            {/* Clean compact list / 2-column grid on wider screens */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[280px] overflow-y-auto pe-1">
+              {purchasedItems.map((item) => {
+                const formattedQty = item.planned_quantity || item.quantity
+                  ? `${item.planned_quantity || item.quantity}${
+                      item.planned_unit || item.unit ? ' ' + (item.planned_unit || item.unit) : ''
+                    }`
+                  : item.note || null;
+
+                return (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between gap-2.5 p-2 rounded-xl bg-surface-bright border border-surface-dim/40 shadow-2xs"
+                  >
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <div className="w-5 h-5 rounded-full bg-[#0F3D2E] text-white flex items-center justify-center shrink-0 shadow-2xs">
+                        <Check className="w-3 h-3 stroke-[3]" />
                       </div>
-
-                      {categoryItems.map((item) => {
-                        const formattedQty = item.quantity
-                          ? `${item.quantity}${item.unit ? ' ' + item.unit : ''}`
-                          : item.note || null;
-
-                        return (
-                          <div
-                            key={item.id}
-                            className="flex items-center justify-between gap-3 p-2.5 bg-surface-bright rounded-2xl border border-surface-dim/40"
-                          >
-                            <div className="flex items-center gap-2.5 min-w-0 flex-1" dir="auto">
-                              <div className="w-4 h-4 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 text-emerald-800 border border-emerald-300/60">
-                                <Check className="w-2.5 h-2.5 stroke-[3]" />
-                              </div>
-                              <BidiText className="font-['Manrope'] text-xs sm:text-sm text-outline line-through truncate font-medium">
-                                {item.name}
-                              </BidiText>
-                            </div>
-
-                            {formattedQty && (
-                              <bdi
-                                dir="ltr"
-                                className="font-['Manrope'] tabular-nums text-xs text-outline bg-surface-container-low px-2 py-0.5 rounded-md shrink-0 font-medium"
-                              >
-                                {formattedQty}
-                              </bdi>
-                            )}
-                          </div>
-                        );
-                      })}
+                      <ItemVisualIcon
+                        name={item.name}
+                        canonicalName={item.canonicalName || item.canonical_name}
+                        displayName={item.name}
+                        categoryId={item.categoryId}
+                        size={28}
+                        className="w-7 h-7 rounded-lg shrink-0 opacity-80"
+                      />
+                      <BidiText className="font-['Newsreader'] text-sm text-on-surface font-medium truncate">
+                        {item.name}
+                      </BidiText>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </motion.section>
 
-        {/* Action Buttons: Return to Home smoothly or view history */}
-        <motion.section
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{
-            duration: 0.45,
-            delay: YAAD_COMPLETION_CONFIG.timing.actionsFadeDelay,
-          }}
-          className="flex flex-col gap-3 pt-1 pb-4"
-        >
-          {/* Primary Action: Smooth return to Home */}
+                    {formattedQty && (
+                      <bdi
+                        dir="ltr"
+                        className="font-['Manrope'] tabular-nums text-[11px] font-bold text-primary bg-surface-container-high px-2 py-0.5 rounded-md shrink-0"
+                      >
+                        {formattedQty}
+                      </bdi>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* Working Actions: Done / Return Home, Start New List, Review / Edit Trip */}
+        <section className="space-y-2.5 pt-1">
+          {/* Primary Action: Done / Return Home */}
           <button
             id="completion_return_home_btn"
+            type="button"
             onClick={onReturnHome}
-            className="w-full h-[54px] rounded-full bg-primary text-on-primary font-['Manrope'] text-base font-bold shadow-[0px_8px_20px_rgba(10,46,34,0.18)] hover:bg-primary/90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full h-[50px] rounded-2xl bg-primary text-on-primary font-['Manrope'] text-sm font-bold shadow-sm hover:bg-primary/90 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
             <Home className="w-4 h-4" />
-            <span>{t('completion.completeTripBtn')}</span>
+            <span>{isUrdu ? 'مکمل • ہوم اسکرین' : 'Done • Return Home'}</span>
           </button>
 
-          {/* Secondary Actions: View in History & Continue / Add More */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Secondary Actions Row: Start New List + Review / Edit Trip */}
+          <div className="grid grid-cols-2 gap-2.5">
             <button
-              id="completion_view_history_btn"
-              onClick={onViewHistory}
-              className="h-[50px] rounded-full bg-surface-container text-primary font-['Manrope'] text-sm font-bold hover:bg-surface-container-high active:scale-[0.98] transition-all flex items-center justify-center gap-2 border border-surface-dim cursor-pointer"
+              id="completion_start_new_list_btn"
+              type="button"
+              onClick={handleStartNewList}
+              className="h-[46px] rounded-2xl bg-surface-container hover:bg-surface-container-high text-primary font-['Manrope'] text-xs sm:text-sm font-bold border border-surface-dim/80 active:scale-[0.99] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
             >
-              <History className="w-4 h-4" />
-              <span>{t('completion.viewHistoryBtn')}</span>
+              <PlusCircle className="w-4 h-4 text-primary" />
+              <span>{isUrdu ? 'نئی لسٹ بنائیں' : 'Start New List'}</span>
             </button>
 
             <button
-              id="completion_add_more_btn"
-              onClick={onAddMoreItems}
-              className="h-[50px] rounded-full bg-surface-container-low text-primary font-['Manrope'] text-sm font-bold hover:bg-surface-container-highest active:scale-[0.98] transition-all flex items-center justify-center gap-2 border border-surface-dim cursor-pointer"
+              id="completion_review_trip_btn"
+              type="button"
+              onClick={handleReviewTrip}
+              className="h-[46px] rounded-2xl bg-surface-container-low hover:bg-surface-container text-primary font-['Manrope'] text-xs sm:text-sm font-bold border border-surface-dim/80 active:scale-[0.99] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
             >
-              <Plus className="w-4 h-4" />
-              <span>{t('completion.addMoreBtn')}</span>
+              <FileEdit className="w-4 h-4 text-primary" />
+              <span>{isUrdu ? 'ٹرپ کا جائزہ لیں' : 'Review / Edit Trip'}</span>
             </button>
           </div>
-        </motion.section>
+
+          {/* View in History Link */}
+          <div className="text-center pt-1">
+            <button
+              id="completion_view_history_link"
+              type="button"
+              onClick={onViewHistory}
+              className="inline-flex items-center gap-1.5 text-xs font-['Manrope'] font-semibold text-outline hover:text-primary transition-colors cursor-pointer py-1"
+            >
+              <History className="w-3.5 h-3.5" />
+              <span>{isUrdu ? 'ہسٹری میں ٹرپ دیکھیں' : 'View in Past Trips History'}</span>
+            </button>
+          </div>
+        </section>
       </main>
     </div>
   );

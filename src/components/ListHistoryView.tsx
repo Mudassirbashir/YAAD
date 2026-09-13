@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react';
 import {
   Calendar,
   ShoppingBag,
-  ChevronRight,
   Clock,
   Plus,
   AlertCircle,
@@ -12,19 +11,23 @@ import {
   WifiOff,
   Database,
   ArrowLeft,
+  RotateCcw,
 } from 'lucide-react';
 import { ShoppingList } from '../types';
 import { TopHeader } from './TopHeader';
 import { useLanguage } from '../context/LanguageContext';
-import { BidiText } from '../utils/bidi';
-import { ListIcon } from './ListIcon';
-import { formatExactDate, formatExactTime } from '../utils/dateFormatting';
 import { getFriendlyErrorMessage } from '../utils/errorFormatting';
+import { ShoppingListCard } from './ShoppingListCard';
+import { triggerHaptic } from '../lib/sound';
 
-interface ListHistoryViewProps {
+export interface ListHistoryViewProps {
   lists: ShoppingList[];
-  onSelectList: (list: ShoppingList | string) => void;
+  onSelectList: (list: ShoppingList) => void;
   onCreateNewList: () => void;
+  onContinueShopping?: (list: ShoppingList) => void;
+  onMarkComplete?: (list: ShoppingList) => void;
+  onDeleteList?: (listId: string) => void;
+  onReuseList?: (list: ShoppingList) => void;
   onOpenProfile: () => void;
   onOpenMenu: () => void;
   onBack?: () => void;
@@ -40,6 +43,10 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
   lists,
   onSelectList,
   onCreateNewList,
+  onContinueShopping,
+  onMarkComplete,
+  onDeleteList,
+  onReuseList,
   onOpenProfile,
   onOpenMenu,
   onBack,
@@ -51,6 +58,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
   const { t } = useLanguage();
   const [filterTab, setFilterTab] = useState<HistoryFilterTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [deletedListToast, setDeletedListToast] = useState<{ list: ShoppingList; timeoutId: any } | null>(null);
 
   // 1. Sort latest first guaranteed
   const sortedLists = useMemo(() => {
@@ -89,7 +97,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase().trim();
         const matchesTitle = (list.title || '').toLowerCase().includes(query);
-        const matchesItems = list.items.some(
+        const matchesItems = (list.items || []).some(
           (i) =>
             i.name.toLowerCase().includes(query) ||
             (i.nameUrdu && i.nameUrdu.includes(query)) ||
@@ -101,6 +109,23 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
       return true;
     });
   }, [sortedLists, filterTab, searchQuery]);
+
+  // Handle delete list with toast
+  const handleDelete = (listId: string) => {
+    const listToDelete = lists.find((l) => l.id === listId);
+    if (onDeleteList) {
+      onDeleteList(listId);
+    }
+    if (listToDelete) {
+      if (deletedListToast?.timeoutId) {
+        clearTimeout(deletedListToast.timeoutId);
+      }
+      const timeoutId = setTimeout(() => {
+        setDeletedListToast(null);
+      }, 5000);
+      setDeletedListToast({ list: listToDelete, timeoutId });
+    }
+  };
 
   const friendlyError = error ? getFriendlyErrorMessage(error) : null;
 
@@ -119,9 +144,9 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
             <button
               type="button"
               onClick={onBack}
-              className="text-xs sm:text-sm font-semibold text-primary hover:bg-emerald-50 px-3 py-1.5 rounded-full transition-colors active:scale-95"
+              className="text-xs sm:text-sm font-semibold text-primary hover:bg-emerald-50 px-3 py-1.5 rounded-full transition-colors active:scale-95 cursor-pointer"
             >
-              {t('history.backToHome')}
+              {t('history.backToHome') || 'Home'}
             </button>
           ) : undefined
         }
@@ -129,8 +154,8 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
 
       {/* Main Content Area */}
       <main className="flex-1 px-4 sm:px-6 lg:px-8 pt-4 flex flex-col gap-5">
-        {/* Header Title and Subtitle */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {/* Header Title and Subtitle + Always-active Create List Action */}
+        <div className="flex items-center justify-between gap-3">
           <div>
             <h1 className="font-['Plus_Jakarta_Sans'] text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight">
               {t('history.title')}
@@ -140,17 +165,19 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
             </p>
           </div>
 
-          {lists.length > 0 && (
-            <button
-              type="button"
-              id="history_create_new_btn"
-              onClick={onCreateNewList}
-              className="self-start sm:self-auto px-4 py-2 rounded-full bg-primary hover:bg-primary/90 text-white text-xs sm:text-sm font-semibold transition-all shadow-xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
-            >
-              <Plus className="w-4 h-4 stroke-[2.4]" />
-              <span>{t('history.createListBtn')}</span>
-            </button>
-          )}
+          {/* Primary Create List Button (Direct route to create_list) */}
+          <button
+            type="button"
+            id="history_create_new_btn"
+            onClick={() => {
+              triggerHaptic(14);
+              onCreateNewList();
+            }}
+            className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-primary hover:bg-primary/90 text-white text-xs sm:text-sm font-bold transition-all shadow-xs flex items-center gap-1.5 active:scale-95 cursor-pointer shrink-0"
+          >
+            <Plus className="w-4 h-4 stroke-[2.4]" />
+            <span>{t('history.createListBtn')}</span>
+          </button>
         </div>
 
         {/* Offline cached notice banner if offline */}
@@ -178,7 +205,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
               <button
                 type="button"
                 onClick={onRetry}
-                className="px-3 py-1 bg-white border border-rose-200 rounded-lg font-bold text-rose-700 hover:bg-rose-100/50 transition-colors flex items-center gap-1 shrink-0"
+                className="px-3 py-1 bg-white border border-rose-200 rounded-lg font-bold text-rose-700 hover:bg-rose-100/50 transition-colors flex items-center gap-1 shrink-0 cursor-pointer"
               >
                 <RefreshCw className="w-3 h-3" />
                 <span>Retry</span>
@@ -187,7 +214,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
           </div>
         )}
 
-        {/* Search & Filter Bar (Only if lists exist) */}
+        {/* Search & Filter Bar (Rendered whenever lists exist) */}
         {lists.length > 0 && (
           <div className="flex flex-col sm:flex-row gap-3">
             {/* Search Input */}
@@ -195,6 +222,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
               <Search className="w-4 h-4 text-outline absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
+                id="history_search_input"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t('history.searchPlaceholder')}
@@ -204,7 +232,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-outline hover:text-on-surface"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-outline hover:text-on-surface cursor-pointer"
                 >
                   Clear
                 </button>
@@ -215,8 +243,12 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
             <div className="flex items-center p-1 bg-surface-container rounded-xl gap-1 shrink-0 self-start sm:self-auto border border-surface-dim/60">
               <button
                 type="button"
-                onClick={() => setFilterTab('all')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-['Manrope'] font-semibold transition-all flex items-center gap-1.5 ${
+                id="history_filter_all"
+                onClick={() => {
+                  triggerHaptic(6);
+                  setFilterTab('all');
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-['Manrope'] font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                   filterTab === 'all'
                     ? 'bg-white text-primary shadow-xs'
                     : 'text-outline hover:text-on-surface'
@@ -230,8 +262,12 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
 
               <button
                 type="button"
-                onClick={() => setFilterTab('completed')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-['Manrope'] font-semibold transition-all flex items-center gap-1.5 ${
+                id="history_filter_completed"
+                onClick={() => {
+                  triggerHaptic(6);
+                  setFilterTab('completed');
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-['Manrope'] font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                   filterTab === 'completed'
                     ? 'bg-white text-emerald-800 shadow-xs'
                     : 'text-outline hover:text-on-surface'
@@ -245,10 +281,14 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
 
               <button
                 type="button"
-                onClick={() => setFilterTab('active')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-['Manrope'] font-semibold transition-all flex items-center gap-1.5 ${
+                id="history_filter_active"
+                onClick={() => {
+                  triggerHaptic(6);
+                  setFilterTab('active');
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-['Manrope'] font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                   filterTab === 'active'
-                    ? 'bg-white text-amber-800 shadow-xs'
+                    ? 'bg-white text-amber-900 shadow-xs'
                     : 'text-outline hover:text-on-surface'
                 }`}
               >
@@ -261,22 +301,21 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
           </div>
         )}
 
-        {/* Loading Skeletons */}
+        {/* Content State: Loading, Empty, No Results, or Cards Grid */}
         {isLoading ? (
-          <div className="flex flex-col gap-3">
-            {[1, 2, 3, 4].map((i) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
               <div
                 key={i}
-                className="bg-white rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-xs border border-surface-dim/60 animate-pulse"
+                className="w-full min-h-[116px] bg-white rounded-2xl p-4 sm:p-4.5 flex flex-col justify-between border border-surface-dim/70 shadow-2xs animate-pulse"
               >
-                <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                <div className="flex items-start gap-3.5 w-full">
                   <div className="w-12 h-12 rounded-xl bg-surface-container shrink-0" />
-                  <div className="flex flex-col gap-2 flex-1">
-                    <div className="w-48 h-4 bg-surface-container rounded" />
-                    <div className="w-32 h-3 bg-surface-container-low rounded" />
+                  <div className="flex flex-col gap-2 flex-1 pt-1">
+                    <div className="w-3/4 h-4 bg-surface-container rounded" />
+                    <div className="w-1/2 h-3 bg-surface-container-low rounded" />
                   </div>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-surface-container shrink-0" />
               </div>
             ))}
           </div>
@@ -295,8 +334,11 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
             <button
               type="button"
               id="history_empty_create_btn"
-              onClick={onCreateNewList}
-              className="bg-primary hover:bg-primary/90 text-white font-['Manrope'] text-xs sm:text-sm font-semibold px-6 py-3 rounded-full shadow-xs transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
+              onClick={() => {
+                triggerHaptic(14);
+                onCreateNewList();
+              }}
+              className="bg-primary hover:bg-primary/90 text-white font-['Manrope'] text-xs sm:text-sm font-bold px-6 py-3 rounded-full shadow-xs transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
             >
               <Plus className="w-4 h-4 stroke-[2.4]" />
               <span>{t('history.createListBtn')}</span>
@@ -304,142 +346,79 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
           </div>
         ) : displayedLists.length === 0 ? (
           /* No search results */
-          <div className="p-8 bg-white rounded-2xl border border-surface-dim/70 text-center shadow-xs">
-            <Search className="w-8 h-8 text-outline mx-auto mb-2 opacity-50" />
+          <div className="p-8 bg-white rounded-2xl border border-surface-dim/70 text-center shadow-xs flex flex-col items-center">
+            <Search className="w-8 h-8 text-outline mb-2 opacity-50" />
             <p className="font-['Plus_Jakarta_Sans'] font-bold text-on-surface text-sm">
               {t('history.noSearchResults')}
             </p>
-            <p className="font-['Manrope'] text-xs text-outline mt-1">
-              Try searching for a different title or item name.
+            <p className="font-['Manrope'] text-xs text-outline mt-1 max-w-xs">
+              Try searching for a different list title or item name, or create a brand new list.
             </p>
-            <button
-              type="button"
-              onClick={() => {
-                setSearchQuery('');
-                setFilterTab('all');
-              }}
-              className="mt-3 px-3 py-1.5 bg-surface-container rounded-lg text-xs font-semibold text-primary hover:bg-surface-container-high transition-colors"
-            >
-              Reset Filters
-            </button>
+            <div className="flex items-center gap-2.5 mt-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery('');
+                  setFilterTab('all');
+                }}
+                className="px-3.5 py-2 bg-surface-container rounded-xl text-xs font-semibold text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer"
+              >
+                Reset Filters
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  triggerHaptic(14);
+                  onCreateNewList();
+                }}
+                className="px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors shadow-2xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Create New List</span>
+              </button>
+            </div>
           </div>
         ) : (
-          /* Historical Shopping List Cards (Responsive: 1 col on mobile, 2 on tablet, 3-4 on desktop) */
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-3.5">
-            {displayedLists.map((list) => {
-              const totalItems = (list.items || []).length;
-              const completedItems = (list.items || []).filter((i) => i.completed).length;
-              const isAllDone = list.isCompleted || (totalItems > 0 && completedItems === totalItems);
-
-              const exactDateStr = formatExactDate(list.createdTimestamp || list.createdAt, {
-                includeWeekday: true,
-              });
-              const exactTimeStr = formatExactTime(list.createdTimestamp || list.createdAt);
-              const completionTimeStr = (isAllDone && (list.completedTimestamp || list.completedAt))
-                ? formatExactTime(list.completedTimestamp || list.completedAt)
-                : null;
-
-              return (
-                <article
-                  key={list.id}
-                  id={`history_card_${list.id}`}
-                  onClick={() => onSelectList(list)}
-                  className="bg-white rounded-2xl p-4 sm:p-5 flex items-center justify-between shadow-xs border border-surface-dim/70 hover:border-primary/40 hover:shadow-sm cursor-pointer transition-all active:scale-[0.99] group select-none"
-                >
-                  <div className="flex items-center gap-3.5 sm:gap-4 flex-1 min-w-0 pe-3">
-                    {/* List Icon */}
-                    <ListIcon
-                      title={list.title}
-                      explicitIcon={list.icon}
-                      items={list.items}
-                      size="lg"
-                      className="shadow-2xs"
-                    />
-
-                    {/* Information */}
-                    <div className="flex flex-col min-w-0 flex-1">
-                      {/* Title & Status Badges */}
-                      <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                        <BidiText
-                          as="h3"
-                          className="font-['Plus_Jakarta_Sans'] text-base sm:text-lg text-on-surface font-bold group-hover:text-primary transition-colors truncate"
-                        >
-                          {list.title}
-                        </BidiText>
-
-                        {/* Completed / Incomplete status pill */}
-                        {isAllDone ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10.5px] font-bold border border-emerald-200/60 shrink-0">
-                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                            <span>{t('home.completed')}</span>
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 text-[10.5px] font-bold border border-amber-200/60 shrink-0">
-                            <Clock className="w-3 h-3 text-amber-600" />
-                            <span>{t('home.inProgress') || 'In Progress'}</span>
-                          </span>
-                        )}
-
-                        {list.isSynced === false && (
-                          <span
-                            title="Stored in offline cache"
-                            className="inline-flex items-center px-2 py-0.5 rounded text-[9.5px] font-medium bg-surface-container text-outline"
-                          >
-                            Cached
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Date, exact time, and item count */}
-                      <div className="flex items-center gap-2.5 text-xs font-['Manrope'] text-outline mt-0.5 flex-wrap">
-                        {/* Exact Date */}
-                        <span className="flex items-center gap-1 text-on-surface-variant font-medium">
-                          <Calendar className="w-3.5 h-3.5 text-outline shrink-0" />
-                          <span>{exactDateStr}</span>
-                        </span>
-
-                        {/* Exact Time when available */}
-                        {exactTimeStr && (
-                          <>
-                            <span>•</span>
-                            <span className="flex items-center gap-1">
-                              <Clock className="w-3.5 h-3.5 text-outline shrink-0" />
-                              <span>{exactTimeStr}</span>
-                            </span>
-                          </>
-                        )}
-
-                        <span>•</span>
-
-                        {/* Item Count */}
-                        <span className="flex items-center gap-1">
-                          <ShoppingBag className="w-3.5 h-3.5 text-outline shrink-0" />
-                          <span>{t('home.itemsCount', { count: totalItems })}</span>
-                        </span>
-
-                        {/* Completion time when available */}
-                        {completionTimeStr && (
-                          <>
-                            <span>•</span>
-                            <span className="text-emerald-700 font-medium">
-                              {t('history.completedAt', { time: completionTimeStr }) || `Done at ${completionTimeStr}`}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Navigation Arrow */}
-                  <div className="w-9 h-9 rounded-full bg-surface-container-low border border-surface-dim/60 flex items-center justify-center text-outline group-hover:text-primary group-hover:bg-emerald-50 group-hover:border-emerald-200/60 group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-all shrink-0 rtl:rotate-180">
-                    <ChevronRight className="w-4 h-4" />
-                  </div>
-                </article>
-              );
-            })}
+          /* Standardized Responsive Card Grid: 1 col on mobile, 2 col on tablet, 3-4 col on desktop */
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+            {displayedLists.map((list) => (
+              <ShoppingListCard
+                key={list.id}
+                list={list}
+                onSelectList={onSelectList}
+                onContinueShopping={onContinueShopping}
+                onMarkComplete={onMarkComplete}
+                onDeleteList={handleDelete}
+                onReuseList={onReuseList}
+                isOnline={isOnline}
+                variant="history"
+              />
+            ))}
           </div>
         )}
       </main>
+
+      {/* Floating Undo Toast on Deletion */}
+      {deletedListToast && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-on-surface text-surface px-4 py-2.5 rounded-2xl shadow-xl flex items-center gap-3 border border-white/10 animate-slide-up text-xs font-['Manrope']">
+          <span>Shopping list deleted</span>
+          {onReuseList && (
+            <button
+              type="button"
+              onClick={() => {
+                triggerHaptic(10);
+                onReuseList(deletedListToast.list);
+                if (deletedListToast.timeoutId) clearTimeout(deletedListToast.timeoutId);
+                setDeletedListToast(null);
+              }}
+              className="text-emerald-400 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Restore</span>
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 };

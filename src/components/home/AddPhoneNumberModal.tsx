@@ -213,7 +213,7 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
               <p className="font-['Manrope'] text-xs text-outline mt-0.5 leading-snug">
                 {language === 'ur'
                   ? 'اکاؤنٹ کو محفوظ اور آسان بازیافت بنانے کے لیے فون نمبر شامل کریں۔'
-                  : 'Add your number to make your account easier to manage and recover.'}
+                  : 'Add your phone number to make your account easier to manage and recover.'}
               </p>
             </div>
           </div>
@@ -224,7 +224,7 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
             onClick={onClose}
             disabled={isSubmitting}
             aria-label="Close"
-            className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container active:scale-95 transition-colors cursor-pointer shrink-0 mt-0.5"
+            className="w-9 h-9 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container active:scale-95 transition-colors cursor-pointer shrink-0 mt-0.5"
           >
             <X className="w-4 h-4" />
           </button>
@@ -262,7 +262,7 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsCountryPickerOpen(false)}
-                  className="text-xs font-semibold text-primary hover:text-primary-container px-2 py-1 rounded-lg hover:bg-primary/5 transition-colors cursor-pointer"
+                  className="min-h-[44px] px-3 py-2 flex items-center text-xs font-bold text-primary hover:text-primary-container rounded-xl hover:bg-primary/5 transition-colors cursor-pointer"
                 >
                   {language === 'ur' ? 'واپس' : 'Done'}
                 </button>
@@ -282,7 +282,7 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
                       ? 'ملک تلاش کریں (مثال: پاکستان، +92)'
                       : 'Search country or code (e.g. Pakistan, +92)...'
                   }
-                  className="w-full h-10 ps-9 pe-3 rounded-xl bg-surface-container border border-surface-dim text-xs font-['Manrope'] text-on-surface placeholder:text-outline/60 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                  className="w-full h-11 ps-9 pe-3 rounded-xl bg-surface-container border border-surface-dim text-xs font-['Manrope'] text-on-surface placeholder:text-outline/60 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
                 />
               </div>
 
@@ -300,7 +300,7 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
                         key={c.iso}
                         type="button"
                         onClick={() => handleSelectCountry(c)}
-                        className={`w-full flex items-center justify-between p-2.5 rounded-xl text-start transition-colors cursor-pointer ${
+                        className={`w-full min-h-[46px] flex items-center justify-between p-2.5 rounded-xl text-start transition-colors cursor-pointer ${
                           isSelected
                             ? 'bg-primary/10 text-primary font-bold'
                             : 'hover:bg-surface-container text-on-surface'
@@ -411,7 +411,7 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
                   id="add_phone_not_now_btn"
                   onClick={onClose}
                   disabled={isSubmitting}
-                  className="px-4 py-2 rounded-full text-xs font-semibold text-outline hover:text-on-surface hover:bg-surface-container active:scale-95 transition-all cursor-pointer"
+                  className="min-h-[44px] px-4 py-2 flex items-center justify-center rounded-full text-xs font-semibold text-outline hover:text-on-surface hover:bg-surface-container active:scale-95 transition-all cursor-pointer"
                 >
                   {language === 'ur' ? 'ابھی نہیں' : 'Not now'}
                 </button>
@@ -420,7 +420,7 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
                   type="submit"
                   id="save_phone_number_btn"
                   disabled={isSubmitting || !localNumber}
-                  className="h-10 px-5 rounded-full bg-primary hover:bg-primary-container active:scale-95 text-on-primary text-xs font-bold font-['Manrope'] transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="h-11 min-h-[44px] px-5 rounded-full bg-primary hover:bg-primary-container active:scale-95 text-on-primary text-xs font-bold font-['Manrope'] transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? (
                     <>

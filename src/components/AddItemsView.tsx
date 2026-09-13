@@ -25,6 +25,7 @@ import { defaultCatalogSearchEngine, CatalogSearchResult } from '../lib/catalog'
 import { generateUUID } from '../lib/uuid';
 import { QuantityEditModal } from './QuantityEditModal';
 import { useRecommendations, RecommendationCandidate } from '../lib/recommendations';
+import { recordSearchQuery } from '../lib/recommendations/searchHistory';
 import { getSuggestionsForContext } from '../lib/recommendations/shoppingContexts';
 import { triggerHaptic } from '../lib/sound';
 
@@ -83,12 +84,28 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
     return getSuggestionsForContext(contextId, listTitle);
   }, [contextId, listTitle]);
 
-  // Dynamic co-purchase recommendations
-  const { recommendations } = useRecommendations({
+  // Dynamic context-aware & co-purchase recommendations
+  const {
+    recommendations,
+    alreadyAddedRecommendations,
+    detectedContext,
+    acceptRecommendation,
+  } = useRecommendations({
     listTitle,
+    contextId: contextId || contextData.contextId,
     currentListItems: items,
-    limit: 6,
+    limit: 8,
   });
+
+  // Track search query behavior for contextual recommendation weighting
+  useEffect(() => {
+    const trimmed = inputVal.trim();
+    if (trimmed.length < 2) return;
+    const timer = setTimeout(() => {
+      recordSearchQuery('guest', trimmed, selectedCategory);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [inputVal, selectedCategory]);
 
   // Real-time Catalog Search Suggestions
   const searchSuggestions: CatalogSearchResult[] = useMemo(() => {
@@ -398,6 +415,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
   };
 
   const handleSelectRecommendation = (candidate: RecommendationCandidate) => {
+    acceptRecommendation(candidate);
     handleUnifiedAddItem(candidate.displayName || candidate.canonicalName, {
       canonicalName: candidate.canonicalName,
       englishName: candidate.displayName || candidate.canonicalName,
@@ -671,7 +689,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                       <span>Suggested for {contextData.contextTitle}:</span>
                     </span>
                     <span className="text-[10px] font-['Manrope'] text-outline uppercase tracking-wider">
-                      1-Tap Add
+                      Context Essentials
                     </span>
                   </div>
 
@@ -680,31 +698,31 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                       const inList = findItemInList(itemName);
                       const isAdded = !!inList;
 
+                      if (isAdded) {
+                        return (
+                          <div
+                            key={itemName}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-['Manrope'] font-medium bg-surface-container-low text-on-surface-variant/70 border border-surface-dim/60 select-none opacity-60 cursor-default"
+                            title="Already in list"
+                          >
+                            <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" strokeWidth={2.5} />
+                            <span className="line-through decoration-outline/40">{itemName}</span>
+                            <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-medium">
+                              Already added ({inList.quantity || '1'})
+                            </span>
+                          </div>
+                        );
+                      }
+
                       return (
                         <button
                           key={itemName}
                           type="button"
                           onClick={() => handleUnifiedAddItem(itemName)}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-['Manrope'] font-semibold transition-all active:scale-95 cursor-pointer shadow-2xs ${
-                            isAdded
-                              ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30'
-                              : 'bg-surface-container hover:bg-surface-container-high text-on-surface border border-surface-dim/80'
-                          }`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-['Manrope'] font-semibold transition-all active:scale-95 cursor-pointer shadow-2xs bg-surface-container hover:bg-surface-container-high text-on-surface border border-surface-dim/80"
                         >
-                          {isAdded ? (
-                            <>
-                              <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" strokeWidth={3} />
-                              <span>{itemName}</span>
-                              <span className="text-[10px] opacity-75 font-normal">
-                                ({inList.quantity || '1'})
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <Plus className="w-3.5 h-3.5 text-primary/70" />
-                              <span>{itemName}</span>
-                            </>
-                          )}
+                          <Plus className="w-3.5 h-3.5 text-primary/70" />
+                          <span>{itemName}</span>
                         </button>
                       );
                     })}
@@ -762,14 +780,16 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
               </div>
             </div>
 
-            {/* Smart Co-Purchase Suggestions Bar */}
-            {recommendations.length > 0 && !inputVal.trim() && (
+            {/* Smart Context & Co-Purchase Suggestions Bar */}
+            {(recommendations.length > 0 || alreadyAddedRecommendations.length > 0) && !inputVal.trim() && (
               <div className="bg-surface-container-lowest p-4 rounded-2xl border border-surface-dim/80 shadow-2xs space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-primary" />
                     <span className="text-xs font-['Manrope'] font-bold text-primary uppercase tracking-wider">
-                      Frequently Bought Together
+                      {detectedContext.name && detectedContext.contextId !== 'general'
+                        ? `Suggested for ${detectedContext.name}`
+                        : 'Frequently Bought Together'}
                     </span>
                   </div>
                   <span className="text-[10px] font-['Manrope'] text-outline uppercase tracking-wider">
@@ -777,34 +797,35 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  {recommendations.map((rec) => {
-                    const inList = findItemInList(rec.canonicalName);
-                    const isAdded = !!inList;
+                  {/* Active un-added suggestions */}
+                  {recommendations.map((rec) => (
+                    <button
+                      key={rec.canonicalName}
+                      type="button"
+                      onClick={() => handleSelectRecommendation(rec)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-['Manrope'] font-medium transition-all active:scale-95 cursor-pointer bg-surface-container hover:bg-surface-container-high text-on-surface border border-surface-dim/70 shadow-2xs"
+                      title={rec.explanation.displayReason}
+                    >
+                      <Plus className="w-3.5 h-3.5 text-primary/70" />
+                      <span>{rec.displayName || rec.canonicalName}</span>
+                    </button>
+                  ))}
 
+                  {/* Already added items (subtle, disabled state) */}
+                  {alreadyAddedRecommendations.map((rec) => {
+                    const inList = findItemInList(rec.canonicalName);
                     return (
-                      <button
+                      <div
                         key={rec.canonicalName}
-                        type="button"
-                        onClick={() => handleSelectRecommendation(rec)}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-['Manrope'] font-medium transition-all active:scale-95 cursor-pointer ${
-                          isAdded
-                            ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30'
-                            : 'bg-surface-container hover:bg-surface-container-high text-on-surface border border-surface-dim/70'
-                        }`}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-['Manrope'] font-medium bg-surface-container-low text-on-surface-variant/70 border border-surface-dim/50 cursor-default opacity-60 select-none"
+                        title={`Already in list: ${rec.explanation.displayReason}`}
                       >
-                        {isAdded ? (
-                          <>
-                            <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" strokeWidth={3} />
-                            <span>{rec.displayName || rec.canonicalName}</span>
-                            <span className="text-[10px] opacity-75">({inList.quantity || '1'})</span>
-                          </>
-                        ) : (
-                          <>
-                            <Plus className="w-3.5 h-3.5 text-primary/70" />
-                            <span>{rec.displayName || rec.canonicalName}</span>
-                          </>
-                        )}
-                      </button>
+                        <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" strokeWidth={2.5} />
+                        <span className="line-through decoration-outline/40">{rec.displayName || rec.canonicalName}</span>
+                        <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-medium">
+                          Already added{inList?.quantity ? ` (${inList.quantity})` : ''}
+                        </span>
+                      </div>
                     );
                   })}
                 </div>

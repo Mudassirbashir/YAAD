@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Plus, Check, Edit3, CheckCheck, Sparkles, ShoppingBag, Loader2, AlertCircle } from 'lucide-react';
+import { Plus, Check, Edit3, CheckCheck, Sparkles, ShoppingBag, Loader2, AlertCircle, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ShoppingList, ShoppingItem, CategoryId, CATEGORIES_LIST } from '../types';
 import { TopHeader } from './TopHeader';
@@ -57,8 +57,28 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
   const lastActionTimeRef = useRef<Map<string, number>>(new Map());
   const localActionItemIdsRef = useRef<Set<string>>(new Set());
   const undoTimerRef = useRef<any>(null);
-  const [undoToast, setUndoToast] = useState<{ item: ShoppingItem; listId: string } | null>(null);
+  const [undoToast, setUndoToast] = useState<{
+    item: ShoppingItem;
+    listId: string;
+    type: 'completed' | 'deleted';
+    index?: number;
+  } | null>(null);
   const [recentLocalCompletedId, setRecentLocalCompletedId] = useState<string | null>(null);
+
+  // Subtle first-session swipe hint
+  const [showSwipeHint, setShowSwipeHint] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('yaad_swipe_hint_dismissed_v2') !== 'true';
+  });
+
+  const dismissSwipeHint = () => {
+    if (showSwipeHint) {
+      setShowSwipeHint(false);
+      try {
+        localStorage.setItem('yaad_swipe_hint_dismissed_v2', 'true');
+      } catch {}
+    }
+  };
 
   useEffect(() => {
     return () => {
@@ -85,6 +105,11 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
   };
 
   const handleDeleteItem = (itemId: string) => {
+    dismissSwipeHint();
+    const itemIndex = list.items.findIndex((it) => it.id === itemId);
+    const targetItem = list.items[itemIndex];
+    if (!targetItem) return;
+
     const updatedItems = list.items.filter((it) => it.id !== itemId);
     const isCompleted = updatedItems.length > 0 && updatedItems.every((i) => i.completed);
     const updatedList: ShoppingList = {
@@ -93,6 +118,27 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
       isCompleted,
     };
     onUpdateList(updatedList);
+    triggerHaptic(12);
+
+    // Show undo toast with 4.5s countdown
+    setUndoToast({
+      item: targetItem,
+      listId: list.id,
+      type: 'deleted',
+      index: itemIndex,
+    });
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    undoTimerRef.current = setTimeout(() => {
+      setUndoToast((prev) => (prev?.item.id === itemId ? null : prev));
+    }, 4500);
+
+    // If deleting remaining items completed the entire list, auto-transition!
+    if (isCompleted) {
+      playCompletionSound();
+      setTimeout(() => {
+        onCompleteTrip(updatedList);
+      }, 500);
+    }
   };
 
   const quickAddParsed = useMemo(() => {
@@ -267,8 +313,9 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
         playItemCheckSound();
       }
 
+      dismissSwipeHint();
       // Show sleek Undo toast for accidental swipe/tap
-      setUndoToast({ item: currentItem, listId: currentList.id });
+      setUndoToast({ item: currentItem, listId: currentList.id, type: 'completed' });
       if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
       undoTimerRef.current = setTimeout(() => {
         setUndoToast((prev) => (prev?.item.id === itemId ? null : prev));
@@ -299,10 +346,27 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
     }
   };
 
-  const handleUndoPurchase = (itemId: string) => {
+  const handleUndoAction = () => {
+    if (!undoToast) return;
     if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    const { item, type, index } = undoToast;
     setUndoToast(null);
-    completeShoppingItem(itemId, false);
+
+    if (type === 'deleted') {
+      const restoreIndex = typeof index === 'number' && index >= 0 ? index : 0;
+      const restoredItems = [...list.items];
+      restoredItems.splice(restoreIndex, 0, item);
+      const isCompleted = restoredItems.length > 0 && restoredItems.every((i) => i.completed);
+      const updatedList: ShoppingList = {
+        ...list,
+        items: restoredItems,
+        isCompleted,
+      };
+      onUpdateList(updatedList);
+      triggerHaptic(8);
+    } else {
+      completeShoppingItem(item.id, false);
+    }
   };
 
   // Add new inline item using natural language parser and smart categorizer
@@ -717,6 +781,44 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
           ))}
         </div>
 
+        {/* Swipe Hint Banner (First-time / contextual, dismissed cleanly) */}
+        <AnimatePresence>
+          {showSwipeHint && list.items.length > 0 && (
+            <motion.div
+              id="swipe-hint-banner"
+              initial={{ opacity: 0, y: -6, height: 0 }}
+              animate={{ opacity: 1, y: 0, height: 'auto' }}
+              exit={{ opacity: 0, y: -6, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              <div className="flex items-center justify-between gap-3 px-3.5 py-2 rounded-2xl bg-surface-container-low border border-surface-dim/80 text-on-surface-variant text-xs font-['Manrope'] shadow-2xs">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <span className="inline-flex items-center gap-1 font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-md border border-rose-200/60 dark:border-rose-800/40 text-[11px] shrink-0">
+                    <span>←</span>
+                    <span>{isUrdu ? 'حذف' : 'Delete'}</span>
+                  </span>
+                  <span className="font-medium text-[11px] truncate">
+                    {isUrdu ? 'آئٹم پر سوائپ یا ٹیپ کریں' : 'Swipe card or tap to check'}
+                  </span>
+                  <span className="inline-flex items-center gap-1 font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200/60 dark:border-emerald-800/40 text-[11px] shrink-0">
+                    <span>{isUrdu ? 'مکمل' : 'Complete'}</span>
+                    <span>→</span>
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={dismissSwipeHint}
+                  aria-label="Dismiss hint"
+                  className="w-5 h-5 rounded-full hover:bg-surface-container text-outline flex items-center justify-center shrink-0 cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Empty State when list has no items */}
         {list.items.length === 0 ? (
           <div className="bg-surface-container-lowest rounded-3xl p-8 text-center border border-surface-container-high/60 my-4 flex flex-col items-center justify-center space-y-3 shadow-xs animate-in fade-in duration-200">
@@ -773,6 +875,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                           formattedQty={formattedQty || undefined}
                           justCompletedLocally={recentLocalCompletedId === item.id}
                           onComplete={completeShoppingItem}
+                          onDelete={handleDeleteItem}
                           onEditQuantity={setEditingItem}
                           onCategoryChange={handleItemCategoryChange}
                           getCategoryName={getCategoryName}
@@ -843,14 +946,28 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.22, ease: 'easeOut' }}
-            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-primary text-white shadow-[0_10px_25px_rgba(15,61,46,0.35)] border border-emerald-500/30 max-w-sm w-[92vw] sm:w-auto min-w-[290px]"
+            className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between gap-3 px-4 py-3 rounded-2xl text-white shadow-[0_10px_25px_rgba(0,0,0,0.3)] border max-w-sm w-[92vw] sm:w-auto min-w-[290px] ${
+              undoToast.type === 'deleted'
+                ? 'bg-rose-950/95 border-rose-500/40 shadow-rose-950/40'
+                : 'bg-primary border-emerald-500/30 shadow-[0_10px_25px_rgba(15,61,46,0.35)]'
+            }`}
           >
             <div className="flex items-center gap-2.5 min-w-0">
-              <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-white shrink-0">
-                <Check className="w-3.5 h-3.5 stroke-[3]" />
+              <span className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-white shrink-0">
+                {undoToast.type === 'deleted' ? (
+                  <Trash2 className="w-3.5 h-3.5" />
+                ) : (
+                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                )}
               </span>
               <span className="text-xs sm:text-sm font-['Manrope'] font-medium truncate">
-                {isUrdu ? (
+                {undoToast.type === 'deleted' ? (
+                  isUrdu ? (
+                    <span className="font-urdu">{undoToast.item.name} حذف کر دیا گیا</span>
+                  ) : (
+                    `${undoToast.item.name} deleted`
+                  )
+                ) : isUrdu ? (
                   <span className="font-urdu">{undoToast.item.name} خریدا گیا</span>
                 ) : (
                   `${undoToast.item.name} ${t('shoppingList.markedPurchased') || 'purchased'}`
@@ -860,7 +977,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
             <button
               id="shopping-undo-btn"
               type="button"
-              onClick={() => handleUndoPurchase(undoToast.item.id)}
+              onClick={handleUndoAction}
               className="px-3 py-1 bg-white/20 hover:bg-white/30 active:scale-95 rounded-lg text-xs font-bold text-white uppercase tracking-wider transition-all cursor-pointer shrink-0"
             >
               {t('shoppingList.undo') || (isUrdu ? 'واپس کریں' : 'Undo')}

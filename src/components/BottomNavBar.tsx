@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Home, Plus, Settings } from 'lucide-react';
+import { Home, Plus, Settings, ClipboardList } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import { NavigationTab } from '../types';
 import { useLanguage } from '../context/LanguageContext';
@@ -20,13 +20,13 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   const prefersReducedMotion = useReducedMotion();
 
   const homeBtnRef = useRef<HTMLButtonElement>(null);
+  const listsBtnRef = useRef<HTMLButtonElement>(null);
   const createBtnRef = useRef<HTMLButtonElement>(null);
   const settingsBtnRef = useRef<HTMLButtonElement>(null);
 
-  // Keyboard shortcut listener (1 / H for Home, 2 / C / + for Create, 3 / S for Settings)
+  // Keyboard shortcut listener (1/H for Home, 2/L for Lists, 3/C/+ for Create, 4/S for Settings)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't intercept when user is typing into input, textarea, or contentEditable
       const target = e.target as HTMLElement | null;
       if (
         target &&
@@ -44,7 +44,11 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
         e.preventDefault();
         triggerHaptic(10);
         onTabChange('home');
-      } else if (e.key === '2' || e.key.toLowerCase() === 'c' || e.key === '+') {
+      } else if (e.key === '2' || e.key.toLowerCase() === 'l') {
+        e.preventDefault();
+        triggerHaptic(10);
+        onTabChange('lists');
+      } else if (e.key === '3' || e.key.toLowerCase() === 'c' || e.key === '+') {
         e.preventDefault();
         triggerHaptic(14);
         if (onCreateClick) {
@@ -52,7 +56,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
         } else {
           onTabChange('create');
         }
-      } else if (e.key === '3' || e.key.toLowerCase() === 's' || e.key === ',') {
+      } else if (e.key === '4' || e.key.toLowerCase() === 's' || e.key === ',') {
         e.preventDefault();
         triggerHaptic(10);
         onTabChange('settings');
@@ -66,20 +70,22 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   // Arrow key navigation between navigation items
   const handleTabKeyDown = (
     e: React.KeyboardEvent<HTMLButtonElement>,
-    current: 'home' | 'create' | 'settings'
+    current: 'home' | 'lists' | 'create' | 'settings'
   ) => {
     const nextKey = isRTL ? 'ArrowLeft' : 'ArrowRight';
     const prevKey = isRTL ? 'ArrowRight' : 'ArrowLeft';
 
     if (e.key === nextKey) {
       e.preventDefault();
-      if (current === 'home') createBtnRef.current?.focus();
+      if (current === 'home') listsBtnRef.current?.focus();
+      else if (current === 'lists') createBtnRef.current?.focus();
       else if (current === 'create') settingsBtnRef.current?.focus();
       else if (current === 'settings') homeBtnRef.current?.focus();
     } else if (e.key === prevKey) {
       e.preventDefault();
       if (current === 'home') settingsBtnRef.current?.focus();
-      else if (current === 'create') homeBtnRef.current?.focus();
+      else if (current === 'lists') homeBtnRef.current?.focus();
+      else if (current === 'create') listsBtnRef.current?.focus();
       else if (current === 'settings') createBtnRef.current?.focus();
     } else if (e.key === 'Home') {
       e.preventDefault();
@@ -93,6 +99,11 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   const handleHomeClick = () => {
     triggerHaptic(10);
     onTabChange('home');
+  };
+
+  const handleListsClick = () => {
+    triggerHaptic(10);
+    onTabChange('lists');
   };
 
   const handleCreateClick = () => {
@@ -110,6 +121,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   };
 
   const isHomeActive = activeTab === 'home';
+  const isListsActive = activeTab === 'lists';
   const isCreateActive = activeTab === 'create';
   const isSettingsActive = activeTab === 'settings';
 
@@ -122,12 +134,12 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
         id="bottom_navigation_bar"
         role="navigation"
         aria-label={t('nav.mainNavigation') || 'Main Navigation'}
-        className="pointer-events-auto w-full sm:w-auto sm:min-w-[440px] sm:max-w-[500px] lg:min-w-[540px] lg:max-w-[620px] bg-surface-container-lowest/95 backdrop-blur-xl border-t sm:border border-surface-dim/70 rounded-none sm:rounded-full lg:rounded-2xl px-3 sm:px-3 lg:px-4 pt-1.5 pb-[max(env(safe-area-inset-bottom,0px),0.5rem)] sm:py-1.5 lg:py-2 sm:mb-2.5 lg:mb-4 shadow-[0_-2px_12px_rgba(0,0,0,0.03)] sm:shadow-[0_8px_28px_-6px_rgba(0,0,0,0.1)] select-none transition-all duration-200"
+        className="pointer-events-auto w-full sm:w-auto sm:min-w-[480px] sm:max-w-[560px] lg:min-w-[580px] lg:max-w-[660px] bg-surface-container-lowest/95 backdrop-blur-xl border-t sm:border border-surface-dim/70 rounded-none sm:rounded-full lg:rounded-2xl px-2 sm:px-3 lg:px-4 pt-1.5 pb-[max(env(safe-area-inset-bottom,0px),0.5rem)] sm:py-1.5 lg:py-2 sm:mb-2.5 lg:mb-4 shadow-[0_-2px_12px_rgba(0,0,0,0.03)] sm:shadow-[0_8px_28px_-6px_rgba(0,0,0,0.1)] select-none transition-all duration-200"
       >
         <div
           role="tablist"
           aria-orientation="horizontal"
-          className="flex items-center justify-between sm:justify-center gap-1 sm:gap-2 lg:gap-3 w-full"
+          className="flex items-center justify-between sm:justify-center gap-1 sm:gap-1.5 lg:gap-2 w-full"
         >
           {/* Home Tab */}
           <button
@@ -139,8 +151,8 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
             onClick={handleHomeClick}
             onKeyDown={(e) => handleTabKeyDown(e, 'home')}
             aria-selected={isHomeActive}
-            aria-label={t('nav.home')}
-            className={`relative flex-1 sm:flex-initial sm:min-w-[120px] lg:min-w-[140px] flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-1.5 sm:py-2 px-2 sm:px-4 rounded-xl sm:rounded-full lg:rounded-xl text-center transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-pointer min-h-[48px] ${
+            aria-label={t('nav.home') || 'Home'}
+            className={`relative flex-1 sm:flex-initial sm:min-w-[100px] lg:min-w-[120px] flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-1.5 sm:py-2 px-1.5 sm:px-3 rounded-xl sm:rounded-full lg:rounded-xl text-center transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-pointer min-h-[48px] ${
               isHomeActive
                 ? 'text-primary font-bold'
                 : 'text-on-surface-variant/80 hover:text-on-surface font-medium hover:bg-surface-container'
@@ -163,7 +175,45 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               }`}
             />
             <span className="text-[11px] sm:text-xs lg:text-[13px] font-['Manrope'] font-semibold tracking-tight whitespace-nowrap leading-tight">
-              {t('nav.home')}
+              {t('nav.home') || 'Home'}
+            </span>
+          </button>
+
+          {/* Lists / History Tab */}
+          <button
+            ref={listsBtnRef}
+            id="nav_tab_lists"
+            role="tab"
+            type="button"
+            tabIndex={isListsActive ? 0 : -1}
+            onClick={handleListsClick}
+            onKeyDown={(e) => handleTabKeyDown(e, 'lists')}
+            aria-selected={isListsActive}
+            aria-label={t('nav.history') || t('history.title') || 'Lists'}
+            className={`relative flex-1 sm:flex-initial sm:min-w-[100px] lg:min-w-[120px] flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-1.5 sm:py-2 px-1.5 sm:px-3 rounded-xl sm:rounded-full lg:rounded-xl text-center transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-pointer min-h-[48px] ${
+              isListsActive
+                ? 'text-primary font-bold'
+                : 'text-on-surface-variant/80 hover:text-on-surface font-medium hover:bg-surface-container'
+            }`}
+          >
+            {isListsActive && (
+              <motion.div
+                layoutId="nav-active-indicator"
+                className="absolute inset-0 bg-primary/10 rounded-xl sm:rounded-full lg:rounded-xl -z-10"
+                transition={
+                  prefersReducedMotion
+                    ? { duration: 0 }
+                    : { type: 'spring', stiffness: 480, damping: 34 }
+                }
+              />
+            )}
+            <ClipboardList
+              className={`w-5 h-5 shrink-0 transition-transform duration-150 ${
+                isListsActive ? 'stroke-[2.3] scale-105' : 'stroke-[1.8]'
+              }`}
+            />
+            <span className="text-[11px] sm:text-xs lg:text-[13px] font-['Manrope'] font-semibold tracking-tight whitespace-nowrap leading-tight">
+              {t('nav.history') || t('history.title') || 'Lists'}
             </span>
           </button>
 
@@ -177,8 +227,8 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
             onClick={handleCreateClick}
             onKeyDown={(e) => handleTabKeyDown(e, 'create')}
             aria-selected={isCreateActive}
-            aria-label={t('nav.create')}
-            className={`relative flex-1 sm:flex-initial sm:min-w-[120px] lg:min-w-[140px] flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-1.5 sm:py-2 px-2 sm:px-4 rounded-xl sm:rounded-full lg:rounded-xl text-center transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-pointer min-h-[48px] ${
+            aria-label={t('nav.create') || 'Create'}
+            className={`relative flex-1 sm:flex-initial sm:min-w-[100px] lg:min-w-[120px] flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-1.5 sm:py-2 px-1.5 sm:px-3 rounded-xl sm:rounded-full lg:rounded-xl text-center transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-pointer min-h-[48px] ${
               isCreateActive
                 ? 'text-primary font-bold'
                 : 'text-on-surface-variant/80 hover:text-on-surface font-medium hover:bg-surface-container'
@@ -201,7 +251,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               }`}
             />
             <span className="text-[11px] sm:text-xs lg:text-[13px] font-['Manrope'] font-semibold tracking-tight whitespace-nowrap leading-tight">
-              {t('nav.create')}
+              {t('nav.create') || 'Create'}
             </span>
           </button>
 
@@ -215,8 +265,8 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
             onClick={handleSettingsClick}
             onKeyDown={(e) => handleTabKeyDown(e, 'settings')}
             aria-selected={isSettingsActive}
-            aria-label={t('nav.settings')}
-            className={`relative flex-1 sm:flex-initial sm:min-w-[120px] lg:min-w-[140px] flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-1.5 sm:py-2 px-2 sm:px-4 rounded-xl sm:rounded-full lg:rounded-xl text-center transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-pointer min-h-[48px] ${
+            aria-label={t('nav.settings') || 'Settings'}
+            className={`relative flex-1 sm:flex-initial sm:min-w-[100px] lg:min-w-[120px] flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-1.5 sm:py-2 px-1.5 sm:px-3 rounded-xl sm:rounded-full lg:rounded-xl text-center transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-pointer min-h-[48px] ${
               isSettingsActive
                 ? 'text-primary font-bold'
                 : 'text-on-surface-variant/80 hover:text-on-surface font-medium hover:bg-surface-container'
@@ -239,7 +289,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               }`}
             />
             <span className="text-[11px] sm:text-xs lg:text-[13px] font-['Manrope'] font-semibold tracking-tight whitespace-nowrap leading-tight">
-              {t('nav.settings')}
+              {t('nav.settings') || 'Settings'}
             </span>
           </button>
         </div>

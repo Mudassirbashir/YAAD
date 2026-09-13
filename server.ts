@@ -1205,6 +1205,19 @@ app.post('/api/passkey/register-verify', async (req, res) => {
       return res.status(500).json({ error: 'Failed to record passkey in database' });
     }
 
+    // Keep user_metadata in sync so account state reflects passkey active
+    try {
+      const existingMeta = userData.user.user_metadata || {};
+      await supabaseAdmin.auth.admin.updateUserById(userData.user.id, {
+        user_metadata: {
+          ...existingMeta,
+          has_passkey: true,
+        },
+      });
+    } catch (metaErr) {
+      console.warn('Notice updating user has_passkey metadata:', metaErr);
+    }
+
     return res.json({
       verified: true,
       passkey: {
@@ -1403,6 +1416,26 @@ app.post('/api/passkey/delete', async (req, res) => {
 
     if (delErr) {
       return res.status(500).json({ error: delErr.message });
+    }
+
+    // Check if any passkeys remain for this user
+    try {
+      const { count } = await supabaseAdmin
+        .from('user_passkeys')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userData.user.id);
+
+      if (count === 0) {
+        const existingMeta = userData.user.user_metadata || {};
+        await supabaseAdmin.auth.admin.updateUserById(userData.user.id, {
+          user_metadata: {
+            ...existingMeta,
+            has_passkey: false,
+          },
+        });
+      }
+    } catch (metaErr) {
+      console.warn('Notice updating user metadata after passkey delete:', metaErr);
     }
 
     return res.json({ success: true });

@@ -2181,3 +2181,100 @@ export async function sendPasswordResetEmail(email: string): Promise<{ error: Er
   }
 }
 
+/**
+ * Deep Link Loader: Loads a single shopping list by ID.
+ * Strictly enforced by Supabase RLS server-side security policies.
+ * If user does not own or have access to listId, Supabase returns null,
+ * guaranteeing zero data leakage across accounts.
+ */
+export async function fetchSingleShoppingList(
+  userId: string,
+  listId: string
+): Promise<{ list: ShoppingList | null; error: Error | null }> {
+  const verifiedUserId = (await getVerifiedUserId(userId)) || userId;
+  if (!verifiedUserId) {
+    return { list: null, error: new Error('User authentication required') };
+  }
+
+  // Check offline IndexedDB cache first
+  const offlineLists = await getOfflineLists(verifiedUserId);
+  const cached = offlineLists.find((l) => l.id === listId);
+
+  if (!supabase || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+    return { list: cached || null, error: cached ? null : new Error('List not found') };
+  }
+
+  try {
+    const { data: row, error: listErr } = await supabase
+      .from('shopping_lists')
+      .select('*')
+      .eq('id', listId)
+      .maybeSingle();
+
+    if (listErr) {
+      if (cached) return { list: cached, error: null };
+      return { list: null, error: new Error(listErr.message) };
+    }
+
+    if (!row) {
+      // Row not found or blocked by Supabase RLS
+      return { list: null, error: new Error('List not found or unauthorized') };
+    }
+
+    // Load child items
+    const { data: itemsData } = await supabase
+      .from('shopping_items')
+      .select('*')
+      .eq('list_id', listId);
+
+    const items: ShoppingItem[] = (itemsData && itemsData.length > 0)
+      ? itemsData.map((r: any) => {
+          const recognized = defaultItemCatalog.findItemByName(r.item_name);
+          return {
+            id: r.id,
+            name: r.item_name || r.name || '',
+            canonicalName: r.canonical_name || recognized?.canonicalName || r.item_name,
+            nameUrdu: r.name_urdu || recognized?.nameUrdu || undefined,
+            nameRomanUrdu: r.name_roman_urdu || recognized?.nameRomanUrdu || undefined,
+            emoji: r.emoji || recognized?.emoji || undefined,
+            categoryId: (r.category || recognized?.categoryId || 'other') as CategoryId,
+            category: r.category || recognized?.category || 'other',
+            quantity: r.quantity !== null && r.quantity !== undefined ? String(r.quantity) : undefined,
+            unit: r.unit || recognized?.defaultUnit || undefined,
+            completed: Boolean(r.is_completed ?? r.is_checked),
+            rawInput: r.raw_input || r.item_name,
+            note: r.note || undefined,
+            isRecognized: Boolean(r.is_recognized || recognized),
+            createdAt: r.created_at ? new Date(r.created_at).getTime() : undefined,
+          };
+        })
+      : (Array.isArray(row.items) ? row.items : []);
+
+    const isCompleted = items.length > 0
+      ? items.every((i: ShoppingItem) => i.completed)
+      : Boolean(row.is_completed);
+
+    const mappedList: ShoppingList = {
+      id: row.id,
+      userId: row.user_id,
+      householdId: row.household_id || null,
+      household_id: row.household_id || null,
+      title: row.title || 'Shopping List',
+      createdAt: row.created_at_label || (row.created_at ? new Date(row.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Today'),
+      createdTimestamp: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
+      completedAt: row.completed_at || (isCompleted ? 'Completed' : undefined),
+      completedTimestamp: row.completed_at ? new Date(row.completed_at).getTime() : undefined,
+      isCompleted,
+      icon: row.icon || 'shopping_basket',
+      items,
+      isSynced: true,
+    };
+
+    return { list: mappedList, error: null };
+  } catch (e: any) {
+    if (cached) return { list: cached, error: null };
+    return { list: null, error: new Error(e?.message || 'Error fetching list') };
+  }
+}
+
+

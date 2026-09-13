@@ -33,6 +33,11 @@ export const PasskeyCard: React.FC<PasskeyCardProps> = ({ onOpenSecuritySettings
       return;
     }
 
+    if (user.identities?.some((i: any) => i.provider === 'webauthn' || i.provider === 'passkey')) {
+      setHasActivePasskey(true);
+      return;
+    }
+
     try {
       const keys = await listPasskeys();
       if (keys && keys.length > 0) {

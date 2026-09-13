@@ -128,16 +128,6 @@ export const CONTEXT_STARTER_ITEMS: Record<string, StarterCatalogItem[]> = {
       defaultUnit: 'kg',
     },
     {
-      canonicalName: 'charcoal',
-      displayName: 'Charcoal / Koyla',
-      nameUrdu: 'کوئلہ',
-      nameRomanUrdu: 'Koyla',
-      category: 'household',
-      emoji: '🪵',
-      defaultQuantity: '1',
-      defaultUnit: 'bag',
-    },
-    {
       canonicalName: 'tikka_masala',
       displayName: 'Tikka Masala',
       nameUrdu: 'ٹکہ مصالحہ',
@@ -148,14 +138,34 @@ export const CONTEXT_STARTER_ITEMS: Record<string, StarterCatalogItem[]> = {
       defaultUnit: 'packet',
     },
     {
-      canonicalName: 'bbq_sauce',
-      displayName: 'BBQ Sauce',
-      nameUrdu: 'بی بی کیو ساس',
-      nameRomanUrdu: 'BBQ Sauce',
-      category: 'sauces_condiments',
-      emoji: '🥫',
+      canonicalName: 'charcoal',
+      displayName: 'Charcoal / Koyla',
+      nameUrdu: 'کوئلہ',
+      nameRomanUrdu: 'Koyla',
+      category: 'household',
+      emoji: '🪵',
       defaultQuantity: '1',
-      defaultUnit: 'bottle',
+      defaultUnit: 'bag',
+    },
+    {
+      canonicalName: 'paratha',
+      displayName: 'Paratha',
+      nameUrdu: 'پراٹھا',
+      nameRomanUrdu: 'Paratha',
+      category: 'bakery',
+      emoji: '🫓',
+      defaultQuantity: '5',
+      defaultUnit: 'pieces',
+    },
+    {
+      canonicalName: 'spices',
+      displayName: 'BBQ Spices / Masala',
+      nameUrdu: 'مصالحہ جات',
+      nameRomanUrdu: 'Masala',
+      category: 'spices',
+      emoji: '🧂',
+      defaultQuantity: '1',
+      defaultUnit: 'packet',
     },
     {
       canonicalName: 'cold_drink',
@@ -166,6 +176,16 @@ export const CONTEXT_STARTER_ITEMS: Record<string, StarterCatalogItem[]> = {
       emoji: '🥤',
       defaultQuantity: '2',
       defaultUnit: 'litres',
+    },
+    {
+      canonicalName: 'bbq_sauce',
+      displayName: 'BBQ Sauce',
+      nameUrdu: 'بی بی کیو ساس',
+      nameRomanUrdu: 'BBQ Sauce',
+      category: 'sauces_condiments',
+      emoji: '🥫',
+      defaultQuantity: '1',
+      defaultUnit: 'bottle',
     },
     {
       canonicalName: 'naan',
@@ -538,15 +558,25 @@ export function getStarterRecommendations(
 ): RecommendationCandidate[] {
   let sourceItems: StarterCatalogItem[] = [];
 
-  if (contextId && CONTEXT_STARTER_ITEMS[contextId]) {
-    sourceItems = [...CONTEXT_STARTER_ITEMS[contextId]];
+  // Normalize context id (e.g. 'weekly' -> 'weekly_grocery', 'home' -> 'household', 'bbq' -> 'bbq')
+  let resolvedCtx = (contextId || '').toLowerCase().trim();
+  if (resolvedCtx === 'weekly' || resolvedCtx === 'hafta') resolvedCtx = 'weekly_grocery';
+  else if (resolvedCtx === 'home' || resolvedCtx === 'cleaning') resolvedCtx = 'household';
+  else if (resolvedCtx === 'grocery' || resolvedCtx === 'rashan') resolvedCtx = 'monthly_shopping';
+  else if (resolvedCtx === 'fruits_vegetables' || resolvedCtx === 'sabzi') resolvedCtx = 'fruits_vegetables';
+
+  if (resolvedCtx && CONTEXT_STARTER_ITEMS[resolvedCtx]) {
+    sourceItems = [...CONTEXT_STARTER_ITEMS[resolvedCtx]];
   }
 
-  // Supplement with general staples if needed to reach limit
-  for (const item of STARTER_POPULAR_ESSENTIALS) {
-    if (sourceItems.length >= limit) break;
-    if (!sourceItems.some((s) => s.canonicalName === item.canonicalName)) {
-      sourceItems.push(item);
+  // Only supplement with general staples if no specific context was chosen,
+  // or if we have fewer than limit and general items match context logic.
+  if (!resolvedCtx || resolvedCtx === 'general' || resolvedCtx === 'weekly_grocery' || resolvedCtx === 'supermarket') {
+    for (const item of STARTER_POPULAR_ESSENTIALS) {
+      if (sourceItems.length >= limit) break;
+      if (!sourceItems.some((s) => s.canonicalName === item.canonicalName)) {
+        sourceItems.push(item);
+      }
     }
   }
 
@@ -586,13 +616,16 @@ export function getStarterRecommendations(
     emoji: item.emoji,
     suggestedQuantity: item.defaultQuantity,
     suggestedUnit: item.defaultUnit,
-    score: 0.5,
+    score: 0.7,
     confidence: 0.5,
     isStarterCatalog: true,
+    isBaseline: true,
     explanation: {
       type: 'popular_starter',
       textKey: 'recommendations.reasons.starter',
-      displayReason: contextId && CONTEXT_STARTER_ITEMS[contextId] ? `Essential for ${contextId.replace(/_/g, ' ')}` : 'Popular staple item',
+      displayReason: resolvedCtx && CONTEXT_STARTER_ITEMS[resolvedCtx]
+        ? `Popular for ${resolvedCtx.replace(/_/g, ' ')}`
+        : 'Curated essentials',
     },
     scoringFactors: {
       frequencyScore: 0.5,

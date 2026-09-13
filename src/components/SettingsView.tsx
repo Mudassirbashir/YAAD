@@ -28,6 +28,8 @@ interface SettingsViewProps {
     page: 'terms' | 'privacy' | 'about' | 'help' | 'legal',
   ) => void;
   initialEditPhone?: boolean;
+  subSection?: string | null;
+  onSubSectionChange?: (section: 'profile' | 'security' | 'language' | 'about') => void;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
@@ -37,6 +39,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   onRestartTour,
   onOpenLegalPage,
   initialEditPhone = false,
+  subSection = null,
+  onSubSectionChange,
 }) => {
   const { t, language, setLanguage, isRTL } = useLanguage();
   const {
@@ -73,6 +77,28 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         .finally(() => setLoadingPasskeys(false));
     }
   }, [user]);
+
+  // Deep Link & Subsection auto-scroll
+  useEffect(() => {
+    if (!subSection) return;
+    const targetId =
+      subSection === 'profile'
+        ? 'settings_section_profile'
+        : subSection === 'security'
+        ? 'settings_section_security'
+        : subSection === 'about'
+        ? 'settings_section_about'
+        : 'settings_section_preferences';
+
+    const timer = setTimeout(() => {
+      const el = document.getElementById(targetId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 150);
+
+    return () => clearTimeout(timer);
+  }, [subSection]);
 
   const handleRegisterPasskey = async (customName?: string) => {
     setIsRegisteringPasskey(true);
@@ -437,7 +463,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   // Legal Modals State
   // ============================================================================
   const [activeLegalModal, setActiveLegalModal] = useState<
-    'privacy' | 'terms' | 'help' | null
+    'privacy' | 'terms' | 'help' | 'about' | null
   >(null);
 
   // Close modals on Escape key
@@ -518,86 +544,144 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             {t('settings.done') || 'Done'}
           </button>
         </div>
+
+        {/* Section Jump Pills */}
+        <div className="max-w-3xl lg:max-w-4xl mx-auto flex items-center gap-2 pt-2.5 overflow-x-auto no-scrollbar pb-0.5">
+          <button
+            id="settings_jump_profile"
+            onClick={() => onSubSectionChange?.('profile')}
+            className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+              subSection === 'profile'
+                ? 'bg-primary text-on-primary shadow-xs'
+                : 'bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
+            }`}
+          >
+            {t('settings.profile') || 'Profile'}
+          </button>
+          <button
+            id="settings_jump_preferences"
+            onClick={() => onSubSectionChange?.('language')}
+            className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+              subSection === 'language' || subSection === 'preferences'
+                ? 'bg-primary text-on-primary shadow-xs'
+                : 'bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
+            }`}
+          >
+            {t('settings.preferencesTitle') || 'Preferences'}
+          </button>
+          {user && (
+            <button
+              id="settings_jump_security"
+              onClick={() => onSubSectionChange?.('security')}
+              className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                subSection === 'security'
+                  ? 'bg-primary text-on-primary shadow-xs'
+                  : 'bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
+              }`}
+            >
+              {t('settings.securityTitle') || 'Security'}
+            </button>
+          )}
+          <button
+            id="settings_jump_about"
+            onClick={() => onSubSectionChange?.('about')}
+            className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+              subSection === 'about'
+                ? 'bg-primary text-on-primary shadow-xs'
+                : 'bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
+            }`}
+          >
+            {t('settings.aboutYaad') || 'About'}
+          </button>
+        </div>
       </header>
 
       {/* Main Content Sections Container */}
       <main className="max-w-3xl lg:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8">
         {/* 1. Profile & Account Section */}
-        <ProfileSection
-          user={user}
-          profile={profile}
-          displayName={displayName}
-          displayEmail={displayEmail}
-          displayPhone={displayPhone}
-          isEditingName={isEditingName}
-          fullNameInput={fullNameInput}
-          setFullNameInput={setFullNameInput}
-          isEditingPhone={isEditingPhone}
-          phoneInput={phoneInput}
-          setPhoneInput={setPhoneInput}
-          phoneError={phoneError}
-          isSavingProfile={isSavingProfile}
-          profileMessage={profileMessage}
-          onSaveName={handleSaveName}
-          onSavePhone={handleSavePhone}
-          onStartEditName={() => {
-            setIsEditingName(true);
-            setFullNameInput(
-              profile?.full_name || user?.user_metadata?.full_name || '',
-            );
-          }}
-          onCancelEditName={() => setIsEditingName(false)}
-          onStartEditPhone={() => {
-            setIsEditingPhone(true);
-            setPhoneInput(displayPhone || '');
-            setPhoneError(null);
-          }}
-          onCancelEditPhone={() => setIsEditingPhone(false)}
-          onOpenAvatarPicker={() => setShowAvatarPicker(true)}
-          onOpenAuth={onOpenAuth}
-        />
+        <div id="settings_section_profile">
+          <ProfileSection
+            user={user}
+            profile={profile}
+            displayName={displayName}
+            displayEmail={displayEmail}
+            displayPhone={displayPhone}
+            isEditingName={isEditingName}
+            fullNameInput={fullNameInput}
+            setFullNameInput={setFullNameInput}
+            isEditingPhone={isEditingPhone}
+            phoneInput={phoneInput}
+            setPhoneInput={setPhoneInput}
+            phoneError={phoneError}
+            isSavingProfile={isSavingProfile}
+            profileMessage={profileMessage}
+            onSaveName={handleSaveName}
+            onSavePhone={handleSavePhone}
+            onStartEditName={() => {
+              setIsEditingName(true);
+              setFullNameInput(
+                profile?.full_name || user?.user_metadata?.full_name || '',
+              );
+            }}
+            onCancelEditName={() => setIsEditingName(false)}
+            onStartEditPhone={() => {
+              setIsEditingPhone(true);
+              setPhoneInput(displayPhone || '');
+              setPhoneError(null);
+            }}
+            onCancelEditPhone={() => setIsEditingPhone(false)}
+            onOpenAvatarPicker={() => setShowAvatarPicker(true)}
+            onOpenAuth={onOpenAuth}
+          />
+        </div>
 
         {/* 2. Preferences Section */}
-        <PreferencesSection
-          soundEnabled={soundEnabled}
-          onToggleSound={handleToggleSound}
-          onLanguageSelect={handleLanguageSelect}
-          onRestartTour={onRestartTour}
-        />
+        <div id="settings_section_preferences">
+          <PreferencesSection
+            soundEnabled={soundEnabled}
+            onToggleSound={handleToggleSound}
+            onLanguageSelect={handleLanguageSelect}
+            onRestartTour={onRestartTour}
+          />
+        </div>
 
         {/* 3. Security Section (When Authenticated) */}
         {user && (
-          <SecuritySection
-            isChangingPassword={isChangingPassword}
-            setIsChangingPassword={setIsChangingPassword}
-            newPassword={newPassword}
-            setNewPassword={setNewPassword}
-            confirmPassword={confirmPassword}
-            setConfirmPassword={setConfirmPassword}
-            showPassword={showPassword}
-            setShowPassword={setShowPassword}
-            isUpdatingPassword={isUpdatingPassword}
-            passwordMessage={passwordMessage}
-            setPasswordMessage={setPasswordMessage}
-            onUpdatePassword={handleUpdatePassword}
-            passkeys={passkeys}
-            loadingPasskeys={loadingPasskeys}
-            isRegisteringPasskey={isRegisteringPasskey}
-            confirmDeletePasskeyId={confirmDeletePasskeyId}
-            setConfirmDeletePasskeyId={setConfirmDeletePasskeyId}
-            isDeletingPasskey={isDeletingPasskey}
-            passkeyMessage={passkeyMessage}
-            onRegisterPasskey={() => handleRegisterPasskey()}
-            onRemovePasskey={handleRemovePasskey}
-            onRequestSignOut={() => setShowSignOutConfirm(true)}
-          />
+          <div id="settings_section_security">
+            <SecuritySection
+              isChangingPassword={isChangingPassword}
+              setIsChangingPassword={setIsChangingPassword}
+              newPassword={newPassword}
+              setNewPassword={setNewPassword}
+              confirmPassword={confirmPassword}
+              setConfirmPassword={setConfirmPassword}
+              showPassword={showPassword}
+              setShowPassword={setShowPassword}
+              isUpdatingPassword={isUpdatingPassword}
+              passwordMessage={passwordMessage}
+              setPasswordMessage={setPasswordMessage}
+              onUpdatePassword={handleUpdatePassword}
+              passkeys={passkeys}
+              loadingPasskeys={loadingPasskeys}
+              isRegisteringPasskey={isRegisteringPasskey}
+              confirmDeletePasskeyId={confirmDeletePasskeyId}
+              setConfirmDeletePasskeyId={setConfirmDeletePasskeyId}
+              isDeletingPasskey={isDeletingPasskey}
+              passkeyMessage={passkeyMessage}
+              onRegisterPasskey={() => handleRegisterPasskey()}
+              onRemovePasskey={handleRemovePasskey}
+              onRequestSignOut={() => setShowSignOutConfirm(true)}
+            />
+          </div>
         )}
 
         {/* 4. About & Legal Section */}
-        <AboutSection
-          onOpenModal={(type) => setActiveLegalModal(type)}
-          onOpenLegalPage={onOpenLegalPage}
-        />
+        <div id="settings_section_about">
+          <AboutSection
+            onOpenModal={(type) => setActiveLegalModal(type)}
+            onOpenLegalPage={onOpenLegalPage}
+          />
+        </div>
       </main>
 
       {/* ==================================================================== */}

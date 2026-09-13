@@ -1,20 +1,18 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Info,
-  Sparkles,
   Shield,
   FileText,
   HelpCircle,
-  ExternalLink,
+  Smartphone,
   ChevronRight,
   ChevronLeft,
-  Share2,
-  Check,
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { APP_VERSION } from '../../version';
 
 interface AboutSectionProps {
-  onOpenModal: (type: 'privacy' | 'terms' | 'help' | null) => void;
+  onOpenModal: (type: 'privacy' | 'terms' | 'help' | 'about' | null) => void;
   onOpenLegalPage?: (
     page: 'terms' | 'privacy' | 'about' | 'help' | 'legal',
   ) => void;
@@ -25,23 +23,15 @@ export const AboutSection: React.FC<AboutSectionProps> = ({
   onOpenLegalPage,
 }) => {
   const { t, language, isRTL } = useLanguage();
-  const [copiedLegalPath, setCopiedLegalPath] = useState<string | null>(null);
-
   const Chevron = isRTL ? ChevronLeft : ChevronRight;
 
-  const handleCopyPath = async (e: React.MouseEvent, path: string) => {
-    e.stopPropagation();
-    try {
-      const origin =
-        typeof window !== 'undefined' ? window.location.origin : '';
-      const fullUrl = `${origin}${path}`;
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(fullUrl);
-        setCopiedLegalPath(path);
-        setTimeout(() => setCopiedLegalPath(null), 2500);
-      }
-    } catch (err) {
-      console.warn('Failed to copy URL:', err);
+  const handleOpenItem = (
+    page: 'about' | 'help' | 'privacy' | 'terms',
+  ) => {
+    if (onOpenLegalPage) {
+      onOpenLegalPage(page);
+    } else {
+      onOpenModal(page);
     }
   };
 
@@ -61,225 +51,151 @@ export const AboutSection: React.FC<AboutSectionProps> = ({
               language === 'ur' ? 'font-urdu text-lg sm:text-xl' : "font-['Manrope']"
             }`}
           >
-            {t('settings.aboutTitle') || 'About YAAD'}
+            {t('settings.aboutTitle') || 'About'}
           </h2>
         </div>
       </div>
 
-      {/* About List Container (Clean, lighter visual feel) */}
+      {/* About Section Card — Premium, uncluttered, system-quality list */}
       <div
         id="settings_about_card"
-        className="bg-surface rounded-3xl border border-surface-dim shadow-xs overflow-hidden divide-y divide-surface-dim/70"
+        className="bg-surface rounded-3xl border border-surface-dim shadow-xs overflow-hidden divide-y divide-surface-dim/60"
       >
         {/* 1. About YAAD */}
-        <div
+        <button
           id="settings_link_about"
-          onClick={() => {
-            if (onOpenLegalPage) onOpenLegalPage('about');
-          }}
-          className="p-4 sm:p-5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-lowest/70 transition-colors cursor-pointer group"
+          type="button"
+          onClick={() => handleOpenItem('about')}
+          className="w-full p-4 sm:p-5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-lowest/80 transition-colors cursor-pointer group active:bg-surface-container-low"
         >
           <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-primary-fixed/30 text-primary flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
-              <Sparkles className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-2xl bg-surface-container text-primary flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+              <Info className="w-5 h-5 stroke-[2]" />
             </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-on-surface font-['Manrope'] truncate">
-                  {t('settings.aboutApp') || 'About YAAD'}
-                </h3>
-                <code className="text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-primary font-mono font-medium">
-                  /about
-                </code>
-              </div>
-              <p className="text-xs text-outline truncate max-w-[220px] sm:max-w-xs md:max-w-sm">
+              <h3 className="text-sm sm:text-base font-bold text-on-surface font-['Manrope'] truncate">
+                {t('settings.aboutYaad') || 'About YAAD'}
+              </h3>
+              <p className="text-xs text-outline truncate max-w-[240px] sm:max-w-md">
                 {t('settings.aboutAppDesc') ||
-                  'Minimalist shopping memory app built for effortless organization.'}
+                  t('settings.aboutYaadDesc') ||
+                  'Smart, minimalist grocery shopping memory.'}
               </p>
             </div>
           </div>
+          <Chevron className="w-4 h-4 text-outline group-hover:text-primary group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-all shrink-0" />
+        </button>
 
-          <div className="flex items-center gap-1 shrink-0">
-            <button
-              type="button"
-              onClick={(e) => handleCopyPath(e, '/about')}
-              title="Copy link to /about"
-              className="p-2 rounded-xl text-outline hover:text-primary hover:bg-surface-container transition-colors cursor-pointer"
-            >
-              {copiedLegalPath === '/about' ? (
-                <Check className="w-4 h-4 text-primary" />
-              ) : (
-                <Share2 className="w-4 h-4" />
-              )}
-            </button>
-            <Chevron className="w-4 h-4 text-outline group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-transform" />
-          </div>
-        </div>
-
-        {/* 2. Privacy Policy */}
-        <div
-          id="settings_link_privacy"
-          onClick={() => {
-            if (onOpenLegalPage) onOpenLegalPage('privacy');
-            else onOpenModal('privacy');
-          }}
-          className="p-4 sm:p-5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-lowest/70 transition-colors cursor-pointer group"
-        >
-          <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-secondary-fixed/40 text-primary flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
-              <Shield className="w-5 h-5" />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-on-surface font-['Manrope'] truncate">
-                  {t('settings.privacyPolicy') || 'Privacy Policy'}
-                </h3>
-                <code className="text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-primary font-mono font-medium">
-                  /privacy
-                </code>
-              </div>
-              <p className="text-xs text-outline truncate max-w-[220px] sm:max-w-xs md:max-w-sm">
-                {t('settings.privacyPolicyDesc') ||
-                  'Your personal list data is securely encrypted.'}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-1 shrink-0">
-            <button
-              type="button"
-              onClick={(e) => handleCopyPath(e, '/privacy')}
-              title="Copy link to /privacy"
-              className="p-2 rounded-xl text-outline hover:text-primary hover:bg-surface-container transition-colors cursor-pointer"
-            >
-              {copiedLegalPath === '/privacy' ? (
-                <Check className="w-4 h-4 text-primary" />
-              ) : (
-                <Share2 className="w-4 h-4" />
-              )}
-            </button>
-            <Chevron className="w-4 h-4 text-outline group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-transform" />
-          </div>
-        </div>
-
-        {/* 3. Terms of Service */}
-        <div
-          id="settings_link_terms"
-          onClick={() => {
-            if (onOpenLegalPage) onOpenLegalPage('terms');
-            else onOpenModal('terms');
-          }}
-          className="p-4 sm:p-5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-lowest/70 transition-colors cursor-pointer group"
-        >
-          <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-surface-container text-primary flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
-              <FileText className="w-5 h-5" />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-on-surface font-['Manrope'] truncate">
-                  {t('settings.termsOfService') || 'Terms of Service'}
-                </h3>
-                <code className="text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-primary font-mono font-medium">
-                  /terms
-                </code>
-              </div>
-              <p className="text-xs text-outline truncate max-w-[220px] sm:max-w-xs md:max-w-sm">
-                {t('settings.termsOfServiceDesc') ||
-                  'Simple, fair terms to help you organize shopping safely.'}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-1 shrink-0">
-            <button
-              type="button"
-              onClick={(e) => handleCopyPath(e, '/terms')}
-              title="Copy link to /terms"
-              className="p-2 rounded-xl text-outline hover:text-primary hover:bg-surface-container transition-colors cursor-pointer"
-            >
-              {copiedLegalPath === '/terms' ? (
-                <Check className="w-4 h-4 text-primary" />
-              ) : (
-                <Share2 className="w-4 h-4" />
-              )}
-            </button>
-            <Chevron className="w-4 h-4 text-outline group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-transform" />
-          </div>
-        </div>
-
-        {/* 4. Help & Support */}
-        <div
+        {/* 2. Help & Feedback */}
+        <button
           id="settings_link_help"
-          onClick={() => {
-            if (onOpenLegalPage) onOpenLegalPage('help');
-            else onOpenModal('help');
-          }}
-          className="p-4 sm:p-5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-lowest/70 transition-colors cursor-pointer group"
+          type="button"
+          onClick={() => handleOpenItem('help')}
+          className="w-full p-4 sm:p-5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-lowest/80 transition-colors cursor-pointer group active:bg-surface-container-low"
         >
           <div className="flex items-center gap-3.5 min-w-0">
             <div className="w-10 h-10 rounded-2xl bg-surface-container text-primary flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
-              <HelpCircle className="w-5 h-5" />
+              <HelpCircle className="w-5 h-5 stroke-[2]" />
             </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-on-surface font-['Manrope'] truncate">
-                  {t('settings.helpSupport') || 'Help & Support'}
-                </h3>
-                <code className="text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-primary font-mono font-medium">
-                  /help
-                </code>
-              </div>
-              <p className="text-xs text-outline truncate max-w-[220px] sm:max-w-xs md:max-w-sm">
-                {t('settings.helpSupportDesc') ||
-                  'Need help or have suggestions? Reach out to our team anytime.'}
+              <h3 className="text-sm sm:text-base font-bold text-on-surface font-['Manrope'] truncate">
+                {t('settings.helpFeedback') ||
+                  t('settings.helpSupport') ||
+                  'Help & Feedback'}
+              </h3>
+              <p className="text-xs text-outline truncate max-w-[240px] sm:max-w-md">
+                {t('settings.helpFeedbackDesc') ||
+                  t('settings.helpSupportDesc') ||
+                  'Need help or have suggestions? Reach out to our team.'}
+              </p>
+            </div>
+          </div>
+          <Chevron className="w-4 h-4 text-outline group-hover:text-primary group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-all shrink-0" />
+        </button>
+
+        {/* 3. Privacy */}
+        <button
+          id="settings_link_privacy"
+          type="button"
+          onClick={() => handleOpenItem('privacy')}
+          className="w-full p-4 sm:p-5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-lowest/80 transition-colors cursor-pointer group active:bg-surface-container-low"
+        >
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="w-10 h-10 rounded-2xl bg-surface-container text-primary flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+              <Shield className="w-5 h-5 stroke-[2]" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-sm sm:text-base font-bold text-on-surface font-['Manrope'] truncate">
+                {t('settings.privacyPolicy') || 'Privacy Policy'}
+              </h3>
+              <p className="text-xs text-outline truncate max-w-[240px] sm:max-w-md">
+                {t('settings.privacyPolicyDesc') ||
+                  'Your personal grocery data is securely protected.'}
+              </p>
+            </div>
+          </div>
+          <Chevron className="w-4 h-4 text-outline group-hover:text-primary group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-all shrink-0" />
+        </button>
+
+        {/* 4. Terms */}
+        <button
+          id="settings_link_terms"
+          type="button"
+          onClick={() => handleOpenItem('terms')}
+          className="w-full p-4 sm:p-5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-lowest/80 transition-colors cursor-pointer group active:bg-surface-container-low"
+        >
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="w-10 h-10 rounded-2xl bg-surface-container text-primary flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+              <FileText className="w-5 h-5 stroke-[2]" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-sm sm:text-base font-bold text-on-surface font-['Manrope'] truncate">
+                {t('settings.termsOfService') || 'Terms of Service'}
+              </h3>
+              <p className="text-xs text-outline truncate max-w-[240px] sm:max-w-md">
+                {t('settings.termsOfServiceDesc') ||
+                  'Simple, fair terms for using YAAD.'}
+              </p>
+            </div>
+          </div>
+          <Chevron className="w-4 h-4 text-outline group-hover:text-primary group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-all shrink-0" />
+        </button>
+
+        {/* 5. Version (Informational row using real app version) */}
+        <div
+          id="settings_item_version"
+          className="p-4 sm:p-5 flex items-center justify-between gap-3 text-start"
+        >
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="w-10 h-10 rounded-2xl bg-surface-container text-primary flex items-center justify-center shrink-0 shadow-2xs">
+              <Smartphone className="w-5 h-5 stroke-[2]" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-sm sm:text-base font-bold text-on-surface font-['Manrope'] truncate">
+                {t('settings.versionTitle') || 'Version'}
+              </h3>
+              <p className="text-xs text-outline truncate max-w-[200px] sm:max-w-xs">
+                {t('settings.versionDesc') || 'Installed application release'}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1 shrink-0">
-            <button
-              type="button"
-              onClick={(e) => handleCopyPath(e, '/help')}
-              title="Copy link to /help"
-              className="p-2 rounded-xl text-outline hover:text-primary hover:bg-surface-container transition-colors cursor-pointer"
-            >
-              {copiedLegalPath === '/help' ? (
-                <Check className="w-4 h-4 text-primary" />
-              ) : (
-                <Share2 className="w-4 h-4" />
-              )}
-            </button>
-            <Chevron className="w-4 h-4 text-outline group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-transform" />
+          <div
+            id="settings_version_badge"
+            className="px-3 py-1 rounded-full bg-surface-container-high/80 text-xs font-mono font-bold text-on-surface-variant border border-surface-dim/80 shrink-0 shadow-2xs"
+          >
+            v{APP_VERSION}
           </div>
-        </div>
-
-        {/* 5. All Legal Pages Hub */}
-        <div
-          id="settings_link_all_hub"
-          onClick={() => {
-            if (onOpenLegalPage) onOpenLegalPage('legal');
-          }}
-          className="p-3.5 sm:p-4 bg-surface-container-lowest/40 flex items-center justify-between gap-3 text-start hover:bg-surface-container-lowest transition-colors cursor-pointer group"
-        >
-          <div className="flex items-center gap-2.5 text-xs text-outline group-hover:text-on-surface transition-colors">
-            <ExternalLink className="w-3.5 h-3.5 text-primary shrink-0" />
-            <span>View All Separate Legal & Info Pages</span>
-            <code className="text-[10px] px-1 rounded bg-surface-container text-outline font-mono">
-              /legal
-            </code>
-          </div>
-          <Chevron className="w-3.5 h-3.5 text-outline group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-transform shrink-0" />
         </div>
       </div>
 
-      {/* Footer: Version & Brand Tagline */}
-      <footer className="pt-3 pb-1 text-center space-y-1 text-xs text-outline">
+      {/* Footer Tagline & Version */}
+      <footer className="pt-3 pb-1 text-center space-y-0.5 text-xs text-outline">
         <p className="font-bold text-on-surface-variant font-['Manrope']">
           {t('settings.footerTagline') || 'Simple Shopping Memory'}
         </p>
-        <p className="text-outline/70">
-          YAAD v1.0.0
+        <p className="text-[11px] text-outline/70">
+          YAAD • v{APP_VERSION}
         </p>
       </footer>
     </section>

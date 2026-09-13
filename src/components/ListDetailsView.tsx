@@ -33,6 +33,7 @@ interface ListDetailsViewProps {
   onBack: () => void;
   onReuseList: (list: ShoppingList) => void;
   onContinueShopping: (list: ShoppingList) => void;
+  onMarkComplete?: (list: ShoppingList) => void;
   onEditList: (list: ShoppingList) => void;
   onDeleteList: (listId: string) => void;
   onOpenProfile: () => void;
@@ -43,6 +44,7 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
   onBack,
   onReuseList,
   onContinueShopping,
+  onMarkComplete,
   onEditList,
   onDeleteList,
   onOpenProfile,
@@ -408,6 +410,19 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
             <RotateCcw className="w-4 h-4 text-primary" />
             <span>{t('history.reuseList')}</span>
           </button>
+
+          {/* Mark Complete (if list is incomplete) */}
+          {!isAllCompleted && onMarkComplete && (
+            <button
+              type="button"
+              id="history_mark_complete_btn"
+              onClick={() => onMarkComplete(list)}
+              className="w-full sm:w-auto sm:min-w-[170px] min-h-[50px] px-5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-['Manrope'] text-sm sm:text-base font-bold flex items-center justify-center gap-2 shadow-xs active:scale-[0.98] transition-all cursor-pointer"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              <span>Mark Complete</span>
+            </button>
+          )}
 
           {/* Continue Shopping (if list is active / incomplete) */}
           {!isAllCompleted && (

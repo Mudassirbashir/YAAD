@@ -299,6 +299,15 @@ export async function registerPasskey(
       lastUsedAt: (passkeyData as any).created_at || new Date().toISOString(),
     };
 
+    // Update user auth metadata so account state reflects active passkey immediately
+    try {
+      await supabase.auth.updateUser({
+        data: { has_passkey: true },
+      });
+    } catch (metaErr) {
+      console.warn('Notice updating user metadata after passkey registration:', metaErr);
+    }
+
     return {
       success: true,
       passkey: passkeyInfo,
@@ -314,24 +323,57 @@ export async function registerPasskey(
 
 /**
  * Lists the registered passkeys for the current user via native Supabase Passkey API
+ * with automatic fallback to server endpoint /api/passkey/list
  */
 export async function listUserPasskeys(_authToken?: string): Promise<PasskeyCredentialInfo[]> {
-  if (!supabase || !(supabase.auth as any).passkey?.list) return [];
-  try {
-    const res = await (supabase.auth as any).passkey.list();
-    if (res.error || !res.data) {
-      return [];
+  // 1. Try native Supabase client passkey.list if available
+  if (supabase && typeof (supabase.auth as any).passkey?.list === 'function') {
+    try {
+      const res = await (supabase.auth as any).passkey.list();
+      if (!res.error && res.data && res.data.length > 0) {
+        return res.data.map((p: any) => ({
+          id: p.id,
+          deviceName: p.friendly_name || 'Passkey Device',
+          createdAt: p.created_at,
+          lastUsedAt: p.last_used_at || p.created_at,
+        }));
+      }
+    } catch (e) {
+      console.warn('Notice from native Supabase passkey.list:', e);
     }
-    return (res.data || []).map((p: any) => ({
-      id: p.id,
-      deviceName: p.friendly_name || 'Passkey Device',
-      createdAt: p.created_at,
-      lastUsedAt: p.last_used_at || p.created_at,
-    }));
-  } catch (e) {
-    console.warn('Could not fetch passkeys from Supabase:', e);
-    return [];
   }
+
+  // 2. Query server-side passkey list endpoint with current session access token
+  try {
+    let token = _authToken;
+    if (!token && supabase) {
+      const { data: sessionData } = await supabase.auth.getSession();
+      token = sessionData?.session?.access_token;
+    }
+
+    if (token) {
+      const res = await fetch('/api/passkey/list', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && Array.isArray(data.passkeys) && data.passkeys.length > 0) {
+          return data.passkeys.map((p: any) => ({
+            id: p.id,
+            deviceName: p.device_name || 'Passkey Device',
+            createdAt: p.created_at,
+            lastUsedAt: p.last_used_at || p.created_at,
+          }));
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Notice querying /api/passkey/list:', err);
+  }
+
+  return [];
 }
 
 /**

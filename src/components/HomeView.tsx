@@ -21,7 +21,10 @@ import { NoActiveListModal } from './home/NoActiveListModal';
 interface HomeViewProps {
   lists: ShoppingList[];
   onCreateList: () => void;
-  onSelectList: (list: ShoppingList | string) => void;
+  onSelectList: (list: ShoppingList) => void;
+  onContinueShopping?: (list: ShoppingList) => void;
+  onMarkComplete?: (list: ShoppingList) => void;
+  onReuseList?: (list: ShoppingList) => void;
   onOpenProfile: () => void;
   onOpenMenu: () => void;
   onOpenHistory?: () => void;
@@ -43,6 +46,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
   lists,
   onCreateList,
   onSelectList,
+  onContinueShopping,
+  onMarkComplete,
+  onReuseList,
   onOpenProfile,
   onOpenMenu,
   onOpenHistory,
@@ -319,8 +325,10 @@ export const HomeView: React.FC<HomeViewProps> = ({
           onRetry={onRetry}
           onCreateList={onCreateList}
           onSelectList={(selected) => onSelectList(selected)}
+          onContinueShopping={onContinueShopping}
+          onMarkComplete={onMarkComplete}
+          onReuseList={onReuseList}
           onOpenHistory={onOpenHistory}
-          onEditList={onEditList}
           onDeleteList={onDeleteList}
         />
       </main>

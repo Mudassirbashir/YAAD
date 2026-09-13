@@ -63,46 +63,80 @@ export const PreferencesSection: React.FC<PreferencesSectionProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2.5 pt-1">
-            {/* English Option */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 pt-1">
+            {/* 1. English Option */}
             <button
               id="lang_select_en"
               type="button"
               onClick={() => onLanguageSelect('en')}
-              className={`min-h-[48px] p-3 rounded-2xl border text-start flex items-center justify-between transition-all cursor-pointer active:scale-98 ${
+              className={`min-h-[56px] p-3.5 rounded-2xl border text-start flex items-center justify-between transition-all cursor-pointer active:scale-[0.98] ${
                 language === 'en'
-                  ? 'border-primary bg-primary-fixed/20 shadow-xs'
-                  : 'border-surface-dim bg-surface-container-lowest hover:bg-surface-container-low'
+                  ? 'border-primary bg-primary-fixed/25 ring-1 ring-primary/30 shadow-xs'
+                  : 'border-surface-dim bg-surface-container-lowest hover:bg-surface-container-low/70'
               }`}
             >
               <div className="min-w-0 pe-2">
-                <div className="font-bold text-sm text-on-surface">English</div>
-                <div className="text-[11px] text-outline truncate">English (US)</div>
+                <div className="font-bold text-sm text-on-surface font-['Manrope']">
+                  {t('settings.languageEn') || 'English'}
+                </div>
+                <div className="text-[11px] text-outline truncate">
+                  {t('settings.languageEnSub') || 'English (US)'}
+                </div>
               </div>
               {language === 'en' && (
-                <div className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center shrink-0">
+                <div className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center shrink-0 shadow-2xs">
                   <Check className="w-3.5 h-3.5 stroke-[2.5]" />
                 </div>
               )}
             </button>
 
-            {/* Urdu Option */}
+            {/* 2. Roman Urdu Option */}
+            <button
+              id="lang_select_roman_urdu"
+              type="button"
+              onClick={() => onLanguageSelect('roman-urdu')}
+              className={`min-h-[56px] p-3.5 rounded-2xl border text-start flex items-center justify-between transition-all cursor-pointer active:scale-[0.98] ${
+                language === 'roman-urdu'
+                  ? 'border-primary bg-primary-fixed/25 ring-1 ring-primary/30 shadow-xs'
+                  : 'border-surface-dim bg-surface-container-lowest hover:bg-surface-container-low/70'
+              }`}
+            >
+              <div className="min-w-0 pe-2">
+                <div className="font-bold text-sm text-on-surface font-['Manrope']">
+                  {t('settings.languageRomanUrdu') || 'Roman Urdu'}
+                </div>
+                <div className="text-[11px] text-outline truncate">
+                  {t('settings.languageRomanUrduSub') || 'Aasan Roman Urdu'}
+                </div>
+              </div>
+              {language === 'roman-urdu' && (
+                <div className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center shrink-0 shadow-2xs">
+                  <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                </div>
+              )}
+            </button>
+
+            {/* 3. Urdu Option */}
             <button
               id="lang_select_ur"
               type="button"
               onClick={() => onLanguageSelect('ur')}
-              className={`min-h-[48px] p-3 rounded-2xl border text-start flex items-center justify-between transition-all cursor-pointer active:scale-98 ${
+              className={`min-h-[56px] p-3.5 rounded-2xl border text-start flex items-center justify-between transition-all cursor-pointer active:scale-[0.98] ${
                 language === 'ur'
-                  ? 'border-primary bg-primary-fixed/20 shadow-xs'
-                  : 'border-surface-dim bg-surface-container-lowest hover:bg-surface-container-low'
+                  ? 'border-primary bg-primary-fixed/25 ring-1 ring-primary/30 shadow-xs'
+                  : 'border-surface-dim bg-surface-container-lowest hover:bg-surface-container-low/70'
               }`}
             >
               <div className="min-w-0 pe-2">
-                <div className="font-bold text-sm text-on-surface font-urdu">اردو</div>
-                <div className="text-[11px] text-outline truncate">Urdu (Pakistan)</div>
+                <div className="font-bold text-base text-on-surface font-urdu">
+                  {t('settings.languageUrdu') || 'اردو'}
+                </div>
+                <div className="text-[11px] text-outline truncate">
+                  {t('settings.languageUrduSub') || 'آسان اردو'}
+                </div>
               </div>
               {language === 'ur' && (
-                <div className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center shrink-0">
+                <div className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center shrink-0 shadow-2xs">
                   <Check className="w-3.5 h-3.5 stroke-[2.5]" />
                 </div>
               )}
