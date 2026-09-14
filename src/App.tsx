@@ -47,6 +47,7 @@ import { detectDuplicateItem, mergeQuantities } from './lib/recognition';
 import { getFriendlyErrorMessage } from './utils/errorFormatting';
 import { LegalPageView } from './components/legal/LegalPageView';
 import { LegalPageType } from './components/legal/legalContent';
+import { HeadManager } from './seo/HeadManager';
 
 const STORAGE_ONBOARDED_KEY = 'yaad_has_onboarded_v2';
 const STORAGE_PROFILE_SETUP_KEY = 'yaad_profile_setup_done';
@@ -1439,6 +1440,7 @@ function AppContent() {
 export default function App() {
   return (
     <RouterProvider>
+      <HeadManager />
       <AppContent />
     </RouterProvider>
   );

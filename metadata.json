@@ -1,6 +1,6 @@
 {
   "name": "YAAD",
-  "description": "YAAD is a smart shopping list application that helps users create, organize and complete shopping lists easily.",
+  "description": "Never forget what you need to buy. YAAD (یاد) is a smart, bilingual shopping reminder that organizes grocery items automatically. Works offline in English, Urdu, and Roman Urdu.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

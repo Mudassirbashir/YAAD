@@ -1,0 +1,50 @@
+# YAAD (یاد) Production robots.txt
+# Strict separation of public SEO pages from private authenticated user lists.
+# Reference: RFC 9309 / BeyondSEO Security Protocol
+
+User-agent: *
+
+# Allow Crawling of Public Marketing, Editorial & Information Pages
+Allow: /$
+Allow: /about$
+Allow: /about
+Allow: /help$
+Allow: /help
+Allow: /terms$
+Allow: /terms
+Allow: /privacy$
+Allow: /privacy
+Allow: /legal$
+Allow: /legal
+
+# Allow Public Assets & Icons
+Allow: /favicon.ico
+Allow: /favicon.png
+Allow: /favicon-*.png
+Allow: /apple-touch-icon.png
+Allow: /logo.png
+Allow: /og-image.png
+Allow: /pwa-*.png
+Allow: /manifest.json
+
+# Strictly Disallow Private User Shopping Lists & Sensitive App States
+# (Never index private user data, authenticated dashboards, or tokens)
+Disallow: /lists/
+Disallow: /history/
+Disallow: /history$
+Disallow: /settings/
+Disallow: /settings$
+Disallow: /create
+Disallow: /create/
+Disallow: /create-list
+Disallow: /add-items
+Disallow: /stats
+Disallow: /statistics
+Disallow: /profile-setup
+Disallow: /onboarding
+Disallow: /reset-password
+Disallow: /reset_password
+Disallow: /api/
+
+# Sitemap Location
+Sitemap: https://yaad-mudassirbashir530-creators-projects.vercel.app/sitemap.xml

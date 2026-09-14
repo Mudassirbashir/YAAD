@@ -1,5 +1,6 @@
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
 import { createServer as createViteServer } from 'vite';
@@ -1576,6 +1577,102 @@ Return JSON with:
   });
 });
 
+// Helper to inject SEO meta tags into initial HTML response for search engine crawlers and social preview bots
+function getInjectedHtml(originalHtml: string, reqPath: string): string {
+  const baseCanonical = (process.env.VITE_SITE_URL || 'https://yaad-mudassirbashir530-creators-projects.vercel.app').replace(/\/+$/, '');
+  const cleanPath = reqPath.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+
+  // Private routes: inject noindex
+  const isPrivate =
+    cleanPath.startsWith('/lists') ||
+    cleanPath.startsWith('/history') ||
+    cleanPath.startsWith('/settings') ||
+    cleanPath.startsWith('/create') ||
+    cleanPath.startsWith('/stats') ||
+    cleanPath.startsWith('/statistics') ||
+    cleanPath.startsWith('/reset-password') ||
+    cleanPath.startsWith('/profile-setup') ||
+    cleanPath.startsWith('/onboarding') ||
+    cleanPath.startsWith('/auth');
+
+  if (isPrivate) {
+    return originalHtml.replace(
+      /<meta name="robots" content="[^"]*"\s*\/?>/i,
+      '<meta name="robots" content="noindex, nofollow, noarchive" />'
+    );
+  }
+
+  // Public editorial routes
+  let title = 'YAAD • Smart Shopping Memory &amp; Grocery Reminder';
+  let description =
+    'Never forget what you need to buy. YAAD (یاد) is a smart, bilingual shopping reminder that organizes grocery items automatically. Works offline in English, Urdu, and Roman Urdu.';
+  let canonical = `${baseCanonical}/`;
+
+  if (cleanPath === '/about') {
+    title = 'About YAAD • Bilingual Intelligence &amp; Shopping Memory';
+    description =
+      'Discover how YAAD solves the universal problem of forgetting grocery items with native Pakistani grocery intelligence, trilingual support, and complete offline privacy.';
+    canonical = `${baseCanonical}/about`;
+  } else if (cleanPath === '/help') {
+    title = 'Help &amp; FAQ • How to Use YAAD Shopping Reminder';
+    description =
+      'Frequently asked questions about YAAD. Learn how to use offline mode, organize grocery items by aisle, log in with Passkeys, and add items in Urdu or Roman Urdu.';
+    canonical = `${baseCanonical}/help`;
+  } else if (cleanPath === '/terms') {
+    title = 'Terms &amp; Conditions • YAAD Smart Shopping Memory';
+    description = 'Read the clear and transparent Terms and Conditions for using YAAD Smart Shopping Memory.';
+    canonical = `${baseCanonical}/terms`;
+  } else if (cleanPath === '/privacy') {
+    title = 'Privacy Policy • Your Data Stays Yours • YAAD';
+    description =
+      'Your shopping lists and private notes belong solely to you. Learn how YAAD protects your data with Row Level Security, local encryption, and zero ad-tracking.';
+    canonical = `${baseCanonical}/privacy`;
+  } else if (cleanPath === '/legal') {
+    title = 'Legal Information &amp; Disclosures • YAAD';
+    description = 'Official legal disclosures, intellectual property notices, and compliance details for YAAD.';
+    canonical = `${baseCanonical}/legal`;
+  }
+
+  let modified = originalHtml;
+  modified = modified.replace(/<title>.*?<\/title>/i, `<title>${title}</title>`);
+  modified = modified.replace(/<meta name="description" content=".*?"\s*\/?>/i, `<meta name="description" content="${description}" />`);
+  modified = modified.replace(/<link rel="canonical" href=".*?"\s*\/?>/i, `<link rel="canonical" href="${canonical}" />`);
+  modified = modified.replace(/<meta property="og:title" content=".*?"\s*\/?>/i, `<meta property="og:title" content="${title}" />`);
+  modified = modified.replace(/<meta property="og:description" content=".*?"\s*\/?>/i, `<meta property="og:description" content="${description}" />`);
+  modified = modified.replace(/<meta property="og:url" content=".*?"\s*\/?>/i, `<meta property="og:url" content="${canonical}" />`);
+  modified = modified.replace(/<meta name="twitter:title" content=".*?"\s*\/?>/i, `<meta name="twitter:title" content="${title}" />`);
+  modified = modified.replace(/<meta name="twitter:description" content=".*?"\s*\/?>/i, `<meta name="twitter:description" content="${description}" />`);
+
+  return modified;
+}
+
+// SEO Endpoints: robots.txt & sitemap.xml
+app.get('/robots.txt', (req, res) => {
+  const robotsPublic = path.join(process.cwd(), 'public', 'robots.txt');
+  const robotsDist = path.join(process.cwd(), 'dist', 'robots.txt');
+  const filePath = fs.existsSync(robotsPublic) ? robotsPublic : robotsDist;
+
+  if (fs.existsSync(filePath)) {
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    return res.sendFile(filePath);
+  }
+  return res.status(200).type('text/plain').send('User-agent: *\nDisallow: /lists/\nDisallow: /settings/\nDisallow: /history/\n');
+});
+
+app.get('/sitemap.xml', (req, res) => {
+  const sitemapPublic = path.join(process.cwd(), 'public', 'sitemap.xml');
+  const sitemapDist = path.join(process.cwd(), 'dist', 'sitemap.xml');
+  const filePath = fs.existsSync(sitemapPublic) ? sitemapPublic : sitemapDist;
+
+  if (fs.existsSync(filePath)) {
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    return res.sendFile(filePath);
+  }
+  return res.status(404).send('Sitemap not found');
+});
+
 // Vite middleware & Static serving
 async function startServer() {
   const distPath = path.join(process.cwd(), 'dist');
@@ -1588,9 +1685,16 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    app.use(express.static(distPath));
+    app.use(express.static(distPath, { index: false }));
     app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+      const indexPath = path.join(distPath, 'index.html');
+      if (fs.existsSync(indexPath)) {
+        const rawHtml = fs.readFileSync(indexPath, 'utf-8');
+        const enrichedHtml = getInjectedHtml(rawHtml, req.path);
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        return res.send(enrichedHtml);
+      }
+      res.sendFile(indexPath);
     });
   }
 
