@@ -327,6 +327,7 @@ export type ScreenType =
   | 'about'
   | 'help'
   | 'legal'
+  | 'rashan_list'
   | 'not_found';
 
 export type ViewState = ScreenType;

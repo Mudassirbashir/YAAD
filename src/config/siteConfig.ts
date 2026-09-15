@@ -151,24 +151,45 @@ export const SITE_CONFIG = {
         ur: 'یاد ایپ کے قانونی اعلانات، املاکِ دانش اور قواعد و ضوابط کی تفصیلات۔',
       },
     },
+    rashanList: {
+      canonicalPath: '/rashan-list',
+      isIndexable: true,
+      priority: 0.9,
+      changeFreq: 'weekly',
+      title: {
+        en: 'Monthly Rashan List • Essential Pakistani Grocery & Pantry Checklist • YAAD',
+        romanUrdu: 'Mahana Rashan List • Pakistan Grocery & Sauda Salaf Checklist • YAAD',
+        ur: 'ماہانہ راشن لسٹ • پاکستانی گھریلو سودا سلف اور گروسری چیک لسٹ • یاد',
+      },
+      description: {
+        en: 'The definitive monthly rashan checklist for Pakistani households. Includes chakki atta, basmati rice, daalein, ghee, traditional units (pao, darjan), storage tips, and instant 1-click import into YAAD.',
+        romanUrdu: 'Pakistani gharon k liye mahana rashan ki mukammal fahreest. Atta, daalein, ghee, masalay, aur bazaar k riwayati paimanon k sath. YAAD mein foran load karein.',
+        ur: 'پاکستانی گھرانوں کے لیے ماہانہ راشن کی مکمل فہرست۔ چکی کا آٹا، باسمتی چاول، دالیں، گھی، روایتی پیمانے (پاؤ، درجن) اور یاد ایپ پر براہ راست لسٹ بنانے کی سہولت۔',
+      },
+    },
   } as Record<string, PageSeoConfig>,
 } as const;
 
 /**
- * Returns the active base site URL:
- * Checks environment variable VITE_SITE_URL, or window.location.origin in the browser,
- * or falls back to the configured production URL.
+ * Returns the authoritative canonical production site URL.
+ * Strictly avoids leaking localhost, dev containers, staging, or preview domains into canonical tags.
+ * Overridable via VITE_SITE_URL or SITE_URL environment variables in production.
  */
 export function getBaseSiteUrl(): string {
-  if (typeof process !== 'undefined' && process.env?.VITE_SITE_URL) {
-    return process.env.VITE_SITE_URL.replace(/\/+$/, '');
+  // 1. Explicit production environment variable override (e.g. custom domain rollout)
+  if (typeof process !== 'undefined') {
+    const envUrl = process.env?.VITE_SITE_URL || process.env?.SITE_URL;
+    if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('run.app')) {
+      return envUrl.replace(/\/+$/, '');
+    }
   }
-  if (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_SITE_URL) {
-    return (import.meta as any).env.VITE_SITE_URL.replace(/\/+$/, '');
+  if (typeof import.meta !== 'undefined') {
+    const envUrl = (import.meta as any).env?.VITE_SITE_URL;
+    if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('run.app')) {
+      return envUrl.replace(/\/+$/, '');
+    }
   }
-  if (typeof window !== 'undefined' && window.location?.origin && !window.location.origin.includes('localhost')) {
-    return window.location.origin.replace(/\/+$/, '');
-  }
+  // 2. Fixed authoritative production domain (Single Source of Truth)
   return SITE_CONFIG.defaultProductionUrl;
 }
 

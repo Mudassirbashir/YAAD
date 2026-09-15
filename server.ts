@@ -1578,12 +1578,14 @@ Return JSON with:
 });
 
 // Helper to inject SEO meta tags into initial HTML response for search engine crawlers and social preview bots
-function getInjectedHtml(originalHtml: string, reqPath: string): string {
+function getInjectedHtml(originalHtml: string, reqPath: string, reqLang?: string): string {
   const baseCanonical = (process.env.VITE_SITE_URL || 'https://yaad-mudassirbashir530-creators-projects.vercel.app').replace(/\/+$/, '');
   const cleanPath = reqPath.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
+  const langParam = reqLang?.toLowerCase();
 
-  // Private routes: inject noindex
+  // Private routes: inject noindex (including /home, /lists, /settings, etc.)
   const isPrivate =
+    cleanPath.startsWith('/home') ||
     cleanPath.startsWith('/lists') ||
     cleanPath.startsWith('/history') ||
     cleanPath.startsWith('/settings') ||
@@ -1602,41 +1604,106 @@ function getInjectedHtml(originalHtml: string, reqPath: string): string {
     );
   }
 
-  // Public editorial routes
-  let title = 'YAAD • Smart Shopping Memory &amp; Grocery Reminder';
+  // Multilingual metadata sets for public pages
+  const isUrdu = langParam === 'ur';
+  const isRomanUrdu = langParam === 'roman-urdu';
+
+  let title = 'YAAD • Smart Shopping Memory & Grocery Reminder';
   let description =
     'Never forget what you need to buy. YAAD (یاد) is a smart, bilingual shopping reminder that organizes grocery items automatically. Works offline in English, Urdu, and Roman Urdu.';
-  let canonical = `${baseCanonical}/`;
-
-  if (cleanPath === '/about') {
-    title = 'About YAAD • Bilingual Intelligence &amp; Shopping Memory';
-    description =
-      'Discover how YAAD solves the universal problem of forgetting grocery items with native Pakistani grocery intelligence, trilingual support, and complete offline privacy.';
-    canonical = `${baseCanonical}/about`;
-  } else if (cleanPath === '/help') {
-    title = 'Help &amp; FAQ • How to Use YAAD Shopping Reminder';
-    description =
-      'Frequently asked questions about YAAD. Learn how to use offline mode, organize grocery items by aisle, log in with Passkeys, and add items in Urdu or Roman Urdu.';
-    canonical = `${baseCanonical}/help`;
-  } else if (cleanPath === '/terms') {
-    title = 'Terms &amp; Conditions • YAAD Smart Shopping Memory';
-    description = 'Read the clear and transparent Terms and Conditions for using YAAD Smart Shopping Memory.';
-    canonical = `${baseCanonical}/terms`;
-  } else if (cleanPath === '/privacy') {
-    title = 'Privacy Policy • Your Data Stays Yours • YAAD';
-    description =
-      'Your shopping lists and private notes belong solely to you. Learn how YAAD protects your data with Row Level Security, local encryption, and zero ad-tracking.';
-    canonical = `${baseCanonical}/privacy`;
-  } else if (cleanPath === '/legal') {
-    title = 'Legal Information &amp; Disclosures • YAAD';
-    description = 'Official legal disclosures, intellectual property notices, and compliance details for YAAD.';
-    canonical = `${baseCanonical}/legal`;
+  
+  if (isUrdu) {
+    title = 'یاد • سودا سلف اور گروسری کی سمارٹ یاد دہانی ایپ';
+    description = 'خریداری کی کوئی چیز نہ بھولیں۔ یاد (YAAD) ایک سمارٹ دو لسانی گروسری ایپ ہے جو سودا سلف اور گھریلو اشیاء کو خودکار طریقے سے منظم کرتی ہے۔';
+  } else if (isRomanUrdu) {
+    title = 'YAAD • Smart Grocery Reminder & Sauda Salaf App';
+    description = 'Khareedari ki koi cheez na bhoolein. YAAD ek smart bilingual shopping reminder hai jo grocery items aur sauda salaf ko automatically organize karta hai.';
   }
 
+  if (cleanPath === '/about') {
+    if (isUrdu) {
+      title = 'یاد ایپ کے بارے میں • کثیر لسانی گروسری ذہانت';
+      description = 'جانیے کہ یاد ایپ پاکستانی خاندانوں کے لیے خریداری اور سودا سلف یاد رکھنے کے مسائل کو کیسے آسان بناتی ہے۔';
+    } else if (isRomanUrdu) {
+      title = 'About YAAD • Bilingual Shopping Memory';
+      description = 'Janein kaise YAAD Pakistani ghareloo khareedari aur sauda salaf ki list ko asaan aur aitemad-bakhsh banati hai.';
+    } else {
+      title = 'About YAAD • Bilingual Intelligence & Shopping Memory';
+      description =
+        'Discover how YAAD solves the universal problem of forgetting grocery items with native Pakistani grocery intelligence, trilingual support, and complete offline privacy.';
+    }
+  } else if (cleanPath === '/help') {
+    if (isUrdu) {
+      title = 'مدد اور عمومی سوالات • یاد ایپ کے استعمال کا طریقہ';
+      description = 'یاد ایپ کے بارے میں اکثر پوچھے جانے والے سوالات۔ آف لائن موڈ، اردو میں لسٹ بنانا اور پاس کیز کے استعمال کی رہنمائی۔';
+    } else if (isRomanUrdu) {
+      title = 'Madad Aur Sawalat • YAAD App Kaise Use Karein';
+      description = 'Aksar pooche gaye sawalat. Offline mode, passkeys login, aur Roman Urdu mein items add karne ka tareeqa.';
+    } else {
+      title = 'Help & FAQ • How to Use YAAD Shopping Reminder';
+      description =
+        'Frequently asked questions about YAAD. Learn how to use offline mode, organize grocery items by aisle, log in with Passkeys, and add items in Urdu or Roman Urdu.';
+    }
+  } else if (cleanPath === '/terms') {
+    title = isUrdu ? 'شرائط و ضوابط • یاد ایپ' : 'Terms & Conditions • YAAD Smart Shopping Memory';
+    description = isUrdu
+      ? 'یاد سمارٹ شاپنگ ایپ کے استعمال کی شرائط و ضوابط کا مطالعہ کریں۔'
+      : 'Read the clear and transparent Terms and Conditions for using YAAD Smart Shopping Memory.';
+  } else if (cleanPath === '/privacy') {
+    title = isUrdu ? 'پرائیویسی پالیسی • آپ کا ڈیٹا آپ کا ہے • یاد' : 'Privacy Policy • Your Data Stays Yours • YAAD';
+    description = isUrdu
+      ? 'آپ کی خریداری کی لسٹیں صرف آپ کی ملکیت ہیں۔ جانیے کہ یاد ایپ کس طرح راؤ لیول سیکیورٹی اور لوکل انکرپشن سے ڈیٹا محفوظ رکھتی ہے۔'
+      : 'Your shopping lists and private notes belong solely to you. Learn how YAAD protects your data with Row Level Security, local encryption, and zero ad-tracking.';
+  } else if (cleanPath === '/legal') {
+    title = isUrdu ? 'قانونی معلومات اور اعلانات • یاد ایپ' : 'Legal Information & Disclosures • YAAD';
+    description = isUrdu
+      ? 'یاد ایپ کے قانونی اعلانات، املاکِ دانش اور قواعد و ضوابط کی تفصیلات۔'
+      : 'Official legal disclosures, intellectual property notices, and compliance details for YAAD.';
+  } else if (cleanPath === '/rashan-list' || cleanPath === '/rashan' || cleanPath === '/rashan-ki-list') {
+    if (isUrdu) {
+      title = 'ماہانہ راشن لسٹ • پاکستانی گھریلو سودا سلف اور گروسری چیک لسٹ • یاد';
+      description = 'پاکستانی گھرانوں کے لیے ماہانہ راشن کی مکمل فہرست۔ چکی کا آٹا، باسمتی چاول، دالیں، گھی، روایتی پیمانے (پاؤ، درجن) اور یاد ایپ پر براہ راست لسٹ بنانے کی سہولت۔';
+    } else if (isRomanUrdu) {
+      title = 'Mahana Rashan List • Pakistan Grocery & Sauda Salaf Checklist • YAAD';
+      description = 'Pakistani gharon k liye mahana rashan ki mukammal fahreest. Atta, daalein, ghee, masalay, aur bazaar k riwayati paimanon k sath. YAAD mein foran load karein.';
+    } else {
+      title = 'Monthly Rashan List • Essential Pakistani Grocery & Pantry Checklist • YAAD';
+      description = 'The definitive monthly rashan checklist for Pakistani households. Includes chakki atta, basmati rice, daalein, ghee, traditional units (pao, darjan), storage tips, and instant 1-click import into YAAD.';
+    }
+  }
+
+  // Canonical calculation
+  const pageBasePath = cleanPath === '/' ? '/' : cleanPath;
+  let canonical = `${baseCanonical}${pageBasePath}`;
+  if (isUrdu) {
+    canonical = `${baseCanonical}${cleanPath === '/' ? '' : cleanPath}?lang=ur`;
+  } else if (isRomanUrdu) {
+    canonical = `${baseCanonical}${cleanPath === '/' ? '' : cleanPath}?lang=roman-urdu`;
+  }
+
+  // Reciprocal hreflang links
+  const targetPath = cleanPath === '/' ? '' : cleanPath;
+  const hreflangTags = `
+    <link rel="alternate" hreflang="x-default" href="${baseCanonical}${targetPath || '/'}" />
+    <link rel="alternate" hreflang="en" href="${baseCanonical}${targetPath || '/'}" />
+    <link rel="alternate" hreflang="ur" href="${baseCanonical}${targetPath}?lang=ur" />
+    <link rel="alternate" hreflang="ur-PK" href="${baseCanonical}${targetPath}?lang=ur" />
+    <link rel="alternate" hreflang="ur-Latn" href="${baseCanonical}${targetPath}?lang=roman-urdu" />`;
+
   let modified = originalHtml;
+  
+  // Set html lang and dir attributes
+  if (isUrdu) {
+    modified = modified.replace(/<html\s+lang="[^"]*"/i, '<html lang="ur-PK" dir="rtl"');
+  } else if (isRomanUrdu) {
+    modified = modified.replace(/<html\s+lang="[^"]*"/i, '<html lang="ur-Latn" dir="ltr"');
+  } else {
+    modified = modified.replace(/<html\s+lang="[^"]*"/i, '<html lang="en" dir="ltr"');
+  }
+
   modified = modified.replace(/<title>.*?<\/title>/i, `<title>${title}</title>`);
   modified = modified.replace(/<meta name="description" content=".*?"\s*\/?>/i, `<meta name="description" content="${description}" />`);
-  modified = modified.replace(/<link rel="canonical" href=".*?"\s*\/?>/i, `<link rel="canonical" href="${canonical}" />`);
+  modified = modified.replace(/<link rel="canonical" href=".*?"\s*\/?>/i, `<link rel="canonical" href="${canonical}" />${hreflangTags}`);
   modified = modified.replace(/<meta property="og:title" content=".*?"\s*\/?>/i, `<meta property="og:title" content="${title}" />`);
   modified = modified.replace(/<meta property="og:description" content=".*?"\s*\/?>/i, `<meta property="og:description" content="${description}" />`);
   modified = modified.replace(/<meta property="og:url" content=".*?"\s*\/?>/i, `<meta property="og:url" content="${canonical}" />`);
@@ -1690,7 +1757,7 @@ async function startServer() {
       const indexPath = path.join(distPath, 'index.html');
       if (fs.existsSync(indexPath)) {
         const rawHtml = fs.readFileSync(indexPath, 'utf-8');
-        const enrichedHtml = getInjectedHtml(rawHtml, req.path);
+        const enrichedHtml = getInjectedHtml(rawHtml, req.path, req.query.lang as string);
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         return res.send(enrichedHtml);
       }

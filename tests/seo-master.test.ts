@@ -28,6 +28,7 @@ async function runSeoTests() {
   assert(robotsContent.includes('Allow: /terms'), 'robots.txt allows /terms');
   assert(robotsContent.includes('Allow: /privacy'), 'robots.txt allows /privacy');
   assert(robotsContent.includes('Allow: /legal'), 'robots.txt allows /legal');
+  assert(robotsContent.includes('Allow: /rashan-list'), 'robots.txt allows /rashan-list');
 
   // Strict Private Data Safeguards
   assert(robotsContent.includes('Disallow: /lists/'), 'robots.txt explicitly disallows /lists/');
@@ -47,13 +48,14 @@ async function runSeoTests() {
   assert(sitemapContent.includes('xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"'), 'sitemap has valid XML namespace');
   assert(sitemapContent.includes('xmlns:xhtml="http://www.w3.org/1999/xhtml"'), 'sitemap has valid XHTML namespace for hreflang');
 
-  // Verify all 6 public indexable URLs are included
+  // Verify all 7 public indexable URLs are included
   assert(sitemapContent.includes('<loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/</loc>'), 'sitemap includes homepage loc');
   assert(sitemapContent.includes('<loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/about</loc>'), 'sitemap includes /about loc');
   assert(sitemapContent.includes('<loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/help</loc>'), 'sitemap includes /help loc');
   assert(sitemapContent.includes('<loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/terms</loc>'), 'sitemap includes /terms loc');
   assert(sitemapContent.includes('<loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/privacy</loc>'), 'sitemap includes /privacy loc');
   assert(sitemapContent.includes('<loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/legal</loc>'), 'sitemap includes /legal loc');
+  assert(sitemapContent.includes('<loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/rashan-list</loc>'), 'sitemap includes /rashan-list loc');
 
   // Verify hreflang annotations
   assert(sitemapContent.includes('hreflang="en"'), 'sitemap includes English hreflang');
@@ -98,12 +100,29 @@ async function runSeoTests() {
   assert(indexHtml.includes(metadataJson.name), 'index.html title includes metadata.json name');
   assert(indexHtml.includes(metadataJson.description), 'index.html description matches metadata.json description');
 
-  // --- 5. Strategic SEO Documents Inspection ---
+  // --- 5. BeyondSEO Strategic Audit & Content Documents ---
   console.log('\n--- 5. BeyondSEO Strategic Audit & Content Documents ---');
-  assert(fs.existsSync(path.join(process.cwd(), 'SEO_AUDIT.md')), 'SEO_AUDIT.md created');
-  assert(fs.existsSync(path.join(process.cwd(), 'SEO_IMPLEMENTATION_PLAN.md')), 'SEO_IMPLEMENTATION_PLAN.md created');
-  assert(fs.existsSync(path.join(process.cwd(), 'SEO_KEYWORD_STRATEGY.md')), 'SEO_KEYWORD_STRATEGY.md created');
-  assert(fs.existsSync(path.join(process.cwd(), 'SEO_CONTENT_PLAN.md')), 'SEO_CONTENT_PLAN.md created');
+  assert(fs.existsSync(path.join(process.cwd(), 'SEO_AUDIT.md')), 'SEO_AUDIT.md exists');
+  assert(fs.existsSync(path.join(process.cwd(), 'SEO_IMPLEMENTATION_PLAN.md')), 'SEO_IMPLEMENTATION_PLAN.md exists');
+  assert(fs.existsSync(path.join(process.cwd(), 'SEO_KEYWORD_STRATEGY.md')), 'SEO_KEYWORD_STRATEGY.md exists');
+  assert(fs.existsSync(path.join(process.cwd(), 'SEO_CONTENT_PLAN.md')), 'SEO_CONTENT_PLAN.md exists');
+
+  // --- 6. Phase 2 Production Verification & Operations Documents ---
+  console.log('\n--- 6. Phase 2 Production Verification & Operations Documents ---');
+  assert(fs.existsSync(path.join(process.cwd(), 'SEO_SEARCH_CONSOLE_SETUP.md')), 'SEO_SEARCH_CONSOLE_SETUP.md exists');
+  assert(fs.existsSync(path.join(process.cwd(), 'SEO_BING_SETUP.md')), 'SEO_BING_SETUP.md exists');
+  assert(fs.existsSync(path.join(process.cwd(), 'SEO_CONTENT_ROADMAP.md')), 'SEO_CONTENT_ROADMAP.md exists');
+  assert(fs.existsSync(path.join(process.cwd(), 'SEO_PRODUCTION_VERIFICATION.md')), 'SEO_PRODUCTION_VERIFICATION.md exists');
+  assert(fs.existsSync(path.join(process.cwd(), 'SEO_FINAL_CHECKLIST.md')), 'SEO_FINAL_CHECKLIST.md exists');
+
+  // Verify Rashan List cluster is documented
+  const kwStrategy = fs.readFileSync(path.join(process.cwd(), 'SEO_KEYWORD_STRATEGY.md'), 'utf-8');
+  assert(kwStrategy.includes('راشن لسٹ'), 'SEO_KEYWORD_STRATEGY.md includes Rashan list cluster in Urdu');
+  assert(kwStrategy.includes('rashan list'), 'SEO_KEYWORD_STRATEGY.md includes rashan list in Roman Urdu');
+
+  // Verify Sitemap URL count (7 public pages × 3 language alternates = 21 URLs)
+  const sitemapUrlMatches = sitemapContent.match(/<loc>/g);
+  assert(sitemapUrlMatches !== null && sitemapUrlMatches.length === 21, `Sitemap contains exactly 21 URLs across language alternates (found: ${sitemapUrlMatches?.length})`);
 
   console.log('\n🎉 ALL SEO & ARCHITECTURAL VERIFICATION TESTS PASSED PERFECTLY!\n');
 }

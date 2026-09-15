@@ -1,8 +1,10 @@
 import React, { useEffect } from 'react';
 import { useAppRouter } from '../router/RouterContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import { SITE_CONFIG, getBaseSiteUrl, getAbsoluteCanonicalUrl } from '../config/siteConfig';
 import { FAQS } from '../components/legal/legalContent';
+import { RASHAN_FAQS } from '../components/rashan/rashanData';
 
 /**
  * Helper to get or create a tag in <head>
@@ -40,6 +42,33 @@ function setCanonicalLink(href: string | null) {
   link.setAttribute('href', href);
 }
 
+function updateHreflangLinks(baseUrl: string, canonicalPath: string) {
+  // Remove existing dynamic hreflang links
+  document.querySelectorAll('link[data-yaad-hreflang="true"]').forEach((el) => el.remove());
+
+  const cleanPath = canonicalPath === '/' ? '' : canonicalPath;
+  const alternates = [
+    { lang: 'x-default', href: `${baseUrl}${cleanPath || '/'}` },
+    { lang: 'en', href: `${baseUrl}${cleanPath || '/'}` },
+    { lang: 'ur', href: `${baseUrl}${cleanPath || '/'}?lang=ur` },
+    { lang: 'ur-PK', href: `${baseUrl}${cleanPath || '/'}?lang=ur` },
+    { lang: 'ur-Latn', href: `${baseUrl}${cleanPath || '/'}?lang=roman-urdu` },
+  ];
+
+  alternates.forEach(({ lang, href }) => {
+    const link = document.createElement('link');
+    link.setAttribute('rel', 'alternate');
+    link.setAttribute('hreflang', lang);
+    link.setAttribute('href', href);
+    link.setAttribute('data-yaad-hreflang', 'true');
+    document.head.appendChild(link);
+  });
+}
+
+function removeHreflangLinks() {
+  document.querySelectorAll('link[data-yaad-hreflang="true"]').forEach((el) => el.remove());
+}
+
 function setJsonLdScript(id: string, data: object | null) {
   const existingScript = document.getElementById(id);
   if (!data) {
@@ -62,6 +91,7 @@ function setJsonLdScript(id: string, data: object | null) {
 export const HeadManager: React.FC = () => {
   const { route } = useAppRouter();
   const { language, isRTL } = useLanguage();
+  const { user } = useAuth();
 
   useEffect(() => {
     const baseUrl = getBaseSiteUrl();
@@ -76,10 +106,14 @@ export const HeadManager: React.FC = () => {
       htmlElement.setAttribute('dir', isRTL ? 'rtl' : 'ltr');
     }
 
-    // 2. Identify if route is public indexable
-    const isPublicHome = routeId === 'root' || routeId === 'home';
-    const isPublicEditorial = ['about', 'help', 'terms', 'privacy', 'legal'].includes(routeId);
-    const isIndexablePublicRoute = isPublicHome || isPublicEditorial;
+    // 2. Identify if route is public indexable:
+    // Public indexable routes are strictly:
+    // - root '/' ONLY when unauthenticated (public landing / sign-in welcome)
+    // - public editorial routes: 'about', 'help', 'terms', 'privacy', 'legal'
+    // /home is NEVER indexable (it is the user's private shopping dashboard)
+    const isPublicEditorial = ['about', 'help', 'terms', 'privacy', 'legal', 'rashan_list'].includes(routeId);
+    const isPublicLanding = (routeId === 'root' || routeId === 'auth') && !user;
+    const isIndexablePublicRoute = (isPublicLanding || isPublicEditorial) && !user;
 
     if (!isIndexablePublicRoute) {
       // -------------------------------------------------------------
@@ -87,10 +121,15 @@ export const HeadManager: React.FC = () => {
       // -------------------------------------------------------------
       setMetaTag('robots', 'noindex, nofollow, noarchive');
       setCanonicalLink(null);
+      removeHreflangLinks();
       setJsonLdScript('schema-org-data', null);
 
       // Clean, unbranded internal title for protected screens
       switch (routeId) {
+        case 'home':
+        case 'root':
+          document.title = 'Shopping Lists • YAAD';
+          break;
         case 'create':
         case 'add_items':
           document.title = 'New Shopping List • YAAD';
@@ -136,18 +175,31 @@ export const HeadManager: React.FC = () => {
     else if (routeId === 'terms') pageKey = 'terms';
     else if (routeId === 'privacy') pageKey = 'privacy';
     else if (routeId === 'legal') pageKey = 'legal';
+    else if (routeId === 'rashan_list') pageKey = 'rashanList';
 
     const pageConfig = SITE_CONFIG.pages[pageKey] || SITE_CONFIG.pages.home;
 
     const pageTitle = pageConfig.title[currentLangKey] || pageConfig.title.en;
     const pageDescription = pageConfig.description[currentLangKey] || pageConfig.description.en;
     const canonicalPath = pageConfig.canonicalPath;
-    const absoluteCanonical = getAbsoluteCanonicalUrl(canonicalPath);
+    
+    // Canonical calculation with language parameter support
+    const baseCanonical = getAbsoluteCanonicalUrl(canonicalPath);
+    let absoluteCanonical = baseCanonical;
+    if (language === 'ur') {
+      absoluteCanonical = `${baseCanonical}${baseCanonical.endsWith('/') ? '' : '/'}?lang=ur`;
+    } else if (language === 'roman-urdu') {
+      absoluteCanonical = `${baseCanonical}${baseCanonical.endsWith('/') ? '' : '/'}?lang=roman-urdu`;
+    }
+
     const ogImageUrl = `${baseUrl}${SITE_CONFIG.ogImage}`;
 
     // Apply Document Title & Canonical
     document.title = pageTitle;
     setCanonicalLink(absoluteCanonical);
+
+    // Apply Reciprocal Hreflang Links
+    updateHreflangLinks(baseUrl, canonicalPath);
 
     // Primary Meta Description
     setMetaTag('description', pageDescription);
@@ -266,6 +318,50 @@ export const HeadManager: React.FC = () => {
           },
         ],
       };
+    } else if (pageKey === 'rashanList') {
+      const faqEntities = RASHAN_FAQS.map((faq) => ({
+        '@type': 'Question',
+        name: faq.question[currentLangKey] || faq.question.en,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: faq.answer[currentLangKey] || faq.answer.en,
+        },
+      }));
+
+      structuredData = {
+        '@context': 'https://schema.org',
+        '@graph': [
+          organizationSchema,
+          {
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              {
+                '@type': 'ListItem',
+                position: 1,
+                name: 'Home',
+                item: baseUrl,
+              },
+              {
+                '@type': 'ListItem',
+                position: 2,
+                name: language === 'ur' ? 'ماہانہ راشن لسٹ' : 'Monthly Rashan List',
+                item: absoluteCanonical,
+              },
+            ],
+          },
+          {
+            '@type': 'ItemPage',
+            name: pageTitle,
+            description: pageDescription,
+            url: absoluteCanonical,
+            inLanguage: language === 'ur' ? 'ur' : 'en',
+          },
+          {
+            '@type': 'FAQPage',
+            mainEntity: faqEntities,
+          },
+        ],
+      };
     } else {
       // General Editorial / Legal Page Schema
       structuredData = {
@@ -301,7 +397,7 @@ export const HeadManager: React.FC = () => {
     }
 
     setJsonLdScript('schema-org-data', structuredData);
-  }, [route, language, isRTL]);
+  }, [route, language, isRTL, user]);
 
   return null;
 };

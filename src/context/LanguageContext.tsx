@@ -21,13 +21,42 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
   const { profile, updateUserProfile, user } = useAuth();
 
   const [language, setLanguageState] = useState<Language>(() => {
-    // Check localStorage first
-    const saved = localStorage.getItem(LANGUAGE_STORAGE_KEY) as Language | null;
+    // 1. Check URL search param first (for SEO / direct shared links, e.g. /about?lang=ur)
+    if (typeof window !== 'undefined') {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlLang = urlParams.get('lang');
+        if (urlLang === 'ur' || urlLang === 'roman-urdu' || urlLang === 'en') {
+          return urlLang as Language;
+        }
+      } catch {}
+    }
+
+    // 2. Check localStorage
+    const saved = typeof localStorage !== 'undefined' ? (localStorage.getItem(LANGUAGE_STORAGE_KEY) as Language | null) : null;
     if (saved && (saved === 'en' || saved === 'roman-urdu' || saved === 'ur')) {
       return saved;
     }
     return 'en';
   });
+
+  // Listen to popstate or direct URL param changes
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleLocationChange = () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlLang = urlParams.get('lang');
+      if (urlLang && (urlLang === 'ur' || urlLang === 'roman-urdu' || urlLang === 'en')) {
+        if (urlLang !== language) {
+          setLanguageState(urlLang as Language);
+        }
+      }
+    };
+
+    window.addEventListener('popstate', handleLocationChange);
+    return () => window.removeEventListener('popstate', handleLocationChange);
+  }, [language]);
 
   // Sync with profile if available
   useEffect(() => {
@@ -46,7 +75,26 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
-    localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
+    }
+
+    // On public pages, synchronize URL parameter cleanly without reloading
+    if (typeof window !== 'undefined' && window.location) {
+      const path = window.location.pathname;
+      const isPublic = ['/', '/about', '/help', '/terms', '/privacy', '/legal'].includes(path);
+      if (isPublic) {
+        try {
+          const url = new URL(window.location.href);
+          if (lang === 'en') {
+            url.searchParams.delete('lang');
+          } else {
+            url.searchParams.set('lang', lang);
+          }
+          window.history.replaceState({}, '', url.toString());
+        } catch {}
+      }
+    }
 
     // If logged in, update remote profile asynchronously
     if (user) {

@@ -47,6 +47,7 @@ import { detectDuplicateItem, mergeQuantities } from './lib/recognition';
 import { getFriendlyErrorMessage } from './utils/errorFormatting';
 import { LegalPageView } from './components/legal/LegalPageView';
 import { LegalPageType } from './components/legal/legalContent';
+import { RashanListPage } from './components/rashan/RashanListPage';
 import { HeadManager } from './seo/HeadManager';
 
 const STORAGE_ONBOARDED_KEY = 'yaad_has_onboarded_v2';
@@ -168,6 +169,8 @@ function AppContent() {
         return 'help';
       case 'legal':
         return 'legal';
+      case 'rashan_list':
+        return 'rashan_list';
       case 'not_found':
       default:
         return 'not_found';
@@ -1179,8 +1182,28 @@ function AppContent() {
         />
       )}
 
+      {/* 1b. Public Dedicated Monthly Rashan List Page */}
+      {currentScreen === 'rashan_list' && (
+        <RashanListPage
+          onBackToApp={() => {
+            navigate(user ? '/home' : '/');
+          }}
+          onOpenAppWithList={async (newList) => {
+            setLists((prev) => [newList, ...prev]);
+            if (user && isConfigured) {
+              await saveUserShoppingList(user.id, newList);
+            }
+            setActiveListId(newList.id);
+            navigate(`/lists/${newList.id}`);
+          }}
+          onNavigatePage={(path) => {
+            navigate(path);
+          }}
+        />
+      )}
+
       {/* 2. Splash Screen on Launch */}
-      {!hasSplashFinished && (
+      {!hasSplashFinished && currentScreen !== 'rashan_list' && (
         <SplashView onFinish={handleSplashFinish} />
       )}
 
@@ -1197,7 +1220,7 @@ function AppContent() {
       )}
 
       {/* 4. Public Unauthenticated View */}
-      {hasSplashFinished && !isPasswordResetRequiredActive && !user && !LEGAL_SCREENS.includes(currentScreen) && currentScreen !== 'not_found' && (
+      {hasSplashFinished && !isPasswordResetRequiredActive && !user && !LEGAL_SCREENS.includes(currentScreen) && currentScreen !== 'not_found' && currentScreen !== 'rashan_list' && (
         <AuthView
           onSuccess={handleAuthSuccess}
           onOpenLegalPage={handleOpenLegalPage}

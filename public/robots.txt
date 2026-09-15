@@ -16,6 +16,8 @@ Allow: /privacy$
 Allow: /privacy
 Allow: /legal$
 Allow: /legal
+Allow: /rashan-list$
+Allow: /rashan-list
 
 # Allow Public Assets & Icons
 Allow: /favicon.ico
@@ -29,6 +31,13 @@ Allow: /manifest.json
 
 # Strictly Disallow Private User Shopping Lists & Sensitive App States
 # (Never index private user data, authenticated dashboards, or tokens)
+Disallow: /home
+Disallow: /home/
+Disallow: /auth
+Disallow: /auth/
+Disallow: /login
+Disallow: /signin
+Disallow: /signup
 Disallow: /lists/
 Disallow: /history/
 Disallow: /history$

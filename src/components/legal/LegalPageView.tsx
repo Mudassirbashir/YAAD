@@ -849,27 +849,16 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
         {/* 5. UNIFIED LEGAL FOOTER WITH DIRECT LINK DIRECTORY */}
         {/* ================================================================ */}
         <footer className="pt-10 border-t border-surface-dim space-y-6 text-center">
-          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-semibold">
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs font-semibold">
             <a
-              href="/terms"
+              href="/"
               onClick={(e) => {
                 e.preventDefault();
-                handleTabClick('terms');
+                onBack();
               }}
-              className={`transition-colors ${currentPage === 'terms' ? 'text-primary font-bold' : 'text-outline hover:text-on-surface'}`}
+              className="text-outline hover:text-on-surface transition-colors"
             >
-              Terms & Conditions (/terms)
-            </a>
-            <span className="text-surface-dim">•</span>
-            <a
-              href="/privacy"
-              onClick={(e) => {
-                e.preventDefault();
-                handleTabClick('privacy');
-              }}
-              className={`transition-colors ${currentPage === 'privacy' ? 'text-primary font-bold' : 'text-outline hover:text-on-surface'}`}
-            >
-              Privacy Policy (/privacy)
+              Home
             </a>
             <span className="text-surface-dim">•</span>
             <a
@@ -880,7 +869,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
               }}
               className={`transition-colors ${currentPage === 'about' ? 'text-primary font-bold' : 'text-outline hover:text-on-surface'}`}
             >
-              About YAAD (/about)
+              About YAAD
             </a>
             <span className="text-surface-dim">•</span>
             <a
@@ -891,7 +880,40 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
               }}
               className={`transition-colors ${currentPage === 'help' ? 'text-primary font-bold' : 'text-outline hover:text-on-surface'}`}
             >
-              Help & FAQ (/help)
+              Help & FAQ
+            </a>
+            <span className="text-surface-dim">•</span>
+            <a
+              href="/privacy"
+              onClick={(e) => {
+                e.preventDefault();
+                handleTabClick('privacy');
+              }}
+              className={`transition-colors ${currentPage === 'privacy' ? 'text-primary font-bold' : 'text-outline hover:text-on-surface'}`}
+            >
+              Privacy Policy
+            </a>
+            <span className="text-surface-dim">•</span>
+            <a
+              href="/terms"
+              onClick={(e) => {
+                e.preventDefault();
+                handleTabClick('terms');
+              }}
+              className={`transition-colors ${currentPage === 'terms' ? 'text-primary font-bold' : 'text-outline hover:text-on-surface'}`}
+            >
+              Terms & Conditions
+            </a>
+            <span className="text-surface-dim">•</span>
+            <a
+              href="/legal"
+              onClick={(e) => {
+                e.preventDefault();
+                handleTabClick('legal');
+              }}
+              className={`transition-colors ${currentPage === 'legal' ? 'text-primary font-bold' : 'text-outline hover:text-on-surface'}`}
+            >
+              Legal Notices
             </a>
           </div>
 

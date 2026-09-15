@@ -117,6 +117,19 @@ These phrases target ChatGPT Search, Google Gemini Search, and Perplexity answer
 | `YAAD vs Google Keep for groceries` | Keep is a blank note; YAAD auto-categorizes Pakistani and global items, tracks units (kilo, pao, darjan), and provides dedicated shopping completion mode. | Never disparage Google Keep; emphasize domain specialization. |
 | `YAAD vs AnyList` | AnyList is tailored for Western supermarkets; YAAD natively supports Urdu, Roman Urdu, Pakistani staples, and requires zero paid subscription. | Factual feature differentiation. |
 
+### Cluster 13: Monthly Rashan & Household Essentials (راشن لسٹ)
+*Targeting the critical Pakistani and diaspora household intent of planning and tracking recurring monthly grocery staples.*
+
+| Keyword / Phrase | Script / Language | Search Intent | Target Content Asset |
+| :--- | :--- | :--- | :--- |
+| `rashan list` | Roman Urdu / EN | High (Monthly planning) | Help & Editorial Roadmap |
+| `monthly rashan list` | English / Roman | High (Budget & pantry audit) | Editorial Roadmap |
+| `راشن لسٹ` | Urdu (Nastaliq) | High (Primary household query) | Landing Page & Help Hub |
+| `گھر کا راشن لسٹ` | Urdu | High (Family pantry inventory) | Help Hub (`?lang=ur`) |
+| `monthly grocery list for family` | English | Informational / Utility | Editorial Guides |
+| `kitchen rashan list urdu` | Mixed | Practical shopping checklist | Help & FAQ Page |
+| `sauda salaf monthly budget` | Roman Urdu | Commercial / Utility | Statistics & Future Guides |
+
 ---
 
 ## 3. Strict Quality & Anti-Stuffing Mandates

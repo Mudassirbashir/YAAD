@@ -2,76 +2,263 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
-  <!-- 1. Home / Landing Page -->
+  <!-- ================================================================ -->
+  <!-- 1. Home / Landing Page (English, Urdu, Roman Urdu) -->
+  <!-- ================================================================ -->
   <url>
     <loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/</loc>
     <lastmod>2026-09-14</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/" />
-    <xhtml:link rel="alternate" hreflang="ur" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/" />
-    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/" />
-    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/" />
+    <xhtml:link rel="alternate" hreflang="ur" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/?lang=roman-urdu" />
+  </url>
+  <url>
+    <loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/?lang=ur</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/" />
+    <xhtml:link rel="alternate" hreflang="ur" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/?lang=roman-urdu" />
+  </url>
+  <url>
+    <loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/?lang=roman-urdu</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/" />
+    <xhtml:link rel="alternate" hreflang="ur" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/?lang=roman-urdu" />
   </url>
 
-  <!-- 2. About YAAD (Mission, Bilingual Intelligence, Craft) -->
+  <!-- ================================================================ -->
+  <!-- 2. About YAAD (Bilingual Grocery Intelligence) -->
+  <!-- ================================================================ -->
   <url>
     <loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/about</loc>
     <lastmod>2026-09-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/about" />
-    <xhtml:link rel="alternate" hreflang="ur" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/about" />
-    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/about" />
-    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/about" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/about" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/about" />
+    <xhtml:link rel="alternate" hreflang="ur" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/about?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/about?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/about?lang=roman-urdu" />
+  </url>
+  <url>
+    <loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/about?lang=ur</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/about" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/about" />
+    <xhtml:link rel="alternate" hreflang="ur" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/about?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/about?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/about?lang=roman-urdu" />
+  </url>
+  <url>
+    <loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/about?lang=roman-urdu</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/about" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/about" />
+    <xhtml:link rel="alternate" hreflang="ur" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/about?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/about?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/about?lang=roman-urdu" />
   </url>
 
+  <!-- ================================================================ -->
   <!-- 3. Help & FAQ Hub (FAQPage Schema target) -->
+  <!-- ================================================================ -->
   <url>
     <loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/help</loc>
     <lastmod>2026-09-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/help" />
-    <xhtml:link rel="alternate" hreflang="ur" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/help" />
-    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/help" />
-    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/help" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/help" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/help" />
+    <xhtml:link rel="alternate" hreflang="ur" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/help?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/help?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/help?lang=roman-urdu" />
+  </url>
+  <url>
+    <loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/help?lang=ur</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/help" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/help" />
+    <xhtml:link rel="alternate" hreflang="ur" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/help?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/help?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/help?lang=roman-urdu" />
+  </url>
+  <url>
+    <loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/help?lang=roman-urdu</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/help" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/help" />
+    <xhtml:link rel="alternate" hreflang="ur" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/help?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/help?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/help?lang=roman-urdu" />
   </url>
 
+  <!-- ================================================================ -->
   <!-- 4. Terms of Service -->
+  <!-- ================================================================ -->
   <url>
     <loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/terms</loc>
     <lastmod>2026-09-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/terms" />
-    <xhtml:link rel="alternate" hreflang="ur" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/terms" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/terms" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/terms" />
+    <xhtml:link rel="alternate" hreflang="ur" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/terms?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/terms?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/terms?lang=roman-urdu" />
+  </url>
+  <url>
+    <loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/terms?lang=ur</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/terms" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/terms" />
+    <xhtml:link rel="alternate" hreflang="ur" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/terms?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/terms?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/terms?lang=roman-urdu" />
+  </url>
+  <url>
+    <loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/terms?lang=roman-urdu</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/terms" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/terms" />
+    <xhtml:link rel="alternate" hreflang="ur" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/terms?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/terms?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/terms?lang=roman-urdu" />
   </url>
 
-  <!-- 5. Privacy Policy (Zero Data Selling, RLS, Local Storage) -->
+  <!-- ================================================================ -->
+  <!-- 5. Privacy Policy (Row Level Security & Offline Privacy) -->
+  <!-- ================================================================ -->
   <url>
     <loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/privacy</loc>
     <lastmod>2026-09-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/privacy" />
-    <xhtml:link rel="alternate" hreflang="ur" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/privacy" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/privacy" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/privacy" />
+    <xhtml:link rel="alternate" hreflang="ur" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/privacy?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/privacy?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/privacy?lang=roman-urdu" />
+  </url>
+  <url>
+    <loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/privacy?lang=ur</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/privacy" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/privacy" />
+    <xhtml:link rel="alternate" hreflang="ur" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/privacy?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/privacy?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/privacy?lang=roman-urdu" />
+  </url>
+  <url>
+    <loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/privacy?lang=roman-urdu</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/privacy" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/privacy" />
+    <xhtml:link rel="alternate" hreflang="ur" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/privacy?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/privacy?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/privacy?lang=roman-urdu" />
   </url>
 
+  <!-- ================================================================ -->
   <!-- 6. Legal Notices & Disclosures -->
+  <!-- ================================================================ -->
   <url>
     <loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/legal</loc>
     <lastmod>2026-09-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
-    <xhtml:link rel="alternate" hreflang="en" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/legal" />
-    <xhtml:link rel="alternate" hreflang="ur" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/legal" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/legal" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/legal" />
+    <xhtml:link rel="alternate" hreflang="ur" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/legal?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/legal?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/legal?lang=roman-urdu" />
+  </url>
+  <url>
+    <loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/legal?lang=ur</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/legal" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/legal" />
+    <xhtml:link rel="alternate" hreflang="ur" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/legal?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/legal?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/legal?lang=roman-urdu" />
+  </url>
+  <url>
+    <loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/legal?lang=roman-urdu</loc>
+    <lastmod>2026-09-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/legal" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/legal" />
+    <xhtml:link rel="alternate" hreflang="ur" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/legal?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/legal?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/legal?lang=roman-urdu" />
+  </url>
+
+  <!-- ================================================================ -->
+  <!-- 7. Monthly Rashan List & Essential Pantry Guide -->
+  <!-- ================================================================ -->
+  <url>
+    <loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/rashan-list</loc>
+    <lastmod>2026-09-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/rashan-list" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/rashan-list" />
+    <xhtml:link rel="alternate" hreflang="ur" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/rashan-list?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/rashan-list?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/rashan-list?lang=roman-urdu" />
+  </url>
+  <url>
+    <loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/rashan-list?lang=ur</loc>
+    <lastmod>2026-09-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/rashan-list" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/rashan-list" />
+    <xhtml:link rel="alternate" hreflang="ur" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/rashan-list?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/rashan-list?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/rashan-list?lang=roman-urdu" />
+  </url>
+  <url>
+    <loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/rashan-list?lang=roman-urdu</loc>
+    <lastmod>2026-09-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/rashan-list" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/rashan-list" />
+    <xhtml:link rel="alternate" hreflang="ur" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/rashan-list?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/rashan-list?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/rashan-list?lang=roman-urdu" />
   </url>
 
 </urlset>

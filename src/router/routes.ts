@@ -25,6 +25,7 @@ export type AppRouteId =
   | 'about'
   | 'help'
   | 'legal'
+  | 'rashan_list'
   | 'not_found';
 
 export type SettingsSubSection = 'profile' | 'security' | 'language' | 'preferences' | 'about';
@@ -47,6 +48,7 @@ export function isProtectedRoute(routeId: AppRouteId): boolean {
     case 'about':
     case 'help':
     case 'legal':
+    case 'rashan_list':
     case 'auth':
     case 'reset_password':
     case 'not_found':
@@ -329,7 +331,18 @@ export function parseRoute(rawPathname: string): ParsedRoute {
     };
   }
 
-  // 10. Unmatched / 404
+  // 10. Dedicated Public Editorial & Rashan Guide
+  if (norm === '/rashan-list' || norm === '/rashan' || norm === '/rashan-ki-list' || norm === '/monthly-rashan') {
+    return {
+      routeId: 'rashan_list',
+      pathname: '/rashan-list',
+      params: {},
+      isProtected: false,
+      canonicalPath: '/rashan-list',
+    };
+  }
+
+  // 11. Unmatched / 404
   return {
     routeId: 'not_found',
     pathname: norm,
@@ -389,6 +402,8 @@ export function buildCanonicalPath(
       return '/help';
     case 'legal':
       return '/legal';
+    case 'rashan_list':
+      return '/rashan-list';
     case 'not_found':
     default:
       return '/404';

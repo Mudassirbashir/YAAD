@@ -1252,7 +1252,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
               onClick={() => onOpenLegalPage?.('about')}
               className="hover:text-on-surface transition-colors hover:underline"
             >
-              About YAAD (/about)
+              About YAAD
             </button>
             <span>•</span>
             <button
@@ -1260,7 +1260,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
               onClick={() => onOpenLegalPage?.('help')}
               className="hover:text-on-surface transition-colors hover:underline"
             >
-              Help & FAQ (/help)
+              Help & FAQ
             </button>
           </div>
         </div>
