@@ -722,30 +722,56 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
             </div>
 
             <div className="flex flex-wrap items-center gap-4">
-              <button
-                onClick={() => onNavigatePage('/about')}
+              <a
+                href="/about"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onNavigatePage('/about');
+                }}
                 className="hover:text-[#005039] hover:underline cursor-pointer"
               >
                 About YAAD
-              </button>
-              <button
-                onClick={() => onNavigatePage('/help')}
+              </a>
+              <a
+                href="/help"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onNavigatePage('/help');
+                }}
                 className="hover:text-[#005039] hover:underline cursor-pointer"
               >
                 Help & FAQ
-              </button>
-              <button
-                onClick={() => onNavigatePage('/privacy')}
+              </a>
+              <a
+                href="/privacy"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onNavigatePage('/privacy');
+                }}
                 className="hover:text-[#005039] hover:underline cursor-pointer"
               >
                 Privacy Policy
-              </button>
-              <button
-                onClick={() => onNavigatePage('/terms')}
+              </a>
+              <a
+                href="/terms"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onNavigatePage('/terms');
+                }}
                 className="hover:text-[#005039] hover:underline cursor-pointer"
               >
                 Terms of Service
-              </button>
+              </a>
+              <a
+                href="/legal"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onNavigatePage('/legal');
+                }}
+                className="hover:text-[#005039] hover:underline cursor-pointer"
+              >
+                Legal Notices
+              </a>
             </div>
           </div>
 

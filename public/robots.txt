@@ -56,4 +56,4 @@ Disallow: /reset_password
 Disallow: /api/
 
 # Sitemap Location
-Sitemap: https://yaad-mudassirbashir530-creators-projects.vercel.app/sitemap.xml
+Sitemap: https://yaadapppk.vercel.app/sitemap.xml

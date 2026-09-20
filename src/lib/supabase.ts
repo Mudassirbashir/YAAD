@@ -4,6 +4,7 @@ import { UserProfile, ShoppingList, ShoppingItem, CategoryId, FrequentlyBoughtIt
 import { generateUUID, isValidUUID, generateDeterministicUUID } from './uuid';
 import { broadcastCrossDeviceSync } from './realtimeSync';
 import { defaultItemCatalog } from './recognition/catalog';
+import { getAuthRedirectUrl } from '../config/siteConfig';
 import {
   getOfflineLists,
   saveOfflineList,
@@ -1998,7 +1999,7 @@ export function formatAuthErrorMessage(error: unknown): string {
     lower.includes('passkey was not found') ||
     lower.includes('failed to find')
   ) {
-    return 'No passkey found for this account/device. Use Email or Google to sign in.';
+    return 'Your passkey was created on an earlier domain. Please sign in with Email or Google and register a new passkey in Settings.';
   }
 
   if (
@@ -2007,9 +2008,11 @@ export function formatAuthErrorMessage(error: unknown): string {
     lower.includes('rp id') ||
     lower.includes('not a valid domain string') ||
     lower.includes('domain-bound') ||
+    lower.includes('yaadapppk.vercel.app') ||
+    lower.includes('yaad-three.vercel.app') ||
     lower.includes('yaad-mudassirbashir530-creators-projects.vercel.app')
   ) {
-    return 'Passkey authentication is domain-bound to production (yaad-mudassirbashir530-creators-projects.vercel.app). On this preview environment, please continue with Email or Google.';
+    return 'Passkey authentication is domain-bound to production (yaadapppk.vercel.app). On this preview environment, please continue with Email or Google.';
   }
 
   // 8. OAUTH PROVIDER, CANCELLATION & ERRORS
@@ -2163,9 +2166,7 @@ export async function sendPasswordResetEmail(email: string): Promise<{ error: Er
 
   try {
     const trimmedEmail = email.trim().toLowerCase();
-    const redirectUrl = typeof window !== 'undefined'
-      ? `${window.location.origin}${window.location.pathname}`
-      : undefined;
+    const redirectUrl = getAuthRedirectUrl('/reset-password');
 
     const { error } = await supabase.auth.resetPasswordForEmail(trimmedEmail, {
       redirectTo: redirectUrl,

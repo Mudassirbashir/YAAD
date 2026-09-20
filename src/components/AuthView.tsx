@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useAppRouter } from '../router/RouterContext';
 import { APP_IMAGES } from '../data/initialData';
 import { formatAuthErrorMessage } from '../lib/supabase';
 import { isPasskeySupported } from '../lib/passkey';
@@ -40,7 +41,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
   onSuccess,
   onOpenLegalPage,
 }) => {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
+  const { navigate } = useAppRouter();
   const {
     signIn,
     signUp,
@@ -1246,7 +1248,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
             </button>
             .
           </p>
-          <div className="flex items-center justify-center gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
             <button
               type="button"
               onClick={() => onOpenLegalPage?.('about')}
@@ -1262,6 +1264,34 @@ export const AuthView: React.FC<AuthViewProps> = ({
             >
               Help & FAQ
             </button>
+            <span>•</span>
+            <a
+              id="auth_footer_rashan_link"
+              href={
+                language === 'ur'
+                  ? '/rashan-list?lang=ur'
+                  : language === 'roman-urdu'
+                  ? '/rashan-list?lang=roman-urdu'
+                  : '/rashan-list'
+              }
+              onClick={(e) => {
+                e.preventDefault();
+                navigate(
+                  language === 'ur'
+                    ? '/rashan-list?lang=ur'
+                    : language === 'roman-urdu'
+                    ? '/rashan-list?lang=roman-urdu'
+                    : '/rashan-list'
+                );
+              }}
+              className="hover:text-on-surface transition-colors hover:underline"
+            >
+              {language === 'ur'
+                ? 'ماہانہ راشن لسٹ'
+                : language === 'roman-urdu'
+                ? 'Mahana Rashan List'
+                : 'Monthly Rashan List'}
+            </a>
           </div>
         </div>
       </div>

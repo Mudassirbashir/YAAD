@@ -11,7 +11,7 @@
  */
 
 const INDEXNOW_KEY = '8f21b34e6c9941a8b9e652a912d0831f';
-const HOST = 'yaad-mudassirbashir530-creators-projects.vercel.app';
+const HOST = 'yaadapppk.vercel.app';
 const KEY_LOCATION = `https://${HOST}/${INDEXNOW_KEY}.txt`;
 
 // Authoritative Public URLs (Base and Localized Alternates)
@@ -25,6 +25,9 @@ const PUBLIC_CANONICAL_URLS = [
   `https://${HOST}/help`,
   `https://${HOST}/help?lang=ur`,
   `https://${HOST}/help?lang=roman-urdu`,
+  `https://${HOST}/rashan-list`,
+  `https://${HOST}/rashan-list?lang=ur`,
+  `https://${HOST}/rashan-list?lang=roman-urdu`,
   `https://${HOST}/terms`,
   `https://${HOST}/terms?lang=ur`,
   `https://${HOST}/terms?lang=roman-urdu`,

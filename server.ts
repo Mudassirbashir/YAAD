@@ -19,6 +19,20 @@ const PORT = 3000;
 
 app.use(express.json());
 
+// Permanent 301 Redirect for legacy production domains to official production domain
+app.use((req, res, next) => {
+  const hostHeader = req.headers['x-forwarded-host'] || req.headers.host || '';
+  const host = (Array.isArray(hostHeader) ? hostHeader[0] : hostHeader).split(':')[0].toLowerCase();
+  if (
+    host === 'yaad-three.vercel.app' ||
+    host === 'yaad-mudassirbashir530-creators-projects.vercel.app'
+  ) {
+    const targetUrl = `https://yaadapppk.vercel.app${req.originalUrl || req.url}`;
+    return res.redirect(301, targetUrl);
+  }
+  next();
+});
+
 const ALLOWED_CATEGORIES = [
   'fruits',
   'vegetables',
@@ -1002,16 +1016,19 @@ app.get('/api/auth/passkey-config', (req, res) => {
 
     const configuredRpId = (
       process.env.PASSKEY_RP_ID ||
-      'yaad-mudassirbashir530-creators-projects.vercel.app'
+      'yaadapppk.vercel.app'
     ).toLowerCase().trim();
 
     const isProductionMatch = host === configuredRpId || host.endsWith('.' + configuredRpId);
+    const isLegacyDomain =
+      host === 'yaad-three.vercel.app' ||
+      host === 'yaad-mudassirbashir530-creators-projects.vercel.app';
     const isLocalhost = host === 'localhost' || host === '127.0.0.1';
-    const supported = isProductionMatch || isLocalhost;
+    const supported = isProductionMatch || isLegacyDomain || isLocalhost;
 
     return res.json({
       supported,
-      rpId: configuredRpId,
+      rpId: isLegacyDomain ? host : configuredRpId,
       currentHost: host,
       isProduction: isProductionMatch,
       reason: supported
@@ -1021,7 +1038,7 @@ app.get('/api/auth/passkey-config', (req, res) => {
   } catch (err: any) {
     return res.status(500).json({
       supported: false,
-      rpId: 'yaad-mudassirbashir530-creators-projects.vercel.app',
+      rpId: 'yaadapppk.vercel.app',
       reason: 'Failed to retrieve passkey configuration.',
     });
   }
@@ -1042,6 +1059,9 @@ function getExpectedOrigins(req: express.Request): string[] {
     origins.add(`https://${host}`);
     origins.add(`http://${host}`);
   }
+  origins.add('https://yaadapppk.vercel.app');
+  origins.add('https://yaad-three.vercel.app');
+  origins.add('https://yaad-mudassirbashir530-creators-projects.vercel.app');
   origins.add('http://localhost:3000');
   origins.add('http://127.0.0.1:3000');
   if (process.env.APP_URL) {
@@ -1579,7 +1599,7 @@ Return JSON with:
 
 // Helper to inject SEO meta tags into initial HTML response for search engine crawlers and social preview bots
 function getInjectedHtml(originalHtml: string, reqPath: string, reqLang?: string): string {
-  const baseCanonical = (process.env.VITE_SITE_URL || 'https://yaad-mudassirbashir530-creators-projects.vercel.app').replace(/\/+$/, '');
+  const baseCanonical = (process.env.VITE_SITE_URL || 'https://yaadapppk.vercel.app').replace(/\/+$/, '');
   const cleanPath = reqPath.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/';
   const langParam = reqLang?.toLowerCase();
 

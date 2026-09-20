@@ -49,13 +49,13 @@ async function runSeoTests() {
   assert(sitemapContent.includes('xmlns:xhtml="http://www.w3.org/1999/xhtml"'), 'sitemap has valid XHTML namespace for hreflang');
 
   // Verify all 7 public indexable URLs are included
-  assert(sitemapContent.includes('<loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/</loc>'), 'sitemap includes homepage loc');
-  assert(sitemapContent.includes('<loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/about</loc>'), 'sitemap includes /about loc');
-  assert(sitemapContent.includes('<loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/help</loc>'), 'sitemap includes /help loc');
-  assert(sitemapContent.includes('<loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/terms</loc>'), 'sitemap includes /terms loc');
-  assert(sitemapContent.includes('<loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/privacy</loc>'), 'sitemap includes /privacy loc');
-  assert(sitemapContent.includes('<loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/legal</loc>'), 'sitemap includes /legal loc');
-  assert(sitemapContent.includes('<loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/rashan-list</loc>'), 'sitemap includes /rashan-list loc');
+  assert(sitemapContent.includes('<loc>https://yaadapppk.vercel.app/</loc>'), 'sitemap includes homepage loc');
+  assert(sitemapContent.includes('<loc>https://yaadapppk.vercel.app/about</loc>'), 'sitemap includes /about loc');
+  assert(sitemapContent.includes('<loc>https://yaadapppk.vercel.app/help</loc>'), 'sitemap includes /help loc');
+  assert(sitemapContent.includes('<loc>https://yaadapppk.vercel.app/terms</loc>'), 'sitemap includes /terms loc');
+  assert(sitemapContent.includes('<loc>https://yaadapppk.vercel.app/privacy</loc>'), 'sitemap includes /privacy loc');
+  assert(sitemapContent.includes('<loc>https://yaadapppk.vercel.app/legal</loc>'), 'sitemap includes /legal loc');
+  assert(sitemapContent.includes('<loc>https://yaadapppk.vercel.app/rashan-list</loc>'), 'sitemap includes /rashan-list loc');
 
   // Verify hreflang annotations
   assert(sitemapContent.includes('hreflang="en"'), 'sitemap includes English hreflang');

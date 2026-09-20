@@ -93,6 +93,21 @@ function AppContent() {
   // Splash screen state: only show initially
   const [hasSplashFinished, setHasSplashFinished] = useState<boolean>(false);
 
+  // Production Domain Migration: Client-side domain drift guard
+  // If user opens a legacy domain link, preserve path, query parameters, and auth/recovery hash fragments
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location) {
+      const hostname = window.location.hostname.toLowerCase();
+      const isLegacyDomain =
+        hostname === 'yaad-three.vercel.app' ||
+        hostname === 'yaad-mudassirbashir530-creators-projects.vercel.app';
+      if (isLegacyDomain) {
+        const targetUrl = `https://yaadapppk.vercel.app${window.location.pathname}${window.location.search}${window.location.hash}`;
+        window.location.replace(targetUrl);
+      }
+    }
+  }, []);
+
   // Active working list
   const [activeListId, setActiveListId] = useState<string | null>(null);
   const [tempNewListTitle, setTempNewListTitle] = useState<string>('');

@@ -20,8 +20,10 @@ import {
   Languages,
   Smartphone,
   CheckCircle2,
+  ShoppingBag,
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAppRouter } from '../../router/RouterContext';
 import { Language } from '../../translations';
 import {
   LegalPageType,
@@ -45,11 +47,26 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
   onNavigate,
 }) => {
   const { language, setLanguage, isRTL } = useLanguage();
+  const { navigate } = useAppRouter();
   const [currentPage, setCurrentPage] = useState<LegalPageType>(initialPage);
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
   const [faqSearchQuery, setFaqSearchQuery] = useState('');
   const [selectedFaqCategory, setSelectedFaqCategory] = useState<string>('all');
   const [openFaqIds, setOpenFaqIds] = useState<Set<string>>(new Set(['offline-how', 'language-switch']));
+
+  const rashanListPath =
+    language === 'ur'
+      ? '/rashan-list?lang=ur'
+      : language === 'roman-urdu'
+      ? '/rashan-list?lang=roman-urdu'
+      : '/rashan-list';
+
+  const rashanListLabel =
+    language === 'ur'
+      ? 'ماہانہ راشن لسٹ'
+      : language === 'roman-urdu'
+      ? 'Mahana Rashan List'
+      : 'Monthly Rashan List';
 
   // Sync internal state when prop changes
   useEffect(() => {
@@ -305,6 +322,20 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
             >
               <HelpCircle className="w-3.5 h-3.5 shrink-0" />
               <span>{getLocalizedText(LEGAL_METADATA.help.title)}</span>
+            </a>
+
+            {/* Monthly Rashan List Guide */}
+            <a
+              id="legal_tab_rashan"
+              href={rashanListPath}
+              onClick={(e) => {
+                e.preventDefault();
+                navigate(rashanListPath);
+              }}
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all bg-surface-container-low text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
+            >
+              <ShoppingBag className="w-3.5 h-3.5 shrink-0 text-primary" />
+              <span>{rashanListLabel}</span>
             </a>
 
             {/* Hub Link */}
@@ -573,6 +604,26 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                 <strong>Doodh</strong>, <strong>Chai Patti</strong>, <strong>Shan Masala</strong>,{' '}
                 <strong>Ghee</strong>, <strong>Atta</strong>, <strong>Basmati Chawal</strong>, and over 2,000 localized food items!
               </p>
+              <div className="pt-1.5">
+                <a
+                  id="about_rashan_checklist_link"
+                  href={rashanListPath}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate(rashanListPath);
+                  }}
+                  className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-primary hover:underline"
+                >
+                  <ShoppingBag className="w-4 h-4 shrink-0" />
+                  <span>
+                    {language === 'ur'
+                      ? 'ماہانہ راشن لسٹ گائیڈ اور گھریلو چیک لسٹ دیکھیں ←'
+                      : language === 'roman-urdu'
+                      ? 'Monthly Rashan List Guide & Pantry Checklist Dekhein →'
+                      : 'Explore the Monthly Rashan List Guide & Household Checklist →'}
+                  </span>
+                </a>
+              </div>
             </div>
           </div>
         )}
@@ -881,6 +932,18 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
               className={`transition-colors ${currentPage === 'help' ? 'text-primary font-bold' : 'text-outline hover:text-on-surface'}`}
             >
               Help & FAQ
+            </a>
+            <span className="text-surface-dim">•</span>
+            <a
+              id="legal_footer_rashan_list"
+              href={rashanListPath}
+              onClick={(e) => {
+                e.preventDefault();
+                navigate(rashanListPath);
+              }}
+              className="text-outline hover:text-on-surface transition-colors"
+            >
+              {rashanListLabel}
             </a>
             <span className="text-surface-dim">•</span>
             <a

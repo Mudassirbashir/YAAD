@@ -30,7 +30,7 @@ export const SITE_CONFIG = {
 
   // Official Domains & URLs
   // Default canonical production URL: easily configurable via environment variable or default
-  defaultProductionUrl: 'https://yaad-mudassirbashir530-creators-projects.vercel.app',
+  defaultProductionUrl: 'https://yaadapppk.vercel.app',
   
   // Brand Palette
   themeColor: '#005039',
@@ -200,5 +200,27 @@ export function getAbsoluteCanonicalUrl(path: string = '/'): string {
   const base = getBaseSiteUrl();
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
   if (cleanPath === '/') return `${base}/`;
+  return `${base}${cleanPath}`;
+}
+
+/**
+ * Resolves the appropriate redirect URL for authentication flows (OAuth, magic links, password resets).
+ * In production or remote environments, always targets the authoritative production domain (https://yaadapppk.vercel.app).
+ * In local/container preview environments, preserves the local origin for active developer testing.
+ */
+export function getAuthRedirectUrl(path: string = '/'): string {
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    const origin = window.location.origin;
+    // Allow local development and AI Studio preview containers to handle their own redirects
+    if (
+      origin.includes('localhost') ||
+      origin.includes('127.0.0.1') ||
+      origin.includes('run.app')
+    ) {
+      return `${origin}${cleanPath}`;
+    }
+  }
+  const base = getBaseSiteUrl();
   return `${base}${cleanPath}`;
 }

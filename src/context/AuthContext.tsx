@@ -22,6 +22,7 @@ import {
 } from '../lib/supabase';
 import { purgeAllUserOfflineData, getOfflineProfile, saveOfflineProfile } from '../lib/offlineDb';
 import { UserProfile, AppLanguage, PasskeyCredentialInfo } from '../types';
+import { getAuthRedirectUrl } from '../config/siteConfig';
 import {
   signInWithPasskey as clientSignInWithPasskey,
   registerPasskey as clientRegisterPasskey,
@@ -592,9 +593,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     isAuthenticatingRef.current = true;
     try {
       const isInIframe = typeof window !== 'undefined' && window.self !== window.top;
-      const redirectUrl = typeof window !== 'undefined'
-        ? `${window.location.origin}${window.location.pathname}`
-        : undefined;
+      const redirectUrl = getAuthRedirectUrl('/auth');
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',

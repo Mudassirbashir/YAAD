@@ -20,7 +20,7 @@ interface SimulatedCrawlRecord {
   isInSitemap: boolean;
 }
 
-const PRODUCTION_HOST = 'https://yaad-mudassirbashir530-creators-projects.vercel.app';
+const PRODUCTION_HOST = 'https://yaadapppk.vercel.app';
 
 // 1. All Public Priority Routes (Base + Multilingual Alternates)
 const PUBLIC_CRAWL_ROUTES: SimulatedCrawlRecord[] = [

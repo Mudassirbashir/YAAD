@@ -54,19 +54,19 @@ assert(!robotsContent.includes('Disallow: /rashan-list'), 'robots.txt does NOT d
 console.log('\n--- 4. Sitemap.xml Audit ---');
 const sitemapContent = fs.readFileSync(path.join(process.cwd(), 'public', 'sitemap.xml'), 'utf-8');
 assert(
-  sitemapContent.includes('<loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/rashan-list</loc>'),
+  sitemapContent.includes('<loc>https://yaadapppk.vercel.app/rashan-list</loc>'),
   'sitemap.xml contains English canonical loc for /rashan-list'
 );
 assert(
-  sitemapContent.includes('<loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/rashan-list?lang=ur</loc>'),
+  sitemapContent.includes('<loc>https://yaadapppk.vercel.app/rashan-list?lang=ur</loc>'),
   'sitemap.xml contains Urdu loc for /rashan-list?lang=ur'
 );
 assert(
-  sitemapContent.includes('<loc>https://yaad-mudassirbashir530-creators-projects.vercel.app/rashan-list?lang=roman-urdu</loc>'),
+  sitemapContent.includes('<loc>https://yaadapppk.vercel.app/rashan-list?lang=roman-urdu</loc>'),
   'sitemap.xml contains Roman Urdu loc for /rashan-list?lang=roman-urdu'
 );
 assert(
-  sitemapContent.includes('hreflang="ur-PK" href="https://yaad-mudassirbashir530-creators-projects.vercel.app/rashan-list?lang=ur"'),
+  sitemapContent.includes('hreflang="ur-PK" href="https://yaadapppk.vercel.app/rashan-list?lang=ur"'),
   'sitemap.xml includes valid xhtml:link hreflang="ur-PK" for /rashan-list'
 );
 

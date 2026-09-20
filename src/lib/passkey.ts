@@ -20,7 +20,11 @@
 import { supabase } from './supabase';
 import { PasskeyCredentialInfo } from '../types';
 
-export const PRODUCTION_PASSKEY_RP_ID = 'yaad-mudassirbashir530-creators-projects.vercel.app';
+export const PRODUCTION_PASSKEY_RP_ID = 'yaadapppk.vercel.app';
+export const LEGACY_PASSKEY_RP_IDS = [
+  'yaad-three.vercel.app',
+  'yaad-mudassirbashir530-creators-projects.vercel.app',
+];
 
 /**
  * Detects if the current browser and operating system support WebAuthn / Passkeys
@@ -47,13 +51,14 @@ export function isPasskeySupportedOnCurrentDomain(): { supported: boolean; reaso
 
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname.toLowerCase();
-    // Allow exact production domain, subdomains, or localhost for local testing
+    // Allow exact production domain, subdomains, legacy production domains, or localhost
     const isProductionMatch =
       hostname === PRODUCTION_PASSKEY_RP_ID ||
       hostname.endsWith('.' + PRODUCTION_PASSKEY_RP_ID);
+    const isLegacyDomain = LEGACY_PASSKEY_RP_IDS.includes(hostname);
     const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
 
-    if (!isProductionMatch && !isLocalhost) {
+    if (!isProductionMatch && !isLegacyDomain && !isLocalhost) {
       return {
         supported: false,
         reason: `Passkey authentication is domain-bound to production (${PRODUCTION_PASSKEY_RP_ID}). On this preview environment, please continue with Email or Google.`,
@@ -188,14 +193,14 @@ export function formatPasskeyError(err: unknown): string {
     lower.includes('no credentials') ||
     lower.includes('failed to find')
   ) {
-    return 'No passkey found for this account/device. Use Email or Google to sign in.';
+    return 'Your passkey was created on an earlier domain. Please sign in with Email or Google and register a new passkey in Settings.';
   }
 
   if (lower.includes('offline') || lower.includes('network') || lower.includes('failed to fetch')) {
     return "You're offline. Please reconnect to continue.";
   }
 
-  return 'No passkey found for this account/device. Use Email or Google to sign in.';
+  return 'Your passkey was created on an earlier domain or device. Please sign in with Email or Google and register a new passkey in Settings.';
 }
 
 /**
