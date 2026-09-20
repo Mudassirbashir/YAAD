@@ -46,6 +46,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
   const {
     signIn,
     signUp,
+    startOfflineOnboarding,
     signInWithGoogle,
     signInWithPasskey,
     oauthError,
@@ -92,6 +93,22 @@ export const AuthView: React.FC<AuthViewProps> = ({
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [resetEmailSent, setResetEmailSent] = useState<boolean>(false);
   const [resetSuccess, setResetSuccess] = useState<boolean>(false);
+
+  // Network offline state
+  const [isOffline, setIsOffline] = useState<boolean>(() => {
+    return typeof navigator !== 'undefined' ? !navigator.onLine : false;
+  });
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   // Synchronous hardware ref to prevent double submissions, duplicate clicks, or enter-key races
   const isSubmittingRef = useRef(false);
@@ -181,18 +198,55 @@ export const AuthView: React.FC<AuthViewProps> = ({
     setErrorMessage(null);
     setSuccessMessage(null);
 
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      setErrorMessage(
-        mode === 'signup'
-          ? "You're offline. Please reconnect to create your account."
-          : "You're offline. Please reconnect to sign in."
-      );
-      return;
-    }
-
     const trimmedEmail = email.trim().toLowerCase();
     const trimmedName = fullName.trim();
     const trimmedPhone = phoneNumber.trim();
+
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      if (mode === 'signup') {
+        // Honest offline-first onboarding: allow entering name & phone to use the app locally
+        // without storing passwords or falsely claiming server account creation.
+        if (!trimmedName) {
+          setErrorMessage('Please enter your full name.');
+          return;
+        }
+        if (!trimmedPhone) {
+          setErrorMessage('Please enter your phone number.');
+          return;
+        }
+        const validation = validatePhoneNumber(trimmedPhone);
+        if (!validation.valid) {
+          setErrorMessage(
+            validation.reason || 'Please enter a valid phone number (e.g. +92 300 1234567).'
+          );
+          return;
+        }
+
+        isSubmittingRef.current = true;
+        setLoading(true);
+        try {
+          await startOfflineOnboarding({
+            fullName: trimmedName,
+            phoneNumber: trimmedPhone,
+            language,
+          });
+          setSuccessMessage('Profile saved locally. Your shopping lists will sync automatically when internet returns.');
+          if (onSuccess) {
+            onSuccess();
+          }
+          return;
+        } catch (offlineErr) {
+          setErrorMessage('Could not save local profile. Please try again.');
+          return;
+        } finally {
+          isSubmittingRef.current = false;
+          setLoading(false);
+        }
+      }
+
+      setErrorMessage("You're offline. Please reconnect to sign in.");
+      return;
+    }
 
     if (mode === 'signup') {
       if (!trimmedName) {
@@ -770,6 +824,19 @@ export const AuthView: React.FC<AuthViewProps> = ({
         {/* ----------------- CREATE ACCOUNT VIEW ----------------- */}
         {mode === 'signup' && (
           <div className="space-y-4">
+            {/* Honest Offline Mode Banner */}
+            {isOffline && (
+              <div className="p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-start gap-2.5 text-xs text-amber-900 dark:text-amber-200">
+                <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                <div className="space-y-0.5">
+                  <p className="font-bold">Offline Setup Available</p>
+                  <p className="text-[11px] leading-relaxed opacity-90">
+                    No internet connection right now. Enter your name and phone to use YAAD offline immediately. Cloud synchronization will complete automatically when internet returns.
+                  </p>
+                </div>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-3.5">
               {/* Full Name Input */}
               <div className="space-y-1">
@@ -790,30 +857,6 @@ export const AuthView: React.FC<AuthViewProps> = ({
                     placeholder="Your full name"
                     disabled={isAnyLoading}
                     className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-3.5 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope'] disabled:opacity-60"
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Email Address Input */}
-              <div className="space-y-1">
-                <label
-                  htmlFor="auth_input_email"
-                  className="text-xs font-bold text-on-surface-variant block font-['Manrope']"
-                >
-                  Email Address
-                </label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <input
-                    id="auth_input_email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    disabled={isAnyLoading}
-                    className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-3.5 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope'] disabled:opacity-60"
-                    autoComplete="email"
                     required
                   />
                 </div>
@@ -844,87 +887,116 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 </div>
               </div>
 
-              {/* Password Input with Show/Hide & Validation */}
-              <div className="space-y-1">
-                <div className="flex justify-between items-center">
-                  <label
-                    htmlFor="auth_input_password"
-                    className="text-xs font-bold text-on-surface-variant block font-['Manrope']"
-                  >
-                    Password
-                  </label>
-                  {password.length >= 6 && (
-                    <span className="text-[11px] font-semibold text-primary flex items-center gap-1">
-                      <Check className="w-3 h-3" /> Valid length
-                    </span>
-                  )}
-                </div>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <input
-                    id="auth_input_password"
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="At least 6 characters"
-                    disabled={isAnyLoading}
-                    className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-11 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope'] disabled:opacity-60"
-                    autoComplete="new-password"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    className="absolute end-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface p-1 transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
+              {/* Online Only Credentials: Email & Password (Never collected/stored in plaintext offline) */}
+              {!isOffline ? (
+                <>
+                  {/* Email Address Input */}
+                  <div className="space-y-1">
+                    <label
+                      htmlFor="auth_input_email"
+                      className="text-xs font-bold text-on-surface-variant block font-['Manrope']"
+                    >
+                      Email Address
+                    </label>
+                    <div className="relative">
+                      <Mail className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <input
+                        id="auth_input_email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="you@example.com"
+                        disabled={isAnyLoading}
+                        className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-3.5 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope'] disabled:opacity-60"
+                        autoComplete="email"
+                        required
+                      />
+                    </div>
+                  </div>
 
-              {/* Confirm Password Input with Match Validation */}
-              <div className="space-y-1">
-                <div className="flex justify-between items-center">
-                  <label
-                    htmlFor="auth_input_confirm_password"
-                    className="text-xs font-bold text-on-surface-variant block font-['Manrope']"
-                  >
-                    Confirm Password
-                  </label>
-                  {confirmPassword && password === confirmPassword && (
-                    <span className="text-[11px] font-semibold text-primary flex items-center gap-1">
-                      <Check className="w-3 h-3" /> Passwords match
-                    </span>
-                  )}
-                </div>
-                <div className="relative">
-                  <KeyRound className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <input
-                    id="auth_input_confirm_password"
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Re-enter your password"
-                    disabled={isAnyLoading}
-                    className={`w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-11 border focus:ring-2 outline-none transition-all placeholder:text-outline font-['Manrope'] disabled:opacity-60 ${
-                      confirmPassword && password !== confirmPassword
-                        ? 'border-error/60 focus:border-error focus:ring-error/20'
-                        : 'border-outline-variant focus:border-primary focus:ring-primary/20'
-                    }`}
-                    autoComplete="new-password"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
-                    className="absolute end-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface p-1 transition-colors"
-                  >
-                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
+                  {/* Password Input with Show/Hide & Validation */}
+                  <div className="space-y-1">
+                    <div className="flex justify-between items-center">
+                      <label
+                        htmlFor="auth_input_password"
+                        className="text-xs font-bold text-on-surface-variant block font-['Manrope']"
+                      >
+                        Password
+                      </label>
+                      {password.length >= 6 && (
+                        <span className="text-[11px] font-semibold text-primary flex items-center gap-1">
+                          <Check className="w-3 h-3" /> Valid length
+                        </span>
+                      )}
+                    </div>
+                    <div className="relative">
+                      <Lock className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <input
+                        id="auth_input_password"
+                        type={showPassword ? 'text' : 'password'}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="At least 6 characters"
+                        disabled={isAnyLoading}
+                        className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-11 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope'] disabled:opacity-60"
+                        autoComplete="new-password"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        className="absolute end-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface p-1 transition-colors"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Confirm Password Input with Match Validation */}
+                  <div className="space-y-1">
+                    <div className="flex justify-between items-center">
+                      <label
+                        htmlFor="auth_input_confirm_password"
+                        className="text-xs font-bold text-on-surface-variant block font-['Manrope']"
+                      >
+                        Confirm Password
+                      </label>
+                      {confirmPassword && password === confirmPassword && (
+                        <span className="text-[11px] font-semibold text-primary flex items-center gap-1">
+                          <Check className="w-3 h-3" /> Passwords match
+                        </span>
+                      )}
+                    </div>
+                    <div className="relative">
+                      <KeyRound className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <input
+                        id="auth_input_confirm_password"
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Re-enter your password"
+                        disabled={isAnyLoading}
+                        className={`w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-11 border focus:ring-2 outline-none transition-all placeholder:text-outline font-['Manrope'] disabled:opacity-60 ${
+                          confirmPassword && password !== confirmPassword
+                            ? 'border-error/60 focus:border-error focus:ring-error/20'
+                            : 'border-outline-variant focus:border-primary focus:ring-primary/20'
+                        }`}
+                        autoComplete="new-password"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                        className="absolute end-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface p-1 transition-colors"
+                      >
+                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : null}
 
               {/* Create Account Action */}
               <button
@@ -938,7 +1010,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 ) : (
                   <>
                     <UserPlus className="w-4 h-4" />
-                    <span>Create Account</span>
+                    <span>{isOffline ? 'Save Profile & Use YAAD Offline' : 'Create Account'}</span>
                   </>
                 )}
               </button>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { User } from '@supabase/supabase-js';
 import { UserProfile, ScreenType } from '../types';
+import { checkIsMobileDevice } from './useIsMobileDevice';
 
 export interface UsePhoneNumberReminderOptions {
   user: User | null;
@@ -81,9 +82,10 @@ export function usePhoneNumberReminder({
 
   // Main evaluation and scheduling effect
   useEffect(() => {
-    // 1. If not authenticated or user already has a phone number:
+    // 1. If not authenticated, user already has phone, or device is not a mobile phone:
     // NEVER show the reminder and tear down all timers.
-    if (!user || hasPhone) {
+    const isMobile = checkIsMobileDevice();
+    if (!isMobile || !user || hasPhone) {
       clearCurrentTimer();
       setIsOpen(false);
       isPendingRef.current = false;

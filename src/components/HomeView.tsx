@@ -265,20 +265,39 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 onCreateList();
               }
             }}
-            className="w-full min-h-[112px] sm:min-h-[116px] rounded-2xl sm:rounded-3xl bg-primary hover:bg-primary-container p-4 sm:p-5 text-on-primary flex items-center justify-between gap-3 shadow-[0_4px_16px_rgba(15,61,46,0.18)] hover:shadow-[0_6px_22px_rgba(15,61,46,0.25)] cursor-pointer relative overflow-hidden transition-all duration-200 active:scale-[0.99] select-none group border border-primary-container/40"
+            className="w-full min-h-[116px] sm:min-h-[120px] rounded-2xl sm:rounded-3xl bg-gradient-to-br from-primary via-primary to-primary-container p-4 sm:p-5 text-on-primary flex items-center justify-between gap-3 shadow-[0_4px_20px_rgba(15,61,46,0.18)] hover:shadow-[0_6px_24px_rgba(15,61,46,0.25)] cursor-pointer relative overflow-hidden transition-all duration-200 active:scale-[0.99] select-none group border border-white/10"
           >
-            {/* Left side: Plus icon + titles */}
+            {/* Background subtle radial glow */}
+            <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-2xl pointer-events-none" />
+
+            {/* Left side: Plus icon + titles + category context badges */}
             <div className="flex items-center gap-3.5 min-w-0 z-10">
-              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-white/10 flex items-center justify-center shrink-0 border border-white/15 shadow-2xs group-hover:bg-white/20 transition-all">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-white/15 flex items-center justify-center shrink-0 border border-white/20 shadow-2xs group-hover:bg-white/25 transition-all">
                 <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-white stroke-[2.4] transition-transform duration-300 group-hover:rotate-90" />
               </div>
               <div className="flex flex-col min-w-0">
-                <h2 className="font-['Plus_Jakarta_Sans'] text-lg sm:text-xl font-bold tracking-tight text-white leading-tight">
-                  {t('home.createListTitle')}
-                </h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="font-['Plus_Jakarta_Sans'] text-lg sm:text-xl font-bold tracking-tight text-white leading-tight">
+                    {t('home.createListTitle')}
+                  </h2>
+                  <span className="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white/15 text-emerald-100 border border-white/20 uppercase tracking-wider">
+                    Quick Start
+                  </span>
+                </div>
                 <p className="font-['Manrope'] text-xs sm:text-[13px] text-emerald-100/90 mt-1 font-normal leading-snug">
                   {t('home.createListDesc')}
                 </p>
+                {/* Category Quick Tags */}
+                <div className="flex items-center gap-1.5 mt-2 overflow-hidden">
+                  {['Weekly', 'Grocery', 'Fruits & Sabzi', 'BBQ'].map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-black/15 text-emerald-50 border border-white/10 whitespace-nowrap"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
 

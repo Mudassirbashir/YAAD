@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { UserProfile, ShoppingList, ShoppingItem, CategoryId, FrequentlyBoughtItem } from '../types';
+import { cleanPhoneNumber } from '../utils/phone';
 import { generateUUID, isValidUUID, generateDeterministicUUID } from './uuid';
 import { broadcastCrossDeviceSync } from './realtimeSync';
 import { defaultItemCatalog } from './recognition/catalog';
@@ -327,12 +328,12 @@ export async function getProfile(userId: string): Promise<UserProfile | null> {
       id: verifiedUserId,
       full_name: data?.full_name ?? userMeta.full_name ?? cached?.full_name ?? null,
       email: data?.email ?? userMeta.email ?? cached?.email ?? null,
-      phone_number: userMeta.phone_number ?? userMeta.phone ?? cached?.phone_number ?? null,
+      phone_number: data?.phone_number ?? data?.phone ?? userMeta.phone_number ?? userMeta.phone ?? cached?.phone_number ?? null,
       avatar_url: data?.avatar_url ?? userMeta.avatar_url ?? cached?.avatar_url ?? null,
       language: data?.language ?? userMeta.language ?? cached?.language ?? 'en',
-      usage_purpose: userMeta.usage_purpose ?? cached?.usage_purpose ?? null,
-      referral_source: userMeta.referral_source ?? cached?.referral_source ?? null,
-      has_completed_setup: userMeta.has_completed_setup ?? cached?.has_completed_setup ?? true,
+      usage_purpose: data?.usage_purpose ?? userMeta.usage_purpose ?? cached?.usage_purpose ?? null,
+      referral_source: data?.referral_source ?? userMeta.referral_source ?? cached?.referral_source ?? null,
+      has_completed_setup: data?.has_completed_setup ?? userMeta.has_completed_setup ?? cached?.has_completed_setup ?? true,
       created_at: data?.created_at ?? cached?.created_at,
       updated_at: data?.updated_at ?? cached?.updated_at,
     };
@@ -350,9 +351,8 @@ export async function getProfile(userId: string): Promise<UserProfile | null> {
 /**
  * Update or insert user profile in Supabase public.profiles table
  * Live database schema constraint:
- * public.profiles contains ONLY: id, full_name, email, avatar_url, language, created_at, updated_at
- * Additional user attributes (phone_number, has_completed_setup, usage_purpose, referral_source)
- * are persisted safely via Supabase Auth user_metadata to avoid PGRST204 errors.
+ * Synchronizes phone_number, full_name, email, avatar_url, language, setup flags
+ * to both public.profiles and Supabase Auth user_metadata.
  */
 export async function updateProfile(
   userId: string,
@@ -363,11 +363,15 @@ export async function updateProfile(
   // Retrieve existing profile from cache first so partial updates NEVER wipe existing fields
   const existingProfile = await getOfflineProfile<UserProfile>(verifiedUserId);
 
+  const normalizedPhone = updates.phone_number !== undefined
+    ? (updates.phone_number ? cleanPhoneNumber(updates.phone_number) : null)
+    : (existingProfile?.phone_number ?? null);
+
   const mergedProfile: UserProfile = {
     id: verifiedUserId,
     full_name: updates.full_name !== undefined ? (updates.full_name || null) : (existingProfile?.full_name ?? null),
     email: updates.email !== undefined ? (updates.email || null) : (existingProfile?.email ?? null),
-    phone_number: updates.phone_number !== undefined ? (updates.phone_number || null) : (existingProfile?.phone_number ?? null),
+    phone_number: normalizedPhone,
     avatar_url: updates.avatar_url !== undefined ? (updates.avatar_url || null) : (existingProfile?.avatar_url ?? null),
     language: updates.language !== undefined ? updates.language : (existingProfile?.language ?? 'en'),
     usage_purpose: updates.usage_purpose !== undefined ? updates.usage_purpose : (existingProfile?.usage_purpose ?? null),
@@ -379,26 +383,55 @@ export async function updateProfile(
   await saveOfflineProfile(verifiedUserId, mergedProfile);
 
   if (!supabase || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+    // Queue offline sync for profile
+    await enqueueOfflineOperation({
+      userId: verifiedUserId,
+      type: 'UPDATE_PROFILE',
+      listId: 'profile',
+      payload: mergedProfile,
+    });
     return { data: mergedProfile, error: null };
   }
 
   try {
-    // 1. Send ONLY valid columns supported by public.profiles:
-    // id, full_name, email, avatar_url, language, updated_at
-    const validProfilePayload = {
+    // 1. Send all profile attributes to public.profiles table
+    const validProfilePayload: Record<string, any> = {
       full_name: mergedProfile.full_name,
       email: mergedProfile.email,
       avatar_url: mergedProfile.avatar_url,
       language: mergedProfile.language,
+      phone_number: mergedProfile.phone_number,
+      phone: mergedProfile.phone_number,
+      has_completed_setup: mergedProfile.has_completed_setup,
+      usage_purpose: mergedProfile.usage_purpose,
+      referral_source: mergedProfile.referral_source,
       updated_at: new Date().toISOString(),
     };
 
     let upsertData: any = null;
-    const { data: updateData, error: updateErr } = await supabase
+    let { data: updateData, error: updateErr } = await supabase
       .from('profiles')
       .update(validProfilePayload)
       .eq('id', verifiedUserId)
       .select();
+
+    // Fallback: If table schema hasn't executed migration yet (PGRST204), retry with base fields
+    if (updateErr && (updateErr.code === 'PGRST204' || updateErr.message?.includes('column'))) {
+      const basePayload = {
+        full_name: mergedProfile.full_name,
+        email: mergedProfile.email,
+        avatar_url: mergedProfile.avatar_url,
+        language: mergedProfile.language,
+        updated_at: new Date().toISOString(),
+      };
+      const retryResult = await supabase
+        .from('profiles')
+        .update(basePayload)
+        .eq('id', verifiedUserId)
+        .select();
+      updateData = retryResult.data;
+      updateErr = retryResult.error;
+    }
 
     if (!updateErr && updateData && updateData.length > 0) {
       upsertData = updateData;
@@ -418,7 +451,7 @@ export async function updateProfile(
       profile: mergedProfile,
     }).catch(() => {});
 
-    // 2. Persist additional user attributes into Supabase Auth user_metadata
+    // 2. Persist user attributes into Supabase Auth user_metadata
     try {
       const { data: authUserData } = await supabase.auth.getUser();
       if (authUserData?.user) {
@@ -426,8 +459,8 @@ export async function updateProfile(
         const metaUpdates: Record<string, unknown> = {};
 
         if (updates.phone_number !== undefined) {
-          metaUpdates.phone_number = updates.phone_number;
-          metaUpdates.phone = updates.phone_number;
+          metaUpdates.phone_number = normalizedPhone;
+          metaUpdates.phone = normalizedPhone;
         }
         if (updates.has_completed_setup !== undefined) {
           metaUpdates.has_completed_setup = updates.has_completed_setup;
@@ -456,6 +489,27 @@ export async function updateProfile(
       }
     } catch (metaErr) {
       console.warn('Notice syncing user_metadata in Supabase Auth:', metaErr);
+    }
+
+    // 3. Trigger backend /api/account/phone for verified server-side update
+    if (updates.phone_number !== undefined) {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData?.session?.access_token;
+        if (token) {
+          fetch('/api/account/phone', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              userId: verifiedUserId,
+              phoneNumber: normalizedPhone,
+            }),
+          }).catch((err) => console.warn('Notice calling /api/account/phone:', err));
+        }
+      } catch {}
     }
 
     const savedRow = Array.isArray(upsertData) ? upsertData[0] : upsertData;
@@ -1821,6 +1875,28 @@ export async function syncPendingOfflineChanges(
             }
           }
         }
+      } else if (item.type === 'UPDATE_PROFILE') {
+        const profilePayload = item.payload;
+        if (profilePayload) {
+          const { error: profileErr } = await updateProfile(verifiedUserId, profilePayload);
+          if (!profileErr) {
+            await removePendingOfflineOperation(item.id);
+            syncedCount++;
+          } else if (isNetworkOrOfflineError(profileErr)) {
+            break;
+          } else {
+            const isTerminalError = item.retryCount >= 5;
+            if (isTerminalError) {
+              await removePendingOfflineOperation(item.id);
+            } else {
+              await updatePendingOperationStatus(item.id, {
+                retryCount: item.retryCount + 1,
+                lastError: profileErr.message,
+                syncStatus: 'failed',
+              });
+            }
+          }
+        }
       }
     } catch (e: any) {
       if (isNetworkOrOfflineError(e)) {
@@ -1893,7 +1969,7 @@ export function formatAuthErrorMessage(error: unknown): string {
 
   // 1. NETWORK ERROR
   if (
-    (typeof navigator !== 'undefined' && !navigator.onLine) ||
+    (typeof window !== 'undefined' && typeof navigator !== 'undefined' && !navigator.onLine) ||
     lower.includes('failed to fetch') ||
     lower.includes('fetch failed') ||
     lower.includes('network error') ||
@@ -1928,7 +2004,36 @@ export function formatAuthErrorMessage(error: unknown): string {
     (lower.includes('recovery link') && lower.includes('expired')) ||
     (lower.includes('invalid') && (lower.includes('token') || lower.includes('otp') || lower.includes('recovery')))
   ) {
-    return 'This password reset link is invalid or has expired. Please request a new one.';
+    return 'Your reset link has expired. Request a new one.';
+  }
+
+  // 2c. SAME PASSWORD AS PREVIOUS
+  if (
+    lower.includes('should be different from the old') ||
+    lower.includes('different from your old') ||
+    lower.includes('same_password') ||
+    lower.includes('same as your current')
+  ) {
+    return 'New password cannot be the same as your current password.';
+  }
+
+  // 2d. AUTH SESSION MISSING / EXPIRED RESET SESSION
+  if (
+    lower.includes('auth session missing') ||
+    lower.includes('session missing') ||
+    lower.includes('no session')
+  ) {
+    return 'Your reset link has expired. Request a new one.';
+  }
+
+  // 2e. INCORRECT CURRENT PASSWORD / CREDENTIALS
+  if (
+    lower.includes('invalid login credentials') ||
+    lower.includes('invalid_grant') ||
+    lower.includes('invalid_credentials') ||
+    lower.includes('incorrect password')
+  ) {
+    return 'Incorrect current password.';
   }
 
   // 3. INVALID EMAIL
@@ -1997,9 +2102,10 @@ export function formatAuthErrorMessage(error: unknown): string {
     lower.includes('no credentials') ||
     lower.includes('not found on this account') ||
     lower.includes('passkey was not found') ||
-    lower.includes('failed to find')
+    lower.includes('failed to find') ||
+    lower.includes('credential not found')
   ) {
-    return 'Your passkey was created on an earlier domain. Please sign in with Email or Google and register a new passkey in Settings.';
+    return 'Passkey not found on this device. Continue with Email or Google.';
   }
 
   if (

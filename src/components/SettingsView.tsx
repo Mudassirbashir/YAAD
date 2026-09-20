@@ -48,16 +48,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     profile,
     updateUserProfile,
     updatePassword,
+    changePassword,
     registerPasskey,
     listPasskeys,
     removePasskey,
+    passkeys: authPasskeys,
+    isLoadingPasskeys,
+    refreshPasskeys,
   } = useAuth();
 
   // ============================================================================
   // Passkey Management State
   // ============================================================================
-  const [passkeys, setPasskeys] = useState<PasskeyCredentialInfo[]>([]);
-  const [loadingPasskeys, setLoadingPasskeys] = useState(false);
+  const [passkeys, setPasskeys] = useState<PasskeyCredentialInfo[]>(authPasskeys);
+  const [loadingPasskeys, setLoadingPasskeys] = useState(isLoadingPasskeys);
   const [isRegisteringPasskey, setIsRegisteringPasskey] = useState(false);
   const [confirmDeletePasskeyId, setConfirmDeletePasskeyId] = useState<
     string | null
@@ -69,12 +73,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   } | null>(null);
 
   useEffect(() => {
+    setPasskeys(authPasskeys);
+  }, [authPasskeys]);
+
+  useEffect(() => {
+    setLoadingPasskeys(isLoadingPasskeys);
+  }, [isLoadingPasskeys]);
+
+  useEffect(() => {
     if (user && isPasskeySupported()) {
-      setLoadingPasskeys(true);
-      listPasskeys()
-        .then(setPasskeys)
-        .catch(() => {})
-        .finally(() => setLoadingPasskeys(false));
+      refreshPasskeys(true).catch(() => {});
     }
   }, [user]);
 
@@ -391,6 +399,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   // Password State & Handlers
   // ============================================================================
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -402,6 +411,23 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      setPasswordMessage({
+        type: 'error',
+        text: "You're offline. Please reconnect to change your password.",
+      });
+      return;
+    }
+
+    if (!currentPassword.trim()) {
+      setPasswordMessage({
+        type: 'error',
+        text: t('settings.enterCurrentPassword') || 'Please enter your current password.',
+      });
+      return;
+    }
+
     if (!newPassword || newPassword.length < 6) {
       setPasswordMessage({
         type: 'error',
@@ -411,6 +437,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       });
       return;
     }
+
+    if (currentPassword === newPassword) {
+      setPasswordMessage({
+        type: 'error',
+        text:
+          t('settings.samePasswordError') ||
+          'New password cannot be the same as your current password.',
+      });
+      return;
+    }
+
     if (newPassword !== confirmPassword) {
       setPasswordMessage({
         type: 'error',
@@ -422,7 +459,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     setIsUpdatingPassword(true);
     setPasswordMessage(null);
 
-    const { error } = await updatePassword(newPassword);
+    const { error } = await changePassword(currentPassword, newPassword);
     setIsUpdatingPassword(false);
 
     if (error) {
@@ -436,6 +473,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         text:
           t('settings.passwordUpdated') || 'Password updated successfully!',
       });
+      setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
       setIsChangingPassword(false);
@@ -651,6 +689,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <SecuritySection
               isChangingPassword={isChangingPassword}
               setIsChangingPassword={setIsChangingPassword}
+              currentPassword={currentPassword}
+              setCurrentPassword={setCurrentPassword}
               newPassword={newPassword}
               setNewPassword={setNewPassword}
               confirmPassword={confirmPassword}

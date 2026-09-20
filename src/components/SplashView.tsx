@@ -3,20 +3,39 @@ import { APP_IMAGES } from '../data/initialData';
 
 interface SplashViewProps {
   onFinish: () => void;
+  isRestoringAuth?: boolean;
 }
 
-export const SplashView: React.FC<SplashViewProps> = ({ onFinish }) => {
+export const SplashView: React.FC<SplashViewProps> = ({ onFinish, isRestoringAuth = false }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
-      onFinish();
-    }, 2200);
+      if (!isRestoringAuth) {
+        onFinish();
+      }
+    }, 2000);
 
     return () => clearTimeout(timer);
-  }, [onFinish]);
+  }, [onFinish, isRestoringAuth]);
+
+  // When auth finishes after splash minimum duration
+  useEffect(() => {
+    if (!isRestoringAuth) {
+      const finishTimer = setTimeout(() => {
+        onFinish();
+      }, 300);
+      return () => clearTimeout(finishTimer);
+    }
+  }, [isRestoringAuth, onFinish]);
+
+  const handleManualDismiss = () => {
+    if (!isRestoringAuth) {
+      onFinish();
+    }
+  };
 
   return (
     <div
-      onClick={onFinish}
+      onClick={handleManualDismiss}
       className="bg-background h-screen w-full flex flex-col items-center justify-center cursor-pointer select-none px-6 relative overflow-hidden"
     >
       {/* Ambient background glow */}
@@ -43,8 +62,17 @@ export const SplashView: React.FC<SplashViewProps> = ({ onFinish }) => {
         </div>
       </div>
 
-      <div className="absolute bottom-10 text-xs text-outline font-['Manrope']">
-        Tap anywhere to continue
+      <div className="absolute bottom-10 flex flex-col items-center gap-2">
+        {isRestoringAuth ? (
+          <div className="flex items-center gap-2 text-xs text-outline font-['Manrope'] animate-pulse">
+            <span className="w-2 h-2 rounded-full bg-primary animate-ping" />
+            <span>Restoring session...</span>
+          </div>
+        ) : (
+          <div className="text-xs text-outline font-['Manrope']">
+            Tap anywhere to continue
+          </div>
+        )}
       </div>
     </div>
   );

@@ -51,14 +51,16 @@ export function isPasskeySupportedOnCurrentDomain(): { supported: boolean; reaso
 
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname.toLowerCase();
-    // Allow exact production domain, subdomains, legacy production domains, or localhost
+    // Allow exact production domain, subdomains, legacy production domains, cloud run, or localhost
     const isProductionMatch =
       hostname === PRODUCTION_PASSKEY_RP_ID ||
       hostname.endsWith('.' + PRODUCTION_PASSKEY_RP_ID);
     const isLegacyDomain = LEGACY_PASSKEY_RP_IDS.includes(hostname);
     const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+    const isCloudPreview = hostname.endsWith('.run.app') || hostname.includes('aistudio');
+    const isSecureContext = window.isSecureContext;
 
-    if (!isProductionMatch && !isLegacyDomain && !isLocalhost) {
+    if (!isProductionMatch && !isLegacyDomain && !isLocalhost && !isCloudPreview && !isSecureContext) {
       return {
         supported: false,
         reason: `Passkey authentication is domain-bound to production (${PRODUCTION_PASSKEY_RP_ID}). On this preview environment, please continue with Email or Google.`,
@@ -191,16 +193,17 @@ export function formatPasskeyError(err: unknown): string {
     lower.includes('not recognized') ||
     lower.includes('no passkey') ||
     lower.includes('no credentials') ||
-    lower.includes('failed to find')
+    lower.includes('failed to find') ||
+    lower.includes('credential not found')
   ) {
-    return 'Your passkey was created on an earlier domain. Please sign in with Email or Google and register a new passkey in Settings.';
+    return 'Passkey not found on this device. Continue with Email or Google.';
   }
 
   if (lower.includes('offline') || lower.includes('network') || lower.includes('failed to fetch')) {
     return "You're offline. Please reconnect to continue.";
   }
 
-  return 'Your passkey was created on an earlier domain or device. Please sign in with Email or Google and register a new passkey in Settings.';
+  return 'Passkey not found on this device. Continue with Email or Google.';
 }
 
 /**
@@ -331,11 +334,11 @@ export async function registerPasskey(
  * with automatic fallback to server endpoint /api/passkey/list
  */
 export async function listUserPasskeys(_authToken?: string): Promise<PasskeyCredentialInfo[]> {
-  // 1. Try native Supabase client passkey.list if available
+  // 1. Single source of truth: native Supabase client passkey.list API
   if (supabase && typeof (supabase.auth as any).passkey?.list === 'function') {
     try {
       const res = await (supabase.auth as any).passkey.list();
-      if (!res.error && res.data && res.data.length > 0) {
+      if (!res.error && Array.isArray(res.data)) {
         return res.data.map((p: any) => ({
           id: p.id,
           deviceName: p.friendly_name || 'Passkey Device',
@@ -343,12 +346,15 @@ export async function listUserPasskeys(_authToken?: string): Promise<PasskeyCred
           lastUsedAt: p.last_used_at || p.created_at,
         }));
       }
+      if (res.error) {
+        console.warn('Notice from native Supabase passkey.list:', res.error);
+      }
     } catch (e) {
       console.warn('Notice from native Supabase passkey.list:', e);
     }
   }
 
-  // 2. Query server-side passkey list endpoint with current session access token
+  // 2. Query server-side passkey list endpoint with current session access token (fallback)
   try {
     let token = _authToken;
     if (!token && supabase) {
@@ -364,10 +370,10 @@ export async function listUserPasskeys(_authToken?: string): Promise<PasskeyCred
       });
       if (res.ok) {
         const data = await res.json();
-        if (data && Array.isArray(data.passkeys) && data.passkeys.length > 0) {
+        if (data && Array.isArray(data.passkeys)) {
           return data.passkeys.map((p: any) => ({
             id: p.id,
-            deviceName: p.device_name || 'Passkey Device',
+            deviceName: p.device_name || p.friendly_name || 'Passkey Device',
             createdAt: p.created_at,
             lastUsedAt: p.last_used_at || p.created_at,
           }));

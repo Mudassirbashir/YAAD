@@ -20,7 +20,9 @@ import {
   cleanAuthUrlParams,
   sendPasswordResetEmail as supabaseSendPasswordResetEmail,
 } from '../lib/supabase';
-import { purgeAllUserOfflineData, getOfflineProfile, saveOfflineProfile } from '../lib/offlineDb';
+import { purgeAllUserOfflineData, getOfflineProfile, saveOfflineProfile, enqueueOfflineOperation, migrateOfflineUserData } from '../lib/offlineDb';
+import { generateUUID } from '../lib/uuid';
+import { cleanPhoneNumber } from '../utils/phone';
 import { UserProfile, AppLanguage, PasskeyCredentialInfo } from '../types';
 import { getAuthRedirectUrl } from '../config/siteConfig';
 import {
@@ -60,9 +62,14 @@ export interface AuthContextType {
   registerPasskey: (deviceName?: string) => Promise<{ success: boolean; passkey?: PasskeyCredentialInfo; error: Error | null }>;
   listPasskeys: () => Promise<PasskeyCredentialInfo[]>;
   removePasskey: (passkeyId: string) => Promise<{ success: boolean; error: Error | null }>;
+  passkeys: PasskeyCredentialInfo[];
+  hasPasskey: boolean;
+  isLoadingPasskeys: boolean;
+  refreshPasskeys: (force?: boolean) => Promise<PasskeyCredentialInfo[]>;
   signOut: () => Promise<void>;
   deleteAccount: () => Promise<{ error: Error | null }>;
   updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<{ error: Error | null }>;
   updateUserProfile: (updates: {
     full_name?: string;
     phone_number?: string | null;
@@ -73,6 +80,12 @@ export interface AuthContextType {
     has_completed_setup?: boolean;
   }) => Promise<{ error: Error | null }>;
   refreshProfile: () => Promise<void>;
+  isOfflineUser: boolean;
+  startOfflineOnboarding: (data: {
+    fullName: string;
+    phoneNumber?: string;
+    language?: AppLanguage;
+  }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -82,6 +95,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isOfflineUser, setIsOfflineUser] = useState<boolean>(false);
   const [oauthError, setOauthError] = useState<string | null>(null);
   const [passwordResetError, setPasswordResetError] = useState<string | null>(null);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState<boolean>(() => {
@@ -106,6 +120,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       } catch {}
     }
   }, []);
+
+  // Native Supabase Passkey State
+  const [passkeys, setPasskeys] = useState<PasskeyCredentialInfo[]>([]);
+  const [hasPasskey, setHasPasskey] = useState<boolean>(false);
+  const [isLoadingPasskeys, setIsLoadingPasskeys] = useState<boolean>(false);
+  const passkeyRefreshInProgressRef = useRef<boolean>(false);
 
   const isAuthenticatingRef = useRef<boolean>(false);
   const syncingUserIdsRef = useRef<Set<string>>(new Set());
@@ -213,7 +233,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             lowerDesc.includes('invalid') ||
             lowerDesc.includes('already been used')
           ) {
-            setPasswordResetError('This password reset link is invalid or has expired. Please request a new one.');
+            setPasswordResetError('Your reset link has expired. Request a new one.');
             setIsPasswordRecovery(false);
             try {
               sessionStorage.removeItem('yaad_password_recovery_active');
@@ -247,6 +267,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     }
 
+    let initialSessionResolved = false;
+
     // Listen to Supabase auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
@@ -274,10 +296,33 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           }
         }
 
-        if (event === 'SIGNED_OUT' || !currentSession?.user) {
+        if (event === 'SIGNED_OUT') {
+          try {
+            localStorage.removeItem('yaad_authenticated_user_cache');
+            localStorage.removeItem('yaad_password_reset_required');
+          } catch {}
           setSession(null);
           setUser(null);
           setProfile(null);
+          setIsOfflineUser(false);
+          setIsLoading(false);
+          return;
+        }
+
+        if (!currentSession?.user) {
+          // If initialSession is still resolving, DO NOT wipe user state!
+          if (!initialSessionResolved) return;
+
+          // If device has an offline cached user session, retain it while offline
+          const hasOfflineCache = typeof window !== 'undefined' && Boolean(localStorage.getItem('yaad_authenticated_user_cache'));
+          if (hasOfflineCache && typeof navigator !== 'undefined' && !navigator.onLine) {
+            return;
+          }
+
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+          setIsOfflineUser(false);
           setIsLoading(false);
           return;
         }
@@ -291,6 +336,36 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         setSession(currentSession);
         setUser(currentSession.user);
+        setIsOfflineUser(false);
+
+        // Migrate any offline-first local user records to this authenticated Supabase identity
+        try {
+          const offlineUserJson = localStorage.getItem('yaad_offline_user');
+          if (offlineUserJson) {
+            const offlineUser = JSON.parse(offlineUserJson);
+            if (offlineUser?.id && String(offlineUser.id).startsWith('local_') && offlineUser.id !== currentSession.user.id) {
+              migrateOfflineUserData(offlineUser.id, currentSession.user.id).catch((migErr) => {
+                console.warn('Background offline user migration failed:', migErr);
+              });
+              localStorage.removeItem('yaad_offline_user');
+            }
+          }
+        } catch (mErr) {
+          console.warn('Offline user migration parse error:', mErr);
+        }
+
+        // Update durable local cache
+        try {
+          localStorage.setItem(
+            'yaad_authenticated_user_cache',
+            JSON.stringify({
+              id: currentSession.user.id,
+              email: currentSession.user.email,
+              user_metadata: currentSession.user.user_metadata,
+              app_metadata: currentSession.user.app_metadata,
+            })
+          );
+        } catch {}
 
         if (currentSession.user.user_metadata?.password_reset_required === true) {
           setIsPasswordRecovery(true);
@@ -331,40 +406,110 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     );
 
-    // Synchronously check getSession() to immediately hydrate active session from storage upon browser reopen
-    supabase.auth.getSession().then(({ data: { session: initialSession }, error: sessionError }) => {
-      if (!isMounted) return;
-      if (sessionError) {
-        console.warn('Notice retrieving initial session:', sessionError);
-      }
-      if (initialSession?.user) {
-        setSession(initialSession);
-        setUser(initialSession.user);
-        const isResetRequired =
-          initialSession.user.user_metadata?.password_reset_required === true ||
-          (typeof window !== 'undefined' && localStorage.getItem('yaad_password_reset_required') === 'true');
+    // Primary Session Restoration Lifecycle
+    const restoreActiveSession = async () => {
+      try {
+        let activeSession: Session | null = null;
+        let activeUser: User | null = null;
 
-        if (isResetRequired) {
-          setIsPasswordRecovery(true);
+        // 1. Check Supabase session from local storage / network
+        try {
+          const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+          if (!sessionError && sessionData?.session?.user) {
+            activeSession = sessionData.session;
+            activeUser = sessionData.session.user;
+          }
+        } catch (sessErr) {
+          console.warn('Notice retrieving initial Supabase session:', sessErr);
         }
-        // Hydrate profile
-        getOfflineProfile<UserProfile>(initialSession.user.id).then((cached) => {
-          if (cached && isMounted) {
-            setProfile(cached);
+
+        // 2. Offline fallback: check durable local user cache if Supabase returned nothing
+        if (!activeUser && typeof window !== 'undefined') {
+          try {
+            const cachedUserRaw = localStorage.getItem('yaad_authenticated_user_cache');
+            if (cachedUserRaw) {
+              const parsed = JSON.parse(cachedUserRaw);
+              if (parsed?.id) {
+                activeUser = parsed as User;
+                if (parsed.is_offline_user) {
+                  setIsOfflineUser(true);
+                }
+              }
+            }
+          } catch {}
+        }
+
+        if (activeUser && isMounted) {
+          setUser(activeUser);
+          if (activeSession) setSession(activeSession);
+
+          // Refresh durable user cache
+          try {
+            localStorage.setItem(
+              'yaad_authenticated_user_cache',
+              JSON.stringify({
+                id: activeUser.id,
+                email: activeUser.email,
+                user_metadata: activeUser.user_metadata,
+                app_metadata: activeUser.app_metadata,
+                is_offline_user: activeUser.user_metadata?.is_offline_user || false,
+              })
+            );
+          } catch {}
+
+          const isResetRequired =
+            activeUser.user_metadata?.password_reset_required === true ||
+            (typeof window !== 'undefined' && localStorage.getItem('yaad_password_reset_required') === 'true');
+          if (isResetRequired) {
+            setIsPasswordRecovery(true);
           }
-        });
-        getProfile(initialSession.user.id).then((serverProfile) => {
-          if (serverProfile && isMounted) {
-            setProfile(serverProfile);
-            saveOfflineProfile(initialSession.user.id, serverProfile).catch(() => {});
+
+          // 3. Hydrate profile BEFORE setting isLoading = false
+          let resolvedProfile = await getOfflineProfile<UserProfile>(activeUser.id);
+          if (!resolvedProfile) {
+            resolvedProfile = {
+              id: activeUser.id,
+              full_name: activeUser.user_metadata?.full_name || activeUser.user_metadata?.name || null,
+              email: activeUser.email || null,
+              phone_number: activeUser.user_metadata?.phone_number || activeUser.user_metadata?.phone || null,
+              avatar_url: activeUser.user_metadata?.avatar_url || activeUser.user_metadata?.picture || null,
+              has_completed_setup: true,
+            };
+            await saveOfflineProfile(activeUser.id, resolvedProfile);
           }
-        });
+
+          if (isMounted) {
+            setProfile(resolvedProfile);
+          }
+
+          // 4. Asynchronously fetch fresh server profile if online without delaying app entry
+          if (typeof navigator !== 'undefined' && navigator.onLine) {
+            getProfile(activeUser.id)
+              .then((serverProfile) => {
+                if (serverProfile && isMounted) {
+                  setProfile(serverProfile);
+                  saveOfflineProfile(activeUser.id, serverProfile).catch(() => {});
+                }
+              })
+              .catch(() => {});
+          }
+        } else if (isMounted) {
+          setUser(null);
+          setSession(null);
+          setProfile(null);
+          setIsOfflineUser(false);
+        }
+      } catch (err) {
+        console.warn('Error in restoreActiveSession:', err);
+      } finally {
+        initialSessionResolved = true;
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
-      setIsLoading(false);
-    }).catch((err) => {
-      console.warn('Error in getSession:', err);
-      if (isMounted) setIsLoading(false);
-    });
+    };
+
+    restoreActiveSession();
 
     return () => {
       isMounted = false;
@@ -676,6 +821,104 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  // Passkey Refresh and Hydration Lifecycle
+  const refreshPasskeys = useCallback(
+    async (force = false): Promise<PasskeyCredentialInfo[]> => {
+      if (!user) {
+        setPasskeys([]);
+        setHasPasskey(false);
+        return [];
+      }
+
+      if (passkeyRefreshInProgressRef.current && !force) {
+        return passkeys;
+      }
+      passkeyRefreshInProgressRef.current = true;
+      setIsLoadingPasskeys(true);
+
+      try {
+        const list = await clientListPasskeys(session?.access_token);
+        setPasskeys(list);
+        const active = list.length > 0;
+        setHasPasskey(active);
+
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem(
+              `yaad_passkeys_${user.id}`,
+              JSON.stringify({
+                hasPasskey: active,
+                count: list.length,
+                passkeys: list,
+                updatedAt: Date.now(),
+              })
+            );
+          } catch {}
+        }
+
+        // Non-blocking sync with user metadata if discrepancy exists
+        if (supabase && user.user_metadata?.has_passkey !== active) {
+          supabase.auth.updateUser({ data: { has_passkey: active } }).catch(() => {});
+        }
+
+        return list;
+      } catch (err) {
+        console.warn('Notice refreshing user passkeys from Supabase:', err);
+        return passkeys;
+      } finally {
+        passkeyRefreshInProgressRef.current = false;
+        setIsLoadingPasskeys(false);
+      }
+    },
+    [user, session?.access_token, passkeys]
+  );
+
+  // Sync passkey state from local cache instantly, then authoritatively refresh from Supabase
+  useEffect(() => {
+    if (!user?.id) {
+      setPasskeys([]);
+      setHasPasskey(false);
+      return;
+    }
+
+    let foundInCache = false;
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem(`yaad_passkeys_${user.id}`);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed.passkeys)) {
+            setPasskeys(parsed.passkeys);
+            setHasPasskey(parsed.passkeys.length > 0 || Boolean(parsed.hasPasskey));
+            foundInCache = true;
+          }
+        }
+      } catch {}
+    }
+
+    if (!foundInCache && user.user_metadata?.has_passkey) {
+      setHasPasskey(true);
+    }
+
+    // Refresh real Supabase passkey state
+    refreshPasskeys(true);
+
+    // Refresh when user returns to app/tab/PWA
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        refreshPasskeys(true);
+      }
+    };
+
+    window.addEventListener('focus', handleVisibility);
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      window.removeEventListener('focus', handleVisibility);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [user?.id]);
+
   const registerPasskey = async (
     deviceName?: string
   ): Promise<{ success: boolean; passkey?: PasskeyCredentialInfo; error: Error | null }> => {
@@ -690,12 +933,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (!res.success) {
       return { success: false, error: res.error || new Error('Failed to register passkey.') };
     }
+
+    // Immediately refresh authoritative passkey state from Supabase
+    await refreshPasskeys(true);
+
     return { success: true, passkey: res.passkey, error: null };
   };
 
   const listPasskeys = async (): Promise<PasskeyCredentialInfo[]> => {
-    if (!session?.access_token) return [];
-    return clientListPasskeys();
+    if (!session?.access_token) return passkeys;
+    return refreshPasskeys(true);
   };
 
   const removePasskey = async (passkeyId: string): Promise<{ success: boolean; error: Error | null }> => {
@@ -706,12 +953,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (!res.success) {
       return { success: false, error: res.error || new Error('Failed to remove passkey.') };
     }
+
+    // Immediately refresh authoritative passkey state from Supabase
+    await refreshPasskeys(true);
+
     return { success: true, error: null };
   };
 
   const signOut = async () => {
     setIsPasswordRecovery(false);
     setPasswordResetError(null);
+    setPasskeys([]);
+    setHasPasskey(false);
     if (typeof window !== 'undefined') {
       try {
         sessionStorage.removeItem('yaad_password_recovery_active');
@@ -872,6 +1125,97 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const changePassword = async (
+    currentPassword: string,
+    newPassword: string
+  ): Promise<{ error: Error | null }> => {
+    if (!supabase) {
+      return { error: new Error('Backend service is not available.') };
+    }
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      return { error: new Error("You're offline. Please reconnect to change your password.") };
+    }
+    if (!user || !user.email) {
+      return { error: new Error('You must be signed in to change your password.') };
+    }
+
+    const trimmedCurrent = currentPassword.trim();
+    const trimmedNew = newPassword.trim();
+
+    // Check if the user has an existing email/password account
+    const hasEmailProvider =
+      user.app_metadata?.provider === 'email' ||
+      (Array.isArray(user.app_metadata?.providers) &&
+        user.app_metadata.providers.includes('email'));
+
+    // If account has an existing password, re-authenticate to verify current password
+    if (hasEmailProvider) {
+      if (!trimmedCurrent) {
+        return { error: new Error('Please enter your current password.') };
+      }
+      try {
+        const { error: verifyError } = await supabase.auth.signInWithPassword({
+          email: user.email,
+          password: trimmedCurrent,
+        });
+        if (verifyError) {
+          const lower = (verifyError.message || '').toLowerCase();
+          if (
+            lower.includes('invalid login credentials') ||
+            lower.includes('invalid_grant') ||
+            lower.includes('invalid_credentials')
+          ) {
+            return { error: new Error('Incorrect current password. Please verify and try again.') };
+          }
+          return { error: new Error(formatAuthErrorMessage(verifyError)) };
+        }
+      } catch (verifyErr: unknown) {
+        if (isNetworkOrOfflineError(verifyErr)) {
+          return { error: new Error("You're offline. Please reconnect to change your password.") };
+        }
+        return { error: new Error('Unable to verify your current password. Please try again.') };
+      }
+    }
+
+    // Validate new password meets existing authentication policy (min 6 characters)
+    if (!trimmedNew || trimmedNew.length < 6) {
+      return { error: new Error('New password must be at least 6 characters.') };
+    }
+
+    if (trimmedCurrent && trimmedCurrent === trimmedNew) {
+      return { error: new Error('New password cannot be the same as your current password.') };
+    }
+
+    try {
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: trimmedNew,
+        data: { password_reset_required: false },
+      });
+
+      if (updateError) {
+        return { error: new Error(formatAuthErrorMessage(updateError)) };
+      }
+
+      // Seamless session refresh without signing out the user
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData?.session) {
+          setSession(sessionData.session);
+          setUser(sessionData.session.user);
+        }
+      } catch (sErr) {
+        console.warn('Notice refreshing session after changePassword:', sErr);
+      }
+
+      return { error: null };
+    } catch (err: unknown) {
+      if (isNetworkOrOfflineError(err)) {
+        return { error: new Error("You're offline. Please reconnect to change your password.") };
+      }
+      return { error: new Error(formatAuthErrorMessage(err)) };
+    }
+  };
+
   const updateUserProfile = async (updates: {
     full_name?: string;
     phone_number?: string | null;
@@ -958,6 +1302,74 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const startOfflineOnboarding = async (data: {
+    fullName: string;
+    phoneNumber?: string;
+    language?: AppLanguage;
+  }): Promise<void> => {
+    const localId = `local_${generateUUID()}`;
+    const cleanPhone = data.phoneNumber ? cleanPhoneNumber(data.phoneNumber) : null;
+    const trimmedName = data.fullName.trim();
+
+    const localUser: User = {
+      id: localId,
+      app_metadata: { provider: 'offline_local' },
+      user_metadata: {
+        full_name: trimmedName,
+        name: trimmedName,
+        phone_number: cleanPhone,
+        phone: cleanPhone,
+        has_completed_setup: true,
+        is_offline_user: true,
+        language: data.language || 'en',
+      },
+      aud: 'authenticated',
+      created_at: new Date().toISOString(),
+    } as unknown as User;
+
+    const localProfile: UserProfile = {
+      id: localId,
+      full_name: trimmedName,
+      email: null,
+      phone_number: cleanPhone,
+      avatar_url: null,
+      language: data.language || 'en',
+      has_completed_setup: true,
+      updated_at: new Date().toISOString(),
+    };
+
+    setUser(localUser);
+    setProfile(localProfile);
+    setIsOfflineUser(true);
+
+    try {
+      localStorage.setItem(
+        'yaad_authenticated_user_cache',
+        JSON.stringify({
+          id: localUser.id,
+          email: null,
+          user_metadata: localUser.user_metadata,
+          app_metadata: localUser.app_metadata,
+          is_offline_user: true,
+        })
+      );
+      localStorage.setItem('yaad_profile_setup_done', 'true');
+      localStorage.setItem('yaad_profile_setup_completed', 'true');
+      localStorage.setItem('yaad_has_onboarded_v2', 'true');
+      localStorage.setItem('yaad_has_onboarded', 'true');
+    } catch {}
+
+    await saveOfflineProfile(localId, localProfile);
+
+    // Queue safe non-sensitive profile data for synchronization when internet returns
+    await enqueueOfflineOperation({
+      userId: localId,
+      type: 'UPDATE_PROFILE',
+      listId: 'profile',
+      payload: localProfile,
+    });
+  };
+
   const isPasswordResetRequired = Boolean(
     isPasswordRecovery ||
     user?.user_metadata?.password_reset_required === true
@@ -979,7 +1391,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         session,
         profile,
         isLoading,
+        isOfflineUser,
         isConfigured: isSupabaseConfigured,
+        startOfflineOnboarding,
         signIn,
         signUp,
         signInWithGoogle,
@@ -987,9 +1401,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         registerPasskey,
         listPasskeys,
         removePasskey,
+        passkeys,
+        hasPasskey,
+        isLoadingPasskeys,
+        refreshPasskeys,
         signOut,
         deleteAccount,
         updatePassword,
+        changePassword,
         updateUserProfile,
         refreshProfile,
         oauthError,

@@ -22,6 +22,8 @@ interface SecuritySectionProps {
   // Password State
   isChangingPassword: boolean;
   setIsChangingPassword: (val: boolean) => void;
+  currentPassword?: string;
+  setCurrentPassword?: (val: string) => void;
   newPassword: string;
   setNewPassword: (val: string) => void;
   confirmPassword: string;
@@ -51,6 +53,8 @@ interface SecuritySectionProps {
 export const SecuritySection: React.FC<SecuritySectionProps> = ({
   isChangingPassword,
   setIsChangingPassword,
+  currentPassword = '',
+  setCurrentPassword,
   newPassword,
   setNewPassword,
   confirmPassword,
@@ -73,6 +77,20 @@ export const SecuritySection: React.FC<SecuritySectionProps> = ({
   onRequestSignOut,
 }) => {
   const { t, language } = useLanguage();
+
+  const [showCurrentPassword, setShowCurrentPassword] = React.useState(false);
+  const [showNewPassword, setShowNewPassword] = React.useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
+
+  const passwordsMatch = newPassword.length > 0 && newPassword === confirmPassword;
+  const isNewDifferent = !currentPassword || (newPassword.length > 0 && currentPassword !== newPassword);
+  const isNewValidLength = newPassword.length >= 6;
+  const canSubmit =
+    Boolean(currentPassword.trim()) &&
+    isNewValidLength &&
+    passwordsMatch &&
+    isNewDifferent &&
+    !isUpdatingPassword;
 
   const getPasskeyIcon = (name?: string) => {
     const lower = (name || '').toLowerCase();
@@ -176,10 +194,11 @@ export const SecuritySection: React.FC<SecuritySectionProps> = ({
           {isChangingPassword && (
             <form
               onSubmit={onUpdatePassword}
-              className="p-4 sm:p-4.5 bg-surface-container-lowest rounded-2xl border border-primary/20 space-y-3.5 animate-in fade-in duration-200"
+              className="p-4 sm:p-5 bg-surface-container-lowest rounded-2xl border border-primary/20 space-y-4 animate-in fade-in duration-200"
             >
               {passwordMessage && (
                 <div
+                  role="alert"
                   className={`p-3 rounded-xl text-xs flex items-center gap-2 ${
                     passwordMessage.type === 'success'
                       ? 'bg-secondary-fixed/50 text-primary font-bold border border-primary/20'
@@ -195,33 +214,37 @@ export const SecuritySection: React.FC<SecuritySectionProps> = ({
                 </div>
               )}
 
+              {/* 1. Current Password Field */}
               <div className="space-y-1">
                 <label
-                  htmlFor="settings_new_password"
-                  className="text-xs font-bold text-on-surface-variant"
+                  htmlFor="settings_current_password"
+                  className="text-xs font-bold text-on-surface-variant block font-['Manrope']"
                 >
-                  {t('settings.newPassword') || 'New Password'}
+                  {t('settings.currentPassword') || 'Current Password'}
                 </label>
                 <div className="relative">
                   <input
-                    id="settings_new_password"
-                    type={showPassword ? 'text' : 'password'}
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
+                    id="settings_current_password"
+                    type={showCurrentPassword ? 'text' : 'password'}
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword && setCurrentPassword(e.target.value)}
                     placeholder={
-                      t('settings.newPasswordPlaceholder') ||
-                      'Enter new password (min 6 chars)'
+                      t('settings.currentPasswordPlaceholder') ||
+                      'Enter your current password'
                     }
-                    className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-surface border border-surface-dim focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 pe-10 font-mono transition-all"
+                    disabled={isUpdatingPassword}
+                    className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-surface border border-surface-dim focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 pe-10 font-mono transition-all disabled:opacity-60"
                     autoFocus
+                    required
                   />
                   <button
+                    id="settings_toggle_current_password"
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    aria-label={showCurrentPassword ? 'Hide current password' : 'Show current password'}
                     className="absolute inset-y-0 end-3 flex items-center text-outline hover:text-on-surface cursor-pointer"
                   >
-                    {showPassword ? (
+                    {showCurrentPassword ? (
                       <EyeOff className="w-4 h-4" />
                     ) : (
                       <Eye className="w-4 h-4" />
@@ -230,38 +253,126 @@ export const SecuritySection: React.FC<SecuritySectionProps> = ({
                 </div>
               </div>
 
+              {/* 2. New Password Field */}
+              <div className="space-y-1">
+                <div className="flex justify-between items-center">
+                  <label
+                    htmlFor="settings_new_password"
+                    className="text-xs font-bold text-on-surface-variant block font-['Manrope']"
+                  >
+                    {t('settings.newPassword') || 'New Password'}
+                  </label>
+                  {isNewValidLength && (
+                    <span className="text-[11px] font-semibold text-primary">Min 6 characters met</span>
+                  )}
+                </div>
+                <div className="relative">
+                  <input
+                    id="settings_new_password"
+                    type={showNewPassword ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder={
+                      t('settings.newPasswordPlaceholder') ||
+                      'Enter new password (min 6 chars)'
+                    }
+                    disabled={isUpdatingPassword}
+                    className={`w-full px-3.5 py-2.5 text-sm rounded-xl bg-surface border focus:outline-hidden focus:ring-2 pe-10 font-mono transition-all disabled:opacity-60 ${
+                      newPassword && currentPassword && newPassword === currentPassword
+                        ? 'border-error focus:border-error focus:ring-error/20'
+                        : 'border-surface-dim focus:border-primary focus:ring-primary/20'
+                    }`}
+                    required
+                  />
+                  <button
+                    id="settings_toggle_new_password"
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
+                    className="absolute inset-y-0 end-3 flex items-center text-outline hover:text-on-surface cursor-pointer"
+                  >
+                    {showNewPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+                {newPassword && currentPassword && newPassword === currentPassword && (
+                  <p className="text-[11px] text-error font-medium">
+                    {t('settings.samePasswordError') ||
+                      'New password cannot be the same as your current password.'}
+                  </p>
+                )}
+              </div>
+
+              {/* 3. Confirm Password Field */}
               <div className="space-y-1">
                 <label
                   htmlFor="settings_confirm_password"
-                  className="text-xs font-bold text-on-surface-variant"
+                  className="text-xs font-bold text-on-surface-variant block font-['Manrope']"
                 >
                   {t('settings.confirmPassword') || 'Confirm Password'}
                 </label>
-                <input
-                  id="settings_confirm_password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder={
-                    t('settings.confirmPasswordPlaceholder') ||
-                    'Re-enter new password'
-                  }
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-surface border border-surface-dim focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 font-mono transition-all"
-                />
+                <div className="relative">
+                  <input
+                    id="settings_confirm_password"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder={
+                      t('settings.confirmPasswordPlaceholder') ||
+                      'Re-enter new password'
+                    }
+                    disabled={isUpdatingPassword}
+                    className={`w-full px-3.5 py-2.5 text-sm rounded-xl bg-surface border focus:outline-hidden focus:ring-2 pe-10 font-mono transition-all disabled:opacity-60 ${
+                      confirmPassword && !passwordsMatch
+                        ? 'border-error focus:border-error focus:ring-error/20'
+                        : 'border-surface-dim focus:border-primary focus:ring-primary/20'
+                    }`}
+                    required
+                  />
+                  <button
+                    id="settings_toggle_confirm_password"
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                    className="absolute inset-y-0 end-3 flex items-center text-outline hover:text-on-surface cursor-pointer"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+                {confirmPassword && !passwordsMatch && (
+                  <p className="text-[11px] text-error font-medium">
+                    {t('settings.passwordMismatch') || 'Passwords do not match.'}
+                  </p>
+                )}
               </div>
 
-              <div className="flex justify-end gap-2 pt-1">
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-2 pt-1.5">
                 <button
                   type="button"
-                  onClick={() => setIsChangingPassword(false)}
+                  onClick={() => {
+                    setIsChangingPassword(false);
+                    if (setCurrentPassword) setCurrentPassword('');
+                    setNewPassword('');
+                    setConfirmPassword('');
+                    setPasswordMessage(null);
+                  }}
                   disabled={isUpdatingPassword}
                   className="px-4 py-2 text-xs font-semibold text-outline hover:text-on-surface bg-surface-container rounded-xl transition-colors cursor-pointer"
                 >
                   {t('settings.cancel') || 'Cancel'}
                 </button>
                 <button
+                  id="settings_submit_password_btn"
                   type="submit"
-                  disabled={isUpdatingPassword}
+                  disabled={!canSubmit}
                   className="px-5 py-2 text-xs font-bold text-white bg-primary hover:bg-primary/90 rounded-xl transition-all disabled:opacity-50 active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-xs"
                 >
                   {isUpdatingPassword ? (

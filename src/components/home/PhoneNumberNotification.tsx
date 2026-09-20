@@ -4,6 +4,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { User } from '@supabase/supabase-js';
 import { UserProfile } from '../../types';
 import { checkUserHasPhone } from '../../hooks/usePhoneNumberReminder';
+import { useIsMobileDevice } from '../../hooks/useIsMobileDevice';
 import { AddPhoneNumberModal } from './AddPhoneNumberModal';
 
 interface PhoneNumberNotificationProps {
@@ -19,6 +20,7 @@ export const PhoneNumberNotification: React.FC<PhoneNumberNotificationProps> = (
   profile,
 }) => {
   const { language, isRTL } = useLanguage();
+  const isMobile = useIsMobileDevice();
   const [isDismissed, setIsDismissed] = useState<boolean>(true);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
@@ -27,7 +29,8 @@ export const PhoneNumberNotification: React.FC<PhoneNumberNotificationProps> = (
   const hasPhone = checkUserHasPhone(profile, user);
 
   useEffect(() => {
-    if (!user || hasPhone) {
+    // Must be on a mobile phone handset, authenticated, and missing phone
+    if (!isMobile || !user || hasPhone) {
       setIsDismissed(true);
       return;
     }
@@ -49,7 +52,12 @@ export const PhoneNumberNotification: React.FC<PhoneNumberNotificationProps> = (
     } else {
       setIsDismissed(false);
     }
-  }, [user, hasPhone, storageKey]);
+  }, [isMobile, user, hasPhone, storageKey]);
+
+  // Requirement 5: This phone reminder/prompt system must NOT appear on iPad/tablet/desktop
+  if (!isMobile) {
+    return null;
+  }
 
   const handleDismiss = () => {
     setIsDismissed(true);
@@ -99,12 +107,14 @@ export const PhoneNumberNotification: React.FC<PhoneNumberNotificationProps> = (
           </div>
           <div className="flex flex-col min-w-0">
             <span className="font-['Plus_Jakarta_Sans'] text-xs sm:text-sm font-bold text-on-surface">
-              {language === 'ur' ? 'اپنا فون نمبر شامل کریں' : 'Add Your Phone Number'}
+              {language === 'ur'
+                ? 'اپنا فون نمبر شامل کریں اور عمل مکمل کریں'
+                : 'Add Your Phone Number & Complete the Process'}
             </span>
             <span className="font-['Manrope'] text-[11px] sm:text-xs text-outline leading-snug mt-0.5">
               {language === 'ur'
                 ? 'اپنے اکاؤنٹ کو محفوظ رکھنے اور آسانی سے بازیافت کرنے کے لیے فون نمبر شامل کریں۔'
-                : 'Add your phone number to help secure your account and make recovery easier.'}
+                : 'Add your phone number to complete your profile and make account recovery seamless.'}
             </span>
           </div>
         </div>

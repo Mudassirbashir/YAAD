@@ -87,7 +87,10 @@ function AppContent() {
     isPasswordRecovery ||
     isPasswordResetRequired ||
     authState === 'PASSWORD_RESET_REQUIRED' ||
-    user?.user_metadata?.password_reset_required === true
+    user?.user_metadata?.password_reset_required === true ||
+    (typeof window !== 'undefined' &&
+      (sessionStorage.getItem('yaad_password_recovery_active') === 'true' ||
+        localStorage.getItem('yaad_password_reset_required') === 'true'))
   );
 
   // Splash screen state: only show initially
@@ -522,6 +525,11 @@ function AppContent() {
   const handleSplashFinish = () => {
     setHasSplashFinished(true);
 
+    if (isAuthLoading) {
+      // Defer routing decisions until authentication session is fully resolved
+      return;
+    }
+
     if (isPasswordResetRequiredActive) {
       replace('/reset-password');
       return;
@@ -761,6 +769,7 @@ function AppContent() {
         id: it.id || generateUUID(),
         completed: it.completed ?? false,
       })),
+      contextId: activeListContext || existingList?.contextId,
     };
 
     setLists((prev) => {
@@ -1172,18 +1181,9 @@ function AppContent() {
     !!user &&
     !isPasswordResetRequiredActive;
 
-  // Loading state while auth is being resolved on launch
-  if (isAuthLoading && !hasSplashFinished) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-primary text-on-primary flex items-center justify-center font-['Plus_Jakarta_Sans'] font-extrabold text-xl shadow-md">
-            Y
-          </div>
-          <Loader2 className="w-5 h-5 text-primary animate-spin" />
-        </div>
-      </div>
-    );
+  // Seamless launch & session restoration: show branded splash until session resolves
+  if ((!hasSplashFinished || isAuthLoading) && currentScreen !== 'rashan_list' && !LEGAL_SCREENS.includes(currentScreen)) {
+    return <SplashView onFinish={handleSplashFinish} isRestoringAuth={isAuthLoading} />;
   }
 
   return (
@@ -1223,24 +1223,34 @@ function AppContent() {
       )}
 
       {/* 3. Password Reset Screen - Strict Gate */}
-      {hasSplashFinished && isPasswordResetRequiredActive && (
-        <ResetPasswordView
-          onSuccess={() => {
-            replace('/home');
-          }}
-          onRequestNewLink={() => {
-            replace('/auth');
-          }}
-        />
-      )}
+      {hasSplashFinished &&
+        (isPasswordResetRequiredActive ||
+          currentScreen === 'reset_password' ||
+          route.routeId === 'reset_password') && (
+          <ResetPasswordView
+            onSuccess={() => {
+              replace('/home');
+            }}
+            onRequestNewLink={() => {
+              replace('/auth');
+            }}
+          />
+        )}
 
       {/* 4. Public Unauthenticated View */}
-      {hasSplashFinished && !isPasswordResetRequiredActive && !user && !LEGAL_SCREENS.includes(currentScreen) && currentScreen !== 'not_found' && currentScreen !== 'rashan_list' && (
-        <AuthView
-          onSuccess={handleAuthSuccess}
-          onOpenLegalPage={handleOpenLegalPage}
-        />
-      )}
+      {hasSplashFinished &&
+        !isPasswordResetRequiredActive &&
+        currentScreen !== 'reset_password' &&
+        route.routeId !== 'reset_password' &&
+        !user &&
+        !LEGAL_SCREENS.includes(currentScreen) &&
+        currentScreen !== 'not_found' &&
+        currentScreen !== 'rashan_list' && (
+          <AuthView
+            onSuccess={handleAuthSuccess}
+            onOpenLegalPage={handleOpenLegalPage}
+          />
+        )}
 
       {/* 5. Profile Setup */}
       {hasSplashFinished && user && !isPasswordResetRequiredActive && currentScreen === 'profile_setup' && (

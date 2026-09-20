@@ -11,7 +11,8 @@ export type OfflineMutationType =
   | 'DELETE_ITEM'
   | 'COMPLETE_ITEM'
   | 'UNCOMPLETE_ITEM'
-  | 'SAVE_LIST'; // General idempotent list upsert
+  | 'SAVE_LIST'
+  | 'UPDATE_PROFILE'; // General idempotent list upsert or profile sync
 
 export interface PendingOfflineOperation {
   id: string;
@@ -345,6 +346,21 @@ export async function enqueueOfflineOperation(
           const cursor = (e.target as IDBRequest<IDBCursorWithValue>).result;
           if (cursor) {
             if (cursor.value.type === 'SAVE_LIST' || cursor.value.type === 'UPDATE_LIST') {
+              cursor.delete();
+            }
+            cursor.continue();
+          } else {
+            store.put(item);
+          }
+        };
+      } else if (item.type === 'UPDATE_PROFILE') {
+        // Coalesce pending UPDATE_PROFILE for the same user
+        const index = store.index('by_user');
+        const req = index.openCursor(IDBKeyRange.only(item.userId));
+        req.onsuccess = (e) => {
+          const cursor = (e.target as IDBRequest<IDBCursorWithValue>).result;
+          if (cursor) {
+            if (cursor.value.type === 'UPDATE_PROFILE') {
               cursor.delete();
             }
             cursor.continue();
@@ -726,4 +742,79 @@ export async function clearUserRecommendationData(userId: string): Promise<void>
     console.warn('Error clearing recommendation data:', err);
   }
 }
+
+/**
+ * Migrates offline user records (shopping lists, pending queue, metadata)
+ * from a temporary local user ID (e.g. 'local_...') to an authenticated user ID.
+ */
+export async function migrateOfflineUserData(oldUserId: string, newUserId: string): Promise<void> {
+  if (!oldUserId || !newUserId || oldUserId === newUserId) return;
+  try {
+    const db = await getOfflineDB();
+
+    // 1. Migrate shopping lists
+    await new Promise<void>((resolve) => {
+      const transaction = db.transaction([STORES.LISTS], 'readwrite');
+      const store = transaction.objectStore(STORES.LISTS);
+      const index = store.index('by_user');
+      const req = index.openCursor(IDBKeyRange.only(oldUserId));
+
+      req.onsuccess = (e) => {
+        const cursor = (e.target as IDBRequest<IDBCursorWithValue>).result;
+        if (cursor) {
+          const list = cursor.value;
+          const updatedList = { ...list, userId: newUserId, user_id: newUserId, isSynced: false };
+          store.put(updatedList);
+          cursor.continue();
+        } else {
+          resolve();
+        }
+      };
+      req.onerror = () => resolve();
+    });
+
+    // 2. Migrate pending queue operations
+    await new Promise<void>((resolve) => {
+      const transaction = db.transaction([STORES.QUEUE], 'readwrite');
+      const store = transaction.objectStore(STORES.QUEUE);
+      const index = store.index('by_user');
+      const req = index.openCursor(IDBKeyRange.only(oldUserId));
+
+      req.onsuccess = (e) => {
+        const cursor = (e.target as IDBRequest<IDBCursorWithValue>).result;
+        if (cursor) {
+          const op = cursor.value;
+          const updatedOp = {
+            ...op,
+            userId: newUserId,
+            payload:
+              op.payload && typeof op.payload === 'object'
+                ? { ...op.payload, userId: newUserId, user_id: newUserId }
+                : op.payload,
+          };
+          store.put(updatedOp);
+          cursor.continue();
+        } else {
+          resolve();
+        }
+      };
+      req.onerror = () => resolve();
+    });
+
+    // 3. Migrate profile metadata
+    const oldProfile = await getOfflineProfile(oldUserId);
+    if (oldProfile) {
+      await saveOfflineProfile(newUserId, { ...oldProfile, id: newUserId });
+      await enqueueOfflineOperation({
+        type: 'UPDATE_PROFILE',
+        userId: newUserId,
+        listId: '',
+        payload: { ...oldProfile, id: newUserId },
+      });
+    }
+  } catch (err) {
+    console.warn('Error migrating offline user data:', err);
+  }
+}
+
 

@@ -6,6 +6,8 @@ import {
   Plus,
   Sparkles,
   Zap,
+  Check,
+  Loader2,
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { triggerHaptic } from '../lib/sound';
@@ -39,13 +41,14 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
   const { t } = useLanguage();
   const [customTitle, setCustomTitle] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string>('');
+  const [selectedContextId, setSelectedContextId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
 
   const handleDispatchCreate = (title: string, iconName?: string, contextId?: string) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
-    triggerHaptic(12);
+    triggerHaptic(14);
 
     const resolvedTitle = title.trim() || 'Shopping List';
     const resolvedIcon = iconName || 'shopping_basket';
@@ -59,26 +62,39 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
   };
 
   /**
-   * Immediately navigates to Add Items screen upon tapping a category/context.
+   * Immediately marks category as selected with visual feedback,
+   * then smoothly continues to Add Items without requiring any "Continue" button.
    */
   const handleSelectContextImmediate = (ctx: ShoppingContextOption) => {
+    if (isSubmitting) return;
+
     if (ctx.id === 'custom' && !customTitle.trim()) {
-      // If user tapped "Custom" with no title, focus input for typing
       triggerHaptic(6);
       titleInputRef.current?.focus();
       return;
     }
 
-    // If user has typed a custom title, prefer their typed title; otherwise use the context title
+    triggerHaptic(14);
+    setSelectedContextId(ctx.id);
+
     const resolvedTitle = customTitle.trim() ? customTitle.trim() : ctx.title;
-    handleDispatchCreate(resolvedTitle, ctx.iconName, ctx.id);
+    
+    // Smooth micro-transition (160ms) gives instant visual confirmation of selection
+    setTimeout(() => {
+      handleDispatchCreate(resolvedTitle, ctx.iconName, ctx.id);
+    }, 160);
   };
 
   /**
    * Fast 1-tap quick title selector - immediately dispatches
    */
   const handleQuickTitleSelect = (item: typeof QUICK_TITLES[0]) => {
-    handleDispatchCreate(item.label, item.iconName, item.contextId);
+    if (isSubmitting) return;
+    triggerHaptic(14);
+    setSelectedContextId(item.contextId);
+    setTimeout(() => {
+      handleDispatchCreate(item.label, item.iconName, item.contextId);
+    }, 120);
   };
 
   /**
@@ -86,6 +102,7 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
    */
   const handleSubmitCustomTitle = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (isSubmitting) return;
     const finalTitle = customTitle.trim();
     if (!finalTitle) {
       setErrorMsg(t('createList.errorEmpty') || 'Please enter a list name first.');
@@ -124,6 +141,7 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
       bestIcon = 'home';
     }
 
+    setSelectedContextId(bestContextId);
     handleDispatchCreate(finalTitle, bestIcon, bestContextId);
   };
 
@@ -263,29 +281,53 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-3.5">
             {SHOPPING_CONTEXT_OPTIONS.map((ctx) => {
               const IconComp = ctx.icon;
+              const isSelected = selectedContextId === ctx.id;
 
               return (
                 <button
                   key={ctx.id}
                   id={`context-option-${ctx.id}`}
                   type="button"
+                  disabled={isSubmitting}
                   onClick={() => handleSelectContextImmediate(ctx)}
-                  className="w-full p-3.5 sm:p-4 rounded-2xl text-start flex items-start gap-3.5 bg-surface-container-lowest hover:bg-surface-container-low border border-surface-dim/80 hover:border-primary/50 shadow-2xs hover:shadow-xs transition-all duration-150 active:scale-[0.98] cursor-pointer group"
+                  className={`w-full p-3.5 sm:p-4 rounded-2xl text-start flex items-start gap-3.5 shadow-2xs transition-all duration-150 active:scale-[0.98] cursor-pointer group ${
+                    isSelected
+                      ? 'ring-2 ring-primary border-primary bg-primary-container/25 text-primary shadow-xs'
+                      : 'bg-surface-container-lowest hover:bg-surface-container-low border border-surface-dim/80 hover:border-primary/50 text-on-surface'
+                  }`}
                 >
                   {/* Icon badge */}
                   <div
-                    className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border ${ctx.accentBg} ${ctx.accentText} ${ctx.accentBorder} group-hover:scale-105 transition-transform`}
+                    className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border transition-all ${
+                      isSelected
+                        ? 'bg-primary text-on-primary border-primary scale-105'
+                        : `${ctx.accentBg} ${ctx.accentText} ${ctx.accentBorder} group-hover:scale-105`
+                    }`}
                   >
-                    <IconComp className="w-5 h-5" strokeWidth={2} />
+                    {isSelected ? (
+                      <Check className="w-5 h-5 text-on-primary stroke-[2.8] animate-in zoom-in-50 duration-150" />
+                    ) : (
+                      <IconComp className="w-5 h-5" strokeWidth={2} />
+                    )}
                   </div>
 
                   {/* Text content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-1">
-                      <span className="font-['Plus_Jakarta_Sans'] font-bold text-base truncate text-on-surface group-hover:text-primary transition-colors">
+                      <span
+                        className={`font-['Plus_Jakarta_Sans'] font-bold text-base truncate transition-colors ${
+                          isSelected ? 'text-primary' : 'text-on-surface group-hover:text-primary'
+                        }`}
+                      >
                         {ctx.title}
                       </span>
-                      <ArrowRight className="w-4 h-4 text-outline group-hover:text-primary group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-all shrink-0" />
+                      {isSelected ? (
+                        <span className="flex items-center gap-1 text-xs font-semibold text-primary">
+                          <Check className="w-4 h-4 stroke-[2.5]" />
+                        </span>
+                      ) : (
+                        <ArrowRight className="w-4 h-4 text-outline group-hover:text-primary group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-all shrink-0" />
+                      )}
                     </div>
                     <p className="font-['Manrope'] text-xs text-on-surface-variant line-clamp-2 mt-0.5 leading-snug">
                       {ctx.subtitle}

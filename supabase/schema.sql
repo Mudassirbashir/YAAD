@@ -23,9 +23,10 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- Ensure has_completed_setup & phone_number columns exist on pre-existing installations
+-- Ensure has_completed_setup, phone_number, and phone columns exist on pre-existing installations
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS has_completed_setup BOOLEAN DEFAULT FALSE;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS phone_number TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS phone TEXT;
 
 -- 2. HOUSEHOLDS TABLE (Shared Household Entity)
 CREATE TABLE IF NOT EXISTS public.households (
