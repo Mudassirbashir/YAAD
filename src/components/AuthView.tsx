@@ -25,8 +25,29 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAppRouter } from '../router/RouterContext';
 import { APP_IMAGES } from '../data/initialData';
 import { formatAuthErrorMessage } from '../lib/supabase';
-import { isPasskeySupported } from '../lib/passkey';
 import { validatePhoneNumber } from '../utils/phone';
+
+// Official multi-color Google 'G' icon component
+const GoogleOfficialIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5 shrink-0' }) => (
+  <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      fill="#4285F4"
+      d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"
+    />
+    <path
+      fill="#34A853"
+      d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z"
+    />
+    <path
+      fill="#FBBC05"
+      d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"
+    />
+    <path
+      fill="#EA4335"
+      d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+    />
+  </svg>
+);
 
 type AuthScreenMode = 'signin' | 'signup' | 'forgot_password' | 'reset_password';
 
@@ -48,7 +69,6 @@ export const AuthView: React.FC<AuthViewProps> = ({
     signUp,
     startOfflineOnboarding,
     signInWithGoogle,
-    signInWithPasskey,
     oauthError,
     clearOauthError,
     isPasswordRecovery,
@@ -86,7 +106,6 @@ export const AuthView: React.FC<AuthViewProps> = ({
   // Loading states
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [passkeyLoading, setPasskeyLoading] = useState(false);
 
   // Feedback messages
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -113,7 +132,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
   // Synchronous hardware ref to prevent double submissions, duplicate clicks, or enter-key races
   const isSubmittingRef = useRef(false);
 
-  const isAnyLoading = loading || googleLoading || passkeyLoading;
+  const isAnyLoading = loading || googleLoading;
 
   // React to password recovery trigger from URL or AuthContext
   useEffect(() => {
@@ -149,44 +168,6 @@ export const AuthView: React.FC<AuthViewProps> = ({
     } finally {
       isSubmittingRef.current = false;
       setGoogleLoading(false);
-    }
-  };
-
-  // Handle Native Supabase Passkey
-  const handlePasskeySignIn = async () => {
-    if (isSubmittingRef.current || isAnyLoading) return;
-    setErrorMessage(null);
-    setSuccessMessage(null);
-    clearOauthError();
-
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      setErrorMessage("You're offline. Please reconnect to continue.");
-      return;
-    }
-
-    if (!isPasskeySupported()) {
-      setErrorMessage(
-        'Passkeys are not supported on this browser or device. Please continue with Email or Google.'
-      );
-      return;
-    }
-
-    isSubmittingRef.current = true;
-    setPasskeyLoading(true);
-
-    try {
-      const { error } = await signInWithPasskey();
-      if (error) {
-        setErrorMessage(formatAuthErrorMessage(error));
-        return;
-      }
-
-      if (onSuccess) onSuccess();
-    } catch (err: unknown) {
-      setErrorMessage(formatAuthErrorMessage(err));
-    } finally {
-      isSubmittingRef.current = false;
-      setPasskeyLoading(false);
     }
   };
 
@@ -514,64 +495,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
           </div>
         )}
 
-        {/* Passkey Cancellation Alert (Soft, Non-scary) */}
-        {displayedError === 'Passkey sign-in was cancelled.' && !resetSuccess ? (
-          <div
-            id="auth_passkey_cancelled_note"
-            className="p-3.5 bg-surface-container-high border border-outline-variant/70 rounded-2xl text-xs text-on-surface-variant font-['Manrope'] flex items-center justify-between gap-2.5 animate-in fade-in duration-200"
-          >
-            <div className="flex items-center gap-2.5">
-              <Fingerprint className="w-4 h-4 text-primary shrink-0" />
-              <span>Passkey sign-in was cancelled.</span>
-            </div>
-            <button
-              type="button"
-              onClick={handlePasskeySignIn}
-              className="text-xs font-bold text-primary hover:underline shrink-0"
-            >
-              Try again
-            </button>
-          </div>
-        ) : displayedError && displayedError.includes('No passkey found') && !resetSuccess ? (
-          /* No Passkey Found: Clear, helpful note with one-tap alternative options */
-          <div
-            id="auth_no_passkey_notice"
-            className="p-4 bg-surface-container-high/80 border border-outline-variant rounded-2xl text-xs font-['Manrope'] space-y-3 animate-in fade-in duration-200"
-          >
-            <div className="flex items-start gap-2.5">
-              <KeyRound className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-              <div className="space-y-1">
-                <p className="font-bold text-on-surface">No passkey found</p>
-                <p className="text-[12px] text-on-surface-variant leading-relaxed">
-                  No passkey was found for this account/device. Use Email or Google to sign in.
-                </p>
-              </div>
-            </div>
-            <div className="pt-0.5 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={handleGoogleSignIn}
-                disabled={isAnyLoading}
-                className="px-3.5 py-1.5 bg-surface-container-lowest border border-outline-variant hover:border-primary text-on-surface text-xs font-bold font-['Manrope'] rounded-xl transition-all flex items-center gap-1.5 active:scale-95 shadow-2xs"
-              >
-                <Globe className="w-3.5 h-3.5 text-primary" />
-                <span>Continue with Google</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowEmailForm(true);
-                  setErrorMessage(null);
-                }}
-                disabled={isAnyLoading}
-                className="px-3.5 py-1.5 bg-surface-container-lowest border border-outline-variant hover:border-primary text-on-surface text-xs font-bold font-['Manrope'] rounded-xl transition-all flex items-center gap-1.5 active:scale-95 shadow-2xs"
-              >
-                <Mail className="w-3.5 h-3.5 text-primary" />
-                <span>Continue with Email</span>
-              </button>
-            </div>
-          </div>
-        ) : displayedError && !resetSuccess ? (
+        {displayedError && !resetSuccess ? (
           /* Standard Error Alert */
           <div
             id="auth_error_alert"
@@ -647,50 +571,24 @@ export const AuthView: React.FC<AuthViewProps> = ({
           <div className="space-y-4">
             {/* Primary Options in Clean Hierarchy */}
             <div className="space-y-2.5">
-              {/* Option 1: Continue with Google */}
+              {/* Option 1: Continue with Google (Official Google Logo) */}
               <motion.button
                 id="auth_google_btn"
                 type="button"
                 whileTap={{ scale: 0.99 }}
                 onClick={handleGoogleSignIn}
                 disabled={isAnyLoading}
-                className="w-full h-12 rounded-2xl bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface font-['Manrope'] text-xs font-bold transition-all flex items-center justify-center gap-2.5 shadow-2xs hover:shadow-xs disabled:opacity-60"
+                className="w-full h-12 rounded-2xl bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface font-['Manrope'] text-xs font-bold transition-all flex items-center justify-center gap-2.5 shadow-2xs hover:shadow-xs active:scale-[0.99] disabled:opacity-60"
               >
                 {googleLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
                 ) : (
-                  <Globe className="w-4 h-4 text-primary" />
+                  <GoogleOfficialIcon className="w-5 h-5" />
                 )}
                 <span>{t('auth.googleBtn') || 'Continue with Google'}</span>
               </motion.button>
 
-              {/* Option 2: Continue with Passkey */}
-              <motion.button
-                id="auth_passkey_btn"
-                type="button"
-                whileTap={{ scale: 0.99 }}
-                onClick={handlePasskeySignIn}
-                disabled={isAnyLoading}
-                className={`w-full h-12 rounded-2xl border font-['Manrope'] text-xs font-bold transition-all flex items-center justify-center gap-2.5 shadow-2xs hover:shadow-xs disabled:opacity-60 relative overflow-hidden ${
-                  passkeyLoading
-                    ? 'bg-primary/10 border-primary/40 text-primary ring-2 ring-primary/20'
-                    : 'bg-surface-container hover:bg-surface-container-high border-outline-variant text-on-surface'
-                }`}
-              >
-                {passkeyLoading ? (
-                  <div className="flex items-center gap-2">
-                    <Fingerprint className="w-4 h-4 text-primary animate-pulse" />
-                    <span>Authenticating with Passkey...</span>
-                  </div>
-                ) : (
-                  <>
-                    <Fingerprint className="w-4 h-4 text-primary" />
-                    <span>{t('auth.passkeyBtn') || 'Continue with Passkey'}</span>
-                  </>
-                )}
-              </motion.button>
-
-              {/* Option 3: Continue with Email */}
+              {/* Option 2: Continue with Email */}
               {!showEmailForm && (
                 <motion.button
                   id="auth_email_toggle_btn"
@@ -1025,17 +923,18 @@ export const AuthView: React.FC<AuthViewProps> = ({
             </div>
 
             <button
+              id="signup_google_btn"
               type="button"
               onClick={handleGoogleSignIn}
               disabled={isAnyLoading}
-              className="w-full h-11 rounded-2xl bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface font-['Manrope'] text-xs font-bold transition-all flex items-center justify-center gap-2.5 shadow-2xs hover:shadow-xs active:scale-[0.99] disabled:opacity-60"
+              className="w-full h-12 rounded-2xl bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface font-['Manrope'] text-xs font-bold transition-all flex items-center justify-center gap-2.5 shadow-2xs hover:shadow-xs active:scale-[0.99] disabled:opacity-60"
             >
               {googleLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                <Loader2 className="w-5 h-5 animate-spin text-primary" />
               ) : (
-                <Globe className="w-4 h-4 text-primary" />
+                <GoogleOfficialIcon className="w-5 h-5" />
               )}
-              <span>Continue with Google</span>
+              <span>{t('auth.googleBtn') || 'Continue with Google'}</span>
             </button>
 
             {/* Switch to Sign In */}

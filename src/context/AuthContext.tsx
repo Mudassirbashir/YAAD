@@ -88,14 +88,79 @@ export interface AuthContextType {
   }) => Promise<void>;
 }
 
+// Helper to synchronously retrieve cached authenticated user from localStorage
+function getPersistedUser(): User | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem('yaad_authenticated_user_cache');
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && parsed.id) {
+      return parsed as User;
+    }
+  } catch (e) {
+    console.warn('Error reading persisted user:', e);
+  }
+  return null;
+}
+
+// Helper to reliably persist or purge user session in localStorage
+function persistUser(userToSave: User | null): void {
+  if (typeof window === 'undefined') return;
+  try {
+    if (userToSave && userToSave.id) {
+      const dataToSave = {
+        id: userToSave.id,
+        email: userToSave.email || null,
+        user_metadata: userToSave.user_metadata || {},
+        app_metadata: userToSave.app_metadata || {},
+        phone: userToSave.phone || userToSave.user_metadata?.phone_number || null,
+        created_at: userToSave.created_at || new Date().toISOString(),
+        aud: userToSave.aud || 'authenticated',
+        is_offline_user: Boolean((userToSave as any).is_offline_user),
+      };
+      localStorage.setItem('yaad_authenticated_user_cache', JSON.stringify(dataToSave));
+      localStorage.setItem('yaad_user_session_persisted', 'true');
+      localStorage.setItem('yaad_profile_setup_done', 'true');
+      localStorage.setItem('yaad_profile_setup_completed', 'true');
+      localStorage.setItem('yaad_has_onboarded_v2', 'true');
+      localStorage.setItem('yaad_has_onboarded', 'true');
+    } else {
+      localStorage.removeItem('yaad_authenticated_user_cache');
+      localStorage.removeItem('yaad_user_session_persisted');
+    }
+  } catch (e) {
+    console.warn('Error saving persisted user:', e);
+  }
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const initialCachedUser = getPersistedUser();
+  const [user, setUser] = useState<User | null>(initialCachedUser);
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isOfflineUser, setIsOfflineUser] = useState<boolean>(false);
+  const [profile, setProfile] = useState<UserProfile | null>(() => {
+    if (typeof window !== 'undefined' && initialCachedUser?.id) {
+      try {
+        const rawProfile = localStorage.getItem(`yaad_offline_profile_${initialCachedUser.id}`);
+        if (rawProfile) {
+          return JSON.parse(rawProfile);
+        }
+        return {
+          id: initialCachedUser.id,
+          full_name: initialCachedUser.user_metadata?.full_name || initialCachedUser.user_metadata?.name || null,
+          email: initialCachedUser.email || null,
+          phone_number: initialCachedUser.user_metadata?.phone_number || initialCachedUser.user_metadata?.phone || null,
+          avatar_url: initialCachedUser.user_metadata?.avatar_url || initialCachedUser.user_metadata?.picture || null,
+          has_completed_setup: true,
+        };
+      } catch {}
+    }
+    return null;
+  });
+  const [isLoading, setIsLoading] = useState<boolean>(() => !initialCachedUser);
+  const [isOfflineUser, setIsOfflineUser] = useState<boolean>(() => Boolean((initialCachedUser as any)?.is_offline_user));
   const [oauthError, setOauthError] = useState<string | null>(null);
   const [passwordResetError, setPasswordResetError] = useState<string | null>(null);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState<boolean>(() => {
@@ -184,6 +249,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Initialize session and auth state listener
   useEffect(() => {
     if (!supabase || !isSupabaseConfigured) {
+      const persistedUser = getPersistedUser();
+      if (persistedUser) {
+        setUser(persistedUser);
+      }
       setIsLoading(false);
       return;
     }
@@ -297,8 +366,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
 
         if (event === 'SIGNED_OUT') {
+          persistUser(null);
           try {
             localStorage.removeItem('yaad_authenticated_user_cache');
+            localStorage.removeItem('yaad_user_session_persisted');
             localStorage.removeItem('yaad_password_reset_required');
           } catch {}
           setSession(null);
@@ -313,9 +384,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           // If initialSession is still resolving, DO NOT wipe user state!
           if (!initialSessionResolved) return;
 
-          // If device has an offline cached user session, retain it while offline
-          const hasOfflineCache = typeof window !== 'undefined' && Boolean(localStorage.getItem('yaad_authenticated_user_cache'));
-          if (hasOfflineCache && typeof navigator !== 'undefined' && !navigator.onLine) {
+          // If device has an authenticated user cache, KEEP THE USER LOGGED IN!
+          // Transient null events, background token refresh delays, or network switches
+          // must NEVER log the user out.
+          const hasPersistedUser = Boolean(getPersistedUser());
+          if (hasPersistedUser) {
             return;
           }
 
@@ -331,12 +404,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (event === 'TOKEN_REFRESHED') {
           setSession(currentSession);
           setUser(currentSession.user);
+          persistUser(currentSession.user);
           return;
         }
 
         setSession(currentSession);
         setUser(currentSession.user);
         setIsOfflineUser(false);
+        persistUser(currentSession.user);
 
         // Migrate any offline-first local user records to this authenticated Supabase identity
         try {
@@ -442,20 +517,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (activeUser && isMounted) {
           setUser(activeUser);
           if (activeSession) setSession(activeSession);
-
-          // Refresh durable user cache
-          try {
-            localStorage.setItem(
-              'yaad_authenticated_user_cache',
-              JSON.stringify({
-                id: activeUser.id,
-                email: activeUser.email,
-                user_metadata: activeUser.user_metadata,
-                app_metadata: activeUser.app_metadata,
-                is_offline_user: activeUser.user_metadata?.is_offline_user || false,
-              })
-            );
-          } catch {}
+          persistUser(activeUser);
 
           const isResetRequired =
             activeUser.user_metadata?.password_reset_required === true ||
@@ -494,10 +556,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               .catch(() => {});
           }
         } else if (isMounted) {
-          setUser(null);
-          setSession(null);
-          setProfile(null);
-          setIsOfflineUser(false);
+          const persisted = getPersistedUser();
+          if (!persisted) {
+            setUser(null);
+            setSession(null);
+            setProfile(null);
+            setIsOfflineUser(false);
+          }
         }
       } catch (err) {
         console.warn('Error in restoreActiveSession:', err);
@@ -564,6 +629,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           has_completed_setup: true,
         };
         setProfile(activeProfile);
+        persistUser(data.user);
         saveOfflineProfile(data.user.id, activeProfile).catch(() => {});
         localStorage.setItem('yaad_profile_setup_done', 'true');
         localStorage.setItem('yaad_profile_setup_completed', 'true');
@@ -684,6 +750,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         };
 
         setProfile(activeProfile);
+        persistUser(activeUser);
 
         // Synchronize profile row into public.profiles
         try {
@@ -965,6 +1032,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setPasswordResetError(null);
     setPasskeys([]);
     setHasPasskey(false);
+    persistUser(null);
     if (typeof window !== 'undefined') {
       try {
         sessionStorage.removeItem('yaad_password_recovery_active');
@@ -1041,6 +1109,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
 
       // 5. Clear local auth state
+      persistUser(null);
       setUser(null);
       setSession(null);
       setProfile(null);
