@@ -105,7 +105,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
   };
 
   const isRTL = language === 'ur';
-  const dir = isRTL ? 'rtl' : 'ltr';
+  const dir: 'ltr' | 'rtl' = isRTL ? 'rtl' : 'ltr';
 
   // Nested translation resolver with param substitution and robust key matching
   const t = (path: string, params?: Record<string, string | number>): string => {

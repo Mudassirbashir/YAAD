@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { ShoppingList, ShoppingItem, ScreenType, NavigationTab } from './types';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { SplashView } from './components/SplashView';
 import { OnboardingView } from './components/OnboardingView';
 import { AuthView } from './components/AuthView';
@@ -96,21 +97,6 @@ function AppContent() {
   // Splash screen state: only show initially
   const [hasSplashFinished, setHasSplashFinished] = useState<boolean>(false);
 
-  // Production Domain Migration: Client-side domain drift guard
-  // If user opens a legacy domain link, preserve path, query parameters, and auth/recovery hash fragments
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.location) {
-      const hostname = window.location.hostname.toLowerCase();
-      const isLegacyDomain =
-        hostname === 'yaad-three.vercel.app' ||
-        hostname === 'yaad-mudassirbashir530-creators-projects.vercel.app';
-      if (isLegacyDomain) {
-        const targetUrl = `https://yaadapppk.vercel.app${window.location.pathname}${window.location.search}${window.location.hash}`;
-        window.location.replace(targetUrl);
-      }
-    }
-  }, []);
-
   // Active working list
   const [activeListId, setActiveListId] = useState<string | null>(null);
   const [tempNewListTitle, setTempNewListTitle] = useState<string>('');
@@ -141,7 +127,7 @@ function AppContent() {
     : true;
 
   // Derive current screen from route
-  const currentScreen: ScreenType = useMemo(() => {
+  const currentScreen: ScreenType = useMemo((): ScreenType => {
     if (!hasSplashFinished) return 'splash';
     if (isPasswordResetRequiredActive) return 'reset_password';
 
@@ -1501,9 +1487,11 @@ function AppContent() {
 
 export default function App() {
   return (
-    <RouterProvider>
-      <HeadManager />
-      <AppContent />
-    </RouterProvider>
+    <ErrorBoundary>
+      <RouterProvider>
+        <HeadManager />
+        <AppContent />
+      </RouterProvider>
+    </ErrorBoundary>
   );
 }

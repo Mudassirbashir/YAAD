@@ -316,7 +316,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
         {/* 6. QUICK ACTIONS SHORTCUTS GRID */}
         <QuickActionsGrid
           lists={lists}
-          onOpenRecentLists={onOpenHistory || (() => onSelectList('recent'))}
+          onOpenRecentLists={onOpenHistory || (lists[0] ? () => onSelectList(lists[0]) : () => {})}
           onOpenFavorites={() => setIsFavoritesModalOpen(true)}
           onOpenCategories={() => setIsCategoryBrowserOpen(true)}
           onOpenStatistics={() => {

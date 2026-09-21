@@ -78,12 +78,16 @@ const ICON_MAP: Record<CategoryId, LucideIcon> = {
 interface CategoryIconProps {
   categoryId: CategoryId | string;
   className?: string;
+  size?: 'sm' | 'md' | 'lg' | string;
 }
 
 export const CategoryIcon: React.FC<CategoryIconProps> = ({
   categoryId,
-  className = 'w-4 h-4',
+  className,
+  size,
 }) => {
+  const sizeClass = size === 'sm' ? 'w-3.5 h-3.5' : size === 'lg' ? 'w-5 h-5' : 'w-4 h-4';
+  const resolvedClass = className || sizeClass;
   const IconComponent = ICON_MAP[categoryId as CategoryId] || Tag;
-  return <IconComponent className={className} strokeWidth={2} />;
+  return <IconComponent className={resolvedClass} strokeWidth={2} />;
 };

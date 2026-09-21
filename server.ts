@@ -19,20 +19,6 @@ const PORT = 3000;
 
 app.use(express.json());
 
-// Permanent 301 Redirect for legacy production domains to official production domain
-app.use((req, res, next) => {
-  const hostHeader = req.headers['x-forwarded-host'] || req.headers.host || '';
-  const host = (Array.isArray(hostHeader) ? hostHeader[0] : hostHeader).split(':')[0].toLowerCase();
-  if (
-    host === 'yaad-three.vercel.app' ||
-    host === 'yaad-mudassirbashir530-creators-projects.vercel.app'
-  ) {
-    const targetUrl = `https://yaadapppk.vercel.app${req.originalUrl || req.url}`;
-    return res.redirect(301, targetUrl);
-  }
-  next();
-});
-
 const ALLOWED_CATEGORIES = [
   'fruits',
   'vegetables',

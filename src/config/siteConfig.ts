@@ -30,7 +30,7 @@ export const SITE_CONFIG = {
 
   // Official Domains & URLs
   // Default canonical production URL: easily configurable via environment variable or default
-  defaultProductionUrl: 'https://yaadapppk.vercel.app',
+  defaultProductionUrl: 'https://yaad-three.vercel.app',
   
   // Brand Palette
   themeColor: '#005039',
@@ -212,12 +212,7 @@ export function getAuthRedirectUrl(path: string = '/'): string {
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
   if (typeof window !== 'undefined' && window.location?.origin) {
     const origin = window.location.origin;
-    // Allow local development and AI Studio preview containers to handle their own redirects
-    if (
-      origin.includes('localhost') ||
-      origin.includes('127.0.0.1') ||
-      origin.includes('run.app')
-    ) {
+    if (origin && !origin.startsWith('file:') && origin !== 'null') {
       return `${origin}${cleanPath}`;
     }
   }

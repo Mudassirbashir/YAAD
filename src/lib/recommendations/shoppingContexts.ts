@@ -196,59 +196,62 @@ export function getSuggestionsForContext(contextId?: string, title?: string): {
     }
   }
 
+  // Helper for safe context retrieval
+  const findSafe = (id: string) => SHOPPING_CONTEXT_OPTIONS.find((c) => c.id === id);
+
   // Infer from title
   const cleanTitle = (title || '').toLowerCase();
   if (cleanTitle.includes('bbq') || cleanTitle.includes('grill') || cleanTitle.includes('tikka') || cleanTitle.includes('kebab')) {
-    const ctx = SHOPPING_CONTEXT_OPTIONS.find((c) => c.id === 'bbq')!;
-    return { contextId: ctx.id, contextTitle: ctx.title, items: ctx.suggestedItems, categoryHint: ctx.categoryHint };
+    const ctx = findSafe('bbq');
+    if (ctx) return { contextId: ctx.id, contextTitle: ctx.title, items: ctx.suggestedItems, categoryHint: ctx.categoryHint };
   }
   if (cleanTitle.includes('nashta') || cleanTitle.includes('breakfast') || cleanTitle.includes('subah') || cleanTitle.includes('chai')) {
-    const ctx = SHOPPING_CONTEXT_OPTIONS.find((c) => c.id === 'breakfast')!;
-    return { contextId: ctx.id, contextTitle: ctx.title, items: ctx.suggestedItems, categoryHint: ctx.categoryHint };
+    const ctx = findSafe('breakfast');
+    if (ctx) return { contextId: ctx.id, contextTitle: ctx.title, items: ctx.suggestedItems, categoryHint: ctx.categoryHint };
   }
   if (cleanTitle.includes('sabzi') || cleanTitle.includes('vegetable') || cleanTitle.includes('fruit') || cleanTitle.includes('phal') || cleanTitle.includes('mandi')) {
-    const ctx = SHOPPING_CONTEXT_OPTIONS.find((c) => c.id === 'fruits_vegetables')!;
-    return { contextId: ctx.id, contextTitle: ctx.title, items: ctx.suggestedItems, categoryHint: ctx.categoryHint };
+    const ctx = findSafe('fruits_vegetables');
+    if (ctx) return { contextId: ctx.id, contextTitle: ctx.title, items: ctx.suggestedItems, categoryHint: ctx.categoryHint };
   }
   if (cleanTitle.includes('pharmacy') || cleanTitle.includes('dawa') || cleanTitle.includes('medicine') || cleanTitle.includes('medical') || cleanTitle.includes('clinic')) {
-    const ctx = SHOPPING_CONTEXT_OPTIONS.find((c) => c.id === 'pharmacy')!;
-    return { contextId: ctx.id, contextTitle: ctx.title, items: ctx.suggestedItems, categoryHint: ctx.categoryHint };
+    const ctx = findSafe('pharmacy');
+    if (ctx) return { contextId: ctx.id, contextTitle: ctx.title, items: ctx.suggestedItems, categoryHint: ctx.categoryHint };
   }
   if (cleanTitle.includes('supermarket') || cleanTitle.includes('mart') || cleanTitle.includes('imtiaz') || cleanTitle.includes('carrefour') || cleanTitle.includes('metro')) {
-    const ctx = SHOPPING_CONTEXT_OPTIONS.find((c) => c.id === 'supermarket')!;
-    return { contextId: ctx.id, contextTitle: ctx.title, items: ctx.suggestedItems, categoryHint: ctx.categoryHint };
+    const ctx = findSafe('supermarket');
+    if (ctx) return { contextId: ctx.id, contextTitle: ctx.title, items: ctx.suggestedItems, categoryHint: ctx.categoryHint };
   }
   if (cleanTitle.includes('home') || cleanTitle.includes('house') || cleanTitle.includes('safai') || cleanTitle.includes('cleaning') || cleanTitle.includes('ghar')) {
-    const ctx = SHOPPING_CONTEXT_OPTIONS.find((c) => c.id === 'home')!;
-    return { contextId: ctx.id, contextTitle: ctx.title, items: ctx.suggestedItems, categoryHint: ctx.categoryHint };
+    const ctx = findSafe('home');
+    if (ctx) return { contextId: ctx.id, contextTitle: ctx.title, items: ctx.suggestedItems, categoryHint: ctx.categoryHint };
   }
   if (cleanTitle.includes('personal') || cleanTitle.includes('care') || cleanTitle.includes('bath') || cleanTitle.includes('shampoo')) {
-    const ctx = SHOPPING_CONTEXT_OPTIONS.find((c) => c.id === 'personal')!;
-    return { contextId: ctx.id, contextTitle: ctx.title, items: ctx.suggestedItems, categoryHint: ctx.categoryHint };
+    const ctx = findSafe('personal');
+    if (ctx) return { contextId: ctx.id, contextTitle: ctx.title, items: ctx.suggestedItems, categoryHint: ctx.categoryHint };
   }
   if (cleanTitle.includes('party') || cleanTitle.includes('dawat') || cleanTitle.includes('mehman') || cleanTitle.includes('gathering')) {
-    const ctx = SHOPPING_CONTEXT_OPTIONS.find((c) => c.id === 'party')!;
-    return { contextId: ctx.id, contextTitle: ctx.title, items: ctx.suggestedItems, categoryHint: ctx.categoryHint };
+    const ctx = findSafe('party');
+    if (ctx) return { contextId: ctx.id, contextTitle: ctx.title, items: ctx.suggestedItems, categoryHint: ctx.categoryHint };
   }
   if (cleanTitle.includes('baking') || cleanTitle.includes('cake') || cleanTitle.includes('sweet') || cleanTitle.includes('dessert')) {
-    const ctx = SHOPPING_CONTEXT_OPTIONS.find((c) => c.id === 'baking')!;
-    return { contextId: ctx.id, contextTitle: ctx.title, items: ctx.suggestedItems, categoryHint: ctx.categoryHint };
+    const ctx = findSafe('baking');
+    if (ctx) return { contextId: ctx.id, contextTitle: ctx.title, items: ctx.suggestedItems, categoryHint: ctx.categoryHint };
   }
   if (cleanTitle.includes('groc') || cleanTitle.includes('rashan') || cleanTitle.includes('sauda') || cleanTitle.includes('pantry') || cleanTitle.includes('kitchen')) {
-    const ctx = SHOPPING_CONTEXT_OPTIONS.find((c) => c.id === 'grocery')!;
-    return { contextId: ctx.id, contextTitle: ctx.title, items: ctx.suggestedItems, categoryHint: ctx.categoryHint };
+    const ctx = findSafe('grocery');
+    if (ctx) return { contextId: ctx.id, contextTitle: ctx.title, items: ctx.suggestedItems, categoryHint: ctx.categoryHint };
   }
   if (cleanTitle.includes('week') || cleanTitle.includes('hafta') || cleanTitle.includes('haftha')) {
-    const ctx = SHOPPING_CONTEXT_OPTIONS.find((c) => c.id === 'weekly')!;
-    return { contextId: ctx.id, contextTitle: ctx.title, items: ctx.suggestedItems, categoryHint: ctx.categoryHint };
+    const ctx = findSafe('weekly');
+    if (ctx) return { contextId: ctx.id, contextTitle: ctx.title, items: ctx.suggestedItems, categoryHint: ctx.categoryHint };
   }
 
-  // Default to weekly essentials as friendly fallback
-  const defaultCtx = SHOPPING_CONTEXT_OPTIONS.find((c) => c.id === 'weekly')!;
+  // Default to weekly essentials or first available context as friendly fallback
+  const defaultCtx = findSafe('weekly') || SHOPPING_CONTEXT_OPTIONS[0];
   return {
-    contextId: 'weekly',
-    contextTitle: 'Weekly Essentials',
-    items: defaultCtx.suggestedItems,
-    categoryHint: defaultCtx.categoryHint,
+    contextId: defaultCtx?.id || 'weekly',
+    contextTitle: defaultCtx?.title || 'Weekly Essentials',
+    items: defaultCtx?.suggestedItems || [],
+    categoryHint: defaultCtx?.categoryHint,
   };
 }

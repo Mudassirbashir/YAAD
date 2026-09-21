@@ -19,7 +19,8 @@ export const containsUrdu = (text: string | null | undefined): boolean => {
 };
 
 interface BidiTextProps extends React.HTMLAttributes<HTMLElement> {
-  children: React.ReactNode;
+  children?: React.ReactNode;
+  text?: string;
   as?: 'span' | 'bdi' | 'p' | 'h1' | 'h2' | 'h3' | 'h4' | 'div';
   forceUrduFont?: boolean;
 }
@@ -32,12 +33,14 @@ interface BidiTextProps extends React.HTMLAttributes<HTMLElement> {
  */
 export const BidiText: React.FC<BidiTextProps> = ({
   children,
+  text,
   as: Component = 'bdi',
   className = '',
   forceUrduFont = false,
   ...props
 }) => {
-  const isUrdu = forceUrduFont || (typeof children === 'string' && containsUrdu(children));
+  const content = children ?? text;
+  const isUrdu = forceUrduFont || (typeof content === 'string' && containsUrdu(content));
   const fontClass = isUrdu ? 'font-urdu' : '';
 
   return (
@@ -46,7 +49,7 @@ export const BidiText: React.FC<BidiTextProps> = ({
       className={`bidi-isolate ${fontClass} ${className}`.trim()}
       {...props}
     >
-      {children}
+      {content}
     </Component>
   );
 };

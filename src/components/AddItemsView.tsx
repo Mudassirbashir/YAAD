@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   ArrowLeft,
   Plus,
@@ -78,6 +78,18 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
       setFeedbackToast(null);
     }, 2800);
   };
+
+  // Helper to find if an item name or canonical name is already in the list
+  const findItemInList = useCallback((nameOrCanonical?: string): ShoppingItem | undefined => {
+    if (!nameOrCanonical) return undefined;
+    const norm = normalizeBaseText(nameOrCanonical);
+    return items.find((it) => {
+      const itCanon = it.canonicalName ? normalizeBaseText(it.canonicalName) : '';
+      const itName = normalizeBaseText(it.name);
+      const itRaw = it.rawInput ? normalizeBaseText(it.rawInput) : '';
+      return (itCanon && itCanon === norm) || itName === norm || itRaw === norm;
+    });
+  }, [items]);
 
   // Context-specific suggestions
   const contextData = useMemo(() => {
@@ -198,19 +210,6 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
       }
     }
   }, [inputVal, userManuallySelectedCategory]);
-
-  /**
-   * Helper to find if an item name or canonical name is already in the list
-   */
-  const findItemInList = (nameOrCanonical: string): ShoppingItem | undefined => {
-    const norm = normalizeBaseText(nameOrCanonical);
-    return items.find((it) => {
-      const itCanon = it.canonicalName ? normalizeBaseText(it.canonicalName) : '';
-      const itName = normalizeBaseText(it.name);
-      const itRaw = it.rawInput ? normalizeBaseText(it.rawInput) : '';
-      return itCanon === norm || itName === norm || itRaw === norm;
-    });
-  };
 
   /**
    * Unified Item Adder: Handles raw strings, catalog search results, or recommendation taps.
