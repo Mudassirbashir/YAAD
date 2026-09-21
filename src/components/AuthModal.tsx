@@ -1,22 +1,44 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   X,
-  Info,
-  AlertCircle,
-  CheckCircle2,
-  ArrowRight,
   UserPlus,
   Loader2,
   Phone,
   Eye,
   EyeOff,
   Lock,
-  KeyRound,
+  Mail,
+  User as UserIcon,
+  AlertCircle,
+  CheckCircle2,
+  ArrowRight,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { APP_IMAGES } from '../data/initialData';
 import { formatAuthErrorMessage } from '../lib/supabase';
 import { validatePhoneNumber } from '../utils/phone';
+
+// Official multi-color Google 'G' icon component
+const GoogleOfficialIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5 shrink-0' }) => (
+  <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      fill="#4285F4"
+      d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"
+    />
+    <path
+      fill="#34A853"
+      d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z"
+    />
+    <path
+      fill="#FBBC05"
+      d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"
+    />
+    <path
+      fill="#EA4335"
+      d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+    />
+  </svg>
+);
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -31,19 +53,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   initialMode = 'signin',
   onOpenLegalPage,
 }) => {
-  const { signIn, signUp, isConfigured } = useAuth();
+  const { signIn, signUp, signInWithGoogle } = useAuth();
   const [mode, setMode] = useState<'signin' | 'signup'>(initialMode);
   const [fullName, setFullName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const isSubmittingRef = React.useRef(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const isSubmittingRef = useRef(false);
 
   // Close modal when pressing Escape key
   useEffect(() => {
@@ -59,9 +80,29 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   if (!isOpen) return null;
 
+  const handleGoogleAuth = async () => {
+    if (isSubmittingRef.current || isSubmitting || googleLoading) return;
+    setErrorMsg(null);
+    setGoogleLoading(true);
+    isSubmittingRef.current = true;
+    try {
+      const { error } = await signInWithGoogle();
+      if (error) {
+        setErrorMsg(formatAuthErrorMessage(error));
+      } else {
+        onClose();
+      }
+    } catch (err) {
+      setErrorMsg(formatAuthErrorMessage(err));
+    } finally {
+      isSubmittingRef.current = false;
+      setGoogleLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmittingRef.current || isSubmitting) return;
+    if (isSubmittingRef.current || isSubmitting || googleLoading) return;
 
     setErrorMsg(null);
     setSuccessMsg(null);
@@ -75,15 +116,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         setErrorMsg('Please enter your full name.');
         return;
       }
-      if (!trimmedEmail) {
-        setErrorMsg('Please enter a valid email address.');
-        return;
-      }
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(trimmedEmail)) {
-        setErrorMsg('Please enter a valid email address.');
-        return;
-      }
       if (!trimmedPhone) {
         setErrorMsg('Please enter your phone number.');
         return;
@@ -93,12 +125,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         setErrorMsg(validation.reason || 'Please enter a valid phone number (e.g. +92 300 1234567).');
         return;
       }
-      if (!password || password.length < 6) {
-        setErrorMsg('Please choose a stronger password (at least 6 characters).');
+      if (!trimmedEmail) {
+        setErrorMsg('Please enter your email address.');
         return;
       }
-      if (password !== confirmPassword) {
-        setErrorMsg('Passwords do not match. Please verify both password fields.');
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(trimmedEmail)) {
+        setErrorMsg('Please enter a valid email address.');
+        return;
+      }
+      if (!password || password.length < 6) {
+        setErrorMsg('Password must be at least 6 characters.');
         return;
       }
     } else {
@@ -153,7 +190,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-surface-container-lowest rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl border border-surface-dim space-y-5 animate-in zoom-in-95 duration-200"
+        className="bg-surface-container-lowest rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl border border-surface-dim space-y-4 animate-in zoom-in-95 duration-200"
       >
         {/* Header */}
         <div className="flex justify-between items-center border-b border-surface-dim/60 pb-3">
@@ -164,7 +201,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               className="w-8 h-8 object-contain"
             />
             <h2 className="font-['Plus_Jakarta_Sans'] text-xl font-bold text-primary">
-              {mode === 'signin' ? 'Sign In to YAAD' : 'Create an Account'}
+              {mode === 'signin' ? 'Sign In to YAAD' : 'Create Account'}
             </h2>
           </div>
           <button
@@ -176,27 +213,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </button>
         </div>
 
-        {!isConfigured && (
-          <div className="p-3 bg-secondary-fixed/20 border border-secondary/20 rounded-2xl text-xs font-['Manrope'] text-on-surface-variant flex items-start gap-2">
-            <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-            <p>
-              Supabase credentials not configured in environment variables yet (<code className="text-primary font-mono font-semibold">VITE_SUPABASE_URL</code>). You can still test offline or supply credentials in your environment.
-            </p>
-          </div>
-        )}
-
         {/* Tab Toggle */}
-        <div className="flex p-1 bg-surface-container rounded-full text-xs font-['Manrope'] font-bold text-on-surface-variant">
+        <div className="flex p-1 bg-surface-container rounded-2xl text-xs font-['Manrope'] font-bold text-on-surface-variant border border-surface-dim">
           <button
             type="button"
             onClick={() => {
               setMode('signin');
               setErrorMsg(null);
             }}
-            className={`flex-1 py-2 rounded-full transition-all ${
+            className={`flex-1 py-2 rounded-xl transition-all ${
               mode === 'signin'
                 ? 'bg-surface-container-lowest text-primary shadow-xs'
-                : 'hover:text-primary'
+                : 'hover:text-primary text-outline'
             }`}
           >
             Sign In
@@ -207,115 +235,128 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               setMode('signup');
               setErrorMsg(null);
             }}
-            className={`flex-1 py-2 rounded-full transition-all ${
+            className={`flex-1 py-2 rounded-xl transition-all ${
               mode === 'signup'
                 ? 'bg-surface-container-lowest text-primary shadow-xs'
-                : 'hover:text-primary'
+                : 'hover:text-primary text-outline'
             }`}
           >
             Create Account
           </button>
         </div>
 
+        {/* 1-Tap Google Sign In with Official Logo */}
+        <button
+          type="button"
+          onClick={handleGoogleAuth}
+          disabled={isSubmitting || googleLoading}
+          className="w-full h-11 rounded-2xl bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface font-['Manrope'] text-xs font-bold transition-all flex items-center justify-center gap-2.5 shadow-2xs hover:shadow-xs active:scale-[0.99] disabled:opacity-60"
+        >
+          {googleLoading ? (
+            <Loader2 className="w-4 h-4 animate-spin text-primary" />
+          ) : (
+            <GoogleOfficialIcon className="w-4 h-4" />
+          )}
+          <span>{mode === 'signin' ? 'Continue with Google' : 'Sign up with Google'}</span>
+        </button>
+
+        {/* Divider */}
+        <div className="relative flex items-center justify-center py-0.5">
+          <div className="border-t border-surface-dim w-full" />
+          <span className="bg-surface-container-lowest px-3 text-[10px] font-['Manrope'] font-medium text-outline uppercase tracking-wider shrink-0">
+            or with email
+          </span>
+        </div>
+
         {/* Error and Success alerts */}
         {errorMsg && (
-          <div className="p-3 bg-error-container/30 border border-error/20 rounded-2xl text-xs font-['Manrope'] text-error flex items-start gap-2 animate-in fade-in duration-200">
+          <div className="p-3 bg-error-container/80 border border-error/20 rounded-2xl text-xs font-['Manrope'] text-error flex items-start gap-2 animate-in fade-in duration-200">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-            <div className="flex-1 space-y-2">
-              <div>{errorMsg}</div>
-              {errorMsg.includes('already registered') && (
-                <div className="pt-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMode('signin');
-                      setErrorMsg(null);
-                    }}
-                    className="px-3 py-1 bg-primary text-on-primary text-xs font-bold font-['Manrope'] rounded-xl shadow-2xs hover:bg-primary-container transition-all active:scale-95"
-                  >
-                    Switch to Sign In
-                  </button>
-                </div>
-              )}
-            </div>
+            <span className="flex-1 font-medium">{errorMsg}</span>
           </div>
         )}
 
         {successMsg && (
-          <div className="p-3 bg-secondary-fixed/40 border border-secondary/30 rounded-2xl text-xs font-['Manrope'] text-primary font-bold flex items-center gap-2 animate-in fade-in duration-200">
+          <div className="p-3 bg-primary-container/80 border border-primary/20 rounded-2xl text-xs font-['Manrope'] text-primary font-bold flex items-center gap-2 animate-in fade-in duration-200">
             <CheckCircle2 className="w-4 h-4 shrink-0" />
             <span>{successMsg}</span>
           </div>
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4 font-['Manrope']">
+        <form onSubmit={handleSubmit} className="space-y-3 font-['Manrope']">
           {mode === 'signup' && (
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider block">
-                Full Name
-              </label>
+            <>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-on-surface-variant block">
+                  Full Name
+                </label>
+                <div className="relative">
+                  <UserIcon className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Your Name"
+                    disabled={isSubmitting}
+                    className="w-full h-11 bg-surface-container text-on-surface rounded-2xl ps-10 pe-3.5 text-sm border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline disabled:opacity-60"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-on-surface-variant block">
+                  Phone Number
+                </label>
+                <div className="relative">
+                  <Phone className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="tel"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    placeholder="+92 300 1234567"
+                    disabled={isSubmitting}
+                    className="w-full h-11 bg-surface-container text-on-surface rounded-2xl ps-10 pe-3.5 text-sm border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline disabled:opacity-60"
+                    autoComplete="tel"
+                    required
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-on-surface-variant block">
+              Email Address
+            </label>
+            <div className="relative">
+              <Mail className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="e.g. Elena Vance"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
                 disabled={isSubmitting}
-                className="w-full h-12 bg-surface-container-lowest text-on-surface rounded-2xl px-4 text-sm border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline disabled:opacity-60"
+                className="w-full h-11 bg-surface-container text-on-surface rounded-2xl ps-10 pe-3.5 text-sm border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline disabled:opacity-60"
                 required
               />
             </div>
-          )}
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider block">
-              Email Address
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              disabled={isSubmitting}
-              className="w-full h-12 bg-surface-container-lowest text-on-surface rounded-2xl px-4 text-sm border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline disabled:opacity-60"
-              required
-            />
           </div>
 
-          {mode === 'signup' && (
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider block">
-                Phone Number
-              </label>
-              <div className="relative">
-                <Phone className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  type="tel"
-                  dir="ltr"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  placeholder="+92 300 1234567"
-                  disabled={isSubmitting}
-                  className="w-full h-12 bg-surface-container-lowest text-on-surface rounded-2xl ps-10 pe-4 text-sm border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline disabled:opacity-60"
-                  autoComplete="tel"
-                  required
-                />
-              </div>
-            </div>
-          )}
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider block">
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-on-surface-variant block">
               Password
             </label>
             <div className="relative">
+              <Lock className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 disabled={isSubmitting}
-                className="w-full h-12 bg-surface-container-lowest text-on-surface rounded-2xl ps-4 pe-11 text-sm border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline disabled:opacity-60"
+                className="w-full h-11 bg-surface-container text-on-surface rounded-2xl ps-10 pe-11 text-sm border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline disabled:opacity-60"
                 required
               />
               <button
@@ -329,47 +370,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </div>
           </div>
 
-          {mode === 'signup' && (
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider block">
-                Confirm Password
-              </label>
-              <div className="relative">
-                <input
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Re-enter your password"
-                  disabled={isSubmitting}
-                  className={`w-full h-12 bg-surface-container-lowest text-on-surface rounded-2xl ps-4 pe-11 text-sm border focus:ring-2 outline-none transition-all placeholder:text-outline disabled:opacity-60 ${
-                    confirmPassword && password !== confirmPassword
-                      ? 'border-error/60 focus:border-error focus:ring-error/20'
-                      : 'border-outline-variant focus:border-primary focus:ring-primary/20'
-                  }`}
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
-                  className="absolute end-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface p-1 transition-colors"
-                >
-                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-          )}
-
           <button
             type="submit"
-            disabled={isSubmitting}
-            className="w-full h-12 mt-2 rounded-full bg-primary text-on-primary font-['Manrope'] text-sm font-bold shadow-sm hover:bg-primary-container active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+            disabled={isSubmitting || googleLoading}
+            className="w-full h-11 mt-2 rounded-full bg-primary text-on-primary font-['Manrope'] text-sm font-bold shadow-sm hover:bg-primary-container active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-60"
           >
             {isSubmitting ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Please wait...</span>
-              </>
+              <Loader2 className="w-4 h-4 animate-spin" />
             ) : mode === 'signin' ? (
               <>
                 <span>Sign In</span>
@@ -384,10 +391,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </button>
         </form>
 
-        <p className="text-center text-xs text-on-surface-variant">
+        <p className="text-center text-xs text-on-surface-variant font-['Manrope']">
           {mode === 'signin' ? (
             <>
-              Don't have an account yet?{' '}
+              Don't have an account?{' '}
               <button
                 type="button"
                 onClick={() => {
@@ -396,7 +403,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 }}
                 className="font-bold text-primary hover:underline ml-1"
               >
-                Sign up
+                Create account
               </button>
             </>
           ) : (
@@ -416,8 +423,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           )}
         </p>
 
-        {/* Separate Legal Links */}
-        <div className="pt-2 text-center text-[11px] text-outline space-x-2">
+        {/* Footer */}
+        <div className="pt-2 text-center text-[11px] text-outline space-x-2 font-['Manrope']">
           <button
             type="button"
             onClick={() => {
@@ -426,7 +433,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             }}
             className="hover:text-primary hover:underline"
           >
-            Terms & Conditions
+            Terms
           </button>
           <span>•</span>
           <button
@@ -437,7 +444,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             }}
             className="hover:text-primary hover:underline"
           >
-            Privacy Policy
+            Privacy
           </button>
           <span>•</span>
           <button
@@ -455,4 +462,3 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     </div>
   );
 };
-

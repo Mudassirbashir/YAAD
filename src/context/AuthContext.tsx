@@ -193,6 +193,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const passkeyRefreshInProgressRef = useRef<boolean>(false);
 
   const isAuthenticatingRef = useRef<boolean>(false);
+  const isExplicitSignOutRef = useRef<boolean>(false);
   const syncingUserIdsRef = useRef<Set<string>>(new Set());
 
   // Helper to sync user metadata (Google OAuth or email) into profiles table non-blockingly
@@ -366,6 +367,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
 
         if (event === 'SIGNED_OUT') {
+          if (!isExplicitSignOutRef.current) {
+            const hasPersistedUser = Boolean(getPersistedUser());
+            if (hasPersistedUser) {
+              console.warn('Preserving authenticated user session despite background SDK SIGNED_OUT notice.');
+              return;
+            }
+          }
+          isExplicitSignOutRef.current = false;
           persistUser(null);
           try {
             localStorage.removeItem('yaad_authenticated_user_cache');
@@ -1028,6 +1037,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const signOut = async () => {
+    isExplicitSignOutRef.current = true;
     setIsPasswordRecovery(false);
     setPasswordResetError(null);
     setPasskeys([]);

@@ -41,9 +41,7 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
-        experimental: {
-          passkey: true,
-        },
+        storageKey: 'yaad_supabase_auth_session',
       },
     })
   : null;

@@ -170,7 +170,7 @@ function AppContent() {
       case 'statistics':
         return 'statistics';
       case 'auth':
-        return 'auth';
+        return user ? 'home' : 'auth';
       case 'reset_password':
         return 'reset_password';
       case 'profile_setup':
@@ -440,12 +440,26 @@ function AppContent() {
       return;
     }
 
-    // 1. PUBLIC ROUTES (Always accessible without authentication)
+    // 1. AUTHENTICATED USERS: If user is on /auth, /root, /profile-setup, or /onboarding, redirect straight to /home or intended
+    if (user) {
+      if (route.routeId === 'auth' || route.routeId === 'root' || route.routeId === 'profile_setup' || route.routeId === 'onboarding') {
+        const intended = getIntendedDestination();
+        if (intended && intended !== '/auth' && intended !== '/profile-setup' && intended !== '/onboarding' && intended !== '/') {
+          clearIntendedDestination();
+          replace(intended);
+        } else {
+          replace('/home');
+        }
+        return;
+      }
+    }
+
+    // 2. PUBLIC ROUTES (Always accessible without authentication)
     if (!route.isProtected) {
       return;
     }
 
-    // 2. UNAUTHENTICATED USERS: Guard protected routes
+    // 3. UNAUTHENTICATED USERS: Guard protected routes
     if (!user) {
       // Save intended destination so user is smoothly returned after sign in
       if (route.routeId !== 'auth' && route.routeId !== 'root') {
@@ -1183,7 +1197,7 @@ function AppContent() {
 
   // Seamless launch & session restoration: show branded splash until session resolves
   if ((!hasSplashFinished || isAuthLoading) && currentScreen !== 'rashan_list' && !LEGAL_SCREENS.includes(currentScreen)) {
-    return <SplashView onFinish={handleSplashFinish} isRestoringAuth={isAuthLoading} />;
+    return <SplashView onFinish={handleSplashFinish} isRestoringAuth={isAuthLoading && !user} />;
   }
 
   return (
