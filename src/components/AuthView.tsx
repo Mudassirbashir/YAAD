@@ -1,11 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  Mail,
   Lock,
-  User as UserIcon,
-  Phone,
-  LogIn,
-  UserPlus,
   Loader2,
   AlertCircle,
   CheckCircle2,
@@ -56,7 +51,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
   onSuccess,
   onOpenLegalPage,
 }) => {
-  const { language, t } = useLanguage();
+  const { language, setLanguage } = useLanguage();
   const { navigate } = useAppRouter();
   const {
     signIn,
@@ -79,6 +74,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
   );
 
   // Form input states
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -157,13 +154,13 @@ export const AuthView: React.FC<AuthViewProps> = ({
     setSuccessMessage(null);
 
     const trimmedEmail = email.trim().toLowerCase();
-    const trimmedName = fullName.trim();
+    const resolvedName = (fullName.trim() || `${firstName.trim()} ${lastName.trim()}`).trim();
     const trimmedPhone = phoneNumber.trim();
 
     // Offline detection
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       if (mode === 'signup') {
-        if (!trimmedName) {
+        if (!resolvedName) {
           setErrorMessage(language === 'ur' ? 'براہ کرم اپنا نام درج کریں۔' : 'Please enter your full name.');
           return;
         }
@@ -181,7 +178,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         setLoading(true);
         try {
           await startOfflineOnboarding({
-            fullName: trimmedName,
+            fullName: resolvedName,
             phoneNumber: trimmedPhone,
             language,
           });
@@ -209,8 +206,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
     // Sign Up Validation
     if (mode === 'signup') {
-      if (!trimmedName) {
-        setErrorMessage(language === 'ur' ? 'براہ کرم اپنا پورا نام درج کریں۔' : 'Please enter your full name.');
+      if (!resolvedName) {
+        setErrorMessage(language === 'ur' ? 'براہ کرم اپنا پورا نام درج کریں۔' : 'Please enter your name.');
         return;
       }
       if (!trimmedPhone) {
@@ -260,7 +257,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
     try {
       if (mode === 'signup') {
-        const { error } = await signUp(trimmedEmail, password, trimmedName, trimmedPhone);
+        const { error } = await signUp(trimmedEmail, password, resolvedName, trimmedPhone);
         if (error) {
           setErrorMessage(formatAuthErrorMessage(error));
           return;
@@ -402,358 +399,260 @@ export const AuthView: React.FC<AuthViewProps> = ({
   return (
     <main
       id="auth_screen_container"
-      className="min-h-screen bg-background flex flex-col justify-center items-center p-4 sm:p-6 md:p-8 select-none"
+      className="min-h-screen bg-[#e8eef2] flex flex-col justify-center items-center p-0 sm:p-4 md:p-6 select-none relative overflow-x-hidden"
     >
+      {/* Ambient background blur spots for studio aesthetic on desktop/tablets */}
+      <div className="absolute top-10 left-1/4 w-96 h-96 bg-[#cbe3db]/40 rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="absolute bottom-10 right-1/4 w-96 h-96 bg-[#fed7aa]/35 rounded-full blur-3xl pointer-events-none -z-10" />
+
+      {/* Main Authenticated Frame: mimics modern mobile phone card */}
       <div
         id="auth_card"
-        className="w-full max-w-md bg-surface-container-lowest rounded-3xl p-6 sm:p-8 shadow-xl border border-surface-dim space-y-6 animate-in fade-in zoom-in-95 duration-200"
+        className="w-full sm:max-w-[420px] min-h-screen sm:min-h-0 bg-white sm:rounded-[40px] shadow-2xl overflow-hidden border border-white/70 relative flex flex-col transition-all duration-300"
       >
-        {/* Brand Header */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center mb-1">
-            <img
-              src={APP_IMAGES.logoTransparent}
-              alt="YAAD Logo"
-              className="w-14 h-14 object-contain drop-shadow-sm"
-            />
-          </div>
-          <h1 className="font-['Plus_Jakarta_Sans'] font-extrabold text-2xl text-primary tracking-tight">
-            YAAD | یاد
-          </h1>
-          <p className="font-['Manrope'] text-xs text-on-surface-variant">
-            {mode === 'signin' && (
-              language === 'ur'
-                ? 'اپنے شاپنگ لسٹ تک رسائی کے لیے لاگ ان کریں'
-                : language === 'roman-urdu'
-                ? 'Apni shopping list ke liye Sign In karein'
-                : 'Sign in to access and sync your shopping lists'
-            )}
-            {mode === 'signup' && (
-              language === 'ur'
-                ? 'شاپنگ لسٹ محفوظ رکھنے کے لیے نیا اکاؤنٹ بنائیں'
-                : language === 'roman-urdu'
-                ? 'Shopping list mehfooz karne ke liye naya account banayein'
-                : 'Create an account to keep your lists organized'
-            )}
-            {mode === 'forgot_password' && (
-              language === 'ur'
-                ? 'پاس ورڈ ری سیٹ کے لیے اپنا ای میل درج کریں'
-                : 'Enter your email to receive a password reset link'
-            )}
-            {mode === 'reset_password' && (
-              language === 'ur'
-                ? 'اپنا نیا پاس ورڈ منتخب کریں'
-                : 'Enter your new password below'
-            )}
-          </p>
-        </div>
+        {/* ============================================================== */}
+        {/* 1. TOP HEADER BANNER (Organic artistic curves & display title) */}
+        {/* ============================================================== */}
+        <div className="relative w-full pt-8 pb-12 px-6 overflow-hidden bg-gradient-to-br from-[#E26A4F] via-[#DE6346] to-[#D05438]">
+          {/* Golden-ochre organic orb on top-left */}
+          <div className="absolute -top-12 -left-12 w-48 h-48 rounded-full bg-[#E5A83B] opacity-95 blur-[0.5px]" />
+          
+          {/* Sea-green/mint organic shape on bottom-right */}
+          <div className="absolute -bottom-8 -right-8 w-44 h-44 rounded-full bg-[#48B89F] opacity-95 blur-[0.5px]" />
 
-        {/* Clean Mode Switcher Tabs (Sign In vs Create Account) */}
-        {(mode === 'signin' || mode === 'signup') && (
-          <div className="flex bg-surface-container p-1 rounded-2xl border border-surface-dim">
-            <button
-              id="auth_tab_signin"
-              type="button"
-              onClick={() => handleSwitchTab('signin')}
-              className={`flex-1 py-2.5 text-xs font-['Manrope'] font-bold rounded-xl transition-all ${
-                mode === 'signin'
-                  ? 'bg-surface-container-lowest text-primary shadow-xs'
-                  : 'text-outline hover:text-on-surface'
-              }`}
-            >
-              {language === 'ur' ? 'سائن ان' : 'Sign In'}
-            </button>
-            <button
-              id="auth_tab_signup"
-              type="button"
-              onClick={() => handleSwitchTab('signup')}
-              className={`flex-1 py-2.5 text-xs font-['Manrope'] font-bold rounded-xl transition-all ${
-                mode === 'signup'
-                  ? 'bg-surface-container-lowest text-primary shadow-xs'
-                  : 'text-outline hover:text-on-surface'
-              }`}
-            >
-              {language === 'ur' ? 'نیا اکاؤنٹ' : 'Create Account'}
-            </button>
-          </div>
-        )}
+          {/* Deep green ambient shade for depth */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-[#0F3D2E]/10 pointer-events-none blur-xl" />
 
-        {/* Concise Error Alert */}
-        {displayedError && (
-          <div
-            role="alert"
-            className="p-3.5 bg-error-container/80 text-on-error-container text-xs rounded-2xl flex items-center gap-2.5 border border-error/30 animate-in fade-in"
-          >
-            <AlertCircle className="w-4 h-4 shrink-0 text-error" />
-            <span className="flex-1 font-['Manrope'] font-medium">{displayedError}</span>
-          </div>
-        )}
+          {/* Subtle artistic paper texture dots */}
+          <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:14px_14px]" />
 
-        {/* Concise Success Alert */}
-        {successMessage && (
-          <div
-            role="status"
-            className="p-3.5 bg-primary-container/80 text-on-primary-container text-xs rounded-2xl flex items-center gap-2.5 border border-primary/30 animate-in fade-in"
-          >
-            <CheckCircle2 className="w-4 h-4 shrink-0 text-primary" />
-            <span className="flex-1 font-['Manrope'] font-medium">{successMessage}</span>
-          </div>
-        )}
-
-        {/* ----------------- SIGN IN VIEW ----------------- */}
-        {mode === 'signin' && (
-          <div className="space-y-4">
-            {/* 1-Tap Google Sign In with Official Logo */}
-            <button
-              id="auth_google_btn"
-              type="button"
-              onClick={handleGoogleSignIn}
-              disabled={isAnyLoading}
-              className="w-full h-12 rounded-2xl bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface font-['Manrope'] text-xs font-bold transition-all flex items-center justify-center gap-2.5 shadow-2xs hover:shadow-xs active:scale-[0.99] disabled:opacity-60"
-            >
-              {googleLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin text-primary" />
-              ) : (
-                <GoogleOfficialIcon className="w-5 h-5" />
-              )}
-              <span>
-                {language === 'ur'
-                  ? 'گوگل سے لاگ ان کریں'
-                  : language === 'roman-urdu'
-                  ? 'Google se Sign In karein'
-                  : 'Continue with Google'}
-              </span>
-            </button>
-
-            {/* Clean Divider */}
-            <div className="relative flex items-center justify-center py-1">
-              <div className="border-t border-surface-dim w-full" />
-              <span className="bg-surface-container-lowest px-3 text-[11px] font-['Manrope'] font-medium text-outline uppercase tracking-wider shrink-0">
-                {language === 'ur' ? 'یا ای میل سے' : 'or with email'}
+          {/* Top Bar with YAAD Logo & Language Switcher */}
+          <div className="relative z-10 flex items-center justify-between mb-5">
+            {/* YAAD Logo Badge */}
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white shadow-xs">
+              <img
+                src={APP_IMAGES.logoTransparent}
+                alt="YAAD"
+                className="w-5 h-5 object-contain drop-shadow-xs"
+              />
+              <span className="font-['Plus_Jakarta_Sans'] font-extrabold text-xs tracking-wider uppercase">
+                YAAD | یاد
               </span>
             </div>
 
-            {/* Direct Email & Password Form */}
-            <form onSubmit={handleSubmit} className="space-y-3.5">
-              <div className="space-y-1">
-                <label
-                  htmlFor="auth_input_email"
-                  className="text-xs font-bold text-on-surface-variant block font-['Manrope']"
-                >
-                  {language === 'ur' ? 'ای میل ایڈریس' : 'Email Address'}
-                </label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <input
-                    id="auth_input_email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    disabled={isAnyLoading}
-                    className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-3.5 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope'] disabled:opacity-60"
-                    autoComplete="email"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <div className="flex justify-between items-center">
-                  <label
-                    htmlFor="auth_input_password"
-                    className="text-xs font-bold text-on-surface-variant block font-['Manrope']"
-                  >
-                    {language === 'ur' ? 'پاس ورڈ' : 'Password'}
-                  </label>
-                  <button
-                    type="button"
-                    onClick={handleOpenForgotPassword}
-                    className="text-xs text-primary font-bold hover:underline font-['Manrope']"
-                  >
-                    {language === 'ur' ? 'پاس ورڈ بھول گئے؟' : 'Forgot password?'}
-                  </button>
-                </div>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <input
-                    id="auth_input_password"
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    disabled={isAnyLoading}
-                    className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-11 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope'] disabled:opacity-60"
-                    autoComplete="current-password"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    className="absolute end-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface p-1 transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              <button
-                id="auth_submit_btn"
-                type="submit"
-                disabled={isAnyLoading}
-                className="w-full h-12 rounded-full bg-primary text-on-primary font-['Manrope'] text-sm font-bold shadow-md hover:bg-primary-container hover:shadow-lg disabled:opacity-50 transition-all flex items-center justify-center gap-2 active:scale-[0.99] mt-2"
-              >
-                {loading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    <LogIn className="w-4 h-4" />
-                    <span>{language === 'ur' ? 'سائن ان کریں' : 'Sign In'}</span>
-                  </>
-                )}
-              </button>
-            </form>
-
-            {/* Quick Switch to Sign Up */}
-            <div className="pt-2 text-center text-xs text-on-surface-variant font-['Manrope']">
-              <span>{language === 'ur' ? 'اکاؤنٹ نہیں ہے؟ ' : "Don't have an account? "}</span>
+            {/* Language Selector */}
+            <div className="inline-flex items-center bg-black/25 backdrop-blur-md rounded-full p-0.5 border border-white/20 text-[10px] font-['Manrope'] font-bold text-white">
               <button
                 type="button"
-                onClick={() => handleSwitchTab('signup')}
-                className="font-bold text-primary hover:underline"
+                onClick={() => setLanguage('en')}
+                className={`px-2 py-0.5 rounded-full transition-all ${
+                  language === 'en' ? 'bg-white text-neutral-900 shadow-xs' : 'hover:text-white/80'
+                }`}
               >
-                {language === 'ur' ? 'نیا اکاؤنٹ بنائیں' : 'Create account'}
+                EN
+              </button>
+              <button
+                type="button"
+                onClick={() => setLanguage('ur')}
+                className={`px-2 py-0.5 rounded-full transition-all font-urdu ${
+                  language === 'ur' ? 'bg-white text-neutral-900 shadow-xs' : 'hover:text-white/80'
+                }`}
+              >
+                اردو
+              </button>
+              <button
+                type="button"
+                onClick={() => setLanguage('roman-urdu')}
+                className={`px-2 py-0.5 rounded-full transition-all ${
+                  language === 'roman-urdu' ? 'bg-white text-neutral-900 shadow-xs' : 'hover:text-white/80'
+                }`}
+              >
+                ROM
               </button>
             </div>
           </div>
-        )}
 
-        {/* ----------------- SIGN UP VIEW ----------------- */}
-        {mode === 'signup' && (
-          <div className="space-y-4">
-            {/* 1-Tap Google Sign Up with Official Logo */}
-            <button
-              id="signup_google_btn"
-              type="button"
-              onClick={handleGoogleSignIn}
-              disabled={isAnyLoading}
-              className="w-full h-12 rounded-2xl bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface font-['Manrope'] text-xs font-bold transition-all flex items-center justify-center gap-2.5 shadow-2xs hover:shadow-xs active:scale-[0.99] disabled:opacity-60"
-            >
-              {googleLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin text-primary" />
-              ) : (
-                <GoogleOfficialIcon className="w-5 h-5" />
+          {/* Main Title Heading */}
+          <div className="relative z-10 text-center px-1">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight font-['Plus_Jakarta_Sans'] drop-shadow-xs">
+              {mode === 'signup' && (
+                language === 'ur' ? 'نیا اکاؤنٹ بنائیں' : language === 'roman-urdu' ? 'Naya Account Banayein' : 'Create an account'
               )}
-              <span>
-                {language === 'ur'
-                  ? 'گوگل سے اکاؤنٹ بنائیں'
-                  : language === 'roman-urdu'
-                  ? 'Google se Account banayein'
-                  : 'Sign up with Google'}
-              </span>
-            </button>
+              {mode === 'signin' && (
+                language === 'ur' ? 'خوش آمدید' : language === 'roman-urdu' ? 'Welcome Back' : 'Welcome back'
+              )}
+              {mode === 'forgot_password' && (
+                language === 'ur' ? 'پاس ورڈ ری سیٹ کریں' : language === 'roman-urdu' ? 'Password Reset Karein' : 'Reset password'
+              )}
+              {mode === 'reset_password' && (
+                language === 'ur' ? 'نیا پاس ورڈ درج کریں' : language === 'roman-urdu' ? 'Naya Password Likhein' : 'Set new password'
+              )}
+            </h1>
+            <p className="text-white/90 text-xs font-['Manrope'] mt-1.5 font-medium max-w-xs mx-auto">
+              {mode === 'signup' && (
+                language === 'ur'
+                  ? 'گھر کے راشن اور سمارٹ خریداری کے لیے ابھی شامل ہوں'
+                  : 'Organize grocery lists and sync easily with family'
+              )}
+              {mode === 'signin' && (
+                language === 'ur'
+                  ? 'اپنی محفوظ کردہ لسٹ تک رسائی کے لیے سائن ان کریں'
+                  : 'Sign in to access and sync your grocery lists'
+              )}
+              {mode === 'forgot_password' && (
+                language === 'ur'
+                  ? 'اپنا ای میل درج کریں، ہم ری سیٹ لنک ارسال کریں گے'
+                  : 'Enter your email to receive recovery instructions'
+              )}
+              {mode === 'reset_password' && (
+                language === 'ur'
+                  ? 'اپنے اکاؤنٹ کے لیے نیا پاس ورڈ منتخب کریں'
+                  : 'Choose a strong password to secure your account'
+              )}
+            </p>
+          </div>
+        </div>
 
-            {/* Clean Divider */}
-            <div className="relative flex items-center justify-center py-1">
-              <div className="border-t border-surface-dim w-full" />
-              <span className="bg-surface-container-lowest px-3 text-[11px] font-['Manrope'] font-medium text-outline uppercase tracking-wider shrink-0">
-                {language === 'ur' ? 'یا ای میل سے' : 'or with email'}
-              </span>
-            </div>
-
-            {/* Streamlined Sign Up Form */}
-            <form onSubmit={handleSubmit} className="space-y-3">
-              {/* Full Name */}
-              <div className="space-y-1">
-                <label
-                  htmlFor="auth_input_name"
-                  className="text-xs font-bold text-on-surface-variant block font-['Manrope']"
-                >
-                  {language === 'ur' ? 'پورا نام' : 'Full Name'}
-                </label>
-                <div className="relative">
-                  <UserIcon className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <input
-                    id="auth_input_name"
-                    type="text"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder={language === 'ur' ? 'آپ کا نام' : 'Your Name'}
-                    disabled={isAnyLoading}
-                    className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-3.5 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope'] disabled:opacity-60"
-                    autoComplete="name"
-                    required
-                  />
-                </div>
+        {/* ============================================================== */}
+        {/* 2. ELEVATED WHITE CARD (Forms, Inputs, Google, Legal)          */}
+        {/* ============================================================== */}
+        <div className="-mt-6 relative z-10 bg-white rounded-t-[32px] sm:rounded-t-[36px] px-6 sm:px-7 pt-7 pb-8 space-y-4 flex-1 shadow-lg flex flex-col justify-between">
+          <div className="space-y-4">
+            {/* Feedback Notifications */}
+            {displayedError && (
+              <div
+                role="alert"
+                className="p-3 bg-red-50 text-red-700 text-xs rounded-2xl flex items-center gap-2.5 border border-red-200 animate-in fade-in"
+              >
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+                <span className="flex-1 font-['Manrope'] font-medium">{displayedError}</span>
               </div>
+            )}
 
-              {/* Phone Number */}
-              <div className="space-y-1">
-                <label
-                  htmlFor="auth_input_phone"
-                  className="text-xs font-bold text-on-surface-variant block font-['Manrope']"
+            {successMessage && (
+              <div
+                role="status"
+                className="p-3 bg-emerald-50 text-emerald-800 text-xs rounded-2xl flex items-center gap-2.5 border border-emerald-200 animate-in fade-in"
+              >
+                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+                <span className="flex-1 font-['Manrope'] font-medium">{successMessage}</span>
+              </div>
+            )}
+
+            {/* Google 1-Tap Sign In Pill Button (shown on signin and signup) */}
+            {(mode === 'signin' || mode === 'signup') && (
+              <>
+                <button
+                  id={mode === 'signup' ? 'signup_google_btn' : 'auth_google_btn'}
+                  type="button"
+                  onClick={handleGoogleSignIn}
+                  disabled={isAnyLoading}
+                  className="w-full h-12 rounded-full border border-neutral-200/90 bg-white hover:bg-neutral-50/80 text-neutral-800 font-['Manrope'] text-sm font-semibold transition-all flex items-center justify-center gap-3 shadow-2xs hover:shadow-xs active:scale-[0.99] disabled:opacity-60 cursor-pointer"
                 >
-                  {language === 'ur' ? 'فون نمبر' : 'Phone Number'}
-                </label>
-                <div className="relative">
-                  <Phone className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  {googleLoading ? (
+                    <Loader2 className="w-5 h-5 animate-spin text-neutral-800" />
+                  ) : (
+                    <GoogleOfficialIcon className="w-5 h-5" />
+                  )}
+                  <span>
+                    {language === 'ur'
+                      ? 'گوگل کے ساتھ جاری رکھیں'
+                      : language === 'roman-urdu'
+                      ? 'Google se continue karein'
+                      : 'Sign in with Google'}
+                  </span>
+                </button>
+
+                {/* Subtle 'or' divider */}
+                <div className="relative flex items-center justify-center py-0.5">
+                  <div className="border-t border-neutral-200/90 w-full" />
+                  <span className="bg-white px-3 text-xs font-medium text-neutral-400 font-['Manrope']">
+                    {language === 'ur' ? 'یا' : 'or'}
+                  </span>
+                </div>
+              </>
+            )}
+
+            {/* ----------------- SIGN UP FORM ----------------- */}
+            {mode === 'signup' && (
+              <form onSubmit={handleSubmit} className="space-y-3 font-['Manrope']">
+                {/* First Name & Last Name (side by side, as in screenshot) */}
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div>
+                    <input
+                      id="auth_input_first_name"
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setFirstName(val);
+                        setFullName(`${val} ${lastName}`.trim());
+                      }}
+                      placeholder={language === 'ur' ? 'پہلا نام' : 'First Name'}
+                      disabled={isAnyLoading}
+                      className="w-full h-12 bg-[#f3f4f6] text-neutral-800 text-sm font-medium rounded-2xl px-4 border border-transparent focus:bg-white focus:border-neutral-300 focus:ring-2 focus:ring-neutral-900/10 outline-none transition-all placeholder:text-neutral-400 disabled:opacity-60"
+                      autoComplete="given-name"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <input
+                      id="auth_input_last_name"
+                      type="text"
+                      value={lastName}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setLastName(val);
+                        setFullName(`${firstName} ${val}`.trim());
+                      }}
+                      placeholder={language === 'ur' ? 'آخری نام' : 'Last Name'}
+                      disabled={isAnyLoading}
+                      className="w-full h-12 bg-[#f3f4f6] text-neutral-800 text-sm font-medium rounded-2xl px-4 border border-transparent focus:bg-white focus:border-neutral-300 focus:ring-2 focus:ring-neutral-900/10 outline-none transition-all placeholder:text-neutral-400 disabled:opacity-60"
+                      autoComplete="family-name"
+                    />
+                  </div>
+                </div>
+
+                {/* Phone Number (crucial for Pakistani shopping & WhatsApp sharing) */}
+                <div>
                   <input
                     id="auth_input_phone"
                     type="tel"
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
-                    placeholder="+92 300 1234567"
+                    placeholder={language === 'ur' ? 'فون نمبر (+92 300 1234567)' : 'Phone Number (+92 300 1234567)'}
                     disabled={isAnyLoading}
-                    className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-3.5 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope'] disabled:opacity-60"
+                    className="w-full h-12 bg-[#f3f4f6] text-neutral-800 text-sm font-medium rounded-2xl px-4 border border-transparent focus:bg-white focus:border-neutral-300 focus:ring-2 focus:ring-neutral-900/10 outline-none transition-all placeholder:text-neutral-400 disabled:opacity-60"
                     autoComplete="tel"
                     required
                   />
                 </div>
-              </div>
 
-              {/* Email */}
-              <div className="space-y-1">
-                <label
-                  htmlFor="auth_input_email_signup"
-                  className="text-xs font-bold text-on-surface-variant block font-['Manrope']"
-                >
-                  {language === 'ur' ? 'ای میل ایڈریس' : 'Email Address'}
-                </label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                {/* Email Address */}
+                <div>
                   <input
                     id="auth_input_email_signup"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
+                    placeholder={language === 'ur' ? 'ای میل ایڈریس' : 'Email'}
                     disabled={isAnyLoading}
-                    className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-3.5 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope'] disabled:opacity-60"
+                    className="w-full h-12 bg-[#f3f4f6] text-neutral-800 text-sm font-medium rounded-2xl px-4 border border-transparent focus:bg-white focus:border-neutral-300 focus:ring-2 focus:ring-neutral-900/10 outline-none transition-all placeholder:text-neutral-400 disabled:opacity-60"
                     autoComplete="email"
                     required
                   />
                 </div>
-              </div>
 
-              {/* Password */}
-              <div className="space-y-1">
-                <label
-                  htmlFor="auth_input_password_signup"
-                  className="text-xs font-bold text-on-surface-variant block font-['Manrope']"
-                >
-                  {language === 'ur' ? 'پاس ورڈ (کم از کم 6 حروف)' : 'Password (min. 6 characters)'}
-                </label>
+                {/* Password with Eye Toggle */}
                 <div className="relative">
-                  <Lock className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     id="auth_input_password_signup"
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="At least 6 characters"
+                    placeholder={language === 'ur' ? 'پاس ورڈ (کم از کم 6 حروف)' : 'Password'}
                     disabled={isAnyLoading}
-                    className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-11 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope'] disabled:opacity-60"
+                    className="w-full h-12 bg-[#f3f4f6] text-neutral-800 text-sm font-medium rounded-2xl ps-4 pe-11 border border-transparent focus:bg-white focus:border-neutral-300 focus:ring-2 focus:ring-neutral-900/10 outline-none transition-all placeholder:text-neutral-400 disabled:opacity-60"
                     autoComplete="new-password"
                     required
                   />
@@ -761,275 +660,360 @@ export const AuthView: React.FC<AuthViewProps> = ({
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    className="absolute end-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface p-1 transition-colors"
+                    className="absolute end-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 p-1.5 transition-colors cursor-pointer"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
-              </div>
 
-              {/* Submit Button */}
-              <button
-                id="auth_submit_btn"
-                type="submit"
-                disabled={isAnyLoading}
-                className="w-full h-12 rounded-full bg-primary text-on-primary font-['Manrope'] text-sm font-bold shadow-md hover:bg-primary-container hover:shadow-lg disabled:opacity-50 transition-all flex items-center justify-center gap-2 active:scale-[0.99] mt-3"
-              >
-                {loading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    <UserPlus className="w-4 h-4" />
-                    <span>{language === 'ur' ? 'اکاؤنٹ بنائیں' : 'Create Account'}</span>
-                  </>
-                )}
-              </button>
-            </form>
-
-            {/* Quick Switch to Sign In */}
-            <div className="pt-2 text-center text-xs text-on-surface-variant font-['Manrope']">
-              <span>{language === 'ur' ? 'پہلے سے اکاؤنٹ موجود ہے؟ ' : 'Already have an account? '}</span>
-              <button
-                type="button"
-                onClick={() => handleSwitchTab('signin')}
-                className="font-bold text-primary hover:underline"
-              >
-                {language === 'ur' ? 'سائن ان کریں' : 'Sign in'}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ----------------- FORGOT PASSWORD VIEW ----------------- */}
-        {mode === 'forgot_password' && (
-          <div className="space-y-4">
-            {!resetEmailSent ? (
-              <form onSubmit={handleForgotPasswordSubmit} className="space-y-4">
-                <div className="space-y-1">
-                  <label
-                    htmlFor="auth_forgot_email"
-                    className="text-xs font-bold text-on-surface-variant block font-['Manrope']"
-                  >
-                    {language === 'ur' ? 'ای میل ایڈریس' : 'Email Address'}
-                  </label>
-                  <div className="relative">
-                    <Mail className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                    <input
-                      id="auth_forgot_email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@example.com"
-                      disabled={isAnyLoading}
-                      className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-3.5 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope'] disabled:opacity-60"
-                      autoComplete="email"
-                      required
-                    />
-                  </div>
-                </div>
-
+                {/* Primary Action Button (Solid Black Pill) */}
                 <button
-                  id="auth_forgot_submit_btn"
+                  id="auth_submit_btn"
                   type="submit"
                   disabled={isAnyLoading}
-                  className="w-full h-12 rounded-full bg-primary text-on-primary font-['Manrope'] text-sm font-bold shadow-md hover:bg-primary-container hover:shadow-lg disabled:opacity-50 transition-all flex items-center justify-center gap-2 active:scale-[0.99]"
+                  className="w-full h-12 rounded-full bg-neutral-900 hover:bg-black text-white font-['Manrope'] text-sm font-bold tracking-tight shadow-md hover:shadow-lg disabled:opacity-50 transition-all flex items-center justify-center gap-2 active:scale-[0.99] mt-3 cursor-pointer"
                 >
                   {loading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
                   ) : (
-                    <span>{language === 'ur' ? 'ری سیٹ لنک بھیجیں' : 'Send Reset Link'}</span>
+                    <span>{language === 'ur' ? 'اکاؤنٹ بنائیں' : 'Create account'}</span>
                   )}
                 </button>
               </form>
-            ) : (
-              <div className="text-center py-4 space-y-2">
-                <CheckCircle2 className="w-10 h-10 text-primary mx-auto" />
-                <p className="font-['Manrope'] text-xs text-on-surface">
-                  {language === 'ur'
-                    ? 'ری سیٹ ای میل بھیج دی گئی ہے۔ براہ کرم اپنا ان باکس چیک کریں۔'
-                    : 'A password reset link has been sent to your email.'}
-                </p>
-              </div>
             )}
 
-            <button
-              type="button"
-              onClick={handleBackToSignIn}
-              disabled={isAnyLoading}
-              className="w-full h-10 rounded-2xl text-xs font-['Manrope'] font-semibold text-outline hover:text-on-surface flex items-center justify-center gap-1.5 transition-colors"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>{language === 'ur' ? 'سائن ان پر واپس جائیں' : 'Back to Sign In'}</span>
-            </button>
-          </div>
-        )}
-
-        {/* ----------------- RESET PASSWORD VIEW ----------------- */}
-        {mode === 'reset_password' && (
-          <div className="space-y-4">
-            {!resetSuccess ? (
-              <form onSubmit={handleResetPasswordSubmit} className="space-y-3.5">
-                <div className="space-y-1">
-                  <label
-                    htmlFor="auth_input_new_password"
-                    className="text-xs font-bold text-on-surface-variant block font-['Manrope']"
-                  >
-                    {language === 'ur' ? 'نیا پاس ورڈ' : 'New Password'}
-                  </label>
-                  <div className="relative">
-                    <Lock className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                    <input
-                      id="auth_input_new_password"
-                      type={showNewPassword ? 'text' : 'password'}
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="At least 6 characters"
-                      disabled={isAnyLoading}
-                      className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-11 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope'] disabled:opacity-60"
-                      autoComplete="new-password"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowNewPassword(!showNewPassword)}
-                      aria-label={showNewPassword ? 'Hide password' : 'Show password'}
-                      className="absolute end-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface p-1 transition-colors"
-                    >
-                      {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
+            {/* ----------------- SIGN IN FORM ----------------- */}
+            {mode === 'signin' && (
+              <form onSubmit={handleSubmit} className="space-y-3 font-['Manrope']">
+                {/* Email Address */}
+                <div>
+                  <input
+                    id="auth_input_email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder={language === 'ur' ? 'ای میل ایڈریس' : 'Email'}
+                    disabled={isAnyLoading}
+                    className="w-full h-12 bg-[#f3f4f6] text-neutral-800 text-sm font-medium rounded-2xl px-4 border border-transparent focus:bg-white focus:border-neutral-300 focus:ring-2 focus:ring-neutral-900/10 outline-none transition-all placeholder:text-neutral-400 disabled:opacity-60"
+                    autoComplete="email"
+                    required
+                  />
                 </div>
 
-                <div className="space-y-1">
-                  <label
-                    htmlFor="auth_input_confirm_new_password"
-                    className="text-xs font-bold text-on-surface-variant block font-['Manrope']"
+                {/* Password with Eye Toggle */}
+                <div className="relative">
+                  <input
+                    id="auth_input_password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder={language === 'ur' ? 'پاس ورڈ' : 'Password'}
+                    disabled={isAnyLoading}
+                    className="w-full h-12 bg-[#f3f4f6] text-neutral-800 text-sm font-medium rounded-2xl ps-4 pe-11 border border-transparent focus:bg-white focus:border-neutral-300 focus:ring-2 focus:ring-neutral-900/10 outline-none transition-all placeholder:text-neutral-400 disabled:opacity-60"
+                    autoComplete="current-password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    className="absolute end-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 p-1.5 transition-colors cursor-pointer"
                   >
-                    {language === 'ur' ? 'پاس ورڈ کی تصدیق کریں' : 'Confirm New Password'}
-                  </label>
-                  <div className="relative">
-                    <KeyRound className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                    <input
-                      id="auth_input_confirm_new_password"
-                      type={showConfirmNewPassword ? 'text' : 'password'}
-                      value={confirmNewPassword}
-                      onChange={(e) => setConfirmNewPassword(e.target.value)}
-                      placeholder="Re-enter new password"
-                      disabled={isAnyLoading}
-                      className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-11 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope'] disabled:opacity-60"
-                      autoComplete="new-password"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
-                      aria-label={showConfirmNewPassword ? 'Hide password' : 'Show password'}
-                      className="absolute end-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface p-1 transition-colors"
-                    >
-                      {showConfirmNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
+
+                {/* Forgot Password link (placed right below password) */}
+                <div className="flex justify-end pt-0.5">
+                  <button
+                    id="auth_forgot_password_btn"
+                    type="button"
+                    onClick={handleOpenForgotPassword}
+                    className="text-xs font-semibold text-neutral-500 hover:text-neutral-900 hover:underline font-['Manrope'] transition-colors cursor-pointer"
+                  >
+                    {language === 'ur'
+                      ? 'پاس ورڈ بھول گئے؟'
+                      : language === 'roman-urdu'
+                      ? 'Password bhool gaye?'
+                      : 'Forgot password?'}
+                  </button>
+                </div>
+
+                {/* Primary Action Button (Solid Black Pill) */}
+                <button
+                  id="auth_submit_btn"
+                  type="submit"
+                  disabled={isAnyLoading}
+                  className="w-full h-12 rounded-full bg-neutral-900 hover:bg-black text-white font-['Manrope'] text-sm font-bold tracking-tight shadow-md hover:shadow-lg disabled:opacity-50 transition-all flex items-center justify-center gap-2 active:scale-[0.99] mt-3 cursor-pointer"
+                >
+                  {loading ? (
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                  ) : (
+                    <span>{language === 'ur' ? 'سائن ان کریں' : 'Sign in'}</span>
+                  )}
+                </button>
+              </form>
+            )}
+
+            {/* ----------------- FORGOT PASSWORD FORM ----------------- */}
+            {mode === 'forgot_password' && (
+              <div className="space-y-4 font-['Manrope']">
+                {!resetEmailSent ? (
+                  <form onSubmit={handleForgotPasswordSubmit} className="space-y-3.5">
+                    <div>
+                      <input
+                        id="auth_forgot_email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder={language === 'ur' ? 'ای میل ایڈریس' : 'Email Address'}
+                        disabled={isAnyLoading}
+                        className="w-full h-12 bg-[#f3f4f6] text-neutral-800 text-sm font-medium rounded-2xl px-4 border border-transparent focus:bg-white focus:border-neutral-300 focus:ring-2 focus:ring-neutral-900/10 outline-none transition-all placeholder:text-neutral-400 disabled:opacity-60"
+                        autoComplete="email"
+                        required
+                      />
+                    </div>
+
+                    <button
+                      id="auth_forgot_submit_btn"
+                      type="submit"
+                      disabled={isAnyLoading}
+                      className="w-full h-12 rounded-full bg-neutral-900 hover:bg-black text-white font-['Manrope'] text-sm font-bold tracking-tight shadow-md hover:shadow-lg disabled:opacity-50 transition-all flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer"
+                    >
+                      {loading ? (
+                        <Loader2 className="w-4 h-4 animate-spin text-white" />
+                      ) : (
+                        <span>{language === 'ur' ? 'ری سیٹ لنک بھیجیں' : 'Send reset link'}</span>
+                      )}
+                    </button>
+                  </form>
+                ) : (
+                  <div className="text-center py-4 space-y-2">
+                    <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
+                    <p className="font-['Manrope'] text-xs text-neutral-700">
+                      {language === 'ur'
+                        ? 'ری سیٹ ای میل بھیج دی گئی ہے۔ براہ کرم اپنا ان باکس چیک کریں۔'
+                        : 'A password reset link has been sent to your email.'}
+                    </p>
+                  </div>
+                )}
 
                 <button
-                  id="auth_update_password_btn"
-                  type="submit"
-                  disabled={isAnyLoading || newPassword.length < 6 || newPassword !== confirmNewPassword}
-                  className="w-full h-12 rounded-full bg-primary text-on-primary font-['Manrope'] text-sm font-bold shadow-md hover:bg-primary-container hover:shadow-lg disabled:opacity-50 transition-all flex items-center justify-center gap-2 active:scale-[0.99] mt-2"
+                  type="button"
+                  onClick={handleBackToSignIn}
+                  disabled={isAnyLoading}
+                  className="w-full h-10 rounded-2xl text-xs font-['Manrope'] font-semibold text-neutral-500 hover:text-neutral-900 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                 >
-                  {loading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <>
-                      <KeyRound className="w-4 h-4" />
-                      <span>{language === 'ur' ? 'نیا پاس ورڈ محفوظ کریں' : 'Save New Password'}</span>
-                    </>
-                  )}
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>{language === 'ur' ? 'سائن ان پر واپس جائیں' : 'Back to sign in'}</span>
                 </button>
-              </form>
-            ) : (
-              <div className="text-center py-4 space-y-2">
-                <CheckCircle2 className="w-10 h-10 text-primary mx-auto" />
-                <p className="font-['Manrope'] text-xs text-on-surface">
-                  {language === 'ur' ? 'پاس ورڈ کامیابی سے تبدیل ہو گیا ہے۔' : 'Password updated successfully!'}
-                </p>
               </div>
             )}
 
-            {!resetSuccess && (
-              <button
-                type="button"
-                onClick={handleBackToSignIn}
-                disabled={isAnyLoading}
-                className="w-full h-10 rounded-2xl text-xs font-['Manrope'] font-semibold text-outline hover:text-on-surface flex items-center justify-center gap-1.5 transition-colors"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span>{language === 'ur' ? 'سائن ان پر واپس جائیں' : 'Back to Sign In'}</span>
-              </button>
+            {/* ----------------- RESET PASSWORD FORM ----------------- */}
+            {mode === 'reset_password' && (
+              <div className="space-y-4 font-['Manrope']">
+                {!resetSuccess ? (
+                  <form onSubmit={handleResetPasswordSubmit} className="space-y-3.5">
+                    <div className="relative">
+                      <input
+                        id="auth_input_new_password"
+                        type={showNewPassword ? 'text' : 'password'}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder={language === 'ur' ? 'نیا پاس ورڈ (کم از کم 6 حروف)' : 'New password (min. 6 characters)'}
+                        disabled={isAnyLoading}
+                        className="w-full h-12 bg-[#f3f4f6] text-neutral-800 text-sm font-medium rounded-2xl ps-4 pe-11 border border-transparent focus:bg-white focus:border-neutral-300 focus:ring-2 focus:ring-neutral-900/10 outline-none transition-all placeholder:text-neutral-400 disabled:opacity-60"
+                        autoComplete="new-password"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        aria-label={showNewPassword ? 'Hide password' : 'Show password'}
+                        className="absolute end-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 p-1.5 transition-colors cursor-pointer"
+                      >
+                        {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+
+                    <div className="relative">
+                      <input
+                        id="auth_input_confirm_new_password"
+                        type={showConfirmNewPassword ? 'text' : 'password'}
+                        value={confirmNewPassword}
+                        onChange={(e) => setConfirmNewPassword(e.target.value)}
+                        placeholder={language === 'ur' ? 'پاس ورڈ کی تصدیق کریں' : 'Confirm new password'}
+                        disabled={isAnyLoading}
+                        className="w-full h-12 bg-[#f3f4f6] text-neutral-800 text-sm font-medium rounded-2xl ps-4 pe-11 border border-transparent focus:bg-white focus:border-neutral-300 focus:ring-2 focus:ring-neutral-900/10 outline-none transition-all placeholder:text-neutral-400 disabled:opacity-60"
+                        autoComplete="new-password"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
+                        aria-label={showConfirmNewPassword ? 'Hide password' : 'Show password'}
+                        className="absolute end-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 p-1.5 transition-colors cursor-pointer"
+                      >
+                        {showConfirmNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+
+                    <button
+                      id="auth_update_password_btn"
+                      type="submit"
+                      disabled={isAnyLoading || newPassword.length < 6 || newPassword !== confirmNewPassword}
+                      className="w-full h-12 rounded-full bg-neutral-900 hover:bg-black text-white font-['Manrope'] text-sm font-bold tracking-tight shadow-md hover:shadow-lg disabled:opacity-50 transition-all flex items-center justify-center gap-2 active:scale-[0.99] mt-2 cursor-pointer"
+                    >
+                      {loading ? (
+                        <Loader2 className="w-4 h-4 animate-spin text-white" />
+                      ) : (
+                        <span>{language === 'ur' ? 'نیا پاس ورڈ محفوظ کریں' : 'Save new password'}</span>
+                      )}
+                    </button>
+                  </form>
+                ) : (
+                  <div className="text-center py-4 space-y-2">
+                    <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
+                    <p className="font-['Manrope'] text-xs text-neutral-700">
+                      {language === 'ur' ? 'پاس ورڈ کامیابی سے تبدیل ہو گیا ہے۔' : 'Password updated successfully!'}
+                    </p>
+                  </div>
+                )}
+
+                {!resetSuccess && (
+                  <button
+                    type="button"
+                    onClick={handleBackToSignIn}
+                    disabled={isAnyLoading}
+                    className="w-full h-10 rounded-2xl text-xs font-['Manrope'] font-semibold text-neutral-500 hover:text-neutral-900 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>{language === 'ur' ? 'سائن ان پر واپس جائیں' : 'Back to sign in'}</span>
+                  </button>
+                )}
+              </div>
             )}
           </div>
-        )}
 
-        {/* Clean Legal & Information Footer */}
-        <div className="pt-2 border-t border-surface-dim/60 text-center space-y-1.5 text-[11px] text-outline font-['Manrope']">
-          <p>
-            By continuing, you agree to YAAD's{' '}
-            <button
-              type="button"
-              onClick={() => onOpenLegalPage?.('terms')}
-              className="font-bold text-primary hover:underline inline"
-            >
-              Terms
-            </button>{' '}
-            &{' '}
-            <button
-              type="button"
-              onClick={() => onOpenLegalPage?.('privacy')}
-              className="font-bold text-primary hover:underline inline"
-            >
-              Privacy
-            </button>
-            .
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
-            <button
-              type="button"
-              onClick={() => onOpenLegalPage?.('help')}
-              className="hover:text-on-surface transition-colors hover:underline"
-            >
-              Help & FAQ
-            </button>
-            <span>•</span>
-            <a
-              id="auth_footer_rashan_link"
-              href={
-                language === 'ur'
-                  ? '/rashan-list?lang=ur'
-                  : language === 'roman-urdu'
-                  ? '/rashan-list?lang=roman-urdu'
-                  : '/rashan-list'
-              }
-              onClick={(e) => {
-                e.preventDefault();
-                navigate(
+          {/* ============================================================== */}
+          {/* 3. LEGAL & BOTTOM SWITCHER (Terms & Privacy + Log In Switch)   */}
+          {/* ============================================================== */}
+          <div className="pt-5 space-y-3 font-['Manrope']">
+            {/* Legal note matching the screenshot style */}
+            <p className="text-center text-[11px] sm:text-xs text-neutral-500 font-normal leading-relaxed">
+              {language === 'ur' ? (
+                <>
+                  اکاؤنٹ بنا کر آپ YAAD کے{' '}
+                  <button
+                    type="button"
+                    onClick={() => onOpenLegalPage?.('privacy')}
+                    className="font-medium text-neutral-800 underline hover:text-black cursor-pointer"
+                  >
+                    پرائیویسی پالیسی
+                  </button>{' '}
+                  اور{' '}
+                  <button
+                    type="button"
+                    onClick={() => onOpenLegalPage?.('terms')}
+                    className="font-medium text-neutral-800 underline hover:text-black cursor-pointer"
+                  >
+                    شرائط
+                  </button>{' '}
+                  سے اتفاق کرتے ہیں۔
+                </>
+              ) : (
+                <>
+                  Signing up for a YAAD account means you agree to the{' '}
+                  <button
+                    type="button"
+                    onClick={() => onOpenLegalPage?.('privacy')}
+                    className="font-medium text-neutral-800 underline hover:text-black cursor-pointer"
+                  >
+                    Privacy Policy
+                  </button>{' '}
+                  and{' '}
+                  <button
+                    type="button"
+                    onClick={() => onOpenLegalPage?.('terms')}
+                    className="font-medium text-neutral-800 underline hover:text-black cursor-pointer"
+                  >
+                    Terms of Service
+                  </button>
+                  .
+                </>
+              )}
+            </p>
+
+            {/* Bottom Switcher: "Have an account? Log in here" or "Don't have an account? Sign up" */}
+            <div className="text-center text-xs text-neutral-600 font-medium">
+              {mode === 'signup' ? (
+                <>
+                  <span>{language === 'ur' ? 'پہلے سے اکاؤنٹ ہے؟ ' : 'Have an account? '}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchTab('signin')}
+                    className="font-bold text-neutral-900 underline hover:text-black cursor-pointer"
+                  >
+                    {language === 'ur' ? 'یہاں لاگ ان کریں' : 'Log in here'}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span>{language === 'ur' ? 'اکاؤنٹ نہیں ہے؟ ' : "Don't have an account? "}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchTab('signup')}
+                    className="font-bold text-neutral-900 underline hover:text-black cursor-pointer"
+                  >
+                    {language === 'ur' ? 'نیا اکاؤنٹ بنائیں' : 'Sign up'}
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Secondary footer link to Rashan list */}
+            <div className="pt-1 flex items-center justify-center gap-3 text-[11px] text-neutral-400">
+              <button
+                type="button"
+                onClick={() => onOpenLegalPage?.('help')}
+                className="hover:text-neutral-700 transition-colors cursor-pointer"
+              >
+                Help & FAQ
+              </button>
+              <span>•</span>
+              <a
+                id="auth_footer_rashan_link"
+                href={
                   language === 'ur'
                     ? '/rashan-list?lang=ur'
                     : language === 'roman-urdu'
                     ? '/rashan-list?lang=roman-urdu'
                     : '/rashan-list'
-                );
-              }}
-              className="hover:text-on-surface transition-colors hover:underline"
-            >
-              {language === 'ur'
-                ? 'ماہانہ راشن لسٹ'
-                : language === 'roman-urdu'
-                ? 'Mahana Rashan List'
-                : 'Monthly Rashan List'}
-            </a>
+                }
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate(
+                    language === 'ur'
+                      ? '/rashan-list?lang=ur'
+                      : language === 'roman-urdu'
+                      ? '/rashan-list?lang=roman-urdu'
+                      : '/rashan-list'
+                  );
+                }}
+                className="hover:text-neutral-700 transition-colors cursor-pointer"
+              >
+                {language === 'ur'
+                  ? 'ماہانہ راشن لسٹ'
+                  : language === 'roman-urdu'
+                  ? 'Mahana Rashan List'
+                  : 'Monthly Rashan List'}
+              </a>
+            </div>
           </div>
         </div>
       </div>
     </main>
   );
 };
+
