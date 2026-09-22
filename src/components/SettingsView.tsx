@@ -10,8 +10,6 @@ import { SecuritySection } from './settings/SecuritySection';
 import { AboutSection } from './settings/AboutSection';
 import { SignOutConfirmModal } from './settings/SignOutConfirmModal';
 import { LegalDocModal } from './settings/LegalDocModal';
-import { isPasskeySupported } from '../lib/passkey';
-import { PasskeyCredentialInfo } from '../types';
 import {
   validatePhoneNumber,
   cleanPhoneNumber,
@@ -22,7 +20,6 @@ interface SettingsViewProps {
   onSignOut: () => Promise<void>;
   onDeleteAccount?: () => Promise<void>;
   onOpenAuth?: (mode?: 'signin' | 'signup') => void;
-  onRestartTour?: () => void;
   onReplayOnboarding?: () => void;
   onOpenLegalPage?: (
     page: 'terms' | 'privacy' | 'about' | 'help' | 'legal',
@@ -36,7 +33,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   onBack,
   onSignOut,
   onOpenAuth,
-  onRestartTour,
   onOpenLegalPage,
   initialEditPhone = false,
   subSection = null,
@@ -49,42 +45,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     updateUserProfile,
     updatePassword,
     changePassword,
-    registerPasskey,
-    listPasskeys,
-    removePasskey,
-    passkeys: authPasskeys,
-    isLoadingPasskeys,
-    refreshPasskeys,
   } = useAuth();
-
-  // ============================================================================
-  // Passkey Management State
-  // ============================================================================
-  const [passkeys, setPasskeys] = useState<PasskeyCredentialInfo[]>(authPasskeys);
-  const [loadingPasskeys, setLoadingPasskeys] = useState(isLoadingPasskeys);
-  const [isRegisteringPasskey, setIsRegisteringPasskey] = useState(false);
-  const [confirmDeletePasskeyId, setConfirmDeletePasskeyId] = useState<
-    string | null
-  >(null);
-  const [isDeletingPasskey, setIsDeletingPasskey] = useState(false);
-  const [passkeyMessage, setPasskeyMessage] = useState<{
-    type: 'success' | 'error';
-    text: string;
-  } | null>(null);
-
-  useEffect(() => {
-    setPasskeys(authPasskeys);
-  }, [authPasskeys]);
-
-  useEffect(() => {
-    setLoadingPasskeys(isLoadingPasskeys);
-  }, [isLoadingPasskeys]);
-
-  useEffect(() => {
-    if (user && isPasskeySupported()) {
-      refreshPasskeys(true).catch(() => {});
-    }
-  }, [user]);
 
   // Deep Link & Subsection auto-scroll
   useEffect(() => {
@@ -107,58 +68,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
     return () => clearTimeout(timer);
   }, [subSection]);
-
-  const handleRegisterPasskey = async (customName?: string) => {
-    setIsRegisteringPasskey(true);
-    setPasskeyMessage(null);
-    try {
-      const res = await registerPasskey(customName);
-      if (res.error) {
-        setPasskeyMessage({ type: 'error', text: res.error.message });
-      } else {
-        setPasskeyMessage({
-          type: 'success',
-          text: 'Passkey registered successfully for this device.',
-        });
-        const updated = await listPasskeys();
-        setPasskeys(updated);
-        setTimeout(() => {
-          setPasskeyMessage((prev) => (prev?.type === 'success' ? null : prev));
-        }, 4000);
-      }
-    } catch (err: unknown) {
-      setPasskeyMessage({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Registration failed',
-      });
-    } finally {
-      setIsRegisteringPasskey(false);
-    }
-  };
-
-  const handleRemovePasskey = async (id: string) => {
-    setIsDeletingPasskey(true);
-    try {
-      const res = await removePasskey(id);
-      if (res.error) {
-        setPasskeyMessage({ type: 'error', text: res.error.message });
-      } else {
-        setPasskeyMessage({
-          type: 'success',
-          text: 'Passkey removed from your account.',
-        });
-        setPasskeys((prev) => prev.filter((p) => p.id !== id));
-        setTimeout(() => {
-          setPasskeyMessage((prev) => (prev?.type === 'success' ? null : prev));
-        }, 3000);
-      }
-    } catch {
-      setPasskeyMessage({ type: 'error', text: 'Failed to remove passkey.' });
-    } finally {
-      setIsDeletingPasskey(false);
-      setConfirmDeletePasskeyId(null);
-    }
-  };
 
   // ============================================================================
   // Profile & Name/Phone Edit State
@@ -679,7 +588,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             soundEnabled={soundEnabled}
             onToggleSound={handleToggleSound}
             onLanguageSelect={handleLanguageSelect}
-            onRestartTour={onRestartTour}
           />
         </div>
 
@@ -701,15 +609,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               passwordMessage={passwordMessage}
               setPasswordMessage={setPasswordMessage}
               onUpdatePassword={handleUpdatePassword}
-              passkeys={passkeys}
-              loadingPasskeys={loadingPasskeys}
-              isRegisteringPasskey={isRegisteringPasskey}
-              confirmDeletePasskeyId={confirmDeletePasskeyId}
-              setConfirmDeletePasskeyId={setConfirmDeletePasskeyId}
-              isDeletingPasskey={isDeletingPasskey}
-              passkeyMessage={passkeyMessage}
-              onRegisterPasskey={() => handleRegisterPasskey()}
-              onRemovePasskey={handleRemovePasskey}
               onRequestSignOut={() => setShowSignOutConfirm(true)}
             />
           </div>

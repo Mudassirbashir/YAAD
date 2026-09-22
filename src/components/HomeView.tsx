@@ -12,7 +12,6 @@ import { ShoppingStatisticsModal } from './ShoppingStatisticsModal';
 import { QuickFavoritesModal } from './QuickFavoritesModal';
 import { CategoryBrowserModal } from './CategoryBrowserModal';
 import { PhoneNumberNotification } from './home/PhoneNumberNotification';
-import { PasskeyCard } from './home/PasskeyCard';
 import { QuickActionsGrid } from './home/QuickActionsGrid';
 import { FrequentEssentialsSection } from './home/FrequentEssentialsSection';
 import { HomeListsSection } from './home/HomeListsSection';
@@ -249,10 +248,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           onOpenPhoneSettings={onOpenPhoneSettings || onOpenProfile}
         />
 
-        {/* 4. COMPACT STATE-AWARE PASSKEY CARD ("Passkey Ready" or "Set Up") */}
-        <PasskeyCard onOpenSecuritySettings={onOpenProfile} />
-
-        {/* 5. PRIMARY ACTION: CREATE NEW LIST CARD */}
+        {/* 4. PRIMARY ACTION: CREATE NEW LIST CARD */}
         <section aria-label={t('home.createListTitle') || 'Create New List'}>
           <div
             id="home_create_list_btn"

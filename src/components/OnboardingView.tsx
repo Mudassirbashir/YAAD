@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, ArrowRight, Check, PlusCircle, Sparkles, CheckCircle2, History, Compass } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, PlusCircle, Sparkles, CheckCircle2, History } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { APP_IMAGES } from '../data/initialData';
 import { useLanguage } from '../context/LanguageContext';
@@ -102,10 +102,6 @@ export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) =>
     if (step > 1) {
       setStep((s) => s - 1);
     }
-  };
-
-  const handleStartTour = () => {
-    onComplete(true);
   };
 
   const StepIcon = currentStep.icon;
@@ -231,25 +227,14 @@ export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) =>
               {isRTL ? <ArrowLeft className="w-4 h-4 stroke-[2.5]" /> : <ArrowRight className="w-4 h-4 stroke-[2.5]" />}
             </button>
           ) : (
-            <div className="w-full flex flex-col gap-2">
-              <button
-                id="onboarding_get_started_btn"
-                onClick={() => onComplete(false)}
-                className="w-full h-12 sm:h-13 rounded-full bg-primary text-on-primary font-['Manrope'] text-base font-bold flex items-center justify-center gap-2 shadow-[0px_8px_20px_rgba(0,30,21,0.12)] hover:bg-primary-container active:scale-[0.98] transition-all"
-              >
-                <span>{t('onboarding.getStarted')}</span>
-                <Check className="w-4 h-4 stroke-[2.5]" />
-              </button>
-
-              <button
-                id="onboarding_start_tour_btn"
-                onClick={handleStartTour}
-                className="w-full h-11 rounded-full bg-surface-container text-primary font-['Manrope'] text-sm font-bold flex items-center justify-center gap-2 border border-surface-dim hover:bg-surface-container-high active:scale-[0.98] transition-all"
-              >
-                <Compass className="w-4 h-4 text-primary" />
-                <span>{t('onboarding.startTour')}</span>
-              </button>
-            </div>
+            <button
+              id="onboarding_get_started_btn"
+              onClick={() => onComplete(false)}
+              className="w-full h-12 sm:h-13 rounded-full bg-primary text-on-primary font-['Manrope'] text-base font-bold flex items-center justify-center gap-2 shadow-[0px_8px_20px_rgba(0,30,21,0.12)] hover:bg-primary-container active:scale-[0.98] transition-all cursor-pointer"
+            >
+              <span>{t('onboarding.getStarted')}</span>
+              <Check className="w-4 h-4 stroke-[2.5]" />
+            </button>
           )}
         </div>
       </footer>

@@ -4,19 +4,12 @@ import {
   KeyRound,
   Eye,
   EyeOff,
-  Fingerprint,
-  Smartphone,
-  Laptop,
-  Plus,
-  Trash2,
   Loader2,
   LogOut,
   CheckCircle2,
   AlertCircle,
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
-import { isPasskeySupported } from '../../lib/passkey';
-import { PasskeyCredentialInfo } from '../../types';
 
 interface SecuritySectionProps {
   // Password State
@@ -34,17 +27,6 @@ interface SecuritySectionProps {
   passwordMessage: { type: 'success' | 'error'; text: string } | null;
   setPasswordMessage: (val: { type: 'success' | 'error'; text: string } | null) => void;
   onUpdatePassword: (e: React.FormEvent) => void;
-
-  // Passkey State
-  passkeys: PasskeyCredentialInfo[];
-  loadingPasskeys: boolean;
-  isRegisteringPasskey: boolean;
-  confirmDeletePasskeyId: string | null;
-  setConfirmDeletePasskeyId: (id: string | null) => void;
-  isDeletingPasskey: boolean;
-  passkeyMessage: { type: 'success' | 'error'; text: string } | null;
-  onRegisterPasskey: () => void;
-  onRemovePasskey: (id: string) => void;
 
   // Sign Out Trigger
   onRequestSignOut: () => void;
@@ -65,15 +47,6 @@ export const SecuritySection: React.FC<SecuritySectionProps> = ({
   passwordMessage,
   setPasswordMessage,
   onUpdatePassword,
-  passkeys,
-  loadingPasskeys,
-  isRegisteringPasskey,
-  confirmDeletePasskeyId,
-  setConfirmDeletePasskeyId,
-  isDeletingPasskey,
-  passkeyMessage,
-  onRegisterPasskey,
-  onRemovePasskey,
   onRequestSignOut,
 }) => {
   const { t, language } = useLanguage();
@@ -91,42 +64,6 @@ export const SecuritySection: React.FC<SecuritySectionProps> = ({
     passwordsMatch &&
     isNewDifferent &&
     !isUpdatingPassword;
-
-  const getPasskeyIcon = (name?: string) => {
-    const lower = (name || '').toLowerCase();
-    if (
-      lower.includes('iphone') ||
-      lower.includes('android') ||
-      lower.includes('phone')
-    ) {
-      return <Smartphone className="w-4 h-4 text-primary" />;
-    }
-    if (
-      lower.includes('mac') ||
-      lower.includes('windows') ||
-      lower.includes('laptop') ||
-      lower.includes('pc') ||
-      lower.includes('desktop')
-    ) {
-      return <Laptop className="w-4 h-4 text-primary" />;
-    }
-    return <Fingerprint className="w-4 h-4 text-primary" />;
-  };
-
-  const formatPasskeyDate = (isoString?: string) => {
-    if (!isoString) return 'Recently';
-    try {
-      const d = new Date(isoString);
-      if (isNaN(d.getTime())) return 'Recently';
-      return d.toLocaleDateString(undefined, {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      });
-    } catch {
-      return 'Recently';
-    }
-  };
 
   return (
     <section id="settings_security_section" className="space-y-3 sm:space-y-3.5">
@@ -391,172 +328,7 @@ export const SecuritySection: React.FC<SecuritySectionProps> = ({
           )}
         </div>
 
-        {/* 2. Passkeys & Biometrics Section */}
-        <div id="settings_passkeys_section" className="py-5 space-y-3.5">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-2xl bg-secondary-fixed/40 text-primary flex items-center justify-center shrink-0 shadow-2xs">
-                <Fingerprint className="w-5 h-5 stroke-[2.2]" />
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm sm:text-base font-bold text-on-surface font-['Manrope'] truncate">
-                    Passkeys & Biometrics
-                  </h3>
-                  {passkeys.length > 0 && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary shrink-0">
-                      {passkeys.length} active
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-outline line-clamp-1">
-                  Touch ID, Face ID, or Windows Hello
-                </p>
-              </div>
-            </div>
-
-            {isPasskeySupported() && (
-              <button
-                id="settings_register_passkey_btn"
-                type="button"
-                disabled={isRegisteringPasskey}
-                onClick={onRegisterPasskey}
-                className="min-h-[38px] px-3.5 py-1.5 text-xs font-bold text-primary bg-primary-fixed/30 hover:bg-primary-fixed/50 rounded-xl transition-all active:scale-95 shrink-0 flex items-center gap-1.5 disabled:opacity-50 shadow-2xs cursor-pointer"
-              >
-                {isRegisteringPasskey ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Setting up...</span>
-                  </>
-                ) : (
-                  <>
-                    <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                    <span>Add Passkey</span>
-                  </>
-                )}
-              </button>
-            )}
-          </div>
-
-          {/* Explainer Callout */}
-          <div className="p-3 bg-surface-container-low border border-outline-variant/60 rounded-2xl text-xs text-on-surface-variant flex items-start gap-2.5">
-            <Shield className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-            <p className="leading-relaxed">
-              Passkeys allow you to sign in quickly and securely using biometrics or screen lock without typing a password.
-            </p>
-          </div>
-
-          {/* Feedback Banner */}
-          {passkeyMessage && (
-            <div
-              id="settings_passkey_message_alert"
-              className={`p-3 rounded-2xl text-xs flex items-center gap-2.5 animate-in fade-in duration-150 ${
-                passkeyMessage.type === 'success'
-                  ? 'bg-secondary-fixed/50 text-primary font-bold border border-primary/20'
-                  : 'bg-error-container/40 text-error border border-error/20'
-              }`}
-            >
-              {passkeyMessage.type === 'success' ? (
-                <CheckCircle2 className="w-4 h-4 shrink-0 text-primary" />
-              ) : (
-                <AlertCircle className="w-4 h-4 shrink-0 text-error" />
-              )}
-              <span>{passkeyMessage.text}</span>
-            </div>
-          )}
-
-          {/* Passkey List or Empty State */}
-          {!isPasskeySupported() ? (
-            <div className="p-3 bg-surface-container-low border border-outline-variant/50 rounded-2xl text-xs text-outline flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-outline shrink-0" />
-              <span>Passkeys are not supported on this device or browser.</span>
-            </div>
-          ) : loadingPasskeys ? (
-            <div className="p-4 bg-surface-container-low rounded-2xl flex items-center justify-center gap-2 text-xs text-outline">
-              <Loader2 className="w-4 h-4 animate-spin text-primary" />
-              <span>Loading registered passkeys...</span>
-            </div>
-          ) : passkeys.length === 0 ? (
-            <div className="p-4 bg-surface-container-low border border-dashed border-outline-variant/80 rounded-2xl text-center space-y-1.5">
-              <div className="w-8 h-8 rounded-full bg-primary/10 text-primary mx-auto flex items-center justify-center">
-                <Fingerprint className="w-4 h-4" />
-              </div>
-              <p className="text-xs font-bold text-on-surface">No passkeys registered yet</p>
-              <p className="text-[11px] text-outline max-w-xs mx-auto">
-                Set up a passkey on this device to sign in instantly with Touch ID, Face ID, or your device lock.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {passkeys.map((pk) => {
-                const deviceTitle =
-                  pk.deviceName || pk.device_name || 'Passkey Device';
-                const isConfirming = confirmDeletePasskeyId === pk.id;
-
-                return (
-                  <div
-                    key={pk.id}
-                    className="p-3 bg-surface-container-low hover:bg-surface-container border border-outline-variant/50 rounded-2xl transition-all"
-                  >
-                    <div className="flex items-center justify-between gap-2.5">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-8 h-8 rounded-xl bg-surface-container text-primary flex items-center justify-center shrink-0 border border-outline-variant/40">
-                          {getPasskeyIcon(deviceTitle)}
-                        </div>
-                        <div className="min-w-0">
-                          <h4 className="text-xs font-bold text-on-surface truncate">
-                            {deviceTitle}
-                          </h4>
-                          <p className="text-[11px] text-outline truncate">
-                            Added {formatPasskeyDate(pk.createdAt)} • Last used{' '}
-                            {formatPasskeyDate(pk.lastUsedAt)}
-                          </p>
-                        </div>
-                      </div>
-
-                      {isConfirming ? (
-                        <div className="flex items-center gap-1.5 shrink-0 animate-in fade-in duration-150">
-                          <span className="text-[11px] font-bold text-error">Remove?</span>
-                          <button
-                            type="button"
-                            disabled={isDeletingPasskey}
-                            onClick={() => onRemovePasskey(pk.id)}
-                            className="px-2.5 py-1 text-[11px] font-bold text-white bg-error hover:bg-error/90 rounded-lg transition-colors disabled:opacity-50 shadow-2xs cursor-pointer"
-                          >
-                            {isDeletingPasskey ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
-                            ) : (
-                              'Yes'
-                            )}
-                          </button>
-                          <button
-                            type="button"
-                            disabled={isDeletingPasskey}
-                            onClick={() => setConfirmDeletePasskeyId(null)}
-                            className="px-2.5 py-1 text-[11px] font-semibold text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-colors cursor-pointer"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => setConfirmDeletePasskeyId(pk.id)}
-                          className="p-2 text-outline hover:text-error hover:bg-error/10 rounded-xl transition-colors shrink-0 cursor-pointer"
-                          title="Remove Passkey"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* 3. Sign Out Row (Calm, Restrained Styling) */}
+        {/* 2. Sign Out Row (Calm, Restrained Styling) */}
         <div className="pt-5 flex items-center justify-between gap-3 min-w-0">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             {/* Neutral, calm icon styling */}

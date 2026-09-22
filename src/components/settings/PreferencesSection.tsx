@@ -1,5 +1,5 @@
 import React from 'react';
-import { Globe, Volume2, VolumeX, Compass, Check } from 'lucide-react';
+import { Globe, Volume2, VolumeX, Check } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { Language } from '../../translations';
 
@@ -7,14 +7,12 @@ interface PreferencesSectionProps {
   soundEnabled: boolean;
   onToggleSound: () => void;
   onLanguageSelect: (lang: Language) => Promise<void> | void;
-  onRestartTour?: () => void;
 }
 
 export const PreferencesSection: React.FC<PreferencesSectionProps> = ({
   soundEnabled,
   onToggleSound,
   onLanguageSelect,
-  onRestartTour,
 }) => {
   const { t, language, isRTL } = useLanguage();
 
@@ -187,43 +185,6 @@ export const PreferencesSection: React.FC<PreferencesSectionProps> = ({
             />
           </button>
         </div>
-
-        {/* 3. Product Tour Replay */}
-        {onRestartTour && (
-          <div className="pt-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-secondary-fixed/40 text-primary flex items-center justify-center shrink-0 shadow-2xs">
-                <Compass className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-sm sm:text-base font-bold text-on-surface font-['Manrope']">
-                  {t('settings.restartTourTitle') ||
-                    t('tour.replayTour') ||
-                    'Restart Product Tour'}
-                </h3>
-                <p className="text-xs text-outline">
-                  {t('settings.restartTourDesc') ||
-                    t('tour.replayTourDesc') ||
-                    'Replay the interactive walkthrough for all features'}
-                </p>
-              </div>
-            </div>
-
-            <button
-              id="settings_restart_tour_btn"
-              type="button"
-              onClick={onRestartTour}
-              className="min-h-[42px] px-4 py-2 rounded-xl bg-surface-container text-primary hover:bg-surface-container-high font-['Manrope'] text-xs font-bold transition-all border border-surface-dim active:scale-95 flex items-center justify-center gap-1.5 shrink-0 self-start sm:self-center cursor-pointer shadow-2xs"
-            >
-              <Compass className="w-3.5 h-3.5" />
-              <span>
-                {t('settings.restartTourBtn') ||
-                  t('tour.replayTour') ||
-                  'Start Tour'}
-              </span>
-            </button>
-          </div>
-        )}
       </div>
     </section>
   );

@@ -20,7 +20,6 @@ import { NotFoundView } from './components/NotFoundView';
 import { ListNotFoundView } from './components/ListNotFoundView';
 import { BottomNavBar } from './components/BottomNavBar';
 import { AuthModal } from './components/AuthModal';
-import { ProductTour } from './components/ProductTour';
 import { PhoneNumberReminderModal } from './components/PhoneNumberReminderModal';
 import { usePhoneNumberReminder } from './hooks/usePhoneNumberReminder';
 import { useAuth } from './context/AuthContext';
@@ -53,7 +52,6 @@ import { HeadManager } from './seo/HeadManager';
 
 const STORAGE_ONBOARDED_KEY = 'yaad_has_onboarded_v2';
 const STORAGE_PROFILE_SETUP_KEY = 'yaad_profile_setup_done';
-const STORAGE_TOUR_KEY = 'yaad_tour_completed_v2';
 const getStorageKey = (userId?: string | null) => {
   return userId ? `yaad_shopping_lists_u_${userId}` : 'yaad_shopping_lists_guest';
 };
@@ -110,9 +108,6 @@ function AppContent() {
   // Modals state
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
-
-  // Interactive Product Tour state
-  const [isTourActive, setIsTourActive] = useState<boolean>(false);
 
   // Phone Number reminder state (auto-navigate to Settings with phone input open)
   const [focusPhoneInSettings, setFocusPhoneInSettings] = useState<boolean>(false);
@@ -210,7 +205,7 @@ function AppContent() {
     user,
     profile,
     currentScreen,
-    isTourActive,
+    isTourActive: false,
     isAuthModalOpen,
     hasOnboarded: hasOnboardedFlag,
     onOpenPhoneSettings: handleOpenPhoneInSettings,
@@ -499,12 +494,6 @@ function AppContent() {
       } else {
         replace('/home');
       }
-
-      // Check if product tour should start
-      const tourDone = localStorage.getItem(STORAGE_TOUR_KEY) === 'true';
-      if (!tourDone && !isExistingAccount) {
-        setIsTourActive(true);
-      }
     }
   }, [
     hasSplashFinished,
@@ -569,15 +558,10 @@ function AppContent() {
         replace('/home');
       }
     }
-
-    const tourDone = localStorage.getItem(STORAGE_TOUR_KEY) === 'true';
-    if (!tourDone) {
-      setIsTourActive(true);
-    }
   };
 
   // Handle onboarding completion
-  const handleOnboardingComplete = (startTour?: boolean) => {
+  const handleOnboardingComplete = () => {
     localStorage.setItem(STORAGE_ONBOARDED_KEY, 'true');
     const intended = getIntendedDestination();
     if (intended) {
@@ -586,31 +570,6 @@ function AppContent() {
     } else {
       replace('/home');
     }
-
-    if (startTour !== false) {
-      const tourDone = localStorage.getItem(STORAGE_TOUR_KEY) === 'true';
-      if (!tourDone || startTour === true) {
-        setIsTourActive(true);
-      }
-    }
-  };
-
-  // Handle tour completion / skip
-  const handleTourComplete = () => {
-    localStorage.setItem(STORAGE_TOUR_KEY, 'true');
-    setIsTourActive(false);
-  };
-
-  const handleTourSkip = () => {
-    localStorage.setItem(STORAGE_TOUR_KEY, 'true');
-    setIsTourActive(false);
-  };
-
-  // Replay tour from Settings
-  const handleRestartTour = () => {
-    localStorage.removeItem(STORAGE_TOUR_KEY);
-    setIsTourActive(true);
-    navigate('/home');
   };
 
   // Handle successful login/signup from AuthView
@@ -653,10 +612,6 @@ function AppContent() {
         replace(intended);
       } else {
         replace('/home');
-      }
-      const tourDone = localStorage.getItem(STORAGE_TOUR_KEY) === 'true';
-      if (!tourDone) {
-        setIsTourActive(true);
       }
     }
   };
@@ -1411,7 +1366,6 @@ function AppContent() {
           onSignOut={handleSignOut}
           onDeleteAccount={handleDeleteAccount}
           onOpenAuth={handleOpenAuth}
-          onRestartTour={handleRestartTour}
           onReplayOnboarding={handleResetOnboarding}
           onOpenLegalPage={handleOpenLegalPage}
         />
@@ -1448,13 +1402,6 @@ function AppContent() {
           onCreateClick={handleStartCreateList}
         />
       )}
-
-      {/* Interactive Product Tour */}
-      <ProductTour
-        isActive={isTourActive && currentScreen === 'home' && !isPasswordResetRequiredActive}
-        onComplete={handleTourComplete}
-        onSkip={handleTourSkip}
-      />
 
       {/* Smart Phone Number Completion Reminder Modal */}
       <PhoneNumberReminderModal
