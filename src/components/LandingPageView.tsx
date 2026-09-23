@@ -355,47 +355,100 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
         </div>
       </section>
 
-      {/* 5. GOOGLE OAUTH & PRIVACY TRANSPARENCY BOX (For Google Reviewers & Users) */}
-      <section className="py-8 px-4 sm:px-6 max-w-4xl mx-auto">
-        <div className="bg-white border border-[#e5e1d8] rounded-2xl p-6 sm:p-8 shadow-xs">
+      {/* 5. DATA TRANSPARENCY & GOOGLE OAUTH COMPLIANCE (Explicitly meeting Google Review Criteria) */}
+      <section className="py-10 px-4 sm:px-6 max-w-4xl mx-auto">
+        <div className="bg-white border border-[#e5e1d8] rounded-3xl p-6 sm:p-9 shadow-xs space-y-6">
           <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-xl bg-[#005039]/10 text-[#005039] flex items-center justify-center shrink-0 mt-0.5">
-              <Lock className="w-5 h-5" />
+            <div className="w-12 h-12 rounded-2xl bg-[#005039]/10 text-[#005039] flex items-center justify-center shrink-0">
+              <Shield className="w-6 h-6" />
             </div>
-            <div className="space-y-2">
-              <h3 className="text-base sm:text-lg font-bold text-[#1c2826]">
+            <div>
+              <h3 className="text-lg sm:text-xl font-bold text-[#1c2826]">
                 {language === 'ur'
-                  ? 'گوگل اکاؤنٹ اور رازداری کی تفصیل'
-                  : 'Why YAAD Uses Google Authentication'}
+                  ? 'گوگل اکاؤنٹ اور رازداری کی تفصیل • ڈیٹا کی شفافیت'
+                  : 'Why YAAD Uses Google Authentication & Data Transparency'}
               </h3>
-              <p className="text-sm text-[#556960] leading-relaxed">
+              <p className="text-xs sm:text-sm text-[#556960] mt-1">
                 {language === 'ur'
-                  ? 'یاد ایپ گوگل سائن ان کا استعمال صرف آپ کی شناخت کی تصدیق اور آپ کے سودا سلف کی فہرستوں کو محفوظ رکھنے کے لیے کرتی ہے۔ ہم آپ کے ای میلز، رابطوں یا گوگل ڈرائیو کا کوئی ڈیٹا حاصل نہیں کرتے۔'
-                  : 'YAAD uses Google OAuth solely to verify your account identity and securely store your shopping lists in your private database profile. We do not access your contacts, private emails, or Google Drive files.'}
+                  ? 'یاد ایپ آپ کی رازداری کا احترام کرتی ہے۔ جانیے کہ ہم آپ کا ڈیٹا کس مقصد کے لیے استعمال کرتے ہیں۔'
+                  : 'YAAD is committed to complete transparency regarding how your data is accessed, stored, and protected.'}
               </p>
-              <div className="flex flex-wrap items-center gap-4 pt-2 text-xs font-semibold text-[#005039]">
-                <button
-                  onClick={() => onOpenLegalPage('privacy')}
-                  className="inline-flex items-center gap-1 hover:underline cursor-pointer"
-                >
-                  <FileText className="w-3.5 h-3.5" />
-                  <span>Privacy Policy</span>
-                </button>
-                <button
-                  onClick={() => onOpenLegalPage('terms')}
-                  className="inline-flex items-center gap-1 hover:underline cursor-pointer"
-                >
-                  <FileText className="w-3.5 h-3.5" />
-                  <span>Terms of Service</span>
-                </button>
-                <button
-                  onClick={() => onOpenLegalPage('help')}
-                  className="inline-flex items-center gap-1 hover:underline cursor-pointer"
-                >
-                  <HelpCircle className="w-3.5 h-3.5" />
-                  <span>Help &amp; Support</span>
-                </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+            {/* Box 1: Why Google Sign-In */}
+            <div className="bg-[#fbf9f5] border border-[#e5e1d8]/80 rounded-2xl p-4 sm:p-5">
+              <div className="flex items-center gap-2 mb-2 font-bold text-sm text-[#1c2826]">
+                <Lock className="w-4 h-4 text-[#005039]" />
+                <span>
+                  {language === 'ur' ? 'گوگل سائن ان کا مقصد' : 'Purpose of Google Sign-In'}
+                </span>
               </div>
+              <p className="text-xs text-[#556960] leading-relaxed">
+                {language === 'ur'
+                  ? 'ہم صرف آپ کا بنیادی نام اور ای میل استعمال کرتے ہیں تاکہ آپ کی خریداری کی لسٹیں محفوظ طریقے سے آپ کے اکاؤنٹ کے ساتھ وابستہ رہیں۔'
+                  : 'We request your basic Google profile (Name and Email) strictly to authenticate your account and securely back up your personal shopping lists across your devices.'}
+              </p>
+            </div>
+
+            {/* Box 2: What we NEVER access */}
+            <div className="bg-[#fbf9f5] border border-[#e5e1d8]/80 rounded-2xl p-4 sm:p-5">
+              <div className="flex items-center gap-2 mb-2 font-bold text-sm text-[#1c2826]">
+                <CheckCircle2 className="w-4 h-4 text-[#005039]" />
+                <span>
+                  {language === 'ur' ? 'ہم کیا حاصل نہیں کرتے' : 'What We Never Access'}
+                </span>
+              </div>
+              <p className="text-xs text-[#556960] leading-relaxed">
+                {language === 'ur'
+                  ? 'ہم آپ کے جی میل، رابطوں، گوگل ڈرائیو یا مقام کا کوئی ڈیٹا طلب نہیں کرتے۔ آپ کا ذاتی ڈیٹا کبھی بھی فروخت یا شیئر نہیں کیا جاتا۔'
+                  : 'YAAD never accesses your Gmail, contacts, Google Drive files, or calendar. We do not track you for ads, and your data is never sold or shared with third parties.'}
+              </p>
+            </div>
+          </div>
+
+          {/* User Data Deletion & Consent Links */}
+          <div className="border-t border-[#e5e1d8] pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#556960]">
+            <span>
+              {language === 'ur'
+                ? 'آپ کسی بھی وقت سیٹنگز سے اپنا ڈیٹا اور اکاؤنٹ مستقل طور پر ڈیلیٹ کر سکتے ہیں۔'
+                : 'You have full control to export or permanently delete your shopping lists and account at any time.'}
+            </span>
+            <div className="flex flex-wrap items-center gap-4 font-semibold text-[#005039] shrink-0">
+              <a
+                href="/privacy"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onOpenLegalPage('privacy');
+                }}
+                className="inline-flex items-center gap-1.5 hover:underline"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Privacy Policy</span>
+              </a>
+              <a
+                href="/terms"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onOpenLegalPage('terms');
+                }}
+                className="inline-flex items-center gap-1.5 hover:underline"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Terms of Service</span>
+              </a>
+              <a
+                href="/help"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onOpenLegalPage('help');
+                }}
+                className="inline-flex items-center gap-1.5 hover:underline"
+              >
+                <HelpCircle className="w-3.5 h-3.5" />
+                <span>Help &amp; FAQ</span>
+              </a>
             </div>
           </div>
         </div>
@@ -440,36 +493,56 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
 
           {/* Legal and Compliance Links */}
           <div className="flex flex-wrap items-center justify-center gap-5 text-xs font-medium">
-            <button
-              onClick={() => onOpenLegalPage('about')}
+            <a
+              href="/about"
+              onClick={(e) => {
+                e.preventDefault();
+                onOpenLegalPage('about');
+              }}
               className="hover:text-[#005039] transition-colors cursor-pointer"
             >
               About
-            </button>
-            <button
-              onClick={onOpenRashanList}
+            </a>
+            <a
+              href="/rashan-list"
+              onClick={(e) => {
+                e.preventDefault();
+                onOpenRashanList();
+              }}
               className="hover:text-[#005039] transition-colors cursor-pointer"
             >
               Monthly Rashan List
-            </button>
-            <button
-              onClick={() => onOpenLegalPage('privacy')}
+            </a>
+            <a
+              href="/privacy"
+              onClick={(e) => {
+                e.preventDefault();
+                onOpenLegalPage('privacy');
+              }}
               className="hover:text-[#005039] transition-colors cursor-pointer"
             >
               Privacy Policy
-            </button>
-            <button
-              onClick={() => onOpenLegalPage('terms')}
+            </a>
+            <a
+              href="/terms"
+              onClick={(e) => {
+                e.preventDefault();
+                onOpenLegalPage('terms');
+              }}
               className="hover:text-[#005039] transition-colors cursor-pointer"
             >
               Terms of Service
-            </button>
-            <button
-              onClick={() => onOpenLegalPage('help')}
+            </a>
+            <a
+              href="/help"
+              onClick={(e) => {
+                e.preventDefault();
+                onOpenLegalPage('help');
+              }}
               className="hover:text-[#005039] transition-colors cursor-pointer"
             >
               Help &amp; FAQ
-            </button>
+            </a>
             <a
               href="mailto:useyaadapp@gmail.com"
               className="hover:text-[#005039] transition-colors"
