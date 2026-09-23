@@ -108,12 +108,12 @@ export const HeadManager: React.FC = () => {
 
     // 2. Identify if route is public indexable:
     // Public indexable routes are strictly:
-    // - root '/' ONLY when unauthenticated (public landing / sign-in welcome)
-    // - public editorial routes: 'about', 'help', 'terms', 'privacy', 'legal'
+    // - root '/' (Public YAAD Product Landing Page)
+    // - public editorial routes: 'about', 'help', 'terms', 'privacy', 'legal', 'rashan_list'
     // /home is NEVER indexable (it is the user's private shopping dashboard)
     const isPublicEditorial = ['about', 'help', 'terms', 'privacy', 'legal', 'rashan_list'].includes(routeId);
-    const isPublicLanding = (routeId === 'root' || routeId === 'auth') && !user;
-    const isIndexablePublicRoute = (isPublicLanding || isPublicEditorial) && !user;
+    const isPublicLanding = routeId === 'root';
+    const isIndexablePublicRoute = isPublicLanding || isPublicEditorial;
 
     if (!isIndexablePublicRoute) {
       // -------------------------------------------------------------
@@ -127,7 +127,6 @@ export const HeadManager: React.FC = () => {
       // Clean, unbranded internal title for protected screens
       switch (routeId) {
         case 'home':
-        case 'root':
           document.title = 'Shopping Lists • YAAD';
           break;
         case 'create':

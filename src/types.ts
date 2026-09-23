@@ -308,6 +308,7 @@ export interface HouseholdMember {
 
 export type ScreenType =
   | 'splash'
+  | 'landing'
   | 'onboarding'
   | 'auth'
   | 'reset_password'

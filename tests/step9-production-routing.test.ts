@@ -45,10 +45,10 @@ assert(homeRoute.routeId === 'home', '/home parses to home');
 assert(homeRoute.isProtected === true, '/home is protected route');
 assert(homeRoute.canonicalPath === '/home', '/home canonical path is /home');
 
-// Root
+// Root (Public Landing Page)
 const rootRoute = parseRoute('/');
 assert(rootRoute.routeId === 'root', '/ parses to root');
-assert(rootRoute.isProtected === true, '/ is protected route requiring auth check');
+assert(rootRoute.isProtected === false, '/ is public landing page accessible without login');
 
 // Create List
 const createRoute = parseRoute('/create');
@@ -210,7 +210,6 @@ assert(
 console.log('\n--- 8. Security Guard Rules (Protected vs Public) ---');
 
 const protectedRouteIds: AppRouteId[] = [
-  'root',
   'home',
   'create',
   'add_items',
@@ -227,6 +226,7 @@ const protectedRouteIds: AppRouteId[] = [
 ];
 
 const publicRouteIds: AppRouteId[] = [
+  'root',
   'auth',
   'reset_password',
   'terms',
@@ -234,6 +234,7 @@ const publicRouteIds: AppRouteId[] = [
   'about',
   'help',
   'legal',
+  'rashan_list',
   'not_found',
 ];
 

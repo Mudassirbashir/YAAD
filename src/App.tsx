@@ -48,6 +48,7 @@ import { getFriendlyErrorMessage } from './utils/errorFormatting';
 import { LegalPageView } from './components/legal/LegalPageView';
 import { LegalPageType } from './components/legal/legalContent';
 import { RashanListPage } from './components/rashan/RashanListPage';
+import { LandingPageView } from './components/LandingPageView';
 import { HeadManager } from './seo/HeadManager';
 
 const STORAGE_ONBOARDED_KEY = 'yaad_has_onboarded_v2';
@@ -141,12 +142,15 @@ function AppContent() {
 
   // Derive current screen from route
   const currentScreen: ScreenType = useMemo((): ScreenType => {
+    // Public landing, rashan, and legal pages render immediately without splash delay
+    if (route.routeId === 'root') return 'landing';
+    if (route.routeId === 'rashan_list') return 'rashan_list';
+    if (LEGAL_SCREENS.includes(route.routeId as ScreenType)) return route.routeId as ScreenType;
+
     if (!hasSplashFinished) return 'splash';
     if (isPasswordResetRequiredActive) return 'reset_password';
 
     switch (route.routeId) {
-      case 'root':
-        return user ? 'home' : 'auth';
       case 'home':
         return 'home';
       case 'create':
@@ -176,18 +180,6 @@ function AppContent() {
         return 'profile_setup';
       case 'onboarding':
         return 'onboarding';
-      case 'terms':
-        return 'terms';
-      case 'privacy':
-        return 'privacy';
-      case 'about':
-        return 'about';
-      case 'help':
-        return 'help';
-      case 'legal':
-        return 'legal';
-      case 'rashan_list':
-        return 'rashan_list';
       case 'not_found':
       default:
         return 'not_found';
@@ -1158,13 +1150,34 @@ function AppContent() {
     !isPasswordResetRequiredActive;
 
   // Seamless launch & session restoration: show branded splash until session resolves
-  if ((!hasSplashFinished || isAuthLoading) && currentScreen !== 'rashan_list' && !LEGAL_SCREENS.includes(currentScreen)) {
+  if ((!hasSplashFinished || isAuthLoading) && currentScreen !== 'landing' && currentScreen !== 'rashan_list' && !LEGAL_SCREENS.includes(currentScreen)) {
     return <SplashView onFinish={handleSplashFinish} isRestoringAuth={isAuthLoading && !user} />;
   }
 
   return (
     <div className="min-h-screen bg-background text-on-background flex flex-col justify-between selection:bg-primary-container selection:text-on-primary-container">
-      {/* 1. Public Dedicated Legal & Information Pages */}
+      {/* 1. Public Dedicated YAAD Landing Page (Root Route `/`) */}
+      {currentScreen === 'landing' && (
+        <LandingPageView
+          user={user}
+          onGetStarted={() => {
+            if (user) {
+              navigate('/home');
+            } else {
+              saveIntendedDestination('/home');
+              navigate('/auth');
+            }
+          }}
+          onSignIn={() => {
+            saveIntendedDestination('/home');
+            navigate('/auth');
+          }}
+          onOpenLegalPage={handleOpenLegalPage}
+          onOpenRashanList={() => navigate('/rashan-list')}
+        />
+      )}
+
+      {/* 1a. Public Dedicated Legal & Information Pages */}
       {LEGAL_SCREENS.includes(currentScreen) && (
         <LegalPageView
           initialPage={currentScreen as LegalPageType}
@@ -1194,7 +1207,7 @@ function AppContent() {
       )}
 
       {/* 2. Splash Screen on Launch */}
-      {!hasSplashFinished && currentScreen !== 'rashan_list' && (
+      {!hasSplashFinished && currentScreen !== 'landing' && currentScreen !== 'rashan_list' && !LEGAL_SCREENS.includes(currentScreen) && (
         <SplashView onFinish={handleSplashFinish} />
       )}
 

@@ -43,6 +43,7 @@ export interface ParsedRoute {
  */
 export function isProtectedRoute(routeId: AppRouteId): boolean {
   switch (routeId) {
+    case 'root':
     case 'terms':
     case 'privacy':
     case 'about':
@@ -53,7 +54,6 @@ export function isProtectedRoute(routeId: AppRouteId): boolean {
     case 'reset_password':
     case 'not_found':
       return false;
-    case 'root':
     case 'home':
     case 'create':
     case 'add_items':
@@ -106,7 +106,7 @@ export function parseRoute(rawPathname: string): ParsedRoute {
       routeId: 'root',
       pathname: '/',
       params: {},
-      isProtected: true,
+      isProtected: false,
       canonicalPath: '/',
     };
   }
