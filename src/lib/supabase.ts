@@ -1967,7 +1967,7 @@ export function formatAuthErrorMessage(error: unknown): string {
 
   // 1. NETWORK ERROR
   if (
-    (typeof window !== 'undefined' && typeof navigator !== 'undefined' && !navigator.onLine) ||
+    (typeof window !== 'undefined' && typeof navigator !== 'undefined' && navigator.onLine === false) ||
     lower.includes('failed to fetch') ||
     lower.includes('fetch failed') ||
     lower.includes('network error') ||
@@ -2078,9 +2078,7 @@ export function formatAuthErrorMessage(error: unknown): string {
   if (
     lower.includes('notallowederror') ||
     lower.includes('operation either timed out or was not allowed') ||
-    lower.includes('user cancelled') ||
-    lower.includes('user canceled') ||
-    lower.includes('passkey request was cancelled') ||
+    (lower.includes('passkey') && (lower.includes('cancelled') || lower.includes('canceled'))) ||
     lower.includes('ceremony was cancelled')
   ) {
     return 'Passkey sign-in was cancelled.';
@@ -2114,7 +2112,8 @@ export function formatAuthErrorMessage(error: unknown): string {
     lower.includes('domain-bound') ||
     lower.includes('yaadapppk.vercel.app') ||
     lower.includes('yaad-three.vercel.app') ||
-    lower.includes('yaad-mudassirbashir530-creators-projects.vercel.app')
+    lower.includes('yaad-mudassirbashir530-creators-projects.vercel.app') ||
+    lower.includes('yaadapppk-mudassirbashir530-creators-projects.vercel.app')
   ) {
     return 'Passkey authentication is domain-bound to production (yaadapppk.vercel.app). On this preview environment, please continue with Email or Google.';
   }
@@ -2196,7 +2195,7 @@ export function formatAuthErrorMessage(error: unknown): string {
     if (lower.includes('webauthn')) {
       return 'Passkey authentication could not be completed on this device. Please continue with Email or Google.';
     }
-    return 'Something went wrong while completing authentication. Please try again.';
+    return 'Something went wrong while signing you in. Please try again.';
   }
 
   // 10. PASSWORD RESET RATE LIMITS & FEEDBACK
@@ -2209,7 +2208,7 @@ export function formatAuthErrorMessage(error: unknown): string {
     return rawMsg;
   }
 
-  return 'Something went wrong while completing authentication. Please try again.';
+  return 'Something went wrong while signing you in. Please try again.';
 }
 
 /**
@@ -2250,7 +2249,8 @@ export function cleanAuthUrlParams(): void {
 
     if (modified) {
       const cleanPath = url.pathname + (url.search ? url.search : '') + (url.hash ? url.hash : '');
-      window.history.replaceState({}, document.title, cleanPath || '/');
+      const docTitle = typeof document !== 'undefined' ? document.title : '';
+      window.history.replaceState({}, docTitle, cleanPath || '/');
     }
   } catch (e) {
     console.warn('Notice cleaning auth URL parameters:', e);

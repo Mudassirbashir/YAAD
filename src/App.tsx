@@ -95,6 +95,24 @@ function AppContent() {
   // Splash screen state: only show initially
   const [hasSplashFinished, setHasSplashFinished] = useState<boolean>(false);
 
+  // Canonical production domain drift guard:
+  // If the user lands on a deployment-specific URL or legacy domain (e.g. after Google OAuth redirect from Supabase),
+  // immediately migrate the browser to the authoritative production domain while preserving the exact path, search params, and hash (tokens).
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const host = (window.location.hostname || '').toLowerCase();
+      const isLegacyOrDeployment =
+        host === 'yaadapppk-mudassirbashir530-creators-projects.vercel.app' ||
+        host === 'yaad-mudassirbashir530-creators-projects.vercel.app' ||
+        host === 'yaad-three.vercel.app';
+      if (isLegacyOrDeployment) {
+        const canonicalTarget = `https://yaadapppk.vercel.app${window.location.pathname}${window.location.search}${window.location.hash}`;
+        window.location.replace(canonicalTarget);
+      }
+    } catch {}
+  }, []);
+
   // Active working list
   const [activeListId, setActiveListId] = useState<string | null>(null);
   const [tempNewListTitle, setTempNewListTitle] = useState<string>('');

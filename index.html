@@ -22,6 +22,21 @@
           // fallback ignore
         }
       })();
+
+      // Immediate domain migration: migrate deployment/legacy URLs to authoritative production domain
+      (function() {
+        try {
+          var host = (window.location.hostname || '').toLowerCase();
+          var isLegacyOrDeployment =
+            host === 'yaadapppk-mudassirbashir530-creators-projects.vercel.app' ||
+            host === 'yaad-mudassirbashir530-creators-projects.vercel.app' ||
+            host === 'yaad-three.vercel.app';
+          if (isLegacyOrDeployment) {
+            var target = 'https://yaadapppk.vercel.app' + window.location.pathname + window.location.search + window.location.hash;
+            window.location.replace(target);
+          }
+        } catch (e) {}
+      })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>YAAD • Smart Shopping Memory &amp; Grocery Reminder</title>

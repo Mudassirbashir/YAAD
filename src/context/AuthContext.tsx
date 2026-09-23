@@ -814,7 +814,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     isAuthenticatingRef.current = true;
     try {
       const isInIframe = typeof window !== 'undefined' && window.self !== window.top;
-      const redirectUrl = getAuthRedirectUrl('/auth');
+      // In production, Google OAuth redirect must target the authoritative domain's /home
+      const redirectUrl = getAuthRedirectUrl('/home');
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',

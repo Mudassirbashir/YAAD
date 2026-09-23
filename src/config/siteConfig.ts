@@ -20,6 +20,19 @@ export interface PageSeoConfig {
   changeFreq?: 'always' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 }
 
+// Authoritative Single Source of Truth for YAAD Production Domain
+export const PRODUCTION_APP_URL = 'https://yaadapppk.vercel.app';
+
+/**
+ * Known legacy domains and Vercel deployment-specific hostnames.
+ * These must NEVER be used as the production OAuth redirect URL.
+ */
+export const LEGACY_OR_DEPLOYMENT_HOSTS = [
+  'yaadapppk-mudassirbashir530-creators-projects.vercel.app',
+  'yaad-mudassirbashir530-creators-projects.vercel.app',
+  'yaad-three.vercel.app',
+] as const;
+
 export const SITE_CONFIG = {
   // Brand & Entity
   name: 'YAAD',
@@ -29,8 +42,8 @@ export const SITE_CONFIG = {
   brandTaglineRomanUrdu: 'Sauda salaf yaad rakhne ki aasan app',
 
   // Official Domains & URLs
-  // Default canonical production URL: easily configurable via environment variable or default
-  defaultProductionUrl: 'https://yaad-three.vercel.app',
+  // Canonical production URL: Single Source of Truth
+  defaultProductionUrl: PRODUCTION_APP_URL,
   
   // Brand Palette
   themeColor: '#005039',
@@ -171,26 +184,62 @@ export const SITE_CONFIG = {
 } as const;
 
 /**
+ * Determines whether a given hostname is a local or development environment.
+ */
+export function isLocalOrDevHost(hostname: string): boolean {
+  const lower = (hostname || '').toLowerCase().trim();
+  return (
+    lower === 'localhost' ||
+    lower === '127.0.0.1' ||
+    lower === '0.0.0.0' ||
+    lower.endsWith('.local') ||
+    lower.endsWith('.run.app')
+  );
+}
+
+/**
+ * Determines whether a given hostname is a dedicated preview deployment (e.g. branch or PR preview on Vercel).
+ * Note: Permanent project deployment URLs (like yaadapppk-mudassirbashir530-creators-projects.vercel.app)
+ * and legacy domains are production aliases, not preview environments.
+ */
+export function isPreviewDeploymentHost(hostname: string): boolean {
+  const lower = (hostname || '').toLowerCase().trim();
+  if (!lower) return false;
+  if (isLocalOrDevHost(lower)) return false;
+  if (lower === 'yaadapppk.vercel.app') return false;
+  if (LEGACY_OR_DEPLOYMENT_HOSTS.some((legacyHost) => lower === legacyHost || lower.includes(legacyHost))) {
+    return false;
+  }
+
+  // Dedicated Vercel branch / PR preview deployments typically contain '-git-'
+  return lower.endsWith('.vercel.app') && lower.includes('-git-');
+}
+
+/**
  * Returns the authoritative canonical production site URL.
- * Strictly avoids leaking localhost, dev containers, staging, or preview domains into canonical tags.
- * Overridable via VITE_SITE_URL or SITE_URL environment variables in production.
+ * Strictly avoids leaking localhost, dev containers, staging, or deployment/preview domains into canonical tags.
+ * Falls back safely to PRODUCTION_APP_URL.
  */
 export function getBaseSiteUrl(): string {
-  // 1. Explicit production environment variable override (e.g. custom domain rollout)
-  if (typeof process !== 'undefined') {
-    const envUrl = process.env?.VITE_SITE_URL || process.env?.SITE_URL;
-    if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('run.app')) {
-      return envUrl.replace(/\/+$/, '');
+  // 1. Explicit production environment variable override (if valid and not a legacy/deployment URL)
+  const candidateUrl =
+    (typeof process !== 'undefined' ? process.env?.VITE_SITE_URL || process.env?.SITE_URL : undefined) ||
+    (typeof import.meta !== 'undefined' ? (import.meta as any).env?.VITE_SITE_URL : undefined);
+
+  if (candidateUrl && typeof candidateUrl === 'string') {
+    const trimmed = candidateUrl.trim().replace(/\/+$/, '');
+    const isExcluded =
+      trimmed.includes('localhost') ||
+      trimmed.includes('run.app') ||
+      LEGACY_OR_DEPLOYMENT_HOSTS.some((h) => trimmed.includes(h));
+
+    if (!isExcluded && (trimmed.startsWith('https://') || trimmed.startsWith('http://'))) {
+      return trimmed;
     }
   }
-  if (typeof import.meta !== 'undefined') {
-    const envUrl = (import.meta as any).env?.VITE_SITE_URL;
-    if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('run.app')) {
-      return envUrl.replace(/\/+$/, '');
-    }
-  }
+
   // 2. Fixed authoritative production domain (Single Source of Truth)
-  return SITE_CONFIG.defaultProductionUrl;
+  return PRODUCTION_APP_URL;
 }
 
 /**
@@ -204,18 +253,38 @@ export function getAbsoluteCanonicalUrl(path: string = '/'): string {
 }
 
 /**
- * Resolves the appropriate redirect URL for authentication flows (OAuth, magic links, password resets).
- * In production or remote environments, always targets the authoritative production domain (https://yaadapppk.vercel.app).
- * In local/container preview environments, preserves the local origin for active developer testing.
+ * Resolves the appropriate redirect URL for authentication flows (Google OAuth, magic links, password resets).
+ *
+ * Rules:
+ * 1. LOCALHOST / DEV: Preserves local origin (http://localhost:3000, AI Studio containers) for active developer testing.
+ * 2. PREVIEW DEPLOYMENTS: Preserves preview branch origin (e.g. https://yaadapppk-git-*.vercel.app) for PR reviewers.
+ * 3. PRODUCTION & DEPLOYMENT URLS: Always returns the authoritative production domain (https://yaadapppk.vercel.app).
+ *    Under NO circumstances will deployment URLs (yaadapppk-mudassirbashir530-creators-projects.vercel.app) or legacy
+ *    domains be returned as the production OAuth redirect URL.
  */
-export function getAuthRedirectUrl(path: string = '/'): string {
+export function getAuthRedirectUrl(path: string = '/home'): string {
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  if (typeof window !== 'undefined' && window.location?.origin) {
-    const origin = window.location.origin;
-    if (origin && !origin.startsWith('file:') && origin !== 'null') {
-      return `${origin}${cleanPath}`;
+
+  if (typeof window !== 'undefined' && window.location?.hostname) {
+    const host = window.location.hostname.toLowerCase();
+
+    // Local development
+    if (isLocalOrDevHost(host)) {
+      const origin = window.location.origin;
+      if (origin && !origin.startsWith('file:') && origin !== 'null') {
+        return `${origin}${cleanPath}`;
+      }
+    }
+
+    // Dedicated Vercel branch / PR preview deployments
+    if (isPreviewDeploymentHost(host)) {
+      const origin = window.location.origin;
+      if (origin && !origin.startsWith('file:') && origin !== 'null') {
+        return `${origin}${cleanPath}`;
+      }
     }
   }
-  const base = getBaseSiteUrl();
-  return `${base}${cleanPath}`;
+
+  // Authoritative Production Domain (Single Source of Truth)
+  return `${PRODUCTION_APP_URL}${cleanPath}`;
 }

@@ -20,10 +20,11 @@
 import { supabase } from './supabase';
 import { PasskeyCredentialInfo } from '../types';
 
-export const PRODUCTION_PASSKEY_RP_ID = 'yaad-three.vercel.app';
+export const PRODUCTION_PASSKEY_RP_ID = 'yaadapppk.vercel.app';
 export const LEGACY_PASSKEY_RP_IDS = [
-  'yaadapppk.vercel.app',
+  'yaad-three.vercel.app',
   'yaad-mudassirbashir530-creators-projects.vercel.app',
+  'yaadapppk-mudassirbashir530-creators-projects.vercel.app',
 ];
 
 /**

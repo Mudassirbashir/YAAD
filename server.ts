@@ -19,6 +19,24 @@ const PORT = 3000;
 
 app.use(express.json());
 
+// Canonical production domain migration middleware:
+// Redirect requests arriving on deployment-specific URLs or legacy domains to https://yaadapppk.vercel.app
+app.use((req, res, next) => {
+  const hostHeader = req.headers['x-forwarded-host'] || req.headers.host || '';
+  const rawHost = Array.isArray(hostHeader) ? hostHeader[0] : hostHeader;
+  const host = rawHost.split(':')[0].toLowerCase();
+
+  const isLegacyOrDeployment =
+    host === 'yaadapppk-mudassirbashir530-creators-projects.vercel.app' ||
+    host === 'yaad-mudassirbashir530-creators-projects.vercel.app' ||
+    host === 'yaad-three.vercel.app';
+
+  if (isLegacyOrDeployment) {
+    return res.redirect(301, `https://yaadapppk.vercel.app${req.originalUrl || req.url}`);
+  }
+  next();
+});
+
 const ALLOWED_CATEGORIES = [
   'fruits',
   'vegetables',
@@ -1008,7 +1026,8 @@ app.get('/api/auth/passkey-config', (req, res) => {
     const isProductionMatch = host === configuredRpId || host.endsWith('.' + configuredRpId);
     const isLegacyDomain =
       host === 'yaad-three.vercel.app' ||
-      host === 'yaad-mudassirbashir530-creators-projects.vercel.app';
+      host === 'yaad-mudassirbashir530-creators-projects.vercel.app' ||
+      host === 'yaadapppk-mudassirbashir530-creators-projects.vercel.app';
     const isLocalhost = host === 'localhost' || host === '127.0.0.1';
     const supported = isProductionMatch || isLegacyDomain || isLocalhost;
 
@@ -1048,6 +1067,7 @@ function getExpectedOrigins(req: express.Request): string[] {
   origins.add('https://yaadapppk.vercel.app');
   origins.add('https://yaad-three.vercel.app');
   origins.add('https://yaad-mudassirbashir530-creators-projects.vercel.app');
+  origins.add('https://yaadapppk-mudassirbashir530-creators-projects.vercel.app');
   origins.add('http://localhost:3000');
   origins.add('http://127.0.0.1:3000');
   if (process.env.APP_URL) {
