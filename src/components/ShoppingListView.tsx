@@ -796,13 +796,13 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                 <div className="flex items-center gap-2 min-w-0 flex-1">
                   <span className="inline-flex items-center gap-1 font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-md border border-rose-200/60 dark:border-rose-800/40 text-[11px] shrink-0">
                     <span>←</span>
-                    <span>{isUrdu ? 'حذف' : 'Delete'}</span>
+                    <span>Delete</span>
                   </span>
                   <span className="font-medium text-[11px] truncate">
-                    {isUrdu ? 'آئٹم پر سوائپ یا ٹیپ کریں' : 'Swipe card or tap to check'}
+                    Swipe card or tap to check
                   </span>
                   <span className="inline-flex items-center gap-1 font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200/60 dark:border-emerald-800/40 text-[11px] shrink-0">
-                    <span>{isUrdu ? 'مکمل' : 'Complete'}</span>
+                    <span>Complete</span>
                     <span>→</span>
                   </span>
                 </div>
@@ -924,7 +924,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
               {isCompletingTrip ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>{isUrdu ? 'ٹرپ مکمل ہو رہا ہے...' : 'Completing trip...'}</span>
+                  <span>Completing trip...</span>
                 </>
               ) : (
                 <>
@@ -961,17 +961,9 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                 )}
               </span>
               <span className="text-xs sm:text-sm font-['Manrope'] font-medium truncate">
-                {undoToast.type === 'deleted' ? (
-                  isUrdu ? (
-                    <span className="font-urdu">{undoToast.item.name} حذف کر دیا گیا</span>
-                  ) : (
-                    `${undoToast.item.name} deleted`
-                  )
-                ) : isUrdu ? (
-                  <span className="font-urdu">{undoToast.item.name} خریدا گیا</span>
-                ) : (
-                  `${undoToast.item.name} ${t('shoppingList.markedPurchased') || 'purchased'}`
-                )}
+                {undoToast.type === 'deleted'
+                  ? `${undoToast.item.name} deleted`
+                  : `${undoToast.item.name} ${t('shoppingList.markedPurchased') || 'purchased'}`}
               </span>
             </div>
             <button
@@ -980,7 +972,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
               onClick={handleUndoAction}
               className="px-3 py-1 bg-white/20 hover:bg-white/30 active:scale-95 rounded-lg text-xs font-bold text-white uppercase tracking-wider transition-all cursor-pointer shrink-0"
             >
-              {t('shoppingList.undo') || (isUrdu ? 'واپس کریں' : 'Undo')}
+              {t('shoppingList.undo') || 'Undo'}
             </button>
           </motion.div>
         )}

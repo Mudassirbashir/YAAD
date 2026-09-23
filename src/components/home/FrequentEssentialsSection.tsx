@@ -90,7 +90,7 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
             <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-semibold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full border border-primary/20">
               <Sparkles className="w-3 h-3 text-primary stroke-[2]" />
               <span>
-                {language === 'ur' ? 'آپ کی پسند' : language === 'roman-urdu' ? 'Aap ke liye' : 'For You'}
+                'For You'
               </span>
             </span>
           )}
@@ -112,7 +112,7 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
           <div className="flex items-center gap-1.5 truncate">
             <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
             <span className="text-outline truncate">
-              {language === 'ur' ? 'براہ راست شامل کریں:' : 'Adding directly to:'}{' '}
+              'Adding directly to:'{' '}
               <strong className="text-primary">{mostRecentActiveList.title}</strong>
             </span>
           </div>
@@ -129,9 +129,7 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
             const isSelected = selectedCategory === cat;
             const label =
               cat === 'all'
-                ? language === 'ur'
-                  ? 'تمام'
-                  : 'All'
+                ? 'All'
                 : getCategoryName(cat as CategoryId);
 
             return (

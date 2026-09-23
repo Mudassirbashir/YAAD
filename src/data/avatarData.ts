@@ -12,7 +12,7 @@ export const AVATAR_COLOR_PALETTES: AvatarColorOption[] = [
   {
     id: 'forest',
     name: 'YAAD Green',
-    nameUrdu: 'یاد سبز',
+    nameUrdu: 'Color',
     nameRomanUrdu: 'YAAD Sabz',
     bgClass: 'bg-[#005039] text-[#e1f5ec]',
     borderClass: 'border-[#003d2b]',
@@ -21,7 +21,7 @@ export const AVATAR_COLOR_PALETTES: AvatarColorOption[] = [
   {
     id: 'mint',
     name: 'Soft Mint',
-    nameUrdu: 'ہلکا پودینہ',
+    nameUrdu: 'Color',
     nameRomanUrdu: 'Halka Mint',
     bgClass: 'bg-[#e1f5ec] text-[#005039]',
     borderClass: 'border-[#a2e6cb]',
@@ -30,7 +30,7 @@ export const AVATAR_COLOR_PALETTES: AvatarColorOption[] = [
   {
     id: 'emerald',
     name: 'Emerald',
-    nameUrdu: 'زمرد',
+    nameUrdu: 'Color',
     nameRomanUrdu: 'Emerald',
     bgClass: 'bg-emerald-100 text-emerald-900',
     borderClass: 'border-emerald-300',
@@ -39,7 +39,7 @@ export const AVATAR_COLOR_PALETTES: AvatarColorOption[] = [
   {
     id: 'teal',
     name: 'Ocean Teal',
-    nameUrdu: 'نیلا سبز',
+    nameUrdu: 'Color',
     nameRomanUrdu: 'Ocean Teal',
     bgClass: 'bg-teal-100 text-teal-900',
     borderClass: 'border-teal-300',
@@ -48,7 +48,7 @@ export const AVATAR_COLOR_PALETTES: AvatarColorOption[] = [
   {
     id: 'amber',
     name: 'Warm Amber',
-    nameUrdu: 'گرم امبر',
+    nameUrdu: 'Color',
     nameRomanUrdu: 'Warm Amber',
     bgClass: 'bg-amber-100 text-amber-950',
     borderClass: 'border-amber-300',
@@ -57,7 +57,7 @@ export const AVATAR_COLOR_PALETTES: AvatarColorOption[] = [
   {
     id: 'orange',
     name: 'Tangerine',
-    nameUrdu: 'نارنجی',
+    nameUrdu: 'Color',
     nameRomanUrdu: 'Narangi',
     bgClass: 'bg-orange-100 text-orange-950',
     borderClass: 'border-orange-300',
@@ -66,7 +66,7 @@ export const AVATAR_COLOR_PALETTES: AvatarColorOption[] = [
   {
     id: 'rose',
     name: 'Soft Rose',
-    nameUrdu: 'گلابی',
+    nameUrdu: 'Color',
     nameRomanUrdu: 'Gulabi',
     bgClass: 'bg-rose-100 text-rose-950',
     borderClass: 'border-rose-300',
@@ -75,7 +75,7 @@ export const AVATAR_COLOR_PALETTES: AvatarColorOption[] = [
   {
     id: 'purple',
     name: 'Lavender',
-    nameUrdu: 'جامنی',
+    nameUrdu: 'Color',
     nameRomanUrdu: 'Jamni',
     bgClass: 'bg-purple-100 text-purple-950',
     borderClass: 'border-purple-300',
@@ -84,7 +84,7 @@ export const AVATAR_COLOR_PALETTES: AvatarColorOption[] = [
   {
     id: 'indigo',
     name: 'Indigo',
-    nameUrdu: 'گہرا نیلا',
+    nameUrdu: 'Color',
     nameRomanUrdu: 'Indigo',
     bgClass: 'bg-indigo-100 text-indigo-950',
     borderClass: 'border-indigo-300',
@@ -93,7 +93,7 @@ export const AVATAR_COLOR_PALETTES: AvatarColorOption[] = [
   {
     id: 'sky',
     name: 'Sky Blue',
-    nameUrdu: 'آسمانی',
+    nameUrdu: 'Color',
     nameRomanUrdu: 'Aasmani',
     bgClass: 'bg-sky-100 text-sky-950',
     borderClass: 'border-sky-300',
@@ -102,7 +102,7 @@ export const AVATAR_COLOR_PALETTES: AvatarColorOption[] = [
   {
     id: 'warm',
     name: 'Warm Cream',
-    nameUrdu: 'کریم',
+    nameUrdu: 'Color',
     nameRomanUrdu: 'Cream',
     bgClass: 'bg-[#f5ede2] text-[#4a3525]',
     borderClass: 'border-[#dfceb9]',
@@ -111,7 +111,7 @@ export const AVATAR_COLOR_PALETTES: AvatarColorOption[] = [
   {
     id: 'slate',
     name: 'Slate Grey',
-    nameUrdu: 'سرمئی',
+    nameUrdu: 'Color',
     nameRomanUrdu: 'Surmayi',
     bgClass: 'bg-slate-100 text-slate-900',
     borderClass: 'border-slate-300',

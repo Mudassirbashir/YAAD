@@ -95,15 +95,13 @@ export const PhoneNumberReminderModal: React.FC<PhoneNumberReminderModalProps> =
                     id="phone_reminder_title"
                     className="font-['Plus_Jakarta_Sans'] font-bold text-xs sm:text-sm text-on-surface tracking-tight"
                   >
-                    {language === 'ur' ? 'اپنا فون نمبر شامل کریں' : 'Complete Your Account'}
+                    Add Phone Number
                   </h3>
                   <p
                     id="phone_reminder_desc"
                     className="font-['Manrope'] text-[11px] sm:text-xs text-outline leading-snug mt-0.5"
                   >
-                    {language === 'ur'
-                      ? 'اکاؤنٹ کو محفوظ اور آسان بازیافت بنانے کے لیے نمبر شامل کریں۔'
-                      : 'Add your number to make your account easier to manage and recover.'}
+                    Add your phone number to keep your lists safe.
                   </p>
                 </div>
               </div>
@@ -116,7 +114,7 @@ export const PhoneNumberReminderModal: React.FC<PhoneNumberReminderModalProps> =
                   onClick={onDismiss}
                   className="px-3 py-1.5 rounded-full text-xs font-semibold font-['Manrope'] text-outline hover:text-on-surface hover:bg-surface-container transition-colors cursor-pointer"
                 >
-                  {language === 'ur' ? 'ابھی نہیں' : 'Not now'}
+                  Not now
                 </button>
 
                 <button
@@ -125,7 +123,7 @@ export const PhoneNumberReminderModal: React.FC<PhoneNumberReminderModalProps> =
                   onClick={handleOpenForm}
                   className="h-8 px-3.5 rounded-full bg-primary hover:bg-primary-container text-on-primary text-xs font-bold font-['Manrope'] shadow-xs active:scale-[0.98] transition-all flex items-center gap-1 cursor-pointer"
                 >
-                  <span>{language === 'ur' ? 'نمبر شامل کریں' : 'Add Number'}</span>
+                  <span>Add Number</span>
                   {isRTL ? (
                     <ArrowLeft className="w-3.5 h-3.5 stroke-[2.2]" />
                   ) : (

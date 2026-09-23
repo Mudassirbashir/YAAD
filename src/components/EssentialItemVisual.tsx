@@ -40,7 +40,7 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
   };
 
   // 1. POTATOES (Earthy golden russet potatoes with natural spots)
-  // Handles: potato, potatoes, aloo, alu, aalu, allu, آلو, الو, poteto
+  // Handles: potato, potatoes, aloo, alu, aalu, allu, , , poteto
   if (
     matches([
       'potato',
@@ -52,8 +52,6 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
       'allu',
       'aaloo',
       'aluw',
-      'آلو',
-      'الو',
       'poteto',
       'potatoe',
     ])
@@ -85,7 +83,7 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
   }
 
   // 2. SUGAR (Crystalline white container & scoop with sparkling amber granules)
-  // Handles: sugar, chini, cheeni, chinni, chenni, shakar, shakkar, چینی, شکر
+  // Handles: sugar, chini, cheeni, chinni, chenni, shakar, shakkar, , 
   if (
     matches([
       'sugar',
@@ -97,8 +95,6 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
       'chenni',
       'shakar',
       'shakkar',
-      'چینی',
-      'شکر',
     ])
   ) {
     return (
@@ -142,7 +138,7 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
   }
 
   // 3. GREEN CHILI (Curved fresh green chili pepper with stem)
-  // Handles: green chili, green chilli, hari mirch, hri mirch, sabz mirch, ہری مرچ
+  // Handles: green chili, green chilli, hari mirch, hri mirch, sabz mirch,  
   if (
     matches([
       'green chili',
@@ -156,8 +152,6 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
       'mirchi',
       'hari mirchi',
       'hri mirchi',
-      'ہری مرچ',
-      'سبز مرچ',
     ])
   ) {
     return (
@@ -201,7 +195,7 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
   }
 
   // 4. CHICKEN (Golden roasted drumstick with clean bone and crisp glaze)
-  // Handles: chicken, murghi, murgi, broiler, چکن, مرغی
+  // Handles: chicken, murghi, murgi, broiler, , 
   if (
     matches([
       'chicken',
@@ -212,9 +206,6 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
       'broiler',
       'desi chicken',
       'boneless chicken',
-      'مرغی',
-      'چکن',
-      'مرغی کا گوشت',
     ])
   ) {
     return (
@@ -242,7 +233,7 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
   }
 
   // 5. ONION (Layered purple/red onion with green sprout)
-  // Handles: onion, onions, pyaz, pyaaz, piyaz, پیاز
+  // Handles: onion, onions, pyaz, pyaaz, piyaz, 
   if (
     matches([
       'onion',
@@ -251,7 +242,6 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
       'pyaaz',
       'piyaz',
       'piaz',
-      'پیاز',
     ])
   ) {
     return (
@@ -281,7 +271,7 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
   }
 
   // 6. MILK (Classic dairy glass bottle with sky blue cap and wave)
-  // Handles: milk, doodh, dodh, دودھ
+  // Handles: milk, doodh, dodh, 
   if (
     matches([
       'milk',
@@ -291,7 +281,6 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
       'fresh milk',
       'olpers',
       'milkpak',
-      'دودھ',
     ])
   ) {
     return (
@@ -319,7 +308,7 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
   }
 
   // 7. EGGS (Farm egg carton with fresh eggs)
-  // Handles: egg, eggs, anday, anda, ande, انڈے, انڈا
+  // Handles: egg, eggs, anday, anda, ande, , 
   if (
     matches([
       'egg',
@@ -329,8 +318,6 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
       'ande',
       'andey',
       'desi anday',
-      'انڈے',
-      'انڈا',
     ])
   ) {
     return (
@@ -354,14 +341,13 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
   }
 
   // 8. TOMATOES (Glossy red tomato with green star leaf calyx)
-  // Handles: tomato, tomatoes, tamatar, ٹماٹر
+  // Handles: tomato, tomatoes, tamatar, 
   if (
     matches([
       'tomato',
       'tomatoes',
       'tamatar',
       'tamater',
-      'ٹماٹر',
     ])
   ) {
     return (
@@ -391,14 +377,13 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
   }
 
   // 9. RICE (Basmati jute sack with grains)
-  // Handles: rice, chawal, basmati, چاول
+  // Handles: rice, chawal, basmati, 
   if (
     matches([
       'rice',
       'chawal',
       'basmati',
       'sela rice',
-      'چاول',
     ])
   ) {
     return (
@@ -428,7 +413,7 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
   }
 
   // 10. COOKING OIL / GHEE (Golden amber bottle with dispenser spout)
-  // Handles: oil, cooking oil, ghee, banaspati, تیل, کوکنگ آئل, گھی
+  // Handles: oil, cooking oil, ghee, banaspati, ,  , 
   if (
     matches([
       'oil',
@@ -437,9 +422,6 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
       'banaspati',
       'dalda',
       'sufi oil',
-      'تیل',
-      'کوکنگ آئل',
-      'گھی',
     ])
   ) {
     return (
@@ -461,7 +443,7 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
   }
 
   // 11. TEA / CHAI (Fragrant steaming cup of karak chai with saucer)
-  // Handles: tea, chai, chai patti, tapal, lipton, چائے
+  // Handles: tea, chai, chai patti, tapal, lipton, 
   if (
     matches([
       'tea',
@@ -471,8 +453,6 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
       'tapal',
       'lipton',
       'danedar',
-      'چائے',
-      'پتی',
     ])
   ) {
     return (
@@ -493,7 +473,7 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
   }
 
   // 12. WHEAT FLOUR / ATTA (Traditional flour sack with wheat sheaf)
-  // Handles: flour, wheat flour, atta, aata, maida, آٹا
+  // Handles: flour, wheat flour, atta, aata, maida, 
   if (
     matches([
       'flour',
@@ -504,8 +484,6 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
       'chakki atta',
       'suji',
       'sooji',
-      'آٹا',
-      'میدہ',
     ])
   ) {
     return (
@@ -524,7 +502,7 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
   }
 
   // 13. BREAD (Golden sliced sandwich loaf)
-  // Handles: bread, double roti, roti, ڈبل روٹی
+  // Handles: bread, double roti, roti,  
   if (
     matches([
       'bread',
@@ -532,7 +510,6 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
       'roti',
       'dawn bread',
       'bun',
-      'ڈبل روٹی',
     ])
   ) {
     return (
@@ -553,14 +530,13 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
   }
 
   // 14. GARLIC (Textured garlic bulb with papery skin and clove)
-  // Handles: garlic, lehsan, lehsun, لہسن
+  // Handles: garlic, lehsan, lehsun, 
   if (
     matches([
       'garlic',
       'lehsan',
       'lehsun',
       'lahsan',
-      'لہسن',
     ])
   ) {
     return (
@@ -583,13 +559,12 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
   }
 
   // 15. GINGER (Knobby aromatic ginger root with warmth)
-  // Handles: ginger, adrak, aadrak, ادرک
+  // Handles: ginger, adrak, aadrak, 
   if (
     matches([
       'ginger',
       'adrak',
       'aadrak',
-      'ادرک',
     ])
   ) {
     return (
@@ -613,7 +588,7 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
   }
 
   // 16. MEAT / BEEF / MUTTON / GOSHT (Fresh marbled red meat cut)
-  // Handles: meat, beef, mutton, gosht, bara gosht, chota gosht, گوشت
+  // Handles: meat, beef, mutton, gosht, bara gosht, chota gosht, 
   if (
     matches([
       'meat',
@@ -625,10 +600,6 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
       'gaye ka gosht',
       'qeema',
       'keema',
-      'گوشت',
-      'بڑا گوشت',
-      'چھوٹا گوشت',
-      'قیمہ',
     ])
   ) {
     return (
@@ -655,7 +626,7 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
   }
 
   // 17. FISH (Fresh silver-blue fish)
-  // Handles: fish, machli, machhli, مچھلی
+  // Handles: fish, machli, machhli, 
   if (
     matches([
       'fish',
@@ -663,7 +634,6 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
       'machhli',
       'rohu',
       'palla',
-      'مچھلی',
     ])
   ) {
     return (
@@ -691,7 +661,7 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
   }
 
   // 18. YOGURT / DAHI (Clay matka / bowl of fresh white thick dahi with mint leaf)
-  // Handles: yogurt, dahi, curd, دہی
+  // Handles: yogurt, dahi, curd, 
   if (
     matches([
       'yogurt',
@@ -699,7 +669,6 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
       'dahi',
       'curd',
       'nestle dahi',
-      'دہی',
     ])
   ) {
     return (
@@ -722,7 +691,7 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
   }
 
   // 19. BUTTER (Golden block of butter with curl)
-  // Handles: butter, makhan, makkhan, nurpur, blue band, مکھن
+  // Handles: butter, makhan, makkhan, nurpur, blue band, 
   if (
     matches([
       'butter',
@@ -730,7 +699,6 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
       'makkhan',
       'nurpur butter',
       'blue band',
-      'مکھن',
     ])
   ) {
     return (
@@ -749,14 +717,13 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
   }
 
   // 20. LEMON (Bright yellow citrus lemon with wedge)
-  // Handles: lemon, leemu, nimbu, لیموں
+  // Handles: lemon, leemu, nimbu, 
   if (
     matches([
       'lemon',
       'leemu',
       'nimbu',
       'lemoo',
-      'لیموں',
     ])
   ) {
     return (
@@ -781,13 +748,12 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
   }
 
   // 21. APPLE (Red orchard apple with leaf)
-  // Handles: apple, saib, seb, سیب
+  // Handles: apple, saib, seb, 
   if (
     matches([
       'apple',
       'saib',
       'seb',
-      'سیب',
     ])
   ) {
     return (
@@ -812,13 +778,12 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
   }
 
   // 22. BANANA (Golden yellow banana bunch)
-  // Handles: banana, kela, kayla, کیلا
+  // Handles: banana, kela, kayla, 
   if (
     matches([
       'banana',
       'kela',
       'kayla',
-      'کیلا',
     ])
   ) {
     return (
@@ -842,7 +807,7 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
   }
 
   // 23. LENTILS / DAAL (Bowl of golden split daal pulses)
-  // Handles: daal, dal, lentils, daal chana, daal masoor, دال
+  // Handles: daal, dal, lentils, daal chana, daal masoor, 
   if (
     matches([
       'daal',
@@ -853,7 +818,6 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
       'masoor',
       'moong',
       'mash',
-      'دال',
     ])
   ) {
     return (
@@ -875,14 +839,13 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
   }
 
   // 24. SALT (Clean salt shaker with crystal sprinkle)
-  // Handles: salt, namak, national namak, نمک
+  // Handles: salt, namak, national namak, 
   if (
     matches([
       'salt',
       'namak',
       'national namak',
       'iodized salt',
-      'نمک',
     ])
   ) {
     return (
@@ -904,7 +867,7 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
   }
 
   // 25. SPICES / MASALA (Spice jar with vibrant turmeric/chili blend)
-  // Handles: spices, masala, haldi, zeera, dhaniya, turmeric, شان مصالحہ, ہلدی, مصالحہ
+  // Handles: spices, masala, haldi, zeera, dhaniya, turmeric,  , , 
   if (
     matches([
       'spices',
@@ -922,10 +885,6 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
       'garam masala',
       'shan',
       'national masala',
-      'ہلدی',
-      'مصالحہ',
-      'زیرہ',
-      'لال مرچ',
     ])
   ) {
     return (
@@ -945,7 +904,7 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
   }
 
   // 26. SOAP (Pastel bath soap bar with lather bubbles)
-  // Handles: soap, saban, lux, dettol soap, صابن
+  // Handles: soap, saban, lux, dettol soap, 
   if (
     matches([
       'soap',
@@ -955,7 +914,6 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
       'lifebuoy',
       'dettol soap',
       'dove',
-      'صابن',
     ])
   ) {
     return (
@@ -975,7 +933,7 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
   }
 
   // 27. DETERGENT / SURF (Washing powder box with fresh sparkles)
-  // Handles: detergent, surf, surf excel, ariel, bonus, سرف
+  // Handles: detergent, surf, surf excel, ariel, bonus, 
   if (
     matches([
       'detergent',
@@ -984,7 +942,6 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
       'ariel',
       'bonus',
       'washing powder',
-      'سرف',
     ])
   ) {
     return (
@@ -1003,7 +960,7 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
   }
 
   // 28. BISCUITS / COOKIES (Golden baked circular cookies with dotted texture)
-  // Handles: biscuit, biscuits, cookies, sooper, rio, prince, بسکٹ
+  // Handles: biscuit, biscuits, cookies, sooper, rio, prince, 
   if (
     matches([
       'biscuit',
@@ -1013,7 +970,6 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
       'rio',
       'prince',
       'gala',
-      'بسکٹ',
     ])
   ) {
     return (
@@ -1035,7 +991,7 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
   }
 
   // 29. WATER / MINERAL WATER (Pure blue water bottle with fresh droplet)
-  // Handles: water, mineral water, nestle pure life, aquafina, پانی
+  // Handles: water, mineral water, nestle pure life, aquafina, 
   if (
     matches([
       'water',
@@ -1043,7 +999,6 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
       'drinking water',
       'nestle water',
       'aquafina',
-      'پانی',
     ])
   ) {
     return (

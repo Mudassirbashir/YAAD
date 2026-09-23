@@ -36,9 +36,9 @@ export const LEGACY_OR_DEPLOYMENT_HOSTS = [
 export const SITE_CONFIG = {
   // Brand & Entity
   name: 'YAAD',
-  nameUrdu: 'یاد',
+  nameUrdu: 'YAAD',
   brandTagline: 'Smart Shopping Memory',
-  brandTaglineUrdu: 'سودا سلف یاد رکھنے کی آسان ایپ',
+  brandTaglineUrdu: 'Smart Shopping Memory',
   brandTaglineRomanUrdu: 'Sauda salaf yaad rakhne ki aasan app',
 
   // Official Domains & URLs
@@ -56,13 +56,13 @@ export const SITE_CONFIG = {
   locales: [
     { code: 'en', name: 'English', hreflang: 'en', dir: 'ltr' as const },
     { code: 'roman-urdu', name: 'Roman Urdu', hreflang: 'ur-Latn', dir: 'ltr' as const },
-    { code: 'ur', name: 'اردو', hreflang: 'ur', dir: 'rtl' as const },
+    { code: 'ur', name: 'Urdu', hreflang: 'ur', dir: 'rtl' as const },
   ],
   defaultLocale: 'en',
 
   // Social & Asset Previews
   ogImage: '/og-image.png',
-  ogImageAlt: 'YAAD (یاد) — Smart Shopping Memory & Grocery Assistant',
+  ogImageAlt: 'YAAD — Smart Shopping Memory & Grocery Assistant',
   logo: '/logo.png',
   favicon: '/favicon.png',
 
@@ -74,14 +74,10 @@ export const SITE_CONFIG = {
       priority: 1.0,
       changeFreq: 'daily',
       title: {
-        en: 'YAAD • Smart Shopping Memory & Grocery Reminder App',
-        romanUrdu: 'YAAD • Sauda Salaf Yaad Rakhne Ki Aasan Grocery App',
-        ur: 'یاد • سودا سلف اور خریداری یاد دہانی کی آسان ایپ',
+        en: 'YAAD • Smart Shopping Memory & Grocery Reminder App', romanUrdu: 'YAAD • Sauda Salaf Yaad Rakhne Ki Aasan Grocery App', ur: 'YAAD • Smart Shopping Memory & Grocery Reminder App',
       },
       description: {
-        en: 'Never forget what you need to buy. YAAD (یاد) is a smart, bilingual shopping reminder that organizes grocery items automatically. Works offline in English, Urdu, and Roman Urdu.',
-        romanUrdu: 'Shopping k waqt koi cheez na bhoolein. YAAD sauda salaf aur grocery yaad rakhne ki tez aur aasan app hai jo offline bhi kaam karti hai.',
-        ur: 'خریداری کے دوران کوئی چیز مت بھولیں۔ یاد ایپ آپ کے سودا سلف کو خودکار طریقے سے ترتیب دیتی ہے اور بغیر انٹرنیٹ کے بھی کام کرتی ہے۔',
+        en: 'Never forget what you need to buy. YAAD is a smart shopping reminder that organizes grocery items automatically. Works offline.', romanUrdu: 'Shopping k waqt koi cheez na bhoolein. YAAD sauda salaf aur grocery yaad rakhne ki tez aur aasan app hai jo offline bhi kaam karti hai.', ur: 'Never forget what you need to buy. YAAD is a smart shopping reminder that organizes grocery items automatically. Works offline.',
       },
     },
     about: {
@@ -90,14 +86,10 @@ export const SITE_CONFIG = {
       priority: 0.9,
       changeFreq: 'weekly',
       title: {
-        en: 'About YAAD • Bilingual Intelligence & Shopping Memory',
-        romanUrdu: 'YAAD K Baaray Mein • Hamari Kahani Aur Maqsad',
-        ur: 'یاد ایپ کے بارے میں • کہانی، مقصد اور خصوصیات',
+        en: 'About YAAD • Bilingual Intelligence & Shopping Memory', romanUrdu: 'YAAD K Baaray Mein • Hamari Kahani Aur Maqsad', ur: 'About YAAD • Bilingual Intelligence & Shopping Memory',
       },
       description: {
-        en: 'Discover how YAAD solves the universal problem of forgetting grocery items with native Pakistani grocery intelligence, trilingual support, and complete offline privacy.',
-        romanUrdu: 'Janiye k YAAD kis tarah aapki grocery aur sauda salaf ko asaan banati hai. Trilingual support aur offline privacy k sath.',
-        ur: 'جانیے کہ یاد ایپ کس طرح سودا سلف یاد رکھنے اور خریداری کے عمل کو آسان بناتی ہے۔ دو لسانی سمجھ بوجھ اور مکمل پرائیویسی کے ساتھ۔',
+        en: 'Discover how YAAD solves the universal problem of forgetting grocery items with native Pakistani grocery intelligence, trilingual support, and complete offline privacy.', romanUrdu: 'Janiye k YAAD kis tarah aapki grocery aur sauda salaf ko asaan banati hai. Trilingual support aur offline privacy k sath.', ur: 'Discover how YAAD solves the universal problem of forgetting grocery items with native Pakistani grocery intelligence, trilingual support, and complete offline privacy.',
       },
     },
     help: {
@@ -106,14 +98,10 @@ export const SITE_CONFIG = {
       priority: 0.8,
       changeFreq: 'weekly',
       title: {
-        en: 'Help & FAQ • How to Use YAAD Shopping Reminder',
-        romanUrdu: 'Madad Aur FAQ • YAAD App Istemal Karne Ka Tareeqa',
-        ur: 'مدد اور سوالات • یاد ایپ استعمال کرنے کا طریقہ اور رہنمائی',
+        en: 'Help & FAQ • How to Use YAAD Shopping Reminder', romanUrdu: 'Madad Aur FAQ • YAAD App Istemal Karne Ka Tareeqa', ur: 'Help & FAQ • How to Use YAAD Shopping Reminder',
       },
       description: {
-        en: 'Frequently asked questions about YAAD. Learn how to use offline mode, organize grocery items by aisle, log in with Passkeys, and add items in Urdu or Roman Urdu.',
-        romanUrdu: 'YAAD k baray mein aam sawalat k jawabat. Offline mode, passkey login aur grocery items organize karne ka tareeqa seekhein.',
-        ur: 'یاد ایپ سے متعلق اکثر پوچھے جانے والے سوالات کے جوابات۔ بغیر انٹرنیٹ لسٹیں بنانے، پاس کیز لاگ ان اور اشیاء کی ترتیب کا طریقہ۔',
+        en: 'Frequently asked questions about YAAD. Learn how to use offline mode, organize grocery items by aisle, log in with Passkeys, and add items in Urdu or Roman Urdu.', romanUrdu: 'YAAD k baray mein aam sawalat k jawabat. Offline mode, passkey login aur grocery items organize karne ka tareeqa seekhein.', ur: 'Frequently asked questions about YAAD. Learn how to use offline mode, organize grocery items by aisle, log in with Passkeys, and add items in Urdu or Roman Urdu.',
       },
     },
     terms: {
@@ -122,14 +110,10 @@ export const SITE_CONFIG = {
       priority: 0.5,
       changeFreq: 'monthly',
       title: {
-        en: 'Terms & Conditions • YAAD Smart Shopping Memory',
-        romanUrdu: 'Terms & Conditions (Sharaait) • YAAD',
-        ur: 'شرائط و ضوابط • یاد ایپ',
+        en: 'Terms & Conditions • YAAD Smart Shopping Memory', romanUrdu: 'Terms & Conditions (Sharaait) • YAAD', ur: 'Terms & Conditions • YAAD Smart Shopping Memory',
       },
       description: {
-        en: 'Read the clear and transparent Terms and Conditions for using YAAD Smart Shopping Memory.',
-        romanUrdu: 'YAAD smart shopping reminder istemal karne ki aasan aur wazeh sharaait.',
-        ur: 'یاد اسمارٹ شاپنگ ایپ کے استعمال سے متعلق شفاف اور آسان شرائط و ضوابط۔',
+        en: 'Read the clear and transparent Terms and Conditions for using YAAD Smart Shopping Memory.', romanUrdu: 'YAAD smart shopping reminder istemal karne ki aasan aur wazeh sharaait.', ur: 'Read the clear and transparent Terms and Conditions for using YAAD Smart Shopping Memory.',
       },
     },
     privacy: {
@@ -138,14 +122,10 @@ export const SITE_CONFIG = {
       priority: 0.5,
       changeFreq: 'monthly',
       title: {
-        en: 'Privacy Policy • Your Data Stays Yours • YAAD',
-        romanUrdu: 'Privacy Policy (Raazdari) • YAAD',
-        ur: 'پرائیویسی پالیسی • ذاتی ڈیٹا کا مکمل تحفظ • یاد',
+        en: 'Privacy Policy • Your Data Stays Yours • YAAD', romanUrdu: 'Privacy Policy (Raazdari) • YAAD', ur: 'Privacy Policy • Your Data Stays Yours • YAAD',
       },
       description: {
-        en: 'Your shopping lists and private notes belong solely to you. Learn how YAAD protects your data with Row Level Security, local encryption, and zero ad-tracking.',
-        romanUrdu: 'Aapki shopping lists aur data hamesha mehfooz hain. Zero ad tracking aur local encryption ki policy parhein.',
-        ur: 'آپ کی خریداری کی لسٹیں صرف آپ کی ملکیت ہیں۔ جانیے کہ یاد ایپ کس طرح راؤ لیول سیکیورٹی اور لوکل انکرپشن سے ڈیٹا محفوظ رکھتی ہے۔',
+        en: 'Your shopping lists and private notes belong solely to you. Learn how YAAD protects your data with Row Level Security, local encryption, and zero ad-tracking.', romanUrdu: 'Aapki shopping lists aur data hamesha mehfooz hain. Zero ad tracking aur local encryption ki policy parhein.', ur: 'Your shopping lists and private notes belong solely to you. Learn how YAAD protects your data with Row Level Security, local encryption, and zero ad-tracking.',
       },
     },
     legal: {
@@ -154,14 +134,10 @@ export const SITE_CONFIG = {
       priority: 0.4,
       changeFreq: 'monthly',
       title: {
-        en: 'Legal Information & Disclosures • YAAD',
-        romanUrdu: 'Qanooni Maloomat Aur Disclosures • YAAD',
-        ur: 'قانونی معلومات اور اعلانات • یاد ایپ',
+        en: 'Legal Information & Disclosures • YAAD', romanUrdu: 'Qanooni Maloomat Aur Disclosures • YAAD', ur: 'Legal Information & Disclosures • YAAD',
       },
       description: {
-        en: 'Official legal disclosures, intellectual property notices, and compliance details for YAAD.',
-        romanUrdu: 'YAAD app k qanooni notices aur compliance ki maloomat.',
-        ur: 'یاد ایپ کے قانونی اعلانات، املاکِ دانش اور قواعد و ضوابط کی تفصیلات۔',
+        en: 'Official legal disclosures, intellectual property notices, and compliance details for YAAD.', romanUrdu: 'YAAD app k qanooni notices aur compliance ki maloomat.', ur: 'Official legal disclosures, intellectual property notices, and compliance details for YAAD.',
       },
     },
     rashanList: {
@@ -170,14 +146,10 @@ export const SITE_CONFIG = {
       priority: 0.9,
       changeFreq: 'weekly',
       title: {
-        en: 'Monthly Rashan List • Essential Pakistani Grocery & Pantry Checklist • YAAD',
-        romanUrdu: 'Mahana Rashan List • Pakistan Grocery & Sauda Salaf Checklist • YAAD',
-        ur: 'ماہانہ راشن لسٹ • پاکستانی گھریلو سودا سلف اور گروسری چیک لسٹ • یاد',
+        en: 'Monthly Rashan List • Essential Pakistani Grocery & Pantry Checklist • YAAD', romanUrdu: 'Mahana Rashan List • Pakistan Grocery & Sauda Salaf Checklist • YAAD', ur: 'Monthly Rashan List • Essential Pakistani Grocery & Pantry Checklist • YAAD',
       },
       description: {
-        en: 'The definitive monthly rashan checklist for Pakistani households. Includes chakki atta, basmati rice, daalein, ghee, traditional units (pao, darjan), storage tips, and instant 1-click import into YAAD.',
-        romanUrdu: 'Pakistani gharon k liye mahana rashan ki mukammal fahreest. Atta, daalein, ghee, masalay, aur bazaar k riwayati paimanon k sath. YAAD mein foran load karein.',
-        ur: 'پاکستانی گھرانوں کے لیے ماہانہ راشن کی مکمل فہرست۔ چکی کا آٹا، باسمتی چاول، دالیں، گھی، روایتی پیمانے (پاؤ، درجن) اور یاد ایپ پر براہ راست لسٹ بنانے کی سہولت۔',
+        en: 'The definitive monthly rashan checklist for Pakistani households. Includes chakki atta, basmati rice, daalein, ghee, traditional units (pao, darjan), storage tips, and instant 1-click import into YAAD.', romanUrdu: 'Pakistani gharon k liye mahana rashan ki mukammal fahreest. Atta, daalein, ghee, masalay, aur bazaar k riwayati paimanon k sath. YAAD mein foran load karein.', ur: 'The definitive monthly rashan checklist for Pakistani households. Includes chakki atta, basmati rice, daalein, ghee, traditional units (pao, darjan), storage tips, and instant 1-click import into YAAD.',
       },
     },
     blog: {
@@ -186,14 +158,10 @@ export const SITE_CONFIG = {
       priority: 0.8,
       changeFreq: 'weekly',
       title: {
-        en: 'YAAD Blog • Smart Grocery Budgeting & Rashan Guides',
-        romanUrdu: 'YAAD Blog • Mahana Rashan & Smart Shopping Guides',
-        ur: 'یاد بلاگ • گھریلو راشن اور سودا سلف کی خریداری کے رہنما مضامین',
+        en: 'YAAD Blog • Smart Grocery Budgeting & Rashan Guides', romanUrdu: 'YAAD Blog • Mahana Rashan & Smart Shopping Guides', ur: 'YAAD Blog • Smart Grocery Budgeting & Rashan Guides',
       },
       description: {
-        en: 'Actionable tips on monthly rashan planning, budget management, traditional Pakistani weights (pao, dharri), and clutter-free shopping habits.',
-        romanUrdu: 'Mahana rashan ki planning, budget bachane k mashwaray, rawaiti paimany aur smart grocery shopping ki rehnumai.',
-        ur: 'ماہانہ راشن کی منصوبہ بندی، بجٹ بچانے کی تجاویز، روایتی پیمانوں کی معلومات اور یاد ایپ کے استعمال سے متعلق معلوماتی مضامین۔',
+        en: 'Actionable tips on monthly rashan planning, budget management, traditional Pakistani weights (pao, dharri), and clutter-free shopping habits.', romanUrdu: 'Mahana rashan ki planning, budget bachane k mashwaray, rawaiti paimany aur smart grocery shopping ki rehnumai.', ur: 'Actionable tips on monthly rashan planning, budget management, traditional Pakistani weights (pao, dharri), and clutter-free shopping habits.',
       },
     },
   } as Record<string, PageSeoConfig>,

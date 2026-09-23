@@ -221,11 +221,8 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
     // 1. Completion discipline
     if (analytics.completedListsCount > 0 && analytics.completionRate >= 75) {
       insights.push({
-        title: language === 'ur' ? 'بہترین تکمیل کی شرح' : 'Consistent Trip Completion',
-        description:
-          language === 'ur'
-            ? `آپ اپنی لسٹوں کے ${analytics.completionRate}٪ سامان کو کامیابی سے مکمل کرتے ہیں۔`
-            : `You complete ${analytics.completionRate}% of the items on your lists, maintaining high shopping efficiency.`,
+        title: 'Consistent Trip Completion',
+        description: `You complete ${analytics.completionRate}% of the items on your lists, maintaining high shopping efficiency.`,
         icon: Award,
       });
     }
@@ -233,11 +230,8 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
     // 2. Frequent staple item
     if (analytics.topStaple) {
       insights.push({
-        title: language === 'ur' ? 'اکثر خریدی جانے والی چیز' : 'Frequent Household Staple',
-        description:
-          language === 'ur'
-            ? `آپ نے "${analytics.topStaple.name}" کو ${analytics.topStaple.count} مختلف خریداری لسٹوں میں شامل کیا۔`
-            : `"${analytics.topStaple.name}" appears across ${analytics.topStaple.count} shopping trips as a key staple.`,
+        title: 'Frequent Household Staple',
+        description: `"${analytics.topStaple.name}" appears across ${analytics.topStaple.count} shopping trips as a key staple.`,
         icon: ShoppingBag,
       });
     }
@@ -246,11 +240,8 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
     if (analytics.hasActivity) {
       const dayLabel = t(`statistics.${analytics.peakDayKey}`) || analytics.peakDayKey;
       insights.push({
-        title: language === 'ur' ? 'خریداری کا پسندیدہ دن' : 'Primary Shopping Day',
-        description:
-          language === 'ur'
-            ? `آپ کی خریداری کی سرگرمی کا سب سے زیادہ وقت عام طور پر ${dayLabel} کے دن ہوتا ہے۔`
-            : `Your shopping routines are most active on ${dayLabel}s.`,
+        title: 'Primary Shopping Day',
+        description: `Your shopping routines are most active on ${dayLabel}s.`,
         icon: Calendar,
       });
     }
@@ -259,18 +250,15 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
     if (analytics.topCategory && analytics.totalItemsPurchased > 2) {
       const catName = getCategoryLabel(analytics.topCategory);
       insights.push({
-        title: language === 'ur' ? 'اہم خریداری کیٹیگری' : 'Core Shopping Category',
-        description:
-          language === 'ur'
-            ? `آپ کی زیادہ تر خریداری "${catName}" کیٹیگری سے متعلق ہوتی ہے۔`
-            : `The majority of your groceries belong to the ${catName} category.`,
+        title: 'Core Shopping Category',
+        description: `The majority of your groceries belong to the ${catName} category.`,
         icon: Layers,
       });
     }
 
     // Pick top primary insight
     return insights.length > 0 ? insights[0] : null;
-  }, [analytics, language, t]);
+  }, [analytics, t]);
 
   return (
     <div
@@ -792,17 +780,11 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
               >
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <h3
-                      className={`text-base font-bold text-on-surface ${
-                        language === 'ur' ? 'font-urdu text-lg' : "font-['Manrope']"
-                      }`}
-                    >
-                      {language === 'ur' ? 'اہم گھریلو سودا سلف' : 'Top Household Staples'}
+                    <h3 className="text-base font-bold text-on-surface font-['Manrope']">
+                      Top Household Staples
                     </h3>
                     <p className="text-xs text-outline font-medium font-['Manrope']">
-                      {language === 'ur'
-                        ? 'آپ کی لسٹوں میں سب سے زیادہ شامل کی گئی اشیاء'
-                        : 'Most frequently added items across your shopping lists'}
+                      Most frequently added items across your shopping lists
                     </p>
                   </div>
                 </div>

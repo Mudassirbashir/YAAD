@@ -54,7 +54,7 @@ export const SplashView: React.FC<SplashViewProps> = ({ onFinish, isRestoringAut
         {/* Brand Text Anchor */}
         <div className="flex flex-col items-center gap-1">
           <h1 className="font-['Plus_Jakarta_Sans'] text-3xl sm:text-4xl font-extrabold text-primary tracking-widest text-center">
-            YAAD | یاد
+            YAAD
           </h1>
           <p className="text-on-surface-variant font-['Manrope'] text-sm font-medium tracking-wide">
             Shopping Memory

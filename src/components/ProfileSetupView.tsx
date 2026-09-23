@@ -225,7 +225,7 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
                     : 'border-outline-variant bg-surface-container hover:bg-surface-container-high text-on-surface'
                 }`}
               >
-                <span className="block font-urdu text-base font-bold leading-normal">اردو</span>
+                <span className="block font-['Plus_Jakarta_Sans'] text-xs font-bold">Urdu</span>
                 <span className="text-[10px] text-on-surface-variant">Urdu</span>
               </button>
             </div>

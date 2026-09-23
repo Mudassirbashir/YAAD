@@ -14,30 +14,30 @@ interface QuantityEditModalProps {
 }
 
 const QUICK_QUANTITIES = [
-  { val: '0.5', label: '0.5 (آدھا)' },
-  { val: '0.75', label: '0.75 (پونا)' },
+  { val: '0.5', label: '0.5' },
+  { val: '0.75', label: '0.75' },
   { val: '1', label: '1' },
-  { val: '1.25', label: '1.25 (سوا)' },
-  { val: '1.5', label: '1.5 (ڈیڑھ)' },
+  { val: '1.25', label: '1.25' },
+  { val: '1.5', label: '1.5' },
   { val: '2', label: '2' },
-  { val: '2.5', label: '2.5 (ڈھائی)' },
+  { val: '2.5', label: '2.5' },
   { val: '3', label: '3' },
   { val: '5', label: '5' },
 ];
 
 const COMMON_UNITS = [
-  { id: 'kg', en: 'kg', ur: 'کلو' },
-  { id: 'g', en: 'g', ur: 'گرام' },
-  { id: 'dozen', en: 'dozen', ur: 'درجن' },
-  { id: 'piece', en: 'piece', ur: 'عدد' },
-  { id: 'packet', en: 'packet', ur: 'پیکٹ' },
-  { id: 'bottle', en: 'bottle', ur: 'بوتل' },
-  { id: 'l', en: 'litre', ur: 'لیٹر' },
-  { id: 'ml', en: 'ml', ur: 'ملی' },
-  { id: 'box', en: 'box', ur: 'ڈبہ' },
-  { id: 'can', en: 'can', ur: 'کین' },
-  { id: 'bag', en: 'bag', ur: 'تھیلا' },
-  { id: 'pao', en: 'pao', ur: 'پاؤ' },
+  { id: 'kg', en: 'kg' },
+  { id: 'g', en: 'g' },
+  { id: 'dozen', en: 'dozen' },
+  { id: 'piece', en: 'piece' },
+  { id: 'packet', en: 'packet' },
+  { id: 'bottle', en: 'bottle' },
+  { id: 'l', en: 'litre' },
+  { id: 'ml', en: 'ml' },
+  { id: 'box', en: 'box' },
+  { id: 'can', en: 'can' },
+  { id: 'bag', en: 'bag' },
+  { id: 'pao', en: 'pao' },
 ];
 
 export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
@@ -219,7 +219,6 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
                   }`}
                 >
                   <span>{u.en}</span>
-                  <span className="font-urdu text-[11px] opacity-75">({u.ur})</span>
                 </button>
               );
             })}

@@ -235,7 +235,6 @@ export const HeadManager: React.FC = () => {
     const organizationSchema = {
       '@type': 'Organization',
       name: 'YAAD',
-      alternateName: 'یاد',
       url: baseUrl,
       logo: `${baseUrl}/logo.png`,
       email: SITE_CONFIG.supportEmail,
@@ -251,15 +250,13 @@ export const HeadManager: React.FC = () => {
           {
             '@type': 'WebSite',
             name: 'YAAD',
-            alternateName: 'یاد',
             url: baseUrl,
             description: SITE_CONFIG.pages.home.description.en,
-            inLanguage: ['en', 'ur'],
+            inLanguage: ['en'],
           },
           {
             '@type': 'WebApplication',
             name: 'YAAD',
-            alternateName: 'یاد',
             url: baseUrl,
             description: SITE_CONFIG.pages.home.description.en,
             applicationCategory: 'ShoppingApplication',
@@ -344,7 +341,7 @@ export const HeadManager: React.FC = () => {
               {
                 '@type': 'ListItem',
                 position: 2,
-                name: language === 'ur' ? 'ماہانہ راشن لسٹ' : 'Monthly Rashan List',
+                name: 'Monthly Rashan List',
                 item: absoluteCanonical,
               },
             ],
@@ -354,7 +351,7 @@ export const HeadManager: React.FC = () => {
             name: pageTitle,
             description: pageDescription,
             url: absoluteCanonical,
-            inLanguage: language === 'ur' ? 'ur' : 'en',
+            inLanguage: 'en',
           },
           {
             '@type': 'FAQPage',

@@ -161,11 +161,7 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
       }, 1300);
     } catch (err: unknown) {
       console.error('Failed to save phone number:', err);
-      setErrorMessage(
-        language === 'ur'
-          ? 'فون نمبر محفوظ نہیں ہو سکا۔ براہ کرم دوبارہ کوشش کریں۔'
-          : 'Unable to save phone number. Please check your connection and try again.'
-      );
+      setErrorMessage('Unable to save phone number. Please check your connection and try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -208,12 +204,10 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
                 id="add_phone_modal_title"
                 className="font-['Plus_Jakarta_Sans'] text-base sm:text-lg font-bold text-on-surface tracking-tight leading-tight truncate"
               >
-                {language === 'ur' ? 'اپنا اکاؤنٹ مکمل کریں' : 'Complete Your Account'}
+                Add Your Phone Number
               </h2>
               <p className="font-['Manrope'] text-xs text-outline mt-0.5 leading-snug">
-                {language === 'ur'
-                  ? 'اکاؤنٹ کو محفوظ اور آسان بازیافت بنانے کے لیے فون نمبر شامل کریں۔'
-                  : 'Add your phone number to make your account easier to manage and recover.'}
+                Add your phone number to keep your lists safe.
               </p>
             </div>
           </div>
@@ -239,12 +233,10 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
                 <CheckCircle2 className="w-8 h-8 stroke-[2.4]" />
               </div>
               <h3 className="font-['Plus_Jakarta_Sans'] text-lg font-bold text-on-surface">
-                {language === 'ur' ? 'فون نمبر شامل کر دیا گیا' : 'Phone number added'}
+                Phone number added!
               </h3>
               <p className="font-['Manrope'] text-xs sm:text-sm text-outline mt-1 max-w-xs leading-relaxed">
-                {language === 'ur'
-                  ? 'آپ کا اکاؤنٹ کامیابی سے مکمل اور محفوظ ہو چکا ہے۔'
-                  : 'Your account is now easier to manage and recover.'}
+                Your phone number has been saved.
               </p>
               {fullFormattedInternational && (
                 <div className="mt-3 px-3.5 py-1.5 rounded-full bg-surface-container border border-surface-dim font-mono text-xs font-semibold text-primary">
@@ -257,14 +249,14 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
             <div className="flex flex-col gap-3 animate-in fade-in duration-150">
               <div className="flex items-center justify-between gap-2">
                 <span className="font-['Plus_Jakarta_Sans'] text-sm font-bold text-on-surface">
-                  {language === 'ur' ? 'ملک منتخب کریں' : 'Select Country'}
+                  'Select Country'
                 </span>
                 <button
                   type="button"
                   onClick={() => setIsCountryPickerOpen(false)}
                   className="min-h-[44px] px-3 py-2 flex items-center text-xs font-bold text-primary hover:text-primary-container rounded-xl hover:bg-primary/5 transition-colors cursor-pointer"
                 >
-                  {language === 'ur' ? 'واپس' : 'Done'}
+                  'Done'
                 </button>
               </div>
 
@@ -277,11 +269,7 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
                   type="text"
                   value={countrySearchQuery}
                   onChange={(e) => setCountrySearchQuery(e.target.value)}
-                  placeholder={
-                    language === 'ur'
-                      ? 'ملک تلاش کریں (مثال: پاکستان، +92)'
-                      : 'Search country or code (e.g. Pakistan, +92)...'
-                  }
+                  placeholder="Search country or code (e.g. Pakistan, +92)..."
                   className="w-full h-11 ps-9 pe-3 rounded-xl bg-surface-container border border-surface-dim text-xs font-['Manrope'] text-on-surface placeholder:text-outline/60 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
                 />
               </div>
@@ -290,7 +278,7 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
               <div className="flex flex-col gap-1 max-h-56 sm:max-h-64 overflow-y-auto divide-y divide-surface-dim/40 pe-1">
                 {filteredCountries.length === 0 ? (
                   <div className="py-6 text-center font-['Manrope'] text-xs text-outline">
-                    {language === 'ur' ? 'کوئی ملک نہیں ملا' : 'No matching countries found'}
+                    No matching countries found
                   </div>
                 ) : (
                   filteredCountries.map((c) => {
@@ -352,7 +340,7 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
                   htmlFor="local_phone_input"
                   className="text-xs font-bold font-['Manrope'] text-on-surface"
                 >
-                  {language === 'ur' ? 'فون نمبر' : 'Phone Number'}
+                  'Phone Number'
                 </label>
 
                 <div className="flex items-center gap-2">
@@ -392,9 +380,7 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
                 {/* Helper and Live Preview */}
                 <div className="flex items-center justify-between text-[11px] font-['Manrope'] text-outline px-1 mt-0.5">
                   <span>
-                    {language === 'ur'
-                      ? `مثال: ${selectedCountry.example}`
-                      : `e.g. ${selectedCountry.example}`}
+                    {`e.g. ${selectedCountry.example}`}
                   </span>
                   {fullFormattedInternational && (
                     <span className="font-mono font-semibold text-primary">
@@ -413,7 +399,7 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
                   disabled={isSubmitting}
                   className="min-h-[44px] px-4 py-2 flex items-center justify-center rounded-full text-xs font-semibold text-outline hover:text-on-surface hover:bg-surface-container active:scale-95 transition-all cursor-pointer"
                 >
-                  {language === 'ur' ? 'ابھی نہیں' : 'Not now'}
+                  'Not now'
                 </button>
 
                 <button
@@ -425,10 +411,10 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
                   {isSubmitting ? (
                     <>
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      <span>{language === 'ur' ? 'محفوظ ہو رہا ہے...' : 'Saving...'}</span>
+                      <span>Saving...</span>
                     </>
                   ) : (
-                    <span>{language === 'ur' ? 'محفوظ کریں' : 'Save Phone Number'}</span>
+                    <span>Save Phone Number</span>
                   )}
                 </button>
               </div>

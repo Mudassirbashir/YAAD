@@ -278,6 +278,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
       }
 
       // Successful Sign In
+      setLanguage('en');
       triggerSuccessState('signin');
     } catch (err) {
       setErrorMessage(formatAuthErrorMessage(err));
@@ -349,8 +350,9 @@ export const AuthView: React.FC<AuthViewProps> = ({
         await startOfflineOnboarding({
           fullName: trimmedName,
           phoneNumber: phoneValidation.cleaned || trimmedPhone,
-          language: language as any,
+          language: 'en',
         });
+        setLanguage('en');
         triggerSuccessState('signup');
         return;
       }
@@ -380,6 +382,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
       }
 
       // Successful Sign Up
+      setLanguage('en');
       triggerSuccessState('signup');
     } catch (err) {
       setErrorMessage(formatAuthErrorMessage(err));
@@ -538,17 +541,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
             >
               EN
             </button>
-            <button
-              type="button"
-              onClick={() => setLanguage('ur')}
-              className={`px-2 py-0.5 rounded-full transition-all cursor-pointer ${
-                language === 'ur'
-                  ? 'bg-[#003527] text-white shadow-xs'
-                  : 'text-neutral-500 hover:text-neutral-900'
-              }`}
-            >
-              اردو
-            </button>
+            
           </div>
         </div>
 
@@ -581,12 +574,10 @@ export const AuthView: React.FC<AuthViewProps> = ({
             {/* Header */}
             <div className="mb-6">
               <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 font-['Plus_Jakarta_Sans'] tracking-tight">
-                {isUrdu ? 'خوش آمدید' : 'Welcome Back'}
+                'Welcome Back'
               </h1>
               <p className="text-neutral-500 text-xs sm:text-sm mt-1.5 font-normal leading-relaxed">
-                {isUrdu
-                  ? 'اپنے اکاؤنٹ تک رسائی کے لیے اپنے ای میل اور پاس ورڈ سے سائن ان کریں۔'
-                  : 'Stay connected by signing in with your email and password to access your account.'}
+                {'Stay connected by signing in with your email and password to access your account.'}
               </p>
             </div>
 
@@ -602,7 +593,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
               ) : (
                 <GoogleOfficialIcon className="w-5 h-5" />
               )}
-              <span>{isUrdu ? 'گوگل کے ساتھ جاری رکھیں' : 'Continue with Google'}</span>
+              <span>Continue with Google</span>
             </button>
 
             {/* Divider */}
@@ -622,7 +613,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   htmlFor="signin_email"
                   className="block text-xs font-semibold text-neutral-700 mb-1.5"
                 >
-                  {isUrdu ? 'ای میل ایڈریس' : 'Email Address'}
+                  'Email Address'
                 </label>
                 <input
                   id="signin_email"
@@ -642,7 +633,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   htmlFor="signin_password"
                   className="block text-xs font-semibold text-neutral-700 mb-1.5"
                 >
-                  {isUrdu ? 'پاس ورڈ' : 'Password'}
+                  'Password'
                 </label>
                 <div className="relative">
                   <input
@@ -681,7 +672,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   }}
                   className="text-xs font-medium text-neutral-500 hover:text-[#003527] transition-colors cursor-pointer"
                 >
-                  {isUrdu ? 'پاس ورڈ بھول گئے؟' : 'Forgot Password?'}
+                  'Forgot Password?'
                 </button>
               </div>
 
@@ -694,14 +685,14 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 {loading ? (
                   <Loader2 className="w-5 h-5 animate-spin text-white" />
                 ) : (
-                  <span>{isUrdu ? 'سائن ان کریں' : 'Sign In'}</span>
+                  <span>Sign In</span>
                 )}
               </button>
             </form>
 
             {/* Bottom Navigation */}
             <div className="text-center mt-7 text-xs sm:text-sm text-neutral-500 font-medium">
-              <span>{isUrdu ? 'اکاؤنٹ نہیں ہے؟ ' : "Don't have an account? "}</span>
+              <span>{"Don't have an account? "}</span>
               <button
                 type="button"
                 onClick={() => {
@@ -711,7 +702,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 }}
                 className="text-[#003527] font-bold hover:underline cursor-pointer ml-1"
               >
-                {isUrdu ? 'اکاؤنٹ بنائیں' : 'Sign Up'}
+                'Sign Up'
               </button>
             </div>
           </div>
@@ -725,12 +716,10 @@ export const AuthView: React.FC<AuthViewProps> = ({
             {/* Header */}
             <div className="mb-5">
               <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 font-['Plus_Jakarta_Sans'] tracking-tight">
-                {isUrdu ? 'اپنا اکاؤنٹ بنائیں' : 'Create your account'}
+                'Create your account'
               </h1>
               <p className="text-neutral-500 text-xs sm:text-sm mt-1.5 font-normal leading-relaxed">
-                {isUrdu
-                  ? 'اکاؤنٹ بنانے اور شروع کرنے کے لیے اپنا نام، موبائل نمبر، ای میل اور پاس ورڈ درج کریں۔'
-                  : 'Provide your full name, email, and password to create your account and get started.'}
+                {'Provide your full name, email, and password to create your account and get started.'}
               </p>
             </div>
 
@@ -746,7 +735,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
               ) : (
                 <GoogleOfficialIcon className="w-5 h-5" />
               )}
-              <span>{isUrdu ? 'گوگل کے ساتھ جاری رکھیں' : 'Continue with Google'}</span>
+              <span>Continue with Google</span>
             </button>
 
             {/* Divider */}
@@ -766,7 +755,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   htmlFor="signup_name"
                   className="block text-xs font-semibold text-neutral-700 mb-1"
                 >
-                  {isUrdu ? 'مکمل نام' : 'Full Name'}
+                  'Full Name'
                 </label>
                 <input
                   id="signup_name"
@@ -786,7 +775,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   htmlFor="signup_phone"
                   className="block text-xs font-semibold text-neutral-700 mb-1"
                 >
-                  {isUrdu ? 'فون نمبر' : 'Phone Number'}
+                  'Phone Number'
                 </label>
                 <input
                   id="signup_phone"
@@ -806,7 +795,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   htmlFor="signup_email"
                   className="block text-xs font-semibold text-neutral-700 mb-1"
                 >
-                  {isUrdu ? 'ای میل ایڈریس' : 'Email Address'}
+                  'Email Address'
                 </label>
                 <input
                   id="signup_email"
@@ -826,7 +815,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   htmlFor="signup_password"
                   className="block text-xs font-semibold text-neutral-700 mb-1"
                 >
-                  {isUrdu ? 'پاس ورڈ' : 'Password'}
+                  'Password'
                 </label>
                 <div className="relative">
                   <input
@@ -860,7 +849,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   htmlFor="signup_confirm_password"
                   className="block text-xs font-semibold text-neutral-700 mb-1"
                 >
-                  {isUrdu ? 'پاس ورڈ کی تصدیق کریں' : 'Confirm Password'}
+                  'Confirm Password'
                 </label>
                 <div className="relative">
                   <input
@@ -899,28 +888,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                     className="mt-0.5 w-4 h-4 rounded border-neutral-300 text-[#003527] focus:ring-[#003527] accent-[#003527] cursor-pointer"
                   />
                   <span className="leading-tight">
-                    {isUrdu ? (
-                      <>
-                        میں{' '}
-                        <button
-                          type="button"
-                          onClick={() => onOpenLegalPage?.('terms')}
-                          className="font-bold text-[#003527] underline hover:text-black cursor-pointer"
-                        >
-                          شرائط
-                        </button>{' '}
-                        اور{' '}
-                        <button
-                          type="button"
-                          onClick={() => onOpenLegalPage?.('privacy')}
-                          className="font-bold text-[#003527] underline hover:text-black cursor-pointer"
-                        >
-                          پرائیویسی پالیسی
-                        </button>{' '}
-                        سے متفق ہوں۔
-                      </>
-                    ) : (
-                      <>
+                    <>
                         I agree to the{' '}
                         <button
                           type="button"
@@ -938,7 +906,6 @@ export const AuthView: React.FC<AuthViewProps> = ({
                           Privacy Policy
                         </button>
                       </>
-                    )}
                   </span>
                 </label>
               </div>
@@ -952,14 +919,14 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 {loading ? (
                   <Loader2 className="w-5 h-5 animate-spin text-white" />
                 ) : (
-                  <span>{isUrdu ? 'اکاؤنٹ بنائیں' : 'Sign Up'}</span>
+                  <span>'Sign Up'</span>
                 )}
               </button>
             </form>
 
             {/* Bottom Navigation */}
             <div className="text-center mt-6 text-xs sm:text-sm text-neutral-500 font-medium">
-              <span>{isUrdu ? 'پہلے سے اکاؤنٹ ہے؟ ' : 'Already have an account? '}</span>
+              <span>{'Already have an account? '}</span>
               <button
                 type="button"
                 onClick={() => {
@@ -969,7 +936,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 }}
                 className="text-[#003527] font-bold hover:underline cursor-pointer ml-1"
               >
-                {isUrdu ? 'سائن ان کریں' : 'Sign In'}
+                {'Sign In'}
               </button>
             </div>
           </div>
@@ -1039,15 +1006,11 @@ export const AuthView: React.FC<AuthViewProps> = ({
               }`}
             >
               <h2 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 font-['Plus_Jakarta_Sans'] tracking-tight">
-                {isUrdu ? 'کامیاب!' : 'Successful!'}
+                'Successful!'
               </h2>
               <p className="text-neutral-500 text-xs sm:text-sm mt-2 max-w-xs mx-auto leading-relaxed">
                 {successType === 'signup'
-                  ? isUrdu
-                    ? 'آپ کا اکاؤنٹ کامیابی سے بن چکا ہے اور اب تیار ہے۔'
-                    : 'Your account is created successfully and ready now.'
-                  : isUrdu
-                  ? 'آپ کامیابی سے سائن ان ہو چکے ہیں۔ یاد میں خوش آمدید۔'
+                  ? 'Your account is created successfully and ready now.'
                   : 'You have signed in successfully. Welcome back to YAAD.'}
               </p>
             </div>
@@ -1063,7 +1026,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 onClick={handleBrowseHome}
                 className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-['Manrope'] text-sm font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
-                <span>{isUrdu ? 'ہوم اسکرین پر جائیں' : 'Browse Home'}</span>
+                <span>Go to Home</span>
               </button>
             </div>
           </div>
@@ -1077,12 +1040,10 @@ export const AuthView: React.FC<AuthViewProps> = ({
             {/* Header */}
             <div className="mb-6">
               <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 font-['Plus_Jakarta_Sans'] tracking-tight">
-                {isUrdu ? 'پاس ورڈ ری سیٹ کریں' : 'Forgot Password'}
+                'Forgot Password'
               </h1>
               <p className="text-neutral-500 text-xs sm:text-sm mt-1.5 font-normal leading-relaxed">
-                {isUrdu
-                  ? 'پاس ورڈ ری سیٹ کرنے کی ہدایات حاصل کرنے کے لیے اپنا رجسٹرڈ ای میل درج کریں۔'
-                  : 'Enter your registered email address to receive password reset instructions.'}
+                {'Enter your registered email address to receive password reset instructions.'}
               </p>
             </div>
 
@@ -1093,7 +1054,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   htmlFor="forgot_email"
                   className="block text-xs font-semibold text-neutral-700 mb-1.5"
                 >
-                  {isUrdu ? 'ای میل ایڈریس' : 'Email Address'}
+                  'Email Address'
                 </label>
                 <input
                   id="forgot_email"
@@ -1116,14 +1077,14 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 {loading ? (
                   <Loader2 className="w-5 h-5 animate-spin text-white" />
                 ) : (
-                  <span>{isUrdu ? 'ری سیٹ لنک بھیجیں' : 'Send Reset Link'}</span>
+                  <span>Send Reset Link</span>
                 )}
               </button>
             </form>
 
             {/* Bottom Navigation */}
             <div className="text-center mt-7 text-xs sm:text-sm text-neutral-500 font-medium">
-              <span>{isUrdu ? 'پاس ورڈ یاد آ گیا؟ ' : 'Remember your password? '}</span>
+              <span>{'Remember your password? '}</span>
               <button
                 type="button"
                 onClick={() => {
@@ -1133,7 +1094,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 }}
                 className="text-[#003527] font-bold hover:underline cursor-pointer ml-1"
               >
-                {isUrdu ? 'سائن ان کریں' : 'Sign In'}
+                {'Sign In'}
               </button>
             </div>
           </div>
@@ -1147,12 +1108,10 @@ export const AuthView: React.FC<AuthViewProps> = ({
             {/* Header */}
             <div className="mb-6">
               <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 font-['Plus_Jakarta_Sans'] tracking-tight">
-                {isUrdu ? 'نیا پاس ورڈ درج کریں' : 'Set New Password'}
+                'Set New Password'
               </h1>
               <p className="text-neutral-500 text-xs sm:text-sm mt-1.5 font-normal leading-relaxed">
-                {isUrdu
-                  ? 'اپنے یاد اکاؤنٹ کے لیے کم از کم 6 ہندسوں کا نیا اور محفوظ پاس ورڈ درج کریں۔'
-                  : 'Choose a new strong password for your YAAD account.'}
+                {'Choose a new strong password for your YAAD account.'}
               </p>
             </div>
 
@@ -1163,7 +1122,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   htmlFor="reset_new_password"
                   className="block text-xs font-semibold text-neutral-700 mb-1.5"
                 >
-                  {isUrdu ? 'نیا پاس ورڈ' : 'New Password'}
+                  'New Password'
                 </label>
                 <div className="relative">
                   <input
@@ -1196,7 +1155,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   htmlFor="reset_confirm_password"
                   className="block text-xs font-semibold text-neutral-700 mb-1.5"
                 >
-                  {isUrdu ? 'نئے پاس ورڈ کی تصدیق کریں' : 'Confirm New Password'}
+                  'Confirm New Password'
                 </label>
                 <div className="relative">
                   <input
@@ -1233,7 +1192,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 {loading ? (
                   <Loader2 className="w-5 h-5 animate-spin text-white" />
                 ) : (
-                  <span>{isUrdu ? 'نیا پاس ورڈ محفوظ کریں' : 'Save New Password'}</span>
+                  <span>Save New Password</span>
                 )}
               </button>
             </form>

@@ -108,14 +108,11 @@ export const HomeView: React.FC<HomeViewProps> = ({
       profile?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name;
     if (rawName && typeof rawName === 'string') {
       const firstName = rawName.trim().split(' ')[0];
-      if (language === 'ur') {
-        return `${timeGreeting}، ${firstName} 👋`;
-      }
       return `${timeGreeting}, ${firstName} 👋`;
     }
 
     return `${timeGreeting} 👋`;
-  }, [profile, user, t, language]);
+  }, [profile, user, t]);
 
   const buildCandidate = (item: EssentialDisplayItem): RecommendationCandidate => {
     return {
@@ -408,7 +405,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             </div>
             <div className="flex flex-col min-w-0">
               <span className="font-['Plus_Jakarta_Sans'] text-xs font-bold text-on-surface truncate">
-                {language === 'ur' ? 'شامل کر دیا گیا:' : 'Added to list:'}{' '}
+                Added to list:{' '}
                 <span className="text-primary">{addedItemToast.message}</span>
               </span>
               <span className="font-['Manrope'] text-[11px] text-outline truncate">
@@ -427,7 +424,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
               }}
               className="h-7 px-3 rounded-full bg-primary text-on-primary text-[11px] font-bold font-['Manrope'] flex items-center gap-1 active:scale-95 transition-transform cursor-pointer shadow-xs"
             >
-              <span>{language === 'ur' ? 'خریداری' : 'Shop Now'}</span>
+              <span>Shop Now</span>
               <ArrowRight className="w-3 h-3 stroke-[2.5]" />
             </button>
 

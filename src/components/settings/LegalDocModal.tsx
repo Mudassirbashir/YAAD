@@ -84,8 +84,7 @@ export const LegalDocModal: React.FC<LegalDocModalProps> = ({
                 effortless and organized.
               </p>
               <p>
-                Engineered with full bilingual support for Pakistani grocery
-                staples in English, Urdu (اردو), and friendly Roman Urdu, YAAD
+                Built with support for grocery staples in simple English and friendly Roman Urdu, YAAD
                 understands local units (pao, darjan, gucchi) and automatically
                 organizes your trip by category.
               </p>

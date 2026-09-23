@@ -40,16 +40,12 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ mode = 'bann
             </div>
             <div>
               <h4 className="text-sm font-bold text-on-surface font-['Plus_Jakarta_Sans']">
-                {isUrdu ? 'ایپ انسٹالیشن (PWA)' : 'PWA App Installation'}
+                'Install App'
               </h4>
               <p className="text-xs text-on-surface-variant font-['Manrope']">
                 {isInstalled
-                  ? isUrdu
-                    ? 'ایپ کامیابی کے ساتھ آپ کے آلے پر انسٹال ہے'
-                    : 'YAAD is installed and running natively'
-                  : isUrdu
-                  ? 'ہوم اسکرین پر شامل کریں اور آف لائن استعمال کریں'
-                  : 'Install to home screen for offline access'}
+                  ? 'YAAD is installed and ready'
+                  : 'Add to your phone to use offline'}
               </p>
             </div>
           </div>
@@ -58,7 +54,7 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ mode = 'bann
             {isInstalled ? (
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary">
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                {isUrdu ? 'انسٹال شدہ' : 'Installed'}
+                'Installed'
               </span>
             ) : (
               <button
@@ -68,7 +64,7 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ mode = 'bann
                 className="px-3.5 py-1.5 rounded-xl bg-primary text-on-primary text-xs font-bold hover:bg-primary-container active:scale-95 transition-all shadow-xs flex items-center gap-1.5"
               >
                 <Download className="w-3.5 h-3.5" />
-                {isUrdu ? 'انسٹال کریں' : 'Install App'}
+                'Install App'
               </button>
             )}
           </div>
@@ -86,7 +82,7 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ mode = 'bann
               >
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="font-bold text-base text-primary font-['Plus_Jakarta_Sans']">
-                    {isUrdu ? 'آئی فون پر انسٹال کریں' : 'Install on iPhone / iPad'}
+                    'Install on iPhone / iPad'
                   </h3>
                   <button
                     onClick={() => setShowIOSModal(false)}
@@ -100,17 +96,13 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ mode = 'bann
                   <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-surface-container-low">
                     <Share className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                     <span>
-                      {isUrdu
-                        ? '1. نیچے سفاری میں شیئر بٹن (Share) پر ٹیپ کریں۔'
-                        : '1. Tap the Share button at the bottom of Safari.'}
+                      {'1. Tap the Share button at the bottom of Safari.'}
                     </span>
                   </div>
                   <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-surface-container-low">
                     <PlusSquare className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                     <span>
-                      {isUrdu
-                        ? '2. نیچے اسکرول کر کے "Add to Home Screen" منتخب کریں۔'
-                        : '2. Scroll down and tap "Add to Home Screen".'}
+                      {'2. Scroll down and tap "Add to Home Screen".'}
                     </span>
                   </div>
                 </div>
@@ -120,7 +112,7 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ mode = 'bann
                   onClick={() => setShowIOSModal(false)}
                   className="mt-5 w-full py-2.5 bg-primary text-on-primary rounded-xl font-bold text-xs"
                 >
-                  {isUrdu ? 'سمجھ گیا' : 'Got it'}
+                  'Got it'
                 </button>
               </motion.div>
             </div>
@@ -148,12 +140,10 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ mode = 'bann
               </div>
               <div className="min-w-0">
                 <h4 className="text-xs sm:text-sm font-bold font-['Plus_Jakarta_Sans'] leading-tight truncate">
-                  {isUrdu ? 'یاد (YAAD) ایپ انسٹال کریں' : 'Install YAAD App'}
+                  'Install YAAD App'
                 </h4>
                 <p className="text-[11px] text-white/80 font-['Manrope'] leading-tight mt-0.5 truncate">
-                  {isUrdu
-                    ? 'ہوم اسکرین پر شامل کریں اور تیز رفتار آف لائن استعمال کریں'
-                    : 'Add to home screen for faster, offline access'}
+                  {'Add to home screen for faster, offline access'}
                 </p>
               </div>
             </div>
@@ -166,7 +156,7 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ mode = 'bann
                 className="px-3 py-1.5 rounded-xl bg-white text-primary text-xs font-bold hover:bg-white/90 active:scale-95 transition-all shadow-xs flex items-center gap-1.5"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span>{isUrdu ? 'انسٹال' : 'Install'}</span>
+                <span>Install</span>
               </button>
               <button
                 type="button"
@@ -199,7 +189,7 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ mode = 'bann
                 <div className="flex items-center gap-2">
                   <Smartphone className="w-5 h-5 text-primary" />
                   <h3 className="font-bold text-base text-primary font-['Plus_Jakarta_Sans']">
-                    {isUrdu ? 'آئی فون پر انسٹال کریں' : 'Install on iPhone / iPad'}
+                    'Install on iPhone / iPad'
                   </h3>
                 </div>
                 <button
@@ -214,17 +204,13 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ mode = 'bann
                 <div className="flex items-start gap-2.5 p-3 rounded-xl bg-surface-container-low">
                   <Share className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                   <span>
-                    {isUrdu
-                      ? '1. سفاری کے نیچے موجود شیئر بٹن (Share) پر ٹیپ کریں۔'
-                      : '1. Tap the Share button at the bottom bar of Safari.'}
+                    {'1. Tap the Share button at the bottom bar of Safari.'}
                   </span>
                 </div>
                 <div className="flex items-start gap-2.5 p-3 rounded-xl bg-surface-container-low">
                   <PlusSquare className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                   <span>
-                    {isUrdu
-                      ? '2. مینو میں نیچے اسکرول کر کے "Add to Home Screen" منتخب کریں۔'
-                      : '2. Scroll down the menu and choose "Add to Home Screen".'}
+                    {'2. Scroll down the menu and choose "Add to Home Screen".'}
                   </span>
                 </div>
               </div>
@@ -234,7 +220,7 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ mode = 'bann
                 onClick={() => setShowIOSModal(false)}
                 className="mt-5 w-full py-2.5 bg-primary text-on-primary rounded-xl font-bold text-xs"
               >
-                {isUrdu ? 'سمجھ گیا' : 'Got it'}
+                'Got it'
               </button>
             </motion.div>
           </div>

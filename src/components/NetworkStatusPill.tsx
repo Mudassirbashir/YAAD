@@ -52,7 +52,7 @@ export const NetworkStatusPill: React.FC<NetworkStatusPillProps> = ({
             </span>
             <WifiOff className="w-3.5 h-3.5 text-amber-300" />
             <span className="font-['Manrope']">
-              {isUrdu ? 'آف لائن • مطابقت پذیری باقی ہے' : 'Offline • Sync pending'}
+              Offline • Saved on device
             </span>
             {pendingCount > 0 && (
               <span className="ml-0.5 px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/30 text-amber-200">
@@ -72,7 +72,7 @@ export const NetworkStatusPill: React.FC<NetworkStatusPillProps> = ({
           >
             <RefreshCw className="w-3.5 h-3.5 text-primary-fixed animate-spin" />
             <span className="font-['Manrope']">
-              {isUrdu ? 'آن لائن • ہم آہنگ ہو رہا ہے...' : 'Back online • Syncing...'}
+              Back online • Syncing...
             </span>
           </motion.div>
         ) : syncStatus === 'synced' ? (
@@ -87,7 +87,7 @@ export const NetworkStatusPill: React.FC<NetworkStatusPillProps> = ({
           >
             <Check className="w-3.5 h-3.5 text-emerald-300 stroke-[2.5]" />
             <span className="font-['Manrope'] text-emerald-100">
-              {isUrdu ? 'ہم آہنگ ہو گیا' : 'Synced'}
+              Saved
             </span>
           </motion.div>
         ) : pendingCount > 0 ? (
@@ -104,7 +104,7 @@ export const NetworkStatusPill: React.FC<NetworkStatusPillProps> = ({
           >
             <Cloud className="w-3.5 h-3.5 text-primary" />
             <span className="font-['Manrope']">
-              {pendingCount} {isUrdu ? 'غیر ہم آہنگ' : 'pending sync'}
+              {pendingCount} pending sync
             </span>
             <RefreshCw className="w-3 h-3 text-on-surface-variant ml-0.5" />
           </motion.button>

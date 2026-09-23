@@ -55,12 +55,10 @@ export const NoActiveListModal: React.FC<NoActiveListModalProps> = ({
               id="no_active_list_modal_title"
               className="font-['Plus_Jakarta_Sans'] text-base sm:text-lg font-bold text-on-surface"
             >
-              {language === 'ur' ? 'کوئی فعال فہرست موجود نہیں' : 'No Active Shopping List'}
+              No Active Shopping List
             </h3>
             <p className="font-['Manrope'] text-xs text-outline">
-              {language === 'ur'
-                ? 'خریداری شروع کرنے کے لیے ایک آپشن منتخب کریں'
-                : 'Choose how you would like to begin shopping'}
+              Choose how you would like to begin shopping
             </p>
           </div>
         </div>
@@ -69,14 +67,14 @@ export const NoActiveListModal: React.FC<NoActiveListModalProps> = ({
         <div className="p-3.5 rounded-2xl bg-surface-container border border-surface-dim/80 flex items-center justify-between gap-3 my-3">
           <div className="flex flex-col min-w-0">
             <span className="font-['Plus_Jakarta_Sans'] text-sm font-bold text-on-surface truncate">
-              {language === 'ur' && item.nameUrdu ? item.nameUrdu : item.displayName}
+              {item.displayName}
             </span>
             <span className="font-['Manrope'] text-xs text-outline">
               {item.quantity} {item.unit}
             </span>
           </div>
           <span className="px-2.5 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-semibold font-['Manrope'] border border-primary/20 shrink-0">
-            {language === 'ur' ? 'لازمی چیز' : 'Essential'}
+            Essential
           </span>
         </div>
 
@@ -95,12 +93,10 @@ export const NoActiveListModal: React.FC<NoActiveListModalProps> = ({
               </div>
               <div className="flex flex-col min-w-0">
                 <span className="font-['Plus_Jakarta_Sans'] text-xs sm:text-sm font-bold truncate">
-                  {language === 'ur' ? 'نئی فہرست میں شامل کریں' : 'Add to a new list'}
+                  Add to a new list
                 </span>
                 <span className="font-['Manrope'] text-[11px] text-on-primary/80 truncate">
-                  {language === 'ur'
-                    ? 'فوری طور پر خریداری شروع کریں'
-                    : 'Create a list and start shopping immediately'}
+                  Create a list and start shopping immediately
                 </span>
               </div>
             </div>
@@ -120,12 +116,10 @@ export const NoActiveListModal: React.FC<NoActiveListModalProps> = ({
               </div>
               <div className="flex flex-col min-w-0">
                 <span className="font-['Plus_Jakarta_Sans'] text-xs sm:text-sm font-bold truncate">
-                  {language === 'ur' ? 'پہلے نئی فہرست بنائیں' : 'Create a list first'}
+                  Create a list first
                 </span>
                 <span className="font-['Manrope'] text-[11px] text-outline truncate">
-                  {language === 'ur'
-                    ? 'اپنی فہرست کا نام اور تفصیلات منتخب کریں'
-                    : 'Choose your list name and icon'}
+                  Choose your list name and icon
                 </span>
               </div>
             </div>
@@ -140,7 +134,7 @@ export const NoActiveListModal: React.FC<NoActiveListModalProps> = ({
             onClick={onClose}
             className="text-xs font-semibold text-outline hover:text-on-surface py-1 px-3 rounded-full transition-colors cursor-pointer"
           >
-            {language === 'ur' ? 'منسوخ کریں' : 'Cancel'}
+            Cancel
           </button>
         </div>
       </div>

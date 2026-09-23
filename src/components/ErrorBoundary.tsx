@@ -64,12 +64,10 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
             <div className="space-y-2">
               <h1 className="font-['Plus_Jakarta_Sans'] font-bold text-xl text-on-surface">
-                {isUrdu ? 'کوئی غیر متوقع مسئلہ پیش آ گیا ہے' : 'Something unexpected occurred'}
+                Something went wrong
               </h1>
               <p className="font-['Manrope'] text-xs text-on-surface-variant leading-relaxed">
-                {isUrdu
-                  ? 'پریشان نہ ہوں، آپ کا ڈیٹا محفوظ ہے۔ براہ کرم صفحہ دوبارہ لوڈ کریں یا ہوم اسکرین پر واپس جائیں۔'
-                  : "Don't worry, your lists and data are safe. Please reload the view or return to home."}
+                Do not worry, your data is safe. Please reload the app or go to the home screen.
               </p>
             </div>
 
@@ -87,7 +85,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                 className="flex-1 h-11 rounded-full bg-primary text-on-primary font-['Manrope'] text-xs font-bold flex items-center justify-center gap-2 shadow-xs hover:bg-primary/90 transition-all active:scale-[0.98]"
               >
                 <RotateCcw className="w-4 h-4" />
-                <span>{isUrdu ? 'دوبارہ لوڈ کریں' : 'Reload App'}</span>
+                <span>Reload App</span>
               </button>
               <button
                 id="error_boundary_home_btn"
@@ -96,7 +94,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                 className="flex-1 h-11 rounded-full bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface font-['Manrope'] text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
               >
                 <Home className="w-4 h-4" />
-                <span>{isUrdu ? 'ہوم اسکرین' : 'Go to Home'}</span>
+                <span>Go to Home</span>
               </button>
             </div>
           </div>

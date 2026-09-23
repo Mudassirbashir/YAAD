@@ -66,7 +66,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
         {/* Center Title - Visually Centered */}
         <div id="top_header_title" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none px-4 max-w-[62%] sm:max-w-[70%]">
           <h1 className="text-lg sm:text-xl font-extrabold font-['Plus_Jakarta_Sans'] text-primary tracking-tight truncate flex items-center justify-center">
-            {title === 'YAAD' || title === 'یاد' ? (
+            {title === 'YAAD' ? (
               <div
                 id="top_header_wordmark"
                 className="inline-flex items-center gap-2 justify-center select-none"
@@ -74,16 +74,6 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
               >
                 <span className="font-extrabold text-primary tracking-tight text-lg sm:text-xl font-['Plus_Jakarta_Sans'] leading-none">
                   YAAD
-                </span>
-                <span className="text-primary/30 font-light text-xs leading-none select-none" aria-hidden="true">
-                  |
-                </span>
-                <span
-                  lang="ur"
-                  dir="rtl"
-                  className="font-urdu-wordmark text-xl sm:text-2xl font-bold text-primary leading-none select-none"
-                >
-                  یاد
                 </span>
               </div>
             ) : (

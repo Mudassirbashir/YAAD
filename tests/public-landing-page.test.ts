@@ -49,18 +49,15 @@ console.log('✅ PASSED: YAAD official palette (#005039, #fbf9f5) and styling ar
 
 // 3 Core Points (Not overwhelming text)
 assert.ok(
-  landingPageContent.includes('Fast, Clutter-Free Lists') ||
-    landingPageContent.includes('سودا سلف کی آسان فہرست'),
+  landingPageContent.includes('Fast, Clutter-Free Lists'),
   'Must include Point 1: Fast/Clutter-Free Grocery Lists'
 );
 assert.ok(
-  landingPageContent.includes('Pakistani Units & Rashan') ||
-    landingPageContent.includes('روایتی پیمانے اور راشن'),
+  landingPageContent.includes('Pakistani Units & Rashan'),
   'Must include Point 2: Pakistani Units (pao, kg, darjan) & Rashan'
 );
 assert.ok(
-  landingPageContent.includes('Private & Secure Sync') ||
-    landingPageContent.includes('محفوظ اور نجی ڈیٹا'),
+  landingPageContent.includes('Private & Secure Sync'),
   'Must include Point 3: Secure Google Sync & Complete Privacy'
 );
 console.log('✅ PASSED: Exactly 3 crisp, essential product pillars present (no fluff)');
@@ -68,8 +65,7 @@ console.log('✅ PASSED: Exactly 3 crisp, essential product pillars present (no 
 // Google Cloud Review Transparency Box
 console.log('\n--- 4. Google OAuth Verification & Compliance Links ---');
 assert.ok(
-  landingPageContent.includes('Why YAAD Uses Google Authentication') ||
-    landingPageContent.includes('گوگل اکاؤنٹ اور رازداری کی تفصیل'),
+  landingPageContent.includes('Why YAAD Uses Google Authentication'),
   'Must clearly explain why YAAD uses Google Sign-In for OAuth verification'
 );
 assert.ok(

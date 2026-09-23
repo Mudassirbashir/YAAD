@@ -56,7 +56,7 @@ export interface CompletionVisualConfig {
   brandEmeraldDeep: string;
   /** Rich brand emerald primary */
   brandEmerald: string;
-  /** Signature golden-amber brand accent dot from the YAAD logo ('ن/د' dot) */
+  /** Signature golden-amber brand accent dot from the YAAD logo */
   brandAmberDot: string;
   /** Soft surface container tint */
   surfaceTint: string;

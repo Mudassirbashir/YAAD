@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useRef, ReactNode } from 'react';
 import { Language, translations } from '../translations';
 import { CategoryId, CATEGORIES_LIST, CATEGORY_MAP } from '../types';
 import { useAuth } from './AuthContext';
@@ -19,6 +19,7 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { profile, updateUserProfile, user } = useAuth();
+  const prevUserIdRef = useRef<string | null>(null);
 
   const [language, setLanguageState] = useState<Language>(() => {
     // 1. Check URL search param first (for SEO / direct shared links, e.g. /about?lang=ur)
@@ -58,13 +59,30 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     return () => window.removeEventListener('popstate', handleLocationChange);
   }, [language]);
 
-  // Sync with profile if available
+  // When user signs in or signs up, the default language must be English
   useEffect(() => {
+    const currentUserId = user?.id || null;
+    const isNewLogin = !prevUserIdRef.current && !!currentUserId;
+    prevUserIdRef.current = currentUserId;
+
+    if (isNewLogin) {
+      // User just authenticated (sign in or sign up) -> default language is English
+      const targetLang = profile?.language || 'en';
+      setLanguageState(targetLang);
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(LANGUAGE_STORAGE_KEY, targetLang);
+      }
+      return;
+    }
+
+    // Sync with user profile if profile specifically specifies language
     if (profile?.language && profile.language !== language) {
       setLanguageState(profile.language);
-      localStorage.setItem(LANGUAGE_STORAGE_KEY, profile.language);
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(LANGUAGE_STORAGE_KEY, profile.language);
+      }
     }
-  }, [profile?.language]);
+  }, [user?.id, profile?.language, language]);
 
   // Apply direction and language attributes to document HTML
   useEffect(() => {

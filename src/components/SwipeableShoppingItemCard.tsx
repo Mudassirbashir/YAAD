@@ -73,7 +73,7 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
             <Check className="w-4 h-4 text-emerald-100 stroke-[3]" />
           </div>
           <span className="text-xs font-bold tracking-wider text-emerald-100 uppercase">
-            {isUrdu ? '✓ مکمل' : '✓ Complete'}
+            ✓ Complete
           </span>
         </motion.div>
       </motion.div>
@@ -89,7 +89,7 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
           className="flex items-center gap-2 font-['Manrope']"
         >
           <span className="text-xs font-bold tracking-wider text-rose-100 uppercase">
-            {isUrdu ? 'حذف کریں' : 'Delete'}
+            Delete
           </span>
           <div className="w-8 h-8 rounded-full bg-rose-500/30 border border-rose-400/40 flex items-center justify-center shadow-xs">
             <Trash2 className="w-4 h-4 text-rose-100 stroke-[2.5]" />
@@ -206,15 +206,6 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
               >
                 {item.name}
               </BidiText>
-              {item.nameUrdu && (
-                <span
-                  className={`font-urdu text-xs transition-opacity duration-180 ${
-                    isChecked ? 'opacity-50 text-outline' : 'text-on-surface-variant font-normal'
-                  }`}
-                >
-                  ({item.nameUrdu})
-                </span>
-              )}
             </div>
 
             {/* Sub-details: Category selector + raw input */}

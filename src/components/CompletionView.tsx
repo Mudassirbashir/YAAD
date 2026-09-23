@@ -83,14 +83,14 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
     const endMs = list.completedTimestamp || completedDateObj.getTime();
     if (startMs && endMs > startMs) {
       const minutes = Math.round((endMs - startMs) / (1000 * 60));
-      if (minutes <= 1) return isUrdu ? '1 منٹ سے کم' : '< 1 min';
-      if (minutes < 60) return `${minutes} ${isUrdu ? 'منٹ' : 'mins'}`;
+      if (minutes <= 1) return '< 1 min';
+      if (minutes < 60) return `${minutes} mins`;
       const hours = Math.floor(minutes / 60);
       const remainingMins = minutes % 60;
       return `${hours}h ${remainingMins}m`;
     }
-    return isUrdu ? 'کامیاب ٹرپ' : 'Fast trip';
-  }, [list.createdTimestamp, list.completedTimestamp, completedDateObj, isUrdu]);
+    return 'Fast trip';
+  }, [list.createdTimestamp, list.completedTimestamp, completedDateObj]);
 
   // Unique categories in purchased items
   const purchasedCategoryIds: CategoryId[] = useMemo(() => {
@@ -147,14 +147,6 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
                 background: `linear-gradient(135deg, ${YAAD_COMPLETION_CONFIG.visual.brandEmerald} 0%, ${YAAD_COMPLETION_CONFIG.visual.brandEmeraldDeep} 100%)`,
               }}
             >
-              {/* YAAD Urdu brand script subtle watermark */}
-              <span
-                className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20 select-none font-urdu-brand text-2xl text-emerald-200"
-                aria-hidden="true"
-              >
-                یاد
-              </span>
-
               {/* Animated Stroke Checkmark */}
               <motion.div
                 initial={{ scale: 0, opacity: 0 }}
@@ -182,7 +174,7 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
           >
             <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-300 text-xs font-['Manrope'] font-bold tracking-tight">
               <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>{isUrdu ? 'شاپنگ مکمل ہو گئی' : 'Shopping Completed'}</span>
+              <span>Shopping Completed</span>
             </div>
 
             <h1 className="font-['Newsreader'] text-2xl sm:text-3xl font-bold text-primary tracking-tight">
@@ -190,9 +182,7 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
             </h1>
 
             <p className="font-['Manrope'] text-xs sm:text-sm text-on-surface-variant max-w-xs sm:max-w-sm mx-auto">
-              {isUrdu
-                ? 'تمام منتخب کردہ اشیاء کامیابی سے حاصل کر لی گئیں'
-                : 'All marked items collected. Your trip is saved.'}
+              All marked items collected. Your trip is saved.
             </p>
           </motion.div>
         </section>
@@ -203,7 +193,7 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
           <div className="bg-surface-container-lowest rounded-2xl p-3 sm:p-3.5 border border-surface-container-high/80 shadow-2xs flex flex-col justify-between">
             <div className="flex items-center gap-1.5 text-outline text-[11px] font-['Manrope'] font-semibold">
               <ShoppingBag className="w-3.5 h-3.5 text-primary" />
-              <span className="truncate">{isUrdu ? 'اشیاء' : 'Items'}</span>
+              <span className="truncate">Items</span>
             </div>
             <div className="mt-1.5 flex items-baseline gap-1">
               <span className="font-['Newsreader'] text-xl sm:text-2xl font-bold text-primary tabular-nums">
@@ -219,7 +209,7 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
           <div className="bg-surface-container-lowest rounded-2xl p-3 sm:p-3.5 border border-surface-container-high/80 shadow-2xs flex flex-col justify-between">
             <div className="flex items-center gap-1.5 text-outline text-[11px] font-['Manrope'] font-semibold">
               <Clock className="w-3.5 h-3.5 text-primary" />
-              <span className="truncate">{isUrdu ? 'دورانیہ' : 'Duration'}</span>
+              <span className="truncate">Duration</span>
             </div>
             <div className="mt-1.5">
               <span className="font-['Newsreader'] text-lg sm:text-xl font-bold text-primary tabular-nums">
@@ -232,7 +222,7 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
           <div className="bg-surface-container-lowest rounded-2xl p-3 sm:p-3.5 border border-surface-container-high/80 shadow-2xs flex flex-col justify-between">
             <div className="flex items-center gap-1.5 text-outline text-[11px] font-['Manrope'] font-semibold">
               <Layers className="w-3.5 h-3.5 text-primary" />
-              <span className="truncate">{isUrdu ? 'اقسام' : 'Categories'}</span>
+              <span className="truncate">Categories</span>
             </div>
             <div className="mt-1.5">
               <span className="font-['Newsreader'] text-xl sm:text-2xl font-bold text-primary tabular-nums">
@@ -248,7 +238,7 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
             <div className="flex items-center justify-between border-b border-surface-dim/60 pb-2.5">
               <div className="flex items-center gap-2">
                 <span className="font-['Manrope'] text-xs font-bold text-primary uppercase tracking-wider">
-                  {isUrdu ? 'خریدی گئی اشیاء' : 'Purchased Items'}
+                  Purchased Items
                 </span>
                 <span className="text-[11px] font-['Manrope'] px-2 py-0.2 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 font-bold border border-emerald-200/60 dark:border-emerald-800/40">
                   {purchasedCount}
@@ -315,7 +305,7 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
             className="w-full h-[50px] rounded-2xl bg-primary text-on-primary font-['Manrope'] text-sm font-bold shadow-sm hover:bg-primary/90 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
             <Home className="w-4 h-4" />
-            <span>{isUrdu ? 'مکمل • ہوم اسکرین' : 'Done • Return Home'}</span>
+            <span>Done • Go Home</span>
           </button>
 
           {/* Secondary Actions Row: Start New List + Review / Edit Trip */}
@@ -327,7 +317,7 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
               className="h-[46px] rounded-2xl bg-surface-container hover:bg-surface-container-high text-primary font-['Manrope'] text-xs sm:text-sm font-bold border border-surface-dim/80 active:scale-[0.99] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
             >
               <PlusCircle className="w-4 h-4 text-primary" />
-              <span>{isUrdu ? 'نئی لسٹ بنائیں' : 'Start New List'}</span>
+              <span>Start New List</span>
             </button>
 
             <button
@@ -337,7 +327,7 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
               className="h-[46px] rounded-2xl bg-surface-container-low hover:bg-surface-container text-primary font-['Manrope'] text-xs sm:text-sm font-bold border border-surface-dim/80 active:scale-[0.99] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
             >
               <FileEdit className="w-4 h-4 text-primary" />
-              <span>{isUrdu ? 'ٹرپ کا جائزہ لیں' : 'Review / Edit Trip'}</span>
+              <span>Review Trip</span>
             </button>
           </div>
 
@@ -350,7 +340,7 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
               className="inline-flex items-center gap-1.5 text-xs font-['Manrope'] font-semibold text-outline hover:text-primary transition-colors cursor-pointer py-1"
             >
               <History className="w-3.5 h-3.5" />
-              <span>{isUrdu ? 'ہسٹری میں ٹرپ دیکھیں' : 'View in Past Trips History'}</span>
+              <span>View in History</span>
             </button>
           </div>
         </section>

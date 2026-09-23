@@ -328,18 +328,6 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
                                 >
                                   {item.name}
                                 </BidiText>
-
-                                {item.nameUrdu && (
-                                  <span
-                                    className={`font-urdu text-xs ${
-                                      item.completed
-                                        ? 'text-outline/70'
-                                        : 'text-on-surface-variant font-normal'
-                                    }`}
-                                  >
-                                    ({item.nameUrdu})
-                                  </span>
-                                )}
                               </div>
 
                               {/* Associated metadata: Category, created time, status */}

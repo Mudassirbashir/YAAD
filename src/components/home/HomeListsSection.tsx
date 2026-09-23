@@ -108,12 +108,10 @@ export const HomeListsSection: React.FC<HomeListsSectionProps> = ({
             <ShoppingBag className="w-6 h-6" />
           </div>
           <h4 className="font-['Plus_Jakarta_Sans'] font-bold text-sm sm:text-base text-on-surface">
-            {language === 'ur' ? 'ابھی کوئی فہرست نہیں ہے' : 'No Shopping Lists Yet'}
+            No Shopping Lists Yet
           </h4>
           <p className="font-['Manrope'] text-xs text-outline mt-1 max-w-xs leading-relaxed">
-            {language === 'ur'
-              ? 'اپنی پہلی خریداری کی فہرست بنائیں، یاد آپ کو یاد دلائے گا کہ کیا خریدنا ہے۔'
-              : 'Create your first shopping list and YAAD will help you remember what to buy.'}
+            Create your first shopping list to remember what to buy.
           </p>
           <button
             type="button"
@@ -122,7 +120,7 @@ export const HomeListsSection: React.FC<HomeListsSectionProps> = ({
             className="mt-4 px-5 py-2.5 rounded-full bg-primary hover:bg-primary-container active:scale-95 text-on-primary font-['Manrope'] text-xs sm:text-sm font-semibold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
           >
             <Plus className="w-4 h-4 stroke-[2.4]" />
-            <span>{language === 'ur' ? 'فہرست بنائیں' : 'Create List'}</span>
+            <span>Create List</span>
           </button>
         </div>
       ) : (

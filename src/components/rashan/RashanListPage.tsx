@@ -74,7 +74,7 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
       const lines = cat.items.map(
         (item) => `• ${item.name[currentLangKey]} — ${item.typicalQty}`
       );
-      const text = `${cat.title[currentLangKey]}\n${lines.join('\n')}\n\nVia YAAD (یاد) • yaad.app`;
+      const text = `${cat.title[currentLangKey]}\n${lines.join('\n')}\n\nVia YAAD • yaadapppk.vercel.app`;
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(text);
         setCopiedCategory(cat.id);
@@ -103,12 +103,7 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
     setIsAddingList(true);
     const now = new Date().toISOString();
 
-    const title =
-      language === 'ur'
-        ? 'ماہانہ راشن لسٹ'
-        : language === 'roman-urdu'
-        ? 'Mahana Rashan List'
-        : 'Monthly Household Rashan';
+    const title = 'Monthly Household Rashan';
 
     // Flatten curated items into YAAD ShoppingItems
     const newItems: ShoppingItem[] = [];
@@ -179,7 +174,7 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
             >
               <ArrowLeft className={`w-5 h-5 ${isRTL ? 'rotate-180' : ''}`} />
               <span className="hidden sm:inline">
-                {language === 'ur' ? 'ایپ پر واپس جائیں' : 'Back to App'}
+                {'Back to App'}
               </span>
             </button>
             <div className="h-4 w-px bg-slate-200 hidden sm:block" />
@@ -188,7 +183,7 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
                 Y
               </div>
               <span className="font-bold text-[#005039] text-base tracking-tight">
-                YAAD <span className="text-xs font-normal opacity-80">(یاد)</span>
+                YAAD
               </span>
             </div>
           </div>
@@ -224,7 +219,7 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                اردو
+                Urdu
               </button>
             </div>
 
@@ -243,7 +238,7 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
               className="hidden md:inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#005039] text-white text-xs font-bold hover:bg-[#003d2b] transition-all cursor-pointer shadow-xs"
             >
               <ShoppingBag className="w-4 h-4" />
-              <span>{language === 'ur' ? 'شاپنگ شروع کریں' : 'Open YAAD'}</span>
+              <span>{'Open YAAD'}</span>
             </button>
           </div>
         </div>
@@ -257,18 +252,14 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#005039]/10 text-[#005039] text-xs font-bold tracking-wide">
             <Sparkles className="w-3.5 h-3.5" />
             <span>
-              {language === 'ur'
-                ? 'مستند پاکستانی گھریلو راشن گائیڈ'
-                : language === 'roman-urdu'
+              {language === 'roman-urdu'
                 ? 'Pakistan Household Rashan Checklist'
                 : 'Definitive Pakistan Household Rashan Guide'}
             </span>
           </div>
 
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#003d2b] tracking-tight leading-tight sm:leading-snug">
-            {language === 'ur' ? (
-              <>ماہانہ راشن کی مکمل لسٹ اور گھریلو سودا سلف گائیڈ</>
-            ) : language === 'roman-urdu' ? (
+            {language === 'roman-urdu' ? (
               <>Mahana Rashan Ki Mukammal Checklist Aur Planning Guide</>
             ) : (
               <>The Essential Monthly Rashan Checklist & Household Guide</>
@@ -276,9 +267,7 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
           </h1>
 
           <p className="text-base sm:text-lg text-slate-700 leading-relaxed max-w-2xl mx-auto">
-            {language === 'ur'
-              ? 'چکی کے آٹے اور باسمتی چاول سے لے کر دالوں، گھی، چائے اور گھریلو صفائی تک۔ پاکستانی خاندانوں کے لیے مہینے کا سودا سلف بغیر کسی پریشانی اور بھول چوک کے ترتیب دینے کی عملی گائیڈ۔'
-              : language === 'roman-urdu'
+            {language === 'roman-urdu'
               ? 'Chakki k atta aur basmati chawal se le kar daalein, cooking oil, chai patti aur safai k saman tak. Pakistani khandan k liye mahana rashan baghair kisi cheez ko bhoolay plan karne ka behtareen tareeqa.'
               : 'From chakki atta and aged basmati rice to lentils, cooking oils, spices, and cleaning essentials. A practical, waste-reducing monthly grocery blueprint crafted for Pakistani homes.'}
           </p>
@@ -293,15 +282,13 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
               {addedListSuccess ? (
                 <>
                   <CheckCircle2 className="w-5 h-5 text-emerald-300" />
-                  <span>{language === 'ur' ? 'لسٹ یاد میں شامل ہوگئی!' : 'List Added to YAAD!'}</span>
+                  <span>{'List Added to YAAD!'}</span>
                 </>
               ) : (
                 <>
                   <ListPlus className="w-5 h-5" />
                   <span>
-                    {language === 'ur'
-                      ? 'یہ لسٹ یاد ایپ میں کھولیں'
-                      : language === 'roman-urdu'
+                    {language === 'roman-urdu'
                       ? 'Ye List YAAD Mein Load Karein'
                       : 'Load This Rashan List into YAAD'}
                   </span>
@@ -313,7 +300,7 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
               onClick={onBackToApp}
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-white border border-slate-300 text-slate-800 font-semibold text-sm sm:text-base hover:bg-slate-50 transition-colors cursor-pointer shadow-xs"
             >
-              <span>{language === 'ur' ? 'اپنی مرضی کی لسٹ بنائیں' : 'Create Custom List'}</span>
+              <span>{'Create Custom List'}</span>
               <ArrowLeft className={`w-4 h-4 ${isRTL ? '' : 'rotate-180'}`} />
             </button>
           </div>
@@ -334,9 +321,7 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
         {/* 2. The Problem with Monthly Rashan Shopping */}
         <section className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-4">
           <h2 className="text-xl sm:text-2xl font-bold text-[#003d2b]">
-            {language === 'ur'
-              ? 'ماہانہ راشن کی خریداری کے عمومی مسائل'
-              : language === 'roman-urdu'
+            {language === 'roman-urdu'
               ? 'Mahana Rashan Kharidte Waqt Aam Masail'
               : 'The Dilemma of Monthly Grocery Shopping in Pakistan'}
           </h2>
@@ -346,12 +331,10 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
                 ✕
               </div>
               <h3 className="font-bold text-slate-900">
-                {language === 'ur' ? 'کاغذ کی لسٹ کا گم ہونا یا کٹنا' : 'Lost Notes & Forgotten Items'}
+                {'Lost Notes & Forgotten Items'}
               </h3>
               <p>
-                {language === 'ur'
-                  ? 'کاغذ کی پرچی پر لکھی لسٹ دکان میں گم ہوجاتی ہے یا گھریلو فون کال پر بتائی گئی چیزیں کٹ جانے سے بھول جاتی ہیں۔'
-                  : 'Handwritten chits get crumpled, lost, or smudged in busy markets, leading to forgotten essentials.'}
+                {'Handwritten chits get crumpled, lost, or smudged in busy markets, leading to forgotten essentials.'}
               </p>
             </div>
 
@@ -360,12 +343,10 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
                 ⟲
               </div>
               <h3 className="font-bold text-slate-900">
-                {language === 'ur' ? 'دکان میں آگے پیچھے چکر کاٹنا' : 'Aisle Backtracking Fatigue'}
+                {'Aisle Backtracking Fatigue'}
               </h3>
               <p>
-                {language === 'ur'
-                  ? 'غیر منظم لسٹ کی وجہ سے کبھی دالوں کا رخ کرنا پڑتا ہے اور کبھی دوبارہ صفائی کے ریک کی طرف واپس جانا پڑتا ہے۔'
-                  : 'Unorganized lists force you to run back and forth between the spice rack, grain sacks, and detergent counters.'}
+                {'Unorganized lists force you to run back and forth between the spice rack, grain sacks, and detergent counters.'}
               </p>
             </div>
 
@@ -374,12 +355,10 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
                 ✓
               </div>
               <h3 className="font-bold text-slate-900">
-                {language === 'ur' ? 'یاد کا اسمارٹ حل' : 'YAAD’s Intelligent Memory'}
+                {'YAAD’s Intelligent Memory'}
               </h3>
               <p>
-                {language === 'ur'
-                  ? 'یاد ایپ خودکار طور پر تمام سودا سلف کو دکان کے حصوں کے مطابق ترتیب دیتی ہے تاکہ آپ ایک ہی چکر میں خریداری مکمل کریں۔'
-                  : 'YAAD auto-sorts every entered item into logical store aisles, saving time and keeping your mind at ease.'}
+                {'YAAD auto-sorts every entered item into logical store aisles, saving time and keeping your mind at ease.'}
               </p>
             </div>
           </div>
@@ -390,16 +369,12 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-[#003d2b]">
-                {language === 'ur'
-                  ? 'ماہانہ راشن کی درجہ بندی شدہ فہرست'
-                  : language === 'roman-urdu'
+                {language === 'roman-urdu'
                   ? 'Categorized Mahana Rashan Checklist'
                   : 'Categorized Monthly Rashan Checklist (Family of 4-5)'}
               </h2>
               <p className="text-sm text-slate-600 mt-1">
-                {language === 'ur'
-                  ? 'اوسط پاکستانی گھرانے کے لیے ۴ ہفتوں کے سودا سلف کے معیاری اندازے۔'
-                  : 'Standard 4-week pantry estimates for an average household. Adjust based on your family size.'}
+                {'Standard 4-week pantry estimates for an average household. Adjust based on your family size.'}
               </p>
             </div>
 
@@ -413,7 +388,7 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
                     : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
                 }`}
               >
-                {language === 'ur' ? 'تمام اجزاء' : 'All Categories'}
+                {'All Categories'}
               </button>
               {RASHAN_CATEGORIES.map((cat) => (
                 <button
@@ -508,14 +483,10 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
           <div className="p-6 rounded-3xl bg-linear-to-br from-[#005039] to-[#003d2b] text-white flex flex-col sm:flex-row items-center justify-between gap-6 shadow-md">
             <div className="space-y-1 text-center sm:text-left">
               <h4 className="text-lg font-bold">
-                {language === 'ur'
-                  ? 'کیا آپ یہ تمام چیزیں اپنی یاد لسٹ میں شامل کرنا چاہتے ہیں؟'
-                  : 'Ready to take this checklist with you to the store?'}
+                {'Ready to take this checklist with you to the store?'}
               </h4>
               <p className="text-xs text-white/80">
-                {language === 'ur'
-                  ? 'ایک کلک میں اپنے موبائل میں کھولیں اور بازار میں بغیر انٹرنیٹ ٹک کرتے جائیں۔'
-                  : 'Loads instantly into YAAD. Tick off items in the aisle even with zero mobile signal.'}
+                {'Loads instantly into YAAD. Tick off items in the aisle even with zero mobile signal.'}
               </p>
             </div>
 
@@ -525,8 +496,8 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
               className="px-5 py-3 rounded-2xl bg-white text-[#005039] font-bold text-sm hover:bg-slate-100 transition-all cursor-pointer whitespace-nowrap shadow-xs"
             >
               {addedListSuccess
-                ? (language === 'ur' ? 'شامل ہوگئی ✓' : 'Added to YAAD ✓')
-                : (language === 'ur' ? 'لسٹ لوڈ کریں' : 'Load Checklist')}
+                ? 'Added to YAAD ✓'
+                : 'Load Checklist'}
             </button>
           </div>
         </section>
@@ -539,14 +510,10 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
               <span>MARKET KNOWLEDGE</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-bold text-[#003d2b]">
-              {language === 'ur'
-                ? 'پاکستانی منڈی و کریانہ کے روایتی پیمانے'
-                : 'Traditional Pakistani Measurement Units Guide'}
+              {'Traditional Pakistani Measurement Units Guide'}
             </h2>
             <p className="text-sm text-slate-600">
-              {language === 'ur'
-                ? 'لوکل کریانہ اور سبزی منڈی میں خریداری کرتے وقت کلو، پاؤ اور دھڑی کو سمجھنا ضروری ہے۔'
-                : 'Understanding traditional Bazaar measurements ensures you get exact quantities without confusing metric terms.'}
+              {'Understanding traditional Bazaar measurements ensures you get exact quantities without confusing metric terms.'}
             </p>
           </div>
 
@@ -572,14 +539,10 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
         <section className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-6">
           <div className="space-y-1">
             <h2 className="text-xl sm:text-2xl font-bold text-[#003d2b]">
-              {language === 'ur'
-                ? 'راشن کی حفاظت اور بجٹ بچانے کے ۴ سنہری اصول'
-                : '4 Golden Rules for Household Rashan Management'}
+              {'4 Golden Rules for Household Rashan Management'}
             </h2>
             <p className="text-sm text-slate-600">
-              {language === 'ur'
-                ? 'ماہانہ راشن کو نمی، کیڑوں اور فضول خرچی سے بچانے کے گھریلو طریقے'
-                : 'Practical pantry audit and storage advice to minimize grocery waste and stretch monthly budgets.'}
+              {'Practical pantry audit and storage advice to minimize grocery waste and stretch monthly budgets.'}
             </p>
           </div>
 
@@ -587,48 +550,40 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
             <div className="p-4 rounded-2xl bg-[#fbf9f5] border border-slate-100 space-y-1.5">
               <h3 className="font-bold text-slate-900 flex items-center gap-2">
                 <span className="w-5 h-5 rounded-full bg-[#005039] text-white flex items-center justify-center text-xs">1</span>
-                <span>{language === 'ur' ? 'خریداری سے پہلے الماری کا معائنہ' : 'The "Dry Pantry Shake"'}</span>
+                <span>{'The "Dry Pantry Shake"'}</span>
               </h3>
               <p className="text-xs text-slate-600 leading-relaxed">
-                {language === 'ur'
-                  ? 'مارکیٹ جانے سے پہلے دالوں اور مصالحوں کے ڈبوں کو ہلا کر دیکھیں کہ کتنا پرانا ذخیرہ باقی ہے۔ کبھی بھی بچی ہوئی چیز کو دوبارہ نہ خریدیں۔'
-                  : 'Always inspect your existing pantry containers before finalizing the list. Households routinely overbuy staples they already have sitting in dark cabinets.'}
+                {'Always inspect your existing pantry containers before finalizing the list. Households routinely overbuy staples they already have sitting in dark cabinets.'}
               </p>
             </div>
 
             <div className="p-4 rounded-2xl bg-[#fbf9f5] border border-slate-100 space-y-1.5">
               <h3 className="font-bold text-slate-900 flex items-center gap-2">
                 <span className="w-5 h-5 rounded-full bg-[#005039] text-white flex items-center justify-center text-xs">2</span>
-                <span>{language === 'ur' ? 'آٹے کو کیڑے سے محفوظ رکھنا' : 'Weevil Protection for Atta'}</span>
+                <span>{'Weevil Protection for Atta'}</span>
               </h3>
               <p className="text-xs text-slate-600 leading-relaxed">
-                {language === 'ur'
-                  ? 'مون سون اور گرمی میں آٹے کے ڈبے میں خشک تیز پات یا ثابت لونگ رکھیں تاکہ سسری اور کیڑا نہ لگے۔'
-                  : 'During humid summer or monsoon months, insert a few whole cloves or dried bay leaves (tez paat) into large flour bins to deter weevils.'}
+                {'During humid summer or monsoon months, insert a few whole cloves or dried bay leaves (tez paat) into large flour bins to deter weevils.'}
               </p>
             </div>
 
             <div className="p-4 rounded-2xl bg-[#fbf9f5] border border-slate-100 space-y-1.5">
               <h3 className="font-bold text-slate-900 flex items-center gap-2">
                 <span className="w-5 h-5 rounded-full bg-[#005039] text-white flex items-center justify-center text-xs">3</span>
-                <span>{language === 'ur' ? 'ثابت مصالحوں کی خریداری' : 'Buy Whole Spices in Bulk'}</span>
+                <span>{'Buy Whole Spices in Bulk'}</span>
               </h3>
               <p className="text-xs text-slate-600 leading-relaxed">
-                {language === 'ur'
-                  ? 'ثابت زیرہ اور کالی مرچ خرید کر گھر میں پسوانا بازار کے کھلے پسے مصالحوں سے زیادہ خالص اور سستا ہوتا ہے۔'
-                  : 'Whole spices (zeera, kali mirch, darchini) retain their essential oils and aroma far longer than pre-ground powders and prevent adulteration.'}
+                {'Whole spices (zeera, kali mirch, darchini) retain their essential oils and aroma far longer than pre-ground powders and prevent adulteration.'}
               </p>
             </div>
 
             <div className="p-4 rounded-2xl bg-[#fbf9f5] border border-slate-100 space-y-1.5">
               <h3 className="font-bold text-slate-900 flex items-center gap-2">
                 <span className="w-5 h-5 rounded-full bg-[#005039] text-white flex items-center justify-center text-xs">4</span>
-                <span>{language === 'ur' ? 'کریانہ بمقابلہ سپر مارکیٹ' : 'Kiryana Provision vs Supermarket'}</span>
+                <span>{'Kiryana Provision vs Supermarket'}</span>
               </h3>
               <p className="text-xs text-slate-600 leading-relaxed">
-                {language === 'ur'
-                  ? 'دالیں، گھی اور آٹا لوکل کریانہ اسٹور یا تھوک منڈی سے خریدنا برانڈڈ سپر مارکیٹوں کی نسبت ۱۵ سے ۲۰ فیصد سستا پڑتا ہے۔'
-                  : 'Wholesale grains and pulses from trusted neighborhood kiryana provision merchants often cost 15-20% less than modern hypermarket chains.'}
+                {'Wholesale grains and pulses from trusted neighborhood kiryana provision merchants often cost 15-20% less than modern hypermarket chains.'}
               </p>
             </div>
           </div>
@@ -638,14 +593,10 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
         <section className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-6">
           <div className="space-y-1">
             <h2 className="text-xl sm:text-2xl font-bold text-[#003d2b]">
-              {language === 'ur'
-                ? 'اکثر پوچھے جانے والے سوالات (FAQ)'
-                : 'Frequently Asked Questions About Rashan Planning'}
+              {'Frequently Asked Questions About Rashan Planning'}
             </h2>
             <p className="text-sm text-slate-600">
-              {language === 'ur'
-                ? 'راشن لسٹ اور یاد ایپ کے استعمال سے متعلق فوری جوابات۔'
-                : 'Direct answers on monthly budgeting, local quantities, and using YAAD offline.'}
+              {'Direct answers on monthly budgeting, local quantities, and using YAAD offline.'}
             </p>
           </div>
 
@@ -684,15 +635,11 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            {language === 'ur'
-              ? 'اگلی خریداری پر کوئی چیز مت بھولیں'
-              : 'Never Forget What You Need to Buy Again'}
+            {'Never Forget What You Need to Buy Again'}
           </h2>
 
           <p className="text-sm sm:text-base text-white/80 max-w-xl mx-auto leading-relaxed">
-            {language === 'ur'
-              ? 'یاد ایپ پاکستانی خاندانوں کے لیے بنائی گئی ہے جو اردو اور انگریزی دونوں زبانوں میں کام کرتی ہے اور کسی اشتہار یا فیس کے بغیر دستیاب ہے۔'
-              : 'YAAD is built specifically around South Asian grocery habits. Private, fast, offline-ready, and completely free.'}
+            {'YAAD is built specifically around South Asian grocery habits. Private, fast, offline-ready, and completely free.'}
           </p>
 
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -707,7 +654,7 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
               onClick={onBackToApp}
               className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-[#003d2b] border border-white/20 text-white font-medium text-sm sm:text-base hover:bg-[#002d20] transition-colors cursor-pointer"
             >
-              {language === 'ur' ? 'براہ راست ایپ کھولیں' : 'Open YAAD Directly'}
+              {'Open YAAD Directly'}
             </button>
           </div>
         </section>
@@ -716,7 +663,7 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
         <footer className="pt-8 border-t border-slate-200/80 text-xs text-slate-500 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <span className="font-bold text-[#005039]">YAAD (یاد)</span>
+              <span className="font-bold text-[#005039]">YAAD</span>
               <span>•</span>
               <span>Smart Shopping Memory</span>
             </div>

@@ -1,7 +1,7 @@
 export interface CountryData {
   iso: string;
   name: string;
-  nameUrdu: string;
+    nameUrdu: '',
   dialCode: string;
   flag: string;
   placeholder: string;
@@ -15,7 +15,7 @@ export const COUNTRIES: CountryData[] = [
   {
     iso: 'PK',
     name: 'Pakistan',
-    nameUrdu: 'پاکستان',
+    nameUrdu: '',
     dialCode: '+92',
     flag: '🇵🇰',
     placeholder: '300 1234567',
@@ -27,7 +27,7 @@ export const COUNTRIES: CountryData[] = [
   {
     iso: 'AE',
     name: 'United Arab Emirates',
-    nameUrdu: 'متحدہ عرب امارات',
+    nameUrdu: '',
     dialCode: '+971',
     flag: '🇦🇪',
     placeholder: '50 123 4567',
@@ -39,7 +39,7 @@ export const COUNTRIES: CountryData[] = [
   {
     iso: 'SA',
     name: 'Saudi Arabia',
-    nameUrdu: 'سعودی عرب',
+    nameUrdu: '',
     dialCode: '+966',
     flag: '🇸🇦',
     placeholder: '50 123 4567',
@@ -51,7 +51,7 @@ export const COUNTRIES: CountryData[] = [
   {
     iso: 'GB',
     name: 'United Kingdom',
-    nameUrdu: 'برطانیہ',
+    nameUrdu: '',
     dialCode: '+44',
     flag: '🇬🇧',
     placeholder: '7911 123456',
@@ -63,7 +63,7 @@ export const COUNTRIES: CountryData[] = [
   {
     iso: 'US',
     name: 'United States',
-    nameUrdu: 'ریاستہائے متحدہ امریکہ',
+    nameUrdu: '',
     dialCode: '+1',
     flag: '🇺🇸',
     placeholder: '555 123 4567',
@@ -75,7 +75,7 @@ export const COUNTRIES: CountryData[] = [
   {
     iso: 'QA',
     name: 'Qatar',
-    nameUrdu: 'قطر',
+    nameUrdu: '',
     dialCode: '+974',
     flag: '🇶🇦',
     placeholder: '3312 3456',
@@ -87,7 +87,7 @@ export const COUNTRIES: CountryData[] = [
   {
     iso: 'OM',
     name: 'Oman',
-    nameUrdu: 'عمان',
+    nameUrdu: '',
     dialCode: '+968',
     flag: '🇴🇲',
     placeholder: '9123 4567',
@@ -99,7 +99,7 @@ export const COUNTRIES: CountryData[] = [
   {
     iso: 'AU',
     name: 'Australia',
-    nameUrdu: 'آسٹریلیا',
+    nameUrdu: '',
     dialCode: '+61',
     flag: '🇦🇺',
     placeholder: '412 345 678',
@@ -111,7 +111,7 @@ export const COUNTRIES: CountryData[] = [
   {
     iso: 'CA',
     name: 'Canada',
-    nameUrdu: 'کینیڈا',
+    nameUrdu: '',
     dialCode: '+1',
     flag: '🇨🇦',
     placeholder: '416 123 4567',
@@ -123,7 +123,7 @@ export const COUNTRIES: CountryData[] = [
   {
     iso: 'KW',
     name: 'Kuwait',
-    nameUrdu: 'کویت',
+    nameUrdu: '',
     dialCode: '+965',
     flag: '🇰🇼',
     placeholder: '9123 4567',
@@ -135,7 +135,7 @@ export const COUNTRIES: CountryData[] = [
   {
     iso: 'BH',
     name: 'Bahrain',
-    nameUrdu: 'بحرین',
+    nameUrdu: '',
     dialCode: '+973',
     flag: '🇧🇭',
     placeholder: '3912 3456',
@@ -147,7 +147,7 @@ export const COUNTRIES: CountryData[] = [
   {
     iso: 'IN',
     name: 'India',
-    nameUrdu: 'بھارت',
+    nameUrdu: '',
     dialCode: '+91',
     flag: '🇮🇳',
     placeholder: '98765 43210',
@@ -159,7 +159,7 @@ export const COUNTRIES: CountryData[] = [
   {
     iso: 'BD',
     name: 'Bangladesh',
-    nameUrdu: 'بنگلہ دیش',
+    nameUrdu: '',
     dialCode: '+880',
     flag: '🇧🇩',
     placeholder: '1712 345678',
@@ -171,7 +171,7 @@ export const COUNTRIES: CountryData[] = [
   {
     iso: 'MY',
     name: 'Malaysia',
-    nameUrdu: 'ملائیشیا',
+    nameUrdu: '',
     dialCode: '+60',
     flag: '🇲🇾',
     placeholder: '12 345 6789',
@@ -182,7 +182,7 @@ export const COUNTRIES: CountryData[] = [
   {
     iso: 'TR',
     name: 'Turkey',
-    nameUrdu: 'ترکی',
+    nameUrdu: '',
     dialCode: '+90',
     flag: '🇹🇷',
     placeholder: '512 345 6789',
@@ -194,7 +194,7 @@ export const COUNTRIES: CountryData[] = [
   {
     iso: 'SG',
     name: 'Singapore',
-    nameUrdu: 'سنگاپور',
+    nameUrdu: '',
     dialCode: '+65',
     flag: '🇸🇬',
     placeholder: '8123 4567',
@@ -206,7 +206,7 @@ export const COUNTRIES: CountryData[] = [
   {
     iso: 'DE',
     name: 'Germany',
-    nameUrdu: 'جرمنی',
+    nameUrdu: '',
     dialCode: '+49',
     flag: '🇩🇪',
     placeholder: '151 12345678',
@@ -217,7 +217,7 @@ export const COUNTRIES: CountryData[] = [
   {
     iso: 'FR',
     name: 'France',
-    nameUrdu: 'فرانس',
+    nameUrdu: '',
     dialCode: '+33',
     flag: '🇫🇷',
     placeholder: '6 12 34 56 78',
@@ -229,7 +229,7 @@ export const COUNTRIES: CountryData[] = [
   {
     iso: 'IE',
     name: 'Ireland',
-    nameUrdu: 'آئرلینڈ',
+    nameUrdu: '',
     dialCode: '+353',
     flag: '🇮🇪',
     placeholder: '85 123 4567',
@@ -241,7 +241,7 @@ export const COUNTRIES: CountryData[] = [
   {
     iso: 'NZ',
     name: 'New Zealand',
-    nameUrdu: 'نیوزی لینڈ',
+    nameUrdu: '',
     dialCode: '+64',
     flag: '🇳🇿',
     placeholder: '21 123 4567',
@@ -252,7 +252,7 @@ export const COUNTRIES: CountryData[] = [
   {
     iso: 'ZA',
     name: 'South Africa',
-    nameUrdu: 'جنوبی افریقہ',
+    nameUrdu: '',
     dialCode: '+27',
     flag: '🇿🇦',
     placeholder: '71 234 5678',
@@ -264,7 +264,7 @@ export const COUNTRIES: CountryData[] = [
   {
     iso: 'EG',
     name: 'Egypt',
-    nameUrdu: 'مصر',
+    nameUrdu: '',
     dialCode: '+20',
     flag: '🇪🇬',
     placeholder: '100 123 4567',
@@ -276,7 +276,7 @@ export const COUNTRIES: CountryData[] = [
   {
     iso: 'LK',
     name: 'Sri Lanka',
-    nameUrdu: 'سری لنکا',
+    nameUrdu: '',
     dialCode: '+94',
     flag: '🇱🇰',
     placeholder: '71 234 5678',
@@ -509,27 +509,21 @@ export function validatePhoneNumber(
   if (!digits || digits.length === 0) {
     return {
       isValid: false,
-      error: lang === 'ur' ? 'براہ کرم اپنا فون نمبر درج کریں' : 'Please enter your phone number.',
+      error: 'Please enter your phone number.',
     };
   }
 
   if (country.exactDigits && digits.length !== country.exactDigits) {
     return {
       isValid: false,
-      error:
-        lang === 'ur'
-          ? `${country.nameUrdu} کا نمبر ${country.exactDigits} ہندسوں کا ہونا چاہیے (مثال: ${country.example})`
-          : `Please enter a valid ${country.exactDigits}-digit ${country.name} number (e.g. ${country.example}).`,
+      error: `Please enter a valid ${country.exactDigits}-digit ${country.name} number (e.g. ${country.example}).`,
     };
   }
 
   if (digits.length < country.minDigits || digits.length > country.maxDigits) {
     return {
       isValid: false,
-      error:
-        lang === 'ur'
-          ? `${country.nameUrdu} کا درست فون نمبر درج کریں (${country.minDigits}-${country.maxDigits} ہندسے)`
-          : `Please enter a valid ${country.name} phone number (${country.minDigits}-${country.maxDigits} digits).`,
+      error: `Please enter a valid ${country.name} phone number (${country.minDigits}-${country.maxDigits} digits).`,
     };
   }
 

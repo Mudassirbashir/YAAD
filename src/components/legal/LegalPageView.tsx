@@ -64,9 +64,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
       : '/rashan-list';
 
   const rashanListLabel =
-    language === 'ur'
-      ? 'ماہانہ راشن لسٹ'
-      : language === 'roman-urdu'
+    language === 'roman-urdu'
       ? 'Mahana Rashan List'
       : 'Monthly Rashan List';
 
@@ -208,13 +206,13 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
               <button
                 type="button"
                 onClick={() => setLanguage('ur')}
-                className={`px-2.5 py-1 rounded-full font-semibold transition-all font-urdu ${
+                className={`px-2.5 py-1 rounded-full font-semibold transition-all ${
                   language === 'ur'
                     ? 'bg-primary text-on-primary shadow-xs'
                     : 'text-on-surface-variant hover:text-on-surface'
                 }`}
               >
-                اردو
+                Urdu
               </button>
             </div>
 
@@ -373,7 +371,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
               }`}
             >
               <Newspaper className="w-3.5 h-3.5 shrink-0" />
-              <span>{language === 'ur' ? 'بلاگ اور آرٹیکلز' : language === 'roman-urdu' ? 'Blog & Articles' : 'Blog'}</span>
+              <span>{language === 'roman-urdu' ? 'Blog & Articles' : 'Blog'}</span>
             </a>
           </nav>
         </div>
@@ -636,9 +634,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                 >
                   <ShoppingBag className="w-4 h-4 shrink-0" />
                   <span>
-                    {language === 'ur'
-                      ? 'ماہانہ راشن لسٹ گائیڈ اور گھریلو چیک لسٹ دیکھیں ←'
-                      : language === 'roman-urdu'
+                    {language === 'roman-urdu'
                       ? 'Monthly Rashan List Guide & Pantry Checklist Dekhein →'
                       : 'Explore the Monthly Rashan List Guide & Household Checklist →'}
                   </span>
@@ -925,17 +921,13 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
             <div className="p-6 sm:p-8 rounded-3xl bg-surface border border-surface-dim flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="space-y-1.5">
                 <span className="text-xs font-bold uppercase tracking-wider text-primary">
-                  {language === 'ur' ? 'یاد ادارتی گائیڈز' : 'YAAD Editorial & Guides'}
+                  YAAD Editorial & Guides
                 </span>
                 <h2 className="text-xl sm:text-2xl font-extrabold text-on-surface font-['Manrope']">
-                  {language === 'ur'
-                    ? 'گھریلو سودا سلف اور ماہانہ راشن کی سمارٹ رہنمائی'
-                    : 'Smart Grocery & Household Shopping Guides'}
+                  Smart Grocery & Household Shopping Guides
                 </h2>
                 <p className="text-xs sm:text-sm text-outline max-w-2xl">
-                  {language === 'ur'
-                    ? 'پاکستانی کچن کے لیے راشن کی منصوبہ بندی، روایتی پیمانوں کی معلومات اور بجٹ بچانے کے طریقے'
-                    : 'Practical articles crafted for Pakistani households to save money, avoid forgotten items, and master local grocery shopping.'}
+                  Practical articles crafted for Pakistani households to save money, avoid forgotten items, and master local grocery shopping.
                 </p>
               </div>
               <div className="w-12 h-12 rounded-2xl bg-primary-fixed/50 flex items-center justify-center text-primary shrink-0">

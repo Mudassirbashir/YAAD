@@ -126,11 +126,11 @@ export const PreferencesSection: React.FC<PreferencesSectionProps> = ({
               }`}
             >
               <div className="min-w-0 pe-2">
-                <div className="font-bold text-base text-on-surface font-urdu">
-                  {t('settings.languageUrdu') || 'اردو'}
+                <div className="font-bold text-sm text-on-surface font-['Manrope']">
+                  {t('settings.languageUrdu') || 'Urdu'}
                 </div>
                 <div className="text-[11px] text-outline truncate">
-                  {t('settings.languageUrduSub') || 'آسان اردو'}
+                  {t('settings.languageUrduSub') || 'Urdu mode'}
                 </div>
               </div>
               {language === 'ur' && (

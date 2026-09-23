@@ -27,8 +27,7 @@ interface LandingPageViewProps {
 
 interface InteractiveDemoItem {
   id: string;
-  nameEn: string;
-  nameUr: string;
+  name: string;
   quantity: string;
   icon: string;
   completed: boolean;
@@ -43,11 +42,11 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
 }) => {
   // Ultra-clear, child-friendly interactive checklist
   const [demoItems, setDemoItems] = useState<InteractiveDemoItem[]>([
-    { id: '1', nameEn: 'Fresh Milk', nameUr: 'تازہ دودھ', quantity: '2 Litre', icon: '🥛', completed: true },
-    { id: '2', nameEn: 'Eggs', nameUr: 'انڈے', quantity: '1 Dozen', icon: '🥚', completed: true },
-    { id: '3', nameEn: 'Biscuits & Snacks', nameUr: 'بسکٹ', quantity: '2 Packs', icon: '🍪', completed: false },
-    { id: '4', nameEn: 'Pyaz (Onions)', nameUr: 'پیاز', quantity: '1 دھڑی (5 kg)', icon: '🧅', completed: false },
-    { id: '5', nameEn: 'Chakki Atta', nameUr: 'چکی کا آٹا', quantity: '10 kg', icon: '🌾', completed: false },
+    { id: '1', name: 'Fresh Milk', quantity: '2 Liters', icon: '🥛', completed: true },
+    { id: '2', name: 'Eggs', quantity: '1 Dozen', icon: '🥚', completed: true },
+    { id: '3', name: 'Biscuits & Snacks', quantity: '2 Packs', icon: '🍪', completed: false },
+    { id: '4', name: 'Fresh Onions', quantity: '5 kg', icon: '🧅', completed: false },
+    { id: '5', name: 'Wheat Flour (Atta)', quantity: '10 kg', icon: '🌾', completed: false },
   ]);
 
   const toggleDemoItem = (id: string) => {
@@ -58,11 +57,10 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
     );
   };
 
-  const addQuickItem = (nameEn: string, nameUr: string, quantity: string, icon: string) => {
+  const addQuickItem = (name: string, quantity: string, icon: string) => {
     const newItem: InteractiveDemoItem = {
       id: Date.now().toString(),
-      nameEn,
-      nameUr,
+      name,
       quantity,
       icon,
       completed: false,
@@ -72,11 +70,11 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
 
   const resetDemo = () => {
     setDemoItems([
-      { id: '1', nameEn: 'Fresh Milk', nameUr: 'تازہ دودھ', quantity: '2 Litre', icon: '🥛', completed: false },
-      { id: '2', nameEn: 'Eggs', nameUr: 'انڈے', quantity: '1 Dozen', icon: '🥚', completed: false },
-      { id: '3', nameEn: 'Biscuits & Snacks', nameUr: 'بسکٹ', quantity: '2 Packs', icon: '🍪', completed: false },
-      { id: '4', nameEn: 'Pyaz (Onions)', nameUr: 'پیاز', quantity: '1 دھڑی (5 kg)', icon: '🧅', completed: false },
-      { id: '5', nameEn: 'Chakki Atta', nameUr: 'چکی کا آٹا', quantity: '10 kg', icon: '🌾', completed: false },
+      { id: '1', name: 'Fresh Milk', quantity: '2 Liters', icon: '🥛', completed: false },
+      { id: '2', name: 'Eggs', quantity: '1 Dozen', icon: '🥚', completed: false },
+      { id: '3', name: 'Biscuits & Snacks', quantity: '2 Packs', icon: '🍪', completed: false },
+      { id: '4', name: 'Fresh Onions', quantity: '5 kg', icon: '🧅', completed: false },
+      { id: '5', name: 'Wheat Flour (Atta)', quantity: '10 kg', icon: '🌾', completed: false },
     ]);
   };
 
@@ -108,9 +106,6 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
                   (e.target as HTMLElement).style.display = 'none';
                 }}
               />
-              <span className="hidden sm:inline-block font-urdu text-base text-[#005039] font-bold">
-                یاد
-              </span>
             </a>
           </div>
 
@@ -177,7 +172,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
       )}
 
       {/* ==================================================================== */}
-      {/* 2. HERO SECTION — SO SIMPLE AN 8-YEAR-OLD GETS IT IN 3 SECONDS */}
+      {/* 2. HERO SECTION — SIMPLE AND CLEAR */}
       {/* ==================================================================== */}
       <section className="pt-8 pb-12 sm:pt-14 sm:pb-16 px-4 sm:px-6 max-w-5xl mx-auto">
         <div className="text-center max-w-3xl mx-auto">
@@ -185,23 +180,22 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
           <div className="inline-flex items-center gap-2 bg-white border border-[#e5e1d8] rounded-full px-4 py-1.5 mb-5 shadow-2xs">
             <Sparkles className="w-4 h-4 text-[#005039]" />
             <span className="text-xs sm:text-sm font-bold text-[#005039]">
-              کاغذ پینسل چھوڑیں — دکان پر جانا اب بالکل آسان!
+              Forget Paper &amp; Pencil — Shopping Made Super Simple!
             </span>
           </div>
 
-          {/* Simple, Emotional, Crystal-Clear Main Headline */}
+          {/* Simple, Clear Main Headline */}
           <h1 className="text-3xl sm:text-5xl font-black text-[#1c2826] tracking-tight leading-[1.18] mb-3 font-['Plus_Jakarta_Sans',sans-serif]">
-            دکان پر جا کر بھول گئے <br className="hidden sm:inline" />
-            کہ کیا لانا تھا؟
+            Forgot what you went to the shop to buy?
           </h1>
 
           <p className="text-xl sm:text-2xl font-bold text-[#005039] mb-3 font-['Plus_Jakarta_Sans',sans-serif]">
             Never Forget What to Buy Again!
           </p>
 
-          {/* Crystal Clear 8-Year-Old Explanation */}
+          {/* Crystal Clear Explanation */}
           <p className="text-sm sm:text-base text-[#556960] max-w-2xl mx-auto mb-8 leading-relaxed">
-            امی نے سودا لینے بھیجا ہو یا گھر کا راشن لانا ہو: <strong>جو چاہیے وہ لکھ لیں</strong>، اور دکان پر ملتے ہی <strong>ٹک کر دیں</strong>۔ کوئی چیز کبھی نہیں بھولے گی!
+            Going for a quick shop or monthly groceries? <strong>Write down what you need</strong>, then <strong>tap to check it off</strong> as you buy. You will never forget an item!
           </p>
 
           {/* Main Action CTAs */}
@@ -211,7 +205,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
               onClick={onGetStarted}
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#005039] hover:bg-[#00402e] text-white font-bold text-sm sm:text-base px-7 py-3.5 rounded-2xl shadow-sm hover:shadow-md transition-all active:scale-98 cursor-pointer"
             >
-              <span>{user ? 'Open Your Shopping Lists' : 'ابھی لسٹ بنائیں — بالکل مفت'}</span>
+              <span>{user ? 'Open Your Shopping Lists' : 'Make a Free List Now'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
             <button
@@ -220,7 +214,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white hover:bg-[#f3f0e8] text-[#1c2826] font-semibold text-sm sm:text-base px-5 py-3.5 rounded-2xl border border-[#e5e1d8] shadow-2xs transition-all cursor-pointer"
             >
               <ShoppingBag className="w-4 h-4 text-[#005039]" />
-              <span>Monthly Rashan Guide (راشن لسٹ)</span>
+              <span>Monthly Grocery Guide</span>
             </button>
           </div>
         </div>
@@ -231,43 +225,43 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
         <div className="max-w-3xl mx-auto mb-10 grid grid-cols-1 sm:grid-cols-3 gap-3.5">
           <div className="bg-white/80 border border-[#e5e1d8] rounded-2xl p-4 text-center shadow-2xs flex flex-col items-center">
             <div className="w-10 h-10 rounded-full bg-[#005039]/10 text-[#005039] font-black text-sm flex items-center justify-center mb-2">
-              ۱
+              1
             </div>
-            <h3 className="text-sm font-bold text-[#1c2826] font-urdu">
-              پہلے لکھیں 📝
+            <h3 className="text-sm font-bold text-[#1c2826]">
+              Write It Down 📝
             </h3>
             <p className="text-xs text-[#556960] mt-1">
-              جو چیز بھی لانی ہے (دودھ، انڈے، آٹا) اس کو لسٹ میں ڈال لیں۔
+              Add what you need to buy (milk, eggs, snacks) in seconds.
             </p>
           </div>
 
           <div className="bg-white/80 border border-[#e5e1d8] rounded-2xl p-4 text-center shadow-2xs flex flex-col items-center">
             <div className="w-10 h-10 rounded-full bg-[#005039]/10 text-[#005039] font-black text-sm flex items-center justify-center mb-2">
-              ۲
+              2
             </div>
-            <h3 className="text-sm font-bold text-[#1c2826] font-urdu">
-              دکان پر جائیں 🏪
+            <h3 className="text-sm font-bold text-[#1c2826]">
+              Go to the Shop 🏪
             </h3>
             <p className="text-xs text-[#556960] mt-1">
-              انٹرنیٹ بند بھی ہو تو پریشانی نہیں، لسٹ فون میں کھلی رہے گی!
+              Open your list on your phone. Works even if your internet is off!
             </p>
           </div>
 
           <div className="bg-white/80 border border-[#e5e1d8] rounded-2xl p-4 text-center shadow-2xs flex flex-col items-center">
             <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-800 font-black text-sm flex items-center justify-center mb-2">
-              ۳
+              3
             </div>
-            <h3 className="text-sm font-bold text-[#1c2826] font-urdu">
-              ٹک کریں ✅
+            <h3 className="text-sm font-bold text-[#1c2826]">
+              Check It Off ✅
             </h3>
             <p className="text-xs text-[#556960] mt-1">
-              چیز تھیلے میں ڈالی، انگلی سے دبایا اور ٹک ہو گیا!
+              Put the item in your bag, tap the box, and it is checked off!
             </p>
           </div>
         </div>
 
         {/* ==================================================================== */}
-        {/* INTERACTIVE PLAYGROUND CARD (Live demo an 8-year-old can play with!) */}
+        {/* INTERACTIVE PLAYGROUND CARD (Live demo anyone can play with!) */}
         {/* ==================================================================== */}
         <div className="max-w-xl mx-auto bg-white rounded-3xl border-2 border-[#005039]/20 shadow-md p-5 sm:p-6 relative overflow-hidden">
           {/* Top Bar */}
@@ -279,14 +273,14 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="text-sm font-bold text-[#1c2826]">
-                    امتحانی لسٹ (خود چلا کر دیکھیں)
+                    Interactive Grocery List
                   </h3>
                   <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
                     Try it now
                   </span>
                 </div>
                 <p className="text-xs text-[#556960]">
-                  کسی بھی چیز پر کلک کریں تاکہ وہ ٹک ہو جائے
+                  Tap any item to check it off
                 </p>
               </div>
             </div>
@@ -309,8 +303,8 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
           <div className="my-3 bg-[#faf8f5] rounded-xl p-2.5 border border-[#e5e1d8]/70 flex items-center justify-between text-xs">
             <span className="text-[#3d5046] font-medium">
               {isAllCompleted
-                ? '🎉 زبردست! سب چیزیں مل گئیں، اب گھر چلیں!'
-                : `${completedCount} چیز مل گئی، باقی ${demoItems.length - completedCount} لینا رہتی ہیں`}
+                ? '🎉 Great job! Everything is checked off, ready to go home!'
+                : `${completedCount} checked off, ${demoItems.length - completedCount} items left to buy`}
             </span>
             <div className="w-20 bg-gray-200 rounded-full h-2 overflow-hidden">
               <div
@@ -340,7 +334,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
                   >
                     {item.completed && <Check className="w-4 h-4 stroke-[3]" />}
                   </div>
-                  <div className="truncate flex items-center gap-1.5">
+                  <div className="truncate flex items-center gap-2">
                     <span className="text-base">{item.icon}</span>
                     <span
                       className={`text-sm font-medium transition-all ${
@@ -349,15 +343,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
                           : 'text-[#1c2826] font-bold'
                       }`}
                     >
-                      {item.nameEn}
-                    </span>
-                    <span className="text-xs text-[#b0a99c]">•</span>
-                    <span
-                      className={`text-xs font-urdu ${
-                        item.completed ? 'text-[#8b9992] line-through' : 'text-[#556960]'
-                      }`}
-                    >
-                      {item.nameUr}
+                      {item.name}
                     </span>
                   </div>
                 </div>
@@ -370,33 +356,33 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
 
           {/* Quick-add chips to show how easy it is */}
           <div className="mt-4 pt-3 border-t border-[#f2efe9]">
-            <p className="text-[11px] font-bold text-[#556960] mb-2 font-urdu">
-              کچھ اور شامل کر کے دیکھیں:
+            <p className="text-[11px] font-bold text-[#556960] mb-2">
+              Try adding an item:
             </p>
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
-                onClick={() => addQuickItem('Chocolate', 'چاکلیٹ', '1 Bar', '🍫')}
+                onClick={() => addQuickItem('Chocolate', '1 Bar', '🍫')}
                 className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-[#faf8f5] hover:bg-[#f0ebe1] border border-[#e5e1d8] text-[#1c2826] font-medium transition-all active:scale-95 cursor-pointer"
               >
                 <Plus className="w-3 h-3 text-[#005039]" />
-                <span>🍫 چاکلیٹ</span>
+                <span>🍫 Chocolate</span>
               </button>
               <button
                 type="button"
-                onClick={() => addQuickItem('Juice', 'جوس', '1 Pack', '🧃')}
+                onClick={() => addQuickItem('Fruit Juice', '1 Pack', '🧃')}
                 className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-[#faf8f5] hover:bg-[#f0ebe1] border border-[#e5e1d8] text-[#1c2826] font-medium transition-all active:scale-95 cursor-pointer"
               >
                 <Plus className="w-3 h-3 text-[#005039]" />
-                <span>🧃 جوس</span>
+                <span>🧃 Fruit Juice</span>
               </button>
               <button
                 type="button"
-                onClick={() => addQuickItem('Dahi (Yogurt)', 'دہی', '1 پاؤ', '🥣')}
+                onClick={() => addQuickItem('Fresh Yogurt', '1 Cup', '🥣')}
                 className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-[#faf8f5] hover:bg-[#f0ebe1] border border-[#e5e1d8] text-[#1c2826] font-medium transition-all active:scale-95 cursor-pointer"
               >
                 <Plus className="w-3 h-3 text-[#005039]" />
-                <span>🥣 دہی (1 پاؤ)</span>
+                <span>🥣 Fresh Yogurt</span>
               </button>
             </div>
           </div>
@@ -405,14 +391,14 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
           <div className="mt-4 pt-3 border-t border-[#f2efe9] flex items-center justify-between text-xs text-[#556960]">
             <span className="inline-flex items-center gap-1.5 text-emerald-700 font-semibold">
               <CheckCircle2 className="w-3.5 h-3.5" />
-              انٹرنیٹ کے بغیر بھی کام کرتا ہے
+              Works offline (no internet needed)
             </span>
             <button
               type="button"
               onClick={onGetStarted}
               className="text-[#005039] font-bold hover:underline cursor-pointer"
             >
-              اپنی اصلی لسٹ بنائیں &rarr;
+              Create Your Own List &rarr;
             </button>
           </div>
         </div>
@@ -424,10 +410,10 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
       <section className="py-12 px-4 sm:px-6 max-w-5xl mx-auto border-t border-[#e5e1d8]">
         <div className="text-center max-w-xl mx-auto mb-10">
           <h2 className="text-2xl sm:text-3xl font-extrabold text-[#1c2826] tracking-tight">
-            یہ ایپ اتنی آسان کیوں ہے؟
+            Why Is YAAD So Easy to Use?
           </h2>
           <p className="text-xs sm:text-sm text-[#556960] mt-2">
-            کسی مشکل مینو یا الجھن کے بغیر — صرف ۳ بنیادی چیزیں
+            No confusing menus or complicated settings — just 3 simple features
           </p>
         </div>
 
@@ -442,11 +428,11 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
                 Fast, Clutter-Free Lists
               </h3>
               <p className="text-xs sm:text-sm text-[#556960] leading-relaxed">
-                کاغذ اور پینسل کی طرح آسان! دکان جانے سے پہلے جو چاہیے لکھ لیں، اور سودا لیتے ہی ٹک کر دیں۔ کوئی فالتو بٹن نہیں۔
+                Just like pencil and paper! Write what you need before leaving home, and check items off one by one as you shop. Nothing gets in your way.
               </p>
             </div>
             <div className="mt-5 pt-3 border-t border-[#f2efe9] text-xs font-bold text-[#005039]">
-              سودا سلف کی آسان فہرست
+              Simple &amp; Fast Grocery Lists
             </div>
           </div>
 
@@ -460,11 +446,11 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
                 Pakistani Units &amp; Rashan
               </h3>
               <p className="text-xs sm:text-sm text-[#556960] leading-relaxed">
-                پاؤ، کلو، درجن اور دھڑی — وہی الفاظ جو دکاندار بولتا ہے۔ ساتھ ہی پورے مہینے کے راشن کی ریڈی میڈ لسٹ بھی موجود ہے۔
+                Easily track everyday units like kg, grams, dozens, and packs. Comes with a ready-made monthly grocery checklist.
               </p>
             </div>
             <div className="mt-5 pt-3 border-t border-[#f2efe9] text-xs font-bold text-[#005039]">
-              روایتی پیمانے اور راشن
+              Everyday Units &amp; Shopping Guides
             </div>
           </div>
 
@@ -478,11 +464,11 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
                 Private &amp; Secure Sync
               </h3>
               <p className="text-xs sm:text-sm text-[#556960] leading-relaxed">
-                امی، ابو یا آپ — کسی بھی فون پر گوگل سے کھولیں، لسٹ سامنے آ جائے گی۔ آپ کا ڈیٹا ۱۰۰٪ محفوظ اور نجی رہتا ہے۔
+                Sign in with Google so your family can access the list on any phone. Your lists stay 100% private, safe, and backed up.
               </p>
             </div>
             <div className="mt-5 pt-3 border-t border-[#f2efe9] text-xs font-bold text-[#005039]">
-              محفوظ اور نجی ڈیٹا
+              Private &amp; Secure Cloud Backup
             </div>
           </div>
         </div>
@@ -530,7 +516,6 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
             <div className="flex items-center gap-2.5">
               <img src="/logo.png" alt="YAAD" className="w-7 h-7 object-contain" />
               <span className="font-bold text-base text-[#1c2826]">YAAD</span>
-              <span className="font-urdu text-sm text-[#005039] font-semibold">یاد</span>
             </div>
             <p className="text-xs text-[#556960] leading-relaxed">
               Thoughtful shopping memory and monthly rashan checklist for Pakistani households. Built for real kiryana trips.
@@ -562,7 +547,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
                   onClick={onOpenRashanList}
                   className="hover:text-[#005039] transition-colors cursor-pointer"
                 >
-                  Monthly Rashan Guide (ماہانہ راشن)
+                  Monthly Rashan Guide
                 </button>
               </li>
               <li>
@@ -601,7 +586,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
                   onClick={() => onOpenLegalPage('blog')}
                   className="text-[#005039] font-bold hover:underline transition-colors cursor-pointer"
                 >
-                  Browse All Articles (بلاگ) &rarr;
+                  Browse All Articles &rarr;
                 </button>
               </li>
               <li>
@@ -681,7 +666,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
 
         {/* Bottom Copyright Strip */}
         <div className="max-w-6xl mx-auto pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#788880]">
-          <p>&copy; {new Date().getFullYear()} YAAD (یاد). All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} YAAD. All rights reserved.</p>
           <div className="flex items-center gap-4">
             <button
               type="button"

@@ -588,7 +588,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                   {t('addItems.title') || 'Add Items'}
                 </h3>
                 <span className="text-xs font-['Manrope'] text-on-surface-variant font-medium">
-                  English, اردو, Roman Urdu
+                  English & Roman Urdu
                 </span>
               </div>
 
@@ -925,11 +925,6 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                               <span className="font-['Manrope'] text-sm font-semibold text-primary truncate">
                                 {item.name}
                               </span>
-                              {item.nameUrdu && (
-                                <span className="font-urdu text-xs text-on-surface-variant">
-                                  ({item.nameUrdu})
-                                </span>
-                              )}
                             </div>
 
                             {/* Category selector */}

@@ -60,12 +60,12 @@ export const LEGAL_METADATA: Record<
     title: {
       en: 'Terms & Conditions',
       romanUrdu: 'Terms & Conditions (Sharaait)',
-      ur: 'شرائط و ضوابط',
+      ur: 'Terms & Conditions',
     },
     subtitle: {
       en: 'Clear, straightforward terms regarding your use of YAAD Smart Shopping Memory.',
       romanUrdu: 'YAAD app istemal karne ki aasan aur wazeh sharaait.',
-      ur: 'یاد ایپ کے استعمال سے متعلق شفاف اور آسان شرائط و ضوابط۔',
+      ur: 'Clear, straightforward terms regarding your use of YAAD Smart Shopping Memory.',
     },
     lastUpdated: 'September 2026',
   },
@@ -75,12 +75,12 @@ export const LEGAL_METADATA: Record<
     title: {
       en: 'Privacy Policy',
       romanUrdu: 'Privacy Policy (Raazdari)',
-      ur: 'پرائیویسی پالیسی',
+      ur: 'Privacy Policy',
     },
     subtitle: {
       en: 'How we safeguard your shopping lists, account credentials, and offline data.',
       romanUrdu: 'Aapki shopping lists, account aur data ko mehfooz rakhne ki policy.',
-      ur: 'آپ کی خریداری کی لسٹوں اور ذاتی ڈیٹا کے تحفظ کی مکمل ضمانت۔',
+      ur: 'How we safeguard your shopping lists, account credentials, and offline data.',
     },
     lastUpdated: 'September 2026',
   },
@@ -90,12 +90,12 @@ export const LEGAL_METADATA: Record<
     title: {
       en: 'About YAAD',
       romanUrdu: 'YAAD K Baaray Mein',
-      ur: 'یاد ایپ کے بارے میں',
+      ur: 'About YAAD',
     },
     subtitle: {
       en: 'The story, craftsmanship, and bilingual intelligence behind your daily shopping memory.',
       romanUrdu: 'YAAD app ki kahani, bilingual intelligence aur maqsad.',
-      ur: 'یاد ایپ کا مقصد، کہانی اور دو لسانی خصوصیات۔',
+      ur: 'The story, craftsmanship, and bilingual intelligence behind your daily shopping memory.',
     },
     lastUpdated: 'September 2026',
   },
@@ -105,12 +105,12 @@ export const LEGAL_METADATA: Record<
     title: {
       en: 'Help & Support',
       romanUrdu: 'Madad Aur Support',
-      ur: 'مدد اور رہنمائی',
+      ur: 'Help & Support',
     },
     subtitle: {
       en: 'Frequently asked questions, troubleshooting tips, and direct contact with our team.',
       romanUrdu: 'Aam sawalat k jawabat aur hamari team se rabtay ki maloomat.',
-      ur: 'اکثر پوچھے جانے والے سوالات کے جوابات اور سپورٹ ٹیم سے رابطہ۔',
+      ur: 'Frequently asked questions, troubleshooting tips, and direct contact with our team.',
     },
     lastUpdated: 'September 2026',
   },
@@ -120,12 +120,12 @@ export const LEGAL_METADATA: Record<
     title: {
       en: 'Legal & Information Hub',
       romanUrdu: 'Legal & Info Hub',
-      ur: 'معلومات اور قانونی مرکز',
+      ur: 'Legal & Information Hub',
     },
     subtitle: {
       en: 'Quick access to all YAAD policies, company information, and support channels.',
       romanUrdu: 'YAAD ki tamam policies aur maloomati safhaat ka markaz.',
-      ur: 'یاد ایپ کی تمام پالیسیز اور وضاحتی صفحات تک آسان رسائی۔',
+      ur: 'Quick access to all YAAD policies, company information, and support channels.',
     },
     lastUpdated: 'September 2026',
   },
@@ -135,12 +135,12 @@ export const LEGAL_METADATA: Record<
     title: {
       en: 'YAAD Blog & Guides',
       romanUrdu: 'YAAD Blog Aur Guides',
-      ur: 'یاد بلاگ اور رہنمائی مضامین',
+      ur: 'YAAD Blog & Guides',
     },
     subtitle: {
       en: 'Smart shopping strategies, monthly rashan planning, and everyday grocery tips for Pakistani homes.',
       romanUrdu: 'Gharelu rashan, smart shopping aur budget bachane k mufeed mashwaray.',
-      ur: 'گھریلو راشن، بچت کی تجاویز اور روزمرہ خریداری کو آسان بنانے والے مفید آرٹیکلز۔',
+      ur: 'Smart shopping strategies, monthly rashan planning, and everyday grocery tips for Pakistani homes.',
     },
     lastUpdated: 'September 2026',
   },
@@ -153,17 +153,17 @@ export const BLOG_POSTS: BlogPost[] = [
     category: {
       en: 'Grocery Budgeting',
       romanUrdu: 'Budgeting & Rashan',
-      ur: 'راشن اور گھریلو بجٹ',
+      ur: 'Grocery Budgeting',
     },
     title: {
       en: '5 Smart Ways to Plan Monthly Rashan Without Overspending',
       romanUrdu: 'Mahana Rashan Ki Planning: Budget Bachane K 5 Asan Tareeqay',
-      ur: 'ماہانہ راشن کی منصوبہ بندی: بجٹ بچانے اور فضول خرچی سے بچنے کے ۵ آسان طریقے',
+      ur: '5 Smart Ways to Plan Monthly Rashan Without Overspending',
     },
     summary: {
       en: 'How writing down a structured checklist beforehand saves Pakistani families thousands of rupees every month.',
       romanUrdu: 'Pehle se list bana kar dukaan jaane se rashan par har maah hazaron rupay kaisay bachtay hain.',
-      ur: 'گھر سے پہلے سے منظم فہرست بنا کر نکلنا کس طرح ہر ماہ ہزاروں روپے کی بچت اور وقت کی سہولت فراہم کرتا ہے۔',
+      ur: 'How writing down a structured checklist beforehand saves Pakistani families thousands of rupees every month.',
     },
     readTime: '3 min read',
     publishDate: 'September 2026',
@@ -183,11 +183,11 @@ export const BLOG_POSTS: BlogPost[] = [
         '4. Dukaan par item basket mein daalte hi YAAD app par check-off karein taakay kuch reh na jaye.',
       ],
       ur: [
-        'اکثر دیکھا گیا ہے کہ جب کوئی بغیر لسٹ کے کریانہ اسٹور یا مارکیٹ جاتا ہے تو غیر ضروری اشیاء پر پیسہ خرچ ہو جاتا ہے اور اصل ضرورت کی چیزیں گھر آ کر یاد آتی ہیں۔',
-        '۱۔ لسٹ بنانے سے پہلے کچن کی الماری چیک کریں: دالیں، گھی اور مصالحہ جات کی موجودہ مقدار دیکھ کر نئی ضرورت نوٹ کریں۔',
-        '۲۔ بنیادی راشن اور روزمرہ اشیاء کو الگ رکھیں: آٹا، گھی اور چاول ماہانہ بنیاد پر لیں جبکہ سبزیاں اور دودھ ضرورت کے مطابق۔',
-        '۳۔ روایتی پیمانوں (پاؤ، آدھا کلو، دھڑی) کا درست استعمال کریں تاکہ ضرورت سے زیادہ یا کم خریداری نہ ہو۔',
-        '۴۔ دکان پر چیز ملتے ہی لسٹ پر ٹک کریں تاکہ کوئی چھوٹی چیز جیسے نمک یا چائے کی پتی بھولنے کا خدشہ نہ رہے۔',
+        'Every household faces the challenge of rising prices and forgotten essentials at the local store. When you enter a kiryana shop without an itemized checklist, unplanned impulse buys quickly inflate your monthly bill.',
+        '1. Audit your pantry before making the list: Check leftover spices, oil, and staples like lentils before writing down new quantities.',
+        '2. Separate staples from perishables: Buy grains and oil in bulk (10kg or 5kg sacks), but get vegetables and dairy weekly to ensure freshness.',
+        '3. Use native units accurately: Confusing 1 Pao (250g) with half kilo leads to food waste. YAAD supports traditional local units natively.',
+        '4. Tick off items as they go into the basket: Having a real-time strike-through list prevents running back to the market later for salt or tea bags.',
       ],
     },
   },
@@ -197,17 +197,17 @@ export const BLOG_POSTS: BlogPost[] = [
     category: {
       en: 'Local Culture & Weights',
       romanUrdu: 'Paimany & Units',
-      ur: 'روایتی پیمانے',
+      ur: 'Local Culture & Weights',
     },
     title: {
       en: 'Understanding Pakistani Grocery Units: Pao, Ser, and Dharri',
       romanUrdu: 'Pakistani Units: Páo, Kilo Aur Dharri Ka Sahi Hisab',
-      ur: 'پاکستانی پیمانے: پاؤ، کلو، درجن اور دھڑی کا درست حساب',
+      ur: 'Understanding Pakistani Grocery Units: Pao, Ser, and Dharri',
     },
     summary: {
       en: 'A handy quick-reference conversion guide for everyday Pakistani grocery shoppers and market visits.',
       romanUrdu: 'Dukaan par khareedari k liye Pakistani paimanon ki asaan tafseel aur conversion guide.',
-      ur: 'سبزی منڈی اور کریانہ اسٹور پر خریداری کے لیے روایتی اور بین الاقوامی پیمانوں کی رہنمائی۔',
+      ur: 'A handy quick-reference conversion guide for everyday Pakistani grocery shoppers and market visits.',
     },
     readTime: '4 min read',
     publishDate: 'September 2026',
@@ -227,11 +227,11 @@ export const BLOG_POSTS: BlogPost[] = [
         'YAAD app in tamam rawaiti paimanon ko natively support karti hai.',
       ],
       ur: [
-        'ہمارے بازاروں اور منڈیوں میں پاؤنڈ یا اونس کے بجائے پاؤ، کلو اور دھڑی بولی جاتی ہے۔ اکثر ایپس ان مقامی ضروریات کو نظرانداز کر دیتی ہیں۔',
-        '۱ پاؤ = ۲۵۰ گرام (ایک کلو کا چوتھائی حصہ)۔ ادرک، لہسن، گرم مصالحہ اور ہری مرچوں کے لیے معیاری ہے۔',
-        '۱ دھڑی = ۵ کلوگرام۔ سبزی منڈی میں پیاز، آلو اور ٹماٹر کی خریداری کا روایتی پیمانہ۔',
-        '۱ درجن = ۱۲ عدد۔ انڈوں اور کیلوں کی خریداری کے لیے۔',
-        'یاد ایپ میں یہ تمام پیمانے صرف ایک کلک پر دستیاب ہیں تاکہ آپ کے بولنے اور لکھنے میں کوئی فرق نہ رہے۔',
+        'Modern smartphones often show generic international units like ounces or pounds, while Pakistani shopkeepers and sabzi vendors exclusively use Pao, Dharri, and Dozen.',
+        '1 Pao = 250 grams (1/4 of a kilogram). Standard for ginger, garlic, cardamoms, and whole spices.',
+        '1 Dharri = 5 kilograms. Used commonly in vegetable markets (Mandi) for potatoes, onions, and tomatoes.',
+        '1 Dozen = 12 units. The universal standard for bananas and eggs.',
+        'YAAD lets you choose these exact traditional units with one tap, matching your local shopping speech naturally.',
       ],
     },
   },
@@ -241,17 +241,17 @@ export const BLOG_POSTS: BlogPost[] = [
     category: {
       en: 'Product & Tech',
       romanUrdu: 'Offline Intelligence',
-      ur: 'آف لائن ٹیکنالوجی',
+      ur: 'Product & Tech',
     },
     title: {
       en: 'Why Offline-First Memory Matters in Crowded Pakistani Bazaars',
       romanUrdu: 'Bazaron Mein Net Na Chalnay Par YAAD Kaisay Madad Karti Hai',
-      ur: 'گنجان بازاروں اور تہہ خانوں میں انٹرنیٹ نہ ہونے پر یاد ایپ کا خودکار کام',
+      ur: 'Why Offline-First Memory Matters in Crowded Pakistani Bazaars',
     },
     summary: {
       en: 'Never get stranded at the checkout line due to poor 4G signals. YAAD works completely offline.',
       romanUrdu: 'Basement shops ya crowded bazaron mein baghair internet k shopping list dekhnay aur tick karnay ki sahoolat.',
-      ur: 'بغیر انٹرنیٹ کے بھی آپ کی لسٹ مکمل طور پر کھلے گی اور محفوظ رہے گی، اور نیٹ آنے پر خودکار سنک ہو جائے گی۔',
+      ur: 'Never get stranded at the checkout line due to poor 4G signals. YAAD works completely offline.',
     },
     readTime: '3 min read',
     publishDate: 'September 2026',
@@ -269,10 +269,10 @@ export const BLOG_POSTS: BlogPost[] = [
         'Jab bhi mobile internet dobara connect hoga, aapka data automatically Google account k sath sync ho jayega.',
       ],
       ur: [
-        'تہہ خانے والی دکانوں اور رش والے بازاروں میں اکثر فور جی سگنل غائب ہو جاتے ہیں، جس سے آن لائن ایپس اٹک جاتی ہیں۔',
-        'یاد ایپ آپ کی تمام لسٹیں آپ کے موبائل کی لوکل میموری میں محفوظ رکھتی ہے۔',
-        'آپ بغیر انٹرنیٹ کے بھی اشیاء شامل کر سکتے ہیں اور دکان پر چیک آف کر سکتے ہیں۔',
-        'جیسے ہی موبائل کنیکٹ ہوتا ہے، تمام تر تبدیلیاں گوگل اکاؤنٹ پر بغیر کسی رکاوٹ کے سنک ہو جاتی ہیں۔',
+        'Pakistani supermarkets and basement kiryana stores are infamous for weak cell reception. A cloud-only grocery app often spins endlessly while you stand at the counter.',
+        'YAAD stores your entire shopping database directly inside your device memory (IndexedDB).',
+        'You can create lists, add quantities, and mark items off without any active internet connection.',
+        'As soon as your phone reconnects to Wi-Fi or mobile data, your changes safely sync with your Google account in the background.',
       ],
     },
   },
@@ -284,7 +284,7 @@ export const TERMS_SECTIONS: LegalSection[] = [
     title: {
       en: '1. Acceptance of Terms',
       romanUrdu: '1. Sharaait Ki Qubooliyat',
-      ur: '۱. شرائط کی قبولیت',
+      ur: '1. Acceptance of Terms',
     },
     content: {
       en: [
@@ -296,8 +296,8 @@ export const TERMS_SECTIONS: LegalSection[] = [
         'Yeh sharaait tamam aam users, registered accounts aur browser ya PWA k zariye app istemal karne walon par laagu hoti hain.',
       ],
       ur: [
-        'یاد ایپلیکیشن کو استعمال کر کے یا اس پر اکاؤنٹ بنا کر آپ ان تمام شرائط و ضوابط کے پابند ہونے کا اقرار کرتے ہیں۔ اگر آپ ان شرائط سے متفق نہیں ہیں تو براہ کرم ایپلیکیشن استعمال نہ کریں۔',
-        'یہ شرائط تمام صارفین، رجسٹرڈ اکاؤنٹس اور براؤزر یا موبائل پی ڈبلیو اے کے ذریعے ایپ استعمال کرنے والے تمام افراد پر لاگو ہوتی ہیں۔',
+        'By accessing, registering for, or using the YAAD application ("YAAD", "the Service", "we", "us", or "our"), you agree to be bound by these Terms & Conditions. If you do not agree with any part of these terms, please refrain from using our application.',
+        'These terms apply to all visitors, registered users, and others who access or use the application via web browser, Progressive Web App (PWA), or mobile device.',
       ],
     },
   },
@@ -306,7 +306,7 @@ export const TERMS_SECTIONS: LegalSection[] = [
     title: {
       en: '2. The YAAD Service & Offline Capabilities',
       romanUrdu: '2. YAAD Service Aur Offline Sahoolat',
-      ur: '۲. یاد ایپ کی سروس اور آف لائن سہولت',
+      ur: '2. The YAAD Service & Offline Capabilities',
     },
     content: {
       en: [
@@ -318,8 +318,8 @@ export const TERMS_SECTIONS: LegalSection[] = [
         'YAAD offline-first technology par kaam karti hai. Agar supermarket mein internet signal na ho, tab bhi aapki lists phone mein chalti hain aur dobara net aane par khud ba khud sync ho jati hain.',
       ],
       ur: [
-        'یاد ایپ کو ایک سمارٹ شاپنگ لسٹ اور گروسری میموری کے طور پر ڈیزائن کیا گیا ہے۔ اس میں لسٹ بنانا، اردو، رومن اردو اور انگریزی اشیاء کی فوری خودکار پہچان، مقدار کا تعین اور کلاؤڈ سنکنگ شامل ہیں۔',
-        'یاد ایپ آف لائن فرسٹ اصول پر بنائی گئی ہے۔ اگر سپر مارکیٹ کے اندر انٹرنیٹ سگنل دستیاب نہ بھی ہوں، تب بھی آپ کی لسٹ مکمل طور پر کام کرتی ہے اور انٹرنیٹ بحال ہوتے ہی خودکار سنک ہو جاتی ہے۔',
+        'YAAD is designed as a smart shopping list and grocery memory utility. Key features include local-first list creation, smart bilingual auto-categorization (English, Roman Urdu, and Urdu), smart unit parsing, restock recommendations, and cross-device synchronization.',
+        'YAAD is built with an offline-first architecture. When internet connectivity is unavailable (such as inside basement supermarket aisles), lists remain fully accessible and editable on your device using client-side IndexedDB storage. Syncing resumes automatically once online connectivity is restored.',
       ],
     },
   },
@@ -328,7 +328,7 @@ export const TERMS_SECTIONS: LegalSection[] = [
     title: {
       en: '3. User Accounts, Phone Verification, & Passkeys',
       romanUrdu: '3. User Account, Phone Aur Passkeys',
-      ur: '۳. صارف کا اکاؤنٹ، فون نمبر اور پاس کیز',
+      ur: '3. User Accounts, Phone Verification, & Passkeys',
     },
     content: {
       en: [
@@ -342,9 +342,9 @@ export const TERMS_SECTIONS: LegalSection[] = [
         'Ghalat ya jaali maloomat faraham karne walay accounts ko band karne ka haq mehfooz hai.',
       ],
       ur: [
-        'اپنی خریداری کی لسٹوں کو مختلف ڈیوائسز پر سنک کرنے کے لیے صارف ای میل، تصدیق شدہ فون نمبر، گوگل یا بائیو میٹرک پاس کیز کے ذریعے اکاؤنٹ بنا سکتا ہے۔',
-        'اپنے اکاؤنٹ کی معلومات اور پاس ورڈ کو خفیہ رکھنا صارف کی ذمہ داری ہے۔ اگر آپ کو کسی غیر مجاز رسائی کا شبہ ہو تو فوری طور پر yaadapppk@gmail.com پر اطلاع دیں۔',
-        'غلط یا مشتبہ معلومات فراہم کرنے والے اکاؤنٹس کو معطل یا ختم کرنے کا حق محفوظ ہے۔',
+        'To synchronize shopping lists across multiple devices, users create an account using email, verified phone number, Google OAuth, or FIDO2/WebAuthn Passkeys.',
+        'You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. If you suspect unauthorized access, notify us immediately at yaadapppk@gmail.com.',
+        'We reserve the right to suspend or terminate accounts that provide fraudulent information or violate security integrity.',
       ],
     },
   },
@@ -353,7 +353,7 @@ export const TERMS_SECTIONS: LegalSection[] = [
     title: {
       en: '4. User Content & Data Ownership',
       romanUrdu: '4. User Ka Data Aur Milkiyat',
-      ur: '۴. صارف کا ڈیٹا اور لسٹوں کی ملکیت',
+      ur: '4. User Content & Data Ownership',
     },
     content: {
       en: [
@@ -367,9 +367,9 @@ export const TERMS_SECTIONS: LegalSection[] = [
         'Aap jab chahein Settings mein ja kar apni lists ya apna poora account hamesha k liye delete kar sakte hain.',
       ],
       ur: [
-        'آپ کی بنائی گئی تمام شاپنگ لسٹوں اور نوٹوں کی سو فیصد ملکیت آپ کی اپنی ہے۔ ہم صارف کی لسٹوں پر کسی قسم کی ملکیت کا دعویٰ نہیں کرتے۔',
-        'آپ ہمیں صرف اتنا اختیار دیتے ہیں کہ ہم آپ کا ڈیٹا محفوظ کر کے آپ کی مختلف ڈیوائسز تک پہنچا سکیں۔',
-        'آپ کسی بھی وقت سیٹنگز اسکرین سے اپنی تمام لسٹیں یا پورا اکاؤنٹ مکمل طور پر ڈیلیٹ کر سکتے ہیں۔',
+        'You retain 100% ownership and copyright over the shopping lists, notes, and items you create in YAAD. We claim no ownership over your personal grocery choices.',
+        'You grant YAAD only the limited license necessary to store, transmit, format, and display your data to provide you with the application service.',
+        'You have the right at any time to delete individual shopping lists or permanently delete your entire account and associated records via the Settings screen.',
       ],
     },
   },
@@ -378,7 +378,7 @@ export const TERMS_SECTIONS: LegalSection[] = [
     title: {
       en: '5. Acceptable Use Policy',
       romanUrdu: '5. Istemal K Qawaneen',
-      ur: '۵. استعمال کے رہنما اصول',
+      ur: '5. Acceptable Use Policy',
     },
     content: {
       en: [
@@ -390,8 +390,8 @@ export const TERMS_SECTIONS: LegalSection[] = [
         'Automated scraping ya servers par be-ja bojh daalna sakhti se mana hai.',
       ],
       ur: [
-        'آپ یاد ایپ کو صرف جائز اور ذاتی یا گھریلو خریداری کے مقاصد کے لیے استعمال کرنے کے پابند ہیں۔ ایپ کے سسٹم کو نقصان پہنچانے، ہیک کرنے یا غلط استعمال کرنے کی قطعی اجازت نہیں ہے۔',
-        'سرورز پر غیر ضروری بوجھ ڈالنا یا خودکار طریقہ کار سے ڈیٹا چرانا سخت منع ہے۔',
+        'You agree to use YAAD solely for lawful personal or household shopping management purposes. You agree not to attempt to reverse engineer the application, abuse API endpoints, launch denial of service attacks, or interfere with other users.',
+        'Automated scraping, bulk spamming, or exploitation of the server recognition infrastructure is strictly prohibited.',
       ],
     },
   },
@@ -400,7 +400,7 @@ export const TERMS_SECTIONS: LegalSection[] = [
     title: {
       en: '6. Disclaimer of Warranties & Limitation of Liability',
       romanUrdu: '6. Zimadari Ki Hadd Aur Disclaimer',
-      ur: '۶. ذمہ داری کی حدود اور وضاحت',
+      ur: '6. Disclaimer of Warranties & Limitation of Liability',
     },
     content: {
       en: [
@@ -412,8 +412,8 @@ export const TERMS_SECTIONS: LegalSection[] = [
         'Qanoon k mutabiq app istemal karne k dauran kisi ghalti ya nuqsan par hamari liability mehdood hai.',
       ],
       ur: [
-        'یاد ایپ کو بغیر کسی غیر معقول ضمانت کے فراہم کیا جاتا ہے۔ اگرچہ ہم مکمل ڈیٹا تحفظ اور بیک اپ فراہم کرتے ہیں، تاہم انٹرنیٹ یا ڈیوائس کے مسائل کی صورت میں ہم کسی غیر متوقع نقصان کے ذمہ دار نہیں ہیں۔',
-        'قانون کے مطابق ایپ کے استعمال یا عدم دستیابی کے نتیجے میں ہونے والے کسی بھی بالواسطہ نقصان پر ہماری ذمہ داری محدود ہوگی۔',
+        'YAAD is provided on an "AS IS" and "AS AVAILABLE" basis without warranties of any kind, whether express or implied. While we employ rigorous database integrity, automated backups, and offline caching, we cannot guarantee uninterrupted service under all local network conditions.',
+        'To the maximum extent permitted by law, YAAD and its developers shall not be liable for any indirect, incidental, or consequential damages resulting from your use of or inability to use the service.',
       ],
     },
   },
@@ -422,7 +422,7 @@ export const TERMS_SECTIONS: LegalSection[] = [
     title: {
       en: '7. Amendments & Contact',
       romanUrdu: '7. Tabdeeliyan Aur Rabta',
-      ur: '۷. ترامیم اور رابطہ',
+      ur: '7. Amendments & Contact',
     },
     content: {
       en: [
@@ -434,8 +434,8 @@ export const TERMS_SECTIONS: LegalSection[] = [
         'Agar aapko in sharaait k baray mein koi sawal ho to yaadapppk@gmail.com par email karein.',
       ],
       ur: [
-        'ہم وقتاً فوقتاً ان شرائط میں ترمیم کر سکتے ہیں۔ تبدیلی کی صورت میں صفحہ کے اوپر تاریخ اپ ڈیٹ کر دی جائے گی۔',
-        'اگر آپ کے پاس ان شرائط کے حوالے سے کوئی سوال ہے تو yaadapppk@gmail.com پر رابطہ کریں۔',
+        'We may revise these Terms & Conditions from time to time. When changes occur, the "Last Updated" date at the top of this page will be refreshed. Continued use of the application constitutes acceptance of any revised terms.',
+        'If you have questions regarding these terms, contact us at yaadapppk@gmail.com.',
       ],
     },
   },
@@ -447,7 +447,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
     title: {
       en: '1. Our Privacy Pledge: Zero Data Selling',
       romanUrdu: '1. Hamara Raazdari Ka Waada',
-      ur: '۱. ہمارا رازداری کا عہد: ڈیٹا فروخت نہ کرنے کی گارنٹی',
+      ur: '1. Our Privacy Pledge: Zero Data Selling',
     },
     content: {
       en: [
@@ -459,8 +459,8 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
         'Aapki shopping lists sirf aapki hain aur kisi marketing k liye istemal nahi hotin.',
       ],
       ur: [
-        'یاد ایپ میں آپ کی رازداری ہمارے لیے بنیادی حیثیت رکھتی ہے۔ ہم آپ کی ذاتی معلومات یا خریداری کی لسٹیں کسی بھی اشتہاری کمپنی یا تیسرے فریق کو فروخت نہیں کرتے۔',
-        'آپ کے گھریلو سودا سلف کی فہرستیں اور عادات مکمل طور پر نجی ہیں اور محفوظ رکھی جاتی ہیں۔',
+        'At YAAD, we respect your privacy as a foundational principle. We do NOT sell, rent, monetize, or broker your personal information or shopping lists to third-party advertisers, data aggregators, or marketing firms.',
+        'Your grocery lists, item preferences, and dietary patterns are strictly yours. We monetize through future optional premium utility features, not through your personal habits.',
       ],
     },
   },
@@ -469,7 +469,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
     title: {
       en: '2. Information We Collect',
       romanUrdu: '2. Hum Konsi Maloomat Lete Hain',
-      ur: '۲. ہم کون سی معلومات اکٹھی کرتے ہیں',
+      ur: '2. Information We Collect',
     },
     content: {
       en: [
@@ -485,10 +485,10 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
         'Technical Logs: App k errors theek karne aur sync behtar karne k liye bunyadi technical logs.',
       ],
       ur: [
-        'اکاؤنٹ معلومات: اکاؤنٹ بناتے وقت آپ کا ای میل، نام، فون نمبر اور اواتار محفوظ کیا جاتا ہے۔',
-        'شاپنگ ڈیٹا: لسٹوں کے نام، شامل کردہ اشیاء، مقداریں اور مکمل ہونے کا وقت۔',
-        'پاس کیز: بائیو میٹرک تصدیق کی صورت میں آپ کے فنگر پرنٹ یا چہرے کا ڈیٹا فون کے اندر ہی رہتا ہے، سرور پر صرف پبلک کی محفوظ ہوتی ہے۔',
-        'تکنیکی لاگز: ایپ کی کارکردگی اور سنکنگ کو بہتر بنانے کے لیے بنیادی تکنیکی لاگز۔',
+        'Account Information: When creating an account, we collect your email address, chosen display name, optional phone number for SMS verification/recovery, and avatar selection.',
+        'Shopping Data: Shopping list titles, items added, checked/completed statuses, quantities, units, and timestamps.',
+        'Authentication Security: If you enable WebAuthn Passkeys, we store the public credential ID and public key. Your actual biometric fingerprint or face scan NEVER leaves your local phone or hardware security enclave.',
+        'Diagnostic & Network Telemetry: Basic anonymous error logs and online/offline connectivity status to ensure dependable synchronization.',
       ],
     },
   },
@@ -497,7 +497,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
     title: {
       en: '3. How We Use Your Information',
       romanUrdu: '3. Data Kaise Istemal Hota Hai',
-      ur: '۳. ہم آپ کی معلومات کیسے استعمال کرتے ہیں',
+      ur: '3. How We Use Your Information',
     },
     content: {
       en: [
@@ -513,10 +513,10 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
         'Madad ya password recovery k liye rabta karne k liye.',
       ],
       ur: [
-        'آپ کی خریداری کی لسٹوں کو تمام ڈیوائسز پر فوری سنک رکھنے کے لیے۔',
-        'اردو اور انگریزی میں لکھی گئی اشیاء (مثلاً "۲ کلو آلو") کو سمجھ کر درست کیٹیگری میں شامل کرنے کے لیے۔',
-        'ماضی کی خریداری کی بنیاد پر آپ کو ضروری اشیاء کی یاد دہانی کرانے کے لیے۔',
-        'کسٹمر سپورٹ اور اکاؤنٹ سیکیورٹی کے مقاصد کے لیے۔',
+        'To synchronize your grocery lists in real time across all logged-in devices.',
+        'To parse raw inputs (e.g., "2kg aloo", "1 packet bread") into normalized categories and quantities using our bilingual smart categorizer.',
+        'To provide intelligent restock suggestions based exclusively on your past purchase intervals (calculated privately for your account).',
+        'To deliver customer support and account security notifications when requested.',
       ],
     },
   },
@@ -525,7 +525,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
     title: {
       en: '4. Data Storage, Encryption, & Local Storage',
       romanUrdu: '4. Data Storage Aur Hifazat',
-      ur: '۴. ڈیٹا اسٹوریج، انکرپشن اور مقامی میموری',
+      ur: '4. Data Storage, Encryption, & Local Storage',
     },
     content: {
       en: [
@@ -539,9 +539,9 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
         'Cloud Security: Server par Supabase Row Level Security har user ka data doosre users se bilkul alag aur mehfooz rakhti hai.',
       ],
       ur: [
-        'مقامی اسٹوریج: بغیر انٹرنیٹ کے لسٹوں تک فوری رسائی کے لیے آپ کے براؤزر کی انڈیکسڈ ڈی بی استعمال کی جاتی ہے۔',
-        'آن لائن انکرپشن: فون اور سرور کے درمیان ڈیٹا کا تمام تبادلہ جدید ترین سیکیورٹی انکرپشن (TLS/HTTPS) کے تحت ہوتا ہے۔',
-        'کلاؤڈ سیکیورٹی: کلاؤڈ ڈیٹا بیس میں ہر صارف کا ڈیٹا الگ الگ اور محفوظ انکرپشن کے ساتھ بند ہوتا ہے۔',
+        'Local Storage: YAAD uses IndexedDB and browser CacheStorage on your device to ensure instant loading and 100% offline capability.',
+        'Transport Security: All communications between your device and our servers are encrypted using Transport Layer Security (TLS/HTTPS).',
+        'Cloud Database: Cloud data is hosted on enterprise-grade Supabase infrastructure with PostgreSQL Row Level Security (RLS) enforcing strict per-user data isolation.',
       ],
     },
   },
@@ -550,7 +550,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
     title: {
       en: '5. Your Rights & Permanent Account Deletion',
       romanUrdu: '5. Aap K Huqooq Aur Account Deletion',
-      ur: '۵. صارف کے حقوق اور اکاؤنٹ کا مستقل خاتمہ',
+      ur: '5. Your Rights & Permanent Account Deletion',
     },
     content: {
       en: [
@@ -562,8 +562,8 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
         'Account Khatam Karna: Agar aap YAAD chorna chahein to Settings mein ja kar Delete Account daba kar apna poora record hamesha k liye mita sakte hain.',
       ],
       ur: [
-        'آپ کو اپنے ڈیٹا پر مکمل اختیار حاصل ہے۔ آپ کسی بھی وقت کوئی بھی لسٹ ڈیلیٹ کر سکتے ہیں۔',
-        'اکاؤنٹ کا مستقل خاتمہ: اگر آپ یاد ایپ کا اکاؤنٹ ختم کرنا چاہیں تو سیٹنگز میں جا کر "Delete Account" کے ذریعے اپنا تمام ڈیٹا اور لسٹیں فوری طور پر ہمیشہ کے لیے صاف کر سکتے ہیں۔',
+        'You have full control over your data. You may view, edit, or delete any shopping list at any time.',
+        'Permanent Deletion: If you decide to stop using YAAD, you can permanently delete your entire account and all associated shopping lists via Settings > Delete Account. Upon confirmation, your lists, purchase histories, credentials, and profile records are immediately and irreversibly purged from our database.',
       ],
     },
   },
@@ -572,7 +572,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
     title: {
       en: '6. Privacy Inquiries',
       romanUrdu: '6. Privacy K Sawalat',
-      ur: '۶. پرائیویسی سے متعلق رابطہ',
+      ur: '6. Privacy Inquiries',
     },
     content: {
       en: [
@@ -582,7 +582,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
         'Privacy k baray mein kisi bhi sawal k liye hamari team ko yaadapppk@gmail.com par email karein. Hum 48 ghanton mein jawab dete hain.',
       ],
       ur: [
-        'پرائیویسی سے متعلق کسی بھی سوال یا رہنمائی کے لیے ہماری ٹیم سے yaadapppk@gmail.com پر رابطہ کریں۔ ہم ۴۸ گھنٹوں کے اندر جواب دیتے ہیں۔',
+        'For questions, concerns, or data requests regarding this Privacy Policy, please email our team directly at yaadapppk@gmail.com. We respond to all privacy inquiries within 48 hours.',
       ],
     },
   },
@@ -594,12 +594,12 @@ export const ABOUT_HIGHLIGHTS = [
     title: {
       en: 'Native Bilingual Intelligence',
       romanUrdu: 'Bilingual Intelligence',
-      ur: 'اردو اور انگریزی کی ذہانت',
+      ur: 'Native Bilingual Intelligence',
     },
     desc: {
-      en: 'Type in English, Roman Urdu ("doodh, aloo, pyaz"), or pure Urdu ("آلو، دودھ"). YAAD recognizes Pakistani kitchen staples and categorizes them automatically.',
+      en: 'Type in English, Roman Urdu ("doodh, aloo, pyaz"), or everyday words ("aloo, doodh"). YAAD recognizes Pakistani kitchen staples and categorizes them automatically.',
       romanUrdu: 'Chahe English likhein ya Roman Urdu ("doodh, aloo, cheeni"), YAAD har item ko foran pehchan kar durust category mein daal deti hai.',
-      ur: 'خواہ انگریزی میں لکھیں یا رومن اردو اور نستعلیق اردو میں، یاد ایپ دیسی سودا سلف اور کچن کی اشیاء کو خود بخود درست کیٹیگری میں ڈالتی ہے۔',
+      ur: 'Type in English, Roman Urdu ("doodh, aloo, pyaz"), or everyday words ("aloo, doodh"). YAAD recognizes Pakistani kitchen staples and categorizes them automatically.',
     },
   },
   {
@@ -607,12 +607,12 @@ export const ABOUT_HIGHLIGHTS = [
     title: {
       en: 'Unstoppable Offline First',
       romanUrdu: 'Bina Internet Kaam Kare',
-      ur: 'بغیر انٹرنیٹ کے مکمل فعال',
+      ur: 'Unstoppable Offline First',
     },
     desc: {
       en: 'Supermarkets are notorious for dead zones. YAAD works completely offline, letting you check off items and create lists anywhere, syncing when reconnected.',
       romanUrdu: 'Supermarket k andar signal na bhi hon to YAAD ruki nahi. Items tick karein, nayi cheezein likhein, net aane par khud sync hogi.',
-      ur: 'سپر مارکیٹ کے تہہ خانے میں انٹرنیٹ نہ بھی ہو، یاد ایپ بغیر رکے چلتی ہے۔ انٹرنیٹ بحال ہوتے ہی تمام لسٹیں سنک ہو جاتی ہیں۔',
+      ur: 'Supermarkets are notorious for dead zones. YAAD works completely offline, letting you check off items and create lists anywhere, syncing when reconnected.',
     },
   },
   {
@@ -620,12 +620,12 @@ export const ABOUT_HIGHLIGHTS = [
     title: {
       en: 'Zero Ad Tracking & Privacy First',
       romanUrdu: '100% Mehfooz Aur Pur-sukoon',
-      ur: 'مکمل رازداری اور اشتہارات سے پاک',
+      ur: 'Zero Ad Tracking & Privacy First',
     },
     desc: {
       en: 'No intrusive banner ads, no popups, and no tracking cookies. Your grocery spending habits are never sold to advertisers.',
       romanUrdu: 'Koi tang karne walay ads nahi aur na hi aapka data kisi ko becha jata hai. Sirf saaf suthra aur aasan tajurba.',
-      ur: 'کوئی پریشان کن اشتہارات نہیں اور نہ ہی آپ کا ڈیٹا کسی کو بیچا جاتا ہے۔ صرف ایک پرسکون اور صاف ستھرا تجربہ۔',
+      ur: 'No intrusive banner ads, no popups, and no tracking cookies. Your grocery spending habits are never sold to advertisers.',
     },
   },
   {
@@ -633,12 +633,12 @@ export const ABOUT_HIGHLIGHTS = [
     title: {
       en: 'Smart Restock Memory',
       romanUrdu: 'Smart Restock Suggestions',
-      ur: 'ضروری اشیاء کی سمارٹ یاد دہانی',
+      ur: 'Smart Restock Memory',
     },
     desc: {
       en: 'YAAD gently remembers how often you purchase essentials like milk, cooking oil, and tea, offering one-tap restock chips right when you need them.',
       romanUrdu: 'Doodh, patti ya tail kab khatam ho sakta hai, YAAD aapki shopping dekh kar zaroori cheezein pehle hi suggest kar deti hai.',
-      ur: 'دودھ، چائے کی پتی یا کوکنگ آئل کب ختم ہو سکتا ہے، یاد ایپ وقت پر ایک ہی کلک میں یاد دہانی کراتی ہے۔',
+      ur: 'YAAD gently remembers how often you purchase essentials like milk, cooking oil, and tea, offering one-tap restock chips right when you need them.',
     },
   },
 ];
@@ -650,12 +650,12 @@ export const FAQS: FAQItem[] = [
     question: {
       en: 'How does YAAD work when I have no internet in the store?',
       romanUrdu: 'Dukaan par internet na ho to YAAD kaise kaam karti hai?',
-      ur: 'دکان پر انٹرنیٹ نہ ہو تو یاد ایپ کیسے کام کرتی ہے؟',
+      ur: 'How does YAAD work when I have no internet in the store?',
     },
     answer: {
       en: 'YAAD caches your lists locally on your phone using modern browser storage (IndexedDB). You can tick items, add new items, and adjust quantities completely offline. As soon as your device catches Wi-Fi or cellular data, all changes automatically upload and sync.',
       romanUrdu: 'YAAD aapke phone ki local storage mein data mehfooz rakhti hai. Aap bina net k items check off kar sakte hain aur nayi lists bana sakte hain. Net aate hi sab sync ho jata hai.',
-      ur: 'یاد ایپ آپ کے فون کی مقامی میموری میں لسٹیں محفوظ رکھتی ہے۔ آپ بغیر انٹرنیٹ کے اشیاء کو ٹک یا شامل کر سکتے ہیں، اور انٹرنیٹ ملتے ہی تمام تبدیلیاں خود بخود کلاؤڈ پر محفوظ ہو جاتی ہیں۔',
+      ur: 'YAAD caches your lists locally on your phone using modern browser storage (IndexedDB). You can tick items, add new items, and adjust quantities completely offline. As soon as your device catches Wi-Fi or cellular data, all changes automatically upload and sync.',
     },
   },
   {
@@ -664,12 +664,12 @@ export const FAQS: FAQItem[] = [
     question: {
       en: 'Can I write items in Urdu or Roman Urdu?',
       romanUrdu: 'Kya mein Urdu ya Roman Urdu mein items likh sakta hoon?',
-      ur: 'کیا میں اردو یا رومن اردو میں لسٹ بنا سکتا ہوں؟',
+      ur: 'Can I write items in Urdu or Roman Urdu?',
     },
     answer: {
-      en: 'Yes! YAAD includes a custom catalog trained on over 2,000 Pakistani and international grocery items. You can type "aloo", "doodh", "chawal", "tamatar", or in Urdu script "آلو", "دال", and YAAD recognizes the item and assigns it to Vegetables, Dairy, or Groceries automatically.',
+      en: 'Yes! YAAD includes a custom catalog trained on over 2,000 Pakistani and international grocery items. You can type "aloo", "doodh", "chawal", "tamatar", or everyday words "aloo", "daal", and YAAD recognizes the item and assigns it to Vegetables, Dairy, or Groceries automatically.',
       romanUrdu: 'Ji haan! YAAD mein 2,000 se zyada grocery items ki dictionary hai. Aap "aloo", "doodh", "chawal" likhein ya Urdu rasm-ul-khat mein likhein, app foran pehchan leti hai.',
-      ur: 'جی ہاں! یاد ایپ میں ۲۰۰۰ سے زائد اشیاء کی لغت شامل ہے۔ آپ "آلو"، "دال"، "گوشت" لکھیں یا رومن میں "aloo", "doodh" لکھیں، ایپ فوری طور پر پہچان لیتی ہے۔',
+      ur: 'Yes! YAAD includes a custom catalog trained on over 2,000 Pakistani and international grocery items. You can type "aloo", "doodh", "chawal", "tamatar", or everyday words "aloo", "daal", and YAAD recognizes the item and assigns it to Vegetables, Dairy, or Groceries automatically.',
     },
   },
   {
@@ -678,12 +678,12 @@ export const FAQS: FAQItem[] = [
     question: {
       en: 'What is a Passkey and why should I use it?',
       romanUrdu: 'Passkey kya hai aur iska kya faida hai?',
-      ur: 'پاس کی کیا ہے اور اس کا کیا فائدہ ہے؟',
+      ur: 'What is a Passkey and why should I use it?',
     },
     answer: {
       en: 'Passkeys allow you to sign in instantly using your fingerprint, Face ID, or screen lock. Passkeys are phishing-resistant, require no password to remember, and your biometric scan stays 100% secure on your device.',
       romanUrdu: 'Passkey k zariye aap fingerprint ya Face ID se foran sign in kar sakte hain. Password yaad rakhne ki zaroorat nahi rehti aur yeh nihayat mehfooz hai.',
-      ur: 'پاس کی کی مدد سے آپ فنگر پرنٹ یا فیس آئی ڈی کے ذریعے فوری سائن ان کر سکتے ہیں۔ پاس ورڈ یاد رکھنے کی ضرورت نہیں رہتی اور یہ انتہائی محفوظ ہے۔',
+      ur: 'Passkeys allow you to sign in instantly using your fingerprint, Face ID, or screen lock. Passkeys are phishing-resistant, require no password to remember, and your biometric scan stays 100% secure on your device.',
     },
   },
   {
@@ -692,12 +692,12 @@ export const FAQS: FAQItem[] = [
     question: {
       en: 'How do I install YAAD on my iPhone, Android, or Computer?',
       romanUrdu: 'YAAD ko phone ya computer par app ki tarah kaise install karein?',
-      ur: 'یاد ایپ کو اپنے فون یا کمپیوٹر پر کیسے انسٹال کریں؟',
+      ur: 'How do I install YAAD on my iPhone, Android, or Computer?',
     },
     answer: {
       en: 'YAAD is an installable Progressive Web App (PWA). On Android or Chrome, tap the "Install App" button in the menu or address bar. On iPhone/Safari, tap the Share button and select "Add to Home Screen". It then runs just like an App Store app with offline support!',
       romanUrdu: 'Chrome ya Android par menu se "Install App" dabayein. iPhone par Share icon daba kar "Add to Home Screen" karein. App phone ki screen par icon ban jayegi.',
-      ur: 'اینڈرائیڈ یا کروم پر مینو سے "Install App" دبائیں۔ آئی فون پر شیئر بٹن دبا کر "Add to Home Screen" منتخب کریں۔ ایپ عام موبائل ایپ کی طرح انسٹال ہو جائے گی۔',
+      ur: 'YAAD is an installable Progressive Web App (PWA). On Android or Chrome, tap the "Install App" button in the menu or address bar. On iPhone/Safari, tap the Share button and select "Add to Home Screen". It then runs just like an App Store app with offline support!',
     },
   },
   {
@@ -706,12 +706,12 @@ export const FAQS: FAQItem[] = [
     question: {
       en: 'How do I delete my account and erase all my lists?',
       romanUrdu: 'Apna account aur lists kaise delete karein?',
-      ur: 'اپنا اکاؤنٹ اور تمام ڈیٹا کیسے ڈیلیٹ کریں؟',
+      ur: 'How do I delete my account and erase all my lists?',
     },
     answer: {
       en: 'Go to Settings > Account > Delete Account. Confirm your request, and all your shopping lists, profile data, and passkeys will be immediately and permanently deleted from our servers.',
       romanUrdu: 'Settings mein jayein aur "Delete Account" par click karein. Tasdeeq karne par aapka tamam data server se foran mita diya jayega.',
-      ur: 'سیٹنگز میں جائیں اور "Delete Account" منتخب کریں۔ تصدیق کے بعد آپ کا تمام ڈیٹا اور لسٹیں فوری طور پر ہمیشہ کے لیے مٹا دی جائیں گی۔',
+      ur: 'Go to Settings > Account > Delete Account. Confirm your request, and all your shopping lists, profile data, and passkeys will be immediately and permanently deleted from our servers.',
     },
   },
 ];
