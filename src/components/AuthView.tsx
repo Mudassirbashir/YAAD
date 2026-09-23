@@ -1,16 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  Lock,
   Loader2,
   AlertCircle,
   CheckCircle2,
-  KeyRound,
   Eye,
   EyeOff,
   ArrowLeft,
   X,
   ArrowRight,
   Sparkles,
+  Users,
+  WifiOff,
+  Mic,
+  ShoppingBag,
+  ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -18,6 +21,7 @@ import { useAppRouter } from '../router/RouterContext';
 import { APP_IMAGES } from '../data/initialData';
 import { formatAuthErrorMessage } from '../lib/supabase';
 import { validatePhoneNumber } from '../utils/phone';
+import { LuminousRing } from './auth/LuminousRing';
 
 // Official multi-color Google 'G' icon component
 const GoogleOfficialIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5 shrink-0' }) => (
@@ -66,7 +70,6 @@ export const AuthView: React.FC<AuthViewProps> = ({
     isPasswordRecovery,
     passwordResetError,
     clearPasswordResetError,
-    clearPasswordRecovery,
     sendPasswordResetEmail,
     updatePassword,
   } = useAuth();
@@ -79,7 +82,6 @@ export const AuthView: React.FC<AuthViewProps> = ({
   // Form input states
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
@@ -98,15 +100,35 @@ export const AuthView: React.FC<AuthViewProps> = ({
   // Feedback messages
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [resetEmailSent, setResetEmailSent] = useState<boolean>(false);
-  const [resetSuccess, setResetSuccess] = useState<boolean>(false);
 
   // Controls bottom sheet pop-up visibility (starts closed unless password recovery)
   const [isSheetOpen, setIsSheetOpen] = useState<boolean>(isPasswordRecovery || false);
 
+  // Dynamic responsive ring size based on viewport
+  const [ringSize, setRingSize] = useState<number>(360);
+
   // Synchronous hardware ref to prevent double submissions or enter-key races
   const isSubmittingRef = useRef(false);
   const isAnyLoading = loading || googleLoading;
+
+  useEffect(() => {
+    const handleResize = () => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      if (w < 380 || h < 600) {
+        setRingSize(270);
+      } else if (w < 640 || h < 700) {
+        setRingSize(310);
+      } else if (w < 1024) {
+        setRingSize(360);
+      } else {
+        setRingSize(400);
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // React to password recovery trigger from URL or AuthContext
   useEffect(() => {
@@ -144,9 +166,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       setErrorMessage(
         language === 'ur'
-          ? 'انٹرنیٹ کنکشن نہیں ہے۔ براہ کرم انٹرنیٹ بحال کر کے دوبارہ کوشش کریں۔'
-          : language === 'roman-urdu'
-          ? 'Internet connection nahi hai. Barah-e-karam internet connect karein.'
+          ? 'انٹرنیٹ کنکشن نہیں ہے۔ لاگ ان کے لیے انٹرنیٹ درکار ہے۔'
           : "You're offline. Please reconnect to continue."
       );
       return;
@@ -177,7 +197,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
     setSuccessMessage(null);
 
     const trimmedEmail = email.trim().toLowerCase();
-    const resolvedName = (fullName.trim() || `${firstName.trim()} ${lastName.trim()}`).trim();
+    const resolvedName = `${firstName.trim()} ${lastName.trim()}`.trim();
     const trimmedPhone = phoneNumber.trim();
 
     // Offline detection
@@ -210,7 +230,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
             onSuccess();
           }
           return;
-        } catch (offlineErr) {
+        } catch {
           setErrorMessage('Could not save local profile. Please try again.');
           return;
         } finally {
@@ -334,7 +354,6 @@ export const AuthView: React.FC<AuthViewProps> = ({
         setErrorMessage(formatAuthErrorMessage(error));
         return;
       }
-      setResetEmailSent(true);
       setSuccessMessage(`Reset link sent! Please check ${trimmedEmail} for instructions.`);
     } catch (err: unknown) {
       setErrorMessage(formatAuthErrorMessage(err));
@@ -370,16 +389,11 @@ export const AuthView: React.FC<AuthViewProps> = ({
         setErrorMessage(formatAuthErrorMessage(error));
         return;
       }
-      setResetSuccess(true);
-      setSuccessMessage('Your password has been successfully changed.');
-      setTimeout(() => {
-        clearPasswordRecovery();
-        if (onSuccess) {
-          onSuccess();
-        } else {
-          setMode('signin');
-        }
-      }, 1200);
+      setSuccessMessage('Your password has been reset successfully. You can now sign in.');
+      setMode('signin');
+      setPassword('');
+      setNewPassword('');
+      setConfirmNewPassword('');
     } catch (err: unknown) {
       setErrorMessage(formatAuthErrorMessage(err));
     } finally {
@@ -388,27 +402,22 @@ export const AuthView: React.FC<AuthViewProps> = ({
     }
   };
 
-  // Switch to Forgot Password
   const handleOpenForgotPassword = () => {
     setMode('forgot_password');
     setErrorMessage(null);
     setSuccessMessage(null);
-    setResetEmailSent(false);
     clearOauthError();
     clearPasswordResetError?.();
   };
 
-  // Return to Sign In
   const handleBackToSignIn = () => {
     setMode('signin');
     setErrorMessage(null);
     setSuccessMessage(null);
     clearOauthError();
     clearPasswordResetError?.();
-    clearPasswordRecovery();
   };
 
-  // Switch between Sign In and Create Account
   const handleSwitchTab = (newMode: 'signin' | 'signup') => {
     setMode(newMode);
     setErrorMessage(null);
@@ -418,39 +427,42 @@ export const AuthView: React.FC<AuthViewProps> = ({
   };
 
   const displayedError = errorMessage || oauthError || passwordResetError;
+  const isUrdu = language === 'ur';
 
   return (
     <main
       id="auth_screen_container"
-      className="min-h-screen bg-[#F4F6F8] flex flex-col justify-between items-center px-4 py-6 sm:py-8 select-none relative overflow-hidden"
+      className="min-h-screen bg-[#05060A] text-white flex flex-col justify-between items-center px-4 py-6 sm:py-8 select-none relative overflow-hidden"
     >
-      {/* Ambient background blur spots for studio aesthetic */}
-      <div className="absolute top-0 left-10 w-96 h-96 bg-[#cbe3db]/40 rounded-full blur-3xl pointer-events-none -z-10" />
-      <div className="absolute bottom-0 right-10 w-96 h-96 bg-[#fed7aa]/35 rounded-full blur-3xl pointer-events-none -z-10" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-[#DE6346]/10 rounded-full blur-3xl pointer-events-none -z-10" />
-      <div className="absolute inset-0 opacity-15 pointer-events-none bg-[radial-gradient(#000000_1px,transparent_1px)] [background-size:24px_24px]" />
+      {/* Ambient chromatic nebula glow points matching the video */}
+      <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-purple-600/10 blur-[130px] pointer-events-none -z-10" />
+      <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-blue-600/10 blur-[130px] pointer-events-none -z-10" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[520px] h-[520px] rounded-full bg-indigo-900/10 blur-[150px] pointer-events-none -z-10" />
 
-      {/* Top Bar with YAAD Logo & Language Switcher */}
-      <header className="w-full max-w-md flex items-center justify-between z-10 pt-1">
-        {/* YAAD Logo Badge */}
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/80 backdrop-blur-md border border-neutral-200/80 text-neutral-900 shadow-2xs">
+      {/* Subtle obsidian dot pattern */}
+      <div className="absolute inset-0 opacity-10 pointer-events-none bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:28px_28px]" />
+
+      {/* Top Header Bar */}
+      <header className="w-full max-w-5xl flex items-center justify-between z-10 pt-1">
+        {/* Brand Badge */}
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 backdrop-blur-md border border-white/10 text-white shadow-2xs hover:bg-white/10 transition-colors">
           <img
             src={APP_IMAGES.logoTransparent}
             alt="YAAD"
-            className="w-5 h-5 object-contain drop-shadow-xs"
+            className="w-5 h-5 object-contain drop-shadow-md"
           />
-          <span className="font-['Plus_Jakarta_Sans'] font-extrabold text-xs tracking-wider uppercase text-neutral-800">
+          <span className="font-['Plus_Jakarta_Sans'] font-extrabold text-xs tracking-wider uppercase text-neutral-200">
             YAAD | یاد
           </span>
         </div>
 
         {/* Language Selector */}
-        <div className="inline-flex items-center bg-white/80 backdrop-blur-md rounded-full p-0.5 border border-neutral-200/80 text-[10px] font-['Manrope'] font-bold text-neutral-600 shadow-2xs">
+        <div className="inline-flex items-center bg-white/5 backdrop-blur-md rounded-full p-1 border border-white/10 text-[11px] font-['Manrope'] font-bold text-neutral-400 shadow-2xs">
           <button
             type="button"
             onClick={() => setLanguage('en')}
-            className={`px-2 py-0.5 rounded-full transition-all cursor-pointer ${
-              language === 'en' ? 'bg-neutral-900 text-white shadow-xs' : 'hover:text-neutral-900'
+            className={`px-2.5 py-0.5 rounded-full transition-all cursor-pointer ${
+              language === 'en' ? 'bg-white text-black font-extrabold shadow-xs' : 'hover:text-white'
             }`}
           >
             EN
@@ -458,8 +470,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
           <button
             type="button"
             onClick={() => setLanguage('ur')}
-            className={`px-2 py-0.5 rounded-full transition-all font-urdu cursor-pointer ${
-              language === 'ur' ? 'bg-neutral-900 text-white shadow-xs' : 'hover:text-neutral-900'
+            className={`px-2.5 py-0.5 rounded-full transition-all font-urdu cursor-pointer ${
+              language === 'ur' ? 'bg-white text-black font-extrabold shadow-xs' : 'hover:text-white'
             }`}
           >
             اردو
@@ -467,8 +479,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
           <button
             type="button"
             onClick={() => setLanguage('roman-urdu')}
-            className={`px-2 py-0.5 rounded-full transition-all cursor-pointer ${
-              language === 'roman-urdu' ? 'bg-neutral-900 text-white shadow-xs' : 'hover:text-neutral-900'
+            className={`px-2.5 py-0.5 rounded-full transition-all cursor-pointer ${
+              language === 'roman-urdu' ? 'bg-white text-black font-extrabold shadow-xs' : 'hover:text-white'
             }`}
           >
             ROM
@@ -477,71 +489,50 @@ export const AuthView: React.FC<AuthViewProps> = ({
       </header>
 
       {/* ============================================================== */}
-      {/* CENTER STAGE: Clean Minimalist Entry with Animated Circle      */}
+      {/* CENTER STAGE: The Authentic Luminous Ring from Video          */}
       {/* ============================================================== */}
-      <section className="flex-1 w-full max-w-md flex flex-col items-center justify-center py-6 text-center z-10">
-        {/* Title & Subtitle */}
-        <div className="space-y-1.5 mb-2">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 tracking-tight font-['Plus_Jakarta_Sans']">
-            {language === 'ur' ? 'یاد میں خوش آمدید' : 'Welcome to YAAD'}
+      <section className="flex-1 w-full max-w-2xl flex flex-col items-center justify-center py-4 sm:py-6 text-center z-10">
+        {/* Title & Tagline */}
+        <div className="space-y-1 mb-2">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-white tracking-tight font-['Plus_Jakarta_Sans']">
+            {isUrdu ? 'یاد میں خوش آمدید' : 'Welcome to YAAD'}
           </h1>
-          <p className="text-xs sm:text-sm font-medium text-neutral-500 font-['Manrope'] max-w-xs mx-auto">
-            {language === 'ur'
-              ? 'گھر کے راشن اور سمارٹ خریداری لسٹ کے لیے سائن ان کریں'
-              : 'Organize your grocery lists and sync easily with family'}
+          <p className="text-xs sm:text-sm font-medium text-neutral-400 font-['Manrope'] max-w-sm mx-auto">
+            {isUrdu
+              ? 'گھر کے راشن اور سمارٹ خریداری کے لیے ایک پرسکون اور آسان شروعات'
+              : 'Smart grocery planning & real-time family rashan sync'}
           </p>
         </div>
 
-        {/* Animated Pulsing Circle Sign-In Button */}
-        <div className="relative flex items-center justify-center my-7 sm:my-9">
-          {/* Animated concentric ripples */}
-          <div className="absolute w-56 h-56 sm:w-64 sm:h-64 rounded-full border border-neutral-900/10 animate-ping opacity-25 pointer-events-none" />
-          <div className="absolute w-48 h-48 sm:w-56 sm:h-56 rounded-full border-2 border-neutral-900/15 animate-pulse pointer-events-none" />
-          <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#DE6346]/20 via-[#48B89F]/20 to-[#E5A83B]/20 blur-2xl opacity-60 pointer-events-none" />
-
-          {/* Core Interactive Circle Button */}
-          <button
-            id="auth_animated_circle_btn"
-            type="button"
+        {/* 60 FPS HTML5 Canvas Luminous Ring Component */}
+        <div className="my-4 sm:my-6 relative flex items-center justify-center">
+          <LuminousRing
+            size={ringSize}
             onClick={handleOpenSignInSheet}
-            className="relative z-10 w-40 h-40 sm:w-48 sm:h-48 rounded-full bg-neutral-900 hover:bg-black text-white shadow-[0_20px_50px_rgba(0,0,0,0.22)] border-4 border-white flex flex-col items-center justify-center p-4 transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer group"
-          >
-            <img
-              src={APP_IMAGES.logoTransparent}
-              alt="YAAD"
-              className="w-10 h-10 object-contain drop-shadow-md group-hover:scale-110 transition-transform duration-300"
-            />
-            <span
-              className={`mt-2 text-lg sm:text-xl font-extrabold tracking-tight group-hover:text-amber-200 transition-colors ${
-                language === 'ur' ? 'font-urdu text-xl sm:text-2xl' : "font-['Plus_Jakarta_Sans']"
-              }`}
-            >
-              {language === 'ur' ? 'سائن ان' : 'Sign In'}
-            </span>
-            <span className="mt-1 text-[11px] text-neutral-300 group-hover:text-white flex items-center gap-1 font-['Manrope'] font-medium transition-colors">
-              <span>{language === 'ur' ? 'ٹیپ کریں' : 'Tap to start'}</span>
-              <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
-            </span>
-          </button>
+            label={isUrdu ? 'سائن ان' : 'Sign In'}
+            subLabel={isUrdu ? 'شروع کرنے کے لیے کلک کریں' : 'Tap to continue'}
+            isUrdu={isUrdu}
+            logoSrc={APP_IMAGES.logoTransparent}
+          />
         </div>
 
-        {/* Secondary Action: Create Account */}
-        <div className="flex flex-col items-center gap-2">
+        {/* Secondary Action: Create Account Pill */}
+        <div className="flex flex-col items-center gap-2 mt-1">
           <button
             id="auth_open_signup_btn"
             type="button"
             onClick={handleOpenSignUpSheet}
-            className="px-5 py-2.5 rounded-full bg-white hover:bg-neutral-50 text-neutral-800 font-['Manrope'] text-xs sm:text-sm font-semibold border border-neutral-200/90 shadow-2xs hover:shadow-xs transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
+            className="px-5 py-2.5 rounded-full bg-white/10 hover:bg-white/15 text-neutral-200 hover:text-white font-['Manrope'] text-xs sm:text-sm font-semibold border border-white/15 backdrop-blur-md shadow-xs transition-all active:scale-95 cursor-pointer flex items-center gap-2"
           >
-            <span>{language === 'ur' ? 'نیا اکاؤنٹ بنائیں (رجسٹر)' : 'New to YAAD? Create Account'}</span>
-            <ArrowRight className="w-3.5 h-3.5 text-neutral-500" />
+            <span>{isUrdu ? 'نیا اکاؤنٹ بنائیں (رجسٹر)' : 'New to YAAD? Create Account'}</span>
+            <ArrowRight className="w-3.5 h-3.5 text-neutral-400" />
           </button>
         </div>
       </section>
 
       {/* Bottom Footer Info */}
-      <footer className="w-full max-w-md flex flex-col items-center gap-2 pt-2 pb-1 z-10 font-['Manrope']">
-        <div className="flex items-center justify-center gap-3 text-xs text-neutral-500">
+      <footer className="w-full max-w-5xl flex flex-col items-center gap-2 pt-2 pb-1 z-10 font-['Manrope']">
+        <div className="flex items-center justify-center gap-3 text-xs text-neutral-400">
           <a
             id="auth_footer_rashan_link_main"
             href="/rashan-list"
@@ -549,7 +540,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
               e.preventDefault();
               navigate(language === 'ur' ? '/rashan-list?lang=ur' : '/rashan-list');
             }}
-            className="font-medium text-neutral-700 hover:text-black transition-colors underline cursor-pointer"
+            className="font-medium text-neutral-300 hover:text-white transition-colors underline cursor-pointer"
           >
             {language === 'ur' ? 'ماہانہ راشن لسٹ' : 'Monthly Rashan List'}
           </a>
@@ -557,7 +548,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
           <button
             type="button"
             onClick={() => onOpenLegalPage?.('privacy')}
-            className="hover:text-black transition-colors cursor-pointer"
+            className="hover:text-white transition-colors cursor-pointer"
           >
             Privacy
           </button>
@@ -565,7 +556,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
           <button
             type="button"
             onClick={() => onOpenLegalPage?.('terms')}
-            className="hover:text-black transition-colors cursor-pointer"
+            className="hover:text-white transition-colors cursor-pointer"
           >
             Terms
           </button>
@@ -573,112 +564,147 @@ export const AuthView: React.FC<AuthViewProps> = ({
       </footer>
 
       {/* ============================================================== */}
-      {/* POP-UP / BOTTOM SHEET MODAL (Slides up when circle is tapped)  */}
+      {/* POP-UP / MODAL (Truly Responsive for Mobile, Tablet & PC)      */}
       {/* ============================================================== */}
       {isSheetOpen && (
         <div
           id="auth_sheet_backdrop"
           onClick={() => setIsSheetOpen(false)}
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4 animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4 md:p-6 animate-in fade-in duration-200"
         >
+          {/* Main Dialog Container */}
           <div
             id="auth_card"
             onClick={(e) => e.stopPropagation()}
-            className="w-full sm:max-w-[420px] max-h-[92vh] sm:max-h-[88vh] bg-white rounded-t-[36px] sm:rounded-[36px] shadow-2xl overflow-y-auto border border-neutral-100 relative flex flex-col animate-in slide-in-from-bottom duration-300 ease-out transition-all"
+            className="w-full sm:max-w-md lg:max-w-3xl max-h-[92vh] sm:max-h-[88vh] bg-[#0C0E15] text-white rounded-t-[32px] sm:rounded-[28px] lg:rounded-[32px] shadow-[0_25px_80px_rgba(0,0,0,0.95)] border-t sm:border border-white/15 relative flex flex-col lg:grid lg:grid-cols-12 overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-300 ease-out"
           >
             {/* Top Close (X) button */}
             <button
               id="auth_sheet_close_btn"
               type="button"
               onClick={() => setIsSheetOpen(false)}
-              className="absolute top-3 end-3.5 z-20 w-8 h-8 rounded-full bg-black/25 hover:bg-black/40 text-white flex items-center justify-center transition-colors cursor-pointer shadow-xs active:scale-90"
+              className="absolute top-3.5 end-4 z-30 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-neutral-300 hover:text-white flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-90"
               aria-label="Close"
             >
               <X className="w-4 h-4 stroke-[2.5]" />
             </button>
 
-            {/* Top Drag Handle (tapping closes sheet) */}
+            {/* Mobile Drag Handle */}
             <div
-              className="w-full pt-2.5 pb-1 flex justify-center cursor-pointer relative z-10"
+              className="sm:hidden w-full pt-2.5 pb-1 flex justify-center cursor-pointer relative z-20"
               onClick={() => setIsSheetOpen(false)}
             >
-              <div className="w-11 h-1.5 bg-white/60 hover:bg-white rounded-full transition-colors" />
+              <div className="w-12 h-1.5 bg-white/20 hover:bg-white/40 rounded-full transition-colors" />
             </div>
 
-            {/* 1. TOP HEADER BANNER (Organic artistic curves & display title) */}
-            <div className="relative w-full pt-4 pb-10 px-6 overflow-hidden bg-gradient-to-br from-[#E26A4F] via-[#DE6346] to-[#D05438]">
-              {/* Golden-ochre organic orb on top-left */}
-              <div className="absolute -top-12 -left-12 w-48 h-48 rounded-full bg-[#E5A83B] opacity-95 blur-[0.5px]" />
-              
-              {/* Sea-green/mint organic shape on bottom-right */}
-              <div className="absolute -bottom-8 -right-8 w-44 h-44 rounded-full bg-[#48B89F] opacity-95 blur-[0.5px]" />
+            {/* ---------------------------------------------------------- */}
+            {/* DESKTOP / PC BRAND SIDEBAR (Left 5 Columns on wide screen) */}
+            {/* ---------------------------------------------------------- */}
+            <div className="hidden lg:flex lg:col-span-5 flex-col justify-between p-8 bg-gradient-to-b from-[#131624] via-[#0E101B] to-[#0A0C13] border-r border-white/10 relative overflow-hidden">
+              {/* Subtle ambient chromatic orb */}
+              <div className="absolute -top-12 -left-12 w-48 h-48 rounded-full bg-purple-600/15 blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-12 -right-12 w-48 h-48 rounded-full bg-blue-600/15 blur-3xl pointer-events-none" />
 
-              {/* Deep green ambient shade for depth */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-[#0F3D2E]/10 pointer-events-none blur-xl" />
-
-              {/* Subtle artistic paper texture dots */}
-              <div className="absolute inset-0 opacity-15 mix-blend-overlay pointer-events-none bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:14px_14px]" />
-
-              {/* Top Title & Logo */}
-              <div className="relative z-10 text-center px-1 pt-2">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white text-[11px] font-['Plus_Jakarta_Sans'] font-extrabold tracking-wider uppercase mb-2 shadow-xs">
+              {/* Brand Top */}
+              <div className="relative z-10">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-white text-xs font-['Plus_Jakarta_Sans'] font-extrabold uppercase mb-4 shadow-xs">
                   <img
                     src={APP_IMAGES.logoTransparent}
                     alt="YAAD"
-                    className="w-4 h-4 object-contain drop-shadow-xs"
+                    className="w-4 h-4 object-contain"
                   />
                   <span>YAAD | یاد</span>
                 </div>
-
-                <h2 className="text-2xl font-extrabold text-white tracking-tight font-['Plus_Jakarta_Sans'] drop-shadow-xs">
-                  {mode === 'signup' && (
-                    language === 'ur' ? 'نیا اکاؤنٹ بنائیں' : language === 'roman-urdu' ? 'Naya Account Banayein' : 'Create an account'
-                  )}
-                  {mode === 'signin' && (
-                    language === 'ur' ? 'خوش آمدید' : language === 'roman-urdu' ? 'Welcome Back' : 'Welcome back'
-                  )}
-                  {mode === 'forgot_password' && (
-                    language === 'ur' ? 'پاس ورڈ ری سیٹ کریں' : language === 'roman-urdu' ? 'Password Reset Karein' : 'Reset password'
-                  )}
-                  {mode === 'reset_password' && (
-                    language === 'ur' ? 'نیا پاس ورڈ درج کریں' : language === 'roman-urdu' ? 'Naya Password Likhein' : 'Set new password'
-                  )}
-                </h2>
-                <p className="text-white/90 text-xs font-['Manrope'] mt-1 font-medium max-w-xs mx-auto">
-                  {mode === 'signup' && (
-                    language === 'ur'
-                      ? 'گھر کے راشن اور سمارٹ خریداری کے لیے ابھی شامل ہوں'
-                      : 'Organize grocery lists and sync easily with family'
-                  )}
-                  {mode === 'signin' && (
-                    language === 'ur'
-                      ? 'اپنی محفوظ کردہ لسٹ تک رسائی کے لیے سائن ان کریں'
-                      : 'Sign in to access and sync your grocery lists'
-                  )}
-                  {mode === 'forgot_password' && (
-                    language === 'ur'
-                      ? 'اپنا ای میل درج کریں، ہم ری سیٹ لنک ارسال کریں گے'
-                      : 'Enter your email to receive recovery instructions'
-                  )}
-                  {mode === 'reset_password' && (
-                    language === 'ur'
-                      ? 'اپنے اکاؤنٹ کے لیے نیا پاس ورڈ منتخب کریں'
-                      : 'Choose a strong password to secure your account'
-                  )}
+                <h3 className="text-xl font-extrabold text-white font-['Plus_Jakarta_Sans'] tracking-tight">
+                  {isUrdu ? 'سمارٹ راشن اور خریداری' : 'Next-Gen Grocery Planning'}
+                </h3>
+                <p className="text-xs text-neutral-400 font-['Manrope'] mt-1 leading-relaxed">
+                  {isUrdu
+                    ? 'گھر کے تمام افراد کے لیے مربوط لسٹ، آف لائن سپورٹ اور ماہانہ راشن پلاننگ۔'
+                    : 'Real-time family list sharing, voice items, and offline synchronization.'}
                 </p>
+              </div>
+
+              {/* Value proposition badges */}
+              <div className="space-y-3.5 my-6 relative z-10">
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-white/5 border border-white/10">
+                  <div className="w-8 h-8 rounded-xl bg-purple-500/20 text-purple-300 flex items-center justify-center shrink-0">
+                    <Users className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-white font-['Manrope']">
+                      {isUrdu ? 'فیملی لائیو شیئرنگ' : 'Live Family Syncing'}
+                    </h4>
+                    <p className="text-[11px] text-neutral-400 font-['Manrope'] leading-tight mt-0.5">
+                      {isUrdu ? 'سب گھر والے ایک ساتھ آئٹمز شامل کر سکتے ہیں' : 'Collaborate together on a single active shopping list'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-white/5 border border-white/10">
+                  <div className="w-8 h-8 rounded-xl bg-blue-500/20 text-blue-300 flex items-center justify-center shrink-0">
+                    <WifiOff className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-white font-['Manrope']">
+                      {isUrdu ? 'آف لائن کام کرتا ہے' : '100% Offline-Ready'}
+                    </h4>
+                    <p className="text-[11px] text-neutral-400 font-['Manrope'] leading-tight mt-0.5">
+                      {isUrdu ? 'مارکیٹ میں بغیر سگنل بھی لسٹ دیکھ سکتے ہیں' : 'Access and check items even with zero internet signal'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-white/5 border border-white/10">
+                  <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center shrink-0">
+                    <ShoppingBag className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-white font-['Manrope']">
+                      {isUrdu ? 'ماہانہ راشن لسٹ' : 'Monthly Rashan Guide'}
+                    </h4>
+                    <p className="text-[11px] text-neutral-400 font-['Manrope'] leading-tight mt-0.5">
+                      {isUrdu ? '40 سے زائد ضروری راشن آئٹمز تیار ہیں' : 'Curated Pakistani household pantry essentials'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom Security Note */}
+              <div className="relative z-10 flex items-center gap-2 text-[11px] text-neutral-500 font-['Manrope']">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <span>Encrypted & secure authentication</span>
               </div>
             </div>
 
-            {/* 2. ELEVATED WHITE CARD (Forms, Inputs, Google, Legal) */}
-            <div className="-mt-6 relative z-10 bg-white rounded-t-[32px] sm:rounded-t-[36px] px-6 sm:px-7 pt-6 pb-8 space-y-4 flex-1 shadow-lg flex flex-col justify-between">
-              <div className="space-y-4">
-                {/* Feedback Notifications */}
+            {/* ---------------------------------------------------------- */}
+            {/* RIGHT SIDE / MAIN FORM PANEL (7 cols on Desktop, 100% else)*/}
+            {/* ---------------------------------------------------------- */}
+            <div className="lg:col-span-7 p-6 sm:p-7 md:p-8 flex flex-col justify-between overflow-y-auto max-h-[85vh]">
+              <div>
+                {/* Header Title on Mobile / Tablet / PC */}
+                <div className="text-start mb-5 pe-8">
+                  <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight font-['Plus_Jakarta_Sans']">
+                    {mode === 'signup' && (isUrdu ? 'نیا اکاؤنٹ بنائیں' : 'Create an account')}
+                    {mode === 'signin' && (isUrdu ? 'اپنے اکاؤنٹ میں سائن ان کریں' : 'Sign in to your account')}
+                    {mode === 'forgot_password' && (isUrdu ? 'پاس ورڈ ری سیٹ کریں' : 'Reset your password')}
+                    {mode === 'reset_password' && (isUrdu ? 'نیا پاس ورڈ درج کریں' : 'Set a new password')}
+                  </h2>
+                  <p className="text-neutral-400 text-xs font-['Manrope'] mt-1 font-medium">
+                    {mode === 'signup' && (isUrdu ? 'گروسری اور راشن لسٹ سنک کرنے کے لیے چند سیکنڈ میں رجسٹر ہوں' : 'Enter your details below to get started with YAAD')}
+                    {mode === 'signin' && (isUrdu ? 'اپنی محفوظ کردہ لسٹ اور فیملی آئٹمز دیکھنے کے لیے لاگ ان کریں' : 'Welcome back! Choose how you would like to sign in')}
+                    {mode === 'forgot_password' && (isUrdu ? 'اپنا ای میل لکھیں، ہم ریکوری لنک بھیجیں گے' : 'Enter your registered email to receive password reset link')}
+                    {mode === 'reset_password' && (isUrdu ? 'اپنے اکاؤنٹ کے لیے نیا پاس ورڈ منتخب کریں' : 'Choose a strong password to secure your account')}
+                  </p>
+                </div>
+
+                {/* Notifications / Alerts */}
                 {displayedError && (
                   <div
                     role="alert"
-                    className="p-3 bg-red-50 text-red-700 text-xs rounded-2xl flex items-center gap-2.5 border border-red-200 animate-in fade-in"
+                    className="p-3 mb-4 bg-red-950/60 border border-red-500/30 text-red-200 text-xs rounded-xl flex items-center gap-2.5 animate-in fade-in"
                   >
-                    <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+                    <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
                     <span className="flex-1 font-['Manrope'] font-medium">{displayedError}</span>
                   </div>
                 )}
@@ -686,14 +712,42 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 {successMessage && (
                   <div
                     role="status"
-                    className="p-3 bg-emerald-50 text-emerald-800 text-xs rounded-2xl flex items-center gap-2.5 border border-emerald-200 animate-in fade-in"
+                    className="p-3 mb-4 bg-emerald-950/60 border border-emerald-500/30 text-emerald-200 text-xs rounded-xl flex items-center gap-2.5 animate-in fade-in"
                   >
-                    <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+                    <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
                     <span className="flex-1 font-['Manrope'] font-medium">{successMessage}</span>
                   </div>
                 )}
 
-                {/* Google 1-Tap Sign In Pill Button (shown on signin and signup) */}
+                {/* Segmented Mode Switcher Pill (Sign In / Create Account) */}
+                {(mode === 'signin' || mode === 'signup') && (
+                  <div className="flex bg-white/5 p-1 rounded-full border border-white/10 font-['Manrope'] mb-4">
+                    <button
+                      type="button"
+                      onClick={() => handleSwitchTab('signin')}
+                      className={`flex-1 py-2 text-xs font-bold rounded-full transition-all cursor-pointer ${
+                        mode === 'signin'
+                          ? 'bg-white text-black shadow-xs'
+                          : 'text-neutral-400 hover:text-white'
+                      }`}
+                    >
+                      {isUrdu ? 'سائن ان' : 'Sign In'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleSwitchTab('signup')}
+                      className={`flex-1 py-2 text-xs font-bold rounded-full transition-all cursor-pointer ${
+                        mode === 'signup'
+                          ? 'bg-white text-black shadow-xs'
+                          : 'text-neutral-400 hover:text-white'
+                      }`}
+                    >
+                      {isUrdu ? 'نیا اکاؤنٹ' : 'Create Account'}
+                    </button>
+                  </div>
+                )}
+
+                {/* Google 1-Tap Sign In Pill Button */}
                 {(mode === 'signin' || mode === 'signup') && (
                   <>
                     <button
@@ -701,76 +755,43 @@ export const AuthView: React.FC<AuthViewProps> = ({
                       type="button"
                       onClick={handleGoogleSignIn}
                       disabled={isAnyLoading}
-                      className="w-full h-12 rounded-full border border-neutral-200/90 bg-white hover:bg-neutral-50/80 text-neutral-800 font-['Manrope'] text-sm font-semibold transition-all flex items-center justify-center gap-3 shadow-2xs hover:shadow-xs active:scale-[0.99] disabled:opacity-60 cursor-pointer"
+                      className="w-full h-11 sm:h-12 rounded-full bg-white hover:bg-neutral-100 text-neutral-900 font-['Manrope'] text-sm font-bold transition-all flex items-center justify-center gap-3 shadow-sm active:scale-[0.99] disabled:opacity-60 cursor-pointer"
                     >
                       {googleLoading ? (
-                        <Loader2 className="w-5 h-5 animate-spin text-neutral-800" />
+                        <Loader2 className="w-5 h-5 animate-spin text-neutral-900" />
                       ) : (
                         <GoogleOfficialIcon className="w-5 h-5" />
                       )}
                       <span>
                         {mode === 'signup'
-                          ? language === 'ur'
+                          ? isUrdu
                             ? 'گوگل کے ساتھ سائن اپ کریں'
-                            : language === 'roman-urdu'
-                            ? 'Google ke sath signup karein'
                             : 'Sign up with Google'
-                          : language === 'ur'
+                          : isUrdu
                           ? 'گوگل کے ساتھ لاگ ان کریں'
-                          : language === 'roman-urdu'
-                          ? 'Google ke sath login karein'
                           : 'Continue with Google'}
                       </span>
                     </button>
 
-                    {/* Clean Minimal 'or' divider */}
-                    <div className="relative flex items-center justify-center my-2">
-                      <div className="border-t border-neutral-200/80 w-full" />
-                      <span className="bg-white px-3 text-[11px] font-['Manrope'] uppercase tracking-wider text-neutral-400 font-bold">
-                        {language === 'ur' ? 'یا' : 'or'}
+                    {/* Divider */}
+                    <div className="relative flex items-center justify-center my-4">
+                      <div className="border-t border-white/10 w-full" />
+                      <span className="bg-[#0C0E15] px-3 text-[11px] font-['Manrope'] uppercase tracking-wider text-neutral-500 font-bold">
+                        {isUrdu ? 'یا ای میل کے ساتھ' : 'or continue with email'}
                       </span>
-                      <div className="border-t border-neutral-200/80 w-full" />
+                      <div className="border-t border-white/10 w-full" />
                     </div>
                   </>
                 )}
 
-                {/* Segmented Mode Switcher Pill (Sign In / Create Account) */}
-                {(mode === 'signin' || mode === 'signup') && (
-                  <div className="flex bg-neutral-100 p-1 rounded-full border border-neutral-200/60 font-['Manrope']">
-                    <button
-                      type="button"
-                      onClick={() => handleSwitchTab('signin')}
-                      className={`flex-1 py-2 text-xs font-bold rounded-full transition-all cursor-pointer ${
-                        mode === 'signin'
-                          ? 'bg-white text-neutral-900 shadow-xs'
-                          : 'text-neutral-500 hover:text-neutral-800'
-                      }`}
-                    >
-                      {language === 'ur' ? 'سائن ان' : 'Sign In'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSwitchTab('signup')}
-                      className={`flex-1 py-2 text-xs font-bold rounded-full transition-all cursor-pointer ${
-                        mode === 'signup'
-                          ? 'bg-white text-neutral-900 shadow-xs'
-                          : 'text-neutral-500 hover:text-neutral-800'
-                      }`}
-                    >
-                      {language === 'ur' ? 'نیا اکاؤنٹ' : 'Create Account'}
-                    </button>
-                  </div>
-                )}
-
-                {/* 3. AUTH FORMS */}
-                {/* -------------------------------------------------------- */}
-                {/* MODE A: SIGN IN FORM                                      */}
-                {/* -------------------------------------------------------- */}
+                {/* ------------------------------------------------------ */}
+                {/* MODE A: SIGN IN FORM                                    */}
+                {/* ------------------------------------------------------ */}
                 {mode === 'signin' && (
                   <form onSubmit={handleSubmit} className="space-y-3.5">
                     <div>
-                      <label className="block text-xs font-bold text-neutral-700 mb-1 font-['Manrope']">
-                        {language === 'ur' ? 'ای میل ایڈریس' : 'Email'}
+                      <label className="block text-xs font-bold text-neutral-300 mb-1 font-['Manrope']">
+                        {isUrdu ? 'ای میل ایڈریس' : 'Email address'}
                       </label>
                       <input
                         id="auth_email_input"
@@ -779,21 +800,21 @@ export const AuthView: React.FC<AuthViewProps> = ({
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="you@example.com"
-                        className="w-full h-11 px-4 rounded-xl border border-neutral-200 bg-neutral-50/50 text-neutral-900 text-sm font-['Manrope'] placeholder:text-neutral-400 focus:outline-hidden focus:border-neutral-900 focus:bg-white transition-all"
+                        className="w-full h-11 px-4 rounded-xl border border-white/15 bg-white/5 text-white text-sm font-['Manrope'] placeholder:text-neutral-500 focus:outline-hidden focus:border-purple-400 focus:bg-white/10 transition-all"
                       />
                     </div>
 
                     <div>
                       <div className="flex items-center justify-between mb-1">
-                        <label className="block text-xs font-bold text-neutral-700 font-['Manrope']">
-                          {language === 'ur' ? 'پاس ورڈ' : 'Password'}
+                        <label className="block text-xs font-bold text-neutral-300 font-['Manrope']">
+                          {isUrdu ? 'پاس ورڈ' : 'Password'}
                         </label>
                         <button
                           type="button"
                           onClick={handleOpenForgotPassword}
-                          className="text-xs text-neutral-500 hover:text-neutral-900 font-['Manrope'] font-medium transition-colors cursor-pointer"
+                          className="text-xs text-neutral-400 hover:text-white font-['Manrope'] font-medium transition-colors cursor-pointer"
                         >
-                          {language === 'ur' ? 'پاس ورڈ بھول گئے؟' : 'Forgot password?'}
+                          {isUrdu ? 'پاس ورڈ بھول گئے؟' : 'Forgot password?'}
                         </button>
                       </div>
                       <div className="relative">
@@ -804,12 +825,12 @@ export const AuthView: React.FC<AuthViewProps> = ({
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           placeholder="••••••••"
-                          className="w-full h-11 px-4 pe-11 rounded-xl border border-neutral-200 bg-neutral-50/50 text-neutral-900 text-sm font-['Manrope'] placeholder:text-neutral-400 focus:outline-hidden focus:border-neutral-900 focus:bg-white transition-all"
+                          className="w-full h-11 px-4 pe-11 rounded-xl border border-white/15 bg-white/5 text-white text-sm font-['Manrope'] placeholder:text-neutral-500 focus:outline-hidden focus:border-purple-400 focus:bg-white/10 transition-all"
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute end-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 p-1 cursor-pointer transition-colors"
+                          className="absolute end-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white p-1 cursor-pointer transition-colors"
                           aria-label={showPassword ? 'Hide password' : 'Show password'}
                         >
                           {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -821,26 +842,26 @@ export const AuthView: React.FC<AuthViewProps> = ({
                       id="auth_submit_btn"
                       type="submit"
                       disabled={isAnyLoading}
-                      className="w-full h-12 mt-2 rounded-full bg-neutral-900 hover:bg-black text-white font-['Manrope'] text-sm font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
+                      className="w-full h-11 sm:h-12 mt-2 rounded-full bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-['Manrope'] text-sm font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
                     >
                       {loading ? (
                         <Loader2 className="w-5 h-5 animate-spin text-white" />
                       ) : (
-                        <span>{language === 'ur' ? 'سائن ان کریں' : 'Sign in'}</span>
+                        <span>{isUrdu ? 'سائن ان کریں' : 'Sign in'}</span>
                       )}
                     </button>
                   </form>
                 )}
 
-                {/* -------------------------------------------------------- */}
-                {/* MODE B: SIGN UP FORM                                      */}
-                {/* -------------------------------------------------------- */}
+                {/* ------------------------------------------------------ */}
+                {/* MODE B: SIGN UP FORM                                    */}
+                {/* ------------------------------------------------------ */}
                 {mode === 'signup' && (
                   <form onSubmit={handleSubmit} className="space-y-3">
                     <div className="grid grid-cols-2 gap-2.5">
                       <div>
-                        <label className="block text-xs font-bold text-neutral-700 mb-1 font-['Manrope']">
-                          {language === 'ur' ? 'پہلا نام' : 'First Name'}
+                        <label className="block text-xs font-bold text-neutral-300 mb-1 font-['Manrope']">
+                          {isUrdu ? 'پہلا نام' : 'First Name'}
                         </label>
                         <input
                           id="signup_first_name_input"
@@ -848,13 +869,13 @@ export const AuthView: React.FC<AuthViewProps> = ({
                           required
                           value={firstName}
                           onChange={(e) => setFirstName(e.target.value)}
-                          placeholder="John"
-                          className="w-full h-10 px-3.5 rounded-xl border border-neutral-200 bg-neutral-50/50 text-neutral-900 text-sm font-['Manrope'] placeholder:text-neutral-400 focus:outline-hidden focus:border-neutral-900 focus:bg-white transition-all"
+                          placeholder="Ali"
+                          className="w-full h-10 px-3.5 rounded-xl border border-white/15 bg-white/5 text-white text-sm font-['Manrope'] placeholder:text-neutral-500 focus:outline-hidden focus:border-purple-400 focus:bg-white/10 transition-all"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-neutral-700 mb-1 font-['Manrope']">
-                          {language === 'ur' ? 'آخری نام' : 'Last Name'}
+                        <label className="block text-xs font-bold text-neutral-300 mb-1 font-['Manrope']">
+                          {isUrdu ? 'آخری نام' : 'Last Name'}
                         </label>
                         <input
                           id="signup_last_name_input"
@@ -862,15 +883,15 @@ export const AuthView: React.FC<AuthViewProps> = ({
                           required
                           value={lastName}
                           onChange={(e) => setLastName(e.target.value)}
-                          placeholder="Doe"
-                          className="w-full h-10 px-3.5 rounded-xl border border-neutral-200 bg-neutral-50/50 text-neutral-900 text-sm font-['Manrope'] placeholder:text-neutral-400 focus:outline-hidden focus:border-neutral-900 focus:bg-white transition-all"
+                          placeholder="Khan"
+                          className="w-full h-10 px-3.5 rounded-xl border border-white/15 bg-white/5 text-white text-sm font-['Manrope'] placeholder:text-neutral-500 focus:outline-hidden focus:border-purple-400 focus:bg-white/10 transition-all"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-neutral-700 mb-1 font-['Manrope']">
-                        {language === 'ur' ? 'فون نمبر' : 'Phone Number'}
+                      <label className="block text-xs font-bold text-neutral-300 mb-1 font-['Manrope']">
+                        {isUrdu ? 'فون نمبر' : 'Phone Number'}
                       </label>
                       <input
                         id="signup_phone_input"
@@ -879,13 +900,13 @@ export const AuthView: React.FC<AuthViewProps> = ({
                         value={phoneNumber}
                         onChange={(e) => setPhoneNumber(e.target.value)}
                         placeholder="0300 1234567"
-                        className="w-full h-10 px-3.5 rounded-xl border border-neutral-200 bg-neutral-50/50 text-neutral-900 text-sm font-['Manrope'] placeholder:text-neutral-400 focus:outline-hidden focus:border-neutral-900 focus:bg-white transition-all"
+                        className="w-full h-10 px-3.5 rounded-xl border border-white/15 bg-white/5 text-white text-sm font-['Manrope'] placeholder:text-neutral-500 focus:outline-hidden focus:border-purple-400 focus:bg-white/10 transition-all"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-neutral-700 mb-1 font-['Manrope']">
-                        {language === 'ur' ? 'ای میل ایڈریس' : 'Email'}
+                      <label className="block text-xs font-bold text-neutral-300 mb-1 font-['Manrope']">
+                        {isUrdu ? 'ای میل ایڈریس' : 'Email'}
                       </label>
                       <input
                         id="signup_email_input"
@@ -894,13 +915,13 @@ export const AuthView: React.FC<AuthViewProps> = ({
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="you@example.com"
-                        className="w-full h-10 px-3.5 rounded-xl border border-neutral-200 bg-neutral-50/50 text-neutral-900 text-sm font-['Manrope'] placeholder:text-neutral-400 focus:outline-hidden focus:border-neutral-900 focus:bg-white transition-all"
+                        className="w-full h-10 px-3.5 rounded-xl border border-white/15 bg-white/5 text-white text-sm font-['Manrope'] placeholder:text-neutral-500 focus:outline-hidden focus:border-purple-400 focus:bg-white/10 transition-all"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-neutral-700 mb-1 font-['Manrope']">
-                        {language === 'ur' ? 'پاس ورڈ (کم از کم 6 حروف)' : 'Password (min. 6 chars)'}
+                      <label className="block text-xs font-bold text-neutral-300 mb-1 font-['Manrope']">
+                        {isUrdu ? 'پاس ورڈ (کم از کم 6 حروف)' : 'Password (min. 6 chars)'}
                       </label>
                       <div className="relative">
                         <input
@@ -911,12 +932,12 @@ export const AuthView: React.FC<AuthViewProps> = ({
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           placeholder="••••••••"
-                          className="w-full h-10 px-3.5 pe-11 rounded-xl border border-neutral-200 bg-neutral-50/50 text-neutral-900 text-sm font-['Manrope'] placeholder:text-neutral-400 focus:outline-hidden focus:border-neutral-900 focus:bg-white transition-all"
+                          className="w-full h-10 px-3.5 pe-11 rounded-xl border border-white/15 bg-white/5 text-white text-sm font-['Manrope'] placeholder:text-neutral-500 focus:outline-hidden focus:border-purple-400 focus:bg-white/10 transition-all"
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute end-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 p-1 cursor-pointer transition-colors"
+                          className="absolute end-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white p-1 cursor-pointer transition-colors"
                           aria-label={showPassword ? 'Hide password' : 'Show password'}
                         >
                           {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -928,25 +949,25 @@ export const AuthView: React.FC<AuthViewProps> = ({
                       id="signup_submit_btn"
                       type="submit"
                       disabled={isAnyLoading}
-                      className="w-full h-12 mt-1 rounded-full bg-neutral-900 hover:bg-black text-white font-['Manrope'] text-sm font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
+                      className="w-full h-11 sm:h-12 mt-1 rounded-full bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-['Manrope'] text-sm font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
                     >
                       {loading ? (
                         <Loader2 className="w-5 h-5 animate-spin text-white" />
                       ) : (
-                        <span>{language === 'ur' ? 'اکاؤنٹ بنائیں' : 'Create account'}</span>
+                        <span>{isUrdu ? 'اکاؤنٹ بنائیں' : 'Create account'}</span>
                       )}
                     </button>
                   </form>
                 )}
 
-                {/* -------------------------------------------------------- */}
-                {/* MODE C: FORGOT PASSWORD FORM                              */}
-                {/* -------------------------------------------------------- */}
+                {/* ------------------------------------------------------ */}
+                {/* MODE C: FORGOT PASSWORD FORM                            */}
+                {/* ------------------------------------------------------ */}
                 {mode === 'forgot_password' && (
                   <form onSubmit={handleForgotPasswordSubmit} className="space-y-4">
                     <div>
-                      <label className="block text-xs font-bold text-neutral-700 mb-1 font-['Manrope']">
-                        {language === 'ur' ? 'اپنا ای میل ایڈریس درج کریں' : 'Your Email Address'}
+                      <label className="block text-xs font-bold text-neutral-300 mb-1 font-['Manrope']">
+                        {isUrdu ? 'اپنا ای میل ایڈریس درج کریں' : 'Your Email Address'}
                       </label>
                       <input
                         id="forgot_email_input"
@@ -955,7 +976,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="you@example.com"
-                        className="w-full h-11 px-4 rounded-xl border border-neutral-200 bg-neutral-50/50 text-neutral-900 text-sm font-['Manrope'] placeholder:text-neutral-400 focus:outline-hidden focus:border-neutral-900 focus:bg-white transition-all"
+                        className="w-full h-11 px-4 rounded-xl border border-white/15 bg-white/5 text-white text-sm font-['Manrope'] placeholder:text-neutral-500 focus:outline-hidden focus:border-purple-400 focus:bg-white/10 transition-all"
                       />
                     </div>
 
@@ -963,34 +984,34 @@ export const AuthView: React.FC<AuthViewProps> = ({
                       id="forgot_submit_btn"
                       type="submit"
                       disabled={isAnyLoading}
-                      className="w-full h-12 rounded-full bg-neutral-900 hover:bg-black text-white font-['Manrope'] text-sm font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
+                      className="w-full h-11 sm:h-12 rounded-full bg-white hover:bg-neutral-100 text-black font-['Manrope'] text-sm font-bold shadow-md active:scale-[0.99] transition-all disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
                     >
                       {loading ? (
-                        <Loader2 className="w-5 h-5 animate-spin text-white" />
+                        <Loader2 className="w-5 h-5 animate-spin text-black" />
                       ) : (
-                        <span>{language === 'ur' ? 'ری سیٹ لنک بھیجیں' : 'Send reset link'}</span>
+                        <span>{isUrdu ? 'ری سیٹ لنک بھیجیں' : 'Send reset link'}</span>
                       )}
                     </button>
 
                     <button
                       type="button"
                       onClick={handleBackToSignIn}
-                      className="w-full py-2 text-xs font-bold text-neutral-600 hover:text-neutral-900 font-['Manrope'] transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="w-full py-2 text-xs font-bold text-neutral-400 hover:text-white font-['Manrope'] transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <ArrowLeft className="w-3.5 h-3.5" />
-                      <span>{language === 'ur' ? 'سائن ان پر واپس جائیں' : 'Back to sign in'}</span>
+                      <span>{isUrdu ? 'سائن ان پر واپس جائیں' : 'Back to sign in'}</span>
                     </button>
                   </form>
                 )}
 
-                {/* -------------------------------------------------------- */}
-                {/* MODE D: RESET PASSWORD FORM                               */}
-                {/* -------------------------------------------------------- */}
+                {/* ------------------------------------------------------ */}
+                {/* MODE D: RESET PASSWORD FORM                             */}
+                {/* ------------------------------------------------------ */}
                 {mode === 'reset_password' && (
                   <form onSubmit={handleResetPasswordSubmit} className="space-y-3.5">
                     <div>
-                      <label className="block text-xs font-bold text-neutral-700 mb-1 font-['Manrope']">
-                        {language === 'ur' ? 'نیا پاس ورڈ' : 'New Password'}
+                      <label className="block text-xs font-bold text-neutral-300 mb-1 font-['Manrope']">
+                        {isUrdu ? 'نیا پاس ورڈ' : 'New Password'}
                       </label>
                       <div className="relative">
                         <input
@@ -1001,12 +1022,12 @@ export const AuthView: React.FC<AuthViewProps> = ({
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
                           placeholder="••••••••"
-                          className="w-full h-11 px-4 pe-11 rounded-xl border border-neutral-200 bg-neutral-50/50 text-neutral-900 text-sm font-['Manrope'] placeholder:text-neutral-400 focus:outline-hidden focus:border-neutral-900 focus:bg-white transition-all"
+                          className="w-full h-11 px-4 pe-11 rounded-xl border border-white/15 bg-white/5 text-white text-sm font-['Manrope'] placeholder:text-neutral-500 focus:outline-hidden focus:border-purple-400 focus:bg-white/10 transition-all"
                         />
                         <button
                           type="button"
                           onClick={() => setShowNewPassword(!showNewPassword)}
-                          className="absolute end-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 p-1 cursor-pointer transition-colors"
+                          className="absolute end-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white p-1 cursor-pointer transition-colors"
                           aria-label={showNewPassword ? 'Hide password' : 'Show password'}
                         >
                           {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -1015,8 +1036,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-neutral-700 mb-1 font-['Manrope']">
-                        {language === 'ur' ? 'پاس ورڈ کی تصدیق کریں' : 'Confirm Password'}
+                      <label className="block text-xs font-bold text-neutral-300 mb-1 font-['Manrope']">
+                        {isUrdu ? 'پاس ورڈ کی تصدیق کریں' : 'Confirm Password'}
                       </label>
                       <div className="relative">
                         <input
@@ -1027,12 +1048,12 @@ export const AuthView: React.FC<AuthViewProps> = ({
                           value={confirmNewPassword}
                           onChange={(e) => setConfirmNewPassword(e.target.value)}
                           placeholder="••••••••"
-                          className="w-full h-11 px-4 pe-11 rounded-xl border border-neutral-200 bg-neutral-50/50 text-neutral-900 text-sm font-['Manrope'] placeholder:text-neutral-400 focus:outline-hidden focus:border-neutral-900 focus:bg-white transition-all"
+                          className="w-full h-11 px-4 pe-11 rounded-xl border border-white/15 bg-white/5 text-white text-sm font-['Manrope'] placeholder:text-neutral-500 focus:outline-hidden focus:border-purple-400 focus:bg-white/10 transition-all"
                         />
                         <button
                           type="button"
                           onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
-                          className="absolute end-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 p-1 cursor-pointer transition-colors"
+                          className="absolute end-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white p-1 cursor-pointer transition-colors"
                           aria-label={showConfirmNewPassword ? 'Hide password' : 'Show password'}
                         >
                           {showConfirmNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -1044,27 +1065,27 @@ export const AuthView: React.FC<AuthViewProps> = ({
                       id="reset_submit_btn"
                       type="submit"
                       disabled={isAnyLoading}
-                      className="w-full h-12 mt-2 rounded-full bg-neutral-900 hover:bg-black text-white font-['Manrope'] text-sm font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
+                      className="w-full h-11 sm:h-12 mt-2 rounded-full bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-['Manrope'] text-sm font-bold shadow-md active:scale-[0.99] transition-all disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
                     >
                       {loading ? (
                         <Loader2 className="w-5 h-5 animate-spin text-white" />
                       ) : (
-                        <span>{language === 'ur' ? 'نیا پاس ورڈ محفوظ کریں' : 'Save new password'}</span>
+                        <span>{isUrdu ? 'نیا پاس ورڈ محفوظ کریں' : 'Save new password'}</span>
                       )}
                     </button>
                   </form>
                 )}
 
-                {/* Terms of Service & Privacy Notice */}
-                <div className="pt-2 text-center">
-                  <p className="text-[11px] text-neutral-500 font-['Manrope'] leading-relaxed max-w-xs mx-auto">
-                    {language === 'ur' ? (
+                {/* Terms and Privacy Disclaimer */}
+                <div className="pt-3 text-center">
+                  <p className="text-[11px] text-neutral-400 font-['Manrope'] leading-relaxed">
+                    {isUrdu ? (
                       <>
                         جاری رکھ کر، آپ ہماری{' '}
                         <button
                           type="button"
                           onClick={() => onOpenLegalPage?.('terms')}
-                          className="text-neutral-800 font-semibold underline hover:text-black cursor-pointer"
+                          className="text-neutral-200 font-semibold underline hover:text-white cursor-pointer"
                         >
                           شرائط
                         </button>{' '}
@@ -1072,7 +1093,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                         <button
                           type="button"
                           onClick={() => onOpenLegalPage?.('privacy')}
-                          className="text-neutral-800 font-semibold underline hover:text-black cursor-pointer"
+                          className="text-neutral-200 font-semibold underline hover:text-white cursor-pointer"
                         >
                           رازداری کی پالیسی
                         </button>{' '}
@@ -1084,7 +1105,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                         <button
                           type="button"
                           onClick={() => onOpenLegalPage?.('terms')}
-                          className="text-neutral-800 font-semibold underline hover:text-black cursor-pointer"
+                          className="text-neutral-200 font-semibold underline hover:text-white cursor-pointer"
                         >
                           Terms
                         </button>{' '}
@@ -1092,7 +1113,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                         <button
                           type="button"
                           onClick={() => onOpenLegalPage?.('privacy')}
-                          className="text-neutral-800 font-semibold underline hover:text-black cursor-pointer"
+                          className="text-neutral-200 font-semibold underline hover:text-white cursor-pointer"
                         >
                           Privacy Policy
                         </button>
@@ -1103,40 +1124,39 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 </div>
               </div>
 
-              {/* Mode switch helper in bottom */}
-              <div className="pt-4 border-t border-neutral-100 flex flex-col items-center gap-2 text-xs text-neutral-500 font-['Manrope']">
+              {/* Bottom switch & links */}
+              <div className="pt-4 mt-2 border-t border-white/10 flex flex-col items-center gap-2 text-xs text-neutral-400 font-['Manrope']">
                 <div className="flex items-center gap-1.5">
                   {mode === 'signup' ? (
                     <>
-                      <span>{language === 'ur' ? 'پہلے سے اکاؤنٹ موجود ہے؟' : 'Already have an account?'}</span>
+                      <span>{isUrdu ? 'پہلے سے اکاؤنٹ موجود ہے؟' : 'Already have an account?'}</span>
                       <button
                         type="button"
                         onClick={() => handleSwitchTab('signin')}
-                        className="font-bold text-neutral-900 underline hover:text-black cursor-pointer"
+                        className="font-bold text-white underline hover:text-purple-300 cursor-pointer"
                       >
-                        {language === 'ur' ? 'سائن ان کریں' : 'Log in'}
+                        {isUrdu ? 'سائن ان کریں' : 'Log in'}
                       </button>
                     </>
                   ) : (
                     <>
-                      <span>{language === 'ur' ? 'اکاؤنٹ نہیں ہے؟' : "Don't have an account?"}</span>
+                      <span>{isUrdu ? 'اکاؤنٹ نہیں ہے؟' : "Don't have an account?"}</span>
                       <button
                         type="button"
                         onClick={() => handleSwitchTab('signup')}
-                        className="font-bold text-neutral-900 underline hover:text-black cursor-pointer"
+                        className="font-bold text-white underline hover:text-purple-300 cursor-pointer"
                       >
-                        {language === 'ur' ? 'نیا اکاؤنٹ بنائیں' : 'Sign up'}
+                        {isUrdu ? 'نیا اکاؤنٹ بنائیں' : 'Sign up'}
                       </button>
                     </>
                   )}
                 </div>
 
-                {/* Secondary footer link to Rashan list */}
-                <div className="pt-1 flex items-center justify-center gap-3 text-[11px] text-neutral-400">
+                <div className="flex items-center justify-center gap-3 text-[11px] text-neutral-500">
                   <button
                     type="button"
                     onClick={() => onOpenLegalPage?.('help')}
-                    className="hover:text-neutral-700 transition-colors cursor-pointer"
+                    className="hover:text-neutral-300 transition-colors cursor-pointer"
                   >
                     Help & FAQ
                   </button>
@@ -1160,13 +1180,9 @@ export const AuthView: React.FC<AuthViewProps> = ({
                           : '/rashan-list'
                       );
                     }}
-                    className="hover:text-neutral-700 transition-colors cursor-pointer"
+                    className="hover:text-neutral-300 transition-colors cursor-pointer"
                   >
-                    {language === 'ur'
-                      ? 'ماہانہ راشن لسٹ'
-                      : language === 'roman-urdu'
-                      ? 'Mahana Rashan List'
-                      : 'Monthly Rashan List'}
+                    {isUrdu ? 'ماہانہ راشن لسٹ' : 'Monthly Rashan List'}
                   </a>
                 </div>
               </div>
