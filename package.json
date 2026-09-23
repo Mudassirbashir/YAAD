@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "test": "tsx tests/recognition.test.ts && tsx tests/rls-logic.test.ts && tsx tests/offline-queue.test.ts && tsx tests/pakistani-units.test.ts && tsx tests/shopping-interaction.test.ts && tsx tests/step7-stats-history-qa.test.ts && tsx tests/step8-settings-language-about.test.ts && tsx tests/seo-master.test.ts && tsx tests/crawl-simulation.test.ts && tsx tests/phase4-rashan-landing.test.ts && tsx tests/password-security-flow.test.ts && tsx scripts/test-passkey-ux.ts && tsx tests/app-update-ux.test.ts",
+    "test": "tsx tests/recognition.test.ts && tsx tests/rls-logic.test.ts && tsx tests/offline-queue.test.ts && tsx tests/pakistani-units.test.ts && tsx tests/shopping-interaction.test.ts && tsx tests/step7-stats-history-qa.test.ts && tsx tests/step8-settings-language-about.test.ts && tsx tests/seo-master.test.ts && tsx tests/crawl-simulation.test.ts && tsx tests/phase4-rashan-landing.test.ts && tsx tests/password-security-flow.test.ts && tsx scripts/test-passkey-ux.ts && tsx tests/app-update-ux.test.ts && tsx tests/auth-redesign-reference.test.ts",
     "notify:indexnow": "tsx scripts/notify-indexnow.ts"
   },
   "dependencies": {

@@ -221,6 +221,9 @@ function AppContent() {
   // Shopping lists collection scoped by authenticated user
   const [lists, setLists] = useState<ShoppingList[]>([]);
 
+  // Controls whether the auth success celebration screen is currently showing
+  const [isAuthSuccessShowing, setIsAuthSuccessShowing] = useState<boolean>(false);
+
   // Track previous user to detect sign in / sign out / switch
   const [prevUserId, setPrevUserId] = useState<string | null | undefined>(user?.id);
 
@@ -422,7 +425,7 @@ function AppContent() {
     }
 
     // 1. AUTHENTICATED USERS: If user is on /auth, /root, /profile-setup, or /onboarding, redirect straight to /home or intended
-    if (user) {
+    if (user && !isAuthSuccessShowing) {
       if (route.routeId === 'auth' || route.routeId === 'root' || route.routeId === 'profile_setup' || route.routeId === 'onboarding') {
         const intended = getIntendedDestination();
         if (intended && intended !== '/auth' && intended !== '/profile-setup' && intended !== '/onboarding' && intended !== '/') {
@@ -1197,12 +1200,16 @@ function AppContent() {
         !isPasswordResetRequiredActive &&
         currentScreen !== 'reset_password' &&
         route.routeId !== 'reset_password' &&
-        !user &&
+        (!user || isAuthSuccessShowing) &&
         !LEGAL_SCREENS.includes(currentScreen) &&
         currentScreen !== 'not_found' &&
         currentScreen !== 'rashan_list' && (
           <AuthView
-            onSuccess={handleAuthSuccess}
+            onSuccess={() => {
+              setIsAuthSuccessShowing(false);
+              handleAuthSuccess();
+            }}
+            onSuccessDisplayChange={setIsAuthSuccessShowing}
             onOpenLegalPage={handleOpenLegalPage}
           />
         )}
