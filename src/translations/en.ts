@@ -473,7 +473,7 @@ export const en = {
     versionTitle: 'App Version',
     versionDesc: 'Installed application release',
     contactSupport: 'Contact Support',
-    supportEmail: 'useyaadapp@gmail.com',
+    supportEmail: 'yaadapppk@gmail.com',
     footerTagline: 'Simple Shopping Memory',
     footerVersion: 'YAAD v2.0.0',
     appInfo: 'Simple shopping-memory application.',

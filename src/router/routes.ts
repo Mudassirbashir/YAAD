@@ -25,6 +25,7 @@ export type AppRouteId =
   | 'about'
   | 'help'
   | 'legal'
+  | 'blog'
   | 'rashan_list'
   | 'not_found';
 
@@ -331,6 +332,16 @@ export function parseRoute(rawPathname: string): ParsedRoute {
     };
   }
 
+  if (norm === '/blog' || norm === '/blogs' || norm === '/articles') {
+    return {
+      routeId: 'blog',
+      pathname: '/blog',
+      params: {},
+      isProtected: false,
+      canonicalPath: '/blog',
+    };
+  }
+
   // 10. Dedicated Public Editorial & Rashan Guide
   if (norm === '/rashan-list' || norm === '/rashan' || norm === '/rashan-ki-list' || norm === '/monthly-rashan') {
     return {
@@ -402,6 +413,8 @@ export function buildCanonicalPath(
       return '/help';
     case 'legal':
       return '/legal';
+    case 'blog':
+      return '/blog';
     case 'rashan_list':
       return '/rashan-list';
     case 'not_found':

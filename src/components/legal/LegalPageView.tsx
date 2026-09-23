@@ -21,6 +21,7 @@ import {
   Smartphone,
   CheckCircle2,
   ShoppingBag,
+  Newspaper,
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAppRouter } from '../../router/RouterContext';
@@ -33,6 +34,7 @@ import {
   ABOUT_HIGHLIGHTS,
   FAQS,
   FAQItem,
+  BLOG_POSTS,
 } from './legalContent';
 
 interface LegalPageViewProps {
@@ -354,6 +356,24 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
             >
               <BookOpen className="w-3.5 h-3.5 shrink-0" />
               <span>{getLocalizedText(LEGAL_METADATA.legal.title)}</span>
+            </a>
+
+            {/* Blog & Articles Link */}
+            <a
+              id="legal_tab_blog"
+              href="/blog"
+              onClick={(e) => {
+                e.preventDefault();
+                handleTabClick('blog');
+              }}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all ${
+                currentPage === 'blog'
+                  ? 'bg-primary text-on-primary shadow-xs'
+                  : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
+              }`}
+            >
+              <Newspaper className="w-3.5 h-3.5 shrink-0" />
+              <span>{language === 'ur' ? 'بلاگ اور آرٹیکلز' : language === 'roman-urdu' ? 'Blog & Articles' : 'Blog'}</span>
             </a>
           </nav>
         </div>
@@ -729,15 +749,15 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                     Direct Support Email
                   </span>
                   <a
-                    href="mailto:useyaadapp@gmail.com"
+                    href="mailto:yaadapppk@gmail.com"
                     className="text-sm font-bold text-primary hover:underline break-all"
                   >
-                    useyaadapp@gmail.com
+                    yaadapppk@gmail.com
                   </a>
                 </div>
 
                 <a
-                  href="mailto:useyaadapp@gmail.com?subject=YAAD%20Support%20Request"
+                  href="mailto:yaadapppk@gmail.com?subject=YAAD%20Support%20Request"
                   className="px-4 py-2 rounded-full text-xs font-bold bg-primary text-on-primary hover:bg-primary/90 transition-colors shadow-xs"
                 >
                   Send Email
@@ -897,6 +917,90 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
         )}
 
         {/* ================================================================ */}
+        {/* VIEW F: YAAD BLOG & GUIDES (User-Requested Editorial Articles) */}
+        {/* ================================================================ */}
+        {currentPage === 'blog' && (
+          <div className="space-y-8">
+            {/* Header intro banner */}
+            <div className="p-6 sm:p-8 rounded-3xl bg-surface border border-surface-dim flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="space-y-1.5">
+                <span className="text-xs font-bold uppercase tracking-wider text-primary">
+                  {language === 'ur' ? 'یاد ادارتی گائیڈز' : 'YAAD Editorial & Guides'}
+                </span>
+                <h2 className="text-xl sm:text-2xl font-extrabold text-on-surface font-['Manrope']">
+                  {language === 'ur'
+                    ? 'گھریلو سودا سلف اور ماہانہ راشن کی سمارٹ رہنمائی'
+                    : 'Smart Grocery & Household Shopping Guides'}
+                </h2>
+                <p className="text-xs sm:text-sm text-outline max-w-2xl">
+                  {language === 'ur'
+                    ? 'پاکستانی کچن کے لیے راشن کی منصوبہ بندی، روایتی پیمانوں کی معلومات اور بجٹ بچانے کے طریقے'
+                    : 'Practical articles crafted for Pakistani households to save money, avoid forgotten items, and master local grocery shopping.'}
+                </p>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-primary-fixed/50 flex items-center justify-center text-primary shrink-0">
+                <Newspaper className="w-6 h-6" />
+              </div>
+            </div>
+
+            {/* Articles List */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {BLOG_POSTS.map((post) => {
+                const title = getLocalizedText(post.title);
+                const summary = getLocalizedText(post.summary);
+                const category = getLocalizedText(post.category);
+                const paragraphs =
+                  language === 'ur'
+                    ? post.content.ur
+                    : language === 'roman-urdu'
+                    ? post.content.romanUrdu
+                    : post.content.en;
+
+                return (
+                  <article
+                    key={post.id}
+                    id={post.id}
+                    className="p-6 rounded-3xl bg-surface border border-surface-dim hover:border-primary/30 transition-all flex flex-col justify-between space-y-4 shadow-2xs"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between gap-2 text-xs">
+                        <span className="px-2.5 py-1 rounded-full bg-primary-fixed/40 text-primary font-bold">
+                          {category}
+                        </span>
+                        <span className="text-outline font-medium">{post.readTime}</span>
+                      </div>
+
+                      <h3
+                        className={`text-base sm:text-lg font-bold text-on-surface leading-snug ${
+                          language === 'ur' ? 'font-urdu text-lg sm:text-xl' : "font-['Manrope']"
+                        }`}
+                      >
+                        {title}
+                      </h3>
+
+                      <p className="text-xs sm:text-sm text-outline leading-relaxed line-clamp-3">
+                        {summary}
+                      </p>
+
+                      <div className="pt-2 border-t border-surface-dim/60 space-y-2 text-xs text-on-surface-variant leading-relaxed">
+                        {paragraphs.slice(0, 2).map((p, idx) => (
+                          <p key={idx}>{p}</p>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="pt-2 text-xs text-outline font-medium flex items-center justify-between">
+                      <span>{post.publishDate}</span>
+                      <span className="text-primary font-bold">YAAD Editorial</span>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ================================================================ */}
         {/* 5. UNIFIED LEGAL FOOTER WITH DIRECT LINK DIRECTORY */}
         {/* ================================================================ */}
         <footer className="pt-10 border-t border-surface-dim space-y-6 text-center">
@@ -977,6 +1081,18 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
               className={`transition-colors ${currentPage === 'legal' ? 'text-primary font-bold' : 'text-outline hover:text-on-surface'}`}
             >
               Legal Notices
+            </a>
+            <span className="text-surface-dim">•</span>
+            <a
+              id="legal_footer_blog"
+              href="/blog"
+              onClick={(e) => {
+                e.preventDefault();
+                handleTabClick('blog');
+              }}
+              className={`transition-colors ${currentPage === 'blog' ? 'text-primary font-bold' : 'text-outline hover:text-on-surface'}`}
+            >
+              Blog & Guides
             </a>
           </div>
 

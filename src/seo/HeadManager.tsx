@@ -111,7 +111,7 @@ export const HeadManager: React.FC = () => {
     // - root '/' (Public YAAD Product Landing Page)
     // - public editorial routes: 'about', 'help', 'terms', 'privacy', 'legal', 'rashan_list'
     // /home is NEVER indexable (it is the user's private shopping dashboard)
-    const isPublicEditorial = ['about', 'help', 'terms', 'privacy', 'legal', 'rashan_list'].includes(routeId);
+    const isPublicEditorial = ['about', 'help', 'terms', 'privacy', 'legal', 'rashan_list', 'blog'].includes(routeId);
     const isPublicLanding = routeId === 'root';
     const isIndexablePublicRoute = isPublicLanding || isPublicEditorial;
 
@@ -175,6 +175,7 @@ export const HeadManager: React.FC = () => {
     else if (routeId === 'privacy') pageKey = 'privacy';
     else if (routeId === 'legal') pageKey = 'legal';
     else if (routeId === 'rashan_list') pageKey = 'rashanList';
+    else if (routeId === 'blog') pageKey = 'blog';
 
     const pageConfig = SITE_CONFIG.pages[pageKey] || SITE_CONFIG.pages.home;
 

@@ -77,7 +77,7 @@ assert.ok(
   'Must provide direct accessible links to Privacy Policy and Terms of Service'
 );
 assert.ok(
-  landingPageContent.includes('useyaadapp@gmail.com'),
+  landingPageContent.includes('yaadapppk@gmail.com'),
   'Must provide support contact email on homepage'
 );
 console.log('✅ PASSED: Google OAuth purpose and legal links verified');

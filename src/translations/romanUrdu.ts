@@ -476,7 +476,7 @@ export const romanUrdu: typeof en = {
     versionTitle: 'App Version',
     versionDesc: 'Mojooda installed version',
     contactSupport: 'Rabta Karein',
-    supportEmail: 'useyaadapp@gmail.com',
+    supportEmail: 'yaadapppk@gmail.com',
     footerTagline: 'Asaan Shopping Memory',
     footerVersion: 'YAAD v2.0.0',
     appInfo: 'YAAD — Asaan shopping memory app.',

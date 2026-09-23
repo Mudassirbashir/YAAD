@@ -147,10 +147,10 @@ export const LegalDocModal: React.FC<LegalDocModalProps> = ({
                 </span>
                 <a
                   id="settings_support_email_link"
-                  href={`mailto:${t('settings.supportEmail') || 'useyaadapp@gmail.com'}`}
+                  href={`mailto:${t('settings.supportEmail') || 'yaadapppk@gmail.com'}`}
                   className="block text-primary font-bold hover:underline break-all"
                 >
-                  {t('settings.supportEmail') || 'useyaadapp@gmail.com'}
+                  {t('settings.supportEmail') || 'yaadapppk@gmail.com'}
                 </a>
               </div>
               <p className="text-xs text-outline">

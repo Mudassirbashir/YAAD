@@ -57,7 +57,7 @@ const getStorageKey = (userId?: string | null) => {
   return userId ? `yaad_shopping_lists_u_${userId}` : 'yaad_shopping_lists_guest';
 };
 
-const LEGAL_SCREENS: ScreenType[] = ['terms', 'privacy', 'about', 'help', 'legal'];
+const LEGAL_SCREENS: ScreenType[] = ['terms', 'privacy', 'about', 'help', 'legal', 'blog'];
 
 function AppContent() {
   const {

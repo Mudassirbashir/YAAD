@@ -476,7 +476,7 @@ export const ur: typeof en = {
     versionTitle: 'ایپ ورژن',
     versionDesc: 'موجودہ انسٹال شدہ ورژن',
     contactSupport: 'رابطہ کریں',
-    supportEmail: 'useyaadapp@gmail.com',
+    supportEmail: 'yaadapppk@gmail.com',
     footerTagline: 'سودا سلف یاد رکھنے کی آسان ایپ',
     footerVersion: 'YAAD v2.0.0',
     appInfo: 'یاد — سودا سلف یاد رکھنے کی آسان ایپ۔',

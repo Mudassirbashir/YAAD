@@ -1,28 +1,37 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   CheckCircle2,
   Sparkles,
   Shield,
   ArrowRight,
   ShoppingBag,
-  Globe,
   Lock,
-  Smartphone,
-  ExternalLink,
-  HelpCircle,
-  FileText,
-  Heart,
-  ChevronRight,
+  Newspaper,
+  Check,
+  Scale,
+  WifiOff,
+  User as UserIcon,
+  Plus,
+  RotateCcw,
 } from 'lucide-react';
-import { useLanguage } from '../context/LanguageContext';
 import { User } from '@supabase/supabase-js';
+import { LegalPageType } from './legal/legalContent';
 
 interface LandingPageViewProps {
   user: User | null;
   onGetStarted: () => void;
   onSignIn: () => void;
-  onOpenLegalPage: (page: 'about' | 'privacy' | 'terms' | 'help' | 'legal') => void;
+  onOpenLegalPage: (page: LegalPageType) => void;
   onOpenRashanList: () => void;
+}
+
+interface InteractiveDemoItem {
+  id: string;
+  nameEn: string;
+  nameUr: string;
+  quantity: string;
+  icon: string;
+  completed: boolean;
 }
 
 export const LandingPageView: React.FC<LandingPageViewProps> = ({
@@ -32,529 +41,672 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
   onOpenLegalPage,
   onOpenRashanList,
 }) => {
-  const { language, setLanguage, isRTL } = useLanguage();
+  // Ultra-clear, child-friendly interactive checklist
+  const [demoItems, setDemoItems] = useState<InteractiveDemoItem[]>([
+    { id: '1', nameEn: 'Fresh Milk', nameUr: 'تازہ دودھ', quantity: '2 Litre', icon: '🥛', completed: true },
+    { id: '2', nameEn: 'Eggs', nameUr: 'انڈے', quantity: '1 Dozen', icon: '🥚', completed: true },
+    { id: '3', nameEn: 'Biscuits & Snacks', nameUr: 'بسکٹ', quantity: '2 Packs', icon: '🍪', completed: false },
+    { id: '4', nameEn: 'Pyaz (Onions)', nameUr: 'پیاز', quantity: '1 دھڑی (5 kg)', icon: '🧅', completed: false },
+    { id: '5', nameEn: 'Chakki Atta', nameUr: 'چکی کا آٹا', quantity: '10 kg', icon: '🌾', completed: false },
+  ]);
+
+  const toggleDemoItem = (id: string) => {
+    setDemoItems((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, completed: !item.completed } : item
+      )
+    );
+  };
+
+  const addQuickItem = (nameEn: string, nameUr: string, quantity: string, icon: string) => {
+    const newItem: InteractiveDemoItem = {
+      id: Date.now().toString(),
+      nameEn,
+      nameUr,
+      quantity,
+      icon,
+      completed: false,
+    };
+    setDemoItems((prev) => [...prev, newItem]);
+  };
+
+  const resetDemo = () => {
+    setDemoItems([
+      { id: '1', nameEn: 'Fresh Milk', nameUr: 'تازہ دودھ', quantity: '2 Litre', icon: '🥛', completed: false },
+      { id: '2', nameEn: 'Eggs', nameUr: 'انڈے', quantity: '1 Dozen', icon: '🥚', completed: false },
+      { id: '3', nameEn: 'Biscuits & Snacks', nameUr: 'بسکٹ', quantity: '2 Packs', icon: '🍪', completed: false },
+      { id: '4', nameEn: 'Pyaz (Onions)', nameUr: 'پیاز', quantity: '1 دھڑی (5 kg)', icon: '🧅', completed: false },
+      { id: '5', nameEn: 'Chakki Atta', nameUr: 'چکی کا آٹا', quantity: '10 kg', icon: '🌾', completed: false },
+    ]);
+  };
+
+  const completedCount = demoItems.filter((i) => i.completed).length;
+  const isAllCompleted = completedCount === demoItems.length && demoItems.length > 0;
 
   return (
-    <div
-      className={`min-h-screen bg-[#fbf9f5] text-[#1c2826] font-sans antialiased selection:bg-[#005039]/15 selection:text-[#005039] ${
-        isRTL ? 'rtl' : 'ltr'
-      }`}
-      dir={isRTL ? 'rtl' : 'ltr'}
-    >
-      {/* 1. TOP HEADER / NAVIGATION */}
-      <header className="sticky top-0 z-40 bg-[#fbf9f5]/95 backdrop-blur-md border-b border-[#e5e1d8]/80 transition-all">
+    <div className="min-h-screen bg-[#fbf9f5] text-[#1c2826] font-sans antialiased selection:bg-[#005039]/15 selection:text-[#005039]">
+      {/* ==================================================================== */}
+      {/* 1. TOP HEADER (Logo Left, YAAD Center, Sign-in Right) */}
+      {/* ==================================================================== */}
+      <header className="sticky top-0 z-40 bg-[#fbf9f5]/95 backdrop-blur-md border-b border-[#e5e1d8]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          {/* Logo & Identity */}
-          <div className="flex items-center gap-3">
-            <img
-              src="/logo.png"
-              alt="YAAD Logo"
-              className="w-9 h-9 object-contain drop-shadow-sm rounded-lg"
-              onError={(e) => {
-                // fallback if needed
-                (e.target as HTMLElement).style.display = 'none';
+          {/* Left: Brand Logo */}
+          <div className="flex items-center gap-2.5">
+            <a
+              href="/"
+              onClick={(e) => {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-            />
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-xl font-bold tracking-tight text-[#005039]">YAAD</span>
-              <span className="text-sm font-semibold text-[#005039]/80 bg-[#005039]/10 px-1.5 py-0.5 rounded text-xs font-urdu">
+              className="flex items-center gap-2.5 group cursor-pointer"
+            >
+              <img
+                src="/logo.png"
+                alt="YAAD Logo"
+                className="w-8 h-8 sm:w-9 sm:h-9 object-contain drop-shadow-xs transition-transform group-hover:scale-105"
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = 'none';
+                }}
+              />
+              <span className="hidden sm:inline-block font-urdu text-base text-[#005039] font-bold">
                 یاد
               </span>
-            </div>
+            </a>
           </div>
 
-          {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-[#556960]">
-            <button
-              onClick={() => onOpenLegalPage('about')}
-              className="hover:text-[#005039] transition-colors cursor-pointer"
+          {/* Center: Clean, Authoritative YAAD Brand Heading */}
+          <div className="text-center">
+            <a
+              href="/"
+              onClick={(e) => {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="inline-block"
             >
-              {language === 'ur' ? 'ہمارے متعلق' : language === 'roman-urdu' ? 'About' : 'About'}
-            </button>
-            <button
-              onClick={onOpenRashanList}
-              className="hover:text-[#005039] transition-colors cursor-pointer"
-            >
-              {language === 'ur' ? 'ماہانہ راشن' : language === 'roman-urdu' ? 'Rashan List' : 'Rashan List'}
-            </button>
-            <button
-              onClick={() => onOpenLegalPage('help')}
-              className="hover:text-[#005039] transition-colors cursor-pointer"
-            >
-              {language === 'ur' ? 'مدد اور رہنمائی' : language === 'roman-urdu' ? 'Help' : 'Help & FAQ'}
-            </button>
-            <button
-              onClick={() => onOpenLegalPage('privacy')}
-              className="hover:text-[#005039] transition-colors cursor-pointer"
-            >
-              {language === 'ur' ? 'پرائیویسی' : language === 'roman-urdu' ? 'Privacy' : 'Privacy'}
-            </button>
-          </nav>
+              <span className="text-xl sm:text-2xl font-black tracking-widest text-[#005039] font-['Plus_Jakarta_Sans',sans-serif]">
+                YAAD
+              </span>
+            </a>
+          </div>
 
-          {/* Language Selector & Auth CTAs */}
-          <div className="flex items-center gap-2.5">
-            {/* Language Pill Switcher */}
-            <div className="flex items-center bg-white border border-[#e5e1d8] rounded-full p-0.5 text-xs font-medium shadow-2xs">
-              <button
-                onClick={() => setLanguage('en')}
-                className={`px-2 py-1 rounded-full transition-all cursor-pointer ${
-                  language === 'en'
-                    ? 'bg-[#005039] text-white font-semibold'
-                    : 'text-[#556960] hover:text-[#1c2826]'
-                }`}
-              >
-                EN
-              </button>
-              <button
-                onClick={() => setLanguage('ur')}
-                className={`px-2 py-1 rounded-full font-urdu transition-all cursor-pointer ${
-                  language === 'ur'
-                    ? 'bg-[#005039] text-white font-semibold'
-                    : 'text-[#556960] hover:text-[#1c2826]'
-                }`}
-              >
-                اردو
-              </button>
-              <button
-                onClick={() => setLanguage('roman-urdu')}
-                className={`px-2 py-1 rounded-full transition-all cursor-pointer ${
-                  language === 'roman-urdu'
-                    ? 'bg-[#005039] text-white font-semibold'
-                    : 'text-[#556960] hover:text-[#1c2826]'
-                }`}
-              >
-                Roman
-              </button>
-            </div>
-
-            {/* User Auth Action */}
+          {/* Right: Clean Account / Sign In Action */}
+          <div className="flex items-center gap-3">
             {user ? (
               <button
+                type="button"
                 onClick={onGetStarted}
-                className="inline-flex items-center gap-1.5 bg-[#005039] hover:bg-[#00402e] text-white text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-xl shadow-xs transition-all cursor-pointer"
+                className="inline-flex items-center gap-2 bg-[#005039] hover:bg-[#00402e] text-white text-xs sm:text-sm font-semibold px-4 py-2 rounded-full shadow-xs transition-all active:scale-95 cursor-pointer"
               >
-                <span>{language === 'ur' ? 'ڈیش بورڈ کھولیں' : 'Go to Lists'}</span>
+                <span>Go to Lists</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             ) : (
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={onSignIn}
-                  className="hidden sm:inline-flex text-xs sm:text-sm font-semibold text-[#005039] hover:text-[#00402e] px-3 py-2 transition-colors cursor-pointer"
-                >
-                  {language === 'ur' ? 'لاگ ان' : language === 'roman-urdu' ? 'Sign In' : 'Sign In'}
-                </button>
-                <button
-                  onClick={onGetStarted}
-                  className="inline-flex items-center gap-1.5 bg-[#005039] hover:bg-[#00402e] text-white text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-xl shadow-xs transition-all cursor-pointer"
-                >
-                  <span>{language === 'ur' ? 'شروع کریں' : language === 'roman-urdu' ? 'Shuru Karein' : 'Get Started'}</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={onSignIn}
+                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#005039] hover:text-[#00402e] bg-[#005039]/8 hover:bg-[#005039]/12 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full border border-[#005039]/15 transition-all active:scale-95 cursor-pointer"
+              >
+                <UserIcon className="w-3.5 h-3.5" />
+                <span>Sign in to your account</span>
+              </button>
             )}
           </div>
         </div>
       </header>
 
-      {/* 2. AUTHENTICATED USER GREETING BANNER (If already logged in) */}
+      {/* Authenticated user quick bar if logged in */}
       {user && (
-        <aside aria-label="Account status" className="bg-[#005039]/10 border-b border-[#005039]/20 py-2.5 px-4">
-          <div className="max-w-6xl mx-auto flex items-center justify-between text-xs sm:text-sm text-[#005039]">
+        <aside
+          aria-label="Account status"
+          className="bg-[#005039]/8 border-b border-[#005039]/15 py-2 px-4 text-center text-xs sm:text-sm text-[#005039] font-medium"
+        >
+          <div className="max-w-6xl mx-auto flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>
-                {language === 'ur'
-                  ? `خوش آمدید! آپ سائن ان ہیں (${user.email || 'صارف'})`
-                  : `Signed in as ${user.email || 'User'}`}
-              </span>
+              <span>Signed in as <strong>{user.email || 'User'}</strong></span>
             </div>
             <button
               onClick={onGetStarted}
-              className="font-semibold underline hover:no-underline cursor-pointer"
+              className="font-bold underline hover:no-underline cursor-pointer"
             >
-              {language === 'ur' ? 'اپنا سودا سلف دیکھیں ←' : 'Open Shopping Lists →'}
+              Open Shopping Lists &rarr;
             </button>
           </div>
         </aside>
       )}
 
-      {/* 3. HERO SECTION */}
-      <section className="py-14 sm:py-20 px-4 sm:px-6 max-w-4xl mx-auto text-center">
-        {/* Subtle Brand Badge */}
-        <div className="inline-flex items-center gap-2 bg-white border border-[#e5e1d8] rounded-full px-3.5 py-1.5 mb-6 shadow-2xs">
-          <Sparkles className="w-4 h-4 text-[#005039]" />
-          <span className="text-xs sm:text-sm font-medium text-[#556960]">
-            {language === 'ur'
-              ? 'سودا سلف یاد رکھنے کی آسان ایپ'
-              : language === 'roman-urdu'
-              ? 'Sauda salaf yaad rakhne ki aasan app'
-              : 'Smart Shopping Memory & Grocery Reminder'}
-          </span>
+      {/* ==================================================================== */}
+      {/* 2. HERO SECTION — SO SIMPLE AN 8-YEAR-OLD GETS IT IN 3 SECONDS */}
+      {/* ==================================================================== */}
+      <section className="pt-8 pb-12 sm:pt-14 sm:pb-16 px-4 sm:px-6 max-w-5xl mx-auto">
+        <div className="text-center max-w-3xl mx-auto">
+          {/* Friendly visual pill */}
+          <div className="inline-flex items-center gap-2 bg-white border border-[#e5e1d8] rounded-full px-4 py-1.5 mb-5 shadow-2xs">
+            <Sparkles className="w-4 h-4 text-[#005039]" />
+            <span className="text-xs sm:text-sm font-bold text-[#005039]">
+              کاغذ پینسل چھوڑیں — دکان پر جانا اب بالکل آسان!
+            </span>
+          </div>
+
+          {/* Simple, Emotional, Crystal-Clear Main Headline */}
+          <h1 className="text-3xl sm:text-5xl font-black text-[#1c2826] tracking-tight leading-[1.18] mb-3 font-['Plus_Jakarta_Sans',sans-serif]">
+            دکان پر جا کر بھول گئے <br className="hidden sm:inline" />
+            کہ کیا لانا تھا؟
+          </h1>
+
+          <p className="text-xl sm:text-2xl font-bold text-[#005039] mb-3 font-['Plus_Jakarta_Sans',sans-serif]">
+            Never Forget What to Buy Again!
+          </p>
+
+          {/* Crystal Clear 8-Year-Old Explanation */}
+          <p className="text-sm sm:text-base text-[#556960] max-w-2xl mx-auto mb-8 leading-relaxed">
+            امی نے سودا لینے بھیجا ہو یا گھر کا راشن لانا ہو: <strong>جو چاہیے وہ لکھ لیں</strong>، اور دکان پر ملتے ہی <strong>ٹک کر دیں</strong>۔ کوئی چیز کبھی نہیں بھولے گی!
+          </p>
+
+          {/* Main Action CTAs */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 max-w-md mx-auto mb-10">
+            <button
+              type="button"
+              onClick={onGetStarted}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#005039] hover:bg-[#00402e] text-white font-bold text-sm sm:text-base px-7 py-3.5 rounded-2xl shadow-sm hover:shadow-md transition-all active:scale-98 cursor-pointer"
+            >
+              <span>{user ? 'Open Your Shopping Lists' : 'ابھی لسٹ بنائیں — بالکل مفت'}</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={onOpenRashanList}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white hover:bg-[#f3f0e8] text-[#1c2826] font-semibold text-sm sm:text-base px-5 py-3.5 rounded-2xl border border-[#e5e1d8] shadow-2xs transition-all cursor-pointer"
+            >
+              <ShoppingBag className="w-4 h-4 text-[#005039]" />
+              <span>Monthly Rashan Guide (راشن لسٹ)</span>
+            </button>
+          </div>
         </div>
 
-        {/* Main Headline */}
-        <h1 className="text-3xl sm:text-5xl font-extrabold text-[#1c2826] tracking-tight leading-[1.15] mb-5">
-          {language === 'ur' ? (
-            <span className="font-urdu leading-relaxed">
-              کبھی سودا سلف مت بھولیں
-            </span>
-          ) : language === 'roman-urdu' ? (
-            <span>
-              Ghar aa kar yaad aya... <br />
-              <span className="text-[#005039]">Shop pe ja kar yaad aya.</span>
-            </span>
-          ) : (
-            <span>
-              Never forget what you <br />
-              <span className="text-[#005039]">went to the shop to buy.</span>
-            </span>
-          )}
-        </h1>
+        {/* ==================================================================== */}
+        {/* 3 STEP STORY CARD (Super easy to grasp in 1 glance) */}
+        {/* ==================================================================== */}
+        <div className="max-w-3xl mx-auto mb-10 grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+          <div className="bg-white/80 border border-[#e5e1d8] rounded-2xl p-4 text-center shadow-2xs flex flex-col items-center">
+            <div className="w-10 h-10 rounded-full bg-[#005039]/10 text-[#005039] font-black text-sm flex items-center justify-center mb-2">
+              ۱
+            </div>
+            <h3 className="text-sm font-bold text-[#1c2826] font-urdu">
+              پہلے لکھیں 📝
+            </h3>
+            <p className="text-xs text-[#556960] mt-1">
+              جو چیز بھی لانی ہے (دودھ، انڈے، آٹا) اس کو لسٹ میں ڈال لیں۔
+            </p>
+          </div>
 
-        {/* Short Relatable Description */}
-        <p className="text-base sm:text-lg text-[#556960] max-w-2xl mx-auto mb-8 leading-relaxed">
-          {language === 'ur'
-            ? 'یاد (YAAD) ایک آسان شاپنگ لسٹ ایپ ہے جو آپ کو سودا سلف اور ماہانہ راشن خریدتے وقت ضروری اشیاء یاد رکھنے میں مدد دیتی ہے۔'
-            : language === 'roman-urdu'
-            ? 'YAAD ek aasan shopping list app hai jo grocery, rashan aur rozmarrah ki zaroori cheezein yaad rakhne mein madad karti hai.'
-            : 'YAAD is a simple, smart shopping reminder built for everyday households. Create grocery lists in seconds, shop with confidence, and never leave essentials behind.'}
-        </p>
+          <div className="bg-white/80 border border-[#e5e1d8] rounded-2xl p-4 text-center shadow-2xs flex flex-col items-center">
+            <div className="w-10 h-10 rounded-full bg-[#005039]/10 text-[#005039] font-black text-sm flex items-center justify-center mb-2">
+              ۲
+            </div>
+            <h3 className="text-sm font-bold text-[#1c2826] font-urdu">
+              دکان پر جائیں 🏪
+            </h3>
+            <p className="text-xs text-[#556960] mt-1">
+              انٹرنیٹ بند بھی ہو تو پریشانی نہیں، لسٹ فون میں کھلی رہے گی!
+            </p>
+          </div>
 
-        {/* Primary Action Buttons */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 max-w-md mx-auto mb-10">
-          <button
-            onClick={onGetStarted}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#005039] hover:bg-[#00402e] text-white font-semibold text-base px-6 py-3.5 rounded-2xl shadow-sm hover:shadow-md transition-all cursor-pointer"
-          >
-            <span>{user ? 'Open Shopping Dashboard' : 'Get Started Free'}</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
-          <button
-            onClick={onOpenRashanList}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white hover:bg-[#f2efe9] text-[#1c2826] font-semibold text-base px-5 py-3.5 rounded-2xl border border-[#e5e1d8] transition-all cursor-pointer"
-          >
-            <ShoppingBag className="w-4 h-4 text-[#005039]" />
-            <span>{language === 'ur' ? 'راشن لسٹ گائیڈ' : 'Explore Rashan List'}</span>
-          </button>
+          <div className="bg-white/80 border border-[#e5e1d8] rounded-2xl p-4 text-center shadow-2xs flex flex-col items-center">
+            <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-800 font-black text-sm flex items-center justify-center mb-2">
+              ۳
+            </div>
+            <h3 className="text-sm font-bold text-[#1c2826] font-urdu">
+              ٹک کریں ✅
+            </h3>
+            <p className="text-xs text-[#556960] mt-1">
+              چیز تھیلے میں ڈالی، انگلی سے دبایا اور ٹک ہو گیا!
+            </p>
+          </div>
         </div>
 
-        {/* Trust Badges */}
-        <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs text-[#556960] font-medium pt-2">
-          <span className="inline-flex items-center gap-1.5">
-            <CheckCircle2 className="w-4 h-4 text-[#005039]" />
-            100% Free to Use
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <CheckCircle2 className="w-4 h-4 text-[#005039]" />
-            English &amp; اردو Support
-          </span>
-          <span className="inline-flex items-center gap-1.5">
-            <CheckCircle2 className="w-4 h-4 text-[#005039]" />
-            Google Secure Sign-In
-          </span>
+        {/* ==================================================================== */}
+        {/* INTERACTIVE PLAYGROUND CARD (Live demo an 8-year-old can play with!) */}
+        {/* ==================================================================== */}
+        <div className="max-w-xl mx-auto bg-white rounded-3xl border-2 border-[#005039]/20 shadow-md p-5 sm:p-6 relative overflow-hidden">
+          {/* Top Bar */}
+          <div className="flex items-center justify-between pb-3.5 border-b border-[#f2efe9]">
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 rounded-xl bg-[#005039]/10 text-[#005039] flex items-center justify-center text-lg">
+                🛒
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-[#1c2826]">
+                    امتحانی لسٹ (خود چلا کر دیکھیں)
+                  </h3>
+                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                    Try it now
+                  </span>
+                </div>
+                <p className="text-xs text-[#556960]">
+                  کسی بھی چیز پر کلک کریں تاکہ وہ ٹک ہو جائے
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={resetDemo}
+                title="Reset list"
+                className="p-1.5 rounded-lg text-outline hover:text-[#005039] hover:bg-[#faf8f5] transition-colors cursor-pointer"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
+              <span className="text-xs font-bold text-[#005039] bg-[#005039]/10 px-2.5 py-1 rounded-full">
+                {completedCount}/{demoItems.length}
+              </span>
+            </div>
+          </div>
+
+          {/* Progress Banner */}
+          <div className="my-3 bg-[#faf8f5] rounded-xl p-2.5 border border-[#e5e1d8]/70 flex items-center justify-between text-xs">
+            <span className="text-[#3d5046] font-medium">
+              {isAllCompleted
+                ? '🎉 زبردست! سب چیزیں مل گئیں، اب گھر چلیں!'
+                : `${completedCount} چیز مل گئی، باقی ${demoItems.length - completedCount} لینا رہتی ہیں`}
+            </span>
+            <div className="w-20 bg-gray-200 rounded-full h-2 overflow-hidden">
+              <div
+                className="bg-[#005039] h-2 transition-all duration-300 rounded-full"
+                style={{ width: `${(completedCount / Math.max(demoItems.length, 1)) * 100}%` }}
+              />
+            </div>
+          </div>
+
+          {/* List Items */}
+          <div className="divide-y divide-[#f5f2ec]">
+            {demoItems.map((item) => (
+              <div
+                key={item.id}
+                onClick={() => toggleDemoItem(item.id)}
+                className={`py-3 flex items-center justify-between group cursor-pointer select-none transition-all px-2.5 rounded-xl ${
+                  item.completed ? 'bg-emerald-50/50' : 'hover:bg-[#faf8f5]'
+                }`}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div
+                    className={`w-6 h-6 rounded-lg flex items-center justify-center border transition-all ${
+                      item.completed
+                        ? 'bg-[#005039] border-[#005039] text-white scale-105'
+                        : 'border-[#c5bfb4] bg-white group-hover:border-[#005039]'
+                    }`}
+                  >
+                    {item.completed && <Check className="w-4 h-4 stroke-[3]" />}
+                  </div>
+                  <div className="truncate flex items-center gap-1.5">
+                    <span className="text-base">{item.icon}</span>
+                    <span
+                      className={`text-sm font-medium transition-all ${
+                        item.completed
+                          ? 'line-through text-[#8b9992]'
+                          : 'text-[#1c2826] font-bold'
+                      }`}
+                    >
+                      {item.nameEn}
+                    </span>
+                    <span className="text-xs text-[#b0a99c]">•</span>
+                    <span
+                      className={`text-xs font-urdu ${
+                        item.completed ? 'text-[#8b9992] line-through' : 'text-[#556960]'
+                      }`}
+                    >
+                      {item.nameUr}
+                    </span>
+                  </div>
+                </div>
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-[#f3efe6] text-[#3d5046] shrink-0">
+                  {item.quantity}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Quick-add chips to show how easy it is */}
+          <div className="mt-4 pt-3 border-t border-[#f2efe9]">
+            <p className="text-[11px] font-bold text-[#556960] mb-2 font-urdu">
+              کچھ اور شامل کر کے دیکھیں:
+            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => addQuickItem('Chocolate', 'چاکلیٹ', '1 Bar', '🍫')}
+                className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-[#faf8f5] hover:bg-[#f0ebe1] border border-[#e5e1d8] text-[#1c2826] font-medium transition-all active:scale-95 cursor-pointer"
+              >
+                <Plus className="w-3 h-3 text-[#005039]" />
+                <span>🍫 چاکلیٹ</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => addQuickItem('Juice', 'جوس', '1 Pack', '🧃')}
+                className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-[#faf8f5] hover:bg-[#f0ebe1] border border-[#e5e1d8] text-[#1c2826] font-medium transition-all active:scale-95 cursor-pointer"
+              >
+                <Plus className="w-3 h-3 text-[#005039]" />
+                <span>🧃 جوس</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => addQuickItem('Dahi (Yogurt)', 'دہی', '1 پاؤ', '🥣')}
+                className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-[#faf8f5] hover:bg-[#f0ebe1] border border-[#e5e1d8] text-[#1c2826] font-medium transition-all active:scale-95 cursor-pointer"
+              >
+                <Plus className="w-3 h-3 text-[#005039]" />
+                <span>🥣 دہی (1 پاؤ)</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Bottom Card Footer */}
+          <div className="mt-4 pt-3 border-t border-[#f2efe9] flex items-center justify-between text-xs text-[#556960]">
+            <span className="inline-flex items-center gap-1.5 text-emerald-700 font-semibold">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              انٹرنیٹ کے بغیر بھی کام کرتا ہے
+            </span>
+            <button
+              type="button"
+              onClick={onGetStarted}
+              className="text-[#005039] font-bold hover:underline cursor-pointer"
+            >
+              اپنی اصلی لسٹ بنائیں &rarr;
+            </button>
+          </div>
         </div>
       </section>
 
-      {/* 4. THE 3 CORE PILLARS (Clean, Focused, 3 Points as requested) */}
-      <section className="py-12 sm:py-16 px-4 sm:px-6 max-w-5xl mx-auto border-t border-[#e5e1d8]">
+      {/* ==================================================================== */}
+      {/* 3. THREE CORE PILLARS (Simple Words for 8-Year-Old + Preserves Tests) */}
+      {/* ==================================================================== */}
+      <section className="py-12 px-4 sm:px-6 max-w-5xl mx-auto border-t border-[#e5e1d8]">
         <div className="text-center max-w-xl mx-auto mb-10">
-          <h2 className="text-2xl sm:text-3xl font-bold text-[#1c2826] mb-3">
-            {language === 'ur'
-              ? 'یاد ایپ آپ کی مدد کیسے کرتی ہے؟'
-              : language === 'roman-urdu'
-              ? 'YAAD kaise madad karti hai?'
-              : 'How YAAD Solves Everyday Shopping'}
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#1c2826] tracking-tight">
+            یہ ایپ اتنی آسان کیوں ہے؟
           </h2>
-          <p className="text-sm text-[#556960]">
-            {language === 'ur'
-              ? 'تین آسان طریقوں سے آپ کے روزمرہ سودا سلف کا مکمل حل'
-              : 'Three simple pillars designed around real everyday shopping habits.'}
+          <p className="text-xs sm:text-sm text-[#556960] mt-2">
+            کسی مشکل مینو یا الجھن کے بغیر — صرف ۳ بنیادی چیزیں
           </p>
         </div>
 
-        {/* 3 Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Point 1: Create & Check Off */}
-          <div className="bg-white border border-[#e5e1d8] rounded-2xl p-6 sm:p-7 shadow-xs hover:border-[#005039]/40 transition-all flex flex-col justify-between">
+          {/* Pillar 1: Fast, Clutter-Free Lists */}
+          <div className="bg-white border border-[#e5e1d8] rounded-2xl p-6 shadow-2xs hover:border-[#005039]/40 transition-all flex flex-col justify-between">
             <div>
-              <div className="w-12 h-12 rounded-xl bg-[#005039]/10 text-[#005039] flex items-center justify-center mb-5">
-                <ShoppingBag className="w-6 h-6" />
+              <div className="w-11 h-11 rounded-xl bg-[#005039]/10 text-[#005039] flex items-center justify-center mb-4">
+                <ShoppingBag className="w-5 h-5" />
               </div>
-              <h3 className="text-lg font-bold text-[#1c2826] mb-2.5">
-                {language === 'ur'
-                  ? 'سودا سلف کی آسان فہرست'
-                  : language === 'roman-urdu'
-                  ? 'Aasan Shopping List'
-                  : 'Fast, Clutter-Free Lists'}
+              <h3 className="text-base font-bold text-[#1c2826] mb-2">
+                Fast, Clutter-Free Lists
               </h3>
-              <p className="text-sm text-[#556960] leading-relaxed">
-                {language === 'ur'
-                  ? 'گھر سے نکلنے سے پہلے مطلوبہ اشیاء درج کریں۔ دکان پر ایک ہی ٹچ میں اشیاء چیک آف کریں تاکہ کچھ رہ نہ جائے۔'
-                  : language === 'roman-urdu'
-                  ? 'Dukaan jaane se pehle zaroori items add karein aur shop par ek click se check-off karein.'
-                  : 'Jot down needed items before heading to the market. Check them off one-by-one as you shop so you never miss a single item.'}
+              <p className="text-xs sm:text-sm text-[#556960] leading-relaxed">
+                کاغذ اور پینسل کی طرح آسان! دکان جانے سے پہلے جو چاہیے لکھ لیں، اور سودا لیتے ہی ٹک کر دیں۔ کوئی فالتو بٹن نہیں۔
               </p>
             </div>
-            <div className="mt-5 pt-4 border-t border-[#f2efe9] text-xs font-semibold text-[#005039] flex items-center gap-1">
-              <span>{language === 'ur' ? 'تیز اور آسان' : 'Effortless checklist'}</span>
+            <div className="mt-5 pt-3 border-t border-[#f2efe9] text-xs font-bold text-[#005039]">
+              سودا سلف کی آسان فہرست
             </div>
           </div>
 
-          {/* Point 2: Pakistani Households & Units */}
-          <div className="bg-white border border-[#e5e1d8] rounded-2xl p-6 sm:p-7 shadow-xs hover:border-[#005039]/40 transition-all flex flex-col justify-between">
+          {/* Pillar 2: Pakistani Units & Rashan */}
+          <div className="bg-white border border-[#e5e1d8] rounded-2xl p-6 shadow-2xs hover:border-[#005039]/40 transition-all flex flex-col justify-between">
             <div>
-              <div className="w-12 h-12 rounded-xl bg-[#005039]/10 text-[#005039] flex items-center justify-center mb-5">
-                <Globe className="w-6 h-6" />
+              <div className="w-11 h-11 rounded-xl bg-[#005039]/10 text-[#005039] flex items-center justify-center mb-4">
+                <Scale className="w-5 h-5" />
               </div>
-              <h3 className="text-lg font-bold text-[#1c2826] mb-2.5">
-                {language === 'ur'
-                  ? 'روایتی پیمانے اور راشن'
-                  : language === 'roman-urdu'
-                  ? 'Pakistani Units & Rashan'
-                  : 'Pakistani Units & Rashan'}
+              <h3 className="text-base font-bold text-[#1c2826] mb-2">
+                Pakistani Units &amp; Rashan
               </h3>
-              <p className="text-sm text-[#556960] leading-relaxed">
-                {language === 'ur'
-                  ? 'پاکستانی گھرانوں کے لیے روایتی پیمانے (پاؤ، کلو، درجن) اور مکمل ماہانہ راشن لسٹ جو اردو اور انگلش دونوں میں دستیاب ہے۔'
-                  : language === 'roman-urdu'
-                  ? 'Traditional Pakistani units (páo, kg, darjan) aur monthly rashan template Urdu aur English mein.'
-                  : 'Built specifically for everyday grocery routines with full support for local Pakistani units (páo, kg, darjan) and curated monthly rashan guides.'}
+              <p className="text-xs sm:text-sm text-[#556960] leading-relaxed">
+                پاؤ، کلو، درجن اور دھڑی — وہی الفاظ جو دکاندار بولتا ہے۔ ساتھ ہی پورے مہینے کے راشن کی ریڈی میڈ لسٹ بھی موجود ہے۔
               </p>
             </div>
-            <div className="mt-5 pt-4 border-t border-[#f2efe9] text-xs font-semibold text-[#005039] flex items-center gap-1">
-              <span>{language === 'ur' ? 'پاؤ، کلو، درجن' : 'Native units supported'}</span>
+            <div className="mt-5 pt-3 border-t border-[#f2efe9] text-xs font-bold text-[#005039]">
+              روایتی پیمانے اور راشن
             </div>
           </div>
 
-          {/* Point 3: Secure Sync & Privacy */}
-          <div className="bg-white border border-[#e5e1d8] rounded-2xl p-6 sm:p-7 shadow-xs hover:border-[#005039]/40 transition-all flex flex-col justify-between">
+          {/* Pillar 3: Private & Secure Sync */}
+          <div className="bg-white border border-[#e5e1d8] rounded-2xl p-6 shadow-2xs hover:border-[#005039]/40 transition-all flex flex-col justify-between">
             <div>
-              <div className="w-12 h-12 rounded-xl bg-[#005039]/10 text-[#005039] flex items-center justify-center mb-5">
-                <Shield className="w-6 h-6" />
+              <div className="w-11 h-11 rounded-xl bg-[#005039]/10 text-[#005039] flex items-center justify-center mb-4">
+                <Shield className="w-5 h-5" />
               </div>
-              <h3 className="text-lg font-bold text-[#1c2826] mb-2.5">
-                {language === 'ur'
-                  ? 'محفوظ اور نجی ڈیٹا'
-                  : language === 'roman-urdu'
-                  ? 'Mehfooz Aur Private'
-                  : 'Private & Secure Sync'}
+              <h3 className="text-base font-bold text-[#1c2826] mb-2">
+                Private &amp; Secure Sync
               </h3>
-              <p className="text-sm text-[#556960] leading-relaxed">
-                {language === 'ur'
-                  ? 'گوگل اکاؤنٹ کے ذریعے محفوظ لاگ ان تاکہ آپ کی لسٹس آپ کے موبائل اور کمپیوٹر پر ہمیشہ ہم آہنگ رہیں۔ آپ کا ڈیٹا مکمل طور پر نجی ہے۔'
-                  : language === 'roman-urdu'
-                  ? 'Google sign-in ke zariye aapki lists har device par sync rehti hain aur data hamesha private rehta hai.'
-                  : 'Sign in smoothly with your Google account to back up and synchronize lists across your phone, tablet, and browser. Your data is strictly private.'}
+              <p className="text-xs sm:text-sm text-[#556960] leading-relaxed">
+                امی، ابو یا آپ — کسی بھی فون پر گوگل سے کھولیں، لسٹ سامنے آ جائے گی۔ آپ کا ڈیٹا ۱۰۰٪ محفوظ اور نجی رہتا ہے۔
               </p>
             </div>
-            <div className="mt-5 pt-4 border-t border-[#f2efe9] text-xs font-semibold text-[#005039] flex items-center gap-1">
-              <span>{language === 'ur' ? 'گوگل سے تصدیق' : 'Google Auth protected'}</span>
+            <div className="mt-5 pt-3 border-t border-[#f2efe9] text-xs font-bold text-[#005039]">
+              محفوظ اور نجی ڈیٹا
             </div>
           </div>
         </div>
       </section>
 
-      {/* 5. DATA TRANSPARENCY & GOOGLE OAUTH COMPLIANCE (Explicitly meeting Google Review Criteria) */}
-      <section className="py-10 px-4 sm:px-6 max-w-4xl mx-auto">
-        <div className="bg-white border border-[#e5e1d8] rounded-3xl p-6 sm:p-9 shadow-xs space-y-6">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-[#005039]/10 text-[#005039] flex items-center justify-center shrink-0">
-              <Shield className="w-6 h-6" />
-            </div>
-            <div>
-              <h3 className="text-lg sm:text-xl font-bold text-[#1c2826]">
-                {language === 'ur'
-                  ? 'گوگل اکاؤنٹ اور رازداری کی تفصیل • ڈیٹا کی شفافیت'
-                  : 'Why YAAD Uses Google Authentication & Data Transparency'}
-              </h3>
-              <p className="text-xs sm:text-sm text-[#556960] mt-1">
-                {language === 'ur'
-                  ? 'یاد ایپ آپ کی رازداری کا احترام کرتی ہے۔ جانیے کہ ہم آپ کا ڈیٹا کس مقصد کے لیے استعمال کرتے ہیں۔'
-                  : 'YAAD is committed to complete transparency regarding how your data is accessed, stored, and protected.'}
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-            {/* Box 1: Why Google Sign-In */}
-            <div className="bg-[#fbf9f5] border border-[#e5e1d8]/80 rounded-2xl p-4 sm:p-5">
-              <div className="flex items-center gap-2 mb-2 font-bold text-sm text-[#1c2826]">
-                <Lock className="w-4 h-4 text-[#005039]" />
-                <span>
-                  {language === 'ur' ? 'گوگل سائن ان کا مقصد' : 'Purpose of Google Sign-In'}
-                </span>
-              </div>
-              <p className="text-xs text-[#556960] leading-relaxed">
-                {language === 'ur'
-                  ? 'ہم صرف آپ کا بنیادی نام اور ای میل استعمال کرتے ہیں تاکہ آپ کی خریداری کی لسٹیں محفوظ طریقے سے آپ کے اکاؤنٹ کے ساتھ وابستہ رہیں۔'
-                  : 'We request your basic Google profile (Name and Email) strictly to authenticate your account and securely back up your personal shopping lists across your devices.'}
-              </p>
-            </div>
-
-            {/* Box 2: What we NEVER access */}
-            <div className="bg-[#fbf9f5] border border-[#e5e1d8]/80 rounded-2xl p-4 sm:p-5">
-              <div className="flex items-center gap-2 mb-2 font-bold text-sm text-[#1c2826]">
-                <CheckCircle2 className="w-4 h-4 text-[#005039]" />
-                <span>
-                  {language === 'ur' ? 'ہم کیا حاصل نہیں کرتے' : 'What We Never Access'}
-                </span>
-              </div>
-              <p className="text-xs text-[#556960] leading-relaxed">
-                {language === 'ur'
-                  ? 'ہم آپ کے جی میل، رابطوں، گوگل ڈرائیو یا مقام کا کوئی ڈیٹا طلب نہیں کرتے۔ آپ کا ذاتی ڈیٹا کبھی بھی فروخت یا شیئر نہیں کیا جاتا۔'
-                  : 'YAAD never accesses your Gmail, contacts, Google Drive files, or calendar. We do not track you for ads, and your data is never sold or shared with third parties.'}
-              </p>
-            </div>
-          </div>
-
-          {/* User Data Deletion & Consent Links */}
-          <div className="border-t border-[#e5e1d8] pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#556960]">
-            <span>
-              {language === 'ur'
-                ? 'آپ کسی بھی وقت سیٹنگز سے اپنا ڈیٹا اور اکاؤنٹ مستقل طور پر ڈیلیٹ کر سکتے ہیں۔'
-                : 'You have full control to export or permanently delete your shopping lists and account at any time.'}
-            </span>
-            <div className="flex flex-wrap items-center gap-4 font-semibold text-[#005039] shrink-0">
-              <a
-                href="/privacy"
-                onClick={(e) => {
-                  e.preventDefault();
-                  onOpenLegalPage('privacy');
-                }}
-                className="inline-flex items-center gap-1.5 hover:underline"
-              >
-                <FileText className="w-3.5 h-3.5" />
-                <span>Privacy Policy</span>
-              </a>
-              <a
-                href="/terms"
-                onClick={(e) => {
-                  e.preventDefault();
-                  onOpenLegalPage('terms');
-                }}
-                className="inline-flex items-center gap-1.5 hover:underline"
-              >
-                <FileText className="w-3.5 h-3.5" />
-                <span>Terms of Service</span>
-              </a>
-              <a
-                href="/help"
-                onClick={(e) => {
-                  e.preventDefault();
-                  onOpenLegalPage('help');
-                }}
-                className="inline-flex items-center gap-1.5 hover:underline"
-              >
-                <HelpCircle className="w-3.5 h-3.5" />
-                <span>Help &amp; FAQ</span>
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 6. CALL TO ACTION STRIP */}
-      <section className="py-12 px-4 sm:px-6 max-w-4xl mx-auto text-center">
-        <div className="bg-[#005039] text-white rounded-3xl p-8 sm:p-10 shadow-sm">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-3">
-            {language === 'ur'
-              ? 'آج ہی اپنی شاپنگ لسٹ بنائیں'
-              : language === 'roman-urdu'
-              ? 'Aaj hi apni shopping list banayein'
-              : 'Ready to remember everything you need?'}
-          </h2>
-          <p className="text-sm sm:text-base text-white/80 max-w-md mx-auto mb-6">
-            {language === 'ur'
-              ? 'کوئی فیس نہیں، کوئی غیر ضروری اشتہارات نہیں — بس آسان اور تیز سودا سلف۔'
-              : 'No hidden fees, no unnecessary noise. Just a fast, reliable shopping memory.'}
-          </p>
-          <button
-            onClick={onGetStarted}
-            className="inline-flex items-center gap-2 bg-white text-[#005039] hover:bg-[#fbf9f5] font-bold text-sm sm:text-base px-6 py-3.5 rounded-2xl shadow-sm transition-all cursor-pointer"
-          >
-            <span>{user ? 'Open Dashboard' : 'Open YAAD App'}</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-      </section>
-
-      {/* 7. FOOTER */}
-      <footer className="mt-10 border-t border-[#e5e1d8] bg-white py-10 px-4 sm:px-6">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-sm text-[#556960]">
-          {/* Logo & Copyright */}
+      {/* ==================================================================== */}
+      {/* 4. GOOGLE OAUTH TRANSPARENCY & PRIVACY NOTICE (Reviewer Compliance) */}
+      {/* ==================================================================== */}
+      <section className="py-8 px-4 sm:px-6 max-w-4xl mx-auto">
+        <div className="bg-white border border-[#e5e1d8] rounded-3xl p-6 sm:p-7 shadow-2xs space-y-4">
           <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="YAAD" className="w-6 h-6 object-contain" />
-            <span className="font-semibold text-[#1c2826]">YAAD (یاد)</span>
-            <span className="text-xs text-[#556960]">
-              &copy; {new Date().getFullYear()} YAAD. All rights reserved.
-            </span>
+            <div className="w-10 h-10 rounded-xl bg-[#005039]/10 text-[#005039] flex items-center justify-center shrink-0">
+              <Lock className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm sm:text-base font-bold text-[#1c2826]">
+                Why YAAD Uses Google Authentication &amp; Data Transparency
+              </h3>
+              <p className="text-xs text-[#556960]">
+                We request your basic Google profile (Name and Email) strictly to identify your account and sync lists across your devices.
+              </p>
+            </div>
           </div>
 
-          {/* Legal and Compliance Links */}
-          <div className="flex flex-wrap items-center justify-center gap-5 text-xs font-medium">
-            <a
-              href="/about"
-              onClick={(e) => {
-                e.preventDefault();
-                onOpenLegalPage('about');
-              }}
-              className="hover:text-[#005039] transition-colors cursor-pointer"
-            >
-              About
-            </a>
-            <a
-              href="/rashan-list"
-              onClick={(e) => {
-                e.preventDefault();
-                onOpenRashanList();
-              }}
-              className="hover:text-[#005039] transition-colors cursor-pointer"
-            >
-              Monthly Rashan List
-            </a>
-            <a
-              href="/privacy"
-              onClick={(e) => {
-                e.preventDefault();
-                onOpenLegalPage('privacy');
-              }}
-              className="hover:text-[#005039] transition-colors cursor-pointer"
-            >
-              Privacy Policy
-            </a>
-            <a
-              href="/terms"
-              onClick={(e) => {
-                e.preventDefault();
-                onOpenLegalPage('terms');
-              }}
-              className="hover:text-[#005039] transition-colors cursor-pointer"
-            >
-              Terms of Service
-            </a>
-            <a
-              href="/help"
-              onClick={(e) => {
-                e.preventDefault();
-                onOpenLegalPage('help');
-              }}
-              className="hover:text-[#005039] transition-colors cursor-pointer"
-            >
-              Help &amp; FAQ
-            </a>
-            <a
-              href="mailto:useyaadapp@gmail.com"
-              className="hover:text-[#005039] transition-colors"
-            >
-              useyaadapp@gmail.com
-            </a>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 text-xs text-[#556960]">
+            <div className="bg-[#faf8f5] p-3.5 rounded-xl border border-[#e5e1d8]/70">
+              <strong className="text-[#1c2826] block mb-1">What we use:</strong>
+              Name &amp; email strictly for authentication and list sync.
+            </div>
+            <div className="bg-[#faf8f5] p-3.5 rounded-xl border border-[#e5e1d8]/70">
+              <strong className="text-[#1c2826] block mb-1">What we never access:</strong>
+              Zero access to Gmail, Google Drive, contacts, or location data.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ==================================================================== */}
+      {/* 5. PROFESSIONAL REORGANIZED FOOTER WITH BLOG & EDITORIAL SECTION */}
+      {/* ==================================================================== */}
+      <footer className="mt-12 border-t border-[#e5e1d8] bg-white pt-12 pb-8 px-4 sm:px-6">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 pb-10 border-b border-[#e5e1d8]">
+          {/* Col 1: Brand & Verified Domain */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2.5">
+              <img src="/logo.png" alt="YAAD" className="w-7 h-7 object-contain" />
+              <span className="font-bold text-base text-[#1c2826]">YAAD</span>
+              <span className="font-urdu text-sm text-[#005039] font-semibold">یاد</span>
+            </div>
+            <p className="text-xs text-[#556960] leading-relaxed">
+              Thoughtful shopping memory and monthly rashan checklist for Pakistani households. Built for real kiryana trips.
+            </p>
+            <div className="pt-1 text-[11px] text-[#556960]">
+              <span className="text-[#788880]">Verified Home:</span>{' '}
+              <span className="font-mono text-[#005039] font-medium">yaadapppk.vercel.app</span>
+            </div>
+          </div>
+
+          {/* Col 2: App & Features */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold text-[#1c2826] uppercase tracking-wider">
+              App &amp; Features
+            </h4>
+            <ul className="space-y-2 text-xs text-[#556960]">
+              <li>
+                <button
+                  type="button"
+                  onClick={onGetStarted}
+                  className="hover:text-[#005039] transition-colors cursor-pointer"
+                >
+                  Open Shopping Lists
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={onOpenRashanList}
+                  className="hover:text-[#005039] transition-colors cursor-pointer"
+                >
+                  Monthly Rashan Guide (ماہانہ راشن)
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => onOpenLegalPage('about')}
+                  className="hover:text-[#005039] transition-colors cursor-pointer"
+                >
+                  About YAAD
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => onOpenLegalPage('help')}
+                  className="hover:text-[#005039] transition-colors cursor-pointer"
+                >
+                  Help &amp; FAQ
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          {/* Col 3: YAAD Blog & Articles */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-1.5">
+              <Newspaper className="w-3.5 h-3.5 text-[#005039]" />
+              <h4 className="text-xs font-bold text-[#1c2826] uppercase tracking-wider">
+                YAAD Blog &amp; Guides
+              </h4>
+            </div>
+            <ul className="space-y-2 text-xs text-[#556960]">
+              <li>
+                <button
+                  type="button"
+                  onClick={() => onOpenLegalPage('blog')}
+                  className="text-[#005039] font-bold hover:underline transition-colors cursor-pointer"
+                >
+                  Browse All Articles (بلاگ) &rarr;
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => onOpenLegalPage('blog')}
+                  className="hover:text-[#005039] transition-colors cursor-pointer text-left"
+                >
+                  5 Smart Ways to Plan Monthly Rashan
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => onOpenLegalPage('blog')}
+                  className="hover:text-[#005039] transition-colors cursor-pointer text-left"
+                >
+                  Understanding Pakistani Units: Pao &amp; Dharri
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => onOpenLegalPage('blog')}
+                  className="hover:text-[#005039] transition-colors cursor-pointer text-left"
+                >
+                  Offline Shopping in Basement Bazaars
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          {/* Col 4: Trust, Legal & Contact */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold text-[#1c2826] uppercase tracking-wider">
+              Privacy &amp; Contact
+            </h4>
+            <ul className="space-y-2 text-xs text-[#556960]">
+              <li>
+                <button
+                  type="button"
+                  onClick={() => onOpenLegalPage('privacy')}
+                  className="hover:text-[#005039] transition-colors cursor-pointer"
+                >
+                  Privacy Policy
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => onOpenLegalPage('terms')}
+                  className="hover:text-[#005039] transition-colors cursor-pointer"
+                >
+                  Terms of Service
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => onOpenLegalPage('legal')}
+                  className="hover:text-[#005039] transition-colors cursor-pointer"
+                >
+                  Legal Information Hub
+                </button>
+              </li>
+              <li className="pt-1">
+                <a
+                  href="mailto:yaadapppk@gmail.com"
+                  className="text-[#005039] font-medium hover:underline"
+                >
+                  yaadapppk@gmail.com
+                </a>
+              </li>
+            </ul>
           </div>
         </div>
 
-        {/* Verification & Domain Notice */}
-        <div className="max-w-6xl mx-auto mt-6 pt-4 border-t border-[#f2efe9] text-center text-xs text-[#556960]/80">
-          Official Domain: <span className="font-mono text-[#005039]">https://yaadapppk.vercel.app</span>
+        {/* Bottom Copyright Strip */}
+        <div className="max-w-6xl mx-auto pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#788880]">
+          <p>&copy; {new Date().getFullYear()} YAAD (یاد). All rights reserved.</p>
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => onOpenLegalPage('privacy')}
+              className="hover:text-[#1c2826] transition-colors cursor-pointer"
+            >
+              Privacy
+            </button>
+            <span>&bull;</span>
+            <button
+              type="button"
+              onClick={() => onOpenLegalPage('terms')}
+              className="hover:text-[#1c2826] transition-colors cursor-pointer"
+            >
+              Terms
+            </button>
+            <span>&bull;</span>
+            <button
+              type="button"
+              onClick={() => onOpenLegalPage('blog')}
+              className="hover:text-[#1c2826] transition-colors cursor-pointer"
+            >
+              Blog
+            </button>
+          </div>
         </div>
       </footer>
     </div>

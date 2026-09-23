@@ -1,4 +1,19 @@
-export type LegalPageType = 'terms' | 'privacy' | 'about' | 'help' | 'legal';
+export type LegalPageType = 'terms' | 'privacy' | 'about' | 'help' | 'legal' | 'blog';
+
+export interface BlogPost {
+  id: string;
+  slug: string;
+  category: { en: string; romanUrdu: string; ur: string };
+  title: { en: string; romanUrdu: string; ur: string };
+  summary: { en: string; romanUrdu: string; ur: string };
+  readTime: string;
+  publishDate: string;
+  content: {
+    en: string[];
+    romanUrdu: string[];
+    ur: string[];
+  };
+}
 
 export interface LegalSection {
   id: string;
@@ -114,7 +129,154 @@ export const LEGAL_METADATA: Record<
     },
     lastUpdated: 'September 2026',
   },
+  blog: {
+    path: '/blog',
+    badge: 'Articles & Guides',
+    title: {
+      en: 'YAAD Blog & Guides',
+      romanUrdu: 'YAAD Blog Aur Guides',
+      ur: 'یاد بلاگ اور رہنمائی مضامین',
+    },
+    subtitle: {
+      en: 'Smart shopping strategies, monthly rashan planning, and everyday grocery tips for Pakistani homes.',
+      romanUrdu: 'Gharelu rashan, smart shopping aur budget bachane k mufeed mashwaray.',
+      ur: 'گھریلو راشن، بچت کی تجاویز اور روزمرہ خریداری کو آسان بنانے والے مفید آرٹیکلز۔',
+    },
+    lastUpdated: 'September 2026',
+  },
 };
+
+export const BLOG_POSTS: BlogPost[] = [
+  {
+    id: 'monthly-rashan-guide',
+    slug: 'monthly-rashan-guide-pakistan',
+    category: {
+      en: 'Grocery Budgeting',
+      romanUrdu: 'Budgeting & Rashan',
+      ur: 'راشن اور گھریلو بجٹ',
+    },
+    title: {
+      en: '5 Smart Ways to Plan Monthly Rashan Without Overspending',
+      romanUrdu: 'Mahana Rashan Ki Planning: Budget Bachane K 5 Asan Tareeqay',
+      ur: 'ماہانہ راشن کی منصوبہ بندی: بجٹ بچانے اور فضول خرچی سے بچنے کے ۵ آسان طریقے',
+    },
+    summary: {
+      en: 'How writing down a structured checklist beforehand saves Pakistani families thousands of rupees every month.',
+      romanUrdu: 'Pehle se list bana kar dukaan jaane se rashan par har maah hazaron rupay kaisay bachtay hain.',
+      ur: 'گھر سے پہلے سے منظم فہرست بنا کر نکلنا کس طرح ہر ماہ ہزاروں روپے کی بچت اور وقت کی سہولت فراہم کرتا ہے۔',
+    },
+    readTime: '3 min read',
+    publishDate: 'September 2026',
+    content: {
+      en: [
+        'Every household faces the challenge of rising prices and forgotten essentials at the local store. When you enter a kiryana shop without an itemized checklist, unplanned impulse buys quickly inflate your monthly bill.',
+        '1. Audit your pantry before making the list: Check leftover spices, oil, and staples like lentils before writing down new quantities.',
+        '2. Separate staples from perishables: Buy grains and oil in bulk (10kg or 5kg sacks), but get vegetables and dairy weekly to ensure freshness.',
+        '3. Use native units accurately: Confusing 1 Pao (250g) with half kilo leads to food waste. YAAD supports traditional local units natively.',
+        '4. Tick off items as they go into the basket: Having a real-time strike-through list prevents running back to the market later for salt or tea bags.',
+      ],
+      romanUrdu: [
+        'Kiryana shop par baghair list k jaane se hamesha extra kharcha ho jata hai aur zaroori cheezein bhool jati hain.',
+        '1. Pehle ghar ki kitchen pantry check karein taakay pata chalay kon sa aatta, daalein ya masalay pehle se mojood hain.',
+        '2. Mahana staples (aatta, tail, ghee) ko alag rakhein aur sabzi/doodh ko weekly schedule par karein.',
+        '3. Páo aur kilo k paimanon ka sahi hisab rakhein taakay zaroorat k mutabiq cheez khareedi jaye.',
+        '4. Dukaan par item basket mein daalte hi YAAD app par check-off karein taakay kuch reh na jaye.',
+      ],
+      ur: [
+        'اکثر دیکھا گیا ہے کہ جب کوئی بغیر لسٹ کے کریانہ اسٹور یا مارکیٹ جاتا ہے تو غیر ضروری اشیاء پر پیسہ خرچ ہو جاتا ہے اور اصل ضرورت کی چیزیں گھر آ کر یاد آتی ہیں۔',
+        '۱۔ لسٹ بنانے سے پہلے کچن کی الماری چیک کریں: دالیں، گھی اور مصالحہ جات کی موجودہ مقدار دیکھ کر نئی ضرورت نوٹ کریں۔',
+        '۲۔ بنیادی راشن اور روزمرہ اشیاء کو الگ رکھیں: آٹا، گھی اور چاول ماہانہ بنیاد پر لیں جبکہ سبزیاں اور دودھ ضرورت کے مطابق۔',
+        '۳۔ روایتی پیمانوں (پاؤ، آدھا کلو، دھڑی) کا درست استعمال کریں تاکہ ضرورت سے زیادہ یا کم خریداری نہ ہو۔',
+        '۴۔ دکان پر چیز ملتے ہی لسٹ پر ٹک کریں تاکہ کوئی چھوٹی چیز جیسے نمک یا چائے کی پتی بھولنے کا خدشہ نہ رہے۔',
+      ],
+    },
+  },
+  {
+    id: 'local-units-demystified',
+    slug: 'pakistani-grocery-units-guide',
+    category: {
+      en: 'Local Culture & Weights',
+      romanUrdu: 'Paimany & Units',
+      ur: 'روایتی پیمانے',
+    },
+    title: {
+      en: 'Understanding Pakistani Grocery Units: Pao, Ser, and Dharri',
+      romanUrdu: 'Pakistani Units: Páo, Kilo Aur Dharri Ka Sahi Hisab',
+      ur: 'پاکستانی پیمانے: پاؤ، کلو، درجن اور دھڑی کا درست حساب',
+    },
+    summary: {
+      en: 'A handy quick-reference conversion guide for everyday Pakistani grocery shoppers and market visits.',
+      romanUrdu: 'Dukaan par khareedari k liye Pakistani paimanon ki asaan tafseel aur conversion guide.',
+      ur: 'سبزی منڈی اور کریانہ اسٹور پر خریداری کے لیے روایتی اور بین الاقوامی پیمانوں کی رہنمائی۔',
+    },
+    readTime: '4 min read',
+    publishDate: 'September 2026',
+    content: {
+      en: [
+        'Modern smartphones often show generic international units like ounces or pounds, while Pakistani shopkeepers and sabzi vendors exclusively use Pao, Dharri, and Dozen.',
+        '1 Pao = 250 grams (1/4 of a kilogram). Standard for ginger, garlic, cardamoms, and whole spices.',
+        '1 Dharri = 5 kilograms. Used commonly in vegetable markets (Mandi) for potatoes, onions, and tomatoes.',
+        '1 Dozen = 12 units. The universal standard for bananas and eggs.',
+        'YAAD lets you choose these exact traditional units with one tap, matching your local shopping speech naturally.',
+      ],
+      romanUrdu: [
+        'Hamare Pakistani bazaron mein pound ya ounce nahi chaltay, balke Páo, Kilo aur Dharri boli jati hai.',
+        '1 Páo = 250 grams (yani kilo ka chotha hissa). Adrak, lehsan aur masalon k liye istemal hota hai.',
+        '1 Dharri = 5 Kilograms. Sabzi mandi mein aaloo aur pyaz k liye dharri boli jati hai.',
+        '1 Darjan = 12 adad. Andon aur kelon ki khareedari ka aam paimana.',
+        'YAAD app in tamam rawaiti paimanon ko natively support karti hai.',
+      ],
+      ur: [
+        'ہمارے بازاروں اور منڈیوں میں پاؤنڈ یا اونس کے بجائے پاؤ، کلو اور دھڑی بولی جاتی ہے۔ اکثر ایپس ان مقامی ضروریات کو نظرانداز کر دیتی ہیں۔',
+        '۱ پاؤ = ۲۵۰ گرام (ایک کلو کا چوتھائی حصہ)۔ ادرک، لہسن، گرم مصالحہ اور ہری مرچوں کے لیے معیاری ہے۔',
+        '۱ دھڑی = ۵ کلوگرام۔ سبزی منڈی میں پیاز، آلو اور ٹماٹر کی خریداری کا روایتی پیمانہ۔',
+        '۱ درجن = ۱۲ عدد۔ انڈوں اور کیلوں کی خریداری کے لیے۔',
+        'یاد ایپ میں یہ تمام پیمانے صرف ایک کلک پر دستیاب ہیں تاکہ آپ کے بولنے اور لکھنے میں کوئی فرق نہ رہے۔',
+      ],
+    },
+  },
+  {
+    id: 'offline-shopping-memory',
+    slug: 'offline-smart-shopping-in-basement-markets',
+    category: {
+      en: 'Product & Tech',
+      romanUrdu: 'Offline Intelligence',
+      ur: 'آف لائن ٹیکنالوجی',
+    },
+    title: {
+      en: 'Why Offline-First Memory Matters in Crowded Pakistani Bazaars',
+      romanUrdu: 'Bazaron Mein Net Na Chalnay Par YAAD Kaisay Madad Karti Hai',
+      ur: 'گنجان بازاروں اور تہہ خانوں میں انٹرنیٹ نہ ہونے پر یاد ایپ کا خودکار کام',
+    },
+    summary: {
+      en: 'Never get stranded at the checkout line due to poor 4G signals. YAAD works completely offline.',
+      romanUrdu: 'Basement shops ya crowded bazaron mein baghair internet k shopping list dekhnay aur tick karnay ki sahoolat.',
+      ur: 'بغیر انٹرنیٹ کے بھی آپ کی لسٹ مکمل طور پر کھلے گی اور محفوظ رہے گی، اور نیٹ آنے پر خودکار سنک ہو جائے گی۔',
+    },
+    readTime: '3 min read',
+    publishDate: 'September 2026',
+    content: {
+      en: [
+        'Pakistani supermarkets and basement kiryana stores are infamous for weak cell reception. A cloud-only grocery app often spins endlessly while you stand at the counter.',
+        'YAAD stores your entire shopping database directly inside your device memory (IndexedDB).',
+        'You can create lists, add quantities, and mark items off without any active internet connection.',
+        'As soon as your phone reconnects to Wi-Fi or mobile data, your changes safely sync with your Google account in the background.',
+      ],
+      romanUrdu: [
+        'Aksar super stores ya basement kiryana dukano mein mobile internet signals drop ho jatay hain.',
+        'YAAD app aapki list ko aap k phone k local database mein mehfooz rakhti hai.',
+        'Aap baghair kisi internet connection k items check-off kar saktay hain.',
+        'Jab bhi mobile internet dobara connect hoga, aapka data automatically Google account k sath sync ho jayega.',
+      ],
+      ur: [
+        'تہہ خانے والی دکانوں اور رش والے بازاروں میں اکثر فور جی سگنل غائب ہو جاتے ہیں، جس سے آن لائن ایپس اٹک جاتی ہیں۔',
+        'یاد ایپ آپ کی تمام لسٹیں آپ کے موبائل کی لوکل میموری میں محفوظ رکھتی ہے۔',
+        'آپ بغیر انٹرنیٹ کے بھی اشیاء شامل کر سکتے ہیں اور دکان پر چیک آف کر سکتے ہیں۔',
+        'جیسے ہی موبائل کنیکٹ ہوتا ہے، تمام تر تبدیلیاں گوگل اکاؤنٹ پر بغیر کسی رکاوٹ کے سنک ہو جاتی ہیں۔',
+      ],
+    },
+  },
+];
 
 export const TERMS_SECTIONS: LegalSection[] = [
   {
@@ -171,17 +333,17 @@ export const TERMS_SECTIONS: LegalSection[] = [
     content: {
       en: [
         'To synchronize shopping lists across multiple devices, users create an account using email, verified phone number, Google OAuth, or FIDO2/WebAuthn Passkeys.',
-        'You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. If you suspect unauthorized access, notify us immediately at useyaadapp@gmail.com.',
+        'You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. If you suspect unauthorized access, notify us immediately at yaadapppk@gmail.com.',
         'We reserve the right to suspend or terminate accounts that provide fraudulent information or violate security integrity.',
       ],
       romanUrdu: [
         'Apni shopping lists ko mukhtalif phones par sync karne k liye aap email, verified phone number, Google ya Passkey ke zariye account banate hain.',
-        'Apne account aur password ki hifazat aapki zimadari hai. Agar aapko shak ho k kisi ne aapka account khola hai to foran useyaadapp@gmail.com par rabta karein.',
+        'Apne account aur password ki hifazat aapki zimadari hai. Agar aapko shak ho k kisi ne aapka account khola hai to foran yaadapppk@gmail.com par rabta karein.',
         'Ghalat ya jaali maloomat faraham karne walay accounts ko band karne ka haq mehfooz hai.',
       ],
       ur: [
         'اپنی خریداری کی لسٹوں کو مختلف ڈیوائسز پر سنک کرنے کے لیے صارف ای میل، تصدیق شدہ فون نمبر، گوگل یا بائیو میٹرک پاس کیز کے ذریعے اکاؤنٹ بنا سکتا ہے۔',
-        'اپنے اکاؤنٹ کی معلومات اور پاس ورڈ کو خفیہ رکھنا صارف کی ذمہ داری ہے۔ اگر آپ کو کسی غیر مجاز رسائی کا شبہ ہو تو فوری طور پر useyaadapp@gmail.com پر اطلاع دیں۔',
+        'اپنے اکاؤنٹ کی معلومات اور پاس ورڈ کو خفیہ رکھنا صارف کی ذمہ داری ہے۔ اگر آپ کو کسی غیر مجاز رسائی کا شبہ ہو تو فوری طور پر yaadapppk@gmail.com پر اطلاع دیں۔',
         'غلط یا مشتبہ معلومات فراہم کرنے والے اکاؤنٹس کو معطل یا ختم کرنے کا حق محفوظ ہے۔',
       ],
     },
@@ -265,15 +427,15 @@ export const TERMS_SECTIONS: LegalSection[] = [
     content: {
       en: [
         'We may revise these Terms & Conditions from time to time. When changes occur, the "Last Updated" date at the top of this page will be refreshed. Continued use of the application constitutes acceptance of any revised terms.',
-        'If you have questions regarding these terms, contact us at useyaadapp@gmail.com.',
+        'If you have questions regarding these terms, contact us at yaadapppk@gmail.com.',
       ],
       romanUrdu: [
         'Hum in terms mein waqt k sath zaroori tabdeeliyan kar sakte hain. Tabdeeli ki soorat mein Last Updated date update ho jayegi.',
-        'Agar aapko in sharaait k baray mein koi sawal ho to useyaadapp@gmail.com par email karein.',
+        'Agar aapko in sharaait k baray mein koi sawal ho to yaadapppk@gmail.com par email karein.',
       ],
       ur: [
         'ہم وقتاً فوقتاً ان شرائط میں ترمیم کر سکتے ہیں۔ تبدیلی کی صورت میں صفحہ کے اوپر تاریخ اپ ڈیٹ کر دی جائے گی۔',
-        'اگر آپ کے پاس ان شرائط کے حوالے سے کوئی سوال ہے تو useyaadapp@gmail.com پر رابطہ کریں۔',
+        'اگر آپ کے پاس ان شرائط کے حوالے سے کوئی سوال ہے تو yaadapppk@gmail.com پر رابطہ کریں۔',
       ],
     },
   },
@@ -414,13 +576,13 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
     },
     content: {
       en: [
-        'For questions, concerns, or data requests regarding this Privacy Policy, please email our team directly at useyaadapp@gmail.com. We respond to all privacy inquiries within 48 hours.',
+        'For questions, concerns, or data requests regarding this Privacy Policy, please email our team directly at yaadapppk@gmail.com. We respond to all privacy inquiries within 48 hours.',
       ],
       romanUrdu: [
-        'Privacy k baray mein kisi bhi sawal k liye hamari team ko useyaadapp@gmail.com par email karein. Hum 48 ghanton mein jawab dete hain.',
+        'Privacy k baray mein kisi bhi sawal k liye hamari team ko yaadapppk@gmail.com par email karein. Hum 48 ghanton mein jawab dete hain.',
       ],
       ur: [
-        'پرائیویسی سے متعلق کسی بھی سوال یا رہنمائی کے لیے ہماری ٹیم سے useyaadapp@gmail.com پر رابطہ کریں۔ ہم ۴۸ گھنٹوں کے اندر جواب دیتے ہیں۔',
+        'پرائیویسی سے متعلق کسی بھی سوال یا رہنمائی کے لیے ہماری ٹیم سے yaadapppk@gmail.com پر رابطہ کریں۔ ہم ۴۸ گھنٹوں کے اندر جواب دیتے ہیں۔',
       ],
     },
   },

@@ -328,6 +328,7 @@ export type ScreenType =
   | 'about'
   | 'help'
   | 'legal'
+  | 'blog'
   | 'rashan_list'
   | 'not_found';
 

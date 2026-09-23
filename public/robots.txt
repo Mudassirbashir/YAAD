@@ -18,6 +18,8 @@ Allow: /legal$
 Allow: /legal
 Allow: /rashan-list$
 Allow: /rashan-list
+Allow: /blog$
+Allow: /blog
 
 # Allow Public Assets & Icons
 Allow: /favicon.ico

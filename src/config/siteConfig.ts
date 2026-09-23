@@ -50,7 +50,7 @@ export const SITE_CONFIG = {
   backgroundColor: '#fbf9f5',
 
   // Official Contact
-  supportEmail: 'useyaadapp@gmail.com',
+  supportEmail: 'yaadapppk@gmail.com',
 
   // Supported Locales
   locales: [
@@ -178,6 +178,22 @@ export const SITE_CONFIG = {
         en: 'The definitive monthly rashan checklist for Pakistani households. Includes chakki atta, basmati rice, daalein, ghee, traditional units (pao, darjan), storage tips, and instant 1-click import into YAAD.',
         romanUrdu: 'Pakistani gharon k liye mahana rashan ki mukammal fahreest. Atta, daalein, ghee, masalay, aur bazaar k riwayati paimanon k sath. YAAD mein foran load karein.',
         ur: 'پاکستانی گھرانوں کے لیے ماہانہ راشن کی مکمل فہرست۔ چکی کا آٹا، باسمتی چاول، دالیں، گھی، روایتی پیمانے (پاؤ، درجن) اور یاد ایپ پر براہ راست لسٹ بنانے کی سہولت۔',
+      },
+    },
+    blog: {
+      canonicalPath: '/blog',
+      isIndexable: true,
+      priority: 0.8,
+      changeFreq: 'weekly',
+      title: {
+        en: 'YAAD Blog • Smart Grocery Budgeting & Rashan Guides',
+        romanUrdu: 'YAAD Blog • Mahana Rashan & Smart Shopping Guides',
+        ur: 'یاد بلاگ • گھریلو راشن اور سودا سلف کی خریداری کے رہنما مضامین',
+      },
+      description: {
+        en: 'Actionable tips on monthly rashan planning, budget management, traditional Pakistani weights (pao, dharri), and clutter-free shopping habits.',
+        romanUrdu: 'Mahana rashan ki planning, budget bachane k mashwaray, rawaiti paimany aur smart grocery shopping ki rehnumai.',
+        ur: 'ماہانہ راشن کی منصوبہ بندی، بجٹ بچانے کی تجاویز، روایتی پیمانوں کی معلومات اور یاد ایپ کے استعمال سے متعلق معلوماتی مضامین۔',
       },
     },
   } as Record<string, PageSeoConfig>,

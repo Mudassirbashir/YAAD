@@ -54,7 +54,7 @@ Establishes a single configurable object containing:
 - `titleTemplate`: `"%s • YAAD"`
 - `defaultDescription`: `"YAAD (یاد) is a smart, friendly shopping reminder that helps you remember what to buy before and during your shopping trip. Works in English, Urdu, and Roman Urdu."`
 - `brandThemeColor`: `"#005039"`
-- `officialEmail`: `"useyaadapp@gmail.com"`
+- `officialEmail`: `"yaadapppk@gmail.com"`
 - `routes`: Canonical paths and metadata definitions for all public pages.
 
 ### Component 2: Static Crawl Files (`public/robots.txt` & `public/sitemap.xml`)
