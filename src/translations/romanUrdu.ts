@@ -416,7 +416,7 @@ export const romanUrdu: typeof en = {
     languageEnSub: 'English (US)',
     languageRomanUrdu: 'Roman Urdu',
     languageRomanUrduSub: 'Aasan Roman Urdu',
-    languageUrdu: 'Urdu',
+    languageUrdu: 'اردو',
     languageUrduSub: 'Aasan Urdu',
     soundTitle: 'Awaaz aur Chime',
     soundDesc: 'Shopping list mukammal honay par kamyabi ki awaaz bajayein',

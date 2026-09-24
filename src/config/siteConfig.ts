@@ -146,7 +146,7 @@ export const SITE_CONFIG = {
       priority: 0.9,
       changeFreq: 'weekly',
       title: {
-        en: 'Monthly Rashan List • Essential Pakistani Grocery & Pantry Checklist • YAAD', romanUrdu: 'Mahana Rashan List • Pakistan Grocery & Sauda Salaf Checklist • YAAD', ur: 'Monthly Rashan List • Essential Pakistani Grocery & Pantry Checklist • YAAD',
+        en: 'Monthly Rashan List • Essential Pakistani Grocery & Pantry Checklist • YAAD', romanUrdu: 'Mahana Rashan List • Pakistan Grocery & Sauda Salaf Checklist • YAAD', ur: 'ماہانہ راشن لسٹ • پاکستانی گھریلو سودا سلف اور گروسری چیک لسٹ • یاد',
       },
       description: {
         en: 'The definitive monthly rashan checklist for Pakistani households. Includes chakki atta, basmati rice, daalein, ghee, traditional units (pao, darjan), storage tips, and instant 1-click import into YAAD.', romanUrdu: 'Pakistani gharon k liye mahana rashan ki mukammal fahreest. Atta, daalein, ghee, masalay, aur bazaar k riwayati paimanon k sath. YAAD mein foran load karein.', ur: 'The definitive monthly rashan checklist for Pakistani households. Includes chakki atta, basmati rice, daalein, ghee, traditional units (pao, darjan), storage tips, and instant 1-click import into YAAD.',

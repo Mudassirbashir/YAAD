@@ -67,12 +67,12 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
     }
   }, [passwordResetError]);
 
-  // Requirements checks consistent with YAAD authentication policy (min 6 chars)
+  // Requirements checks consistent with YAAD authentication policy (min 6 chars, letters and numbers, matching)
   const hasMinLength = newPassword.length >= 6;
   const hasLetter = /[a-zA-Z]/.test(newPassword);
   const hasNumber = /[0-9]/.test(newPassword);
   const passwordsMatch = newPassword.length > 0 && newPassword === confirmPassword;
-  const isValid = hasMinLength && passwordsMatch;
+  const isValid = hasMinLength && hasLetter && hasNumber && passwordsMatch;
 
   // Determine if the recovery link is expired, invalid, or missing
   const isExpiredOrInvalidLink = Boolean(
@@ -88,10 +88,23 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmittingRef.current || isLoading || !isValid) return;
+    if (isSubmittingRef.current || isLoading) return;
 
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       setErrorMessage("You're offline. Please reconnect to update your password.");
+      return;
+    }
+
+    if (!hasMinLength) {
+      setErrorMessage('Password must be at least 6 characters.');
+      return;
+    }
+    if (!hasLetter || !hasNumber) {
+      setErrorMessage('Password must contain both letters and numbers.');
+      return;
+    }
+    if (!passwordsMatch) {
+      setErrorMessage('Passwords do not match.');
       return;
     }
 

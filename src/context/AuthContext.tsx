@@ -182,7 +182,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     if (typeof window !== 'undefined') {
       try {
         sessionStorage.removeItem('yaad_password_recovery_active');
+        localStorage.removeItem('yaad_password_reset_required');
       } catch {}
+      cleanAuthUrlParams(true);
     }
   }, []);
 
@@ -282,6 +284,40 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             sessionStorage.setItem('yaad_password_recovery_active', 'true');
             localStorage.setItem('yaad_password_reset_required', 'true');
           } catch {}
+
+          // If recovery tokens exist in URL fragment, establish the session with Supabase Auth
+          const accToken = hashParams.get('access_token');
+          const refToken = hashParams.get('refresh_token');
+          if (accToken && refToken) {
+            supabase.auth
+              .setSession({ access_token: accToken, refresh_token: refToken })
+              .then(({ data, error }) => {
+                if (!error && data?.session && isMounted) {
+                  setSession(data.session);
+                  setUser(data.session.user);
+                  setIsPasswordRecovery(true);
+                  setIsLoading(false);
+                }
+              })
+              .catch((err) => {
+                console.warn('Notice establishing recovery session from hash:', err);
+              });
+          } else if (searchParams.get('code')) {
+            const authCode = searchParams.get('code')!;
+            supabase.auth
+              .exchangeCodeForSession(authCode)
+              .then(({ data, error }) => {
+                if (!error && data?.session && isMounted) {
+                  setSession(data.session);
+                  setUser(data.session.user);
+                  setIsPasswordRecovery(true);
+                  setIsLoading(false);
+                }
+              })
+              .catch((err) => {
+                console.warn('Notice exchanging PKCE code for recovery session:', err);
+              });
+          }
         }
 
         const errorParam = searchParams.get('error') || hashParams.get('error');
@@ -323,9 +359,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               'Google sign-in could not be completed. Please try again or sign in with Email.'
             );
           }
-          cleanAuthUrlParams();
-        } else if (window.location.hash.includes('access_token') || window.location.search.includes('code=')) {
-          // Allow Supabase OAuth listener to process token, then clean URL
+          cleanAuthUrlParams(true);
+        } else if (!isRecoveryHash && (window.location.hash.includes('access_token') || window.location.search.includes('code='))) {
+          // Allow Supabase OAuth listener to process token, then clean URL (non-recovery only)
           setTimeout(() => {
             cleanAuthUrlParams();
           }, 350);
@@ -344,9 +380,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       async (event, currentSession) => {
         if (!isMounted) return;
 
-        // Clean up OAuth callback tokens/code/trailing hash from browser URL bar safely without reloading
-        cleanAuthUrlParams();
-
         if (event === 'PASSWORD_RECOVERY') {
           setIsPasswordRecovery(true);
           try {
@@ -354,16 +387,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             localStorage.setItem('yaad_password_reset_required', 'true');
           } catch {}
 
-          if (currentSession?.user?.id) {
-            fetch('/api/auth/mark-reset-required', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                ...(currentSession.access_token ? { Authorization: `Bearer ${currentSession.access_token}` } : {}),
-              },
-              body: JSON.stringify({ userId: currentSession.user.id }),
-            }).catch(() => {});
+          if (currentSession) {
+            setSession(currentSession);
+            if (currentSession.user) {
+              setUser(currentSession.user);
+              persistUser(currentSession.user);
+            }
           }
+          setIsLoading(false);
+          // Return early. Do NOT run profile sync or metadata update endpoints during PASSWORD_RECOVERY.
+          // Background calls can mutate user state and invalidate the single-use recovery token before
+          // the user submits their new password.
+          return;
+        }
+
+        // Clean up OAuth callback tokens from URL bar safely if not in password recovery mode
+        if (
+          sessionStorage.getItem('yaad_password_recovery_active') !== 'true' &&
+          !window.location.hash.includes('type=recovery')
+        ) {
+          cleanAuthUrlParams();
         }
 
         if (event === 'SIGNED_OUT') {
@@ -1049,7 +1092,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         sessionStorage.removeItem('yaad_password_recovery_active');
         localStorage.removeItem('yaad_password_reset_required');
       } catch {}
-      cleanAuthUrlParams();
+      cleanAuthUrlParams(true);
     }
     if (user?.id) {
       try {
@@ -1154,29 +1197,58 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return { error: new Error("You're offline. Please reconnect to update your password.") };
     }
     try {
+      // 1. Verify that an active session exists before attempting updateUser
+      let { data: sessionData } = await supabase.auth.getSession();
+
+      // If session is not immediately present, attempt to recover from URL tokens or code
+      if (!sessionData?.session && typeof window !== 'undefined') {
+        const hashStr = window.location.hash.startsWith('#')
+          ? window.location.hash.substring(1)
+          : window.location.hash;
+        const hashParams = new URLSearchParams(hashStr);
+        const accessToken = hashParams.get('access_token');
+        const refreshToken = hashParams.get('refresh_token');
+
+        if (accessToken && refreshToken) {
+          const { data: restored, error: restoreErr } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (!restoreErr && restored?.session) {
+            sessionData = restored;
+            setSession(restored.session);
+            setUser(restored.session.user);
+          }
+        } else {
+          const searchParams = new URLSearchParams(window.location.search);
+          const code = searchParams.get('code');
+          if (code) {
+            const { data: exchanged, error: exchErr } = await supabase.auth.exchangeCodeForSession(code);
+            if (!exchErr && exchanged?.session) {
+              sessionData = exchanged;
+              setSession(exchanged.session);
+              setUser(exchanged.session.user);
+            }
+          }
+        }
+      }
+
+      if (!sessionData?.session) {
+        console.error('[Supabase Auth] Password update failed: No active recovery session found.');
+        return { error: new Error('Your reset link has expired. Request a new one.') };
+      }
+
+      // 2. Call supabase.auth.updateUser with ONLY the new password (Technical Requirement 11)
       const { data: updateData, error } = await supabase.auth.updateUser({
         password: newPassword,
-        data: { password_reset_required: false },
       });
+
       if (error) {
-        return { error: new Error(formatAuthErrorMessage(error)) };
+        console.error('[Supabase Auth] updateUser error:', error);
+        return { error: new Error(formatAuthErrorMessage(error, 'password_reset')) };
       }
 
-      // Clear server-side reset requirement
-      const targetUserId = updateData?.user?.id || user?.id;
-      if (targetUserId) {
-        fetch('/api/auth/clear-reset-required', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
-          },
-          body: JSON.stringify({ userId: targetUserId }),
-        }).catch((err) => {
-          console.warn('Notice clearing password reset required on server:', err);
-        });
-      }
-
+      // 3. Clear recovery state and force URL cleanup
       setIsPasswordRecovery(false);
       setPasswordResetError(null);
       if (typeof window !== 'undefined') {
@@ -1184,24 +1256,47 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           sessionStorage.removeItem('yaad_password_recovery_active');
           localStorage.removeItem('yaad_password_reset_required');
         } catch {}
-        cleanAuthUrlParams();
+        cleanAuthUrlParams(true);
       }
-      // Refresh current session to ensure clean authenticated state
+
+      // 4. Refresh current session to ensure clean authenticated state
+      let activeAccessToken = sessionData?.session?.access_token;
       try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (sessionData?.session) {
-          setSession(sessionData.session);
-          setUser(sessionData.session.user);
+        const { data: freshSessionData } = await supabase.auth.getSession();
+        if (freshSessionData?.session) {
+          setSession(freshSessionData.session);
+          setUser(freshSessionData.session.user);
+          persistUser(freshSessionData.session.user);
+          if (freshSessionData.session.access_token) {
+            activeAccessToken = freshSessionData.session.access_token;
+          }
         }
       } catch (e) {
         console.warn('Notice refreshing session after password update:', e);
       }
+
+      // 5. Clear server-side reset requirement in the background
+      const targetUserId = updateData?.user?.id || sessionData?.session?.user?.id || user?.id;
+      if (targetUserId) {
+        fetch('/api/auth/clear-reset-required', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(activeAccessToken ? { Authorization: `Bearer ${activeAccessToken}` } : {}),
+          },
+          body: JSON.stringify({ userId: targetUserId }),
+        }).catch((err) => {
+          console.warn('Notice clearing password reset required on server:', err);
+        });
+      }
+
       return { error: null };
     } catch (err: unknown) {
+      console.error('[Supabase Auth] Exception during updatePassword:', err);
       if (isNetworkOrOfflineError(err)) {
         return { error: new Error("You're offline. Please reconnect to update your password.") };
       }
-      return { error: new Error(formatAuthErrorMessage(err)) };
+      return { error: new Error(formatAuthErrorMessage(err, 'password_reset')) };
     }
   };
 

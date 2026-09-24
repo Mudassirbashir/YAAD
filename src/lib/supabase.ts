@@ -1939,13 +1939,19 @@ export function setupNetworkSyncListener(
  * Translates technical Supabase authentication errors, rate limits, and network
  * failures into clean, friendly, reassuring messages for end users.
  */
-export function formatAuthErrorMessage(error: unknown): string {
-  if (!error) return 'Something went wrong while creating your account. Please try again.';
-
-  // Log the raw technical error to developer console in development mode
-  if (typeof window !== 'undefined' && (import.meta.env?.DEV || process.env.NODE_ENV !== 'production')) {
-    console.error('[Auth Error Technical Log]:', error);
+export function formatAuthErrorMessage(
+  error: unknown,
+  context?: 'sign_in' | 'sign_up' | 'password_reset'
+): string {
+  if (!error) {
+    if (context === 'password_reset') {
+      return 'Failed to update password. Please try again.';
+    }
+    return 'Something went wrong while creating your account. Please try again.';
   }
+
+  // Log the raw technical error to developer console safely for debugging
+  console.error('[Auth Error Technical Log]:', error);
 
   let rawMsg = '';
   if (error instanceof Error) {
@@ -2019,7 +2025,9 @@ export function formatAuthErrorMessage(error: unknown): string {
   if (
     lower.includes('auth session missing') ||
     lower.includes('session missing') ||
-    lower.includes('no session')
+    lower.includes('no session') ||
+    lower.includes('requires a bearer token') ||
+    lower.includes('sub claim in jwt')
   ) {
     return 'Your reset link has expired. Request a new one.';
   }
@@ -2190,10 +2198,16 @@ export function formatAuthErrorMessage(error: unknown): string {
     lower.includes('object')
   ) {
     if (lower.includes('jwt')) {
+      if (context === 'password_reset') {
+        return 'Your reset link has expired. Request a new one.';
+      }
       return 'Your authentication session has expired. Please sign in again.';
     }
     if (lower.includes('webauthn')) {
       return 'Passkey authentication could not be completed on this device. Please continue with Email or Google.';
+    }
+    if (context === 'password_reset') {
+      return 'Failed to update password. Please try again or request a new reset link.';
     }
     return 'Something went wrong while signing you in. Please try again.';
   }
@@ -2208,16 +2222,34 @@ export function formatAuthErrorMessage(error: unknown): string {
     return rawMsg;
   }
 
+  if (context === 'password_reset') {
+    return 'Failed to update password. Please try again.';
+  }
+
   return 'Something went wrong while signing you in. Please try again.';
 }
 
 /**
  * Clean OAuth callback tokens, code, and error parameters from URL bar
  * without reloading the page.
+ *
+ * @param force If false (default), will NEVER strip URL parameters while a password recovery is active.
  */
-export function cleanAuthUrlParams(): void {
+export function cleanAuthUrlParams(force: boolean = false): void {
   if (typeof window === 'undefined') return;
   try {
+    // If password recovery is active and this is not a forced cleanup (e.g. after successful reset or cancel),
+    // NEVER strip recovery URL parameters! Supabase needs them to initialize or restore the recovery session.
+    if (!force) {
+      const isRecoveryActive =
+        sessionStorage.getItem('yaad_password_recovery_active') === 'true' ||
+        window.location.hash.includes('type=recovery') ||
+        new URLSearchParams(window.location.search).get('type') === 'recovery';
+      if (isRecoveryActive) {
+        return;
+      }
+    }
+
     const url = new URL(window.location.href);
     let modified = false;
 

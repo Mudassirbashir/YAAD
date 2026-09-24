@@ -49,14 +49,14 @@ export const RASHAN_CATEGORIES: RashanCategory[] = [
     items: [
       {
         id: 'atta',
-        name: { en: 'Whole Wheat Chakki Atta', romanUrdu: 'Chakki Ka Atta', ur: 'Whole Wheat Chakki Atta' },
+        name: { en: 'Whole Wheat Chakki Atta', romanUrdu: 'Chakki Ka Atta', ur: 'چکی کا آٹا' },
         typicalQty: '20 kg',
         category: 'grains',
         note: { en: 'Check milling freshness; store in airtight tin.', romanUrdu: 'Hawa-band dabbe mein rakhein.', ur: 'Check milling freshness; store in airtight tin.' },
       },
       {
         id: 'basmati-rice',
-        name: { en: 'Super Kernel Basmati Rice', romanUrdu: 'Basmati Chawal', ur: 'Super Kernel Basmati Rice' },
+        name: { en: 'Super Kernel Basmati Rice', romanUrdu: 'Basmati Chawal', ur: 'باسمتی چاول' },
         typicalQty: '5 kg',
         category: 'grains',
         note: { en: 'Aged rice absorbs water better for biryani & pulao.', romanUrdu: 'Biryani aur pulao k liye purana chawal behtar hai.', ur: 'Aged rice absorbs water better for biryani & pulao.' },
