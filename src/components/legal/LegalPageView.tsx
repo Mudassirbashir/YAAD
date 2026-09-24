@@ -3,29 +3,36 @@ import {
   ArrowLeft,
   ArrowRight,
   Shield,
+  ShieldCheck,
   FileText,
   Sparkles,
   HelpCircle,
   Share2,
   Check,
-  ExternalLink,
   Mail,
   ChevronDown,
   ChevronUp,
-  Globe,
   Search,
   BookOpen,
   Lock,
   WifiOff,
   Languages,
-  Smartphone,
   CheckCircle2,
   ShoppingBag,
   Newspaper,
+  UserCheck,
+  ShieldAlert,
+  Award,
+  Scale,
+  Database,
+  Trash2,
+  RotateCcw,
+  UtensilsCrossed,
+  Layers,
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
 import { useAppRouter } from '../../router/RouterContext';
-import { Language } from '../../translations';
 import {
   LegalPageType,
   LEGAL_METADATA,
@@ -33,7 +40,6 @@ import {
   PRIVACY_SECTIONS,
   ABOUT_HIGHLIGHTS,
   FAQS,
-  FAQItem,
   BLOG_POSTS,
 } from './legalContent';
 import { AppPublicHeader } from '../common/AppPublicHeader';
@@ -43,20 +49,25 @@ interface LegalPageViewProps {
   initialPage: LegalPageType;
   onBack: () => void;
   onNavigate: (page: LegalPageType) => void;
+  user?: any;
 }
 
 export const LegalPageView: React.FC<LegalPageViewProps> = ({
   initialPage,
   onBack,
   onNavigate,
+  user: propUser,
 }) => {
-  const { language, setLanguage, isRTL } = useLanguage();
+  const { language, isRTL } = useLanguage();
+  const { user: authUser } = useAuth();
   const { navigate } = useAppRouter();
   const [currentPage, setCurrentPage] = useState<LegalPageType>(initialPage);
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
   const [faqSearchQuery, setFaqSearchQuery] = useState('');
   const [selectedFaqCategory, setSelectedFaqCategory] = useState<string>('all');
   const [openFaqIds, setOpenFaqIds] = useState<Set<string>>(new Set(['offline-how', 'language-switch']));
+
+  const activeUser = propUser !== undefined ? propUser : authUser;
 
   const rashanListPath =
     language === 'ur'
@@ -130,20 +141,60 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
   });
 
   const meta = LEGAL_METADATA[currentPage] || LEGAL_METADATA.terms;
-  const BackIcon = isRTL ? ArrowRight : ArrowLeft;
 
   const getLocalizedText = (obj: { en: string; romanUrdu: string; ur: string }) => {
     return obj.en || obj.romanUrdu || obj.ur;
+  };
+
+  // Dedicated icons mapping for Terms sections
+  const getTermsIcon = (idx: number) => {
+    switch (idx) {
+      case 0:
+        return <CheckCircle2 className="w-5 h-5 text-[#005039]" />;
+      case 1:
+        return <WifiOff className="w-5 h-5 text-[#005039]" />;
+      case 2:
+        return <UserCheck className="w-5 h-5 text-[#005039]" />;
+      case 3:
+        return <ShieldAlert className="w-5 h-5 text-[#005039]" />;
+      case 4:
+        return <Award className="w-5 h-5 text-[#005039]" />;
+      case 5:
+        return <Scale className="w-5 h-5 text-[#005039]" />;
+      case 6:
+      default:
+        return <Mail className="w-5 h-5 text-[#005039]" />;
+    }
+  };
+
+  // Dedicated icons mapping for Privacy sections
+  const getPrivacyIcon = (idx: number) => {
+    switch (idx) {
+      case 0:
+        return <ShieldCheck className="w-5 h-5 text-[#005039]" />;
+      case 1:
+        return <Database className="w-5 h-5 text-[#005039]" />;
+      case 2:
+        return <Sparkles className="w-5 h-5 text-[#005039]" />;
+      case 3:
+        return <Lock className="w-5 h-5 text-[#005039]" />;
+      case 4:
+        return <Trash2 className="w-5 h-5 text-[#005039]" />;
+      case 5:
+      default:
+        return <Mail className="w-5 h-5 text-[#005039]" />;
+    }
   };
 
   return (
     <div
       id="legal_page_container"
       dir="ltr"
-      className="min-h-screen bg-[#faf8f5] text-[#1c2826] font-['Plus_Jakarta_Sans'] pb-12 selection:bg-[#005039]/15 flex flex-col justify-between"
+      className="min-h-screen bg-[#faf8f5] text-[#1c2826] font-['Plus_Jakarta_Sans',sans-serif] selection:bg-[#005039]/15 flex flex-col justify-between"
     >
-      {/* 1. Global Public Header with Screen-Centered Title and Smart Scroll */}
+      {/* 1. Global Public Header with Screen-Centered Title and Smooth Sign In */}
       <AppPublicHeader
+        user={activeUser}
         showBack={true}
         onBack={onBack}
         onSignIn={onBack}
@@ -161,7 +212,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav
             aria-label="Legal and About Pages"
-            className="flex items-center gap-2 overflow-x-auto py-2.5 no-scrollbar"
+            className="flex items-center gap-2 overflow-x-auto py-3 no-scrollbar"
           >
             {/* Terms & Conditions Link */}
             <a
@@ -171,10 +222,10 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                 e.preventDefault();
                 handleTabClick('terms');
               }}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
                 currentPage === 'terms'
-                  ? 'bg-primary text-on-primary shadow-xs'
-                  : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
+                  ? 'bg-[#005039] text-white shadow-xs'
+                  : 'bg-[#faf8f5] text-[#556960] hover:text-[#1c2826] hover:bg-[#f0ebe1] border border-[#e5e1d8]'
               }`}
             >
               <FileText className="w-3.5 h-3.5 shrink-0" />
@@ -189,13 +240,13 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                 e.preventDefault();
                 handleTabClick('privacy');
               }}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
                 currentPage === 'privacy'
-                  ? 'bg-primary text-on-primary shadow-xs'
-                  : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
+                  ? 'bg-[#005039] text-white shadow-xs'
+                  : 'bg-[#faf8f5] text-[#556960] hover:text-[#1c2826] hover:bg-[#f0ebe1] border border-[#e5e1d8]'
               }`}
             >
-              <Shield className="w-3.5 h-3.5 shrink-0" />
+              <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
               <span>{getLocalizedText(LEGAL_METADATA.privacy.title)}</span>
             </a>
 
@@ -207,10 +258,10 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                 e.preventDefault();
                 handleTabClick('about');
               }}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
                 currentPage === 'about'
-                  ? 'bg-primary text-on-primary shadow-xs'
-                  : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
+                  ? 'bg-[#005039] text-white shadow-xs'
+                  : 'bg-[#faf8f5] text-[#556960] hover:text-[#1c2826] hover:bg-[#f0ebe1] border border-[#e5e1d8]'
               }`}
             >
               <Sparkles className="w-3.5 h-3.5 shrink-0" />
@@ -225,10 +276,10 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                 e.preventDefault();
                 handleTabClick('help');
               }}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
                 currentPage === 'help'
-                  ? 'bg-primary text-on-primary shadow-xs'
-                  : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
+                  ? 'bg-[#005039] text-white shadow-xs'
+                  : 'bg-[#faf8f5] text-[#556960] hover:text-[#1c2826] hover:bg-[#f0ebe1] border border-[#e5e1d8]'
               }`}
             >
               <HelpCircle className="w-3.5 h-3.5 shrink-0" />
@@ -243,9 +294,9 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                 e.preventDefault();
                 navigate(rashanListPath);
               }}
-              className="flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all bg-surface-container-low text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
+              className="flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all bg-[#faf8f5] text-[#556960] hover:text-[#1c2826] hover:bg-[#f0ebe1] border border-[#e5e1d8] cursor-pointer"
             >
-              <ShoppingBag className="w-3.5 h-3.5 shrink-0 text-primary" />
+              <ShoppingBag className="w-3.5 h-3.5 shrink-0 text-[#005039]" />
               <span>{rashanListLabel}</span>
             </a>
 
@@ -257,13 +308,13 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                 e.preventDefault();
                 handleTabClick('legal');
               }}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
                 currentPage === 'legal'
-                  ? 'bg-primary text-on-primary shadow-xs'
-                  : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
+                  ? 'bg-[#005039] text-white shadow-xs'
+                  : 'bg-[#faf8f5] text-[#556960] hover:text-[#1c2826] hover:bg-[#f0ebe1] border border-[#e5e1d8]'
               }`}
             >
-              <BookOpen className="w-3.5 h-3.5 shrink-0" />
+              <Layers className="w-3.5 h-3.5 shrink-0" />
               <span>{getLocalizedText(LEGAL_METADATA.legal.title)}</span>
             </a>
 
@@ -275,14 +326,14 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                 e.preventDefault();
                 handleTabClick('blog');
               }}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
                 currentPage === 'blog'
-                  ? 'bg-primary text-on-primary shadow-xs'
-                  : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
+                  ? 'bg-[#005039] text-white shadow-xs'
+                  : 'bg-[#faf8f5] text-[#556960] hover:text-[#1c2826] hover:bg-[#f0ebe1] border border-[#e5e1d8]'
               }`}
             >
               <Newspaper className="w-3.5 h-3.5 shrink-0" />
-              <span>{language === 'roman-urdu' ? 'Blog & Articles' : 'Blog'}</span>
+              <span>{language === 'roman-urdu' ? 'Blog & Guides' : 'Blog'}</span>
             </a>
           </nav>
         </div>
@@ -291,47 +342,48 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
       {/* ==================================================================== */}
       {/* 3. HERO / PAGE TITLE BANNER */}
       {/* ==================================================================== */}
-      <section className="bg-surface border-b border-surface-dim px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+      <section className="bg-white border-b border-[#e5e1d8] px-4 sm:px-6 lg:px-8 py-8 sm:py-10 shadow-2xs">
         <div className="max-w-4xl mx-auto space-y-3">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-primary-fixed/50 text-primary border border-primary/10">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#005039]/10 text-[#005039] border border-[#005039]/20">
               {currentPage === 'terms' && <FileText className="w-3.5 h-3.5" />}
-              {currentPage === 'privacy' && <Shield className="w-3.5 h-3.5" />}
+              {currentPage === 'privacy' && <ShieldCheck className="w-3.5 h-3.5" />}
               {currentPage === 'about' && <Sparkles className="w-3.5 h-3.5" />}
               {currentPage === 'help' && <HelpCircle className="w-3.5 h-3.5" />}
               {currentPage === 'legal' && <BookOpen className="w-3.5 h-3.5" />}
-              {meta.badge}
+              {currentPage === 'blog' && <Newspaper className="w-3.5 h-3.5" />}
+              <span>{meta.badge}</span>
             </span>
 
-            <span className="text-xs text-outline font-medium">
-              Direct Link: <code className="bg-surface-container px-1.5 py-0.5 rounded font-mono text-on-surface">{meta.path}</code>
+            <span className="text-xs text-[#788880] font-medium">
+              Direct Link: <code className="bg-[#faf8f5] px-2 py-0.5 rounded border border-[#e5e1d8] font-mono text-[#1c2826]">{meta.path}</code>
             </span>
           </div>
 
           <h1
-            className={`text-2xl sm:text-3xl lg:text-4xl font-extrabold text-on-surface tracking-tight ${
-              language === 'ur' ? 'font-urdu leading-relaxed' : "font-['Manrope']"
+            className={`text-2xl sm:text-3xl lg:text-4xl font-black text-[#1c2826] tracking-tight ${
+              language === 'ur' ? 'font-urdu leading-relaxed' : "font-['Plus_Jakarta_Sans',sans-serif]"
             }`}
           >
             {getLocalizedText(meta.title)}
           </h1>
 
-          <p className="text-sm sm:text-base text-outline max-w-2xl leading-relaxed">
+          <p className="text-sm sm:text-base text-[#556960] max-w-2xl leading-relaxed">
             {getLocalizedText(meta.subtitle)}
           </p>
 
-          <div className="pt-2 flex flex-wrap items-center gap-4 text-xs text-outline">
-            <span>Last Updated: <strong className="text-on-surface">{meta.lastUpdated}</strong></span>
+          <div className="pt-2 flex flex-wrap items-center gap-4 text-xs text-[#788880]">
+            <span>Last Updated: <strong className="text-[#1c2826]">{meta.lastUpdated}</strong></span>
             <span>•</span>
-            <span>Platform: <strong className="text-on-surface">YAAD PWA & Web</strong></span>
+            <span>Platform: <strong className="text-[#1c2826]">YAAD PWA &amp; Web</strong></span>
             <span>•</span>
             <button
               type="button"
               onClick={() => handleCopyPageLink(currentPage)}
-              className="text-primary font-semibold hover:underline inline-flex items-center gap-1"
+              className="text-[#005039] font-bold hover:underline inline-flex items-center gap-1 cursor-pointer"
             >
               <Share2 className="w-3 h-3" />
-              Copy Direct URL
+              <span>{copiedUrl === currentPage ? 'Link Copied!' : 'Copy Direct URL'}</span>
             </button>
           </div>
         </div>
@@ -340,47 +392,52 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
       {/* ==================================================================== */}
       {/* 4. MAIN PAGE CONTENT BODY */}
       {/* ==================================================================== */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-10">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-10 flex-1">
         {/* ================================================================ */}
         {/* VIEW A: TERMS & CONDITIONS */}
         {/* ================================================================ */}
         {currentPage === 'terms' && (
           <div className="space-y-8">
             {/* Quick Table of Contents Jump Box */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-surface border border-surface-dim space-y-2.5">
-              <span className="text-xs font-bold uppercase tracking-wider text-outline block font-['Manrope']">
+            <div className="p-5 rounded-3xl bg-white border border-[#e5e1d8] shadow-2xs space-y-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#005039] block">
                 Table of Contents
               </span>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                {TERMS_SECTIONS.map((sec) => (
+                {TERMS_SECTIONS.map((sec, idx) => (
                   <a
                     key={sec.id}
                     href={`#${sec.id}`}
-                    className="p-2 rounded-xl bg-surface-container-lowest hover:bg-primary-fixed/30 hover:text-primary transition-colors text-on-surface truncate block"
+                    className="p-2.5 rounded-xl bg-[#faf8f5] hover:bg-[#005039]/10 hover:text-[#005039] transition-colors text-[#1c2826] font-medium truncate block border border-[#e5e1d8]/50"
                   >
-                    {getLocalizedText(sec.title)}
+                    {idx + 1}. {getLocalizedText(sec.title).replace(/^\d+\.\s*/, '')}
                   </a>
                 ))}
               </div>
             </div>
 
-            {/* Sections */}
-            <div className="space-y-8 divide-y divide-surface-dim">
+            {/* Terms Sections with Specific Icons */}
+            <div className="space-y-6">
               {TERMS_SECTIONS.map((section, idx) => (
                 <section
                   key={section.id}
                   id={section.id}
-                  className={`space-y-3.5 ${idx > 0 ? 'pt-8' : ''}`}
+                  className="bg-white border border-[#e5e1d8] rounded-3xl p-6 sm:p-7 shadow-2xs space-y-4"
                 >
-                  <h2
-                    className={`text-lg sm:text-xl font-bold text-on-surface tracking-tight ${
-                      language === 'ur' ? 'font-urdu text-xl sm:text-2xl' : "font-['Manrope']"
-                    }`}
-                  >
-                    {getLocalizedText(section.title)}
-                  </h2>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-[#005039]/10 text-[#005039] flex items-center justify-center shrink-0">
+                      {getTermsIcon(idx)}
+                    </div>
+                    <h2
+                      className={`text-lg sm:text-xl font-black text-[#1c2826] tracking-tight ${
+                        language === 'ur' ? 'font-urdu text-xl sm:text-2xl' : ''
+                      }`}
+                    >
+                      {getLocalizedText(section.title)}
+                    </h2>
+                  </div>
 
-                  <div className="space-y-3 text-sm sm:text-base text-on-surface-variant leading-relaxed font-normal">
+                  <div className="space-y-3 text-sm sm:text-base text-[#556960] leading-relaxed font-normal">
                     {(language === 'ur'
                       ? section.content.ur
                       : language === 'roman-urdu'
@@ -402,55 +459,60 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
         {currentPage === 'privacy' && (
           <div className="space-y-8">
             {/* Privacy Highlights Ribbon */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="p-4 rounded-2xl bg-surface border border-surface-dim space-y-1">
-                <div className="w-8 h-8 rounded-xl bg-primary-fixed/40 text-primary flex items-center justify-center mb-2">
-                  <Shield className="w-4 h-4" />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="p-5 rounded-3xl bg-white border border-[#e5e1d8] shadow-2xs space-y-2">
+                <div className="w-10 h-10 rounded-2xl bg-[#005039]/10 text-[#005039] flex items-center justify-center mb-2">
+                  <ShieldCheck className="w-5 h-5 text-[#005039]" />
                 </div>
-                <h3 className="text-sm font-bold text-on-surface font-['Manrope']">Zero Ad Tracking</h3>
-                <p className="text-xs text-outline leading-relaxed">
-                  We never sell or broker your grocery lists to third-party ad networks.
+                <h3 className="text-sm sm:text-base font-bold text-[#1c2826]">Zero Ad Tracking</h3>
+                <p className="text-xs text-[#556960] leading-relaxed">
+                  We never sell, rent, or broker your grocery lists to third-party ad networks or brokers.
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-surface border border-surface-dim space-y-1">
-                <div className="w-8 h-8 rounded-xl bg-secondary-fixed/50 text-secondary flex items-center justify-center mb-2">
-                  <Lock className="w-4 h-4" />
+              <div className="p-5 rounded-3xl bg-white border border-[#e5e1d8] shadow-2xs space-y-2">
+                <div className="w-10 h-10 rounded-2xl bg-[#005039]/10 text-[#005039] flex items-center justify-center mb-2">
+                  <Lock className="w-5 h-5 text-[#005039]" />
                 </div>
-                <h3 className="text-sm font-bold text-on-surface font-['Manrope']">Full Encryption</h3>
-                <p className="text-xs text-outline leading-relaxed">
-                  Row Level Security (RLS) on Supabase PostgreSQL protects personal records.
+                <h3 className="text-sm sm:text-base font-bold text-[#1c2826]">Strict Isolation</h3>
+                <p className="text-xs text-[#556960] leading-relaxed">
+                  Enterprise Row Level Security (RLS) ensures only authenticated household members can read lists.
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-surface border border-surface-dim space-y-1">
-                <div className="w-8 h-8 rounded-xl bg-primary-fixed/40 text-primary flex items-center justify-center mb-2">
-                  <CheckCircle2 className="w-4 h-4" />
+              <div className="p-5 rounded-3xl bg-white border border-[#e5e1d8] shadow-2xs space-y-2">
+                <div className="w-10 h-10 rounded-2xl bg-[#005039]/10 text-[#005039] flex items-center justify-center mb-2">
+                  <Trash2 className="w-5 h-5 text-[#005039]" />
                 </div>
-                <h3 className="text-sm font-bold text-on-surface font-['Manrope']">Instant Data Purge</h3>
-                <p className="text-xs text-outline leading-relaxed">
-                  One-tap permanent account deletion immediately erases all data.
+                <h3 className="text-sm sm:text-base font-bold text-[#1c2826]">Permanent Data Purge</h3>
+                <p className="text-xs text-[#556960] leading-relaxed">
+                  One-tap permanent account deletion immediately purges all lists, histories, and credentials.
                 </p>
               </div>
             </div>
 
-            {/* Privacy Sections */}
-            <div className="space-y-8 divide-y divide-surface-dim">
+            {/* Privacy Sections with Specific Icons */}
+            <div className="space-y-6">
               {PRIVACY_SECTIONS.map((section, idx) => (
                 <section
                   key={section.id}
                   id={section.id}
-                  className={`space-y-3.5 ${idx > 0 ? 'pt-8' : ''}`}
+                  className="bg-white border border-[#e5e1d8] rounded-3xl p-6 sm:p-7 shadow-2xs space-y-4"
                 >
-                  <h2
-                    className={`text-lg sm:text-xl font-bold text-on-surface tracking-tight ${
-                      language === 'ur' ? 'font-urdu text-xl sm:text-2xl' : "font-['Manrope']"
-                    }`}
-                  >
-                    {getLocalizedText(section.title)}
-                  </h2>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-[#005039]/10 text-[#005039] flex items-center justify-center shrink-0">
+                      {getPrivacyIcon(idx)}
+                    </div>
+                    <h2
+                      className={`text-lg sm:text-xl font-black text-[#1c2826] tracking-tight ${
+                        language === 'ur' ? 'font-urdu text-xl sm:text-2xl' : ''
+                      }`}
+                    >
+                      {getLocalizedText(section.title)}
+                    </h2>
+                  </div>
 
-                  <div className="space-y-3 text-sm sm:text-base text-on-surface-variant leading-relaxed">
+                  <div className="space-y-3 text-sm sm:text-base text-[#556960] leading-relaxed">
                     {(language === 'ur'
                       ? section.content.ur
                       : language === 'roman-urdu'
@@ -467,73 +529,138 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
         )}
 
         {/* ================================================================ */}
-        {/* VIEW C: ABOUT YAAD */}
+        {/* VIEW C: ABOUT YAAD (Polished Layout, Form, Spacing & Specific Icons) */}
         {/* ================================================================ */}
         {currentPage === 'about' && (
           <div className="space-y-10">
-            {/* Story Card */}
-            <div className="p-6 sm:p-8 rounded-3xl bg-surface border border-surface-dim space-y-4">
-              <span className="text-xs font-bold uppercase tracking-wider text-primary">
-                Our Purpose
-              </span>
-              <h2 className="text-xl sm:text-2xl font-extrabold text-on-surface font-['Manrope']">
+            {/* 1. Main Editorial Story Banner */}
+            <div className="p-7 sm:p-9 rounded-3xl bg-white border border-[#e5e1d8] shadow-xs space-y-4 relative overflow-hidden">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#005039]/10 text-[#005039] text-xs font-bold tracking-wide">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Our Craft &amp; Purpose</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-black text-[#1c2826] tracking-tight leading-snug">
                 Built to solve the real chaos of grocery shopping.
               </h2>
-              <p className="text-sm sm:text-base text-on-surface-variant leading-relaxed">
-                Most shopping list applications are built for Western supermarkets. They don't understand that
-                Pakistani and South Asian kitchens buy in kilograms, need fresh coriander ("hara dhaniya"), cook
-                with specialty lentils ("daal mash", "daal chana"), and prepare for weekend family gatherings.
+              <p className="text-sm sm:text-base text-[#556960] leading-relaxed">
+                Most shopping list applications are built for Western supermarkets. They don&apos;t understand that
+                Pakistani and South Asian kitchens buy in kilograms, need fresh coriander (&ldquo;hara dhaniya&rdquo;), cook
+                with specialty lentils (&ldquo;daal mash&rdquo;, &ldquo;daal chana&rdquo;), and prepare for weekend family gatherings.
               </p>
-              <p className="text-sm sm:text-base text-on-surface-variant leading-relaxed">
-                YAAD was crafted from the ground up to bring thoughtful, respectful intelligence to shopping.
+              <p className="text-sm sm:text-base text-[#556960] leading-relaxed">
+                YAAD was crafted from the ground up to bring thoughtful, respectful intelligence to daily shopping.
                 Whether you type in English, fast Roman Urdu, or authentic Nastaliq Urdu script, YAAD understands
                 your items instantly.
               </p>
             </div>
 
-            {/* Core Highlights Grid */}
+            {/* 2. Four Pillars Grid with Specific, Elevated Lucide Icons */}
             <div className="space-y-4">
-              <h3 className="text-lg font-bold text-on-surface font-['Manrope']">
-                What Makes YAAD Different
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg sm:text-xl font-black text-[#1c2826] tracking-tight">
+                  What Makes YAAD Different
+                </h3>
+                <span className="text-xs font-semibold text-[#005039]">4 Core Pillars</span>
+              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {ABOUT_HIGHLIGHTS.map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="p-5 rounded-2xl bg-surface border border-surface-dim space-y-2.5 hover:border-primary/30 transition-colors"
-                  >
-                    <div className="w-10 h-10 rounded-2xl bg-primary-fixed/40 text-primary flex items-center justify-center">
-                      {item.icon === 'languages' && <Languages className="w-5 h-5" />}
-                      {item.icon === 'wifi-off' && <WifiOff className="w-5 h-5" />}
-                      {item.icon === 'shield-check' && <Shield className="w-5 h-5" />}
-                      {item.icon === 'sparkles' && <Sparkles className="w-5 h-5" />}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                {/* Pillar 1: Native Bilingual Intelligence */}
+                <div className="p-6 rounded-3xl bg-white border border-[#e5e1d8] space-y-3.5 shadow-2xs hover:border-[#005039]/40 hover:shadow-xs transition-all flex flex-col justify-between">
+                  <div>
+                    <div className="w-12 h-12 rounded-2xl bg-[#005039]/10 text-[#005039] flex items-center justify-center mb-3">
+                      <Languages className="w-6 h-6 text-[#005039]" />
                     </div>
-                    <h4 className="text-base font-bold text-on-surface font-['Manrope']">
-                      {getLocalizedText(item.title)}
+                    <h4 className="text-base sm:text-lg font-bold text-[#1c2826] tracking-tight">
+                      Native Bilingual Intelligence
                     </h4>
-                    <p className="text-xs sm:text-sm text-outline leading-relaxed">
-                      {getLocalizedText(item.desc)}
+                    <p className="text-xs sm:text-sm text-[#556960] leading-relaxed mt-1.5">
+                      Type in English, Roman Urdu (&ldquo;doodh, aloo, pyaz&rdquo;), or everyday words. YAAD recognizes Pakistani kitchen staples and categorizes them automatically.
                     </p>
                   </div>
-                ))}
+                  <div className="pt-3 border-t border-[#f2efe9] text-xs font-bold text-[#005039]">
+                    Auto categorizer
+                  </div>
+                </div>
+
+                {/* Pillar 2: Unstoppable Offline First */}
+                <div className="p-6 rounded-3xl bg-white border border-[#e5e1d8] space-y-3.5 shadow-2xs hover:border-[#005039]/40 hover:shadow-xs transition-all flex flex-col justify-between">
+                  <div>
+                    <div className="w-12 h-12 rounded-2xl bg-[#005039]/10 text-[#005039] flex items-center justify-center mb-3">
+                      <WifiOff className="w-6 h-6 text-[#005039]" />
+                    </div>
+                    <h4 className="text-base sm:text-lg font-bold text-[#1c2826] tracking-tight">
+                      Unstoppable Offline First
+                    </h4>
+                    <p className="text-xs sm:text-sm text-[#556960] leading-relaxed mt-1.5">
+                      Supermarkets and basement bazaars are notorious for dead zones. YAAD works completely offline, letting you check off items and create lists anywhere, syncing when reconnected.
+                    </p>
+                  </div>
+                  <div className="pt-3 border-t border-[#f2efe9] text-xs font-bold text-[#005039]">
+                    100% offline ready
+                  </div>
+                </div>
+
+                {/* Pillar 3: Zero Ad Tracking & Absolute Privacy */}
+                <div className="p-6 rounded-3xl bg-white border border-[#e5e1d8] space-y-3.5 shadow-2xs hover:border-[#005039]/40 hover:shadow-xs transition-all flex flex-col justify-between">
+                  <div>
+                    <div className="w-12 h-12 rounded-2xl bg-[#005039]/10 text-[#005039] flex items-center justify-center mb-3">
+                      <ShieldCheck className="w-6 h-6 text-[#005039]" />
+                    </div>
+                    <h4 className="text-base sm:text-lg font-bold text-[#1c2826] tracking-tight">
+                      Zero Ad Tracking &amp; Absolute Privacy
+                    </h4>
+                    <p className="text-xs sm:text-sm text-[#556960] leading-relaxed mt-1.5">
+                      No intrusive banner ads, no popups, and no tracking cookies. Your grocery spending habits are never sold to advertisers or marketing aggregators.
+                    </p>
+                  </div>
+                  <div className="pt-3 border-t border-[#f2efe9] text-xs font-bold text-[#005039]">
+                    Zero telemetry
+                  </div>
+                </div>
+
+                {/* Pillar 4: Smart Restock Memory */}
+                <div className="p-6 rounded-3xl bg-white border border-[#e5e1d8] space-y-3.5 shadow-2xs hover:border-[#005039]/40 hover:shadow-xs transition-all flex flex-col justify-between">
+                  <div>
+                    <div className="w-12 h-12 rounded-2xl bg-[#005039]/10 text-[#005039] flex items-center justify-center mb-3">
+                      <RotateCcw className="w-6 h-6 text-[#005039]" />
+                    </div>
+                    <h4 className="text-base sm:text-lg font-bold text-[#1c2826] tracking-tight">
+                      Smart Restock Memory
+                    </h4>
+                    <p className="text-xs sm:text-sm text-[#556960] leading-relaxed mt-1.5">
+                      YAAD gently remembers how often you purchase essentials like milk, cooking oil, and tea, offering one-tap restock chips right when you need them.
+                    </p>
+                  </div>
+                  <div className="pt-3 border-t border-[#f2efe9] text-xs font-bold text-[#005039]">
+                    Smart cadence
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Cultural Nuance Showcase */}
-            <div className="p-6 rounded-3xl bg-secondary-fixed/20 border border-secondary-fixed/40 space-y-3">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-primary" />
-                <h4 className="text-sm font-bold text-on-surface font-['Manrope']">
-                  Deep Urdu & Pakistani Kitchen Catalog
-                </h4>
+            {/* 3. Cultural Nuance & Pakistani Kitchen Catalog Showcase */}
+            <div className="p-7 sm:p-8 rounded-3xl bg-white border-2 border-[#005039]/25 shadow-xs space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-[#005039] text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <UtensilsCrossed className="w-6 h-6" />
+                </div>
+                <div>
+                  <h4 className="text-lg font-bold text-[#1c2826] tracking-tight">
+                    Deep Urdu &amp; Pakistani Kitchen Catalog
+                  </h4>
+                  <p className="text-xs text-[#556960]">
+                    Trained specifically on everyday South Asian groceries and traditional weights
+                  </p>
+                </div>
               </div>
-              <p className="text-xs sm:text-sm text-on-surface-variant leading-relaxed">
+
+              <p className="text-xs sm:text-sm text-[#556960] leading-relaxed">
                 YAAD recognizes staples including <strong>Aloo</strong>, <strong>Pyaz</strong>, <strong>Tamatar</strong>,{' '}
                 <strong>Doodh</strong>, <strong>Chai Patti</strong>, <strong>Shan Masala</strong>,{' '}
-                <strong>Ghee</strong>, <strong>Atta</strong>, <strong>Basmati Chawal</strong>, and over 2,000 localized food items!
+                <strong>Ghee</strong>, <strong>Chakki Atta</strong>, <strong>Basmati Chawal</strong>, and over 2,000 localized food items!
               </p>
-              <div className="pt-1.5">
+
+              <div className="pt-2">
                 <a
                   id="about_rashan_checklist_link"
                   href={rashanListPath}
@@ -541,7 +668,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                     e.preventDefault();
                     navigate(rashanListPath);
                   }}
-                  className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-primary hover:underline"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-[#005039] hover:bg-[#003d2b] shadow-xs transition-all active:scale-95 cursor-pointer"
                 >
                   <ShoppingBag className="w-4 h-4 shrink-0" />
                   <span>
@@ -561,15 +688,15 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
         {currentPage === 'help' && (
           <div className="space-y-8">
             {/* Search & Category Filter */}
-            <div className="space-y-3">
+            <div className="space-y-3.5">
               <div className="relative">
-                <Search className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <Search className="w-4 h-4 text-[#788880] absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="text"
                   value={faqSearchQuery}
                   onChange={(e) => setFaqSearchQuery(e.target.value)}
                   placeholder="Search questions (e.g. offline, passkey, urdu)..."
-                  className="w-full h-11 bg-surface rounded-2xl ps-10 pe-4 text-sm border border-surface-dim focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none text-on-surface placeholder:text-outline"
+                  className="w-full h-11 bg-white rounded-2xl ps-10 pe-4 text-sm border border-[#e5e1d8] focus:border-[#005039] focus:ring-2 focus:ring-[#005039]/20 outline-none text-[#1c2826] placeholder:text-[#788880] shadow-2xs"
                 />
               </div>
 
@@ -579,13 +706,18 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                     key={cat}
                     type="button"
                     onClick={() => setSelectedFaqCategory(cat)}
-                    className={`px-3 py-1 rounded-full font-semibold capitalize transition-all ${
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full font-bold capitalize transition-all cursor-pointer ${
                       selectedFaqCategory === cat
-                        ? 'bg-primary text-on-primary shadow-2xs'
-                        : 'bg-surface text-outline hover:text-on-surface border border-surface-dim'
+                        ? 'bg-[#005039] text-white shadow-xs'
+                        : 'bg-white text-[#556960] hover:text-[#1c2826] border border-[#e5e1d8]'
                     }`}
                   >
-                    {cat === 'all' ? 'All Questions' : cat}
+                    {cat === 'offline' && <WifiOff className="w-3.5 h-3.5" />}
+                    {cat === 'security' && <Lock className="w-3.5 h-3.5" />}
+                    {cat === 'language' && <Languages className="w-3.5 h-3.5" />}
+                    {cat === 'general' && <Sparkles className="w-3.5 h-3.5" />}
+                    {cat === 'all' && <HelpCircle className="w-3.5 h-3.5" />}
+                    <span>{cat === 'all' ? 'All Questions' : cat}</span>
                   </button>
                 ))}
               </div>
@@ -594,8 +726,8 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
             {/* Accordion List */}
             <div className="space-y-3">
               {filteredFaqs.length === 0 ? (
-                <div className="p-8 text-center rounded-2xl bg-surface border border-surface-dim text-outline space-y-1">
-                  <p className="font-semibold text-sm">No matching questions found</p>
+                <div className="p-8 text-center rounded-3xl bg-white border border-[#e5e1d8] text-[#788880] space-y-1 shadow-2xs">
+                  <p className="font-bold text-sm text-[#1c2826]">No matching questions found</p>
                   <p className="text-xs">Try searching for different keywords or email our team directly.</p>
                 </div>
               ) : (
@@ -604,27 +736,27 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                   return (
                     <div
                       key={faq.id}
-                      className="rounded-2xl bg-surface border border-surface-dim overflow-hidden transition-all"
+                      className="rounded-3xl bg-white border border-[#e5e1d8] overflow-hidden transition-all shadow-2xs"
                     >
                       <button
                         type="button"
                         onClick={() => toggleFaq(faq.id)}
-                        className="w-full p-4 sm:p-5 flex items-center justify-between text-start gap-4 hover:bg-surface-container-lowest/60 transition-colors"
+                        className="w-full p-5 flex items-center justify-between text-start gap-4 hover:bg-[#faf8f5] transition-colors cursor-pointer"
                       >
                         <span
-                          className={`text-sm sm:text-base font-bold text-on-surface leading-snug ${
-                            language === 'ur' ? 'font-urdu' : "font-['Manrope']"
+                          className={`text-sm sm:text-base font-bold text-[#1c2826] leading-snug ${
+                            language === 'ur' ? 'font-urdu' : ''
                           }`}
                         >
                           {getLocalizedText(faq.question)}
                         </span>
-                        <div className="w-7 h-7 rounded-full bg-surface-container flex items-center justify-center shrink-0 text-outline">
+                        <div className="w-7 h-7 rounded-full bg-[#faf8f5] border border-[#e5e1d8] flex items-center justify-center shrink-0 text-[#005039]">
                           {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                         </div>
                       </button>
 
                       {isOpen && (
-                        <div className="px-4 sm:px-5 pb-5 pt-1 text-xs sm:text-sm text-on-surface-variant leading-relaxed border-t border-surface-dim/40 bg-surface-container-lowest/30">
+                        <div className="px-5 pb-5 pt-1 text-xs sm:text-sm text-[#556960] leading-relaxed border-t border-[#f2efe9] bg-[#faf8f5]/60">
                           <p>{getLocalizedText(faq.answer)}</p>
                         </div>
                       )}
@@ -635,29 +767,29 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
             </div>
 
             {/* Direct Contact Card */}
-            <div className="p-6 rounded-3xl bg-surface border border-surface-dim space-y-4">
+            <div className="p-7 rounded-3xl bg-white border border-[#e5e1d8] shadow-2xs space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-primary-fixed/40 text-primary flex items-center justify-center shrink-0">
-                  <Mail className="w-5 h-5" />
+                <div className="w-11 h-11 rounded-2xl bg-[#005039]/10 text-[#005039] flex items-center justify-center shrink-0">
+                  <Mail className="w-5 h-5 text-[#005039]" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-on-surface font-['Manrope']">
+                  <h3 className="text-base font-bold text-[#1c2826]">
                     Still need help or have a suggestion?
                   </h3>
-                  <p className="text-xs text-outline">
+                  <p className="text-xs text-[#556960]">
                     Our engineering and customer care team responds to all inquiries within 24 hours.
                   </p>
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-surface-container-lowest border border-surface-dim flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div>
-                  <span className="text-[11px] font-bold uppercase text-outline block">
+                  <span className="text-[11px] font-bold uppercase text-[#788880] block">
                     Direct Support Email
                   </span>
                   <a
                     href="mailto:yaadapppk@gmail.com"
-                    className="text-sm font-bold text-primary hover:underline break-all"
+                    className="text-sm font-bold text-[#005039] hover:underline break-all"
                   >
                     yaadapppk@gmail.com
                   </a>
@@ -665,7 +797,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
 
                 <a
                   href="mailto:yaadapppk@gmail.com?subject=YAAD%20Support%20Request"
-                  className="px-4 py-2 rounded-full text-xs font-bold bg-primary text-on-primary hover:bg-primary/90 transition-colors shadow-xs"
+                  className="px-5 py-2.5 rounded-full text-xs font-bold bg-[#005039] text-white hover:bg-[#003d2b] transition-colors shadow-xs"
                 >
                   Send Email
                 </a>
@@ -679,31 +811,31 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
         {/* ================================================================ */}
         {currentPage === 'legal' && (
           <div className="space-y-6">
-            <p className="text-sm text-outline">
+            <p className="text-sm text-[#556960]">
               Below are all individual public links for YAAD. Each page is independently accessible via its own dedicated URL link:
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Terms Card */}
-              <div className="p-5 rounded-3xl bg-surface border border-surface-dim flex flex-col justify-between space-y-4">
+              <div className="p-6 rounded-3xl bg-white border border-[#e5e1d8] flex flex-col justify-between space-y-4 shadow-2xs">
                 <div className="space-y-2">
-                  <div className="w-10 h-10 rounded-2xl bg-primary-fixed/40 text-primary flex items-center justify-center">
-                    <FileText className="w-5 h-5" />
+                  <div className="w-10 h-10 rounded-2xl bg-[#005039]/10 text-[#005039] flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-[#005039]" />
                   </div>
-                  <h3 className="text-base font-bold text-on-surface font-['Manrope']">
-                    Terms & Conditions
+                  <h3 className="text-base font-bold text-[#1c2826]">
+                    Terms &amp; Conditions
                   </h3>
-                  <p className="text-xs text-outline leading-relaxed">
+                  <p className="text-xs text-[#556960] leading-relaxed">
                     User agreement, service terms, offline functionality guidelines, and liability terms.
                   </p>
-                  <code className="text-xs text-primary font-mono block">/terms</code>
+                  <code className="text-xs text-[#005039] font-mono block">/terms</code>
                 </div>
 
-                <div className="flex items-center gap-2 pt-2 border-t border-surface-dim">
+                <div className="flex items-center gap-2 pt-3 border-t border-[#f2efe9]">
                   <button
                     type="button"
                     onClick={() => handleTabClick('terms')}
-                    className="flex-1 py-2 text-xs font-bold text-center bg-primary text-on-primary rounded-xl hover:bg-primary/90 transition-colors"
+                    className="flex-1 py-2 text-xs font-bold text-center bg-[#005039] text-white rounded-xl hover:bg-[#003d2b] transition-colors cursor-pointer"
                   >
                     Open Terms
                   </button>
@@ -711,33 +843,33 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                     type="button"
                     onClick={() => handleCopyPageLink('terms')}
                     title="Copy /terms link"
-                    className="p-2 rounded-xl bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors"
+                    className="p-2 rounded-xl bg-[#faf8f5] border border-[#e5e1d8] text-[#556960] hover:text-[#1c2826] transition-colors cursor-pointer"
                   >
-                    {copiedUrl === 'terms' ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
+                    {copiedUrl === 'terms' ? <Check className="w-4 h-4 text-[#005039]" /> : <Share2 className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
 
               {/* Privacy Card */}
-              <div className="p-5 rounded-3xl bg-surface border border-surface-dim flex flex-col justify-between space-y-4">
+              <div className="p-6 rounded-3xl bg-white border border-[#e5e1d8] flex flex-col justify-between space-y-4 shadow-2xs">
                 <div className="space-y-2">
-                  <div className="w-10 h-10 rounded-2xl bg-secondary-fixed/50 text-secondary flex items-center justify-center">
-                    <Shield className="w-5 h-5" />
+                  <div className="w-10 h-10 rounded-2xl bg-[#005039]/10 text-[#005039] flex items-center justify-center">
+                    <ShieldCheck className="w-5 h-5 text-[#005039]" />
                   </div>
-                  <h3 className="text-base font-bold text-on-surface font-['Manrope']">
+                  <h3 className="text-base font-bold text-[#1c2826]">
                     Privacy Policy
                   </h3>
-                  <p className="text-xs text-outline leading-relaxed">
-                    Zero ad selling guarantee, Supabase database isolation, passkeys, and account deletion.
+                  <p className="text-xs text-[#556960] leading-relaxed">
+                    Zero ad selling guarantee, database isolation, passkeys, and account deletion.
                   </p>
-                  <code className="text-xs text-primary font-mono block">/privacy</code>
+                  <code className="text-xs text-[#005039] font-mono block">/privacy</code>
                 </div>
 
-                <div className="flex items-center gap-2 pt-2 border-t border-surface-dim">
+                <div className="flex items-center gap-2 pt-3 border-t border-[#f2efe9]">
                   <button
                     type="button"
                     onClick={() => handleTabClick('privacy')}
-                    className="flex-1 py-2 text-xs font-bold text-center bg-primary text-on-primary rounded-xl hover:bg-primary/90 transition-colors"
+                    className="flex-1 py-2 text-xs font-bold text-center bg-[#005039] text-white rounded-xl hover:bg-[#003d2b] transition-colors cursor-pointer"
                   >
                     Open Privacy
                   </button>
@@ -745,33 +877,33 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                     type="button"
                     onClick={() => handleCopyPageLink('privacy')}
                     title="Copy /privacy link"
-                    className="p-2 rounded-xl bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors"
+                    className="p-2 rounded-xl bg-[#faf8f5] border border-[#e5e1d8] text-[#556960] hover:text-[#1c2826] transition-colors cursor-pointer"
                   >
-                    {copiedUrl === 'privacy' ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
+                    {copiedUrl === 'privacy' ? <Check className="w-4 h-4 text-[#005039]" /> : <Share2 className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
 
               {/* About YAAD Card */}
-              <div className="p-5 rounded-3xl bg-surface border border-surface-dim flex flex-col justify-between space-y-4">
+              <div className="p-6 rounded-3xl bg-white border border-[#e5e1d8] flex flex-col justify-between space-y-4 shadow-2xs">
                 <div className="space-y-2">
-                  <div className="w-10 h-10 rounded-2xl bg-primary-fixed/40 text-primary flex items-center justify-center">
-                    <Sparkles className="w-5 h-5" />
+                  <div className="w-10 h-10 rounded-2xl bg-[#005039]/10 text-[#005039] flex items-center justify-center">
+                    <Sparkles className="w-5 h-5 text-[#005039]" />
                   </div>
-                  <h3 className="text-base font-bold text-on-surface font-['Manrope']">
+                  <h3 className="text-base font-bold text-[#1c2826]">
                     About YAAD
                   </h3>
-                  <p className="text-xs text-outline leading-relaxed">
+                  <p className="text-xs text-[#556960] leading-relaxed">
                     The vision, Pakistani kitchen catalog, bilingual recognition, and craft behind the app.
                   </p>
-                  <code className="text-xs text-primary font-mono block">/about</code>
+                  <code className="text-xs text-[#005039] font-mono block">/about</code>
                 </div>
 
-                <div className="flex items-center gap-2 pt-2 border-t border-surface-dim">
+                <div className="flex items-center gap-2 pt-3 border-t border-[#f2efe9]">
                   <button
                     type="button"
                     onClick={() => handleTabClick('about')}
-                    className="flex-1 py-2 text-xs font-bold text-center bg-primary text-on-primary rounded-xl hover:bg-primary/90 transition-colors"
+                    className="flex-1 py-2 text-xs font-bold text-center bg-[#005039] text-white rounded-xl hover:bg-[#003d2b] transition-colors cursor-pointer"
                   >
                     Open About
                   </button>
@@ -779,33 +911,33 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                     type="button"
                     onClick={() => handleCopyPageLink('about')}
                     title="Copy /about link"
-                    className="p-2 rounded-xl bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors"
+                    className="p-2 rounded-xl bg-[#faf8f5] border border-[#e5e1d8] text-[#556960] hover:text-[#1c2826] transition-colors cursor-pointer"
                   >
-                    {copiedUrl === 'about' ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
+                    {copiedUrl === 'about' ? <Check className="w-4 h-4 text-[#005039]" /> : <Share2 className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
 
               {/* Help & Support Card */}
-              <div className="p-5 rounded-3xl bg-surface border border-surface-dim flex flex-col justify-between space-y-4">
+              <div className="p-6 rounded-3xl bg-white border border-[#e5e1d8] flex flex-col justify-between space-y-4 shadow-2xs">
                 <div className="space-y-2">
-                  <div className="w-10 h-10 rounded-2xl bg-surface-container text-outline flex items-center justify-center">
-                    <HelpCircle className="w-5 h-5" />
+                  <div className="w-10 h-10 rounded-2xl bg-[#005039]/10 text-[#005039] flex items-center justify-center">
+                    <HelpCircle className="w-5 h-5 text-[#005039]" />
                   </div>
-                  <h3 className="text-base font-bold text-on-surface font-['Manrope']">
-                    Help & Support
+                  <h3 className="text-base font-bold text-[#1c2826]">
+                    Help &amp; Support
                   </h3>
-                  <p className="text-xs text-outline leading-relaxed">
+                  <p className="text-xs text-[#556960] leading-relaxed">
                     Interactive FAQ, PWA installation, language guide, and direct email contacts.
                   </p>
-                  <code className="text-xs text-primary font-mono block">/help</code>
+                  <code className="text-xs text-[#005039] font-mono block">/help</code>
                 </div>
 
-                <div className="flex items-center gap-2 pt-2 border-t border-surface-dim">
+                <div className="flex items-center gap-2 pt-3 border-t border-[#f2efe9]">
                   <button
                     type="button"
                     onClick={() => handleTabClick('help')}
-                    className="flex-1 py-2 text-xs font-bold text-center bg-primary text-on-primary rounded-xl hover:bg-primary/90 transition-colors"
+                    className="flex-1 py-2 text-xs font-bold text-center bg-[#005039] text-white rounded-xl hover:bg-[#003d2b] transition-colors cursor-pointer"
                   >
                     Open Help
                   </button>
@@ -813,9 +945,9 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                     type="button"
                     onClick={() => handleCopyPageLink('help')}
                     title="Copy /help link"
-                    className="p-2 rounded-xl bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors"
+                    className="p-2 rounded-xl bg-[#faf8f5] border border-[#e5e1d8] text-[#556960] hover:text-[#1c2826] transition-colors cursor-pointer"
                   >
-                    {copiedUrl === 'help' ? <Check className="w-4 h-4 text-primary" /> : <Share2 className="w-4 h-4" />}
+                    {copiedUrl === 'help' ? <Check className="w-4 h-4 text-[#005039]" /> : <Share2 className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
@@ -829,19 +961,19 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
         {currentPage === 'blog' && (
           <div className="space-y-8">
             {/* Header intro banner */}
-            <div className="p-6 sm:p-8 rounded-3xl bg-surface border border-surface-dim flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="p-7 sm:p-9 rounded-3xl bg-white border border-[#e5e1d8] shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="space-y-1.5">
-                <span className="text-xs font-bold uppercase tracking-wider text-primary">
-                  YAAD Editorial & Guides
+                <span className="text-xs font-bold uppercase tracking-wider text-[#005039]">
+                  YAAD Editorial &amp; Guides
                 </span>
-                <h2 className="text-xl sm:text-2xl font-extrabold text-on-surface font-['Manrope']">
-                  Smart Grocery & Household Shopping Guides
+                <h2 className="text-xl sm:text-2xl font-black text-[#1c2826] tracking-tight">
+                  Smart Grocery &amp; Household Shopping Guides
                 </h2>
-                <p className="text-xs sm:text-sm text-outline max-w-2xl">
+                <p className="text-xs sm:text-sm text-[#556960] max-w-2xl">
                   Practical articles crafted for Pakistani households to save money, avoid forgotten items, and master local grocery shopping.
                 </p>
               </div>
-              <div className="w-12 h-12 rounded-2xl bg-primary-fixed/50 flex items-center justify-center text-primary shrink-0">
+              <div className="w-12 h-12 rounded-2xl bg-[#005039]/10 flex items-center justify-center text-[#005039] shrink-0">
                 <Newspaper className="w-6 h-6" />
               </div>
             </div>
@@ -863,38 +995,38 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                   <article
                     key={post.id}
                     id={post.id}
-                    className="p-6 rounded-3xl bg-surface border border-surface-dim hover:border-primary/30 transition-all flex flex-col justify-between space-y-4 shadow-2xs"
+                    className="p-6 rounded-3xl bg-white border border-[#e5e1d8] hover:border-[#005039]/30 transition-all flex flex-col justify-between space-y-4 shadow-2xs"
                   >
                     <div className="space-y-3">
                       <div className="flex items-center justify-between gap-2 text-xs">
-                        <span className="px-2.5 py-1 rounded-full bg-primary-fixed/40 text-primary font-bold">
+                        <span className="px-2.5 py-1 rounded-full bg-[#005039]/10 text-[#005039] font-bold">
                           {category}
                         </span>
-                        <span className="text-outline font-medium">{post.readTime}</span>
+                        <span className="text-[#788880] font-medium">{post.readTime}</span>
                       </div>
 
                       <h3
-                        className={`text-base sm:text-lg font-bold text-on-surface leading-snug ${
-                          language === 'ur' ? 'font-urdu text-lg sm:text-xl' : "font-['Manrope']"
+                        className={`text-base sm:text-lg font-bold text-[#1c2826] leading-snug ${
+                          language === 'ur' ? 'font-urdu text-lg sm:text-xl' : ''
                         }`}
                       >
                         {title}
                       </h3>
 
-                      <p className="text-xs sm:text-sm text-outline leading-relaxed line-clamp-3">
+                      <p className="text-xs sm:text-sm text-[#556960] leading-relaxed line-clamp-3">
                         {summary}
                       </p>
 
-                      <div className="pt-2 border-t border-surface-dim/60 space-y-2 text-xs text-on-surface-variant leading-relaxed">
+                      <div className="pt-2 border-t border-[#f2efe9] space-y-2 text-xs text-[#556960] leading-relaxed">
                         {paragraphs.slice(0, 2).map((p, idx) => (
                           <p key={idx}>{p}</p>
                         ))}
                       </div>
                     </div>
 
-                    <div className="pt-2 text-xs text-outline font-medium flex items-center justify-between">
+                    <div className="pt-2 text-xs text-[#788880] font-medium flex items-center justify-between">
                       <span>{post.publishDate}</span>
-                      <span className="text-primary font-bold">YAAD Editorial</span>
+                      <span className="text-[#005039] font-bold">YAAD Editorial</span>
                     </div>
                   </article>
                 );

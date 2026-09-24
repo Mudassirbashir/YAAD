@@ -1180,6 +1180,7 @@ function AppContent() {
       {/* 1a. Public Dedicated Legal & Information Pages */}
       {LEGAL_SCREENS.includes(currentScreen) && (
         <LegalPageView
+          user={user}
           initialPage={currentScreen as LegalPageType}
           onBack={handleBackFromLegal}
           onNavigate={handleOpenLegalPage}

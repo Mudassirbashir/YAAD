@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { ArrowLeft, User } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { ArrowLeft, User, LogIn } from 'lucide-react';
 import { useSmartScroll } from '../../hooks/useSmartScroll';
 import { APP_IMAGES } from '../../data/initialData';
+import { useAuth } from '../../context/AuthContext';
+import { Avatar } from '../Avatar';
 
 interface AppPublicHeaderProps {
   user?: any;
@@ -13,7 +15,7 @@ interface AppPublicHeaderProps {
 }
 
 export const AppPublicHeader: React.FC<AppPublicHeaderProps> = ({
-  user,
+  user: propUser,
   onSignIn,
   showBack = false,
   onBack,
@@ -21,19 +23,37 @@ export const AppPublicHeader: React.FC<AppPublicHeaderProps> = ({
   onGoHome,
 }) => {
   const isVisible = useSmartScroll(25);
+  const { user: authUser, profile } = useAuth();
   const [isExpanding, setIsExpanding] = useState(false);
+  const isNavigatingRef = useRef(false);
+
+  // Active user: prop takes precedence if explicitly passed, otherwise use auth context
+  const activeUser = propUser !== undefined ? propUser : authUser;
 
   const handleProfileClick = () => {
-    if (user) {
-      if (onSignIn) onSignIn();
+    if (activeUser) {
+      if (onSignIn) {
+        onSignIn();
+      } else if (typeof window !== 'undefined') {
+        window.location.href = '/home';
+      }
       return;
     }
-    // Smoothly expand the pill to reveal "Sign In" text before navigating
+
+    if (isNavigatingRef.current) return;
+    isNavigatingRef.current = true;
+
+    // Smooth, deliberate slide animation for the Sign In button
     setIsExpanding(true);
+
+    // Give user time (750ms) to clearly see the elegant slide out animation
     setTimeout(() => {
-      if (onSignIn) onSignIn();
+      if (onSignIn) {
+        onSignIn();
+      }
       setIsExpanding(false);
-    }, 280);
+      isNavigatingRef.current = false;
+    }, 750);
   };
 
   const handleLogoClick = () => {
@@ -43,6 +63,20 @@ export const AppPublicHeader: React.FC<AppPublicHeaderProps> = ({
       window.location.href = '/';
     }
   };
+
+  const userAvatarUrl =
+    profile?.avatar_url ||
+    activeUser?.user_metadata?.avatar_url ||
+    activeUser?.user_metadata?.picture ||
+    activeUser?.photoURL ||
+    null;
+
+  const userDisplayName =
+    profile?.full_name ||
+    activeUser?.user_metadata?.full_name ||
+    activeUser?.displayName ||
+    activeUser?.email ||
+    '';
 
   return (
     <header
@@ -87,44 +121,62 @@ export const AppPublicHeader: React.FC<AppPublicHeaderProps> = ({
           <button
             type="button"
             onClick={handleLogoClick}
-            className="text-base sm:text-lg font-black tracking-tight text-[#005039] font-['Plus_Jakarta_Sans'] hover:opacity-85 transition-opacity cursor-pointer"
+            className="text-base sm:text-lg font-black tracking-tight text-[#005039] font-['Plus_Jakarta_Sans'] hover:opacity-85 transition-opacity cursor-pointer select-none"
           >
             {title}
           </button>
         </div>
 
-        {/* Right: Sliding Interactive Sign In / Profile Avatar */}
+        {/* Right: Smooth Sliding Interactive Sign In / Authenticated User Profile */}
         <div className="flex items-center gap-2 z-10">
-          {user ? (
+          {activeUser ? (
             <button
               type="button"
               onClick={handleProfileClick}
-              className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-[#005039] text-white text-xs sm:text-sm font-bold shadow-xs hover:bg-[#003d2b] transition-all active:scale-95 cursor-pointer"
+              title={userDisplayName || 'Your Account Dashboard'}
+              className="inline-flex items-center gap-2 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-full bg-white hover:bg-[#faf8f5] border border-[#005039]/25 text-[#005039] shadow-2xs active:scale-95 transition-all cursor-pointer group"
             >
-              <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px] font-bold">
-                {user.email ? user.email.charAt(0).toUpperCase() : 'U'}
-              </div>
-              <span className="hidden xs:inline">Dashboard</span>
+              <Avatar
+                name={userDisplayName}
+                email={activeUser.email}
+                avatarUrl={userAvatarUrl}
+                size="sm"
+                className="ring-1 ring-[#005039]/30"
+              />
+              <span className="hidden sm:inline text-xs font-bold text-[#1c2826] max-w-[120px] truncate">
+                {userDisplayName.split(' ')[0] || 'Dashboard'}
+              </span>
             </button>
           ) : (
             <button
               type="button"
               onClick={handleProfileClick}
-              title="Sign In to your account"
-              className={`group flex items-center bg-white border border-[#005039]/25 hover:border-[#005039] text-[#005039] shadow-2xs transition-all duration-300 ease-out cursor-pointer active:scale-95 ${
+              disabled={isExpanding}
+              title="Sign in to your account"
+              aria-label="Sign in"
+              className={`group relative flex items-center shadow-2xs cursor-pointer active:scale-95 transition-all duration-500 ease-out overflow-hidden ${
                 isExpanding
-                  ? 'px-3.5 py-1.5 rounded-full bg-[#005039]/10'
-                  : 'w-9 h-9 sm:w-10 sm:h-10 rounded-full justify-center hover:bg-[#005039]/10'
+                  ? 'w-[108px] sm:w-[116px] px-3.5 py-2 rounded-full bg-[#005039] text-white border border-[#005039] shadow-md'
+                  : 'w-9 h-9 sm:w-10 sm:h-10 rounded-full justify-center bg-white border border-[#005039]/25 text-[#005039] hover:border-[#005039] hover:bg-[#005039]/5'
               }`}
             >
-              <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0">
-                <User className="w-4 h-4 text-[#005039]" />
+              <div
+                className={`flex items-center justify-center shrink-0 transition-transform duration-500 ease-out ${
+                  isExpanding ? 'scale-105 text-white' : 'text-[#005039]'
+                }`}
+              >
+                {isExpanding ? (
+                  <LogIn className="w-4 h-4 text-white animate-pulse" />
+                ) : (
+                  <User className="w-4 h-4 text-[#005039]" />
+                )}
               </div>
+
               <span
-                className={`overflow-hidden whitespace-nowrap text-xs font-bold transition-all duration-300 ease-out ${
+                className={`whitespace-nowrap text-xs font-extrabold tracking-tight transition-all duration-500 ease-out ${
                   isExpanding
-                    ? 'max-w-[70px] opacity-100 ms-1.5'
-                    : 'max-w-0 opacity-0 group-hover:max-w-[70px] group-hover:opacity-100 group-hover:ms-1.5'
+                    ? 'opacity-100 translate-x-0 ms-2 max-w-[80px]'
+                    : 'opacity-0 -translate-x-2 ms-0 max-w-0 pointer-events-none'
                 }`}
               >
                 Sign In

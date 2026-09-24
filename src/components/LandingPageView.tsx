@@ -7,12 +7,8 @@ import {
   Lock,
   PenLine,
   Plus,
-  Scale,
-  Shield,
   ShoppingBag,
-  Sparkles,
   Store,
-  WifiOff,
 } from 'lucide-react';
 import { AppPublicHeader } from './common/AppPublicHeader';
 import { AppPublicFooter } from './common/AppPublicFooter';
@@ -73,7 +69,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
       id="landing_page_container"
       className="min-h-screen bg-[#faf8f5] text-[#1c2826] font-['Plus_Jakarta_Sans',sans-serif] flex flex-col justify-between selection:bg-[#005039]/15"
     >
-      {/* 1. Global Public Header with Screen-Centered YAAD & Smart Scroll */}
+      {/* 1. Global Public Header with Screen-Centered YAAD & Smooth Animated Sign In */}
       <AppPublicHeader
         user={user}
         onSignIn={onSignIn}
@@ -89,7 +85,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
           {/* Subtle Announcement Pill */}
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white border border-[#e5e1d8] text-[#005039] text-xs font-semibold mb-6 shadow-2xs">
             <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
-            <span>Simple, Private Grocery Memory</span>
+            <span className="whitespace-nowrap">Simple, Private Grocery Memory</span>
           </div>
 
           {/* Primary Headline */}
@@ -97,7 +93,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
             Never forget what you came to buy.
           </h1>
 
-          {/* Reduced, clean subheadline */}
+          {/* Clean subheadline */}
           <p className="mt-4 sm:mt-5 text-sm sm:text-base md:text-lg text-[#556960] max-w-2xl mx-auto leading-relaxed">
             Fast, clutter-free shopping lists designed for real grocery trips. Works 100% offline, anywhere.
           </p>
@@ -108,7 +104,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
             <button
               type="button"
               onClick={onGetStarted}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-2xl bg-[#005039] hover:bg-[#003d2b] text-white font-bold text-sm sm:text-base shadow-[0_4px_0_0_#003324,0_8px_20px_rgba(0,80,57,0.28)] active:translate-y-1 active:shadow-[0_0px_0_0_#003324] border border-emerald-500/30 transition-all cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-2xl bg-[#005039] hover:bg-[#003d2b] text-white font-bold text-sm sm:text-base shadow-[0_4px_0_0_#003324,0_8px_20px_rgba(0,80,57,0.28)] active:translate-y-1 active:shadow-[0_0px_0_0_#003324] border border-emerald-500/30 transition-all cursor-pointer whitespace-nowrap"
             >
               <span>List Now</span>
               <ArrowRight className="w-4 h-4" />
@@ -118,7 +114,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
             <button
               type="button"
               onClick={onOpenRashanList}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-white hover:bg-neutral-50 text-[#1c2826] font-bold text-sm sm:text-base shadow-[0_4px_0_0_#d8d3c7,0_8px_16px_rgba(0,0,0,0.06)] active:translate-y-1 active:shadow-[0_0px_0_0_#d8d3c7] border border-[#d8d3c7] transition-all cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-white hover:bg-neutral-50 text-[#1c2826] font-bold text-sm sm:text-base shadow-[0_4px_0_0_#d8d3c7,0_8px_16px_rgba(0,0,0,0.06)] active:translate-y-1 active:shadow-[0_0px_0_0_#d8d3c7] border border-[#d8d3c7] transition-all cursor-pointer whitespace-nowrap"
             >
               <ShoppingBag className="w-4 h-4 text-[#005039]" />
               <span>Monthly Grocery Guide</span>
@@ -127,18 +123,35 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
 
           {/* Trust points */}
           <div className="mt-8 flex flex-wrap items-center justify-center gap-y-2 gap-x-6 text-xs text-[#556960]">
-            <span className="inline-flex items-center gap-1.5 font-medium">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+            <span className="inline-flex items-center gap-1.5 font-medium whitespace-nowrap">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
               Works without internet
             </span>
-            <span className="inline-flex items-center gap-1.5 font-medium">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+            <span className="inline-flex items-center gap-1.5 font-medium whitespace-nowrap">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
               No ads or spam
             </span>
-            <span className="inline-flex items-center gap-1.5 font-medium">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+            <span className="inline-flex items-center gap-1.5 font-medium whitespace-nowrap">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
               Pakistani units (kg, grams, pao)
             </span>
+          </div>
+
+          {/* Invisible Crawlable SEO Content for Search Engines */}
+          <div className="sr-only" aria-hidden="false">
+            <h2>About YAAD Smart Grocery Memory &amp; Shopping Assistant</h2>
+            <p>
+              YAAD is an intelligent, bilingual grocery shopping checklist and rashan manager built for Pakistani households.
+              Features include: 100% offline functionality in basement markets, native Roman Urdu and Nastaliq item recognition,
+              Pakistani units including kg, pao, darjan, and chattak, automatic categorization, and private zero-ad data storage.
+            </p>
+            <h3>Official Community &amp; Social Channels</h3>
+            <ul>
+              <li><a href="https://www.tiktok.com/@yaadapp" rel="noopener noreferrer">YAAD on TikTok</a></li>
+              <li><a href="https://www.facebook.com/yaadapp" rel="noopener noreferrer">YAAD on Facebook</a></li>
+              <li><a href="https://www.instagram.com/yaadapp" rel="noopener noreferrer">YAAD on Instagram</a></li>
+              <li><a href="https://www.linkedin.com/company/yaadapp" rel="noopener noreferrer">YAAD on LinkedIn</a></li>
+            </ul>
           </div>
         </section>
 
@@ -217,30 +230,34 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
           </div>
 
           <div className="bg-white border border-[#e5e1d8] rounded-3xl p-5 sm:p-7 shadow-xs">
-            {/* Header info */}
-            <div className="flex items-center justify-between pb-3.5 border-b border-[#f2efe9]">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-sm text-[#1c2826]">Today&apos;s Groceries</span>
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#005039]/10 text-[#005039]">
-                  {completedCount}/{demoItems.length} Done
+            {/* Header info - Structured single line, never wrapping awkwardly */}
+            <div className="flex items-center justify-between gap-3 pb-4 border-b border-[#f2efe9]">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="font-extrabold text-sm sm:text-base text-[#1c2826] tracking-tight whitespace-nowrap">
+                  Today&apos;s Groceries
+                </span>
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#005039]/10 text-[#005039] shrink-0 whitespace-nowrap">
+                  {completedCount} of {demoItems.length} Done
                 </span>
               </div>
-              <span className="text-xs text-[#556960]">Tap item to check</span>
+              <span className="text-xs font-medium text-[#556960] shrink-0 whitespace-nowrap">
+                Tap item to check
+              </span>
             </div>
 
-            {/* Items List */}
+            {/* Items List - Single line layout with clean truncate and shrink-0 badges */}
             <div className="divide-y divide-[#f2efe9] mt-2">
               {demoItems.map((item) => (
                 <div
                   key={item.id}
                   onClick={() => toggleDemoItem(item.id)}
-                  className={`py-3 px-2 flex items-center justify-between rounded-xl transition-all cursor-pointer ${
+                  className={`py-3 px-3 flex items-center justify-between gap-3 rounded-xl transition-all select-none cursor-pointer ${
                     item.completed ? 'bg-[#faf8f5]/80 opacity-60' : 'hover:bg-[#faf8f5]'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
                     <div
-                      className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${
+                      className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition-all ${
                         item.completed
                           ? 'bg-[#005039] border-[#005039] text-white'
                           : 'border-[#cfc9be] bg-white'
@@ -249,14 +266,14 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
                       {item.completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                     </div>
                     <span
-                      className={`text-sm font-medium ${
+                      className={`text-sm font-semibold truncate ${
                         item.completed ? 'line-through text-[#788880]' : 'text-[#1c2826]'
                       }`}
                     >
                       {item.name}
                     </span>
                   </div>
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-[#f3efe6] text-[#3d5046] shrink-0">
+                  <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-[#f3efe6] text-[#3d5046] shrink-0 whitespace-nowrap">
                     {item.quantity}
                   </span>
                 </div>
@@ -264,50 +281,50 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
             </div>
 
             {/* Quick Add Chips */}
-            <div className="mt-4 pt-3 border-t border-[#f2efe9]">
-              <p className="text-[11px] font-bold text-[#556960] mb-2">
+            <div className="mt-4 pt-3.5 border-t border-[#f2efe9]">
+              <p className="text-xs font-bold text-[#556960] mb-2.5 whitespace-nowrap">
                 Try adding an item:
               </p>
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   onClick={() => addQuickItem('Chocolate', '1 Bar')}
-                  className="inline-flex items-center gap-1.5 text-xs px-3 py-1 rounded-full bg-[#faf8f5] hover:bg-[#f0ebe1] border border-[#e5e1d8] text-[#1c2826] font-medium transition-all active:scale-95 cursor-pointer"
+                  className="inline-flex items-center gap-1.5 text-xs px-3.5 py-1.5 rounded-full bg-[#faf8f5] hover:bg-[#f0ebe1] border border-[#e5e1d8] text-[#1c2826] font-semibold whitespace-nowrap transition-all active:scale-95 cursor-pointer"
                 >
-                  <Plus className="w-3 h-3 text-[#005039]" />
+                  <Plus className="w-3.5 h-3.5 text-[#005039]" />
                   <span>Chocolate</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => addQuickItem('Fruit Juice', '1 Pack')}
-                  className="inline-flex items-center gap-1.5 text-xs px-3 py-1 rounded-full bg-[#faf8f5] hover:bg-[#f0ebe1] border border-[#e5e1d8] text-[#1c2826] font-medium transition-all active:scale-95 cursor-pointer"
+                  className="inline-flex items-center gap-1.5 text-xs px-3.5 py-1.5 rounded-full bg-[#faf8f5] hover:bg-[#f0ebe1] border border-[#e5e1d8] text-[#1c2826] font-semibold whitespace-nowrap transition-all active:scale-95 cursor-pointer"
                 >
-                  <Plus className="w-3 h-3 text-[#005039]" />
+                  <Plus className="w-3.5 h-3.5 text-[#005039]" />
                   <span>Fruit Juice</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => addQuickItem('Fresh Yogurt', '1 Cup')}
-                  className="inline-flex items-center gap-1.5 text-xs px-3 py-1 rounded-full bg-[#faf8f5] hover:bg-[#f0ebe1] border border-[#e5e1d8] text-[#1c2826] font-medium transition-all active:scale-95 cursor-pointer"
+                  className="inline-flex items-center gap-1.5 text-xs px-3.5 py-1.5 rounded-full bg-[#faf8f5] hover:bg-[#f0ebe1] border border-[#e5e1d8] text-[#1c2826] font-semibold whitespace-nowrap transition-all active:scale-95 cursor-pointer"
                 >
-                  <Plus className="w-3 h-3 text-[#005039]" />
+                  <Plus className="w-3.5 h-3.5 text-[#005039]" />
                   <span>Fresh Yogurt</span>
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Prominent, Centered "Create Your Own List" CTA Button */}
-          <div className="mt-6 flex flex-col items-center justify-center gap-2">
+          {/* Prominent, Centered "Create Your Own List" CTA Button with Tactile Embossed Feel */}
+          <div className="mt-8 flex flex-col items-center justify-center gap-2.5 text-center">
             <button
               type="button"
               onClick={onGetStarted}
-              className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full bg-[#005039] hover:bg-[#003d2b] text-white font-bold text-sm shadow-md hover:shadow-lg active:scale-95 transition-all cursor-pointer"
+              className="inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl bg-[#005039] hover:bg-[#003d2b] text-white font-black text-sm sm:text-base shadow-[0_4px_0_0_#003324,0_8px_20px_rgba(0,80,57,0.28)] active:translate-y-1 active:shadow-[0_0px_0_0_#003324] border border-emerald-500/30 transition-all cursor-pointer whitespace-nowrap"
             >
               <span>Create Your Own List</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
-            <span className="text-[11px] text-[#788880]">
+            <span className="text-xs text-[#788880] font-medium whitespace-nowrap">
               Sign in to sync across your household devices
             </span>
           </div>
@@ -346,7 +363,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
         </section>
       </main>
 
-      {/* 6. Clean Global Public Footer (No verified home link) */}
+      {/* 6. Clean Global Public Footer */}
       <AppPublicFooter
         onOpenShopping={onGetStarted}
         onOpenRashan={onOpenRashanList}
