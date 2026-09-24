@@ -51,14 +51,15 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             </button>
           ) : (
             <div id="top_header_logo_area" className="flex items-center">
-              {/* Preserved Full Transparent YAAD Logo (no circular crop, no artificial background, exact aspect ratio) */}
-              <img
-                id="top_header_logo"
-                src={APP_IMAGES.logoTransparent || '/logo.png'}
-                alt="YAAD Logo"
-                draggable={false}
-                className="h-8 sm:h-9 w-auto max-w-none object-contain select-none transition-transform duration-200 hover:scale-105 active:scale-95"
-              />
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white border border-[#e5e1d8] flex items-center justify-center shadow-2xs p-1">
+                <img
+                  id="top_header_logo"
+                  src={APP_IMAGES.logoTransparent || '/logo.png'}
+                  alt="YAAD Logo"
+                  draggable={false}
+                  className="h-full w-full object-contain select-none transition-transform duration-200 hover:scale-105 active:scale-95"
+                />
+              </div>
             </div>
           )}
         </div>

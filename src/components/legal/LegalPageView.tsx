@@ -36,6 +36,8 @@ import {
   FAQItem,
   BLOG_POSTS,
 } from './legalContent';
+import { AppPublicHeader } from '../common/AppPublicHeader';
+import { AppPublicFooter } from '../common/AppPublicFooter';
 
 interface LegalPageViewProps {
   initialPage: LegalPageType;
@@ -131,121 +133,30 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
   const BackIcon = isRTL ? ArrowRight : ArrowLeft;
 
   const getLocalizedText = (obj: { en: string; romanUrdu: string; ur: string }) => {
-    if (language === 'ur') return obj.ur;
-    if (language === 'roman-urdu') return obj.romanUrdu;
-    return obj.en;
+    return obj.en || obj.romanUrdu || obj.ur;
   };
 
   return (
     <div
       id="legal_page_container"
-      dir={isRTL ? 'rtl' : 'ltr'}
-      className="min-h-screen bg-surface-container-lowest text-on-surface font-['Plus_Jakarta_Sans'] pb-24 selection:bg-primary-container selection:text-on-primary-container"
+      dir="ltr"
+      className="min-h-screen bg-[#faf8f5] text-[#1c2826] font-['Plus_Jakarta_Sans'] pb-12 selection:bg-[#005039]/15 flex flex-col justify-between"
     >
-      {/* ==================================================================== */}
-      {/* 1. TOP STICKY APP BAR */}
-      {/* ==================================================================== */}
-      <header
-        id="legal_page_header"
-        className="sticky top-0 z-40 bg-surface-container-lowest/90 backdrop-blur-md border-b border-surface-dim px-4 sm:px-6 lg:px-8 py-3.5 transition-colors"
-      >
-        <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
-          {/* Back Button & Brand */}
-          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-            <button
-              id="legal_back_btn"
-              type="button"
-              onClick={onBack}
-              aria-label="Back to YAAD"
-              className="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors active:scale-95 shrink-0"
-            >
-              <BackIcon className="w-5 h-5" />
-            </button>
-
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-base sm:text-lg font-bold font-['Manrope'] text-on-surface tracking-tight truncate">
-                  YAAD
-                </span>
-                <span className="hidden sm:inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full bg-primary-fixed/40 text-primary">
-                  {meta.badge}
-                </span>
-              </div>
-              <p className="text-xs text-outline font-medium truncate">
-                {getLocalizedText(meta.title)}
-              </p>
-            </div>
-          </div>
-
-          {/* Right Actions: Language Selector & Copy Direct Link */}
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {/* Language Switcher */}
-            <div className="flex items-center bg-surface-container rounded-full p-1 border border-surface-dim text-xs">
-              <button
-                type="button"
-                onClick={() => setLanguage('en')}
-                className={`px-2.5 py-1 rounded-full font-semibold transition-all ${
-                  language === 'en'
-                    ? 'bg-primary text-on-primary shadow-xs'
-                    : 'text-on-surface-variant hover:text-on-surface'
-                }`}
-              >
-                EN
-              </button>
-              <button
-                type="button"
-                onClick={() => setLanguage('roman-urdu')}
-                className={`px-2.5 py-1 rounded-full font-semibold transition-all ${
-                  language === 'roman-urdu'
-                    ? 'bg-primary text-on-primary shadow-xs'
-                    : 'text-on-surface-variant hover:text-on-surface'
-                }`}
-              >
-                Roman
-              </button>
-              <button
-                type="button"
-                onClick={() => setLanguage('ur')}
-                className={`px-2.5 py-1 rounded-full font-semibold transition-all ${
-                  language === 'ur'
-                    ? 'bg-primary text-on-primary shadow-xs'
-                    : 'text-on-surface-variant hover:text-on-surface'
-                }`}
-              >
-                Urdu
-              </button>
-            </div>
-
-            {/* Share / Copy Link Button */}
-            <button
-              id="legal_copy_link_btn"
-              type="button"
-              onClick={() => handleCopyPageLink(currentPage)}
-              title="Copy link to this page"
-              className="h-9 px-3 rounded-full flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary-fixed/40 hover:bg-primary-fixed/60 transition-all active:scale-95 border border-primary/15"
-            >
-              {copiedUrl === currentPage ? (
-                <>
-                  <Check className="w-3.5 h-3.5 text-primary" />
-                  <span className="hidden xs:inline">Link Copied!</span>
-                </>
-              ) : (
-                <>
-                  <Share2 className="w-3.5 h-3.5" />
-                  <span className="hidden xs:inline">Copy Link</span>
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-      </header>
+      {/* 1. Global Public Header with Screen-Centered Title and Smart Scroll */}
+      <AppPublicHeader
+        showBack={true}
+        onBack={onBack}
+        onSignIn={onBack}
+        title="YAAD"
+        onGoHome={onBack}
+      />
 
       {/* ==================================================================== */}
       {/* 2. SECONDARY LINK TABS (Dedicated Link Navigation) */}
       {/* ==================================================================== */}
       <div
         id="legal_nav_tabs"
-        className="sticky top-[61px] z-30 bg-surface/95 backdrop-blur-md border-b border-surface-dim shadow-2xs"
+        className="pt-16 sm:pt-20 bg-white border-b border-[#e5e1d8]"
       >
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav
@@ -992,121 +903,27 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
           </div>
         )}
 
-        {/* ================================================================ */}
-        {/* 5. UNIFIED LEGAL FOOTER WITH DIRECT LINK DIRECTORY */}
-        {/* ================================================================ */}
-        <footer className="pt-10 border-t border-surface-dim space-y-6 text-center">
-          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs font-semibold">
-            <a
-              href="/"
-              onClick={(e) => {
-                e.preventDefault();
-                onBack();
-              }}
-              className="text-outline hover:text-on-surface transition-colors"
-            >
-              Home
-            </a>
-            <span className="text-surface-dim">•</span>
-            <a
-              href="/about"
-              onClick={(e) => {
-                e.preventDefault();
-                handleTabClick('about');
-              }}
-              className={`transition-colors ${currentPage === 'about' ? 'text-primary font-bold' : 'text-outline hover:text-on-surface'}`}
-            >
-              About YAAD
-            </a>
-            <span className="text-surface-dim">•</span>
-            <a
-              href="/help"
-              onClick={(e) => {
-                e.preventDefault();
-                handleTabClick('help');
-              }}
-              className={`transition-colors ${currentPage === 'help' ? 'text-primary font-bold' : 'text-outline hover:text-on-surface'}`}
-            >
-              Help & FAQ
-            </a>
-            <span className="text-surface-dim">•</span>
-            <a
-              id="legal_footer_rashan_list"
-              href={rashanListPath}
-              onClick={(e) => {
-                e.preventDefault();
-                navigate(rashanListPath);
-              }}
-              className="text-outline hover:text-on-surface transition-colors"
-            >
-              {rashanListLabel}
-            </a>
-            <span className="text-surface-dim">•</span>
-            <a
-              href="/privacy"
-              onClick={(e) => {
-                e.preventDefault();
-                handleTabClick('privacy');
-              }}
-              className={`transition-colors ${currentPage === 'privacy' ? 'text-primary font-bold' : 'text-outline hover:text-on-surface'}`}
-            >
-              Privacy Policy
-            </a>
-            <span className="text-surface-dim">•</span>
-            <a
-              href="/terms"
-              onClick={(e) => {
-                e.preventDefault();
-                handleTabClick('terms');
-              }}
-              className={`transition-colors ${currentPage === 'terms' ? 'text-primary font-bold' : 'text-outline hover:text-on-surface'}`}
-            >
-              Terms & Conditions
-            </a>
-            <span className="text-surface-dim">•</span>
-            <a
-              href="/legal"
-              onClick={(e) => {
-                e.preventDefault();
-                handleTabClick('legal');
-              }}
-              className={`transition-colors ${currentPage === 'legal' ? 'text-primary font-bold' : 'text-outline hover:text-on-surface'}`}
-            >
-              Legal Notices
-            </a>
-            <span className="text-surface-dim">•</span>
-            <a
-              id="legal_footer_blog"
-              href="/blog"
-              onClick={(e) => {
-                e.preventDefault();
-                handleTabClick('blog');
-              }}
-              className={`transition-colors ${currentPage === 'blog' ? 'text-primary font-bold' : 'text-outline hover:text-on-surface'}`}
-            >
-              Blog & Guides
-            </a>
-          </div>
-
-          <div className="space-y-1 text-xs text-outline">
-            <p className="font-semibold text-on-surface font-['Manrope']">
-              YAAD • The Thoughtful Shopping Memory
-            </p>
-            <p>© {new Date().getFullYear()} YAAD. All rights reserved.</p>
-          </div>
-
-          <div>
-            <button
-              type="button"
-              onClick={onBack}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold text-primary bg-primary-fixed/40 hover:bg-primary-fixed/60 transition-colors active:scale-95"
-            >
-              <BackIcon className="w-3.5 h-3.5" />
-              Return to Shopping
-            </button>
-          </div>
-        </footer>
+        {/* 5. Clean Return to Home Button */}
+        <div className="pt-6 text-center">
+          <button
+            type="button"
+            onClick={onBack}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-xs font-bold text-[#005039] bg-white border border-[#e5e1d8] hover:bg-[#faf8f5] shadow-2xs transition-all active:scale-95 cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Return to Shopping</span>
+          </button>
+        </div>
       </main>
+
+      {/* Global Unified Public Footer */}
+      <AppPublicFooter
+        onOpenShopping={onBack}
+        onOpenRashan={() => {
+          navigate(rashanListPath);
+        }}
+        onOpenLegal={(page) => handleTabClick(page as LegalPageType)}
+      />
     </div>
   );
 };

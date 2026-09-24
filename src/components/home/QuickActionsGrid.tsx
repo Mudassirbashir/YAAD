@@ -53,8 +53,8 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({
           </span>
           <span className="text-[10px] sm:text-[11px] font-medium text-outline font-['Manrope'] truncate max-w-[95%]">
             {stats.activeLists > 0
-              ? `${stats.activeLists} ${'Active'}`
-              : `${stats.totalLists} ${'Lists'}`}
+              ? `${stats.activeLists} Active`
+              : `${stats.totalLists} Lists`}
           </span>
         </button>
 
@@ -72,7 +72,7 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({
             {t('home.quickActions.favorites')}
           </span>
           <span className="text-[10px] sm:text-[11px] font-medium text-outline font-['Manrope'] truncate max-w-[95%]">
-            'Quick Add'
+            Quick Add
           </span>
         </button>
 
@@ -90,7 +90,7 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({
             {t('home.quickActions.categories')}
           </span>
           <span className="text-[10px] sm:text-[11px] font-medium text-outline font-['Manrope'] truncate max-w-[95%]">
-            'Browse All'
+            Browse All
           </span>
         </button>
 
@@ -109,8 +109,8 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({
           </span>
           <span className="text-[10px] sm:text-[11px] font-medium text-outline font-['Manrope'] truncate max-w-[95%]">
             {stats.completionRate > 0
-              ? `${stats.completionRate}% ${'Done'}`
-              : `${stats.totalItems} ${'Items'}`}
+              ? `${stats.completionRate}% Done`
+              : `${stats.totalItems} Items`}
           </span>
         </button>
       </div>

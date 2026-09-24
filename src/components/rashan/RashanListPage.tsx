@@ -29,6 +29,8 @@ import {
 } from './rashanData';
 import { generateUUID } from '../../lib/uuid';
 import { ShoppingList, ShoppingItem } from '../../types';
+import { AppPublicHeader } from '../common/AppPublicHeader';
+import { AppPublicFooter } from '../common/AppPublicFooter';
 
 interface RashanListPageProps {
   onBackToApp: () => void;
@@ -158,94 +160,21 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
 
   return (
     <div
-      className={`min-h-screen bg-[#fbf9f5] text-[#1c1c1c] font-['Plus_Jakarta_Sans',sans-serif] ${
-        isRTL ? 'text-right' : 'text-left'
-      }`}
-      dir={isRTL ? 'rtl' : 'ltr'}
+      className="min-h-screen bg-[#faf8f5] text-[#1c2826] font-['Plus_Jakarta_Sans',sans-serif] flex flex-col justify-between"
+      dir="ltr"
     >
-      {/* Top Sticky Header */}
-      <header className="sticky top-0 z-40 bg-[#fbf9f5]/95 backdrop-blur-md border-b border-[#005039]/10 px-4 py-3 sm:px-8">
-        <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={onBackToApp}
-              className="p-2 rounded-xl text-[#005039] hover:bg-[#005039]/10 transition-colors cursor-pointer flex items-center gap-1.5 font-medium text-sm"
-              title="Return to YAAD App"
-            >
-              <ArrowLeft className={`w-5 h-5 ${isRTL ? 'rotate-180' : ''}`} />
-              <span className="hidden sm:inline">
-                {'Back to App'}
-              </span>
-            </button>
-            <div className="h-4 w-px bg-slate-200 hidden sm:block" />
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-[#005039] text-[#ffffff] flex items-center justify-center font-extrabold text-sm shadow-xs">
-                Y
-              </div>
-              <span className="font-bold text-[#005039] text-base tracking-tight">
-                YAAD
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {/* Language Switcher */}
-            <div className="flex items-center bg-white rounded-xl p-1 border border-slate-200 shadow-2xs">
-              <button
-                onClick={() => setLanguage('en')}
-                className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
-                  language === 'en'
-                    ? 'bg-[#005039] text-white'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                EN
-              </button>
-              <button
-                onClick={() => setLanguage('roman-urdu')}
-                className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
-                  language === 'roman-urdu'
-                    ? 'bg-[#005039] text-white'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                Roman
-              </button>
-              <button
-                onClick={() => setLanguage('ur')}
-                className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
-                  language === 'ur'
-                    ? 'bg-[#005039] text-white'
-                    : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                Urdu
-              </button>
-            </div>
-
-            {/* Share / Copy Link */}
-            <button
-              onClick={handleSharePage}
-              className="p-2 rounded-xl text-slate-700 hover:bg-slate-100 transition-colors border border-slate-200 bg-white cursor-pointer"
-              title="Share or Copy Link"
-            >
-              {copiedUrl ? <Check className="w-4 h-4 text-[#005039]" /> : <Share2 className="w-4 h-4" />}
-            </button>
-
-            {/* Primary Action Button */}
-            <button
-              onClick={onBackToApp}
-              className="hidden md:inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#005039] text-white text-xs font-bold hover:bg-[#003d2b] transition-all cursor-pointer shadow-xs"
-            >
-              <ShoppingBag className="w-4 h-4" />
-              <span>{'Open YAAD'}</span>
-            </button>
-          </div>
-        </div>
-      </header>
+      {/* Global Unified Header with Screen-Centered Title and Smart Scroll */}
+      <AppPublicHeader
+        user={user}
+        showBack={true}
+        onBack={onBackToApp}
+        onSignIn={onBackToApp}
+        title="YAAD"
+        onGoHome={onBackToApp}
+      />
 
       {/* Main Content Container */}
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-14 space-y-16">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-12 md:pt-24 space-y-16 flex-1">
         
         {/* 1. Hero Section */}
         <section className="text-center space-y-6 max-w-3xl mx-auto">
@@ -282,7 +211,7 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
               {addedListSuccess ? (
                 <>
                   <CheckCircle2 className="w-5 h-5 text-emerald-300" />
-                  <span>{'List Added to YAAD!'}</span>
+                  <span>List Added to YAAD!</span>
                 </>
               ) : (
                 <>
@@ -300,7 +229,7 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
               onClick={onBackToApp}
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-white border border-slate-300 text-slate-800 font-semibold text-sm sm:text-base hover:bg-slate-50 transition-colors cursor-pointer shadow-xs"
             >
-              <span>{'Create Custom List'}</span>
+              <span>Create Custom List</span>
               <ArrowLeft className={`w-4 h-4 ${isRTL ? '' : 'rotate-180'}`} />
             </button>
           </div>
@@ -331,10 +260,10 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
                 ✕
               </div>
               <h3 className="font-bold text-slate-900">
-                {'Lost Notes & Forgotten Items'}
+                Lost Notes &amp; Forgotten Items
               </h3>
               <p>
-                {'Handwritten chits get crumpled, lost, or smudged in busy markets, leading to forgotten essentials.'}
+                Handwritten chits get crumpled, lost, or smudged in busy markets, leading to forgotten essentials.
               </p>
             </div>
 
@@ -343,10 +272,10 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
                 ⟲
               </div>
               <h3 className="font-bold text-slate-900">
-                {'Aisle Backtracking Fatigue'}
+                Aisle Backtracking Fatigue
               </h3>
               <p>
-                {'Unorganized lists force you to run back and forth between the spice rack, grain sacks, and detergent counters.'}
+                Unorganized lists force you to run back and forth between the spice rack, grain sacks, and detergent counters.
               </p>
             </div>
 
@@ -355,10 +284,10 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
                 ✓
               </div>
               <h3 className="font-bold text-slate-900">
-                {'YAAD’s Intelligent Memory'}
+                YAAD’s Intelligent Memory
               </h3>
               <p>
-                {'YAAD auto-sorts every entered item into logical store aisles, saving time and keeping your mind at ease.'}
+                YAAD auto-sorts every entered item into logical store aisles, saving time and keeping your mind at ease.
               </p>
             </div>
           </div>
@@ -374,7 +303,7 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
                   : 'Categorized Monthly Rashan Checklist (Family of 4-5)'}
               </h2>
               <p className="text-sm text-slate-600 mt-1">
-                {'Standard 4-week pantry estimates for an average household. Adjust based on your family size.'}
+                Standard 4-week pantry estimates for an average household. Adjust based on your family size.
               </p>
             </div>
 
@@ -388,7 +317,7 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
                     : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
                 }`}
               >
-                {'All Categories'}
+                All Categories
               </button>
               {RASHAN_CATEGORIES.map((cat) => (
                 <button
@@ -510,10 +439,10 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
               <span>MARKET KNOWLEDGE</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-bold text-[#003d2b]">
-              {'Traditional Pakistani Measurement Units Guide'}
+              Traditional Pakistani Measurement Units Guide
             </h2>
             <p className="text-sm text-slate-600">
-              {'Understanding traditional Bazaar measurements ensures you get exact quantities without confusing metric terms.'}
+              Understanding traditional Bazaar measurements ensures you get exact quantities without confusing metric terms.
             </p>
           </div>
 
@@ -539,10 +468,10 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
         <section className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-6">
           <div className="space-y-1">
             <h2 className="text-xl sm:text-2xl font-bold text-[#003d2b]">
-              {'4 Golden Rules for Household Rashan Management'}
+              4 Golden Rules for Household Rashan Management
             </h2>
             <p className="text-sm text-slate-600">
-              {'Practical pantry audit and storage advice to minimize grocery waste and stretch monthly budgets.'}
+              Practical pantry audit and storage advice to minimize grocery waste and stretch monthly budgets.
             </p>
           </div>
 
@@ -550,40 +479,40 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
             <div className="p-4 rounded-2xl bg-[#fbf9f5] border border-slate-100 space-y-1.5">
               <h3 className="font-bold text-slate-900 flex items-center gap-2">
                 <span className="w-5 h-5 rounded-full bg-[#005039] text-white flex items-center justify-center text-xs">1</span>
-                <span>{'The "Dry Pantry Shake"'}</span>
+                <span>The Dry Pantry Shake</span>
               </h3>
               <p className="text-xs text-slate-600 leading-relaxed">
-                {'Always inspect your existing pantry containers before finalizing the list. Households routinely overbuy staples they already have sitting in dark cabinets.'}
+                Always inspect your existing pantry containers before finalizing the list. Households routinely overbuy staples they already have sitting in dark cabinets.
               </p>
             </div>
 
             <div className="p-4 rounded-2xl bg-[#fbf9f5] border border-slate-100 space-y-1.5">
               <h3 className="font-bold text-slate-900 flex items-center gap-2">
                 <span className="w-5 h-5 rounded-full bg-[#005039] text-white flex items-center justify-center text-xs">2</span>
-                <span>{'Weevil Protection for Atta'}</span>
+                <span>Weevil Protection for Atta</span>
               </h3>
               <p className="text-xs text-slate-600 leading-relaxed">
-                {'During humid summer or monsoon months, insert a few whole cloves or dried bay leaves (tez paat) into large flour bins to deter weevils.'}
+                During humid summer or monsoon months, insert a few whole cloves or dried bay leaves (tez paat) into large flour bins to deter weevils.
               </p>
             </div>
 
             <div className="p-4 rounded-2xl bg-[#fbf9f5] border border-slate-100 space-y-1.5">
               <h3 className="font-bold text-slate-900 flex items-center gap-2">
                 <span className="w-5 h-5 rounded-full bg-[#005039] text-white flex items-center justify-center text-xs">3</span>
-                <span>{'Buy Whole Spices in Bulk'}</span>
+                <span>Buy Whole Spices in Bulk</span>
               </h3>
               <p className="text-xs text-slate-600 leading-relaxed">
-                {'Whole spices (zeera, kali mirch, darchini) retain their essential oils and aroma far longer than pre-ground powders and prevent adulteration.'}
+                Whole spices (zeera, kali mirch, darchini) retain their essential oils and aroma far longer than pre-ground powders and prevent adulteration.
               </p>
             </div>
 
             <div className="p-4 rounded-2xl bg-[#fbf9f5] border border-slate-100 space-y-1.5">
               <h3 className="font-bold text-slate-900 flex items-center gap-2">
                 <span className="w-5 h-5 rounded-full bg-[#005039] text-white flex items-center justify-center text-xs">4</span>
-                <span>{'Kiryana Provision vs Supermarket'}</span>
+                <span>Kiryana Provision vs Supermarket</span>
               </h3>
               <p className="text-xs text-slate-600 leading-relaxed">
-                {'Wholesale grains and pulses from trusted neighborhood kiryana provision merchants often cost 15-20% less than modern hypermarket chains.'}
+                Wholesale grains and pulses from trusted neighborhood kiryana provision merchants often cost 15-20% less than modern hypermarket chains.
               </p>
             </div>
           </div>
@@ -593,10 +522,10 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
         <section className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-6">
           <div className="space-y-1">
             <h2 className="text-xl sm:text-2xl font-bold text-[#003d2b]">
-              {'Frequently Asked Questions About Rashan Planning'}
+              Frequently Asked Questions About Rashan Planning
             </h2>
             <p className="text-sm text-slate-600">
-              {'Direct answers on monthly budgeting, local quantities, and using YAAD offline.'}
+              Direct answers on monthly budgeting, local quantities, and using YAAD offline.
             </p>
           </div>
 
@@ -635,11 +564,11 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            {'Never Forget What You Need to Buy Again'}
+            Never Forget What You Need to Buy Again
           </h2>
 
           <p className="text-sm sm:text-base text-white/80 max-w-xl mx-auto leading-relaxed">
-            {'YAAD is built specifically around South Asian grocery habits. Private, fast, offline-ready, and completely free.'}
+            YAAD is built specifically around South Asian grocery habits. Private, fast, offline-ready, and completely free.
           </p>
 
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -654,80 +583,19 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
               onClick={onBackToApp}
               className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-[#003d2b] border border-white/20 text-white font-medium text-sm sm:text-base hover:bg-[#002d20] transition-colors cursor-pointer"
             >
-              {'Open YAAD Directly'}
+              Open YAAD Directly
             </button>
           </div>
         </section>
 
-        {/* 8. Related Public Resources Footer */}
-        <footer className="pt-8 border-t border-slate-200/80 text-xs text-slate-500 space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-[#005039]">YAAD</span>
-              <span>•</span>
-              <span>Smart Shopping Memory</span>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-4">
-              <a
-                href="/about"
-                onClick={(e) => {
-                  e.preventDefault();
-                  onNavigatePage('/about');
-                }}
-                className="hover:text-[#005039] hover:underline cursor-pointer"
-              >
-                About YAAD
-              </a>
-              <a
-                href="/help"
-                onClick={(e) => {
-                  e.preventDefault();
-                  onNavigatePage('/help');
-                }}
-                className="hover:text-[#005039] hover:underline cursor-pointer"
-              >
-                Help & FAQ
-              </a>
-              <a
-                href="/privacy"
-                onClick={(e) => {
-                  e.preventDefault();
-                  onNavigatePage('/privacy');
-                }}
-                className="hover:text-[#005039] hover:underline cursor-pointer"
-              >
-                Privacy Policy
-              </a>
-              <a
-                href="/terms"
-                onClick={(e) => {
-                  e.preventDefault();
-                  onNavigatePage('/terms');
-                }}
-                className="hover:text-[#005039] hover:underline cursor-pointer"
-              >
-                Terms of Service
-              </a>
-              <a
-                href="/legal"
-                onClick={(e) => {
-                  e.preventDefault();
-                  onNavigatePage('/legal');
-                }}
-                className="hover:text-[#005039] hover:underline cursor-pointer"
-              >
-                Legal Notices
-              </a>
-            </div>
-          </div>
-
-          <p className="text-slate-400">
-            © {new Date().getFullYear()} YAAD. Designed for household grocery shoppers in Pakistan and the global diaspora.
-          </p>
-        </footer>
-
       </main>
+
+      {/* Global Unified Public Footer */}
+      <AppPublicFooter
+        onOpenShopping={onBackToApp}
+        onOpenRashan={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        onOpenLegal={(page) => onNavigatePage('/' + page)}
+      />
     </div>
   );
 };

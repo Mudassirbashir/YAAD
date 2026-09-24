@@ -1,35 +1,34 @@
 import React, { useState } from 'react';
 import {
-  CheckCircle2,
-  Sparkles,
-  Shield,
   ArrowRight,
-  ShoppingBag,
-  Lock,
-  Newspaper,
   Check,
-  Scale,
-  WifiOff,
-  User as UserIcon,
+  CheckCircle2,
+  CheckSquare,
+  Lock,
+  PenLine,
   Plus,
-  RotateCcw,
+  Scale,
+  Shield,
+  ShoppingBag,
+  Sparkles,
+  Store,
+  WifiOff,
 } from 'lucide-react';
-import { User } from '@supabase/supabase-js';
-import { LegalPageType } from './legal/legalContent';
+import { AppPublicHeader } from './common/AppPublicHeader';
+import { AppPublicFooter } from './common/AppPublicFooter';
 
 interface LandingPageViewProps {
-  user: User | null;
+  user: any;
   onGetStarted: () => void;
   onSignIn: () => void;
-  onOpenLegalPage: (page: LegalPageType) => void;
+  onOpenLegalPage: (page: 'about' | 'terms' | 'privacy' | 'help' | 'blog' | 'legal') => void;
   onOpenRashanList: () => void;
 }
 
-interface InteractiveDemoItem {
+interface DemoItem {
   id: string;
   name: string;
   quantity: string;
-  icon: string;
   completed: boolean;
 }
 
@@ -40,13 +39,12 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
   onOpenLegalPage,
   onOpenRashanList,
 }) => {
-  // Ultra-clear, child-friendly interactive checklist
-  const [demoItems, setDemoItems] = useState<InteractiveDemoItem[]>([
-    { id: '1', name: 'Fresh Milk', quantity: '2 Liters', icon: '🥛', completed: true },
-    { id: '2', name: 'Eggs', quantity: '1 Dozen', icon: '🥚', completed: true },
-    { id: '3', name: 'Biscuits & Snacks', quantity: '2 Packs', icon: '🍪', completed: false },
-    { id: '4', name: 'Fresh Onions', quantity: '5 kg', icon: '🧅', completed: false },
-    { id: '5', name: 'Wheat Flour (Atta)', quantity: '10 kg', icon: '🌾', completed: false },
+  // Interactive grocery preview state
+  const [demoItems, setDemoItems] = useState<DemoItem[]>([
+    { id: '1', name: 'Basmati Rice', quantity: '5 kg', completed: false },
+    { id: '2', name: 'Cooking Oil', quantity: '2 Liters', completed: false },
+    { id: '3', name: 'Desi Eggs', quantity: '1 Dozen', completed: true },
+    { id: '4', name: 'Chai Patti (Tea)', quantity: '450 g', completed: false },
   ]);
 
   const toggleDemoItem = (id: string) => {
@@ -57,643 +55,303 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
     );
   };
 
-  const addQuickItem = (name: string, quantity: string, icon: string) => {
-    const newItem: InteractiveDemoItem = {
+  const addQuickItem = (name: string, quantity: string) => {
+    if (demoItems.some((i) => i.name.toLowerCase() === name.toLowerCase())) return;
+    const newItem: DemoItem = {
       id: Date.now().toString(),
       name,
       quantity,
-      icon,
       completed: false,
     };
-    setDemoItems((prev) => [...prev, newItem]);
-  };
-
-  const resetDemo = () => {
-    setDemoItems([
-      { id: '1', name: 'Fresh Milk', quantity: '2 Liters', icon: '🥛', completed: false },
-      { id: '2', name: 'Eggs', quantity: '1 Dozen', icon: '🥚', completed: false },
-      { id: '3', name: 'Biscuits & Snacks', quantity: '2 Packs', icon: '🍪', completed: false },
-      { id: '4', name: 'Fresh Onions', quantity: '5 kg', icon: '🧅', completed: false },
-      { id: '5', name: 'Wheat Flour (Atta)', quantity: '10 kg', icon: '🌾', completed: false },
-    ]);
+    setDemoItems((prev) => [newItem, ...prev]);
   };
 
   const completedCount = demoItems.filter((i) => i.completed).length;
-  const isAllCompleted = completedCount === demoItems.length && demoItems.length > 0;
 
   return (
-    <div className="min-h-screen bg-[#fbf9f5] text-[#1c2826] font-sans antialiased selection:bg-[#005039]/15 selection:text-[#005039]">
-      {/* ==================================================================== */}
-      {/* 1. TOP HEADER (Logo Left, YAAD Center, Sign-in Right) */}
-      {/* ==================================================================== */}
-      <header className="sticky top-0 z-40 bg-[#fbf9f5]/95 backdrop-blur-md border-b border-[#e5e1d8]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          {/* Left: Brand Logo */}
-          <div className="flex items-center gap-2.5">
-            <a
-              href="/"
-              onClick={(e) => {
-                e.preventDefault();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              className="flex items-center gap-2.5 group cursor-pointer"
-            >
-              <img
-                src="/logo.png"
-                alt="YAAD Logo"
-                className="w-8 h-8 sm:w-9 sm:h-9 object-contain drop-shadow-xs transition-transform group-hover:scale-105"
-                onError={(e) => {
-                  (e.target as HTMLElement).style.display = 'none';
-                }}
-              />
-            </a>
+    <div
+      id="landing_page_container"
+      className="min-h-screen bg-[#faf8f5] text-[#1c2826] font-['Plus_Jakarta_Sans',sans-serif] flex flex-col justify-between selection:bg-[#005039]/15"
+    >
+      {/* 1. Global Public Header with Screen-Centered YAAD & Smart Scroll */}
+      <AppPublicHeader
+        user={user}
+        onSignIn={onSignIn}
+        title="YAAD"
+        onGoHome={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+      />
+
+      <main className="flex-1 pt-20 sm:pt-24">
+        {/* ==================================================================== */}
+        {/* 2. HERO SECTION */}
+        {/* ==================================================================== */}
+        <section className="pt-8 sm:pt-14 pb-12 sm:pb-16 px-4 sm:px-6 max-w-4xl mx-auto text-center">
+          {/* Subtle Announcement Pill */}
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white border border-[#e5e1d8] text-[#005039] text-xs font-semibold mb-6 shadow-2xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+            <span>Simple, Private Grocery Memory</span>
           </div>
 
-          {/* Center: Clean, Authoritative YAAD Brand Heading */}
-          <div className="text-center">
-            <a
-              href="/"
-              onClick={(e) => {
-                e.preventDefault();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-              className="inline-block"
-            >
-              <span className="text-xl sm:text-2xl font-black tracking-widest text-[#005039] font-['Plus_Jakarta_Sans',sans-serif]">
-                YAAD
-              </span>
-            </a>
-          </div>
-
-          {/* Right: Clean Account / Sign In Action */}
-          <div className="flex items-center gap-3">
-            {user ? (
-              <button
-                type="button"
-                onClick={onGetStarted}
-                className="inline-flex items-center gap-2 bg-[#005039] hover:bg-[#00402e] text-white text-xs sm:text-sm font-semibold px-4 py-2 rounded-full shadow-xs transition-all active:scale-95 cursor-pointer"
-              >
-                <span>Go to Lists</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={onSignIn}
-                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#005039] hover:text-[#00402e] bg-[#005039]/8 hover:bg-[#005039]/12 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full border border-[#005039]/15 transition-all active:scale-95 cursor-pointer"
-              >
-                <UserIcon className="w-3.5 h-3.5" />
-                <span>Sign in to your account</span>
-              </button>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* Authenticated user quick bar if logged in */}
-      {user && (
-        <aside
-          aria-label="Account status"
-          className="bg-[#005039]/8 border-b border-[#005039]/15 py-2 px-4 text-center text-xs sm:text-sm text-[#005039] font-medium"
-        >
-          <div className="max-w-6xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Signed in as <strong>{user.email || 'User'}</strong></span>
-            </div>
-            <button
-              onClick={onGetStarted}
-              className="font-bold underline hover:no-underline cursor-pointer"
-            >
-              Open Shopping Lists &rarr;
-            </button>
-          </div>
-        </aside>
-      )}
-
-      {/* ==================================================================== */}
-      {/* 2. HERO SECTION — SIMPLE AND CLEAR */}
-      {/* ==================================================================== */}
-      <section className="pt-8 pb-12 sm:pt-14 sm:pb-16 px-4 sm:px-6 max-w-5xl mx-auto">
-        <div className="text-center max-w-3xl mx-auto">
-          {/* Friendly visual pill */}
-          <div className="inline-flex items-center gap-2 bg-white border border-[#e5e1d8] rounded-full px-4 py-1.5 mb-5 shadow-2xs">
-            <Sparkles className="w-4 h-4 text-[#005039]" />
-            <span className="text-xs sm:text-sm font-bold text-[#005039]">
-              Forget Paper &amp; Pencil — Shopping Made Super Simple!
-            </span>
-          </div>
-
-          {/* Simple, Clear Main Headline */}
-          <h1 className="text-3xl sm:text-5xl font-black text-[#1c2826] tracking-tight leading-[1.18] mb-3 font-['Plus_Jakarta_Sans',sans-serif]">
-            Forgot what you went to the shop to buy?
+          {/* Primary Headline */}
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-black text-[#1c2826] tracking-tight leading-[1.15]">
+            Never forget what you came to buy.
           </h1>
 
-          <p className="text-xl sm:text-2xl font-bold text-[#005039] mb-3 font-['Plus_Jakarta_Sans',sans-serif]">
-            Never Forget What to Buy Again!
+          {/* Reduced, clean subheadline */}
+          <p className="mt-4 sm:mt-5 text-sm sm:text-base md:text-lg text-[#556960] max-w-2xl mx-auto leading-relaxed">
+            Fast, clutter-free shopping lists designed for real grocery trips. Works 100% offline, anywhere.
           </p>
 
-          {/* Crystal Clear Explanation */}
-          <p className="text-sm sm:text-base text-[#556960] max-w-2xl mx-auto mb-8 leading-relaxed">
-            Going for a quick shop or monthly groceries? <strong>Write down what you need</strong>, then <strong>tap to check it off</strong> as you buy. You will never forget an item!
-          </p>
-
-          {/* Main Action CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 max-w-md mx-auto mb-10">
+          {/* Two Prominent Action Buttons with Tactile Embossed Feel */}
+          <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto">
+            {/* Primary Action: Make First List Now */}
             <button
               type="button"
               onClick={onGetStarted}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#005039] hover:bg-[#00402e] text-white font-bold text-sm sm:text-base px-7 py-3.5 rounded-2xl shadow-sm hover:shadow-md transition-all active:scale-98 cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-2xl bg-[#005039] hover:bg-[#003d2b] text-white font-bold text-sm sm:text-base shadow-[0_4px_0_0_#003324,0_8px_20px_rgba(0,80,57,0.28)] active:translate-y-1 active:shadow-[0_0px_0_0_#003324] border border-emerald-500/30 transition-all cursor-pointer"
             >
-              <span>{user ? 'Open Your Shopping Lists' : 'Make a Free List Now'}</span>
+              <span>List Now</span>
               <ArrowRight className="w-4 h-4" />
             </button>
+
+            {/* Secondary Action: Monthly Grocery Guide */}
             <button
               type="button"
               onClick={onOpenRashanList}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white hover:bg-[#f3f0e8] text-[#1c2826] font-semibold text-sm sm:text-base px-5 py-3.5 rounded-2xl border border-[#e5e1d8] shadow-2xs transition-all cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-white hover:bg-neutral-50 text-[#1c2826] font-bold text-sm sm:text-base shadow-[0_4px_0_0_#d8d3c7,0_8px_16px_rgba(0,0,0,0.06)] active:translate-y-1 active:shadow-[0_0px_0_0_#d8d3c7] border border-[#d8d3c7] transition-all cursor-pointer"
             >
               <ShoppingBag className="w-4 h-4 text-[#005039]" />
               <span>Monthly Grocery Guide</span>
             </button>
           </div>
-        </div>
 
-        {/* ==================================================================== */}
-        {/* 3 STEP STORY CARD (Super easy to grasp in 1 glance) */}
-        {/* ==================================================================== */}
-        <div className="max-w-3xl mx-auto mb-10 grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-          <div className="bg-white/80 border border-[#e5e1d8] rounded-2xl p-4 text-center shadow-2xs flex flex-col items-center">
-            <div className="w-10 h-10 rounded-full bg-[#005039]/10 text-[#005039] font-black text-sm flex items-center justify-center mb-2">
-              1
-            </div>
-            <h3 className="text-sm font-bold text-[#1c2826]">
-              Write It Down 📝
-            </h3>
-            <p className="text-xs text-[#556960] mt-1">
-              Add what you need to buy (milk, eggs, snacks) in seconds.
-            </p>
+          {/* Trust points */}
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-y-2 gap-x-6 text-xs text-[#556960]">
+            <span className="inline-flex items-center gap-1.5 font-medium">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              Works without internet
+            </span>
+            <span className="inline-flex items-center gap-1.5 font-medium">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              No ads or spam
+            </span>
+            <span className="inline-flex items-center gap-1.5 font-medium">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              Pakistani units (kg, grams, pao)
+            </span>
           </div>
-
-          <div className="bg-white/80 border border-[#e5e1d8] rounded-2xl p-4 text-center shadow-2xs flex flex-col items-center">
-            <div className="w-10 h-10 rounded-full bg-[#005039]/10 text-[#005039] font-black text-sm flex items-center justify-center mb-2">
-              2
-            </div>
-            <h3 className="text-sm font-bold text-[#1c2826]">
-              Go to the Shop 🏪
-            </h3>
-            <p className="text-xs text-[#556960] mt-1">
-              Open your list on your phone. Works even if your internet is off!
-            </p>
-          </div>
-
-          <div className="bg-white/80 border border-[#e5e1d8] rounded-2xl p-4 text-center shadow-2xs flex flex-col items-center">
-            <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-800 font-black text-sm flex items-center justify-center mb-2">
-              3
-            </div>
-            <h3 className="text-sm font-bold text-[#1c2826]">
-              Check It Off ✅
-            </h3>
-            <p className="text-xs text-[#556960] mt-1">
-              Put the item in your bag, tap the box, and it is checked off!
-            </p>
-          </div>
-        </div>
+        </section>
 
         {/* ==================================================================== */}
-        {/* INTERACTIVE PLAYGROUND CARD (Live demo anyone can play with!) */}
+        {/* 3. THREE UNIFIED FEATURE CARDS (NO EMOJIS, UNIFIED ICONS & SIZES) */}
         {/* ==================================================================== */}
-        <div className="max-w-xl mx-auto bg-white rounded-3xl border-2 border-[#005039]/20 shadow-md p-5 sm:p-6 relative overflow-hidden">
-          {/* Top Bar */}
-          <div className="flex items-center justify-between pb-3.5 border-b border-[#f2efe9]">
-            <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-[#005039]/10 text-[#005039] flex items-center justify-center text-lg">
-                🛒
-              </div>
+        <section className="py-10 px-4 sm:px-6 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+            {/* Card 1: Write It Down */}
+            <div className="bg-white border border-[#e5e1d8] rounded-2xl p-6 shadow-2xs hover:border-[#005039]/40 hover:shadow-xs transition-all flex flex-col justify-between">
               <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold text-[#1c2826]">
-                    Interactive Grocery List
-                  </h3>
-                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
-                    Try it now
-                  </span>
+                <div className="w-12 h-12 rounded-2xl bg-[#005039]/10 text-[#005039] flex items-center justify-center mb-4">
+                  <PenLine className="w-5 h-5 text-[#005039]" />
                 </div>
-                <p className="text-xs text-[#556960]">
-                  Tap any item to check it off
+                <h3 className="text-lg font-bold text-[#1c2826] mb-2 tracking-tight">
+                  Write It Down
+                </h3>
+                <p className="text-xs sm:text-sm text-[#556960] leading-relaxed">
+                  Add items the moment you remember them at home. Add quantities, units, and brands in seconds before leaving.
                 </p>
               </div>
+              <div className="mt-5 pt-3 border-t border-[#f2efe9] text-xs font-bold text-[#005039]">
+                Zero clutter
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={resetDemo}
-                title="Reset list"
-                className="p-1.5 rounded-lg text-outline hover:text-[#005039] hover:bg-[#faf8f5] transition-colors cursor-pointer"
-              >
-                <RotateCcw className="w-4 h-4" />
-              </button>
-              <span className="text-xs font-bold text-[#005039] bg-[#005039]/10 px-2.5 py-1 rounded-full">
-                {completedCount}/{demoItems.length}
-              </span>
+
+            {/* Card 2: Go to the Shop */}
+            <div className="bg-white border border-[#e5e1d8] rounded-2xl p-6 shadow-2xs hover:border-[#005039]/40 hover:shadow-xs transition-all flex flex-col justify-between">
+              <div>
+                <div className="w-12 h-12 rounded-2xl bg-[#005039]/10 text-[#005039] flex items-center justify-center mb-4">
+                  <Store className="w-5 h-5 text-[#005039]" />
+                </div>
+                <h3 className="text-lg font-bold text-[#1c2826] mb-2 tracking-tight">
+                  Go to the Shop
+                </h3>
+                <p className="text-xs sm:text-sm text-[#556960] leading-relaxed">
+                  Take YAAD into grocery stores and basement bazaars. No Wi-Fi or mobile data needed to view your list.
+                </p>
+              </div>
+              <div className="mt-5 pt-3 border-t border-[#f2efe9] text-xs font-bold text-[#005039]">
+                100% offline ready
+              </div>
+            </div>
+
+            {/* Card 3: Check It Off */}
+            <div className="bg-white border border-[#e5e1d8] rounded-2xl p-6 shadow-2xs hover:border-[#005039]/40 hover:shadow-xs transition-all flex flex-col justify-between">
+              <div>
+                <div className="w-12 h-12 rounded-2xl bg-[#005039]/10 text-[#005039] flex items-center justify-center mb-4">
+                  <CheckSquare className="w-5 h-5 text-[#005039]" />
+                </div>
+                <h3 className="text-lg font-bold text-[#1c2826] mb-2 tracking-tight">
+                  Check It Off
+                </h3>
+                <p className="text-xs sm:text-sm text-[#556960] leading-relaxed">
+                  Tap each item as you put it in your basket. Completed items fade out so you never buy duplicates or miss a thing.
+                </p>
+              </div>
+              <div className="mt-5 pt-3 border-t border-[#f2efe9] text-xs font-bold text-[#005039]">
+                Clear satisfaction
+              </div>
             </div>
           </div>
+        </section>
 
-          {/* Progress Banner */}
-          <div className="my-3 bg-[#faf8f5] rounded-xl p-2.5 border border-[#e5e1d8]/70 flex items-center justify-between text-xs">
-            <span className="text-[#3d5046] font-medium">
-              {isAllCompleted
-                ? '🎉 Great job! Everything is checked off, ready to go home!'
-                : `${completedCount} checked off, ${demoItems.length - completedCount} items left to buy`}
-            </span>
-            <div className="w-20 bg-gray-200 rounded-full h-2 overflow-hidden">
-              <div
-                className="bg-[#005039] h-2 transition-all duration-300 rounded-full"
-                style={{ width: `${(completedCount / Math.max(demoItems.length, 1)) * 100}%` }}
-              />
-            </div>
+        {/* ==================================================================== */}
+        {/* 4. INTERACTIVE GROCERY DEMO & PROMINENT CENTERED CTA */}
+        {/* ==================================================================== */}
+        <section className="py-10 px-4 sm:px-6 max-w-2xl mx-auto">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#1c2826] tracking-tight">
+              Interactive Grocery List
+            </h2>
+            <p className="text-xs sm:text-sm text-[#556960] mt-1.5">
+              Tap any item below to try out checking items off:
+            </p>
           </div>
 
-          {/* List Items */}
-          <div className="divide-y divide-[#f5f2ec]">
-            {demoItems.map((item) => (
-              <div
-                key={item.id}
-                onClick={() => toggleDemoItem(item.id)}
-                className={`py-3 flex items-center justify-between group cursor-pointer select-none transition-all px-2.5 rounded-xl ${
-                  item.completed ? 'bg-emerald-50/50' : 'hover:bg-[#faf8f5]'
-                }`}
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div
-                    className={`w-6 h-6 rounded-lg flex items-center justify-center border transition-all ${
-                      item.completed
-                        ? 'bg-[#005039] border-[#005039] text-white scale-105'
-                        : 'border-[#c5bfb4] bg-white group-hover:border-[#005039]'
-                    }`}
-                  >
-                    {item.completed && <Check className="w-4 h-4 stroke-[3]" />}
-                  </div>
-                  <div className="truncate flex items-center gap-2">
-                    <span className="text-base">{item.icon}</span>
-                    <span
-                      className={`text-sm font-medium transition-all ${
+          <div className="bg-white border border-[#e5e1d8] rounded-3xl p-5 sm:p-7 shadow-xs">
+            {/* Header info */}
+            <div className="flex items-center justify-between pb-3.5 border-b border-[#f2efe9]">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm text-[#1c2826]">Today&apos;s Groceries</span>
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#005039]/10 text-[#005039]">
+                  {completedCount}/{demoItems.length} Done
+                </span>
+              </div>
+              <span className="text-xs text-[#556960]">Tap item to check</span>
+            </div>
+
+            {/* Items List */}
+            <div className="divide-y divide-[#f2efe9] mt-2">
+              {demoItems.map((item) => (
+                <div
+                  key={item.id}
+                  onClick={() => toggleDemoItem(item.id)}
+                  className={`py-3 px-2 flex items-center justify-between rounded-xl transition-all cursor-pointer ${
+                    item.completed ? 'bg-[#faf8f5]/80 opacity-60' : 'hover:bg-[#faf8f5]'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${
                         item.completed
-                          ? 'line-through text-[#8b9992]'
-                          : 'text-[#1c2826] font-bold'
+                          ? 'bg-[#005039] border-[#005039] text-white'
+                          : 'border-[#cfc9be] bg-white'
+                      }`}
+                    >
+                      {item.completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                    </div>
+                    <span
+                      className={`text-sm font-medium ${
+                        item.completed ? 'line-through text-[#788880]' : 'text-[#1c2826]'
                       }`}
                     >
                       {item.name}
                     </span>
                   </div>
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-[#f3efe6] text-[#3d5046] shrink-0">
+                    {item.quantity}
+                  </span>
                 </div>
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-[#f3efe6] text-[#3d5046] shrink-0">
-                  {item.quantity}
-                </span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
 
-          {/* Quick-add chips to show how easy it is */}
-          <div className="mt-4 pt-3 border-t border-[#f2efe9]">
-            <p className="text-[11px] font-bold text-[#556960] mb-2">
-              Try adding an item:
-            </p>
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => addQuickItem('Chocolate', '1 Bar', '🍫')}
-                className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-[#faf8f5] hover:bg-[#f0ebe1] border border-[#e5e1d8] text-[#1c2826] font-medium transition-all active:scale-95 cursor-pointer"
-              >
-                <Plus className="w-3 h-3 text-[#005039]" />
-                <span>🍫 Chocolate</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => addQuickItem('Fruit Juice', '1 Pack', '🧃')}
-                className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-[#faf8f5] hover:bg-[#f0ebe1] border border-[#e5e1d8] text-[#1c2826] font-medium transition-all active:scale-95 cursor-pointer"
-              >
-                <Plus className="w-3 h-3 text-[#005039]" />
-                <span>🧃 Fruit Juice</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => addQuickItem('Fresh Yogurt', '1 Cup', '🥣')}
-                className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full bg-[#faf8f5] hover:bg-[#f0ebe1] border border-[#e5e1d8] text-[#1c2826] font-medium transition-all active:scale-95 cursor-pointer"
-              >
-                <Plus className="w-3 h-3 text-[#005039]" />
-                <span>🥣 Fresh Yogurt</span>
-              </button>
+            {/* Quick Add Chips */}
+            <div className="mt-4 pt-3 border-t border-[#f2efe9]">
+              <p className="text-[11px] font-bold text-[#556960] mb-2">
+                Try adding an item:
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => addQuickItem('Chocolate', '1 Bar')}
+                  className="inline-flex items-center gap-1.5 text-xs px-3 py-1 rounded-full bg-[#faf8f5] hover:bg-[#f0ebe1] border border-[#e5e1d8] text-[#1c2826] font-medium transition-all active:scale-95 cursor-pointer"
+                >
+                  <Plus className="w-3 h-3 text-[#005039]" />
+                  <span>Chocolate</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => addQuickItem('Fruit Juice', '1 Pack')}
+                  className="inline-flex items-center gap-1.5 text-xs px-3 py-1 rounded-full bg-[#faf8f5] hover:bg-[#f0ebe1] border border-[#e5e1d8] text-[#1c2826] font-medium transition-all active:scale-95 cursor-pointer"
+                >
+                  <Plus className="w-3 h-3 text-[#005039]" />
+                  <span>Fruit Juice</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => addQuickItem('Fresh Yogurt', '1 Cup')}
+                  className="inline-flex items-center gap-1.5 text-xs px-3 py-1 rounded-full bg-[#faf8f5] hover:bg-[#f0ebe1] border border-[#e5e1d8] text-[#1c2826] font-medium transition-all active:scale-95 cursor-pointer"
+                >
+                  <Plus className="w-3 h-3 text-[#005039]" />
+                  <span>Fresh Yogurt</span>
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Bottom Card Footer */}
-          <div className="mt-4 pt-3 border-t border-[#f2efe9] flex items-center justify-between text-xs text-[#556960]">
-            <span className="inline-flex items-center gap-1.5 text-emerald-700 font-semibold">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              Works offline (no internet needed)
-            </span>
+          {/* Prominent, Centered "Create Your Own List" CTA Button */}
+          <div className="mt-6 flex flex-col items-center justify-center gap-2">
             <button
               type="button"
               onClick={onGetStarted}
-              className="text-[#005039] font-bold hover:underline cursor-pointer"
+              className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full bg-[#005039] hover:bg-[#003d2b] text-white font-bold text-sm shadow-md hover:shadow-lg active:scale-95 transition-all cursor-pointer"
             >
-              Create Your Own List &rarr;
+              <span>Create Your Own List</span>
+              <ArrowRight className="w-4 h-4" />
             </button>
+            <span className="text-[11px] text-[#788880]">
+              Sign in to sync across your household devices
+            </span>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ==================================================================== */}
-      {/* 3. THREE CORE PILLARS (Simple Words for 8-Year-Old + Preserves Tests) */}
-      {/* ==================================================================== */}
-      <section className="py-12 px-4 sm:px-6 max-w-5xl mx-auto border-t border-[#e5e1d8]">
-        <div className="text-center max-w-xl mx-auto mb-10">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#1c2826] tracking-tight">
-            Why Is YAAD So Easy to Use?
-          </h2>
-          <p className="text-xs sm:text-sm text-[#556960] mt-2">
-            No confusing menus or complicated settings — just 3 simple features
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Pillar 1: Fast, Clutter-Free Lists */}
-          <div className="bg-white border border-[#e5e1d8] rounded-2xl p-6 shadow-2xs hover:border-[#005039]/40 transition-all flex flex-col justify-between">
-            <div>
-              <div className="w-11 h-11 rounded-xl bg-[#005039]/10 text-[#005039] flex items-center justify-center mb-4">
-                <ShoppingBag className="w-5 h-5" />
+        {/* ==================================================================== */}
+        {/* 5. PRIVACY TRANSPARENCY NOTICE */}
+        {/* ==================================================================== */}
+        <section className="py-8 px-4 sm:px-6 max-w-4xl mx-auto">
+          <div className="bg-white border border-[#e5e1d8] rounded-3xl p-6 sm:p-7 shadow-2xs space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#005039]/10 text-[#005039] flex items-center justify-center shrink-0">
+                <Lock className="w-5 h-5 text-[#005039]" />
               </div>
-              <h3 className="text-base font-bold text-[#1c2826] mb-2">
-                Fast, Clutter-Free Lists
-              </h3>
-              <p className="text-xs sm:text-sm text-[#556960] leading-relaxed">
-                Just like pencil and paper! Write what you need before leaving home, and check items off one by one as you shop. Nothing gets in your way.
-              </p>
-            </div>
-            <div className="mt-5 pt-3 border-t border-[#f2efe9] text-xs font-bold text-[#005039]">
-              Simple &amp; Fast Grocery Lists
-            </div>
-          </div>
-
-          {/* Pillar 2: Pakistani Units & Rashan */}
-          <div className="bg-white border border-[#e5e1d8] rounded-2xl p-6 shadow-2xs hover:border-[#005039]/40 transition-all flex flex-col justify-between">
-            <div>
-              <div className="w-11 h-11 rounded-xl bg-[#005039]/10 text-[#005039] flex items-center justify-center mb-4">
-                <Scale className="w-5 h-5" />
+              <div>
+                <h3 className="text-sm sm:text-base font-bold text-[#1c2826]">
+                  Data Privacy &amp; Sync Transparency
+                </h3>
+                <p className="text-xs text-[#556960]">
+                  We request your basic profile strictly to identify your account and synchronize lists across your family devices.
+                </p>
               </div>
-              <h3 className="text-base font-bold text-[#1c2826] mb-2">
-                Pakistani Units &amp; Rashan
-              </h3>
-              <p className="text-xs sm:text-sm text-[#556960] leading-relaxed">
-                Easily track everyday units like kg, grams, dozens, and packs. Comes with a ready-made monthly grocery checklist.
-              </p>
             </div>
-            <div className="mt-5 pt-3 border-t border-[#f2efe9] text-xs font-bold text-[#005039]">
-              Everyday Units &amp; Shopping Guides
-            </div>
-          </div>
 
-          {/* Pillar 3: Private & Secure Sync */}
-          <div className="bg-white border border-[#e5e1d8] rounded-2xl p-6 shadow-2xs hover:border-[#005039]/40 transition-all flex flex-col justify-between">
-            <div>
-              <div className="w-11 h-11 rounded-xl bg-[#005039]/10 text-[#005039] flex items-center justify-center mb-4">
-                <Shield className="w-5 h-5" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 text-xs text-[#556960]">
+              <div className="bg-[#faf8f5] p-3.5 rounded-xl border border-[#e5e1d8]/70">
+                <strong className="text-[#1c2826] block mb-1">What we use:</strong>
+                Name &amp; email strictly for authentication and list sync.
               </div>
-              <h3 className="text-base font-bold text-[#1c2826] mb-2">
-                Private &amp; Secure Sync
-              </h3>
-              <p className="text-xs sm:text-sm text-[#556960] leading-relaxed">
-                Sign in with Google so your family can access the list on any phone. Your lists stay 100% private, safe, and backed up.
-              </p>
-            </div>
-            <div className="mt-5 pt-3 border-t border-[#f2efe9] text-xs font-bold text-[#005039]">
-              Private &amp; Secure Cloud Backup
+              <div className="bg-[#faf8f5] p-3.5 rounded-xl border border-[#e5e1d8]/70">
+                <strong className="text-[#1c2826] block mb-1">What we never access:</strong>
+                Zero access to Gmail, Google Drive, contacts, or location data.
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </main>
 
-      {/* ==================================================================== */}
-      {/* 4. GOOGLE OAUTH TRANSPARENCY & PRIVACY NOTICE (Reviewer Compliance) */}
-      {/* ==================================================================== */}
-      <section className="py-8 px-4 sm:px-6 max-w-4xl mx-auto">
-        <div className="bg-white border border-[#e5e1d8] rounded-3xl p-6 sm:p-7 shadow-2xs space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#005039]/10 text-[#005039] flex items-center justify-center shrink-0">
-              <Lock className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-sm sm:text-base font-bold text-[#1c2826]">
-                Why YAAD Uses Google Authentication &amp; Data Transparency
-              </h3>
-              <p className="text-xs text-[#556960]">
-                We request your basic Google profile (Name and Email) strictly to identify your account and sync lists across your devices.
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 text-xs text-[#556960]">
-            <div className="bg-[#faf8f5] p-3.5 rounded-xl border border-[#e5e1d8]/70">
-              <strong className="text-[#1c2826] block mb-1">What we use:</strong>
-              Name &amp; email strictly for authentication and list sync.
-            </div>
-            <div className="bg-[#faf8f5] p-3.5 rounded-xl border border-[#e5e1d8]/70">
-              <strong className="text-[#1c2826] block mb-1">What we never access:</strong>
-              Zero access to Gmail, Google Drive, contacts, or location data.
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ==================================================================== */}
-      {/* 5. PROFESSIONAL REORGANIZED FOOTER WITH BLOG & EDITORIAL SECTION */}
-      {/* ==================================================================== */}
-      <footer className="mt-12 border-t border-[#e5e1d8] bg-white pt-12 pb-8 px-4 sm:px-6">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 pb-10 border-b border-[#e5e1d8]">
-          {/* Col 1: Brand & Verified Domain */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2.5">
-              <img src="/logo.png" alt="YAAD" className="w-7 h-7 object-contain" />
-              <span className="font-bold text-base text-[#1c2826]">YAAD</span>
-            </div>
-            <p className="text-xs text-[#556960] leading-relaxed">
-              Thoughtful shopping memory and monthly rashan checklist for Pakistani households. Built for real kiryana trips.
-            </p>
-            <div className="pt-1 text-[11px] text-[#556960]">
-              <span className="text-[#788880]">Verified Home:</span>{' '}
-              <span className="font-mono text-[#005039] font-medium">yaadapppk.vercel.app</span>
-            </div>
-          </div>
-
-          {/* Col 2: App & Features */}
-          <div className="space-y-3">
-            <h4 className="text-xs font-bold text-[#1c2826] uppercase tracking-wider">
-              App &amp; Features
-            </h4>
-            <ul className="space-y-2 text-xs text-[#556960]">
-              <li>
-                <button
-                  type="button"
-                  onClick={onGetStarted}
-                  className="hover:text-[#005039] transition-colors cursor-pointer"
-                >
-                  Open Shopping Lists
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={onOpenRashanList}
-                  className="hover:text-[#005039] transition-colors cursor-pointer"
-                >
-                  Monthly Rashan Guide
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onOpenLegalPage('about')}
-                  className="hover:text-[#005039] transition-colors cursor-pointer"
-                >
-                  About YAAD
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onOpenLegalPage('help')}
-                  className="hover:text-[#005039] transition-colors cursor-pointer"
-                >
-                  Help &amp; FAQ
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          {/* Col 3: YAAD Blog & Articles */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-1.5">
-              <Newspaper className="w-3.5 h-3.5 text-[#005039]" />
-              <h4 className="text-xs font-bold text-[#1c2826] uppercase tracking-wider">
-                YAAD Blog &amp; Guides
-              </h4>
-            </div>
-            <ul className="space-y-2 text-xs text-[#556960]">
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onOpenLegalPage('blog')}
-                  className="text-[#005039] font-bold hover:underline transition-colors cursor-pointer"
-                >
-                  Browse All Articles &rarr;
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onOpenLegalPage('blog')}
-                  className="hover:text-[#005039] transition-colors cursor-pointer text-left"
-                >
-                  5 Smart Ways to Plan Monthly Rashan
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onOpenLegalPage('blog')}
-                  className="hover:text-[#005039] transition-colors cursor-pointer text-left"
-                >
-                  Understanding Pakistani Units: Pao &amp; Dharri
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onOpenLegalPage('blog')}
-                  className="hover:text-[#005039] transition-colors cursor-pointer text-left"
-                >
-                  Offline Shopping in Basement Bazaars
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          {/* Col 4: Trust, Legal & Contact */}
-          <div className="space-y-3">
-            <h4 className="text-xs font-bold text-[#1c2826] uppercase tracking-wider">
-              Privacy &amp; Contact
-            </h4>
-            <ul className="space-y-2 text-xs text-[#556960]">
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onOpenLegalPage('privacy')}
-                  className="hover:text-[#005039] transition-colors cursor-pointer"
-                >
-                  Privacy Policy
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onOpenLegalPage('terms')}
-                  className="hover:text-[#005039] transition-colors cursor-pointer"
-                >
-                  Terms of Service
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  onClick={() => onOpenLegalPage('legal')}
-                  className="hover:text-[#005039] transition-colors cursor-pointer"
-                >
-                  Legal Information Hub
-                </button>
-              </li>
-              <li className="pt-1">
-                <a
-                  href="mailto:yaadapppk@gmail.com"
-                  className="text-[#005039] font-medium hover:underline"
-                >
-                  yaadapppk@gmail.com
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        {/* Bottom Copyright Strip */}
-        <div className="max-w-6xl mx-auto pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#788880]">
-          <p>&copy; {new Date().getFullYear()} YAAD. All rights reserved.</p>
-          <div className="flex items-center gap-4">
-            <button
-              type="button"
-              onClick={() => onOpenLegalPage('privacy')}
-              className="hover:text-[#1c2826] transition-colors cursor-pointer"
-            >
-              Privacy
-            </button>
-            <span>&bull;</span>
-            <button
-              type="button"
-              onClick={() => onOpenLegalPage('terms')}
-              className="hover:text-[#1c2826] transition-colors cursor-pointer"
-            >
-              Terms
-            </button>
-            <span>&bull;</span>
-            <button
-              type="button"
-              onClick={() => onOpenLegalPage('blog')}
-              className="hover:text-[#1c2826] transition-colors cursor-pointer"
-            >
-              Blog
-            </button>
-          </div>
-        </div>
-      </footer>
+      {/* 6. Clean Global Public Footer (No verified home link) */}
+      <AppPublicFooter
+        onOpenShopping={onGetStarted}
+        onOpenRashan={onOpenRashanList}
+        onOpenLegal={onOpenLegalPage}
+      />
     </div>
   );
 };

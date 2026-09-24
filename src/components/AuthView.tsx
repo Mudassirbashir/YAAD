@@ -180,12 +180,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
       setInfoMessage(null);
       return;
     }
-    // In signin mode: navigate back if history exists, or to catalog
-    if (typeof window !== 'undefined' && window.history.length > 1) {
-      window.history.back();
-    } else {
-      navigate('/rashan-list');
-    }
+    // In signin mode: navigate reliably back to home screen
+    navigate('/');
   };
 
   // 1. Google OAuth
@@ -519,7 +515,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
           {/* YAAD Logo */}
           <div className="flex items-center gap-2">
             <img
-              src={APP_IMAGES.logoTransparent}
+              src={APP_IMAGES.logoTransparent || '/logo.png'}
               alt="YAAD"
               className="w-8 h-8 object-contain"
             />
@@ -528,21 +524,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
             </span>
           </div>
 
-          {/* Language Switch */}
-          <div className="flex items-center bg-neutral-100/80 rounded-full p-0.5 border border-neutral-200/60 text-xs font-semibold">
-            <button
-              type="button"
-              onClick={() => setLanguage('en')}
-              className={`px-2 py-0.5 rounded-full transition-all cursor-pointer ${
-                language === 'en'
-                  ? 'bg-white text-[#003527] shadow-xs'
-                  : 'text-neutral-500 hover:text-neutral-900'
-              }`}
-            >
-              EN
-            </button>
-            
-          </div>
+          {/* Right Spacer */}
+          <div className="w-10 h-10" />
         </div>
 
         {/* ─── ERROR & INFO NOTIFICATIONS ─── */}
@@ -574,10 +557,10 @@ export const AuthView: React.FC<AuthViewProps> = ({
             {/* Header */}
             <div className="mb-6">
               <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 font-['Plus_Jakarta_Sans'] tracking-tight">
-                'Welcome Back'
+                Welcome Back
               </h1>
               <p className="text-neutral-500 text-xs sm:text-sm mt-1.5 font-normal leading-relaxed">
-                {'Stay connected by signing in with your email and password to access your account.'}
+                Stay connected by signing in with your email and password to access your account.
               </p>
             </div>
 
@@ -613,7 +596,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   htmlFor="signin_email"
                   className="block text-xs font-semibold text-neutral-700 mb-1.5"
                 >
-                  'Email Address'
+                  Email Address
                 </label>
                 <input
                   id="signin_email"
@@ -633,7 +616,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   htmlFor="signin_password"
                   className="block text-xs font-semibold text-neutral-700 mb-1.5"
                 >
-                  'Password'
+                  Password
                 </label>
                 <div className="relative">
                   <input
@@ -672,7 +655,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   }}
                   className="text-xs font-medium text-neutral-500 hover:text-[#003527] transition-colors cursor-pointer"
                 >
-                  'Forgot Password?'
+                  Forgot Password?
                 </button>
               </div>
 
@@ -702,7 +685,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 }}
                 className="text-[#003527] font-bold hover:underline cursor-pointer ml-1"
               >
-                'Sign Up'
+                Sign Up
               </button>
             </div>
           </div>
@@ -716,10 +699,10 @@ export const AuthView: React.FC<AuthViewProps> = ({
             {/* Header */}
             <div className="mb-5">
               <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 font-['Plus_Jakarta_Sans'] tracking-tight">
-                'Create your account'
+                Create your account
               </h1>
               <p className="text-neutral-500 text-xs sm:text-sm mt-1.5 font-normal leading-relaxed">
-                {'Provide your full name, email, and password to create your account and get started.'}
+                Provide your full name, email, and password to create your account and get started.
               </p>
             </div>
 
@@ -755,7 +738,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   htmlFor="signup_name"
                   className="block text-xs font-semibold text-neutral-700 mb-1"
                 >
-                  'Full Name'
+                  Full Name
                 </label>
                 <input
                   id="signup_name"
@@ -775,7 +758,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   htmlFor="signup_phone"
                   className="block text-xs font-semibold text-neutral-700 mb-1"
                 >
-                  'Phone Number'
+                  Phone Number
                 </label>
                 <input
                   id="signup_phone"
@@ -795,7 +778,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   htmlFor="signup_email"
                   className="block text-xs font-semibold text-neutral-700 mb-1"
                 >
-                  'Email Address'
+                  Email Address
                 </label>
                 <input
                   id="signup_email"
@@ -815,7 +798,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   htmlFor="signup_password"
                   className="block text-xs font-semibold text-neutral-700 mb-1"
                 >
-                  'Password'
+                  Password
                 </label>
                 <div className="relative">
                   <input
@@ -849,7 +832,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   htmlFor="signup_confirm_password"
                   className="block text-xs font-semibold text-neutral-700 mb-1"
                 >
-                  'Confirm Password'
+                  Confirm Password
                 </label>
                 <div className="relative">
                   <input
@@ -919,14 +902,14 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 {loading ? (
                   <Loader2 className="w-5 h-5 animate-spin text-white" />
                 ) : (
-                  <span>'Sign Up'</span>
+                  <span>Sign Up</span>
                 )}
               </button>
             </form>
 
             {/* Bottom Navigation */}
             <div className="text-center mt-6 text-xs sm:text-sm text-neutral-500 font-medium">
-              <span>{'Already have an account? '}</span>
+              <span>Already have an account? </span>
               <button
                 type="button"
                 onClick={() => {
@@ -936,7 +919,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 }}
                 className="text-[#003527] font-bold hover:underline cursor-pointer ml-1"
               >
-                {'Sign In'}
+                Sign In
               </button>
             </div>
           </div>
@@ -1006,7 +989,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
               }`}
             >
               <h2 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 font-['Plus_Jakarta_Sans'] tracking-tight">
-                'Successful!'
+                Successful!
               </h2>
               <p className="text-neutral-500 text-xs sm:text-sm mt-2 max-w-xs mx-auto leading-relaxed">
                 {successType === 'signup'
@@ -1040,10 +1023,10 @@ export const AuthView: React.FC<AuthViewProps> = ({
             {/* Header */}
             <div className="mb-6">
               <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 font-['Plus_Jakarta_Sans'] tracking-tight">
-                'Forgot Password'
+                Forgot Password
               </h1>
               <p className="text-neutral-500 text-xs sm:text-sm mt-1.5 font-normal leading-relaxed">
-                {'Enter your registered email address to receive password reset instructions.'}
+                Enter your registered email address to receive password reset instructions.
               </p>
             </div>
 
@@ -1054,7 +1037,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   htmlFor="forgot_email"
                   className="block text-xs font-semibold text-neutral-700 mb-1.5"
                 >
-                  'Email Address'
+                  Email Address
                 </label>
                 <input
                   id="forgot_email"
@@ -1084,7 +1067,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
             {/* Bottom Navigation */}
             <div className="text-center mt-7 text-xs sm:text-sm text-neutral-500 font-medium">
-              <span>{'Remember your password? '}</span>
+              <span>Remember your password? </span>
               <button
                 type="button"
                 onClick={() => {
@@ -1094,7 +1077,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 }}
                 className="text-[#003527] font-bold hover:underline cursor-pointer ml-1"
               >
-                {'Sign In'}
+                Sign In
               </button>
             </div>
           </div>
@@ -1108,10 +1091,10 @@ export const AuthView: React.FC<AuthViewProps> = ({
             {/* Header */}
             <div className="mb-6">
               <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 font-['Plus_Jakarta_Sans'] tracking-tight">
-                'Set New Password'
+                Set New Password
               </h1>
               <p className="text-neutral-500 text-xs sm:text-sm mt-1.5 font-normal leading-relaxed">
-                {'Choose a new strong password for your YAAD account.'}
+                Choose a new strong password for your YAAD account.
               </p>
             </div>
 
@@ -1122,7 +1105,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   htmlFor="reset_new_password"
                   className="block text-xs font-semibold text-neutral-700 mb-1.5"
                 >
-                  'New Password'
+                  New Password
                 </label>
                 <div className="relative">
                   <input
@@ -1155,7 +1138,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   htmlFor="reset_confirm_password"
                   className="block text-xs font-semibold text-neutral-700 mb-1.5"
                 >
-                  'Confirm New Password'
+                  Confirm New Password
                 </label>
                 <div className="relative">
                   <input

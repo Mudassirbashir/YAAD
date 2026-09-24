@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { APP_IMAGES } from '../data/initialData';
 
 interface ResetPasswordViewProps {
   onSuccess?: () => void;
@@ -224,8 +225,12 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
       <div className="w-full max-w-md bg-surface border border-outline-variant/60 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
         {/* Brand Header */}
         <div className="flex flex-col items-center text-center space-y-3">
-          <div className="w-12 h-12 rounded-2xl bg-primary text-on-primary flex items-center justify-center font-['Plus_Jakarta_Sans'] font-extrabold text-xl shadow-md">
-            Y
+          <div className="w-14 h-14 rounded-2xl bg-white border border-[#e5e1d8] flex items-center justify-center shadow-xs p-2">
+            <img
+              src={APP_IMAGES.logoTransparent || '/logo.png'}
+              alt="YAAD"
+              className="w-10 h-10 object-contain"
+            />
           </div>
           <div className="space-y-1">
             <h1
