@@ -1430,10 +1430,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           if (updates.full_name !== undefined) metadataUpdates.full_name = updates.full_name;
           if (updates.avatar_url !== undefined) metadataUpdates.avatar_url = updates.avatar_url;
           if (updates.phone_number !== undefined) {
-            metadataUpdates.phone_number = updates.phone_number;
-            metadataUpdates.phone = updates.phone_number;
+            const cleanPhone = updates.phone_number ? cleanPhoneNumber(updates.phone_number) : null;
+            metadataUpdates.phone_number = cleanPhone;
+            metadataUpdates.phone = cleanPhone;
           }
-          await supabase.auth.updateUser({ data: metadataUpdates });
+          const { data: authUserData } = await supabase.auth.updateUser({ data: metadataUpdates });
+          if (authUserData?.user) {
+            setUser(authUserData.user);
+            persistUser(authUserData.user);
+          }
         } catch (authMetaErr) {
           console.warn('Notice updating user metadata in Supabase Auth:', authMetaErr);
         }

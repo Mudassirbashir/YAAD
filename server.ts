@@ -899,7 +899,7 @@ app.post('/api/account/phone', async (req, res) => {
       }
     }
 
-    // Validate phone number
+    // Validate and normalize phone number
     const trimmedPhone = typeof phoneNumber === 'string' ? phoneNumber.trim() : '';
     let cleanedPhone: string | null = null;
     if (trimmedPhone) {
@@ -916,29 +916,76 @@ app.post('/api/account/phone', async (req, res) => {
       if (digits.length > 15) {
         return res.status(400).json({ error: 'Phone number is too long (maximum 15 digits allowed).' });
       }
-      cleanedPhone = trimmedPhone.startsWith('+') ? `+${digits}` : `+${digits}`;
+
+      // Smart international formatting
+      if (trimmedPhone.startsWith('+')) {
+        cleanedPhone = `+${digits}`;
+      } else if (trimmedPhone.startsWith('00')) {
+        cleanedPhone = `+${digits.slice(2)}`;
+      } else if (digits.startsWith('92') && (digits.length === 12 || digits.length === 11)) {
+        cleanedPhone = `+${digits}`;
+      } else if (digits.startsWith('03') && digits.length === 11) {
+        // Pakistan local format 03xx xxx xxxx -> +923xx xxx xxxx
+        cleanedPhone = `+92${digits.slice(1)}`;
+      } else if (digits.startsWith('3') && digits.length === 10) {
+        // Pakistan local format without leading 0 -> +923xx xxx xxxx
+        cleanedPhone = `+92${digits}`;
+      } else {
+        cleanedPhone = `+${digits}`;
+      }
     }
 
     // Update user auth metadata
-    await supabaseAdmin.auth.admin.updateUserById(userId, {
-      user_metadata: {
-        phone_number: cleanedPhone,
-        phone: cleanedPhone,
-      },
-    });
-
-    // Update profiles table
     try {
-      const updateData: Record<string, any> = {
+      const { data: existingUser } = await supabaseAdmin.auth.admin.getUserById(userId);
+      const existingMeta = existingUser?.user?.user_metadata || {};
+      await supabaseAdmin.auth.admin.updateUserById(userId, {
+        user_metadata: {
+          ...existingMeta,
+          phone_number: cleanedPhone,
+          phone: cleanedPhone,
+        },
+      });
+    } catch (metaErr: any) {
+      console.warn('Notice updating admin user metadata in /api/account/phone:', metaErr?.message);
+    }
+
+    // Attempt direct phone property update in auth.users if supported by project setup
+    if (cleanedPhone) {
+      try {
+        await supabaseAdmin.auth.admin.updateUserById(userId, {
+          phone: cleanedPhone,
+        });
+      } catch (authPhoneErr: any) {
+        // Ignored if SMS provider not configured in Supabase Auth
+      }
+    }
+
+    // Update or insert into profiles table
+    try {
+      const profileRow: Record<string, any> = {
+        id: userId,
         updated_at: new Date().toISOString(),
       };
       if (cleanedPhone !== null) {
-        updateData.phone_number = cleanedPhone;
+        profileRow.phone_number = cleanedPhone;
       }
-      const { error: profileErr } = await supabaseAdmin
+
+      let { error: profileErr } = await supabaseAdmin
         .from('profiles')
-        .update(updateData)
-        .eq('id', userId);
+        .upsert(profileRow, { onConflict: 'id' });
+
+      // If 'phone_number' column not found in schema, retry with 'phone' column
+      if (profileErr && (profileErr.message?.includes('phone_number') || profileErr.code === 'PGRST204')) {
+        delete profileRow.phone_number;
+        if (cleanedPhone !== null) {
+          profileRow.phone = cleanedPhone;
+        }
+        const { error: err2 } = await supabaseAdmin
+          .from('profiles')
+          .upsert(profileRow, { onConflict: 'id' });
+        profileErr = err2;
+      }
 
       if (profileErr) {
         console.warn('Notice updating profile phone number:', profileErr.message);

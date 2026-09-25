@@ -263,6 +263,12 @@ export async function resilientUpsert(
       if (match && match[1] && match[1] in mutablePayload) {
         const offendingColumn = match[1];
         console.warn(`Column '${offendingColumn}' not found in '${table}' schema cache. Retrying upsert without '${offendingColumn}'.`);
+        // Intelligently fallback between phone_number and phone aliases
+        if (offendingColumn === 'phone_number' && mutablePayload.phone === undefined && mutablePayload.phone_number !== undefined) {
+          mutablePayload.phone = mutablePayload.phone_number;
+        } else if (offendingColumn === 'phone' && mutablePayload.phone_number === undefined && mutablePayload.phone !== undefined) {
+          mutablePayload.phone_number = mutablePayload.phone;
+        }
         delete mutablePayload[offendingColumn];
         continue;
       }
@@ -315,10 +321,12 @@ export async function getProfile(userId: string): Promise<UserProfile | null> {
 
     // Retrieve user_metadata from Supabase Auth to merge phone_number & setup flags
     let userMeta: Record<string, any> = {};
+    let authUserPhone: string | null = null;
     try {
       const { data: authUserData } = await supabase.auth.getUser();
       if (authUserData?.user?.id === verifiedUserId) {
         userMeta = authUserData.user.user_metadata || {};
+        authUserPhone = authUserData.user.phone || null;
       }
     } catch {}
 
@@ -326,7 +334,7 @@ export async function getProfile(userId: string): Promise<UserProfile | null> {
       id: verifiedUserId,
       full_name: data?.full_name ?? userMeta.full_name ?? cached?.full_name ?? null,
       email: data?.email ?? userMeta.email ?? cached?.email ?? null,
-      phone_number: data?.phone_number ?? data?.phone ?? userMeta.phone_number ?? userMeta.phone ?? cached?.phone_number ?? null,
+      phone_number: data?.phone_number ?? data?.phone ?? userMeta.phone_number ?? userMeta.phone ?? authUserPhone ?? cached?.phone_number ?? null,
       avatar_url: data?.avatar_url ?? userMeta.avatar_url ?? cached?.avatar_url ?? null,
       language: data?.language ?? userMeta.language ?? cached?.language ?? 'en',
       usage_purpose: data?.usage_purpose ?? userMeta.usage_purpose ?? cached?.usage_purpose ?? null,
@@ -392,55 +400,64 @@ export async function updateProfile(
   }
 
   try {
-    // 1. Send all profile attributes to public.profiles table
-    const validProfilePayload: Record<string, any> = {
+    // 1. Send profile attributes to public.profiles table using resilientUpsert to create or update
+    const profileUpsertPayload: Record<string, any> = {
+      id: verifiedUserId,
       full_name: mergedProfile.full_name,
       email: mergedProfile.email,
       avatar_url: mergedProfile.avatar_url,
       language: mergedProfile.language,
-      phone_number: mergedProfile.phone_number,
-      phone: mergedProfile.phone_number,
       has_completed_setup: mergedProfile.has_completed_setup,
       usage_purpose: mergedProfile.usage_purpose,
       referral_source: mergedProfile.referral_source,
       updated_at: new Date().toISOString(),
     };
 
-    let upsertData: any = null;
-    let { data: updateData, error: updateErr } = await supabase
-      .from('profiles')
-      .update(validProfilePayload)
-      .eq('id', verifiedUserId)
-      .select();
-
-    // Fallback: If table schema hasn't executed migration yet (PGRST204), retry with base fields
-    if (updateErr && (updateErr.code === 'PGRST204' || updateErr.message?.includes('column'))) {
-      const basePayload = {
-        full_name: mergedProfile.full_name,
-        email: mergedProfile.email,
-        avatar_url: mergedProfile.avatar_url,
-        language: mergedProfile.language,
-        updated_at: new Date().toISOString(),
-      };
-      const retryResult = await supabase
-        .from('profiles')
-        .update(basePayload)
-        .eq('id', verifiedUserId)
-        .select();
-      updateData = retryResult.data;
-      updateErr = retryResult.error;
+    if (mergedProfile.phone_number !== undefined && mergedProfile.phone_number !== null) {
+      profileUpsertPayload.phone_number = mergedProfile.phone_number;
     }
 
-    if (!updateErr && updateData && updateData.length > 0) {
-      upsertData = updateData;
-    } else {
-      // Fallback: If row doesn't exist yet, attempt resilientUpsert
-      const fallbackResult = await resilientUpsert(
-        'profiles',
-        { id: verifiedUserId, ...validProfilePayload },
-        { onConflict: 'id' }
-      );
-      upsertData = fallbackResult.data;
+    let upsertResult = await resilientUpsert('profiles', profileUpsertPayload, { onConflict: 'id' });
+    let upsertData: any = upsertResult.data;
+
+    // Direct UPDATE safeguard (in case database RLS requires direct UPDATE rather than UPSERT)
+    try {
+      const directUpdatePayload: Record<string, any> = {
+        updated_at: new Date().toISOString(),
+      };
+      if (mergedProfile.full_name !== undefined) directUpdatePayload.full_name = mergedProfile.full_name;
+      if (mergedProfile.email !== undefined) directUpdatePayload.email = mergedProfile.email;
+      if (mergedProfile.avatar_url !== undefined) directUpdatePayload.avatar_url = mergedProfile.avatar_url;
+      if (mergedProfile.language !== undefined) directUpdatePayload.language = mergedProfile.language;
+      if (mergedProfile.phone_number !== undefined && mergedProfile.phone_number !== null) {
+        directUpdatePayload.phone_number = mergedProfile.phone_number;
+      }
+
+      const { data: directData, error: directErr } = await supabase
+        .from('profiles')
+        .update(directUpdatePayload)
+        .eq('id', verifiedUserId)
+        .select();
+
+      if (!directErr && directData && directData.length > 0) {
+        upsertData = directData;
+      } else if (directErr && (directErr.message?.includes('phone_number') || directErr.code === 'PGRST204')) {
+        // Retry direct update with 'phone' column alias if table uses 'phone'
+        delete directUpdatePayload.phone_number;
+        if (mergedProfile.phone_number !== undefined && mergedProfile.phone_number !== null) {
+          directUpdatePayload.phone = mergedProfile.phone_number;
+        }
+        const { data: retryData } = await supabase
+          .from('profiles')
+          .update(directUpdatePayload)
+          .eq('id', verifiedUserId)
+          .select();
+        if (retryData && retryData.length > 0) {
+          upsertData = retryData;
+        }
+      }
+    } catch (directEx) {
+      console.warn('Notice on direct profile update check:', directEx);
     }
 
     // Broadcast profile update across active devices
