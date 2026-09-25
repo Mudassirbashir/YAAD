@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { supabase } from '../../lib/supabase';
+import { cleanPhoneNumber } from '../../utils/phone';
 import {
   COUNTRIES,
   CountryData,
@@ -123,7 +124,8 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
       return;
     }
 
-    const fullPhoneNumber = `${selectedCountry.dialCode}${localNumber}`;
+    const rawCombined = `${selectedCountry.dialCode}${localNumber}`;
+    const fullPhoneNumber = cleanPhoneNumber(rawCombined);
     setIsSubmitting(true);
     setErrorMessage(null);
 

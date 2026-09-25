@@ -35,7 +35,8 @@ export const COMMON_COUNTRY_CODES: CountryCodeOption[] = [
 ];
 
 /**
- * Strips formatting noise (spaces, dashes, parentheses, dots) while preserving the leading plus.
+ * Strips formatting noise (spaces, dashes, parentheses, dots) and normalizes into strict E.164 format.
+ * Automatically converts local Pakistani formats (03xx xxx xxxx or 3xx xxx xxxx) into +923xx xxx xxxx.
  */
 export function cleanPhoneNumber(rawPhone: string): string {
   if (!rawPhone) return '';
@@ -47,11 +48,33 @@ export function cleanPhoneNumber(rawPhone: string): string {
     normalized = '+' + normalized.slice(2);
   }
 
-  // Preserve leading plus if present
   const hasPlus = normalized.startsWith('+');
   const digitsOnly = normalized.replace(/\D/g, '');
 
-  return hasPlus ? `+${digitsOnly}` : digitsOnly;
+  if (!digitsOnly) return '';
+
+  if (hasPlus) {
+    return `+${digitsOnly}`;
+  }
+
+  // Handle Pakistani local mobile formats:
+  // e.g. 0300 1234567 (11 digits starting with 03) -> +923001234567
+  if (digitsOnly.startsWith('03') && digitsOnly.length === 11) {
+    return `+92${digitsOnly.slice(1)}`;
+  }
+
+  // e.g. 300 1234567 (10 digits starting with 3) -> +923001234567
+  if (digitsOnly.startsWith('3') && digitsOnly.length === 10) {
+    return `+92${digitsOnly}`;
+  }
+
+  // e.g. 923001234567 (12 digits starting with 92) -> +923001234567
+  if (digitsOnly.startsWith('92') && (digitsOnly.length === 12 || digitsOnly.length === 11)) {
+    return `+${digitsOnly}`;
+  }
+
+  // Default to E.164 with plus
+  return `+${digitsOnly}`;
 }
 
 /**

@@ -554,11 +554,24 @@ export async function getAppMetadata<T>(key: string): Promise<T | null> {
 }
 
 export async function saveOfflineProfile(userId: string, profile: any): Promise<void> {
+  try {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`yaad_offline_profile_${userId}`, JSON.stringify(profile));
+    }
+  } catch {}
   await setAppMetadata(`profile_${userId}`, profile);
 }
 
 export async function getOfflineProfile<T = any>(userId: string): Promise<T | null> {
-  return await getAppMetadata<T>(`profile_${userId}`);
+  const fromDb = await getAppMetadata<T>(`profile_${userId}`);
+  if (fromDb) return fromDb;
+  try {
+    if (typeof window !== 'undefined') {
+      const raw = localStorage.getItem(`yaad_offline_profile_${userId}`);
+      if (raw) return JSON.parse(raw);
+    }
+  } catch {}
+  return null;
 }
 
 // ============================================================================

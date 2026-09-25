@@ -10,12 +10,14 @@ import {
   AlertCircle,
   HelpCircle,
   Camera,
+  Smartphone,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { Language } from '../translations';
 import { Avatar } from './Avatar';
 import { AvatarPickerModal } from './AvatarPickerModal';
+import { cleanPhoneNumber, validatePhoneNumber } from '../utils/phone';
 
 interface ProfileSetupViewProps {
   onComplete: () => void;
@@ -26,6 +28,7 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
   const { language, setLanguage, t } = useLanguage();
 
   const [fullName, setFullName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(profile?.avatar_url || null);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState<Language>(language || 'en');
@@ -45,6 +48,13 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
     if (profile?.avatar_url) {
       setAvatarUrl(profile.avatar_url);
     }
+    if (profile?.phone_number) {
+      setPhoneNumber(profile.phone_number);
+    } else if (user?.user_metadata?.phone_number) {
+      setPhoneNumber(user.user_metadata.phone_number);
+    } else if (user?.phone) {
+      setPhoneNumber(user.phone);
+    }
   }, [profile, user]);
 
   const handleLanguageSelect = (lang: Language) => {
@@ -59,12 +69,23 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
       return;
     }
 
+    let cleanedPhone: string | undefined = undefined;
+    if (phoneNumber.trim()) {
+      const val = validatePhoneNumber(phoneNumber.trim(), false);
+      if (!val.isValid) {
+        setErrorMessage(val.error || 'Please enter a valid phone number');
+        return;
+      }
+      cleanedPhone = cleanPhoneNumber(phoneNumber.trim());
+    }
+
     setErrorMessage(null);
     setIsSubmitting(true);
 
     try {
       const { error } = await updateUserProfile({
         full_name: fullName.trim(),
+        phone_number: cleanedPhone !== undefined ? cleanedPhone : undefined,
         avatar_url: avatarUrl || undefined,
         language: selectedLanguage,
         usage_purpose: usagePurpose || undefined,
@@ -177,6 +198,30 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
                 placeholder={t('profileSetup.namePlaceholder') || 'e.g. Sara Ahmed'}
                 className="w-full h-12 bg-surface-container text-on-surface font-['Manrope'] text-sm rounded-2xl px-4 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline"
                 autoFocus
+              />
+            </div>
+          </div>
+
+          {/* Phone Number (Optional) */}
+          <div className="space-y-1.5">
+            <label className="font-['Manrope'] text-xs font-bold text-on-surface-variant flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <Smartphone className="w-3.5 h-3.5 text-primary" />
+                <span>{t('settings.phoneNumber') || 'Phone Number'}</span>
+              </span>
+              <span className="text-[11px] text-outline font-normal">Optional</span>
+            </label>
+            <div className="relative">
+              <input
+                type="tel"
+                dir="ltr"
+                value={phoneNumber}
+                onChange={(e) => {
+                  setPhoneNumber(e.target.value);
+                  if (errorMessage) setErrorMessage(null);
+                }}
+                placeholder="+92 300 1234567"
+                className="w-full h-12 bg-surface-container text-on-surface font-mono text-sm rounded-2xl px-4 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline"
               />
             </div>
           </div>
