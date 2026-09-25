@@ -1,10 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  UserCheck,
+  Palette,
+  SlidersHorizontal,
+  Compass,
+  ShieldAlert,
+  Check,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { Language } from '../translations';
 import { AvatarPickerModal } from './AvatarPickerModal';
 import { ProfileSection } from './settings/ProfileSection';
+import { AppearanceSection } from './settings/AppearanceSection';
 import { PreferencesSection } from './settings/PreferencesSection';
 import { SecuritySection } from './settings/SecuritySection';
 import { AboutSection } from './settings/AboutSection';
@@ -26,7 +36,9 @@ interface SettingsViewProps {
   ) => void;
   initialEditPhone?: boolean;
   subSection?: string | null;
-  onSubSectionChange?: (section: 'profile' | 'security' | 'language' | 'about') => void;
+  onSubSectionChange?: (
+    section: 'profile' | 'appearance' | 'preferences' | 'about' | 'security' | 'language',
+  ) => void;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
@@ -43,16 +55,24 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     user,
     profile,
     updateUserProfile,
-    updatePassword,
     changePassword,
   } = useAuth();
+
+  // Active section for jump pill highlights
+  const [activeSection, setActiveSection] = useState<string>(
+    subSection || 'profile',
+  );
 
   // Deep Link & Subsection auto-scroll
   useEffect(() => {
     if (!subSection) return;
+    setActiveSection(subSection);
+
     const targetId =
       subSection === 'profile'
         ? 'settings_section_profile'
+        : subSection === 'appearance'
+        ? 'settings_section_appearance'
         : subSection === 'security'
         ? 'settings_section_security'
         : subSection === 'about'
@@ -68,6 +88,28 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
     return () => clearTimeout(timer);
   }, [subSection]);
+
+  const handleJumpToSection = (
+    section: 'profile' | 'appearance' | 'preferences' | 'about' | 'security',
+  ) => {
+    setActiveSection(section);
+    onSubSectionChange?.(section);
+    const targetId =
+      section === 'profile'
+        ? 'settings_section_profile'
+        : section === 'appearance'
+        ? 'settings_section_appearance'
+        : section === 'preferences'
+        ? 'settings_section_preferences'
+        : section === 'about'
+        ? 'settings_section_about'
+        : 'settings_section_security';
+
+    const el = document.getElementById(targetId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   // ============================================================================
   // Profile & Name/Phone Edit State
@@ -160,7 +202,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     } else {
       setProfileMessage({
         type: 'success',
-        text: t('settings.saved') || 'Saved successfully',
+        text: t('settings.saved') || (language === 'ur' ? 'محفوظ کر لیا گیا' : 'Saved successfully'),
       });
       setIsEditingName(false);
       setTimeout(() => setProfileMessage(null), 3000);
@@ -203,7 +245,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     } else {
       setProfileMessage({
         type: 'success',
-        text: t('settings.saved') || 'Saved successfully',
+        text: t('settings.saved') || (language === 'ur' ? 'فون نمبر محفوظ کر لیا گیا' : 'Saved successfully'),
       });
       setIsEditingPhone(false);
       setTimeout(() => setProfileMessage(null), 3000);
@@ -226,7 +268,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     } else {
       setProfileMessage({
         type: 'success',
-        text: t('settings.avatarUpdated') || t('settings.saved'),
+        text: t('settings.avatarUpdated') || t('settings.saved') || (language === 'ur' ? 'اواتار تبدیل ہو گیا' : 'Avatar updated!'),
       });
       setTimeout(() => setProfileMessage(null), 3000);
     }
@@ -324,7 +366,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       setPasswordMessage({
         type: 'error',
-        text: "You're offline. Please reconnect to change your password.",
+        text: language === 'ur'
+          ? 'آپ آف لائن ہیں۔ پاس ورڈ تبدیل کرنے کے لیے انٹرنیٹ سے جڑیں۔'
+          : "You're offline. Please reconnect to change your password.",
       });
       return;
     }
@@ -332,7 +376,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     if (!currentPassword.trim()) {
       setPasswordMessage({
         type: 'error',
-        text: t('settings.enterCurrentPassword') || 'Please enter your current password.',
+        text: t('settings.enterCurrentPassword') ||
+          (language === 'ur' ? 'براہ کرم اپنا موجودہ پاس ورڈ درج کریں۔' : 'Please enter your current password.'),
       });
       return;
     }
@@ -342,7 +387,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         type: 'error',
         text:
           t('settings.passwordTooShort') ||
-          'Password must be at least 6 characters.',
+          (language === 'ur' ? 'پاس ورڈ کم از کم 6 ہندسوں پر مشتمل ہونا چاہیے۔' : 'Password must be at least 6 characters.'),
       });
       return;
     }
@@ -352,7 +397,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         type: 'error',
         text:
           t('settings.samePasswordError') ||
-          'New password cannot be the same as your current password.',
+          (language === 'ur' ? 'نیا پاس ورڈ پرانے سے مختلف ہونا چاہیے۔' : 'New password cannot be the same as your current password.'),
       });
       return;
     }
@@ -360,7 +405,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     if (newPassword !== confirmPassword) {
       setPasswordMessage({
         type: 'error',
-        text: t('settings.passwordMismatch') || 'Passwords do not match.',
+        text: t('settings.passwordMismatch') ||
+          (language === 'ur' ? 'پاس ورڈ کی تصدیق مماثل نہیں ہے۔' : 'Passwords do not match.'),
       });
       return;
     }
@@ -374,13 +420,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     if (error) {
       setPasswordMessage({
         type: 'error',
-        text: error.message || 'Unable to update password.',
+        text: error.message || (language === 'ur' ? 'پاس ورڈ اپ ڈیٹ نہیں ہو سکا' : 'Unable to update password.'),
       });
     } else {
       setPasswordMessage({
         type: 'success',
         text:
-          t('settings.passwordUpdated') || 'Password updated successfully!',
+          t('settings.passwordUpdated') ||
+          (language === 'ur' ? 'پاس ورڈ کامیابی سے تبدیل ہو گیا!' : 'Password updated successfully!'),
       });
       setCurrentPassword('');
       setNewPassword('');
@@ -438,9 +485,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const displayName =
     profile?.full_name ||
     user?.user_metadata?.full_name ||
-    (user ? 'Account User' : t('settings.guestUser'));
+    (user ? 'Account User' : t('settings.guestUser') || (language === 'ur' ? 'مہمان صارف' : 'Guest User'));
   const displayEmail =
-    user?.email || (user ? 'Authenticated user' : t('settings.guestSubtitle'));
+    user?.email || (user ? 'Authenticated user' : t('settings.guestSubtitle') || (language === 'ur' ? 'غیر رجسٹرڈ' : 'Not signed in'));
   const displayPhone =
     profile?.phone_number ||
     user?.user_metadata?.phone_number ||
@@ -474,11 +521,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               )}
             </button>
             <div>
-              <h1 className="text-xl font-bold font-['Manrope'] text-on-surface tracking-tight leading-tight">
-                {t('settings.title') || 'Settings'}
+              <h1 className={`text-xl font-bold text-on-surface tracking-tight leading-tight ${language === 'ur' ? 'font-urdu' : "font-['Manrope']"}`}>
+                {t('settings.title') || (language === 'ur' ? 'ترتیبات' : 'Settings')}
               </h1>
               <p className="text-xs text-outline font-medium">
-                {t('settings.subtitle') || 'Preferences & Account'}
+                {t('settings.subtitle') ||
+                  (language === 'ur' ? 'پروفائل، اپیرنس، ترجیحات و سیکیورٹی' : 'Profile, Appearance & Security')}
               </p>
             </div>
           </div>
@@ -486,60 +534,92 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <button
             id="settings_done_btn"
             onClick={onBack}
-            className="px-4 py-1.5 text-xs sm:text-sm font-bold text-primary bg-primary-fixed/40 hover:bg-primary-fixed/60 rounded-full transition-colors active:scale-95 cursor-pointer"
+            className="px-4 py-1.5 text-xs sm:text-sm font-bold text-primary bg-primary-fixed/40 hover:bg-primary-fixed/60 rounded-full transition-colors active:scale-95 cursor-pointer flex items-center gap-1.5"
           >
-            {t('settings.done') || 'Done'}
+            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span>{t('settings.done') || (language === 'ur' ? 'مکمل' : 'Done')}</span>
           </button>
         </div>
 
-        {/* Section Jump Pills */}
+        {/* Section Jump Pills (Order: Profile -> Appearance -> Preferences -> About -> Security at the end) */}
         <div className="max-w-3xl lg:max-w-4xl mx-auto flex items-center gap-2 pt-2.5 overflow-x-auto no-scrollbar pb-0.5">
+          {/* 1. Profile Pill */}
           <button
             id="settings_jump_profile"
-            onClick={() => onSubSectionChange?.('profile')}
-            className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-              subSection === 'profile'
+            onClick={() => handleJumpToSection('profile')}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeSection === 'profile'
                 ? 'bg-primary text-on-primary shadow-xs'
                 : 'bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
             }`}
           >
-            {t('settings.profile') || 'Profile'}
+            <UserCheck className="w-3.5 h-3.5" />
+            <span>{t('settings.profile') || (language === 'ur' ? 'پروفائل' : 'Profile')}</span>
           </button>
+
+          {/* 2. Appearance Pill */}
+          <button
+            id="settings_jump_appearance"
+            onClick={() => handleJumpToSection('appearance')}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeSection === 'appearance'
+                ? 'bg-primary text-on-primary shadow-xs'
+                : 'bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
+            }`}
+          >
+            <Palette className="w-3.5 h-3.5" />
+            <span>
+              {language === 'ur'
+                ? 'اپیرنس اور تھیم'
+                : language === 'roman-urdu'
+                ? 'Appearance & Theme'
+                : 'Appearance'}
+            </span>
+          </button>
+
+          {/* 3. Preferences Pill */}
           <button
             id="settings_jump_preferences"
-            onClick={() => onSubSectionChange?.('language')}
-            className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-              subSection === 'language' || subSection === 'preferences'
+            onClick={() => handleJumpToSection('preferences')}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeSection === 'preferences' || activeSection === 'language'
                 ? 'bg-primary text-on-primary shadow-xs'
                 : 'bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
             }`}
           >
-            {t('settings.preferencesTitle') || 'Preferences'}
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            <span>{t('settings.preferencesTitle') || (language === 'ur' ? 'ترجیحات' : 'Preferences')}</span>
           </button>
+
+          {/* 4. About Pill */}
+          <button
+            id="settings_jump_about"
+            onClick={() => handleJumpToSection('about')}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeSection === 'about'
+                ? 'bg-primary text-on-primary shadow-xs'
+                : 'bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
+            }`}
+          >
+            <Compass className="w-3.5 h-3.5" />
+            <span>{t('settings.aboutYaad') || (language === 'ur' ? 'یاد کے بارے میں' : 'About')}</span>
+          </button>
+
+          {/* 5. Security Pill (At the very end!) */}
           {user && (
             <button
               id="settings_jump_security"
-              onClick={() => onSubSectionChange?.('security')}
-              className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-                subSection === 'security'
+              onClick={() => handleJumpToSection('security')}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeSection === 'security'
                   ? 'bg-primary text-on-primary shadow-xs'
                   : 'bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
               }`}
             >
-              {t('settings.securityTitle') || 'Security'}
+              <ShieldAlert className="w-3.5 h-3.5" />
+              <span>{t('settings.securityTitle') || (language === 'ur' ? 'سیکیورٹی و سائن آؤٹ' : 'Security')}</span>
             </button>
           )}
-          <button
-            id="settings_jump_about"
-            onClick={() => onSubSectionChange?.('about')}
-            className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-              subSection === 'about'
-                ? 'bg-primary text-on-primary shadow-xs'
-                : 'bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
-            }`}
-          >
-            {t('settings.aboutYaad') || 'About'}
-          </button>
         </div>
       </header>
 
@@ -582,7 +662,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           />
         </div>
 
-        {/* 2. Preferences Section */}
+        {/* 2. Appearance & Pre-installed Themes Section (NEW) */}
+        <div id="settings_section_appearance">
+          <AppearanceSection />
+        </div>
+
+        {/* 3. Preferences Section (Language & Sound) */}
         <div id="settings_section_preferences">
           <PreferencesSection
             soundEnabled={soundEnabled}
@@ -591,7 +676,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           />
         </div>
 
-        {/* 3. Security Section (When Authenticated) */}
+        {/* 4. About & Legal Section */}
+        <div id="settings_section_about">
+          <AboutSection
+            onOpenModal={(type) => setActiveLegalModal(type)}
+            onOpenLegalPage={onOpenLegalPage}
+          />
+        </div>
+
+        {/* 5. Security & Sign Out Section (PLACED AT THE VERY END AS REQUESTED) */}
         {user && (
           <div id="settings_section_security">
             <SecuritySection
@@ -613,14 +706,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             />
           </div>
         )}
-
-        {/* 4. About & Legal Section */}
-        <div id="settings_section_about">
-          <AboutSection
-            onOpenModal={(type) => setActiveLegalModal(type)}
-            onOpenLegalPage={onOpenLegalPage}
-          />
-        </div>
       </main>
 
       {/* ==================================================================== */}

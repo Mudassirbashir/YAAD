@@ -29,7 +29,13 @@ export type AppRouteId =
   | 'rashan_list'
   | 'not_found';
 
-export type SettingsSubSection = 'profile' | 'security' | 'language' | 'preferences' | 'about';
+export type SettingsSubSection =
+  | 'profile'
+  | 'appearance'
+  | 'security'
+  | 'language'
+  | 'preferences'
+  | 'about';
 
 export interface ParsedRoute {
   routeId: AppRouteId;

@@ -1,10 +1,11 @@
 import React from 'react';
 import {
-  Info,
-  Shield,
-  FileText,
-  HelpCircle,
-  Smartphone,
+  Compass,
+  Sparkles,
+  ShieldCheck,
+  ScrollText,
+  Headphones,
+  Cpu,
   ChevronRight,
   ChevronLeft,
 } from 'lucide-react';
@@ -44,19 +45,19 @@ export const AboutSection: React.FC<AboutSectionProps> = ({
       >
         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
           <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-2xl bg-primary-fixed/40 text-primary flex items-center justify-center shrink-0 border border-primary/10 shadow-2xs">
-            <Info className="w-4 h-4 sm:w-4.5 sm:h-4.5 stroke-[2.2]" />
+            <Compass className="w-4 h-4 sm:w-4.5 sm:h-4.5 stroke-[2.2]" />
           </div>
           <h2
             className={`text-base sm:text-lg font-bold text-on-surface tracking-tight leading-tight ${
               language === 'ur' ? 'font-urdu text-lg sm:text-xl' : "font-['Manrope']"
             }`}
           >
-            {t('settings.aboutTitle') || 'About'}
+            {t('settings.aboutTitle') || (language === 'ur' ? 'یاد کے بارے میں' : 'About YAAD')}
           </h2>
         </div>
       </div>
 
-      {/* About Section Card — Premium, uncluttered, system-quality list */}
+      {/* About Section Card */}
       <div
         id="settings_about_card"
         className="bg-surface rounded-3xl border border-surface-dim shadow-xs overflow-hidden divide-y divide-surface-dim/60"
@@ -69,17 +70,19 @@ export const AboutSection: React.FC<AboutSectionProps> = ({
           className="w-full p-4 sm:p-5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-lowest/80 transition-colors cursor-pointer group active:bg-surface-container-low"
         >
           <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-surface-container text-primary flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
-              <Info className="w-5 h-5 stroke-[2]" />
+            <div className="w-10 h-10 rounded-2xl bg-primary-fixed/30 text-primary flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+              <Sparkles className="w-5 h-5 stroke-[2.2]" />
             </div>
             <div className="min-w-0">
               <h3 className="text-sm sm:text-base font-bold text-on-surface font-['Manrope'] truncate">
-                {t('settings.aboutYaad') || 'About YAAD'}
+                {t('settings.aboutYaad') || (language === 'ur' ? 'یاد ایپ کا تعارف' : 'About YAAD')}
               </h3>
               <p className="text-xs text-outline truncate max-w-[240px] sm:max-w-md">
                 {t('settings.aboutAppDesc') ||
                   t('settings.aboutYaadDesc') ||
-                  'Smart, minimalist grocery shopping memory.'}
+                  (language === 'ur'
+                    ? 'سمارٹ اور خودکار گروسری لسٹ اسسٹنٹ'
+                    : 'Smart, minimalist grocery shopping memory.')}
               </p>
             </div>
           </div>
@@ -94,26 +97,28 @@ export const AboutSection: React.FC<AboutSectionProps> = ({
           className="w-full p-4 sm:p-5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-lowest/80 transition-colors cursor-pointer group active:bg-surface-container-low"
         >
           <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-surface-container text-primary flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
-              <HelpCircle className="w-5 h-5 stroke-[2]" />
+            <div className="w-10 h-10 rounded-2xl bg-primary-fixed/30 text-primary flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+              <Headphones className="w-5 h-5 stroke-[2.2]" />
             </div>
             <div className="min-w-0">
               <h3 className="text-sm sm:text-base font-bold text-on-surface font-['Manrope'] truncate">
                 {t('settings.helpFeedback') ||
                   t('settings.helpSupport') ||
-                  'Help & Feedback'}
+                  (language === 'ur' ? 'مدد اور رائے' : 'Help & Feedback')}
               </h3>
               <p className="text-xs text-outline truncate max-w-[240px] sm:max-w-md">
                 {t('settings.helpFeedbackDesc') ||
                   t('settings.helpSupportDesc') ||
-                  'Need help or have suggestions? Reach out to our team.'}
+                  (language === 'ur'
+                    ? 'کوئی سوال یا مشورہ؟ ہماری سپورٹ ٹیم سے رابطہ کریں'
+                    : 'Need help or have suggestions? Reach out to our team.')}
               </p>
             </div>
           </div>
           <Chevron className="w-4 h-4 text-outline group-hover:text-primary group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-all shrink-0" />
         </button>
 
-        {/* 3. Privacy */}
+        {/* 3. Privacy Policy */}
         <button
           id="settings_link_privacy"
           type="button"
@@ -121,23 +126,25 @@ export const AboutSection: React.FC<AboutSectionProps> = ({
           className="w-full p-4 sm:p-5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-lowest/80 transition-colors cursor-pointer group active:bg-surface-container-low"
         >
           <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-surface-container text-primary flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
-              <Shield className="w-5 h-5 stroke-[2]" />
+            <div className="w-10 h-10 rounded-2xl bg-primary-fixed/30 text-primary flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+              <ShieldCheck className="w-5 h-5 stroke-[2.2]" />
             </div>
             <div className="min-w-0">
               <h3 className="text-sm sm:text-base font-bold text-on-surface font-['Manrope'] truncate">
-                {t('settings.privacyPolicy') || 'Privacy Policy'}
+                {t('settings.privacyPolicy') || (language === 'ur' ? 'پرائیویسی پالیسی' : 'Privacy Policy')}
               </h3>
               <p className="text-xs text-outline truncate max-w-[240px] sm:max-w-md">
                 {t('settings.privacyPolicyDesc') ||
-                  'Your personal grocery data is securely protected.'}
+                  (language === 'ur'
+                    ? 'آپ کا ذاتی گروسری ڈیٹا مکمل محفوظ اور انکرپٹڈ ہے'
+                    : 'Your personal grocery data is securely protected.')}
               </p>
             </div>
           </div>
           <Chevron className="w-4 h-4 text-outline group-hover:text-primary group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-all shrink-0" />
         </button>
 
-        {/* 4. Terms */}
+        {/* 4. Terms of Service */}
         <button
           id="settings_link_terms"
           type="button"
@@ -145,37 +152,39 @@ export const AboutSection: React.FC<AboutSectionProps> = ({
           className="w-full p-4 sm:p-5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-lowest/80 transition-colors cursor-pointer group active:bg-surface-container-low"
         >
           <div className="flex items-center gap-3.5 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-surface-container text-primary flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
-              <FileText className="w-5 h-5 stroke-[2]" />
+            <div className="w-10 h-10 rounded-2xl bg-primary-fixed/30 text-primary flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+              <ScrollText className="w-5 h-5 stroke-[2.2]" />
             </div>
             <div className="min-w-0">
               <h3 className="text-sm sm:text-base font-bold text-on-surface font-['Manrope'] truncate">
-                {t('settings.termsOfService') || 'Terms of Service'}
+                {t('settings.termsOfService') || (language === 'ur' ? 'استعمال کی شرائط' : 'Terms of Service')}
               </h3>
               <p className="text-xs text-outline truncate max-w-[240px] sm:max-w-md">
                 {t('settings.termsOfServiceDesc') ||
-                  'Simple, fair terms for using YAAD.'}
+                  (language === 'ur'
+                    ? 'یاد کے استعمال کی آسان اور شفاف شرائط'
+                    : 'Simple, fair terms for using YAAD.')}
               </p>
             </div>
           </div>
           <Chevron className="w-4 h-4 text-outline group-hover:text-primary group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-all shrink-0" />
         </button>
 
-        {/* 5. Version (Informational row using real app version) */}
+        {/* 5. Version */}
         <div
           id="settings_item_version"
           className="p-4 sm:p-5 flex items-center justify-between gap-3 text-start"
         >
           <div className="flex items-center gap-3.5 min-w-0">
             <div className="w-10 h-10 rounded-2xl bg-surface-container text-primary flex items-center justify-center shrink-0 shadow-2xs">
-              <Smartphone className="w-5 h-5 stroke-[2]" />
+              <Cpu className="w-5 h-5 stroke-[2]" />
             </div>
             <div className="min-w-0">
               <h3 className="text-sm sm:text-base font-bold text-on-surface font-['Manrope'] truncate">
-                {t('settings.versionTitle') || 'Version'}
+                {t('settings.versionTitle') || (language === 'ur' ? 'ایپ ورژن' : 'Version')}
               </h3>
               <p className="text-xs text-outline truncate max-w-[200px] sm:max-w-xs">
-                {t('settings.versionDesc') || 'Installed application release'}
+                {t('settings.versionDesc') || (language === 'ur' ? 'انسٹال شدہ ریلیز' : 'Installed application release')}
               </p>
             </div>
           </div>

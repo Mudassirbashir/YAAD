@@ -71,6 +71,156 @@
   --font-urdu-clean: "Noto Sans Arabic", "Noto Nastaliq Urdu", sans-serif;
 }
 
+/* ====================================================================
+   PRE-INSTALLED APP THEMES (EMERALD, MIDNIGHT, SAPPHIRE, TERRACOTTA, AMETHYST, ROSE)
+   Customizes primary brand colors and tactile surfaces across the application.
+   ==================================================================== */
+html[data-app-theme="default"],
+:root {
+  --color-primary: #0F3D2E;
+  --color-primary-container: #14523e;
+  --color-primary-fixed: #bcedd8;
+  --color-primary-fixed-dim: #a0d1bc;
+  --color-on-primary-fixed: #002117;
+  --color-on-primary-fixed-variant: #0F3D2E;
+  --color-surface-tint: #0F3D2E;
+  --color-background: #f7faf5;
+  --color-surface: #f7faf5;
+  --color-surface-dim: #d8dbd6;
+  --color-surface-bright: #f7faf5;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f1f4f0;
+  --color-surface-container: #ecefea;
+  --color-surface-container-high: #e6e9e4;
+  --color-surface-container-highest: #e0e3df;
+  --color-on-surface: #191c1a;
+  --color-on-surface-variant: #404944;
+}
+
+html[data-app-theme="midnight"] {
+  --color-primary: #10b981;
+  --color-on-primary: #002117;
+  --color-primary-container: #064e3b;
+  --color-on-primary-container: #a7f3d0;
+  --color-primary-fixed: #065f46;
+  --color-primary-fixed-dim: #047857;
+  --color-on-primary-fixed: #d1fae5;
+  --color-on-primary-fixed-variant: #6ee7b7;
+  --color-surface-tint: #10b981;
+  --color-background: #090d16;
+  --color-surface: #0f172a;
+  --color-surface-dim: #1e293b;
+  --color-surface-bright: #1e293b;
+  --color-surface-container-lowest: #050811;
+  --color-surface-container-low: #0c1322;
+  --color-surface-container: #141e32;
+  --color-surface-container-high: #1c273e;
+  --color-surface-container-highest: #24324d;
+  --color-on-surface: #f8fafc;
+  --color-on-surface-variant: #cbd5e1;
+  --color-outline: #64748b;
+  --color-outline-variant: #334155;
+  --color-inverse-surface: #f8fafc;
+  --color-inverse-on-surface: #090d16;
+}
+
+html[data-app-theme="sapphire"] {
+  --color-primary: #1d4ed8;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #1e40af;
+  --color-on-primary-container: #dbeafe;
+  --color-primary-fixed: #dbeafe;
+  --color-primary-fixed-dim: #bfdbfe;
+  --color-on-primary-fixed: #172554;
+  --color-on-primary-fixed-variant: #1e3a8a;
+  --color-surface-tint: #1d4ed8;
+  --color-background: #f4f7fc;
+  --color-surface: #f4f7fc;
+  --color-surface-dim: #cbd5e1;
+  --color-surface-bright: #f4f7fc;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #ecf2fa;
+  --color-surface-container: #e2ebf7;
+  --color-surface-container-high: #d8e3f4;
+  --color-surface-container-highest: #cad9ee;
+  --color-on-surface: #0f172a;
+  --color-on-surface-variant: #334155;
+  --color-outline: #64748b;
+}
+
+html[data-app-theme="terracotta"] {
+  --color-primary: #9a3412;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #7c2d12;
+  --color-on-primary-container: #ffedd5;
+  --color-primary-fixed: #ffedd5;
+  --color-primary-fixed-dim: #fed7aa;
+  --color-on-primary-fixed: #431407;
+  --color-on-primary-fixed-variant: #7c2d12;
+  --color-surface-tint: #9a3412;
+  --color-background: #fdfaf6;
+  --color-surface: #fdfaf6;
+  --color-surface-dim: #ded3c7;
+  --color-surface-bright: #fdfaf6;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f8f1e8;
+  --color-surface-container: #f3e7dc;
+  --color-surface-container-high: #ebdcd0;
+  --color-surface-container-highest: #dfccbe;
+  --color-on-surface: #271e1b;
+  --color-on-surface-variant: #52433d;
+  --color-outline: #7c6962;
+}
+
+html[data-app-theme="amethyst"] {
+  --color-primary: #6b21a8;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #581c87;
+  --color-on-primary-container: #f3e8ff;
+  --color-primary-fixed: #f3e8ff;
+  --color-primary-fixed-dim: #e9d5ff;
+  --color-on-primary-fixed: #3b0764;
+  --color-on-primary-fixed-variant: #581c87;
+  --color-surface-tint: #6b21a8;
+  --color-background: #faf7fd;
+  --color-surface: #faf7fd;
+  --color-surface-dim: #d8cde3;
+  --color-surface-bright: #faf7fd;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f4eefa;
+  --color-surface-container: #eee4f7;
+  --color-surface-container-high: #e5d8f1;
+  --color-surface-container-highest: #d9c8e8;
+  --color-on-surface: #22172b;
+  --color-on-surface-variant: #4b3d56;
+  --color-outline: #776785;
+}
+
+html[data-app-theme="rose"] {
+  --color-primary: #9f1239;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #881337;
+  --color-on-primary-container: #ffe4e6;
+  --color-primary-fixed: #ffe4e6;
+  --color-primary-fixed-dim: #fecdd3;
+  --color-on-primary-fixed: #4c0519;
+  --color-on-primary-fixed-variant: #881337;
+  --color-surface-tint: #9f1239;
+  --color-background: #fff7f8;
+  --color-surface: #fff7f8;
+  --color-surface-dim: #e4cdd2;
+  --color-surface-bright: #fff7f8;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #fdf0f2;
+  --color-surface-container: #fbe6e9;
+  --color-surface-container-high: #f6d8dd;
+  --color-surface-container-highest: #edc7ce;
+  --color-on-surface: #2d161d;
+  --color-on-surface-variant: #563943;
+  --color-outline: #80616b;
+}
+
+
 @layer base {
   * {
     -webkit-tap-highlight-color: transparent;

@@ -1,11 +1,12 @@
 import React from 'react';
 import {
-  User,
+  UserCheck,
   Mail,
-  Phone,
+  PhoneCall,
+  Smartphone,
   Camera,
-  Edit2,
-  Check,
+  Pencil,
+  ShieldCheck,
   CheckCircle2,
   AlertCircle,
   Loader2,
@@ -76,14 +77,14 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
       >
         <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
           <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-2xl bg-primary-fixed/40 text-primary flex items-center justify-center shrink-0 border border-primary/10 shadow-2xs">
-            <User className="w-4 h-4 sm:w-4.5 sm:h-4.5 stroke-[2.2]" />
+            <UserCheck className="w-4 h-4 sm:w-4.5 sm:h-4.5 stroke-[2.2]" />
           </div>
           <h2
             className={`text-base sm:text-lg font-bold text-on-surface tracking-tight leading-tight ${
               language === 'ur' ? 'font-urdu text-lg sm:text-xl' : "font-['Manrope']"
             }`}
           >
-            {t('settings.accountTitle') || 'Profile & Account'}
+            {t('settings.accountTitle') || (language === 'ur' ? 'پروفائل و اکاؤنٹ' : 'Profile & Account')}
           </h2>
         </div>
       </div>
@@ -142,25 +143,25 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
                   <h3 className="text-lg sm:text-xl font-bold text-on-surface font-['Manrope'] truncate max-w-full">
                     {displayName}
                   </h3>
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-secondary-fixed/50 text-primary shrink-0">
-                    <Check className="w-3 h-3 stroke-[2.5]" />
-                    <span>{t('settings.verified') || 'Active Account'}</span>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary-fixed/40 text-primary shrink-0 border border-primary/10">
+                    <ShieldCheck className="w-3.5 h-3.5 stroke-[2.2]" />
+                    <span>{t('settings.verified') || (language === 'ur' ? 'فعال اکاؤنٹ' : 'Active Account')}</span>
                   </span>
                 </div>
 
                 {/* Email address */}
                 <p className="text-xs sm:text-sm text-outline flex items-center justify-center sm:justify-start gap-1.5 font-['Plus_Jakarta_Sans']">
-                  <Mail className="w-3.5 h-3.5 shrink-0 text-outline" />
+                  <Mail className="w-3.5 h-3.5 shrink-0 text-primary" />
                   <span className="truncate max-w-[280px] sm:max-w-xs">{displayEmail}</span>
                 </p>
 
                 {/* Phone number */}
                 <p className="text-xs sm:text-sm text-outline flex items-center justify-center sm:justify-start gap-1.5 font-['Plus_Jakarta_Sans']">
-                  <Phone className="w-3.5 h-3.5 shrink-0 text-outline" />
+                  <PhoneCall className="w-3.5 h-3.5 shrink-0 text-primary" />
                   <span className="truncate max-w-[280px] sm:max-w-xs" dir="ltr">
                     {displayPhone
                       ? formatPhoneNumber(displayPhone)
-                      : (t('settings.noPhone') || 'No phone number added')}
+                      : (t('settings.noPhone') || (language === 'ur' ? 'کوئی فون نمبر شامل نہیں' : 'No phone number added'))}
                   </span>
                 </p>
 
@@ -173,8 +174,8 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
                       onClick={onStartEditName}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-primary bg-primary-fixed/30 hover:bg-primary-fixed/50 rounded-xl transition-colors active:scale-95 cursor-pointer"
                     >
-                      <Edit2 className="w-3 h-3" />
-                      <span>{t('settings.editName') || 'Edit Name'}</span>
+                      <Pencil className="w-3.5 h-3.5" />
+                      <span>{t('settings.editName') || (language === 'ur' ? 'نام تبدیل کریں' : 'Edit Name')}</span>
                     </button>
                   )}
 
@@ -185,11 +186,11 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
                       onClick={onStartEditPhone}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-primary bg-primary-fixed/30 hover:bg-primary-fixed/50 rounded-xl transition-colors active:scale-95 cursor-pointer"
                     >
-                      <Phone className="w-3 h-3" />
+                      <Smartphone className="w-3.5 h-3.5" />
                       <span>
                         {displayPhone
-                          ? (t('settings.editPhone') || 'Edit Phone')
-                          : (t('settings.addPhone') || 'Add Phone')}
+                          ? (t('settings.editPhone') || (language === 'ur' ? 'فون تبدیل کریں' : 'Edit Phone'))
+                          : (t('settings.addPhone') || (language === 'ur' ? 'فون نمبر درج کریں' : 'Add Phone'))}
                       </span>
                     </button>
                   )}
@@ -200,8 +201,8 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
                     onClick={onOpenAvatarPicker}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-on-surface-variant bg-surface-container-low hover:bg-surface-container rounded-xl transition-colors active:scale-95 cursor-pointer"
                   >
-                    <Camera className="w-3 h-3" />
-                    <span>{t('settings.chooseAvatar') || 'Choose Avatar'}</span>
+                    <Camera className="w-3.5 h-3.5" />
+                    <span>{t('settings.chooseAvatar') || (language === 'ur' ? 'اواتار تبدیل کریں' : 'Choose Avatar')}</span>
                   </button>
                 </div>
               </div>
@@ -216,16 +217,17 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
                 <div className="flex items-center justify-between">
                   <label
                     htmlFor="settings_input_full_name"
-                    className="block text-xs font-bold text-on-surface-variant"
+                    className="block text-xs font-bold text-on-surface-variant flex items-center gap-1.5"
                   >
-                    {t('settings.name') || 'Full Name'}
+                    <Pencil className="w-3.5 h-3.5 text-primary" />
+                    <span>{t('settings.name') || (language === 'ur' ? 'مکمل نام' : 'Full Name')}</span>
                   </label>
                   <button
                     type="button"
                     onClick={onCancelEditName}
                     className="text-xs text-outline hover:text-on-surface flex items-center gap-1 cursor-pointer"
                   >
-                    <X className="w-3 h-3" />
+                    <X className="w-3.5 h-3.5" />
                     <span>{t('settings.cancel') || 'Cancel'}</span>
                   </button>
                 </div>
@@ -237,7 +239,7 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
                     dir="auto"
                     value={fullNameInput}
                     onChange={(e) => setFullNameInput(e.target.value)}
-                    placeholder={t('settings.namePlaceholder') || 'Enter your name'}
+                    placeholder={t('settings.namePlaceholder') || (language === 'ur' ? 'اپنا نام درج کریں' : 'Enter your name')}
                     className="flex-1 px-3.5 py-2.5 text-sm rounded-xl bg-surface border border-surface-dim focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                     autoFocus
                   />
@@ -253,7 +255,10 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
                           <span>{t('settings.saving') || 'Saving...'}</span>
                         </>
                       ) : (
-                        <span>{t('settings.save') || 'Save'}</span>
+                        <>
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>{t('settings.save') || (language === 'ur' ? 'محفوظ کریں' : 'Save')}</span>
+                        </>
                       )}
                     </button>
                     <button
@@ -278,16 +283,17 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
                 <div className="flex items-center justify-between">
                   <label
                     htmlFor="settings_input_phone"
-                    className="block text-xs font-bold text-on-surface-variant"
+                    className="block text-xs font-bold text-on-surface-variant flex items-center gap-1.5"
                   >
-                    {t('settings.phoneNumber') || 'Phone Number'}
+                    <Smartphone className="w-3.5 h-3.5 text-primary" />
+                    <span>{t('settings.phoneNumber') || (language === 'ur' ? 'فون نمبر' : 'Phone Number')}</span>
                   </label>
                   <button
                     type="button"
                     onClick={onCancelEditPhone}
                     className="text-xs text-outline hover:text-on-surface flex items-center gap-1 cursor-pointer"
                   >
-                    <X className="w-3 h-3" />
+                    <X className="w-3.5 h-3.5" />
                     <span>{t('settings.cancel') || 'Cancel'}</span>
                   </button>
                 </div>
@@ -316,7 +322,10 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
                             <span>{t('settings.saving') || 'Saving...'}</span>
                           </>
                         ) : (
-                          <span>{t('settings.save') || 'Save'}</span>
+                          <>
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>{t('settings.save') || (language === 'ur' ? 'محفوظ کریں' : 'Save')}</span>
+                          </>
                         )}
                       </button>
                       <button
@@ -337,7 +346,9 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
                     </p>
                   ) : (
                     <p className="text-[11px] text-outline">
-                      Format: +92 300 1234567 or local 03001234567. We use this for list sync reminders.
+                      {language === 'ur'
+                        ? 'فارمیٹ: 923001234567+ یا 03001234567۔ یہ لسٹ سنک کے لیے استعمال ہو سکتا ہے۔'
+                        : 'Format: +92 300 1234567 or local 03001234567. We use this for list sync reminders.'}
                     </p>
                   )}
                 </div>
@@ -355,11 +366,13 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
               />
               <div className="space-y-1">
                 <h3 className="text-base sm:text-lg font-bold text-on-surface font-['Manrope']">
-                  {t('settings.guestUser') || 'Guest User'}
+                  {t('settings.guestUser') || (language === 'ur' ? 'مہمان صارف' : 'Guest User')}
                 </h3>
                 <p className="text-xs sm:text-sm text-outline max-w-sm">
                   {t('settings.guestSubtitle') ||
-                    'Sign in to sync your shopping lists securely across all your devices.'}
+                    (language === 'ur'
+                      ? 'اپنی شاپنگ لسٹوں کو تمام ڈیوائسز پر سنک اور محفوظ رکھنے کے لیے سائن ان کریں۔'
+                      : 'Sign in to sync your shopping lists securely across all your devices.')}
                 </p>
               </div>
             </div>
@@ -371,7 +384,7 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
                 className="min-h-[44px] px-5 py-2.5 text-xs sm:text-sm font-bold text-white bg-primary hover:bg-primary/90 rounded-2xl transition-all shadow-xs active:scale-95 flex items-center gap-2 cursor-pointer shrink-0"
               >
                 <LogIn className="w-4 h-4" />
-                <span>{t('auth.signIn') || 'Sign In / Register'}</span>
+                <span>{t('auth.signIn') || (language === 'ur' ? 'سائن ان / رجسٹریشن' : 'Sign In / Register')}</span>
               </button>
             )}
           </div>
