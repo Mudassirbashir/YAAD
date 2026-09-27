@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { AppPublicHeader } from './common/AppPublicHeader';
 import { AppPublicFooter } from './common/AppPublicFooter';
+import { BlueTickCheckCircle } from './BlueTickCheckCircle';
 
 interface LandingPageViewProps {
   user: any;
@@ -256,15 +257,11 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div
-                      className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 transition-all ${
-                        item.completed
-                          ? 'bg-[#005039] border-[#005039] text-white'
-                          : 'border-[#cfc9be] bg-white'
-                      }`}
-                    >
-                      {item.completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                    </div>
+                    <BlueTickCheckCircle
+                      isChecked={item.completed}
+                      size={22}
+                      className="shrink-0"
+                    />
                     <span
                       className={`text-sm font-semibold truncate ${
                         item.completed ? 'line-through text-[#788880]' : 'text-[#1c2826]'

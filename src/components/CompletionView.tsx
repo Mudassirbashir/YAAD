@@ -15,6 +15,7 @@ import { ShoppingList, CategoryId } from '../types';
 import { TopHeader } from './TopHeader';
 import { CategoryIcon } from './CategoryIcon';
 import { ItemVisualIcon } from './ItemVisualIcon';
+import { BlueTickCheckCircle } from './BlueTickCheckCircle';
 import { useLanguage } from '../context/LanguageContext';
 import { playCompletionSound, triggerHaptic } from '../lib/sound';
 import { BidiText } from '../utils/bidi';
@@ -264,9 +265,11 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
                     className="flex items-center justify-between gap-2.5 p-2 rounded-xl bg-surface-bright border border-surface-dim/40 shadow-2xs"
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <div className="w-5 h-5 rounded-full bg-[#0F3D2E] text-white flex items-center justify-center shrink-0 shadow-2xs">
-                        <Check className="w-3 h-3 stroke-[3]" />
-                      </div>
+                      <BlueTickCheckCircle
+                        isChecked={true}
+                        size={20}
+                        className="shrink-0"
+                      />
                       <ItemVisualIcon
                         name={item.name}
                         canonicalName={item.canonicalName || item.canonical_name}

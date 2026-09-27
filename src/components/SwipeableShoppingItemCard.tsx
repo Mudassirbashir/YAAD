@@ -1,9 +1,10 @@
 import React, { useRef } from 'react';
 import { motion, useMotionValue, useTransform } from 'motion/react';
-import { Check, Circle, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { ShoppingItem, CategoryId, CATEGORIES_LIST } from '../types';
 import { ItemVisualIcon } from './ItemVisualIcon';
 import { BidiText } from '../utils/bidi';
+import { BlueTickCheckCircle } from './BlueTickCheckCircle';
 
 interface SwipeableShoppingItemCardProps {
   item: ShoppingItem;
@@ -63,16 +64,14 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
       <motion.div
         style={{ opacity: completeOpacity }}
         aria-hidden="true"
-        className="absolute inset-0 bg-[#0F3D2E] rounded-2xl flex items-center justify-start px-4 text-white pointer-events-none"
+        className="absolute inset-0 bg-gradient-to-r from-blue-950 via-blue-900 to-blue-800 rounded-2xl flex items-center justify-start px-4 text-white pointer-events-none"
       >
         <motion.div
           style={{ scale: completeScale }}
           className="flex items-center gap-2 font-['Manrope']"
         >
-          <div className="w-8 h-8 rounded-full bg-emerald-500/30 border border-emerald-400/40 flex items-center justify-center shadow-xs">
-            <Check className="w-4 h-4 text-emerald-100 stroke-[3]" />
-          </div>
-          <span className="text-xs font-bold tracking-wider text-emerald-100 uppercase">
+          <BlueTickCheckCircle isChecked={true} size={28} />
+          <span className="text-xs font-bold tracking-wider text-blue-100 uppercase">
             ✓ Complete
           </span>
         </motion.div>
@@ -158,28 +157,19 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
           isChecked
             ? 'bg-surface-container-low/60 opacity-65 border border-transparent'
             : justCompletedLocally
-            ? 'bg-emerald-50/90 border border-emerald-400/50 shadow-xs'
+            ? 'bg-blue-50/90 dark:bg-blue-950/30 border border-blue-400/40 shadow-xs'
             : 'bg-surface-bright hover:bg-surface-container-low active:bg-surface-container border border-surface-dim/55 shadow-2xs'
         }`}
       >
         {/* Left Side: Check Circle + Visual Icon + Item Name & Category */}
         <div className="flex items-center gap-3 min-w-0 flex-1">
-          {/* Instant Checkmark Transition */}
-          <motion.div
-            animate={justCompletedLocally ? { scale: [0.8, 1.22, 1], rotate: [0, 6, 0] } : {}}
-            transition={{ duration: 0.22, ease: 'easeOut' }}
-            className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-all duration-180 ${
-              isChecked
-                ? 'bg-[#0F3D2E] text-white shadow-2xs border border-emerald-800'
-                : 'border-2 border-surface-dim hover:border-primary/60 text-transparent'
-            }`}
-          >
-            {isChecked ? (
-              <Check className="w-3.5 h-3.5 stroke-[3] text-white" />
-            ) : (
-              <Circle className="w-2.5 h-2.5 text-transparent" />
-            )}
-          </motion.div>
+          {/* Animated Blue Tick Check Circle */}
+          <BlueTickCheckCircle
+            isChecked={isChecked}
+            isJustCompleted={justCompletedLocally}
+            size={24}
+            className="shrink-0"
+          />
 
           {/* Item Visual Icon */}
           <ItemVisualIcon
