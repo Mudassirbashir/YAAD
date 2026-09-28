@@ -12,11 +12,12 @@ export interface CelebrationCheckboxProps {
 
 /**
  * CelebrationCheckbox
- * Exact integration of the user's custom completion checkbox & celebration burst animation.
- * Features:
- * - Scalable container with 50% border radius
- * - Custom checkmark with smooth 0.3s cubic scaling & #20c580 background
- * - 50x50 celebratory polygon burst animation playing 'kfr-celebrate' once on incomplete -> completed
+ * Exact integration of the user's custom completion checkbox & animation:
+ * - Responsive container with rounded circular geometry
+ * - SVG vector with background circle (cx="17.8" cy="17.8" r="16.8"),
+ *   outer stroke circle (cx="17.8" cy="17.8" r="16.8"),
+ *   and smooth draw checkmark (polyline points="10.7,18.7 15.3,23.3 24.9,13.7")
+ * - 50x50 celebratory polygon burst animation playing on incomplete -> completed
  * - Retains normal completed checkmark state after animation finishes
  */
 export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
@@ -54,9 +55,6 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
 
   const shouldCelebrate = isJustCompleted || isPlayingCelebration;
 
-  // Calculate font-size so that 1.3em equals requested size (e.g. 24px / 1.3 ≈ 18.5px)
-  const computedFontSize = Math.round((size / 1.3) * 10) / 10;
-
   const handleClick = (e: React.MouseEvent) => {
     if (onClick) {
       onClick(e);
@@ -68,9 +66,10 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
 
   return (
     <label
-      className={`container yaad-celebrate-container ${isChecked ? 'is-checked' : ''} ${className}`}
+      className={`checkbox-wrapper yaad-checkbox-container container yaad-celebrate-container ${
+        isChecked ? 'is-checked' : ''
+      } ${shouldCelebrate ? 'is-celebrating' : ''} ${className}`}
       style={{
-        fontSize: `${computedFontSize}px`,
         width: `${size}px`,
         height: `${size}px`,
       }}
@@ -85,7 +84,16 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
         tabIndex={-1}
         aria-hidden="true"
       />
-      <div className="checkmark" />
+      <svg
+        className="checkbox-svg"
+        viewBox="0 0 35.6 35.6"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+      >
+        <circle className="background" cx="17.8" cy="17.8" r="16.8" />
+        <circle className="stroke" cx="17.8" cy="17.8" r="16.8" />
+        <polyline className="check" points="10.7,18.7 15.3,23.3 24.9,13.7" />
+      </svg>
       {shouldCelebrate && (
         <svg
           key={isPlayingCelebration ? 'celebrating' : 'idle'}
