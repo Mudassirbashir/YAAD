@@ -421,3 +421,144 @@ html[data-app-theme="rose"] {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* ====================================================================
+   YAAD Custom Completion Checkbox & Celebration Animation
+   ==================================================================== */
+
+/* Hide the default checkbox */
+.container.yaad-celebrate-container input,
+.container input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  width: 0;
+  height: 0;
+  margin: 0;
+}
+
+.container.yaad-celebrate-container {
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  cursor: pointer;
+  font-size: 20px;
+  user-select: none;
+  border-radius: 50%;
+  background-color: white;
+  width: 1.3em !important;
+  max-width: 1.3em !important;
+  height: 1.3em;
+  border: 1.8px solid #d8dbd6;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  transition: border-color 0.25s ease, background-color 0.25s ease;
+}
+
+.dark .container.yaad-celebrate-container {
+  background-color: #191c1a;
+  border-color: #404944;
+}
+
+/* Create a custom checkbox */
+.container .checkmark,
+.container.yaad-celebrate-container .checkmark {
+  position: absolute;
+  top: -1.8px;
+  left: -1.8px;
+  right: -1.8px;
+  bottom: -1.8px;
+  height: 1.3em;
+  width: 1.3em;
+  transition: transform .3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color .3s;
+  transform: scale(0);
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+
+/* When the checkbox is checked, add a green background */
+.container input:checked ~ .checkmark,
+.container.is-checked .checkmark,
+.container.yaad-celebrate-container input:checked ~ .checkmark,
+.container.yaad-celebrate-container.is-checked .checkmark {
+  background-color: #20c580;
+  transform: scale(1);
+}
+
+.container.yaad-celebrate-container input:checked,
+.container.yaad-celebrate-container.is-checked {
+  border-color: #20c580;
+}
+
+/* Create the checkmark/indicator (hidden when not checked) */
+.container .checkmark:after,
+.container.yaad-celebrate-container .checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+/* Show the checkmark when checked */
+.container input:checked ~ .checkmark:after,
+.container.is-checked .checkmark:after,
+.container.yaad-celebrate-container input:checked ~ .checkmark:after,
+.container.yaad-celebrate-container.is-checked .checkmark:after {
+  display: block;
+}
+
+.container input:checked ~ .celebrate,
+.container.is-checked .celebrate,
+.container.yaad-celebrate-container input:checked ~ .celebrate,
+.container.yaad-celebrate-container.is-checked .celebrate {
+  display: block;
+}
+
+/* Style the checkmark/indicator */
+.container .checkmark:after,
+.container.yaad-celebrate-container .checkmark:after {
+  left: 0.45em;
+  top: 0.25em;
+  width: 0.30em;
+  height: 0.5em;
+  border: solid white;
+  border-width: 0 0.15em 0.15em 0;
+  transform: rotate(45deg);
+  box-sizing: border-box;
+}
+
+.container .celebrate,
+.container.yaad-celebrate-container .celebrate {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  transform-origin: center;
+  animation: kfr-celebrate .4s;
+  animation-fill-mode: forwards;
+  display: none;
+  stroke: #20c580;
+  fill: #20c580;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+  overflow: visible;
+}
+
+@keyframes kfr-celebrate {
+  0% {
+    transform: scale(0);
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1.2);
+    opacity: 0;
+    display: none;
+  }
+}
+

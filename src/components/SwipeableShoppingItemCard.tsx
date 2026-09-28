@@ -4,7 +4,7 @@ import { Trash2 } from 'lucide-react';
 import { ShoppingItem, CategoryId, CATEGORIES_LIST } from '../types';
 import { ItemVisualIcon } from './ItemVisualIcon';
 import { BidiText } from '../utils/bidi';
-import { BlueTickCheckCircle } from './BlueTickCheckCircle';
+import { CelebrationCheckbox } from './CelebrationCheckbox';
 
 interface SwipeableShoppingItemCardProps {
   item: ShoppingItem;
@@ -64,14 +64,14 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
       <motion.div
         style={{ opacity: completeOpacity }}
         aria-hidden="true"
-        className="absolute inset-0 bg-gradient-to-r from-blue-950 via-blue-900 to-blue-800 rounded-2xl flex items-center justify-start px-4 text-white pointer-events-none"
+        className="absolute inset-0 bg-gradient-to-r from-emerald-950 via-emerald-900 to-emerald-800 rounded-2xl flex items-center justify-start px-4 text-white pointer-events-none"
       >
         <motion.div
           style={{ scale: completeScale }}
           className="flex items-center gap-2 font-['Manrope']"
         >
-          <BlueTickCheckCircle isChecked={true} size={28} />
-          <span className="text-xs font-bold tracking-wider text-blue-100 uppercase">
+          <CelebrationCheckbox isChecked={true} size={28} />
+          <span className="text-xs font-bold tracking-wider text-emerald-100 uppercase">
             ✓ Complete
           </span>
         </motion.div>
@@ -157,18 +157,23 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
           isChecked
             ? 'bg-surface-container-low/60 opacity-65 border border-transparent'
             : justCompletedLocally
-            ? 'bg-blue-50/90 dark:bg-blue-950/30 border border-blue-400/40 shadow-xs'
+            ? 'bg-emerald-50/90 dark:bg-emerald-950/30 border border-emerald-400/40 shadow-xs'
             : 'bg-surface-bright hover:bg-surface-container-low active:bg-surface-container border border-surface-dim/55 shadow-2xs'
         }`}
       >
         {/* Left Side: Check Circle + Visual Icon + Item Name & Category */}
         <div className="flex items-center gap-3 min-w-0 flex-1">
-          {/* Animated Blue Tick Check Circle */}
-          <BlueTickCheckCircle
+          {/* Custom Celebration Checkbox & Burst Animation */}
+          <CelebrationCheckbox
             isChecked={isChecked}
             isJustCompleted={justCompletedLocally}
             size={24}
             className="shrink-0"
+            onClick={(e) => {
+              e.stopPropagation();
+              onComplete(item.id);
+            }}
+            ariaLabel={`Mark ${item.name} as ${isChecked ? 'incomplete' : 'complete'}`}
           />
 
           {/* Item Visual Icon */}
