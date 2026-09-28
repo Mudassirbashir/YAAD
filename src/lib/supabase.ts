@@ -2013,7 +2013,16 @@ export function formatAuthErrorMessage(
     lower.includes('email already in use') ||
     lower.includes('email_exists')
   ) {
-    return 'This email is already registered.';
+    return 'This email is already registered. Please sign in instead.';
+  }
+
+  // 2a. EMAIL NOT CONFIRMED
+  if (
+    lower.includes('email not confirmed') ||
+    lower.includes('email_not_confirmed') ||
+    lower.includes('confirm your email')
+  ) {
+    return 'Please check your inbox to confirm your email before signing in.';
   }
 
   // 2b. PASSWORD RESET TOKEN / LINK ERRORS
@@ -2170,12 +2179,21 @@ export function formatAuthErrorMessage(
     return 'Google OAuth credentials are invalid. Please check your Google Client ID and Secret in your Supabase Dashboard (Authentication → Providers → Google).';
   }
 
+  const isDatabaseOrServerError =
+    lower.includes('database error') ||
+    lower.includes('error saving new user') ||
+    lower.includes('relation') ||
+    lower.includes('trigger') ||
+    lower.includes('schema cache');
+
   if (
-    lower.includes('access_denied') ||
-    lower.includes('oauth cancelled') ||
-    lower.includes('user denied access') ||
-    lower.includes('flow was cancelled') ||
-    lower.includes('cancelled')
+    !isDatabaseOrServerError &&
+    (lower.includes('access_denied') ||
+      lower.includes('oauth cancelled') ||
+      lower.includes('user denied access') ||
+      lower.includes('flow was cancelled') ||
+      lower.includes('cancelled') ||
+      lower.includes('canceled'))
   ) {
     return 'Google sign-in was cancelled. You can try again or continue with another sign-in method.';
   }
@@ -2258,10 +2276,14 @@ export function cleanAuthUrlParams(force: boolean = false): void {
     // If password recovery is active and this is not a forced cleanup (e.g. after successful reset or cancel),
     // NEVER strip recovery URL parameters! Supabase needs them to initialize or restore the recovery session.
     if (!force) {
+      const hasSessionStorage = typeof sessionStorage !== 'undefined' && sessionStorage !== null;
+      const isRecoverySession = hasSessionStorage && sessionStorage.getItem('yaad_password_recovery_active') === 'true';
+      const hashStr = window.location?.hash || '';
+      const searchStr = window.location?.search || '';
       const isRecoveryActive =
-        sessionStorage.getItem('yaad_password_recovery_active') === 'true' ||
-        window.location.hash.includes('type=recovery') ||
-        new URLSearchParams(window.location.search).get('type') === 'recovery';
+        isRecoverySession ||
+        hashStr.includes('type=recovery') ||
+        new URLSearchParams(searchStr).get('type') === 'recovery';
       if (isRecoveryActive) {
         return;
       }

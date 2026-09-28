@@ -191,9 +191,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     try {
       if (mode === 'signup') {
-        const { error } = await signUp(trimmedEmail, password, trimmedName, trimmedPhone);
-        if (error) {
-          setErrorMsg(formatAuthErrorMessage(error));
+        const res = await signUp(trimmedEmail, password, trimmedName, trimmedPhone);
+        if (res.error) {
+          setErrorMsg(formatAuthErrorMessage(res.error, 'sign_up'));
+        } else if (res.needsEmailConfirmation) {
+          setSuccessMsg('Account created. Check your email to confirm your YAAD account.');
+          setTimeout(() => {
+            setMode('signin');
+            setErrorMsg(null);
+          }, 3500);
         } else {
           setSuccessMsg('Account created successfully!');
           setTimeout(() => {

@@ -77,6 +77,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
   // Success screen state
   const [successType, setSuccessType] = useState<'signin' | 'signup'>('signin');
+  const [needsEmailConfirmation, setNeedsEmailConfirmation] = useState(false);
   const [checkmarkDrawn, setCheckmarkDrawn] = useState(false);
   const [particlesActive, setParticlesActive] = useState(false);
   const [contentVisible, setContentVisible] = useState(false);
@@ -160,6 +161,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
   // Trigger success screen on successful auth
   const triggerSuccessState = (type: 'signin' | 'signup') => {
     setSuccessType(type);
+    setNeedsEmailConfirmation(false);
     setErrorMessage(null);
     setInfoMessage(null);
     setMode('success');
@@ -168,6 +170,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
   // Back button handler
   const handleBack = () => {
     if (isAnyLoading) return;
+    setNeedsEmailConfirmation(false);
     if (mode === 'signup' || mode === 'forgot_password') {
       setMode('signin');
       setErrorMessage(null);
@@ -353,15 +356,15 @@ export const AuthView: React.FC<AuthViewProps> = ({
         return;
       }
 
-      const { error } = await signUp(
+      const res = await signUp(
         trimmedEmail,
         trimmedPass,
         trimmedName,
         phoneValidation.cleaned || trimmedPhone
       );
 
-      if (error) {
-        const lower = error.message.toLowerCase();
+      if (res.error) {
+        const lower = res.error.message.toLowerCase();
         if (
           lower.includes('user already registered') ||
           lower.includes('already registered') ||
@@ -372,12 +375,23 @@ export const AuthView: React.FC<AuthViewProps> = ({
         } else if (lower.includes('password') && lower.includes('weak')) {
           setErrorMessage('Please choose a stronger password.');
         } else {
-          setErrorMessage(formatAuthErrorMessage(error));
+          setErrorMessage(formatAuthErrorMessage(res.error, 'sign_up'));
         }
         return;
       }
 
-      // Successful Sign Up
+      // Check if email confirmation is required (Supabase project settings)
+      if (res.needsEmailConfirmation) {
+        setNeedsEmailConfirmation(true);
+        setSuccessType('signup');
+        setErrorMessage(null);
+        setInfoMessage('Account created. Check your email to confirm your YAAD account.');
+        setMode('success');
+        return;
+      }
+
+      // Successful Sign Up with active session
+      setNeedsEmailConfirmation(false);
       setLanguage('en');
       triggerSuccessState('signup');
     } catch (err) {
@@ -989,28 +1003,46 @@ export const AuthView: React.FC<AuthViewProps> = ({
               }`}
             >
               <h2 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 font-['Plus_Jakarta_Sans'] tracking-tight">
-                Successful!
+                {needsEmailConfirmation ? 'Account Created!' : 'Successful!'}
               </h2>
               <p className="text-neutral-500 text-xs sm:text-sm mt-2 max-w-xs mx-auto leading-relaxed">
-                {successType === 'signup'
+                {needsEmailConfirmation
+                  ? 'Check your email to confirm your YAAD account. Once verified, you can sign in to your account.'
+                  : successType === 'signup'
                   ? 'Your account is created successfully and ready now.'
                   : 'You have signed in successfully. Welcome back to YAAD.'}
               </p>
             </div>
 
-            {/* Action CTA: Browse Home */}
+            {/* Action CTA: Browse Home or Go to Sign In */}
             <div
               className={`w-full mt-8 transition-all duration-500 ease-out ${
                 contentVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
               }`}
             >
-              <button
-                type="button"
-                onClick={handleBrowseHome}
-                className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-['Manrope'] text-sm font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <span>Go to Home</span>
-              </button>
+              {needsEmailConfirmation ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode('signin');
+                    setErrorMessage(null);
+                    setInfoMessage('Check your email to confirm your YAAD account, then sign in.');
+                    setPassword('');
+                    setNeedsEmailConfirmation(false);
+                  }}
+                  className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-['Manrope'] text-sm font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <span>Go to Sign In</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleBrowseHome}
+                  className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-['Manrope'] text-sm font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <span>Browse Home</span>
+                </button>
+              )}
             </div>
           </div>
         )}

@@ -56,7 +56,7 @@ export interface AuthContextType {
   clearPasswordRecovery: () => void;
   sendPasswordResetEmail: (email: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, fullName: string, phoneNumber?: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, fullName: string, phoneNumber?: string) => Promise<{ error: Error | null; needsEmailConfirmation?: boolean; user?: User | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
   signInWithPasskey: () => Promise<{ error: Error | null }>;
   registerPasskey: (deviceName?: string) => Promise<{ success: boolean; passkey?: PasskeyCredentialInfo; error: Error | null }>;
@@ -329,6 +329,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           const lowerDesc = errorDesc.toLowerCase();
           const lowerCode = (errorCode || '').toLowerCase();
 
+          // Safe developer diagnostic logging as required
+          console.error('[YAAD OAUTH CALLBACK ERROR]', {
+            error: errorParam,
+            code: errorCode,
+            description: errorDesc,
+          });
+
           // Check if this error relates to password reset / recovery token expiration or invalidity
           if (
             lowerCode === 'otp_expired' ||
@@ -346,17 +353,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               localStorage.removeItem('yaad_password_reset_required');
             } catch {}
           } else if (
-            errorParam === 'access_denied' ||
-            lowerDesc.includes('access_denied') ||
-            lowerDesc.includes('denied') ||
-            lowerDesc.includes('cancel')
+            lowerDesc.includes('database') ||
+            lowerDesc.includes('server') ||
+            lowerDesc.includes('postgres') ||
+            lowerDesc.includes('trigger') ||
+            lowerDesc.includes('error saving new user')
+          ) {
+            setOauthError(
+              'A server error occurred during Google sign-in. Please try again or sign in with Email.'
+            );
+          } else if (
+            lowerDesc.includes('user denied') ||
+            lowerDesc.includes('user_denied') ||
+            lowerDesc.includes('cancelled') ||
+            lowerDesc.includes('canceled') ||
+            (errorParam === 'access_denied' && !errorDesc)
           ) {
             setOauthError(
               'Google sign-in was cancelled. You can try again or continue with another sign-in method.'
             );
           } else {
             setOauthError(
-              'Google sign-in could not be completed. Please try again or sign in with Email.'
+              formatAuthErrorMessage(errorDesc || errorParam || 'Google sign-in could not be completed.')
             );
           }
           cleanAuthUrlParams(true);
@@ -364,7 +382,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           // Allow Supabase OAuth listener to process token, then clean URL (non-recovery only)
           setTimeout(() => {
             cleanAuthUrlParams();
-          }, 350);
+          }, 1500);
         } else if (window.location.hash === '#' || window.location.hash.startsWith('#_=_')) {
           cleanAuthUrlParams();
         }
@@ -702,7 +720,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     password: string,
     fullName: string,
     phoneNumber?: string
-  ): Promise<{ error: Error | null }> => {
+  ): Promise<{ error: Error | null; needsEmailConfirmation?: boolean; user?: User | null }> => {
     // Prevent duplicate concurrent requests (double clicks)
     if (isAuthenticatingRef.current) {
       return { error: new Error('An authentication request is already in progress.') };
@@ -729,17 +747,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return { error: new Error('Please enter your phone number.') };
     }
     if (!password || password.length < 6) {
-      return { error: new Error('Please choose a stronger password.') };
+      return { error: new Error('Password must be at least 6 characters.') };
     }
 
     isAuthenticatingRef.current = true;
 
     try {
-      // 1. Direct standard Supabase signup with user metadata
+      const redirectUrl = getAuthRedirectUrl('/home');
+
+      // 1. Direct standard Supabase signup with user metadata & production redirect
       const { data, error } = await supabase.auth.signUp({
         email: trimmedEmail,
         password,
         options: {
+          emailRedirectTo: redirectUrl,
           data: {
             full_name: trimmedName,
             name: trimmedName,
@@ -750,42 +771,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
 
       if (error) {
-        return { error: new Error(formatAuthErrorMessage(error)) };
+        console.error('[YAAD AUTH SIGNUP ERROR]', {
+          message: error?.message,
+          code: (error as any)?.code,
+          status: (error as any)?.status,
+          name: error?.name,
+        });
+        return { error: new Error(formatAuthErrorMessage(error, 'sign_up')) };
       }
 
-      // If Supabase returned an already-registered user without identities
+      console.log('[YAAD SIGNUP RESULT]', {
+        hasUser: !!data?.user,
+        userId: data?.user?.id ?? null,
+        hasSession: !!data?.session,
+      });
+
+      // If Supabase returned an already-registered user without identities (fake user for enumeration protection)
       if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
         return { error: new Error('This email is already registered. Please sign in instead.') };
       }
 
-      let activeSession = data.session;
-      let activeUser = data.user;
+      const activeSession = data.session;
+      const activeUser = data.user;
 
-      // 2. Immediate session recovery if "Confirm email" was still enabled in Supabase project
-      if (!activeSession && activeUser) {
-        try {
-          const confirmResp = await fetch('/api/auth/confirm-user', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: activeUser.id, email: trimmedEmail }),
-          });
-
-          if (confirmResp.ok) {
-            const { data: signInData } = await supabase.auth.signInWithPassword({
-              email: trimmedEmail,
-              password,
-            });
-            if (signInData?.session) {
-              activeSession = signInData.session;
-              activeUser = signInData.user;
-            }
-          }
-        } catch (confirmErr) {
-          console.warn('Auto-confirm attempt notice:', confirmErr);
-        }
-      }
-
-      // 3. Authenticated session successfully established
+      // CASE A: Active session established immediately (instant signup or auto-confirmed)
       if (activeSession && activeUser) {
         setSession(activeSession);
         setUser(activeUser);
@@ -803,40 +812,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         setProfile(activeProfile);
         persistUser(activeUser);
-
-        // Synchronize profile row into public.profiles
-        try {
-          await supabaseUpdateProfile(activeUser.id, {
-            full_name: trimmedName,
-            phone_number: trimmedPhone,
-            email: trimmedEmail,
-            has_completed_setup: true,
-          });
-        } catch (profileErr) {
-          console.warn('Profile synchronization notice:', profileErr);
-        }
-
-        // Cache locally for instant offline availability
         await saveOfflineProfile(activeUser.id, activeProfile);
+
         localStorage.setItem('yaad_profile_setup_done', 'true');
         localStorage.setItem('yaad_profile_setup_completed', 'true');
         localStorage.setItem('yaad_has_onboarded_v2', 'true');
         localStorage.setItem('yaad_has_onboarded', 'true');
 
-        return { error: null };
+        // Non-blocking background sync of profile metadata if needed
+        syncProfileFromUser(activeUser).catch(() => {});
+
+        return { error: null, needsEmailConfirmation: false, user: activeUser };
       }
 
+      // CASE B: User created successfully, but session is null because email confirmation is required
       if (!activeSession && activeUser) {
-        return {
-          error: new Error(
-            'Account created, but verification is required by your Supabase project settings. Please turn off "Confirm email" in your Supabase Dashboard (Authentication → Providers → Email) to enable instant signup.'
-          ),
-        };
+        // Do NOT treat this as a failure! Supabase created the auth user and handle_new_user() created the profile row.
+        console.log('[YAAD AUTH SIGNUP] User created successfully, awaiting email confirmation.');
+        return { error: null, needsEmailConfirmation: true, user: activeUser };
       }
 
       return { error: null };
     } catch (err: unknown) {
-      return { error: new Error(formatAuthErrorMessage(err)) };
+      console.error('[YAAD SIGNUP EXCEPTION]', err);
+      return { error: new Error(formatAuthErrorMessage(err, 'sign_up')) };
     } finally {
       isAuthenticatingRef.current = false;
     }
