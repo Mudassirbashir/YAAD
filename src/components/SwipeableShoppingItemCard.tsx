@@ -145,19 +145,23 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
         animate={
           justCompletedLocally
             ? {
-                scale: [1, 1.015, 1],
-                backgroundColor: ['#ECFDF5', '#F0FDF4', '#F4F4F4'],
-                transition: { duration: 0.22, ease: 'easeOut' },
+                scale: [1, 1.025, 0.995, 1],
+                boxShadow: [
+                  '0 0 0 0 rgba(16,185,129,0)',
+                  '0 0 0 4px rgba(16,185,129,0.28)',
+                  '0 0 0 0 rgba(16,185,129,0)',
+                ],
+                transition: { duration: 0.38, ease: 'easeOut' },
               }
             : {
                 scale: 1,
               }
         }
-        className={`relative flex items-center justify-between gap-3.5 p-3 rounded-2xl cursor-pointer select-none transition-all duration-180 outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+        className={`relative flex items-center justify-between gap-3.5 p-3 rounded-2xl cursor-pointer select-none transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-primary ${
           isChecked
             ? 'bg-surface-container-low/60 opacity-65 border border-transparent'
             : justCompletedLocally
-            ? 'bg-emerald-50/90 dark:bg-emerald-950/30 border border-emerald-400/40 shadow-xs'
+            ? 'bg-emerald-50/95 dark:bg-emerald-950/40 border border-emerald-400/60 shadow-sm'
             : 'bg-surface-bright hover:bg-surface-container-low active:bg-surface-container border border-surface-dim/55 shadow-2xs'
         }`}
       >
@@ -167,7 +171,7 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
           <CelebrationCheckbox
             isChecked={isChecked}
             isJustCompleted={justCompletedLocally}
-            size={24}
+            size={26}
             className="shrink-0"
             onClick={(e) => {
               e.stopPropagation();
@@ -183,8 +187,12 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
             displayName={item.name}
             categoryId={item.categoryId}
             size={38}
-            className={`w-9 h-9 rounded-xl shrink-0 transition-opacity duration-180 ${
-              isChecked ? 'opacity-50 grayscale-[35%]' : 'opacity-100'
+            className={`w-9 h-9 rounded-xl shrink-0 transition-all duration-200 ${
+              isChecked
+                ? 'opacity-50 grayscale-[35%] scale-95'
+                : justCompletedLocally
+                ? 'scale-105'
+                : 'opacity-100'
             }`}
           />
 
@@ -193,9 +201,9 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
             <div className="flex items-center gap-2 flex-wrap" dir="auto">
               <BidiText
                 as="span"
-                className={`font-['Newsreader'] text-base font-semibold leading-snug tracking-tight transition-all duration-180 ${
+                className={`font-['Newsreader'] text-base font-semibold leading-snug tracking-tight transition-all duration-200 ${
                   isChecked
-                    ? 'line-through text-outline opacity-60'
+                    ? 'line-through text-outline opacity-60 decoration-emerald-600/70 dark:decoration-emerald-400/70 decoration-2'
                     : 'text-on-surface'
                 }`}
               >

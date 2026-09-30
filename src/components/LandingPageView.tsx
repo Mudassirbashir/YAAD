@@ -68,7 +68,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
   return (
     <div
       id="landing_page_container"
-      className="min-h-screen bg-[#faf8f5] text-[#1c2826] font-['Plus_Jakarta_Sans',sans-serif] flex flex-col justify-between selection:bg-[#005039]/15"
+      className="min-h-screen bg-[#fbf9f5] text-[#1c2826] font-['Plus_Jakarta_Sans',sans-serif] flex flex-col justify-between selection:bg-[#005039]/15"
     >
       {/* 1. Global Public Header with Screen-Centered YAAD & Smooth Animated Sign In */}
       <AppPublicHeader
@@ -83,9 +83,10 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
         {/* 2. HERO SECTION */}
         {/* ==================================================================== */}
         <section className="pt-8 sm:pt-14 pb-12 sm:pb-16 px-4 sm:px-6 max-w-4xl mx-auto text-center">
-          {/* Subtle Announcement Pill */}
+          {/* Subtle Announcement Pill with Original YAAD Logo */}
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white border border-[#e5e1d8] text-[#005039] text-xs font-semibold mb-6 shadow-2xs">
-            <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+            <img src="/logo.png" alt="YAAD" className="w-4 h-4 rounded-full object-contain shrink-0" />
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
             <span className="whitespace-nowrap">Simple, Private Grocery Memory</span>
           </div>
 
@@ -167,9 +168,12 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
                 <div className="w-12 h-12 rounded-2xl bg-[#005039]/10 text-[#005039] flex items-center justify-center mb-4">
                   <PenLine className="w-5 h-5 text-[#005039]" />
                 </div>
-                <h3 className="text-lg font-bold text-[#1c2826] mb-2 tracking-tight">
+                <h3 className="text-lg font-bold text-[#1c2826] mb-1 tracking-tight">
                   Write It Down
                 </h3>
+                <span className="text-xs font-semibold text-[#005039] block mb-2">
+                  Fast, Clutter-Free Lists
+                </span>
                 <p className="text-xs sm:text-sm text-[#556960] leading-relaxed">
                   Add items the moment you remember them at home. Add quantities, units, and brands in seconds before leaving.
                 </p>
@@ -185,9 +189,12 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
                 <div className="w-12 h-12 rounded-2xl bg-[#005039]/10 text-[#005039] flex items-center justify-center mb-4">
                   <Store className="w-5 h-5 text-[#005039]" />
                 </div>
-                <h3 className="text-lg font-bold text-[#1c2826] mb-2 tracking-tight">
+                <h3 className="text-lg font-bold text-[#1c2826] mb-1 tracking-tight">
                   Go to the Shop
                 </h3>
+                <span className="text-xs font-semibold text-[#005039] block mb-2">
+                  Pakistani Units & Rashan
+                </span>
                 <p className="text-xs sm:text-sm text-[#556960] leading-relaxed">
                   Take YAAD into grocery stores and basement bazaars. No Wi-Fi or mobile data needed to view your list.
                 </p>
@@ -203,9 +210,12 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
                 <div className="w-12 h-12 rounded-2xl bg-[#005039]/10 text-[#005039] flex items-center justify-center mb-4">
                   <CheckSquare className="w-5 h-5 text-[#005039]" />
                 </div>
-                <h3 className="text-lg font-bold text-[#1c2826] mb-2 tracking-tight">
+                <h3 className="text-lg font-bold text-[#1c2826] mb-1 tracking-tight">
                   Check It Off
                 </h3>
+                <span className="text-xs font-semibold text-[#005039] block mb-2">
+                  Private & Secure Sync
+                </span>
                 <p className="text-xs sm:text-sm text-[#556960] leading-relaxed">
                   Tap each item as you put it in your basket. Completed items fade out so you never buy duplicates or miss a thing.
                 </p>
@@ -338,7 +348,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
               </div>
               <div>
                 <h3 className="text-sm sm:text-base font-bold text-[#1c2826]">
-                  Data Privacy &amp; Sync Transparency
+                  Why YAAD Uses Google Authentication
                 </h3>
                 <p className="text-xs text-[#556960]">
                   We request your basic profile strictly to identify your account and synchronize lists across your family devices.
@@ -349,11 +359,11 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 text-xs text-[#556960]">
               <div className="bg-[#faf8f5] p-3.5 rounded-xl border border-[#e5e1d8]/70">
                 <strong className="text-[#1c2826] block mb-1">What we use:</strong>
-                Name &amp; email strictly for authentication and list sync.
+                Name &amp; email strictly for authentication and list sync. Read our <button type="button" onClick={() => onOpenLegalPage('privacy')} className="underline font-semibold text-[#005039]">Privacy Policy</button> and <button type="button" onClick={() => onOpenLegalPage('terms')} className="underline font-semibold text-[#005039]">Terms of Service</button>.
               </div>
               <div className="bg-[#faf8f5] p-3.5 rounded-xl border border-[#e5e1d8]/70">
-                <strong className="text-[#1c2826] block mb-1">What we never access:</strong>
-                Zero access to Gmail, Google Drive, contacts, or location data.
+                <strong className="text-[#1c2826] block mb-1">Support &amp; Verification:</strong>
+                Zero access to Gmail, Drive, contacts, or location data. For support email <a href="mailto:yaadapppk@gmail.com" className="underline font-semibold text-[#005039]">yaadapppk@gmail.com</a>.
               </div>
             </div>
           </div>

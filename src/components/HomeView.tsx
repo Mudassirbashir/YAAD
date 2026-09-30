@@ -209,7 +209,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
       />
 
       {/* Main Content Feed */}
-      <main className="flex-1 px-4 sm:px-6 lg:px-8 pt-3 sm:pt-4 flex flex-col gap-5 sm:gap-6">
+      <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-2 sm:pt-4 flex flex-col gap-3.5 sm:gap-5">
         {/* 2. PERSONALIZED GREETING & AVATAR */}
         <section
           id="home_greeting_section"
@@ -258,30 +258,30 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 onCreateList();
               }
             }}
-            className="w-full min-h-[116px] sm:min-h-[120px] rounded-2xl sm:rounded-3xl bg-gradient-to-br from-primary via-primary to-primary-container p-4 sm:p-5 text-on-primary flex items-center justify-between gap-3 shadow-[0_4px_20px_rgba(15,61,46,0.18)] hover:shadow-[0_6px_24px_rgba(15,61,46,0.25)] cursor-pointer relative overflow-hidden transition-all duration-200 active:scale-[0.99] select-none group border border-white/10"
+            className="w-full min-h-[86px] sm:min-h-[116px] rounded-2xl sm:rounded-3xl bg-gradient-to-br from-primary via-primary to-primary-container p-3.5 sm:p-5 text-on-primary flex items-center justify-between gap-3 shadow-[0_4px_20px_rgba(15,61,46,0.18)] hover:shadow-[0_6px_24px_rgba(15,61,46,0.25)] cursor-pointer relative overflow-hidden transition-all duration-200 active:scale-[0.99] select-none group border border-white/10"
           >
             {/* Background subtle radial glow */}
             <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-2xl pointer-events-none" />
 
             {/* Left side: Plus icon + titles + category context badges */}
-            <div className="flex items-center gap-3.5 min-w-0 z-10">
-              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-white/15 flex items-center justify-center shrink-0 border border-white/20 shadow-2xs group-hover:bg-white/25 transition-all">
+            <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 z-10">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-white/15 flex items-center justify-center shrink-0 border border-white/20 shadow-2xs group-hover:bg-white/25 transition-all">
                 <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-white stroke-[2.4] transition-transform duration-300 group-hover:rotate-90" />
               </div>
               <div className="flex flex-col min-w-0">
                 <div className="flex items-center gap-2">
-                  <h2 className="font-['Plus_Jakarta_Sans'] text-lg sm:text-xl font-bold tracking-tight text-white leading-tight">
+                  <h2 className="font-['Plus_Jakarta_Sans'] text-base sm:text-xl font-bold tracking-tight text-white leading-tight">
                     {t('home.createListTitle')}
                   </h2>
                   <span className="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white/15 text-emerald-100 border border-white/20 uppercase tracking-wider">
                     Quick Start
                   </span>
                 </div>
-                <p className="font-['Manrope'] text-xs sm:text-[13px] text-emerald-100/90 mt-1 font-normal leading-snug">
+                <p className="font-['Manrope'] text-xs sm:text-[13px] text-emerald-100/90 mt-0.5 sm:mt-1 font-normal leading-snug">
                   {t('home.createListDesc')}
                 </p>
                 {/* Category Quick Tags */}
-                <div className="flex items-center gap-1.5 mt-2 overflow-hidden">
+                <div className="hidden xs:flex items-center gap-1.5 mt-2 overflow-hidden">
                   {['Weekly', 'Grocery', 'Fruits & Sabzi', 'BBQ'].map((tag) => (
                     <span
                       key={tag}
@@ -295,9 +295,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
             </div>
 
             {/* Right side: Grocery Basket Visual & Circular Arrow */}
-            <div className="flex items-center gap-2.5 sm:gap-3 shrink-0 z-10">
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0 z-10">
               <div className="hidden xs:block relative transform group-hover:scale-105 transition-all duration-300">
-                <GroceryBasketIllustration size={76} />
+                <GroceryBasketIllustration size={68} />
               </div>
               <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/15 flex items-center justify-center text-white shrink-0 group-hover:bg-white/25 group-hover:scale-105 transition-all rtl:rotate-180 border border-white/20 shadow-2xs">
                 <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2]" />
