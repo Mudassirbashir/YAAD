@@ -108,47 +108,71 @@ export class RecommendationService {
     if (!this.userId || this.userId === 'guest') return;
 
     try {
-      // Query user_item_history from Supabase
+      // Query shopping_history from Supabase (the real existing persistence table)
       const { data, error } = await supabase
-        .from('user_item_history')
+        .from('shopping_history')
         .select('*')
-        .eq('user_id', this.userId);
+        .eq('user_id', this.userId)
+        .order('purchased_at', { ascending: false });
 
       if (error) {
-        console.warn('Could not fetch user_item_history from Supabase:', error.message);
+        console.warn('Could not fetch shopping_history from Supabase:', error.message);
         return;
       }
 
       if (data && data.length > 0) {
         let hasNew = false;
+        // Group rows by canonical_name / item_name
+        const countMap = new Map<string, { count: number; lastPurchasedAt: string; firstPurchasedAt: string; category: CategoryId; displayName: string }>();
+
         for (const row of data) {
-          const canonical = (row.item_id || row.canonical_name || '').toLowerCase();
+          const canonical = (row.canonical_name || row.item_name || '').toLowerCase().trim();
           if (!canonical) continue;
 
+          const existing = countMap.get(canonical);
+          const purchasedAt = row.purchased_at || row.created_at || new Date().toISOString();
+          if (existing) {
+            existing.count += 1;
+            if (new Date(purchasedAt) > new Date(existing.lastPurchasedAt)) {
+              existing.lastPurchasedAt = purchasedAt;
+            }
+            if (new Date(purchasedAt) < new Date(existing.firstPurchasedAt)) {
+              existing.firstPurchasedAt = purchasedAt;
+            }
+          } else {
+            countMap.set(canonical, {
+              count: 1,
+              lastPurchasedAt: purchasedAt,
+              firstPurchasedAt: purchasedAt,
+              category: 'other' as CategoryId,
+              displayName: row.canonical_name || row.item_name || canonical,
+            });
+          }
+        }
+
+        for (const [canonical, stats] of countMap.entries()) {
           const existing = this.profilesMap.get(canonical);
-          if (!existing || (row.purchase_count && row.purchase_count > existing.purchaseCount)) {
+          if (!existing || stats.count > existing.purchaseCount) {
             hasNew = true;
             const updatedProfile: UserItemBehaviorProfile = {
               id: `${this.userId}_${canonical}`,
               userId: this.userId,
               canonicalName: canonical,
-              displayName: row.canonical_name || canonical,
-              category: (row.category as CategoryId) || 'other',
-              purchaseCount: row.purchase_count || 1,
-              firstPurchasedAt: row.created_at || new Date().toISOString(),
-              lastPurchasedAt: row.last_purchased_at || new Date().toISOString(),
-              purchaseHistory: existing?.purchaseHistory || [Date.parse(row.last_purchased_at || new Date().toISOString())],
-              averageIntervalDays: row.average_interval_days || 7,
+              displayName: stats.displayName,
+              category: stats.category,
+              purchaseCount: stats.count,
+              firstPurchasedAt: stats.firstPurchasedAt,
+              lastPurchasedAt: stats.lastPurchasedAt,
+              purchaseHistory: [Date.parse(stats.lastPurchasedAt)],
+              averageIntervalDays: 7,
               intervalStdDevDays: 0,
-              purchaseFrequency: (row.purchase_frequency as any) || 'weekly',
-              preferredQuantity: row.preferred_quantity || undefined,
-              preferredUnit: row.preferred_unit || undefined,
-              quantityFrequencies: existing?.quantityFrequencies || (row.preferred_quantity ? { [row.preferred_quantity]: 1 } : {}),
-              unitFrequencies: existing?.unitFrequencies || (row.preferred_unit ? { [row.preferred_unit]: 1 } : {}),
-              weekdayDistribution: existing?.weekdayDistribution || [0, 0, 0, 0, 0, 0, 0],
-              dismissalCount: row.dismissal_count || 0,
-              createdAt: row.created_at || new Date().toISOString(),
-              updatedAt: row.updated_at || new Date().toISOString(),
+              purchaseFrequency: 'weekly',
+              quantityFrequencies: {},
+              unitFrequencies: {},
+              weekdayDistribution: [0, 0, 0, 0, 0, 0, 0],
+              dismissalCount: 0,
+              createdAt: stats.firstPurchasedAt,
+              updatedAt: stats.lastPurchasedAt,
             };
             this.profilesMap.set(canonical, updatedProfile);
           }
@@ -387,39 +411,12 @@ export class RecommendationService {
     }
 
     try {
-      // 1. Update frequently_bought_items
-      const freqRows = profiles.map((p) => ({
-        id: `${this.userId}_${p.canonicalName.toLowerCase()}`,
-        user_id: this.userId,
-        item_name: p.displayName || p.canonicalName,
-        category: p.category || 'other',
-        purchase_count: p.purchaseCount,
-        last_purchased_at: p.lastPurchasedAt,
-        updated_at: new Date().toISOString(),
-      }));
-
-      await supabase
-        .from('frequently_bought_items')
-        .upsert(freqRows, { onConflict: 'user_id,item_name' });
-
-      // 2. Update user_item_history with rich behavioral signals
-      const historyRows = profiles.map((p) => ({
-        id: `${this.userId}_${p.canonicalName.toLowerCase()}`,
-        user_id: this.userId,
-        item_id: p.itemId || p.canonicalName.toLowerCase(),
-        purchase_count: p.purchaseCount,
-        last_purchased_at: p.lastPurchasedAt,
-        purchase_frequency: p.purchaseFrequency,
-        preferred_quantity: p.preferredQuantity || null,
-        created_at: p.firstPurchasedAt,
-        updated_at: new Date().toISOString(),
-      }));
-
-      await supabase
-        .from('user_item_history')
-        .upsert(historyRows, { onConflict: 'user_id,item_id' });
+      // Completed purchases are already recorded in Supabase 'shopping_history'
+      // by recordCompletedShoppingTrip() upon list completion.
+      // We persist local profiles to offline storage for instantaneous offline recommendations.
+      await saveUserBehaviorProfilesBatch(profiles);
     } catch (err) {
-      console.warn('Error syncing purchase signals to Supabase:', err);
+      console.warn('Error saving local recommendation profiles:', err);
     }
   }
 

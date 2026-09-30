@@ -1034,6 +1034,7 @@ app.post('/api/account/delete', async (req, res) => {
       // Explicitly purge all user-owned data across tables to prevent orphaned records
       try {
         await supabaseAdmin.from('shopping_items').delete().eq('user_id', userId);
+        await supabaseAdmin.from('shopping_history').delete().eq('user_id', userId);
         await supabaseAdmin.from('shopping_lists').delete().eq('user_id', userId);
         await supabaseAdmin.from('frequently_bought_items').delete().eq('user_id', userId);
         await supabaseAdmin.from('profiles').delete().eq('id', userId);

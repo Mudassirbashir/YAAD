@@ -65,7 +65,7 @@ class SupabaseCatalogService {
     this.isSyncing = true;
 
     try {
-      // Fetch public categories
+      // 1. Fetch public categories from existing 'categories' table if populated
       const { data: catData, error: catError } = await supabase
         .from('categories')
         .select('*')
@@ -79,108 +79,35 @@ class SupabaseCatalogService {
         }
       }
 
-      // Fetch public master items
-      const { data: itemData, error: itemError } = await supabase
-        .from('items')
-        .select('*')
-        .eq('active', true);
+      // 2. Fetch public master aliases from existing Supabase 'item_aliases' table
+      try {
+        if (supabase) {
+          const { data: aliasData, error: aliasError } = await supabase
+            .from('item_aliases')
+            .select('*');
 
-      if (!itemError && itemData && itemData.length > 0) {
-        const mergedItems: MasterCatalogItem[] = [...INITIAL_MASTER_CATALOG];
-        const existingIds = new Set(mergedItems.map((i) => i.id));
-
-        for (const remote of itemData) {
-          const formatted: MasterCatalogItem = {
-            id: remote.id,
-            canonical_name: remote.canonical_name,
-            english_name: remote.english_name,
-            urdu_name: remote.urdu_name,
-            roman_urdu_names: remote.roman_urdu_names || [],
-            aliases: remote.aliases || [],
-            common_misspellings: remote.common_misspellings || [],
-            category_id: remote.category_id,
-            subcategory_id: remote.subcategory_id,
-            searchable_terms: remote.searchable_terms || [],
-            active: remote.active,
-            created_at: remote.created_at,
-            updated_at: remote.updated_at,
-            emoji: remote.emoji,
-            default_unit: remote.default_unit,
-            canonicalName: remote.canonical_name,
-            nameUrdu: remote.urdu_name,
-            nameRomanUrdu: remote.roman_urdu_names?.[0] || '',
-            categoryId: remote.category_id,
-            defaultUnit: remote.default_unit,
-          };
-
-          if (existingIds.has(formatted.id)) {
-            const idx = mergedItems.findIndex((i) => i.id === formatted.id);
-            if (idx >= 0) mergedItems[idx] = formatted;
-          } else {
-            mergedItems.push(formatted);
-            existingIds.add(formatted.id);
-          }
-        }
-
-        defaultCatalogSearchEngine.indexItems(mergedItems);
-
-        // Also update ItemCatalog in recognition
-        defaultItemCatalog.registerItems(
-          mergedItems.map((item) => ({
-            id: item.id,
-            canonical_name: item.canonical_name,
-            english_name: item.english_name,
-            urdu_name: item.urdu_name,
-            roman_urdu_names: item.roman_urdu_names,
-            aliases: item.aliases,
-            category: item.category_id,
-            subcategory: item.subcategory_id,
-            common_spellings: item.common_misspellings,
-            confidence: 0.98,
-            active: item.active,
-            emoji: item.emoji,
-            defaultUnit: item.default_unit,
-            canonicalName: item.canonical_name,
-            nameUrdu: item.urdu_name,
-            nameRomanUrdu: item.roman_urdu_names[0] || '',
-            categoryId: item.category_id,
-          }))
-        );
-
-        try {
-          localStorage.setItem(CACHE_KEY_ITEMS, JSON.stringify(mergedItems));
-        } catch {
-          // ignore cache write error
-        }
-
-        // Fetch public master aliases from Supabase item_aliases table
-        try {
-          if (supabase) {
-            const { data: aliasData, error: aliasError } = await supabase
-              .from('item_aliases')
-              .select('*');
-
-            if (!aliasError && aliasData && Array.isArray(aliasData) && aliasData.length > 0) {
-              for (const row of aliasData) {
-                const aliasText = (row.alias || row.alias_name || row.raw_alias || row.name || '').trim();
-                const targetItemId = row.item_id || row.canonical_id || row.canonical_item_id;
-                if (aliasText && targetItemId) {
-                  defaultItemCatalog.registerCustomAlias(aliasText, targetItemId);
-                }
-              }
-              try {
-                localStorage.setItem(CACHE_KEY_ALIASES, JSON.stringify(aliasData));
-              } catch {
-                // ignore cache write error
+          if (!aliasError && aliasData && Array.isArray(aliasData) && aliasData.length > 0) {
+            for (const row of aliasData) {
+              const aliasText = (row.alias || row.alias_name || row.raw_alias || '').trim();
+              const canonicalName = row.canonical_name || row.item_name || '';
+              if (aliasText && canonicalName) {
+                defaultItemCatalog.registerCustomAlias(aliasText, canonicalName);
               }
             }
+            try {
+              localStorage.setItem(CACHE_KEY_ALIASES, JSON.stringify(aliasData));
+            } catch {
+              // ignore cache write error
+            }
           }
-        } catch {
-          // Graceful offline fallback
         }
-
-        return true;
+      } catch {
+        // Graceful fallback
       }
+
+      // 3. Ensure master catalog is always indexed from INITIAL_MASTER_CATALOG
+      defaultCatalogSearchEngine.indexItems(INITIAL_MASTER_CATALOG);
+      return true;
     } catch {
       // Offline fallback is natural
     } finally {

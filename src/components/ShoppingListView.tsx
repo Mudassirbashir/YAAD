@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Plus, Check, Edit3, CheckCheck, Sparkles, ShoppingBag, Loader2, AlertCircle, Trash2 } from 'lucide-react';
+import { Plus, Check, Edit3, CheckCheck, Sparkles, ShoppingBag, Loader2, AlertCircle, Trash2, ArrowRight, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ShoppingList, ShoppingItem, CategoryId, CATEGORIES_LIST } from '../types';
 import { TopHeader } from './TopHeader';
@@ -589,6 +589,23 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
     new Set(displayedItems.map((i) => (i.categoryId || 'other') as CategoryId))
   );
 
+  // Next category navigation helper for fast store shopping
+  const nextCategoryId = useMemo(() => {
+    if (uniqueCategoryIds.length <= 1) return null;
+    if (selectedCategoryFilter === 'all') return uniqueCategoryIds[0];
+    const currentIdx = uniqueCategoryIds.indexOf(selectedCategoryFilter as CategoryId);
+    if (currentIdx === -1) return uniqueCategoryIds[0];
+    return uniqueCategoryIds[(currentIdx + 1) % uniqueCategoryIds.length];
+  }, [selectedCategoryFilter, uniqueCategoryIds]);
+
+  const prevCategoryId = useMemo(() => {
+    if (uniqueCategoryIds.length <= 1) return null;
+    if (selectedCategoryFilter === 'all') return uniqueCategoryIds[uniqueCategoryIds.length - 1];
+    const currentIdx = uniqueCategoryIds.indexOf(selectedCategoryFilter as CategoryId);
+    if (currentIdx === -1) return uniqueCategoryIds[0];
+    return uniqueCategoryIds[(currentIdx - 1 + uniqueCategoryIds.length) % uniqueCategoryIds.length];
+  }, [selectedCategoryFilter, uniqueCategoryIds]);
+
   return (
     <div className="w-full max-w-6xl mx-auto min-h-screen flex flex-col antialiased bg-background pb-28 selection:bg-primary-container selection:text-on-primary-container">
       {/* TopAppBar */}
@@ -750,35 +767,64 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
           onAddItem={handleAddSmartSuggestion}
         />
 
-        {/* Categories / Filter Chips */}
-        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8">
+        {/* Categories / Filter Chips & Fast Switcher */}
+        <div className="flex gap-2 overflow-x-auto pb-1.5 no-scrollbar -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8">
           <button
             type="button"
             onClick={() => setSelectedCategoryFilter('all')}
-            className={`px-4 py-1.5 rounded-full font-['Manrope'] text-xs font-bold whitespace-nowrap flex-shrink-0 transition-all ${
+            className={`px-3.5 py-1.5 rounded-full font-['Manrope'] text-xs font-bold whitespace-nowrap flex-shrink-0 transition-all flex items-center gap-1.5 cursor-pointer ${
               selectedCategoryFilter === 'all'
                 ? 'border border-primary bg-primary text-on-primary shadow-xs'
                 : 'border border-surface-container-high bg-surface-container-lowest text-primary hover:bg-surface-container-low'
             }`}
           >
-            {t('shoppingList.allCategories')}
-          </button>
-
-          {uniqueCategoryIds.map((catId) => (
-            <button
-              key={catId}
-              type="button"
-              onClick={() => setSelectedCategoryFilter(catId)}
-              className={`px-4 py-1.5 rounded-full font-['Manrope'] text-xs font-bold whitespace-nowrap flex-shrink-0 transition-all flex items-center gap-1.5 ${
-                selectedCategoryFilter === catId
-                  ? 'border border-primary bg-primary text-on-primary shadow-xs'
-                  : 'border border-surface-container-high bg-surface-container-lowest text-primary hover:bg-surface-container-low'
+            <span>{t('shoppingList.allCategories')}</span>
+            <span
+              className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
+                selectedCategoryFilter === 'all'
+                  ? 'bg-white/20 text-on-primary'
+                  : 'bg-surface-container text-outline'
               }`}
             >
-              <CategoryIcon categoryId={catId} className="w-3.5 h-3.5" />
-              <span>{getCategoryName(catId)}</span>
-            </button>
-          ))}
+              {completedItemsCount}/{totalItems}
+            </span>
+          </button>
+
+          {uniqueCategoryIds.map((catId) => {
+            const catItems = list.items.filter((i) => (i.categoryId || 'other') === catId);
+            const catCompleted = catItems.filter((i) => i.completed).length;
+            const isAllCatDone = catItems.length > 0 && catCompleted === catItems.length;
+            const isSelected = selectedCategoryFilter === catId;
+
+            return (
+              <button
+                key={catId}
+                type="button"
+                onClick={() => setSelectedCategoryFilter(catId)}
+                className={`px-3.5 py-1.5 rounded-full font-['Manrope'] text-xs font-bold whitespace-nowrap flex-shrink-0 transition-all flex items-center gap-1.5 cursor-pointer ${
+                  isSelected
+                    ? 'border border-primary bg-primary text-on-primary shadow-xs'
+                    : isAllCatDone
+                    ? 'border border-emerald-300/80 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300'
+                    : 'border border-surface-container-high bg-surface-container-lowest text-primary hover:bg-surface-container-low'
+                }`}
+              >
+                <CategoryIcon categoryId={catId} className="w-3.5 h-3.5 shrink-0" />
+                <span>{getCategoryName(catId)}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
+                    isSelected
+                      ? 'bg-white/20 text-on-primary'
+                      : isAllCatDone
+                      ? 'bg-emerald-200/60 dark:bg-emerald-800/40 text-emerald-900 dark:text-emerald-200'
+                      : 'bg-surface-container text-outline'
+                  }`}
+                >
+                  {catCompleted}/{catItems.length}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Swipe Hint Banner (First-time / contextual, dismissed cleanly) */}
@@ -835,55 +881,106 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
             </div>
           </div>
         ) : (
-          /* Grouped Shopping List Cards (Responsive 1-col on mobile, 2-col on tablet/desktop) */
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+          /* Grouped Shopping List Cards (Responsive 1-col on mobile, 2-col on tablet/desktop, Anti-collapse items-stretch) */
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4 items-stretch w-full">
             {groupedCategoryIds.map((catId) => {
               const categoryItems = displayedItems.filter(
                 (i) => (i.categoryId || 'other') === catId
               );
               if (categoryItems.length === 0) return null;
 
+              const completedCatCount = categoryItems.filter((i) => i.completed).length;
+              const isCategoryComplete = completedCatCount === categoryItems.length;
+
               return (
                 <div
                   key={catId}
-                  className="bg-surface-container-lowest rounded-3xl p-5 shadow-[0px_4px_20px_rgba(0,30,21,0.03)] border border-surface-container-high/60 animate-in fade-in duration-200"
+                  className="bg-surface-container-lowest rounded-3xl p-4 sm:p-5 shadow-[0px_4px_20px_rgba(0,30,21,0.03)] border border-surface-container-high/60 w-full min-h-[110px] shrink-0 flex flex-col justify-between"
                 >
-                  <h2 className="font-['Manrope'] text-sm font-bold text-primary mb-3.5 tracking-wide flex items-center justify-between">
-                    <span className="flex items-center gap-2">
-                      <CategoryIcon categoryId={catId} className="w-4 h-4 text-primary/80" />
-                      <span>{getCategoryName(catId)}</span>
-                    </span>
-                    <span className="text-xs text-outline font-semibold">
-                      {categoryItems.filter((i) => i.completed).length}/{categoryItems.length}
-                    </span>
-                  </h2>
+                  <div>
+                    <h2 className="font-['Manrope'] text-sm font-bold text-primary mb-3.5 tracking-wide flex items-center justify-between">
+                      <span className="flex items-center gap-2">
+                        <CategoryIcon categoryId={catId} className="w-4 h-4 text-primary/80" />
+                        <span>{getCategoryName(catId)}</span>
+                      </span>
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                        isCategoryComplete
+                          ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-300/40'
+                          : 'text-outline bg-surface-container-low'
+                      }`}>
+                        {completedCatCount}/{categoryItems.length}
+                      </span>
+                    </h2>
 
-                  <div className="flex flex-col gap-2.5">
-                    {categoryItems.map((item) => {
-                      const isChecked = item.completed;
-                      const plannedQty = item.planned_quantity || item.quantity;
-                      const plannedUnit = item.planned_unit || item.unit;
-                      const formattedQty = plannedQty
-                        ? `${plannedQty}${plannedUnit ? ' ' + plannedUnit : ''}`
-                        : item.note || null;
+                    <div className="flex flex-col gap-2 min-h-[44px] w-full">
+                      {categoryItems.map((item) => {
+                        const isChecked = item.completed;
+                        const plannedQty = item.planned_quantity || item.quantity;
+                        const plannedUnit = item.planned_unit || item.unit;
+                        const formattedQty = plannedQty
+                          ? `${plannedQty}${plannedUnit ? ' ' + plannedUnit : ''}`
+                          : item.note || null;
 
-                      return (
-                        <SwipeableShoppingItemCard
-                          key={item.id}
-                          item={item}
-                          isChecked={isChecked}
-                          formattedQty={formattedQty || undefined}
-                          justCompletedLocally={recentLocalCompletedId === item.id}
-                          onComplete={completeShoppingItem}
-                          onDelete={handleDeleteItem}
-                          onEditQuantity={setEditingItem}
-                          onCategoryChange={handleItemCategoryChange}
-                          getCategoryName={getCategoryName}
-                          isUrdu={isUrdu}
-                        />
-                      );
-                    })}
+                        return (
+                          <SwipeableShoppingItemCard
+                            key={item.id}
+                            item={item}
+                            isChecked={isChecked}
+                            formattedQty={formattedQty || undefined}
+                            justCompletedLocally={recentLocalCompletedId === item.id}
+                            onComplete={completeShoppingItem}
+                            onDelete={handleDeleteItem}
+                            onEditQuantity={setEditingItem}
+                            onCategoryChange={handleItemCategoryChange}
+                            getCategoryName={getCategoryName}
+                            isUrdu={isUrdu}
+                          />
+                        );
+                      })}
+                    </div>
                   </div>
+
+                  {/* Fast Category Switcher Footer */}
+                  {uniqueCategoryIds.length > 1 && (
+                    <div className="flex items-center justify-between gap-2 pt-3 border-t border-surface-container-high/50 mt-3">
+                      {selectedCategoryFilter !== 'all' ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedCategoryFilter('all')}
+                            className="text-xs font-['Manrope'] font-bold text-outline hover:text-primary transition-colors flex items-center gap-1 cursor-pointer"
+                          >
+                            <span>View All Categories</span>
+                          </button>
+                          {nextCategoryId && (
+                            <button
+                              type="button"
+                              onClick={() => setSelectedCategoryFilter(nextCategoryId)}
+                              className="px-3.5 py-1.5 rounded-full bg-primary text-on-primary hover:bg-primary-container font-['Manrope'] text-xs font-bold flex items-center gap-1.5 shadow-2xs active:scale-95 transition-all cursor-pointer"
+                            >
+                              <span>Next: {getCategoryName(nextCategoryId)}</span>
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </>
+                      ) : (
+                        <div className="w-full flex items-center justify-between text-[11px] font-['Manrope'] text-outline font-medium">
+                          <span>
+                            {isCategoryComplete
+                              ? '✓ All items in this category bought'
+                              : `${categoryItems.length - completedCatCount} items remaining`}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedCategoryFilter(catId)}
+                            className="text-primary hover:underline font-bold text-xs cursor-pointer"
+                          >
+                            Focus {getCategoryName(catId)} →
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}

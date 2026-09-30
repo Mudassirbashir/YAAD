@@ -133,18 +133,14 @@ export async function saveUserCustomAlias(
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         aliasRecord.userId = user.id;
-        await supabase.from('user_item_aliases').upsert({
-          id: aliasRecord.id,
-          user_id: user.id,
-          raw_alias: aliasRecord.rawAlias,
-          canonical_id: aliasRecord.canonicalId || null,
+        await supabase.from('item_aliases').upsert({
+          id: aliasRecord.id.length === 36 ? aliasRecord.id : undefined,
           canonical_name: aliasRecord.canonicalName,
-          category_id: aliasRecord.categoryId,
+          alias: aliasRecord.rawAlias,
           confidence: assignedConfidence,
-          usage_count: newUsageCount,
-          last_used_at: now,
+          is_active: true,
           updated_at: now,
-        }, { onConflict: 'user_id,raw_alias' });
+        });
       }
     } catch (err) {
       // Non-blocking: local storage is already updated
@@ -200,27 +196,28 @@ export async function syncUserCustomAliasesFromCloud(userId: string): Promise<vo
 
   try {
     const { data, error } = await supabase
-      .from('user_item_aliases')
+      .from('item_aliases')
       .select('*')
-      .eq('user_id', userId);
+      .eq('is_active', true);
 
     if (error || !data) return;
 
     const map = getAliasMap();
     for (const row of data) {
-      const norm = normalizeBaseText(row.raw_alias);
+      const aliasString = row.alias || row.raw_alias;
+      const norm = normalizeBaseText(aliasString);
       if (norm) {
         map.set(norm, {
           id: row.id,
-          userId: row.user_id,
-          rawAlias: row.raw_alias,
+          userId,
+          rawAlias: aliasString,
           normalizedAlias: norm,
-          canonicalId: row.canonical_id || undefined,
+          canonicalId: row.canonical_name,
           canonicalName: row.canonical_name,
-          categoryId: row.category_id as CategoryId,
+          categoryId: (row.category_id as CategoryId) || 'other',
           confidence: row.confidence ?? 1.0,
-          usageCount: row.usage_count || 1,
-          lastUsedAt: row.last_used_at || row.updated_at || row.created_at,
+          usageCount: 1,
+          lastUsedAt: row.updated_at || row.created_at,
           createdAt: row.created_at,
           updatedAt: row.updated_at,
         });
