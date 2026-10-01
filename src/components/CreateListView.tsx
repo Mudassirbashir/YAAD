@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import {
   ArrowLeft,
   ArrowRight,
@@ -19,15 +19,6 @@ export interface CreateListViewProps {
   onContinue?: (title: string, icon?: string, contextId?: string) => void;
 }
 
-const QUICK_PRESETS = [
-  { label: 'Grocery', contextId: 'grocery', iconName: 'shopping_bag' },
-  { label: 'Weekly', contextId: 'weekly', iconName: 'calendar' },
-  { label: 'Fruits & Sabzi', contextId: 'fruits_vegetables', iconName: 'apple' },
-  { label: 'Supermarket', contextId: 'supermarket', iconName: 'store' },
-  { label: 'BBQ / Dawat', contextId: 'bbq', iconName: 'flame' },
-  { label: 'Pharmacy', contextId: 'pharmacy', iconName: 'heart_pulse' },
-];
-
 export const CreateListView: React.FC<CreateListViewProps> = ({
   onBack,
   onCreateList,
@@ -40,12 +31,24 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
 
+  const quickPresets = useMemo(
+    () => [
+      { label: t('home.quickStartGrocery') || 'Grocery', contextId: 'grocery', iconName: 'shopping_bag' },
+      { label: t('home.quickStartWeekly') || 'Weekly', contextId: 'weekly', iconName: 'calendar' },
+      { label: t('home.quickStartProduce') || 'Fruits & Sabzi', contextId: 'fruits_vegetables', iconName: 'apple' },
+      { label: t('createList.types.supermarket.title') || 'Supermarket', contextId: 'supermarket', iconName: 'store' },
+      { label: t('createList.types.bbq.title') || 'BBQ / Dawat', contextId: 'bbq', iconName: 'flame' },
+      { label: t('createList.types.pharmacy.title') || 'Pharmacy', contextId: 'pharmacy', iconName: 'heart_pulse' },
+    ],
+    [t]
+  );
+
   const handleDispatchCreate = (title: string, iconName?: string, contextId?: string) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
     triggerHaptic(14);
 
-    const resolvedTitle = title.trim() || 'Shopping List';
+    const resolvedTitle = title.trim() || t('createList.title') || 'Shopping List';
     const resolvedIcon = iconName || 'shopping_basket';
     const resolvedContext = contextId || 'weekly';
 
@@ -73,7 +76,7 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
   /**
    * Fast 1-tap quick preset selector
    */
-  const handlePresetSelect = (item: (typeof QUICK_PRESETS)[0]) => {
+  const handlePresetSelect = (item: { label: string; contextId: string; iconName: string }) => {
     if (isSubmitting) return;
     triggerHaptic(14);
     setSelectedContextId(item.contextId);
@@ -181,7 +184,7 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
               disabled={isSubmitting}
               className="absolute end-1.5 top-1.5 bottom-1.5 px-4 rounded-xl bg-primary text-on-primary font-['Manrope'] text-xs font-bold flex items-center gap-1.5 hover:bg-primary-container active:scale-95 transition-all shadow-xs cursor-pointer disabled:opacity-60"
             >
-              <span>Create</span>
+              <span>{t('createList.continueBtn') || t('save') || 'Create'}</span>
               <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
             </button>
           </div>
@@ -195,9 +198,9 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
 
           {/* Quick 1-tap Pill Presets */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5 no-scrollbar">
-            {QUICK_PRESETS.map((item) => (
+            {quickPresets.map((item) => (
               <button
-                key={item.label}
+                key={item.contextId}
                 type="button"
                 onClick={() => handlePresetSelect(item)}
                 className="px-3 py-1.5 rounded-full text-xs font-['Manrope'] font-medium bg-surface-container hover:bg-surface-container-high hover:border-primary/40 text-on-surface-variant hover:text-primary border border-surface-dim transition-all shrink-0 cursor-pointer active:scale-95 flex items-center gap-1"

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Palette,
   Sparkles,
@@ -7,18 +7,14 @@ import {
   Flame,
   Crown,
   Heart,
-  CheckCircle2,
   Check,
-  Eye,
-  ShoppingBag,
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAppTheme, AppThemeId } from '../../context/ThemeContext';
 
 export const AppearanceSection: React.FC = () => {
   const { t, language } = useLanguage();
-  const { theme, setTheme, themes, currentThemeConfig } = useAppTheme();
-  const [previewChecked, setPreviewChecked] = useState(false);
+  const { theme, setTheme, themes } = useAppTheme();
 
   const getThemeIcon = (id: AppThemeId) => {
     switch (id) {
@@ -185,78 +181,6 @@ export const AppearanceSection: React.FC = () => {
               </button>
             );
           })}
-        </div>
-
-        {/* Live Interactive Preview Card */}
-        <div
-          id="theme_live_preview_card"
-          className="p-4 sm:p-5 rounded-2xl bg-surface-container-lowest border border-primary/20 space-y-3"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs font-bold text-on-surface-variant font-['Manrope']">
-              <Eye className="w-4 h-4 text-primary" />
-              <span>
-                {language === 'ur'
-                  ? 'لائیو پیش نظارہ (Interactive Preview)'
-                  : language === 'roman-urdu'
-                  ? 'Live Theme Preview'
-                  : 'Live Theme Preview'}
-              </span>
-            </div>
-            <span className="text-[11px] font-semibold text-primary bg-primary-fixed/40 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3" />
-              {language === 'ur'
-                ? 'فعال اور لاگو ہے'
-                : language === 'roman-urdu'
-                ? 'Lagaya gaya hai'
-                : 'Active Across App'}
-            </span>
-          </div>
-
-          {/* Sample grocery item row using current theme tokens */}
-          <div
-            onClick={() => setPreviewChecked(!previewChecked)}
-            className="p-3.5 rounded-2xl bg-surface border border-surface-dim flex items-center justify-between gap-3 cursor-pointer hover:border-primary/40 transition-all select-none active:scale-[0.99]"
-          >
-            <div className="flex items-center gap-3 min-w-0">
-              <div
-                className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all ${
-                  previewChecked
-                    ? 'bg-primary text-white shadow-2xs'
-                    : 'border-2 border-primary/40 bg-surface-container-lowest'
-                }`}
-              >
-                {previewChecked && <Check className="w-4 h-4 stroke-[3]" />}
-              </div>
-              <div className="min-w-0">
-                <div
-                  className={`text-sm font-bold font-['Manrope'] text-on-surface transition-all ${
-                    previewChecked ? 'line-through opacity-60' : ''
-                  }`}
-                >
-                  {language === 'ur'
-                    ? 'باسمتی چاول (Basmati Rice)'
-                    : 'Basmati Rice 5kg'}
-                </div>
-                <div className="text-[11px] text-outline">
-                  {language === 'ur'
-                    ? 'باورچی خانہ راشن • 1 تھیلا'
-                    : 'Kitchen Rashan • 1 Bag'}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-primary-fixed/50 text-primary">
-                {language === 'ur' ? 'ضروری سودا' : 'Essential'}
-              </span>
-            </div>
-          </div>
-          <p className="text-[11px] text-outline text-center">
-            {language === 'ur'
-              ? 'ٹیسٹ کرنے کے لیے اوپر والی آئٹم پر کلک کریں'
-              : 'Tap the preview item above to test checkmark and theme colors'}
-          </p>
         </div>
       </div>
     </section>

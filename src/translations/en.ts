@@ -144,7 +144,19 @@ export const en = {
       inList: 'In List',
       added: 'Added',
       add: 'Add',
+      addMore: 'Add More',
+      staple: 'Staple',
     },
+    quickStartWeekly: 'Weekly',
+    quickStartGrocery: 'Grocery',
+    quickStartProduce: 'Fruits & Sabzi',
+    quickStartBbq: 'BBQ',
+    addedToListToast: 'Added to list',
+    shopNow: 'Shop Now',
+    quickAdd: 'Quick Add',
+    browseAll: 'Browse All',
+    noListsYet: 'No Shopping Lists Yet',
+    noListsDesc: 'Create your first shopping list to remember what to buy.',
     quickActions: {
       recentLists: 'Recent Lists',
       favorites: 'Favorites',
@@ -302,6 +314,8 @@ export const en = {
     markedPurchased: 'Marked as purchased',
     undo: 'Undo',
     tapOrSwipeHint: 'Tap or swipe item to mark purchased',
+    completingTrip: 'Completing trip...',
+    itemDeleted: '{name} deleted',
   },
 
   // Completion Screen
@@ -351,6 +365,8 @@ export const en = {
     itemsPurchased: '{completed} of {total} items purchased',
     backToHistory: 'Back to History',
     backToHome: 'Back to Home',
+    exactTimeLogged: 'Exact time logged',
+    recordsPreservedNotice: 'Historical session records are preserved. Editing a new trip will never alter this past record.',
   },
 
   // Edit List Screen

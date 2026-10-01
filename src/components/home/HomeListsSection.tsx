@@ -77,7 +77,7 @@ export const HomeListsSection: React.FC<HomeListsSectionProps> = ({
               className="px-2.5 py-1 bg-surface-container rounded-lg font-bold text-primary hover:bg-surface-container-high transition-colors flex items-center gap-1 shrink-0 cursor-pointer"
             >
               <RefreshCw className="w-3 h-3" />
-              <span>Retry</span>
+              <span>{t('appUpdate.retry') || 'Retry'}</span>
             </button>
           )}
         </div>
@@ -108,10 +108,10 @@ export const HomeListsSection: React.FC<HomeListsSectionProps> = ({
             <ShoppingBag className="w-6 h-6" />
           </div>
           <h4 className="font-['Plus_Jakarta_Sans'] font-bold text-sm sm:text-base text-on-surface">
-            No Shopping Lists Yet
+            {t('home.noListsYet') || t('home.emptyTitle') || 'No Shopping Lists Yet'}
           </h4>
           <p className="font-['Manrope'] text-xs text-outline mt-1 max-w-xs leading-relaxed">
-            Create your first shopping list to remember what to buy.
+            {t('home.noListsDesc') || t('home.emptySubtitle') || 'Create your first shopping list to remember what to buy.'}
           </p>
           <button
             type="button"
@@ -120,7 +120,7 @@ export const HomeListsSection: React.FC<HomeListsSectionProps> = ({
             className="mt-4 px-5 py-2.5 rounded-full bg-primary hover:bg-primary-container active:scale-95 text-on-primary font-['Manrope'] text-xs sm:text-sm font-semibold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
           >
             <Plus className="w-4 h-4 stroke-[2.4]" />
-            <span>Create List</span>
+            <span>{t('home.createFirstList') || t('home.createNewList') || 'Create List'}</span>
           </button>
         </div>
       ) : (

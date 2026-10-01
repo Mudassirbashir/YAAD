@@ -1021,7 +1021,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
               {isCompletingTrip ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Completing trip...</span>
+                  <span>{t('shoppingList.completingTrip') || 'Completing trip...'}</span>
                 </>
               ) : (
                 <>
@@ -1059,7 +1059,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
               </span>
               <span className="text-xs sm:text-sm font-['Manrope'] font-medium truncate">
                 {undoToast.type === 'deleted'
-                  ? `${undoToast.item.name} deleted`
+                  ? `${undoToast.item.name} (${t('delete') || 'deleted'})`
                   : `${undoToast.item.name} ${t('shoppingList.markedPurchased') || 'purchased'}`}
               </span>
             </div>

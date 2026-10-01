@@ -181,7 +181,7 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
                   {t('history.timeLabel')}
                 </span>
                 <span className="font-['Manrope'] text-xs sm:text-sm font-bold text-on-surface">
-                  {sessionTimes.time || 'Exact time logged'}
+                  {sessionTimes.time || t('history.exactTimeLogged') || 'Exact time logged'}
                 </span>
               </div>
             </div>
@@ -229,7 +229,8 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
           <div className="flex items-center gap-2 text-[11px] font-['Manrope'] text-outline border-t border-surface-dim/60 pt-3">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
             <span>
-              Historical session records are preserved. Editing a new trip will never alter this past record.
+              {t('history.recordsPreservedNotice') ||
+                'Historical session records are preserved. Editing a new trip will never alter this past record.'}
             </span>
           </div>
         </section>

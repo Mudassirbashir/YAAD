@@ -273,23 +273,22 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   <h2 className="font-['Plus_Jakarta_Sans'] text-base sm:text-xl font-bold tracking-tight text-white leading-tight">
                     {t('home.createListTitle')}
                   </h2>
-                  <span className="hidden sm:inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white/15 text-emerald-100 border border-white/20 uppercase tracking-wider">
-                    Quick Start
+                  <span className="hidden sm:inline-block text-[11px] font-medium text-emerald-200/90 font-['Manrope']">
+                    · {t('home.quickStart') || 'Quick Start'}
                   </span>
                 </div>
                 <p className="font-['Manrope'] text-xs sm:text-[13px] text-emerald-100/90 mt-0.5 sm:mt-1 font-normal leading-snug">
                   {t('home.createListDesc')}
                 </p>
                 {/* Category Quick Tags */}
-                <div className="hidden xs:flex items-center gap-1.5 mt-2 overflow-hidden">
-                  {['Weekly', 'Grocery', 'Fruits & Sabzi', 'BBQ'].map((tag) => (
-                    <span
-                      key={tag}
-                      className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-black/15 text-emerald-50 border border-white/10 whitespace-nowrap"
-                    >
-                      {tag}
-                    </span>
-                  ))}
+                <div className="hidden xs:flex items-center gap-1.5 mt-2 text-[11px] font-['Manrope'] text-emerald-100/80">
+                  <span>{t('home.quickStartWeekly') || 'Weekly'}</span>
+                  <span aria-hidden="true" className="opacity-50">·</span>
+                  <span>{t('home.quickStartGrocery') || 'Grocery'}</span>
+                  <span aria-hidden="true" className="opacity-50">·</span>
+                  <span>{t('home.quickStartProduce') || 'Fruits & Sabzi'}</span>
+                  <span aria-hidden="true" className="opacity-50">·</span>
+                  <span>{t('home.quickStartBbq') || 'BBQ'}</span>
                 </div>
               </div>
             </div>
@@ -405,7 +404,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             </div>
             <div className="flex flex-col min-w-0">
               <span className="font-['Plus_Jakarta_Sans'] text-xs font-bold text-on-surface truncate">
-                Added to list:{' '}
+                {t('home.addedToListToast') || 'Added to list'}:{' '}
                 <span className="text-primary">{addedItemToast.message}</span>
               </span>
               <span className="font-['Manrope'] text-[11px] text-outline truncate">
@@ -424,7 +423,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
               }}
               className="h-7 px-3 rounded-full bg-primary text-on-primary text-[11px] font-bold font-['Manrope'] flex items-center gap-1 active:scale-95 transition-transform cursor-pointer shadow-xs"
             >
-              <span>Shop Now</span>
+              <span>{t('home.shopNow') || 'Shop Now'}</span>
               <ArrowRight className="w-3 h-3 stroke-[2.5]" />
             </button>
 

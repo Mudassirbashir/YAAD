@@ -240,28 +240,22 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
               <div
                 className={`relative w-full h-24 sm:h-28 rounded-xl sm:rounded-2xl bg-gradient-to-b ${theme.aura} flex items-center justify-center overflow-hidden border border-black/[0.04] dark:border-white/[0.05] transition-all`}
               >
-                {/* Category chip on top left */}
-                <div className="absolute top-1.5 left-1.5 z-10">
-                  <span
-                    className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border shadow-2xs ${theme.badge}`}
-                  >
+                {/* Category label on top left */}
+                <div className="absolute top-1.5 left-2 z-10">
+                  <span className="text-[10px] font-semibold text-outline-variant font-['Manrope']">
                     {getCategoryName(item.category as CategoryId)}
                   </span>
                 </div>
 
-                {/* In List indicator / staple badge on top right */}
-                <div className="absolute top-1.5 right-1.5 z-10">
-                  {activeStatus.inList ? (
+                {/* In List indicator on top right */}
+                {activeStatus.inList && (
+                  <div className="absolute top-1.5 right-1.5 z-10">
                     <span className="px-2 py-0.5 rounded-full text-[9.5px] sm:text-[10px] font-bold bg-emerald-600 text-white shadow-2xs flex items-center gap-1">
                       <Check className="w-2.5 h-2.5 stroke-[3]" />
                       <span>{t('home.essentials.inList')}</span>
                     </span>
-                  ) : (
-                    <span className="px-1.5 py-0.5 rounded-md text-[9px] font-semibold text-outline-variant bg-white/70 dark:bg-black/40 backdrop-blur-xs border border-black/5 dark:border-white/10">
-                      Staple
-                    </span>
-                  )}
-                </div>
+                  </div>
+                )}
 
                 {/* Centered Large Vector Illustration with hover scale */}
                 <div className="transform group-hover:scale-110 transition-transform duration-300 drop-shadow-xs">
@@ -328,7 +322,9 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
                 ) : activeStatus.inList ? (
                   <>
                     <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                    <span className="truncate">Add More</span>
+                    <span className="truncate">
+                      {t('home.essentials.addMore') || 'Add More'}
+                    </span>
                   </>
                 ) : (
                   <>

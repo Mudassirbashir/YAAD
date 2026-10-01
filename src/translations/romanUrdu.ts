@@ -147,7 +147,19 @@ export const romanUrdu: typeof en = {
       inList: 'List Me Hai',
       added: 'Shamil Ho Gaya',
       add: 'Add Karein',
+      addMore: 'Aur Dalein',
+      staple: 'Aam Cheez',
     },
+    quickStartWeekly: 'Haftawar',
+    quickStartGrocery: 'Sauda Salaf',
+    quickStartProduce: 'Phal o Sabzi',
+    quickStartBbq: 'BBQ',
+    addedToListToast: 'List mein shaamil ho gaya',
+    shopNow: 'Shopping Karein',
+    quickAdd: 'Foran Add Karein',
+    browseAll: 'Sab Dekhein',
+    noListsYet: 'Abhi koi list nahi hai',
+    noListsDesc: 'Apni pehli shopping list banayein taakay sauda yaad rahe.',
     quickActions: {
       recentLists: 'Pichli Lists',
       favorites: 'Favorites',
@@ -305,6 +317,8 @@ export const romanUrdu: typeof en = {
     markedPurchased: 'Khareed lia gya',
     undo: 'Wapas karein',
     tapOrSwipeHint: 'Item ko tap ya swipe kar k khareeda mark karein',
+    completingTrip: 'Trip mukammal ho rahi hai...',
+    itemDeleted: '{name} delete ho gaya',
   },
 
   // Completion Screen
@@ -354,6 +368,8 @@ export const romanUrdu: typeof en = {
     itemsPurchased: '{total} mein se {completed} cheezein khareedi gayin',
     backToHistory: 'History par wapis',
     backToHome: 'Home par wapis',
+    exactTimeLogged: 'Darust waqt darj hai',
+    recordsPreservedNotice: 'Purani shopping records hamesha mehfooz rehti hain.',
   },
 
   // Edit List Screen
