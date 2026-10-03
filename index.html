@@ -39,19 +39,19 @@
       })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>YAAD • Smart Shopping Memory &amp; Grocery Reminder</title>
-    <meta name="description" content="Never forget what you need to buy. YAAD is a smart shopping reminder that organizes grocery items automatically. Works offline." />
+    <title>YAAD | Smart Shopping List &amp; Reminder App</title>
+    <meta name="description" content="Never forget what you need to buy. YAAD is a shopping list and reminder app that helps people remember the things they need to buy before and during shopping. Works offline." />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta name="google-site-verification" content="ubibfGvNogfJCKbAmUarrlNSJIfIvvgJktw-vNNqK_o" />
     <meta name="google-site-verification" content="BBtNIhi5i9ysQRvwAjXIWz3DnfhZLl0-4bweA8zuxDg" />
-    <link rel="canonical" href="https://yaadapppk.vercel.app/" />
+    <link rel="canonical" href="https://yaadapppk.vercel.app/home" />
 
     <!-- Open Graph / Facebook / WhatsApp -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="YAAD" />
-    <meta property="og:url" content="https://yaadapppk.vercel.app/" />
-    <meta property="og:title" content="YAAD • Smart Shopping Memory &amp; Grocery Reminder" />
-    <meta property="og:description" content="Never forget what you need to buy. YAAD is a smart shopping reminder that organizes grocery items automatically. Works offline." />
+    <meta property="og:url" content="https://yaadapppk.vercel.app/home" />
+    <meta property="og:title" content="YAAD | Smart Shopping List &amp; Reminder App" />
+    <meta property="og:description" content="Never forget what you need to buy. YAAD is a shopping list and reminder app that helps people remember the things they need to buy before and during shopping. Works offline." />
     <meta property="og:image" content="https://yaadapppk.vercel.app/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -61,8 +61,8 @@
 
     <!-- Twitter / X -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="YAAD • Smart Shopping Memory &amp; Grocery Reminder" />
-    <meta name="twitter:description" content="Never forget what you need to buy. YAAD is a smart shopping reminder that organizes grocery items automatically. Works offline." />
+    <meta name="twitter:title" content="YAAD | Smart Shopping List &amp; Reminder App" />
+    <meta name="twitter:description" content="Never forget what you need to buy. YAAD is a shopping list and reminder app that helps people remember the things they need to buy before and during shopping. Works offline." />
     <meta name="twitter:image" content="https://yaadapppk.vercel.app/og-image.png" />
     <meta name="twitter:image:alt" content="YAAD — Smart Shopping Memory &amp; Grocery Assistant" />
 
@@ -73,30 +73,68 @@
         "@graph": [
           {
             "@type": "Organization",
+            "@id": "https://yaadapppk.vercel.app/#organization",
             "name": "YAAD",
-            "url": "https://yaadapppk.vercel.app",
+            "url": "https://yaadapppk.vercel.app/",
             "logo": "https://yaadapppk.vercel.app/logo.png",
-            "email": "yaadapppk@gmail.com"
+            "email": "yaadapppk@gmail.com",
+            "sameAs": [
+              "https://www.tiktok.com/@yaadapp",
+              "https://www.facebook.com/yaadapp",
+              "https://www.instagram.com/yaadapp",
+              "https://www.linkedin.com/company/yaadapp"
+            ]
           },
           {
-            "@type": "WebSite",
+            "@type": "SoftwareApplication",
+            "@id": "https://yaadapppk.vercel.app/#softwareapplication",
             "name": "YAAD",
-            "url": "https://yaadapppk.vercel.app",
-            "description": "Never forget what you need to buy. YAAD is a smart shopping reminder that organizes grocery items automatically.",
-            "inLanguage": ["en"]
-          },
-          {
-            "@type": "WebApplication",
-            "name": "YAAD",
-            "url": "https://yaadapppk.vercel.app",
-            "description": "Never forget what you need to buy. YAAD is a smart shopping reminder that organizes grocery items automatically. Works offline.",
+            "url": "https://yaadapppk.vercel.app/",
+            "description": "YAAD is a shopping list and reminder app that helps people remember the things they need to buy before and during shopping.",
             "applicationCategory": "ShoppingApplication",
-            "operatingSystem": "All",
+            "operatingSystem": "All (iOS, Android, Windows, macOS, Linux, ChromeOS)",
+            "browserRequirements": "Requires modern web browser with HTML5 and IndexedDB support",
+            "publisher": {
+              "@id": "https://yaadapppk.vercel.app/#organization"
+            },
+            "creator": {
+              "@id": "https://yaadapppk.vercel.app/#organization"
+            },
             "offers": {
               "@type": "Offer",
               "price": "0",
               "priceCurrency": "USD"
-            }
+            },
+            "featureList": [
+              "Bilingual English and Urdu item categorizer",
+              "Roman Urdu natural kitchen item input",
+              "Offline-first shopping list with local IndexedDB storage",
+              "Pakistani units (kg, grams, pao, darjan)",
+              "Passkey biometric authentication",
+              "Zero ad tracking and private data security"
+            ]
+          },
+          {
+            "@type": "WebPage",
+            "@id": "https://yaadapppk.vercel.app/home#webpage",
+            "url": "https://yaadapppk.vercel.app/home",
+            "name": "YAAD | Smart Shopping List & Reminder App",
+            "description": "Never forget what you need to buy. YAAD is a shopping list and reminder app that helps people remember the things they need to buy before and during shopping. Works offline.",
+            "isPartOf": {
+              "@type": "WebSite",
+              "@id": "https://yaadapppk.vercel.app/#website",
+              "name": "YAAD",
+              "url": "https://yaadapppk.vercel.app/",
+              "description": "Never forget what you need to buy. YAAD is a smart shopping reminder that organizes grocery items automatically.",
+              "inLanguage": ["en", "ur"]
+            },
+            "about": {
+              "@id": "https://yaadapppk.vercel.app/#softwareapplication"
+            },
+            "publisher": {
+              "@id": "https://yaadapppk.vercel.app/#organization"
+            },
+            "inLanguage": "en"
           }
         ]
       }

@@ -157,6 +157,10 @@ export const en = {
     browseAll: 'Browse All',
     noListsYet: 'No Shopping Lists Yet',
     noListsDesc: 'Create your first shopping list to remember what to buy.',
+    letsMakeAList: "Let's make a list",
+    listsAvailable: '{count} Lists Available',
+    listsAvailableOne: '1 List Available',
+    listsAvailableZero: '0 Lists Available',
     quickActions: {
       recentLists: 'Recent Lists',
       favorites: 'Favorites',
@@ -229,11 +233,12 @@ export const en = {
     title: 'Create New List',
     subtitle: 'Choose a suggested list type or enter your own custom name.',
     customSectionTitle: 'Custom List',
-    customPlaceholder: 'Enter custom list name (e.g. Dawat, Eid Shopping)...',
+    customPlaceholder: 'List Name',
     continueBtn: 'Continue',
     suggestedSectionTitle: 'Suggested Lists',
     suggestedSubtitle: 'Tap any to start adding items immediately',
-    errorEmpty: 'Please enter a list name first.',
+    categoriesHeading: 'Categories',
+    errorEmpty: 'First enter the list name, then continue.',
     types: {
       weekly_grocery: {
         title: 'Weekly Grocery',
@@ -288,7 +293,7 @@ export const en = {
   // Add Items Screen
   addItems: {
     title: 'Add items to your list',
-    inputPlaceholder: 'e.g. Potato, Milk, Bread, Soap...',
+    inputPlaceholder: 'Add item (e.g. Milk, Apples)...',
     errorEmpty: 'Enter an item name to add.',
     categoryLabel: 'Category',
     chooseCategory: 'Choose a category',

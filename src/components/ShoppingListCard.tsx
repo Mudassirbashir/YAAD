@@ -1,22 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  CheckCircle2,
-  Clock,
-  ChevronRight,
   MoreVertical,
-  ShoppingCart,
-  Check,
   Trash2,
   RotateCcw,
   Eye,
-  Calendar,
-  ShoppingBag,
 } from 'lucide-react';
 import { ShoppingList } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { BidiText } from '../utils/bidi';
 import { ListIcon } from './ListIcon';
-import { formatExactDate, formatExactTime } from '../utils/dateFormatting';
+import { formatRelativeTimeAgo } from '../utils/dateFormatting';
 import { triggerHaptic } from '../lib/sound';
 
 export interface ShoppingListCardProps {
@@ -33,11 +26,8 @@ export interface ShoppingListCardProps {
 export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
   list,
   onSelectList,
-  onContinueShopping,
-  onMarkComplete,
   onDeleteList,
   onReuseList,
-  variant = 'history',
 }) => {
   const { t } = useLanguage();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -68,38 +58,12 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
   const isAllDone = list.isCompleted || (totalItems > 0 && completedItems === totalItems);
   const percentComplete = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
 
-  const exactDateStr = formatExactDate(list.createdTimestamp || list.createdAt, {
-    includeWeekday: variant === 'history',
-  });
-  const exactTimeStr = formatExactTime(list.createdTimestamp || list.createdAt);
-  const completionTimeStr =
-    isAllDone && (list.completedTimestamp || list.completedAt)
-      ? formatExactTime(list.completedTimestamp || list.completedAt)
-      : null;
-
-  const handleCardClick = () => {
-    triggerHaptic(8);
-    onSelectList(list);
-  };
-
-  const handleContinueClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    triggerHaptic(12);
-    if (onContinueShopping) {
-      onContinueShopping(list);
-    } else {
-      onSelectList(list);
-    }
-  };
-
-  const handleMarkCompleteClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsMenuOpen(false);
-    triggerHaptic(16);
-    if (onMarkComplete) {
-      onMarkComplete(list);
-    }
-  };
+  // Relative elapsed time formatting (e.g. "4 minutes ago", "1 hour 5 mins ago", "2 days ago")
+  const relevantTimestamp =
+    (isAllDone && (list.completedTimestamp || list.completedAt)) ||
+    list.createdTimestamp ||
+    list.createdAt;
+  const timeAgoStr = formatRelativeTimeAgo(relevantTimestamp);
 
   const handleReuseClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -129,13 +93,16 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
     <>
       <article
         id={`list_card_${list.id}`}
-        onClick={handleCardClick}
-        className="w-full min-h-[116px] sm:min-h-[120px] bg-white rounded-2xl p-4 sm:p-4.5 flex flex-col justify-between border border-surface-dim/80 hover:border-primary/40 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_16px_rgba(15,61,46,0.08),0_1px_3px_rgba(0,0,0,0.05)] hover:-translate-y-0.5 transition-all duration-200 active:scale-[0.99] group select-none cursor-pointer relative"
+        onClick={() => {
+          triggerHaptic(8);
+          onSelectList(list);
+        }}
+        className="w-full min-h-[78px] sm:min-h-[84px] bg-white dark:bg-surface-container-lowest rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between border border-surface-dim/80 shadow-2xs hover:shadow-xs hover:border-primary/40 active:scale-[0.99] transition-all relative select-none cursor-pointer group"
       >
-        {/* TOP ROW: Icon + Title + Status Badges + Menu Button */}
-        <div className="flex items-start justify-between gap-3 w-full">
-          <div className="flex items-center gap-3.5 flex-1 min-w-0">
-            {/* Standardized Icon Area (w-11 h-11 sm:w-12 sm:h-12) */}
+        {/* TOP ROW: Icon + Title & Time + 3-Dots in Top Right Corner (Arrow removed) */}
+        <div className="flex items-start justify-between gap-2.5 w-full">
+          <div className="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0">
+            {/* Standardized Icon Area */}
             <ListIcon
               title={list.title}
               explicitIcon={list.icon}
@@ -144,213 +111,108 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
               className="shrink-0 shadow-2xs"
             />
 
-            {/* Title & Status Pills */}
-            <div className="flex flex-col min-w-0 flex-1">
-              <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                <BidiText
-                  as="h3"
-                  className="font-['Plus_Jakarta_Sans'] text-base sm:text-lg font-bold text-on-surface group-hover:text-primary transition-colors truncate"
-                >
-                  {list.title}
-                </BidiText>
-
-                {/* Status Badges */}
-                {isAllDone ? (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 text-[10.5px] font-bold border border-emerald-200/70 shrink-0">
-                    <CheckCircle2 className="w-3 h-3 text-emerald-600 stroke-[2.4]" />
-                    <span>{t('home.completed') || 'Completed'}</span>
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-900 text-[10.5px] font-bold border border-amber-200/70 shrink-0">
-                    <Clock className="w-3 h-3 text-amber-600 stroke-[2.4]" />
-                    <span>{t('home.inProgress') || 'In Progress'}</span>
-                  </span>
-                )}
-
-                {list.isSynced === false && (
-                  <span
-                    title="Stored in local offline cache"
-                    className="inline-flex items-center px-2 py-0.5 rounded text-[9.5px] font-medium bg-surface-container text-outline"
-                  >
-                    Cached
-                  </span>
-                )}
-              </div>
-
-              {/* Metadata Sub-Row: Date, Exact Time, Item Count, Completion Time */}
-              <div className="flex items-center gap-2 text-xs font-['Manrope'] text-outline mt-0.5 flex-wrap">
-                <span className="flex items-center gap-1 text-on-surface-variant font-medium">
-                  <Calendar className="w-3.5 h-3.5 text-outline shrink-0" />
-                  <span>{exactDateStr}</span>
+            {/* Title & Elapsed Relative Time (shifted up) */}
+            <div className="flex flex-col min-w-0 flex-1 -mt-0.5">
+              <BidiText
+                as="h3"
+                className="font-['Plus_Jakarta_Sans'] text-[15px] sm:text-base font-bold text-on-surface group-hover:text-primary transition-colors truncate leading-tight"
+              >
+                {list.title}
+              </BidiText>
+              {timeAgoStr && (
+                <span className="text-[11px] sm:text-xs font-medium text-outline font-['Manrope'] mt-0.5 truncate">
+                  {timeAgoStr}
                 </span>
-
-                {exactTimeStr && (
-                  <>
-                    <span>•</span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5 text-outline shrink-0" />
-                      <span>{exactTimeStr}</span>
-                    </span>
-                  </>
-                )}
-
-                <span>•</span>
-                <span className="flex items-center gap-1">
-                  <ShoppingBag className="w-3.5 h-3.5 text-outline shrink-0" />
-                  <span>
-                    {!isAllDone && totalItems > 0
-                      ? `${completedItems}/${totalItems} items`
-                      : t('home.itemsCount', { count: totalItems })}
-                  </span>
-                </span>
-
-                {completionTimeStr && (
-                  <>
-                    <span>•</span>
-                    <span className="text-emerald-800 font-medium">
-                      {t('history.completedAt', { time: completionTimeStr }) || `Done at ${completionTimeStr}`}
-                    </span>
-                  </>
-                )}
-              </div>
+              )}
             </div>
           </div>
 
-          {/* Action Area: In-Progress Quick Action & Three-Dot Menu */}
-          <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
-            {/* If In-Progress: Direct 1-tap "Continue Shopping" button */}
-            {!isAllDone && onContinueShopping && (
-              <button
-                type="button"
-                onClick={handleContinueClick}
-                aria-label={t('history.continueShopping') || 'Continue Shopping'}
-                title={t('history.continueShopping') || 'Continue Shopping'}
-                className="hidden xs:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary text-primary hover:text-white font-['Manrope'] text-xs font-bold transition-all active:scale-95 cursor-pointer"
-              >
-                <ShoppingCart className="w-3.5 h-3.5" />
-                <span>Continue</span>
-              </button>
-            )}
+          {/* Three-Dot Menu Button in Top-Right Corner */}
+          <div className="relative shrink-0 -mt-1 -mr-1" ref={menuRef}>
+            <button
+              type="button"
+              id={`card_options_btn_${list.id}`}
+              aria-label="List options"
+              onClick={(e) => {
+                e.stopPropagation();
+                triggerHaptic(6);
+                setIsMenuOpen((prev) => !prev);
+              }}
+              className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-all active:scale-95 cursor-pointer"
+            >
+              <MoreVertical className="w-4 h-4" />
+            </button>
 
-            {/* Context Options Menu Button */}
-            <div className="relative" ref={menuRef}>
-              <button
-                type="button"
-                id={`card_options_btn_${list.id}`}
-                aria-label="List options"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  triggerHaptic(6);
-                  setIsMenuOpen((prev) => !prev);
-                }}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-all active:scale-95 cursor-pointer"
+            {/* Dropdown Menu: View Details + Reuse List + Delete List */}
+            {isMenuOpen && (
+              <div
+                role="menu"
+                className="absolute right-0 rtl:right-auto rtl:left-0 top-8 z-30 w-44 bg-white dark:bg-stone-800 rounded-2xl shadow-xl border border-surface-dim/80 py-1.5 animate-scale-in text-xs font-['Manrope'] font-semibold text-on-surface"
               >
-                <MoreVertical className="w-4 h-4" />
-              </button>
-
-              {/* Dropdown Menu */}
-              {isMenuOpen && (
-                <div
-                  role="menu"
-                  className="absolute right-0 rtl:right-auto rtl:left-0 top-9 z-30 w-48 bg-white rounded-2xl shadow-xl border border-surface-dim/80 py-1.5 animate-scale-in text-xs font-['Manrope'] font-semibold text-on-surface"
+                {/* 1. View Details (Open Details) */}
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsMenuOpen(false);
+                    triggerHaptic(8);
+                    onSelectList(list);
+                  }}
+                  className="w-full px-3.5 py-2 text-left rtl:text-right flex items-center gap-2 hover:bg-surface-container transition-colors cursor-pointer text-primary font-bold"
                 >
-                  {/* View Details */}
+                  <Eye className="w-3.5 h-3.5 text-primary" />
+                  <span>{t('viewDetails') || 'View Details'}</span>
+                </button>
+
+                {/* 2. Reuse as New List */}
+                {onReuseList && (
                   <button
                     type="button"
                     role="menuitem"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsMenuOpen(false);
-                      onSelectList(list);
-                    }}
-                    className="w-full px-3.5 py-2.5 text-left rtl:text-right flex items-center gap-2 hover:bg-surface-container transition-colors cursor-pointer"
+                    onClick={handleReuseClick}
+                    className="w-full px-3.5 py-2 text-left rtl:text-right flex items-center gap-2 hover:bg-surface-container transition-colors cursor-pointer"
                   >
-                    <Eye className="w-3.5 h-3.5 text-outline" />
-                    <span>View Details</span>
+                    <RotateCcw className="w-3.5 h-3.5 text-outline" />
+                    <span>{t('history.reuseList') || 'Reuse List'}</span>
                   </button>
+                )}
 
-                  {/* In-Progress Actions: Continue & Mark Complete */}
-                  {!isAllDone && (
-                    <>
-                      {onContinueShopping && (
-                        <button
-                          type="button"
-                          role="menuitem"
-                          onClick={handleContinueClick}
-                          className="w-full px-3.5 py-2.5 text-left rtl:text-right flex items-center gap-2 hover:bg-surface-container transition-colors text-primary font-bold cursor-pointer"
-                        >
-                          <ShoppingCart className="w-3.5 h-3.5" />
-                          <span>{t('history.continueShopping') || 'Continue Shopping'}</span>
-                        </button>
-                      )}
-
-                      {onMarkComplete && (
-                        <button
-                          type="button"
-                          role="menuitem"
-                          onClick={handleMarkCompleteClick}
-                          className="w-full px-3.5 py-2.5 text-left rtl:text-right flex items-center gap-2 hover:bg-surface-container transition-colors text-emerald-800 font-bold cursor-pointer"
-                        >
-                          <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2.5]" />
-                          <span>Mark as Complete</span>
-                        </button>
-                      )}
-                    </>
-                  )}
-
-                  {/* Reuse as New List */}
-                  {onReuseList && (
+                {/* 3. Delete List */}
+                {onDeleteList && (
+                  <>
+                    <div className="my-1 border-t border-surface-dim/60" />
                     <button
                       type="button"
                       role="menuitem"
-                      onClick={handleReuseClick}
-                      className="w-full px-3.5 py-2.5 text-left rtl:text-right flex items-center gap-2 hover:bg-surface-container transition-colors cursor-pointer"
+                      onClick={handleDeleteTrigger}
+                      className="w-full px-3.5 py-2 text-left rtl:text-right flex items-center gap-2 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-700 dark:text-rose-400 transition-colors cursor-pointer"
                     >
-                      <RotateCcw className="w-3.5 h-3.5 text-outline" />
-                      <span>{t('history.reuseList') || 'Reuse as New List'}</span>
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>{t('delete') || 'Delete List'}</span>
                     </button>
-                  )}
-
-                  {/* Delete List */}
-                  {onDeleteList && (
-                    <>
-                      <div className="my-1 border-t border-surface-dim/60" />
-                      <button
-                        type="button"
-                        role="menuitem"
-                        onClick={handleDeleteTrigger}
-                        className="w-full px-3.5 py-2.5 text-left rtl:text-right flex items-center gap-2 hover:bg-rose-50 text-rose-700 transition-colors cursor-pointer"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span>{t('delete') || 'Delete List'}</span>
-                      </button>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Chevron Right Indicator */}
-            <div className="w-7 h-7 rounded-full bg-surface-container-low border border-surface-dim/50 flex items-center justify-center text-outline group-hover:text-primary group-hover:bg-emerald-50 group-hover:border-emerald-200/60 group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-all shrink-0 rtl:rotate-180">
-              <ChevronRight className="w-3.5 h-3.5" />
-            </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
-        {/* BOTTOM PROGRESS ROW (For in-progress lists with items) */}
-        {!isAllDone && totalItems > 0 && (
-          <div className="w-full mt-3 pt-2 border-t border-surface-dim/50 flex items-center gap-3">
-            <div className="flex-1 bg-surface-container rounded-full h-1.5 overflow-hidden">
-              <div
-                className="bg-primary h-1.5 rounded-full transition-all duration-300 ease-out"
-                style={{ width: `${percentComplete}%` }}
-              />
-            </div>
-            <span className="text-[11px] font-bold text-on-surface-variant font-['Manrope'] tabular-nums shrink-0">
-              {percentComplete}% bought
-            </span>
+        {/* BOTTOM ROW: Shifted up automatically with compact card height */}
+        <div className="flex items-center justify-between mt-auto pt-2 w-full">
+          <div>
+            {!isAllDone && totalItems > 0 && (
+              <span className="text-[10.5px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200/60 px-2 py-0.5 rounded-md">
+                {percentComplete}% bought
+              </span>
+            )}
           </div>
-        )}
+
+          {/* Item count clearly positioned on bottom-right side */}
+          <div className="text-[11px] sm:text-xs font-bold text-on-surface-variant font-['Manrope'] bg-surface-container/70 border border-surface-dim/60 px-2 py-0.5 rounded-md shrink-0">
+            {totalItems} {totalItems === 1 ? 'item' : 'items'}
+          </div>
+        </div>
       </article>
 
       {/* Delete Confirmation Modal */}
@@ -364,7 +226,7 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-surface-dim space-y-4 animate-scale-in"
+            className="bg-white dark:bg-stone-900 rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-surface-dim space-y-4 animate-scale-in"
           >
             <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-700 flex items-center justify-center mx-auto border border-rose-100">
               <Trash2 className="w-6 h-6" />

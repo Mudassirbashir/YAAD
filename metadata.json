@@ -1,6 +1,6 @@
 {
   "name": "YAAD",
-  "description": "Never forget what you need to buy. YAAD is a smart shopping reminder that organizes grocery items automatically. Works offline.",
+  "description": "Never forget what you need to buy. YAAD is a shopping list and reminder app that helps people remember the things they need to buy before and during shopping. Works offline.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

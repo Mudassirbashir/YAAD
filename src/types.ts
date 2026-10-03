@@ -327,6 +327,8 @@ export type ScreenType =
   | 'privacy'
   | 'about'
   | 'help'
+  | 'features'
+  | 'how_it_works'
   | 'legal'
   | 'blog'
   | 'rashan_list'

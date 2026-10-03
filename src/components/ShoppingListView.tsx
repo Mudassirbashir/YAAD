@@ -7,6 +7,7 @@ import { CategoryIcon } from './CategoryIcon';
 import { ItemVisualIcon } from './ItemVisualIcon';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import { useAppTheme } from '../context/ThemeContext';
 import { BidiText, MixedQuantityBadge } from '../utils/bidi';
 import { categorizeItemLocally, smartCategorizeItem } from '../lib/categorizer';
 import { parseShoppingItem, parseMultiItemInput } from '../lib/recognition/engine';
@@ -45,10 +46,25 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
 }) => {
   const { user } = useAuth();
   const { t, getCategoryName, language } = useLanguage();
+  const { theme, currentThemeConfig } = useAppTheme();
   const isUrdu = language === 'ur';
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
   const [newItemText, setNewItemText] = useState<string>('');
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
+
+  // Transient feedback banner for added/updated items
+  const [feedbackToast, setFeedbackToast] = useState<{ message: string; type: 'add' | 'merge' } | null>(null);
+  const feedbackTimerRef = useRef<any>(null);
+
+  const showFeedbackToast = (message: string, type: 'add' | 'merge' = 'add') => {
+    if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+    setFeedbackToast({ message, type });
+    feedbackTimerRef.current = setTimeout(() => {
+      setFeedbackToast(null);
+    }, 3000);
+  };
+
+  const plusBg = theme === 'default' ? '#000000' : currentThemeConfig?.primary || '#000000';
 
   // Gesture, anti-duplicate & undo state tracking
   const listRef = useRef<ShoppingList>(list);
@@ -196,6 +212,15 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
       };
       onUpdateList(updatedList);
       setNewItemText('');
+      setSelectedCategoryFilter('all');
+      showFeedbackToast(
+        language === 'ur'
+          ? `${canonical.urdu_name || canonical.english_name} کی مقدار اپڈیٹ ہو گئی`
+          : `Updated ${canonical.english_name} quantity`,
+        'merge'
+      );
+      triggerHaptic(12);
+      playItemCheckSound();
       return;
     }
 
@@ -238,6 +263,15 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
 
     onUpdateList(updatedList);
     setNewItemText('');
+    setSelectedCategoryFilter('all');
+    showFeedbackToast(
+      language === 'ur'
+        ? `${canonical.urdu_name || canonical.english_name} لسٹ میں شامل ہو گیا`
+        : `Added "${canonical.english_name}" to list`,
+      'add'
+    );
+    triggerHaptic(15);
+    playItemCheckSound();
   };
 
   const totalItems = list.items.length;
@@ -464,6 +498,15 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
 
     onUpdateList(updatedList);
     setNewItemText('');
+    setSelectedCategoryFilter('all');
+    showFeedbackToast(
+      language === 'ur'
+        ? `"${trimmed}" لسٹ میں شامل ہو گیا`
+        : `Added "${trimmed}" to list`,
+      'add'
+    );
+    triggerHaptic(15);
+    playItemCheckSound();
   };
 
   const handleItemCategoryChange = (itemId: string, newCategoryId: CategoryId) => {
@@ -571,6 +614,13 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
       items: updatedItems,
       isCompleted: false,
     });
+    setSelectedCategoryFilter('all');
+    showFeedbackToast(
+      language === 'ur'
+        ? `"${itemData.name}" لسٹ میں شامل ہو گیا`
+        : `Added "${itemData.name}" to list`,
+      'add'
+    );
   };
 
   // Extract unique categoryIds in this list
@@ -627,38 +677,29 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
 
       {/* Main Content */}
       <main className="flex-1 px-4 sm:px-6 md:px-8 pt-4 flex flex-col gap-5">
-        {/* Header & Summary */}
-        <div className="flex flex-col gap-2">
-          <div className="flex justify-between items-end">
-            <h1 className="font-['Plus_Jakarta_Sans'] text-2xl sm:text-3xl font-extrabold text-primary tracking-tight truncate pr-2">
-              {list.title}
-            </h1>
-            <span className="font-['Manrope'] text-sm text-on-surface-variant font-medium shrink-0">
-              {t('home.itemsCount', { count: totalItems })}
-            </span>
-          </div>
-
-          {/* Progress Bar */}
-          <div className="w-full bg-surface-container-high rounded-full h-2.5 mt-1 overflow-hidden shadow-inner">
-            <div
-              className="bg-primary h-2.5 rounded-full transition-all duration-500 ease-out"
-              style={{ width: `${percentComplete}%` }}
-            />
-          </div>
-
-          <div className="flex justify-between items-center font-['Manrope'] text-xs font-semibold text-outline">
-            <span>
-              {t('shoppingList.boughtSummary', { done: completedItemsCount, total: totalItems })}
-            </span>
-            <span>{t('shoppingList.percentComplete', { percent: percentComplete })}</span>
-          </div>
-
-          {totalItems > 0 && (
-            <div className="flex items-center gap-1.5 text-[11px] font-['Manrope'] font-medium text-outline/80">
-              <span>{t('shoppingList.tapOrSwipeHint')}</span>
-            </div>
-          )}
+        {/* Header & Summary - Clean & Minimal as requested */}
+        <div className="flex justify-between items-center pb-0.5">
+          <h1 className="font-['Plus_Jakarta_Sans'] text-2xl sm:text-3xl font-extrabold text-primary tracking-tight truncate pr-2">
+            {list.title}
+          </h1>
+          <span className="font-['Manrope'] text-sm text-on-surface-variant font-semibold shrink-0 bg-surface-container-low px-3 py-1 rounded-full border border-surface-dim">
+            {t('home.itemsCount', { count: totalItems })}
+          </span>
         </div>
+
+        {/* Transient Feedback Banner */}
+        {feedbackToast && (
+          <div
+            className={`p-2.5 rounded-xl text-xs font-['Manrope'] font-semibold flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-150 ${
+              feedbackToast.type === 'merge'
+                ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20'
+                : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20'
+            }`}
+          >
+            <Check className="w-3.5 h-3.5 shrink-0" strokeWidth={3} />
+            <span className="truncate">{feedbackToast.message}</span>
+          </div>
+        )}
 
         {/* Add Item Input Bar */}
         <div className="space-y-2">
@@ -677,7 +718,8 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
             <button
               type="submit"
               aria-label="Add item"
-              className="absolute end-1.5 top-1/2 -translate-y-1/2 w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center hover:bg-primary/90 active:scale-95 transition-all shadow-xs"
+              style={{ backgroundColor: plusBg }}
+              className="absolute end-1.5 top-1/2 -translate-y-1/2 w-10 h-10 text-white rounded-full flex items-center justify-center hover:opacity-90 active:scale-95 transition-all shadow-xs cursor-pointer"
             >
               <Plus className="w-5 h-5 stroke-[2.4]" />
             </button>

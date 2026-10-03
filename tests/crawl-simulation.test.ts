@@ -182,7 +182,6 @@ const PUBLIC_CRAWL_ROUTES: SimulatedCrawlRecord[] = [
 
 // 2. All Private / Authenticated Routes (Must NEVER be indexable or leaked)
 const PRIVATE_CRAWL_ROUTES: string[] = [
-  '/home',
   '/lists/test-list-id-123',
   '/lists/test-list-id-123/details',
   '/lists/test-list-id-123/edit',
@@ -217,8 +216,15 @@ async function runCrawlSimulation() {
   console.log('--- 1. Testing Public & Localized Indexable Endpoints ---');
   for (const item of PUBLIC_CRAWL_ROUTES) {
     // Verify Sitemap presence
-    const cleanSitemapTarget = item.route === '/' ? PRODUCTION_HOST + '/' : PRODUCTION_HOST + item.route;
-    const isPresentInSitemap = sitemapContent.includes(`<loc>${cleanSitemapTarget}</loc>`);
+    const isHome = item.route === '/' || item.route === '/home';
+    const isHomeWithQuery = item.route.startsWith('/?');
+    const isPresentInSitemap = isHome
+      ? sitemapContent.includes(`<loc>${PRODUCTION_HOST}/home</loc>`) ||
+        sitemapContent.includes(`<loc>${PRODUCTION_HOST}/</loc>`)
+      : isHomeWithQuery
+      ? sitemapContent.includes(`<loc>${PRODUCTION_HOST}/home${item.route.substring(1)}</loc>`) ||
+        sitemapContent.includes(`<loc>${PRODUCTION_HOST}${item.route}</loc>`)
+      : sitemapContent.includes(`<loc>${PRODUCTION_HOST}${item.route}</loc>`);
     assert(isPresentInSitemap === item.isInSitemap, `Route ${item.route} matches sitemap inclusion policy (${isPresentInSitemap})`);
 
     // Verify robots.txt does not disallow the base path

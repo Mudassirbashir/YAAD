@@ -57,7 +57,7 @@ const getStorageKey = (userId?: string | null) => {
   return userId ? `yaad_shopping_lists_u_${userId}` : 'yaad_shopping_lists_guest';
 };
 
-const LEGAL_SCREENS: ScreenType[] = ['terms', 'privacy', 'about', 'help', 'legal', 'blog'];
+const LEGAL_SCREENS: ScreenType[] = ['terms', 'privacy', 'about', 'help', 'legal', 'blog', 'features', 'how_it_works'];
 
 function AppContent() {
   const {
@@ -142,8 +142,13 @@ function AppContent() {
 
   // Derive current screen from route
   const currentScreen: ScreenType = useMemo((): ScreenType => {
-    // Public landing, rashan, and legal pages render immediately without splash delay
-    if (route.routeId === 'root') return 'landing';
+    // If user is already authenticated, they should NEVER see the public website landing page on root '/'
+    if (route.routeId === 'root') {
+      if (user) return 'home';
+      return 'landing';
+    }
+
+    // Public rashan and legal pages render immediately without splash delay
     if (route.routeId === 'rashan_list') return 'rashan_list';
     if (LEGAL_SCREENS.includes(route.routeId as ScreenType)) return route.routeId as ScreenType;
 
@@ -423,6 +428,22 @@ function AppContent() {
   // ===========================================================================
   // PRODUCTION ROUTE GUARDS & INTENDED DESTINATION ENGINE
   // ===========================================================================
+  // Immediate auto-redirect for authenticated users landing on root '/' or '/auth'
+  useEffect(() => {
+    if (isAuthLoading) return;
+    if (user && !isAuthSuccessShowing) {
+      if (route.routeId === 'root' || route.routeId === 'auth') {
+        const intended = getIntendedDestination();
+        if (intended && intended !== '/auth' && intended !== '/profile-setup' && intended !== '/onboarding' && intended !== '/') {
+          clearIntendedDestination();
+          replace(intended);
+        } else {
+          replace('/home');
+        }
+      }
+    }
+  }, [user, isAuthLoading, isAuthSuccessShowing, route.routeId, getIntendedDestination, clearIntendedDestination, replace]);
+
   useEffect(() => {
     if (!hasSplashFinished || isAuthLoading) return;
 

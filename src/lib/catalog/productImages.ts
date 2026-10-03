@@ -101,10 +101,10 @@ const ITEM_PHOTO_MAP: Record<string, string> = {
   basmati: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80',
   'چاول': 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=300&q=80',
 
-  sugar: 'https://images.unsplash.com/photo-1581441363689-1f3c3c414635?auto=format&fit=crop&w=300&q=80',
-  cheeni: 'https://images.unsplash.com/photo-1581441363689-1f3c3c414635?auto=format&fit=crop&w=300&q=80',
-  chini: 'https://images.unsplash.com/photo-1581441363689-1f3c3c414635?auto=format&fit=crop&w=300&q=80',
-  'چینی': 'https://images.unsplash.com/photo-1581441363689-1f3c3c414635?auto=format&fit=crop&w=300&q=80',
+  sugar: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/6/65/Bowl_of_white_sugar_without_background.jpg/500px-Bowl_of_white_sugar_without_background.jpg',
+  cheeni: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/6/65/Bowl_of_white_sugar_without_background.jpg/500px-Bowl_of_white_sugar_without_background.jpg',
+  chini: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/6/65/Bowl_of_white_sugar_without_background.jpg/500px-Bowl_of_white_sugar_without_background.jpg',
+  'چینی': 'https://thumb.wikimedia.org/wikipedia/commons/thumb/6/65/Bowl_of_white_sugar_without_background.jpg/500px-Bowl_of_white_sugar_without_background.jpg',
 
   flour: 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=300&q=80',
   atta: 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=300&q=80',

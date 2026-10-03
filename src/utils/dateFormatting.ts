@@ -136,3 +136,45 @@ export function formatItemCreatedTime(createdInput?: string | number | Date | nu
   if (!date) return null;
   return formatExactTime(date);
 }
+
+/**
+ * Format relative elapsed time (e.g. "Just now", "4 minutes ago", "20 minutes ago", "1 hour 5 mins ago", "2 hours ago", "1 day ago", "2 days ago")
+ */
+export function formatRelativeTimeAgo(input?: string | number | Date | null): string {
+  const date = parseDateSafe(input);
+  if (!date) return '';
+
+  const now = Date.now();
+  const diffMs = Math.max(0, now - date.getTime());
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHours = Math.floor(diffMin / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffMin < 1) return 'Just now';
+  if (diffMin < 60) {
+    return `${diffMin} ${diffMin === 1 ? 'minute' : 'minutes'} ago`;
+  }
+  if (diffHours < 24) {
+    const remMin = diffMin % 60;
+    if (diffHours === 1 && remMin > 0) {
+      return `1 hour ${remMin} ${remMin === 1 ? 'min' : 'mins'} ago`;
+    }
+    return `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`;
+  }
+  if (diffDays === 1) {
+    return '1 day ago';
+  }
+  if (diffDays < 7) {
+    return `${diffDays} days ago`;
+  }
+  const diffWeeks = Math.floor(diffDays / 7);
+  if (diffWeeks === 1) {
+    return '1 week ago';
+  }
+  if (diffWeeks < 4) {
+    return `${diffWeeks} weeks ago`;
+  }
+  const diffMonths = Math.floor(diffDays / 30);
+  return `${diffMonths} ${diffMonths === 1 ? 'month' : 'months'} ago`;
+}

@@ -4,6 +4,7 @@ import {
   Plus,
   AlertCircle,
   RefreshCw,
+  ClipboardList,
 } from 'lucide-react';
 import { ShoppingList } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
@@ -102,25 +103,39 @@ export const HomeListsSection: React.FC<HomeListsSectionProps> = ({
           ))}
         </div>
       ) : lists.length === 0 ? (
-        /* Empty State: Prompt to create list */
-        <div className="p-6 sm:p-8 bg-surface-container-lowest rounded-2xl border border-dashed border-surface-dim flex flex-col items-center justify-center text-center">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-primary flex items-center justify-center mb-3">
-            <ShoppingBag className="w-6 h-6" />
+        /* Super-rounded Slim Modern Empty State Card */
+        <div
+          id="home_empty_create_card"
+          onClick={onCreateList}
+          className="w-full h-16 sm:h-[72px] px-4 sm:px-5 bg-surface-container-lowest rounded-full border border-surface-dim/80 shadow-2xs hover:shadow-xs hover:border-primary/40 active:scale-[0.99] transition-all flex items-center justify-between gap-3 cursor-pointer group"
+        >
+          {/* Left: Fresh circular icon with encouraging active title */}
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <ShoppingBag className="w-5 h-5 stroke-[2.2]" />
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="font-['Plus_Jakarta_Sans'] text-sm sm:text-base font-bold text-on-surface truncate group-hover:text-primary transition-colors">
+                {t('home.createFirstList') || 'Create your first shopping list'}
+              </span>
+              <span className="font-['Manrope'] text-[11px] text-outline truncate">
+                {t('home.noListsDesc') || 'Tap to start organizing what to buy'}
+              </span>
+            </div>
           </div>
-          <h4 className="font-['Plus_Jakarta_Sans'] font-bold text-sm sm:text-base text-on-surface">
-            {t('home.noListsYet') || t('home.emptyTitle') || 'No Shopping Lists Yet'}
-          </h4>
-          <p className="font-['Manrope'] text-xs text-outline mt-1 max-w-xs leading-relaxed">
-            {t('home.noListsDesc') || t('home.emptySubtitle') || 'Create your first shopping list to remember what to buy.'}
-          </p>
+
+          {/* Right: Circular Plus Button */}
           <button
             type="button"
             id="home_empty_create_btn"
-            onClick={onCreateList}
-            className="mt-4 px-5 py-2.5 rounded-full bg-primary hover:bg-primary-container active:scale-95 text-on-primary font-['Manrope'] text-xs sm:text-sm font-semibold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+            aria-label={t('home.createFirstList') || 'Create new list'}
+            onClick={(e) => {
+              e.stopPropagation();
+              onCreateList();
+            }}
+            className="w-10 h-10 rounded-full bg-primary hover:bg-primary-container text-on-primary flex items-center justify-center shadow-xs active:scale-95 transition-all shrink-0 cursor-pointer group-hover:scale-105"
           >
-            <Plus className="w-4 h-4 stroke-[2.4]" />
-            <span>{t('home.createFirstList') || t('home.createNewList') || 'Create List'}</span>
+            <Plus className="w-5 h-5 stroke-[2.6]" />
           </button>
         </div>
       ) : (

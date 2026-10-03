@@ -1,4 +1,18 @@
-export type LegalPageType = 'terms' | 'privacy' | 'about' | 'help' | 'legal' | 'blog';
+export type LegalPageType = 'terms' | 'privacy' | 'about' | 'help' | 'legal' | 'blog' | 'features' | 'how_it_works';
+
+export interface BlogArticleSection {
+  heading: { en: string; romanUrdu: string; ur: string };
+  paragraphs: { en: string[]; romanUrdu: string[]; ur: string[] };
+  bullets?: { en: string[]; romanUrdu: string[]; ur: string[] };
+}
+
+export interface BlogCitation {
+  claim: string;
+  sourceTitle: string;
+  sourcePublisher: string;
+  sourceUrl?: string;
+  citationYear?: string;
+}
 
 export interface BlogPost {
   id: string;
@@ -6,8 +20,13 @@ export interface BlogPost {
   category: { en: string; romanUrdu: string; ur: string };
   title: { en: string; romanUrdu: string; ur: string };
   summary: { en: string; romanUrdu: string; ur: string };
+  directAnswer?: { en: string; romanUrdu: string; ur: string };
   readTime: string;
   publishDate: string;
+  sections?: BlogArticleSection[];
+  citations?: BlogCitation[];
+  internalLinks?: { label: string; path: string }[];
+  conclusion?: { en: string; romanUrdu: string; ur: string };
   content: {
     en: string[];
     romanUrdu: string[];
@@ -144,139 +163,39 @@ export const LEGAL_METADATA: Record<
     },
     lastUpdated: 'September 2026',
   },
+  features: {
+    path: '/features',
+    badge: 'Features & Capabilities',
+    title: {
+      en: 'YAAD Features',
+      romanUrdu: 'YAAD Features Aur Khususiyaat',
+      ur: 'YAAD Features',
+    },
+    subtitle: {
+      en: 'Explore the bilingual grocery intelligence, instant offline memory, and smart list tools built into YAAD.',
+      romanUrdu: 'YAAD ki bilingual grocery intelligence aur offline list tools ki tafseel.',
+      ur: 'Explore the bilingual grocery intelligence, instant offline memory, and smart list tools built into YAAD.',
+    },
+    lastUpdated: 'October 2026',
+  },
+  how_it_works: {
+    path: '/how-it-works',
+    badge: 'How It Works',
+    title: {
+      en: 'See How YAAD Works',
+      romanUrdu: 'YAAD Kaise Kaam Karti Hai',
+      ur: 'See How YAAD Works',
+    },
+    subtitle: {
+      en: 'A step-by-step walkthrough of planning groceries, auto-categorizing items, and checking off staples in the market.',
+      romanUrdu: 'Ghar k rashan aur sauda salaf ki list banane aur market mein istemal karne ka asan tareeqa.',
+      ur: 'A step-by-step walkthrough of planning groceries, auto-categorizing items, and checking off staples in the market.',
+    },
+    lastUpdated: 'October 2026',
+  },
 };
 
-export const BLOG_POSTS: BlogPost[] = [
-  {
-    id: 'monthly-rashan-guide',
-    slug: 'monthly-rashan-guide-pakistan',
-    category: {
-      en: 'Grocery Budgeting',
-      romanUrdu: 'Budgeting & Rashan',
-      ur: 'Grocery Budgeting',
-    },
-    title: {
-      en: '5 Smart Ways to Plan Monthly Rashan Without Overspending',
-      romanUrdu: 'Mahana Rashan Ki Planning: Budget Bachane K 5 Asan Tareeqay',
-      ur: '5 Smart Ways to Plan Monthly Rashan Without Overspending',
-    },
-    summary: {
-      en: 'How writing down a structured checklist beforehand saves Pakistani families thousands of rupees every month.',
-      romanUrdu: 'Pehle se list bana kar dukaan jaane se rashan par har maah hazaron rupay kaisay bachtay hain.',
-      ur: 'How writing down a structured checklist beforehand saves Pakistani families thousands of rupees every month.',
-    },
-    readTime: '3 min read',
-    publishDate: 'September 2026',
-    content: {
-      en: [
-        'Every household faces the challenge of rising prices and forgotten essentials at the local store. When you enter a kiryana shop without an itemized checklist, unplanned impulse buys quickly inflate your monthly bill.',
-        '1. Audit your pantry before making the list: Check leftover spices, oil, and staples like lentils before writing down new quantities.',
-        '2. Separate staples from perishables: Buy grains and oil in bulk (10kg or 5kg sacks), but get vegetables and dairy weekly to ensure freshness.',
-        '3. Use native units accurately: Confusing 1 Pao (250g) with half kilo leads to food waste. YAAD supports traditional local units natively.',
-        '4. Tick off items as they go into the basket: Having a real-time strike-through list prevents running back to the market later for salt or tea bags.',
-      ],
-      romanUrdu: [
-        'Kiryana shop par baghair list k jaane se hamesha extra kharcha ho jata hai aur zaroori cheezein bhool jati hain.',
-        '1. Pehle ghar ki kitchen pantry check karein taakay pata chalay kon sa aatta, daalein ya masalay pehle se mojood hain.',
-        '2. Mahana staples (aatta, tail, ghee) ko alag rakhein aur sabzi/doodh ko weekly schedule par karein.',
-        '3. Páo aur kilo k paimanon ka sahi hisab rakhein taakay zaroorat k mutabiq cheez khareedi jaye.',
-        '4. Dukaan par item basket mein daalte hi YAAD app par check-off karein taakay kuch reh na jaye.',
-      ],
-      ur: [
-        'Every household faces the challenge of rising prices and forgotten essentials at the local store. When you enter a kiryana shop without an itemized checklist, unplanned impulse buys quickly inflate your monthly bill.',
-        '1. Audit your pantry before making the list: Check leftover spices, oil, and staples like lentils before writing down new quantities.',
-        '2. Separate staples from perishables: Buy grains and oil in bulk (10kg or 5kg sacks), but get vegetables and dairy weekly to ensure freshness.',
-        '3. Use native units accurately: Confusing 1 Pao (250g) with half kilo leads to food waste. YAAD supports traditional local units natively.',
-        '4. Tick off items as they go into the basket: Having a real-time strike-through list prevents running back to the market later for salt or tea bags.',
-      ],
-    },
-  },
-  {
-    id: 'local-units-demystified',
-    slug: 'pakistani-grocery-units-guide',
-    category: {
-      en: 'Local Culture & Weights',
-      romanUrdu: 'Paimany & Units',
-      ur: 'Local Culture & Weights',
-    },
-    title: {
-      en: 'Understanding Pakistani Grocery Units: Pao, Ser, and Dharri',
-      romanUrdu: 'Pakistani Units: Páo, Kilo Aur Dharri Ka Sahi Hisab',
-      ur: 'Understanding Pakistani Grocery Units: Pao, Ser, and Dharri',
-    },
-    summary: {
-      en: 'A handy quick-reference conversion guide for everyday Pakistani grocery shoppers and market visits.',
-      romanUrdu: 'Dukaan par khareedari k liye Pakistani paimanon ki asaan tafseel aur conversion guide.',
-      ur: 'A handy quick-reference conversion guide for everyday Pakistani grocery shoppers and market visits.',
-    },
-    readTime: '4 min read',
-    publishDate: 'September 2026',
-    content: {
-      en: [
-        'Modern smartphones often show generic international units like ounces or pounds, while Pakistani shopkeepers and sabzi vendors exclusively use Pao, Dharri, and Dozen.',
-        '1 Pao = 250 grams (1/4 of a kilogram). Standard for ginger, garlic, cardamoms, and whole spices.',
-        '1 Dharri = 5 kilograms. Used commonly in vegetable markets (Mandi) for potatoes, onions, and tomatoes.',
-        '1 Dozen = 12 units. The universal standard for bananas and eggs.',
-        'YAAD lets you choose these exact traditional units with one tap, matching your local shopping speech naturally.',
-      ],
-      romanUrdu: [
-        'Hamare Pakistani bazaron mein pound ya ounce nahi chaltay, balke Páo, Kilo aur Dharri boli jati hai.',
-        '1 Páo = 250 grams (yani kilo ka chotha hissa). Adrak, lehsan aur masalon k liye istemal hota hai.',
-        '1 Dharri = 5 Kilograms. Sabzi mandi mein aaloo aur pyaz k liye dharri boli jati hai.',
-        '1 Darjan = 12 adad. Andon aur kelon ki khareedari ka aam paimana.',
-        'YAAD app in tamam rawaiti paimanon ko natively support karti hai.',
-      ],
-      ur: [
-        'Modern smartphones often show generic international units like ounces or pounds, while Pakistani shopkeepers and sabzi vendors exclusively use Pao, Dharri, and Dozen.',
-        '1 Pao = 250 grams (1/4 of a kilogram). Standard for ginger, garlic, cardamoms, and whole spices.',
-        '1 Dharri = 5 kilograms. Used commonly in vegetable markets (Mandi) for potatoes, onions, and tomatoes.',
-        '1 Dozen = 12 units. The universal standard for bananas and eggs.',
-        'YAAD lets you choose these exact traditional units with one tap, matching your local shopping speech naturally.',
-      ],
-    },
-  },
-  {
-    id: 'offline-shopping-memory',
-    slug: 'offline-smart-shopping-in-basement-markets',
-    category: {
-      en: 'Product & Tech',
-      romanUrdu: 'Offline Intelligence',
-      ur: 'Product & Tech',
-    },
-    title: {
-      en: 'Why Offline-First Memory Matters in Crowded Pakistani Bazaars',
-      romanUrdu: 'Bazaron Mein Net Na Chalnay Par YAAD Kaisay Madad Karti Hai',
-      ur: 'Why Offline-First Memory Matters in Crowded Pakistani Bazaars',
-    },
-    summary: {
-      en: 'Never get stranded at the checkout line due to poor 4G signals. YAAD works completely offline.',
-      romanUrdu: 'Basement shops ya crowded bazaron mein baghair internet k shopping list dekhnay aur tick karnay ki sahoolat.',
-      ur: 'Never get stranded at the checkout line due to poor 4G signals. YAAD works completely offline.',
-    },
-    readTime: '3 min read',
-    publishDate: 'September 2026',
-    content: {
-      en: [
-        'Pakistani supermarkets and basement kiryana stores are infamous for weak cell reception. A cloud-only grocery app often spins endlessly while you stand at the counter.',
-        'YAAD stores your entire shopping database directly inside your device memory (IndexedDB).',
-        'You can create lists, add quantities, and mark items off without any active internet connection.',
-        'As soon as your phone reconnects to Wi-Fi or mobile data, your changes safely sync with your Google account in the background.',
-      ],
-      romanUrdu: [
-        'Aksar super stores ya basement kiryana dukano mein mobile internet signals drop ho jatay hain.',
-        'YAAD app aapki list ko aap k phone k local database mein mehfooz rakhti hai.',
-        'Aap baghair kisi internet connection k items check-off kar saktay hain.',
-        'Jab bhi mobile internet dobara connect hoga, aapka data automatically Google account k sath sync ho jayega.',
-      ],
-      ur: [
-        'Pakistani supermarkets and basement kiryana stores are infamous for weak cell reception. A cloud-only grocery app often spins endlessly while you stand at the counter.',
-        'YAAD stores your entire shopping database directly inside your device memory (IndexedDB).',
-        'You can create lists, add quantities, and mark items off without any active internet connection.',
-        'As soon as your phone reconnects to Wi-Fi or mobile data, your changes safely sync with your Google account in the background.',
-      ],
-    },
-  },
-];
+export { BLOG_POSTS } from './blogArticlesData';
 
 export const TERMS_SECTIONS: LegalSection[] = [
   {
@@ -645,6 +564,62 @@ export const ABOUT_HIGHLIGHTS = [
 
 export const FAQS: FAQItem[] = [
   {
+    id: 'what-is-yaad',
+    category: 'general',
+    question: {
+      en: 'What is YAAD and who is it designed for?',
+      romanUrdu: 'YAAD kya hai aur yeh kin logon k liye banayi gayi hai?',
+      ur: 'What is YAAD and who is it designed for?',
+    },
+    answer: {
+      en: 'YAAD is a shopping list and reminder app built for people who regularly shop for groceries, household items, and everyday kitchen essentials. It helps you quickly write down what you need before leaving home and keep track of items while shopping so nothing gets forgotten.',
+      romanUrdu: 'YAAD gharelu sauda salaf aur grocery ki list banane aur yaad rakhne ki app hai. Yeh un tamam logon k liye hai jo bazaar ya store se saman khareedte hain aur cheezein bhoolna nahi chahte.',
+      ur: 'YAAD is a shopping list and reminder app built for people who regularly shop for groceries, household items, and everyday kitchen essentials. It helps you quickly write down what you need before leaving home and keep track of items while shopping so nothing gets forgotten.',
+    },
+  },
+  {
+    id: 'how-yaad-helps',
+    category: 'general',
+    question: {
+      en: 'How does YAAD help me stop forgetting grocery items?',
+      romanUrdu: 'YAAD shopping k waqt cheezein bhoolne se kaise bachati hai?',
+      ur: 'How does YAAD help me stop forgetting grocery items?',
+    },
+    answer: {
+      en: 'YAAD solves this by providing instant natural language capture, common staple suggestions, automated aisle department sorting, and a 1-tap checklist that works completely offline. You cross off items as they go into your basket, leaving only pending items visible.',
+      romanUrdu: 'YAAD mein aap asani se items likh sakte hain, rozmarra k staples ek tap mein add hote hain aur market mein offline rehte hue bhi items ko check-off kar sakte hain taake koi cheez reh na jaye.',
+      ur: 'YAAD solves this by providing instant natural language capture, common staple suggestions, automated aisle department sorting, and a 1-tap checklist that works completely offline. You cross off items as they go into your basket, leaving only pending items visible.',
+    },
+  },
+  {
+    id: 'multiple-lists',
+    category: 'general',
+    question: {
+      en: 'Can I manage multiple lists for different stores or occasions?',
+      romanUrdu: 'Kya alag alag dukano ya trips k liye alag lists ban sakti hain?',
+      ur: 'Can I manage multiple lists for different stores or occasions?',
+    },
+    answer: {
+      en: 'Yes. You can create separate lists for weekly local kiryana trips, monthly rashan hauls, bakery runs, or special occasions. Past trips are saved in your personal history archive so you can review purchases or reuse previous lists with one tap.',
+      romanUrdu: 'Ji haan! Aap kiryana store, monthly rashan, sabzi mandi ya bakery k liye alag alag lists bana sakte hain aur purani lists ko dubara use bhi kar sakte hain.',
+      ur: 'Yes. You can create separate lists for weekly local kiryana trips, monthly rashan hauls, bakery runs, or special occasions. Past trips are saved in your personal history archive so you can review purchases or reuse previous lists with one tap.',
+    },
+  },
+  {
+    id: 'pricing-and-privacy',
+    category: 'security',
+    question: {
+      en: 'Is YAAD free to use, and does it show advertisements?',
+      romanUrdu: 'Kya YAAD bilkul free hai aur isme ads aate hain?',
+      ur: 'Is YAAD free to use, and does it show advertisements?',
+    },
+    answer: {
+      en: 'YAAD is completely free to use. We do not display banner ads, popup interruptions, or tracking pixels. Your lists and shopping habits are stored securely and privately, and we never sell your personal data.',
+      romanUrdu: 'YAAD bilkul muft hai. Isme koi commercial ads ya tracking nahi hai. Aapka grocery data mukammal tor par mehfooz aur private rehta hai.',
+      ur: 'YAAD is completely free to use. We do not display banner ads, popup interruptions, or tracking pixels. Your lists and shopping habits are stored securely and privately, and we never sell your personal data.',
+    },
+  },
+  {
     id: 'offline-how',
     category: 'offline',
     question: {
@@ -712,6 +687,230 @@ export const FAQS: FAQItem[] = [
       en: 'Go to Settings > Account > Delete Account. Confirm your request, and all your shopping lists, profile data, and passkeys will be immediately and permanently deleted from our servers.',
       romanUrdu: 'Settings mein jayein aur "Delete Account" par click karein. Tasdeeq karne par aapka tamam data server se foran mita diya jayega.',
       ur: 'Go to Settings > Account > Delete Account. Confirm your request, and all your shopping lists, profile data, and passkeys will be immediately and permanently deleted from our servers.',
+    },
+  },
+];
+
+export interface FeatureItem {
+  id: string;
+  iconName: string;
+  badge: { en: string; romanUrdu: string; ur: string };
+  title: { en: string; romanUrdu: string; ur: string };
+  description: { en: string; romanUrdu: string; ur: string };
+}
+
+export const FEATURES_DATA: FeatureItem[] = [
+  {
+    id: 'bilingual-ai',
+    iconName: 'languages',
+    badge: { en: 'Bilingual Engine', romanUrdu: 'Bilingual Engine', ur: 'Bilingual Engine' },
+    title: {
+      en: 'Bilingual Urdu & English Grocery Recognition',
+      romanUrdu: 'Urdu & English Sauda Salaf Recognition',
+      ur: 'Bilingual Urdu & English Grocery Recognition',
+    },
+    description: {
+      en: 'Type natural kitchen staples in English, Nastaliq Urdu, or Roman Urdu (like "cheeni", "doodh", "dahi", "aloo"). YAAD recognizes items instantly and categorizes them automatically.',
+      romanUrdu: 'English ya Roman Urdu mein likhein jaise doodh, dahi, pyaz, chawal. YAAD foran samajh kar category mein daal deti hai.',
+      ur: 'Type natural kitchen staples in English, Nastaliq Urdu, or Roman Urdu (like "cheeni", "doodh", "dahi", "aloo"). YAAD recognizes items instantly and categorizes them automatically.',
+    },
+  },
+  {
+    id: 'offline-first',
+    iconName: 'wifiOff',
+    badge: { en: 'Zero Internet Needed', romanUrdu: 'Offline Kaam', ur: 'Zero Internet Needed' },
+    title: {
+      en: '100% Offline-First Memory Engine',
+      romanUrdu: 'Baghair Internet List Ka Istemal',
+      ur: '100% Offline-First Memory Engine',
+    },
+    description: {
+      en: 'Every item is stored safely in your device local IndexedDB. Even in basement markets, concrete superstores, or load-shedding zones with zero reception, your list stays fast and accessible.',
+      romanUrdu: 'Basement bazaar ya kamzor signal mein bhi aapki list foran khulti hai. Tamam data phone k IndexedDB mein mehfooz rehta hai.',
+      ur: 'Every item is stored safely in your device local IndexedDB. Even in basement markets, concrete superstores, or load-shedding zones with zero reception, your list stays fast and accessible.',
+    },
+  },
+  {
+    id: 'pakistani-units',
+    iconName: 'scale',
+    badge: { en: 'Local Measurements', romanUrdu: 'Desi Paimane', ur: 'Local Measurements' },
+    title: {
+      en: 'Pakistani Weights & Grocery Units',
+      romanUrdu: 'Pakistani Paimane (Kg, Darjan, Pao)',
+      ur: 'Pakistani Weights & Grocery Units',
+    },
+    description: {
+      en: 'Seamlessly pick units made for Pakistani grocery shopping: kg, grams, pao, darjan (dozens), packets, bundles (gaddi), bottles, and pieces.',
+      romanUrdu: 'Asaan Pakistani units chunain: kg, pao, darjan, packet, bundle aur gaddi.',
+      ur: 'Seamlessly pick units made for Pakistani grocery shopping: kg, grams, pao, darjan (dozens), packets, bundles (gaddi), bottles, and pieces.',
+    },
+  },
+  {
+    id: 'smart-sync',
+    iconName: 'database',
+    badge: { en: 'Cloud Sync', romanUrdu: 'Cloud Sync', ur: 'Cloud Sync' },
+    title: {
+      en: 'Instant Cross-Device Sync',
+      romanUrdu: 'Household Devices Mein Foran Sync',
+      ur: 'Instant Cross-Device Sync',
+    },
+    description: {
+      en: 'Plan your list on your laptop or tablet at home, and pick it up on your phone at the store. Changes sync silently with Supabase database as soon as you have network.',
+      romanUrdu: 'Ghar par computer ya tablet par list banayein aur market mein phone par open karein. Cloud sync k sath har tabdeeli mehfooz rehti hai.',
+      ur: 'Plan your list on your laptop or tablet at home, and pick it up on your phone at the store. Changes sync silently with Supabase database as soon as you have network.',
+    },
+  },
+  {
+    id: 'one-tap-checklist',
+    iconName: 'checkCircle',
+    badge: { en: 'Fast Shopping Mode', romanUrdu: 'Aisle Mode', ur: 'Fast Shopping Mode' },
+    title: {
+      en: 'Aisle Organization & Tap-to-Check Checklist',
+      romanUrdu: '1-Tap Checklist Aur Aisle Sorting',
+      ur: 'Aisle Organization & Tap-to-Check Checklist',
+    },
+    description: {
+      en: 'Items are cleanly grouped by supermarket department (Dairy, Spices, Vegetables, Household) so you do not have to wander back and forth across store aisles.',
+      romanUrdu: 'Saman category k hisaab se arrange hota hai taake market mein baar baar idhar udhar na jana paray.',
+      ur: 'Items are cleanly grouped by supermarket department (Dairy, Spices, Vegetables, Household) so you do not have to wander back and forth across store aisles.',
+    },
+  },
+  {
+    id: 'privacy-first',
+    iconName: 'lock',
+    badge: { en: 'No Ads or Tracking', romanUrdu: 'Mukammal Raazdari', ur: 'No Ads or Tracking' },
+    title: {
+      en: 'Zero Ad-Tracking & Private Data Isolation',
+      romanUrdu: 'Zero Ads Aur Mukammal Security',
+      ur: 'Zero Ad-Tracking & Private Data Isolation',
+    },
+    description: {
+      en: 'No intrusive popups, no third-party ad pixels, and no selling your shopping data to brokers. Protected with Row Level Security (RLS) and Passkey authentication.',
+      romanUrdu: 'Koi ads nahi, koi tracking nahi. Aapka shopping data sirf aapka hai aur mukammal secure hai.',
+      ur: 'No intrusive popups, no third-party ad pixels, and no selling your shopping data to brokers. Protected with Row Level Security (RLS) and Passkey authentication.',
+    },
+  },
+];
+
+export interface HowItWorksStep {
+  step: number;
+  badge: { en: string; romanUrdu: string; ur: string };
+  title: { en: string; romanUrdu: string; ur: string };
+  description: { en: string; romanUrdu: string; ur: string };
+  details: { en: string[]; romanUrdu: string[]; ur: string[] };
+}
+
+export const HOW_IT_WORKS_DATA: HowItWorksStep[] = [
+  {
+    step: 1,
+    badge: { en: 'Step 1: Create', romanUrdu: 'Pehla Qadam', ur: 'Step 1: Create' },
+    title: {
+      en: 'Create Your Shopping List in Seconds',
+      romanUrdu: 'Apni Shopping List Ka Naam Dein',
+      ur: 'Create Your Shopping List in Seconds',
+    },
+    description: {
+      en: 'Tap New List and name it (e.g. "Weekly Kiryana", "Monthly Rashan", "Baking Supplies").',
+      romanUrdu: 'Nayi list banayein aur uska naam rakhein jaise Weekly Kiryana ya Mahana Rashan.',
+      ur: 'Tap New List and name it (e.g. "Weekly Kiryana", "Monthly Rashan", "Baking Supplies").',
+    },
+    details: {
+      en: [
+        'Organize different trips separately (Supermarket vs Local Kiryana).',
+        'Reuse frequent list templates or start completely fresh with one tap.',
+      ],
+      romanUrdu: [
+        'Mukhtalif trips k liye alag alag lists banayein.',
+        'Pichli lists ko dubara reuse bhi kar sakte hain.',
+      ],
+      ur: [
+        'Organize different trips separately (Supermarket vs Local Kiryana).',
+        'Reuse frequent list templates or start completely fresh with one tap.',
+      ],
+    },
+  },
+  {
+    step: 2,
+    badge: { en: 'Step 2: Add Items', romanUrdu: 'Doosra Qadam', ur: 'Step 2: Add Items' },
+    title: {
+      en: 'Add Items Naturally in English or Urdu',
+      romanUrdu: 'Asaan Zuban Mein Cheezein Likhein',
+      ur: 'Add Items Naturally in English or Urdu',
+    },
+    description: {
+      en: 'Type naturally like you would tell a shopkeeper: "Milk 2 litres", "Cheeni 5 kg", or "Eggs 1 dozen".',
+      romanUrdu: 'Seedhe alfaaz mein likhein jaise "Milk 2 litres", "Cheeni 5 kg" ya "Anday 1 dozen".',
+      ur: 'Type naturally like you would tell a shopkeeper: "Milk 2 litres", "Cheeni 5 kg", or "Eggs 1 dozen".',
+    },
+    details: {
+      en: [
+        'Automatic quantity and unit detection saves you typing time.',
+        'Frequent essentials suggestions let you tap staples straight into the list.',
+      ],
+      romanUrdu: [
+        'Quantity aur unit khud bakhud pehchan li jati hai.',
+        'Aam sauda salaf ko ek click mein list mein shaamil karein.',
+      ],
+      ur: [
+        'Automatic quantity and unit detection saves you typing time.',
+        'Frequent essentials suggestions let you tap staples straight into the list.',
+      ],
+    },
+  },
+  {
+    step: 3,
+    badge: { en: 'Step 3: In the Shop', romanUrdu: 'Teesra Qadam', ur: 'Step 3: In the Shop' },
+    title: {
+      en: 'Shop at the Store & Check Off with 1 Tap',
+      romanUrdu: 'Market Mein Saman Check Off Karein',
+      ur: 'Shop at the Store & Check Off with 1 Tap',
+    },
+    description: {
+      en: 'Open YAAD at the store. Works 100% offline even if your phone has zero signal or mobile data.',
+      romanUrdu: 'Market mein phone open karein aur jo cheez mil jaye uspe tap karein. Internet na bhi ho to chalega.',
+      ur: 'Open YAAD at the store. Works 100% offline even if your phone has zero signal or mobile data.',
+    },
+    details: {
+      en: [
+        'Checked items move down cleanly so you only see what is left to buy.',
+        'Live progress bar shows how much of your grocery shopping is completed.',
+      ],
+      romanUrdu: [
+        'Check ki hui cheezein neeche chali jati hain taake baaqi sauda asani se nazar aaye.',
+        'Progress bar se pata chal jata hai kitna shopping mukammal ho gaya.',
+      ],
+      ur: [
+        'Checked items move down cleanly so you only see what is left to buy.',
+        'Live progress bar shows how much of your grocery shopping is completed.',
+      ],
+    },
+  },
+  {
+    step: 4,
+    badge: { en: 'Step 4: Memory', romanUrdu: 'Choutha Qadam', ur: 'Step 4: Memory' },
+    title: {
+      en: 'Finish Trip & Build Your Shopping Memory',
+      romanUrdu: 'Trip Mukammal Karein Aur Record Mehfooz Rakhein',
+      ur: 'Finish Trip & Build Your Shopping Memory',
+    },
+    description: {
+      en: 'Mark the trip complete. YAAD saves the date, time, and purchased items to your personal history archive.',
+      romanUrdu: 'Complete Trip par tap karein. YAAD tareekh aur saman ka record mehfooz kar leti hai.',
+      ur: 'Mark the trip complete. YAAD saves the date, time, and purchased items to your personal history archive.',
+    },
+    details: {
+      en: [
+        'Review past shopping sessions and track your favorite household staples.',
+        'Never guess what you bought last week or how much you paid.',
+      ],
+      romanUrdu: [
+        'Pichle hafton ki khareedari ka hisaab dekhein.',
+        'Agle mahine k rashan k liye pura record hamesha haazir rehta hai.',
+      ],
+      ur: [
+        'Review past shopping sessions and track your favorite household staples.',
+        'Never guess what you bought last week or how much you paid.',
+      ],
     },
   },
 ];

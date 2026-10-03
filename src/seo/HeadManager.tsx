@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { SITE_CONFIG, getBaseSiteUrl, getAbsoluteCanonicalUrl } from '../config/siteConfig';
 import { FAQS } from '../components/legal/legalContent';
 import { RASHAN_FAQS } from '../components/rashan/rashanData';
+import { BLOG_POSTS } from '../components/legal/blogArticlesData';
 
 /**
  * Helper to get or create a tag in <head>
@@ -108,11 +109,21 @@ export const HeadManager: React.FC = () => {
 
     // 2. Identify if route is public indexable:
     // Public indexable routes are strictly:
-    // - root '/' (Public YAAD Product Landing Page)
-    // - public editorial routes: 'about', 'help', 'terms', 'privacy', 'legal', 'rashan_list'
-    // /home is NEVER indexable (it is the user's private shopping dashboard)
-    const isPublicEditorial = ['about', 'help', 'terms', 'privacy', 'legal', 'rashan_list', 'blog'].includes(routeId);
-    const isPublicLanding = routeId === 'root';
+    // - Public landing / home page (Canonical: https://yaadapppk.vercel.app/home)
+    // - public editorial routes: 'about', 'help', 'terms', 'privacy', 'legal', 'rashan_list', 'blog', 'features', 'how_it_works'
+    // Private user shopping lists when authenticated on /home remain strictly protected
+    const isPublicEditorial = [
+      'about',
+      'help',
+      'terms',
+      'privacy',
+      'legal',
+      'rashan_list',
+      'blog',
+      'features',
+      'how_it_works',
+    ].includes(routeId);
+    const isPublicLanding = routeId === 'root' || (routeId === 'home' && !user);
     const isIndexablePublicRoute = isPublicLanding || isPublicEditorial;
 
     if (!isIndexablePublicRoute) {
@@ -171,6 +182,8 @@ export const HeadManager: React.FC = () => {
     let pageKey = 'home';
     if (routeId === 'about') pageKey = 'about';
     else if (routeId === 'help') pageKey = 'help';
+    else if (routeId === 'features') pageKey = 'features';
+    else if (routeId === 'how_it_works') pageKey = 'howItWorks';
     else if (routeId === 'terms') pageKey = 'terms';
     else if (routeId === 'privacy') pageKey = 'privacy';
     else if (routeId === 'legal') pageKey = 'legal';
@@ -232,12 +245,29 @@ export const HeadManager: React.FC = () => {
     // -------------------------------------------------------------
     // Structured Data (JSON-LD)
     // -------------------------------------------------------------
+    const authorPersonSchema = {
+      '@type': 'Person',
+      '@id': `${baseUrl}/#author`,
+      name: 'Mudassir Bashir',
+      jobTitle: 'Software Engineer & Creator',
+      email: SITE_CONFIG.supportEmail,
+      url: `${baseUrl}/about`,
+    };
+
     const organizationSchema = {
       '@type': 'Organization',
+      '@id': `${baseUrl}/#organization`,
       name: 'YAAD',
-      url: baseUrl,
+      url: `${baseUrl}/`,
       logo: `${baseUrl}/logo.png`,
       email: SITE_CONFIG.supportEmail,
+      founder: authorPersonSchema,
+      sameAs: [
+        'https://www.tiktok.com/@yaadapp',
+        'https://www.facebook.com/yaadapp',
+        'https://www.instagram.com/yaadapp',
+        'https://www.linkedin.com/company/yaadapp',
+      ],
     };
 
     let structuredData: object;
@@ -248,20 +278,20 @@ export const HeadManager: React.FC = () => {
         '@graph': [
           organizationSchema,
           {
-            '@type': 'WebSite',
+            '@type': 'SoftwareApplication',
+            '@id': `${baseUrl}/#softwareapplication`,
             name: 'YAAD',
-            url: baseUrl,
-            description: SITE_CONFIG.pages.home.description.en,
-            inLanguage: ['en'],
-          },
-          {
-            '@type': 'WebApplication',
-            name: 'YAAD',
-            url: baseUrl,
-            description: SITE_CONFIG.pages.home.description.en,
+            url: `${baseUrl}/`,
+            description: 'YAAD is a shopping list and reminder app that helps people remember the things they need to buy before and during shopping.',
             applicationCategory: 'ShoppingApplication',
             operatingSystem: 'All (iOS, Android, Windows, macOS, Linux, ChromeOS)',
             browserRequirements: 'Requires modern web browser with HTML5 and IndexedDB support',
+            publisher: {
+              '@id': `${baseUrl}/#organization`,
+            },
+            creator: {
+              '@id': `${baseUrl}/#organization`,
+            },
             offers: {
               '@type': 'Offer',
               price: '0',
@@ -271,9 +301,32 @@ export const HeadManager: React.FC = () => {
               'Bilingual English and Urdu item categorizer',
               'Roman Urdu natural kitchen item input',
               'Offline-first shopping list with local IndexedDB storage',
+              'Pakistani units (kg, grams, pao, darjan)',
               'Passkey biometric authentication',
               'Zero ad tracking and private data security',
             ],
+          },
+          {
+            '@type': 'WebPage',
+            '@id': `${baseUrl}/home#webpage`,
+            url: `${baseUrl}/home`,
+            name: pageTitle,
+            description: pageDescription,
+            isPartOf: {
+              '@type': 'WebSite',
+              '@id': `${baseUrl}/#website`,
+              name: 'YAAD',
+              url: `${baseUrl}/`,
+              description: SITE_CONFIG.pages.home.description.en,
+              inLanguage: ['en', 'ur'],
+            },
+            about: {
+              '@id': `${baseUrl}/#softwareapplication`,
+            },
+            publisher: {
+              '@id': `${baseUrl}/#organization`,
+            },
+            inLanguage: language === 'ur' ? 'ur' : 'en',
           },
         ],
       };
@@ -294,24 +347,49 @@ export const HeadManager: React.FC = () => {
           organizationSchema,
           {
             '@type': 'BreadcrumbList',
+            '@id': `${absoluteCanonical}#breadcrumb`,
             itemListElement: [
               {
                 '@type': 'ListItem',
                 position: 1,
                 name: 'Home',
-                item: baseUrl,
+                item: `${baseUrl}/home`,
               },
               {
                 '@type': 'ListItem',
                 position: 2,
-                name: 'Help & FAQ',
+                name: 'FAQ',
                 item: absoluteCanonical,
               },
             ],
           },
           {
             '@type': 'FAQPage',
+            '@id': `${absoluteCanonical}#faq`,
             mainEntity: faqEntities,
+          },
+          {
+            '@type': 'WebPage',
+            '@id': `${absoluteCanonical}#webpage`,
+            name: pageTitle,
+            description: pageDescription,
+            url: absoluteCanonical,
+            breadcrumb: {
+              '@id': `${absoluteCanonical}#breadcrumb`,
+            },
+            mainEntity: {
+              '@id': `${absoluteCanonical}#faq`,
+            },
+            isPartOf: {
+              '@type': 'WebSite',
+              '@id': `${baseUrl}/#website`,
+              name: 'YAAD',
+              url: `${baseUrl}/`,
+            },
+            publisher: {
+              '@id': `${baseUrl}/#organization`,
+            },
+            inLanguage: language === 'ur' ? 'ur' : 'en',
           },
         ],
       };
@@ -331,62 +409,262 @@ export const HeadManager: React.FC = () => {
           organizationSchema,
           {
             '@type': 'BreadcrumbList',
+            '@id': `${absoluteCanonical}#breadcrumb`,
             itemListElement: [
               {
                 '@type': 'ListItem',
                 position: 1,
                 name: 'Home',
-                item: baseUrl,
+                item: `${baseUrl}/home`,
               },
               {
                 '@type': 'ListItem',
                 position: 2,
-                name: 'Monthly Rashan List',
+                name: 'Monthly Rashan Guide',
                 item: absoluteCanonical,
               },
             ],
           },
           {
+            '@type': 'FAQPage',
+            '@id': `${absoluteCanonical}#faq`,
+            mainEntity: faqEntities,
+          },
+          {
             '@type': 'ItemPage',
+            '@id': `${absoluteCanonical}#itempage`,
             name: pageTitle,
             description: pageDescription,
             url: absoluteCanonical,
+            breadcrumb: {
+              '@id': `${absoluteCanonical}#breadcrumb`,
+            },
+            isPartOf: {
+              '@type': 'WebSite',
+              '@id': `${baseUrl}/#website`,
+              name: 'YAAD',
+              url: `${baseUrl}/`,
+            },
+            publisher: {
+              '@id': `${baseUrl}/#organization`,
+            },
             inLanguage: 'en',
-          },
-          {
-            '@type': 'FAQPage',
-            mainEntity: faqEntities,
           },
         ],
       };
-    } else {
-      // General Editorial / Legal Page Schema
+    } else if (pageKey === 'blog') {
+      const blogPostingEntities = BLOG_POSTS.map((post) => ({
+        '@type': 'BlogPosting',
+        '@id': `${baseUrl}/blog#${post.id}`,
+        headline: post.title.en,
+        name: post.title.en,
+        description: post.summary.en,
+        articleBody: post.directAnswer?.en || post.summary.en,
+        url: `${baseUrl}/blog#${post.id}`,
+        datePublished: '2026-10-01',
+        inLanguage: language === 'ur' ? 'ur' : 'en',
+        author: {
+          '@type': 'Organization',
+          name: 'YAAD Editorial Team',
+          url: `${baseUrl}/about`,
+        },
+        publisher: {
+          '@id': `${baseUrl}/#organization`,
+        },
+        mainEntityOfPage: {
+          '@type': 'WebPage',
+          '@id': `${absoluteCanonical}#webpage`,
+        },
+      }));
+
       structuredData = {
         '@context': 'https://schema.org',
         '@graph': [
           organizationSchema,
           {
             '@type': 'BreadcrumbList',
+            '@id': `${absoluteCanonical}#breadcrumb`,
             itemListElement: [
               {
                 '@type': 'ListItem',
                 position: 1,
                 name: 'Home',
-                item: baseUrl,
+                item: `${baseUrl}/home`,
               },
               {
                 '@type': 'ListItem',
                 position: 2,
-                name: pageTitle.split('•')[0].trim(),
+                name: 'Blog',
+                item: absoluteCanonical,
+              },
+            ],
+          },
+          {
+            '@type': 'Blog',
+            '@id': `${absoluteCanonical}#blog`,
+            name: 'YAAD Editorial & Shopping Guides',
+            description: 'Practical grocery and household shopping knowledge, cognitive memory insights, and list organization guides.',
+            url: absoluteCanonical,
+            publisher: {
+              '@id': `${baseUrl}/#organization`,
+            },
+            blogPost: blogPostingEntities,
+          },
+          {
+            '@type': 'WebPage',
+            '@id': `${absoluteCanonical}#webpage`,
+            name: pageTitle,
+            description: pageDescription,
+            url: absoluteCanonical,
+            breadcrumb: {
+              '@id': `${absoluteCanonical}#breadcrumb`,
+            },
+            mainEntity: {
+              '@id': `${absoluteCanonical}#blog`,
+            },
+            isPartOf: {
+              '@type': 'WebSite',
+              '@id': `${baseUrl}/#website`,
+              name: 'YAAD',
+              url: `${baseUrl}/`,
+            },
+            publisher: {
+              '@id': `${baseUrl}/#organization`,
+            },
+            inLanguage: language === 'ur' ? 'ur' : 'en',
+          },
+        ],
+      };
+    } else if (pageKey === 'about') {
+      structuredData = {
+        '@context': 'https://schema.org',
+        '@graph': [
+          organizationSchema,
+          authorPersonSchema,
+          {
+            '@type': 'SoftwareApplication',
+            '@id': `${baseUrl}/#softwareapplication`,
+            name: 'YAAD',
+            url: `${baseUrl}/`,
+            description: 'YAAD is a shopping list and reminder app that helps people remember the things they need to buy before and during shopping.',
+            applicationCategory: 'ShoppingApplication',
+            operatingSystem: 'All (iOS, Android, Windows, macOS, Linux, ChromeOS)',
+            browserRequirements: 'Requires modern web browser with HTML5 and IndexedDB support',
+            author: {
+              '@id': `${baseUrl}/#author`,
+            },
+            creator: {
+              '@id': `${baseUrl}/#author`,
+            },
+            publisher: {
+              '@id': `${baseUrl}/#organization`,
+            },
+            offers: {
+              '@type': 'Offer',
+              price: '0',
+              priceCurrency: 'USD',
+            },
+          },
+          {
+            '@type': 'BreadcrumbList',
+            '@id': `${absoluteCanonical}#breadcrumb`,
+            itemListElement: [
+              {
+                '@type': 'ListItem',
+                position: 1,
+                name: 'Home',
+                item: `${baseUrl}/home`,
+              },
+              {
+                '@type': 'ListItem',
+                position: 2,
+                name: 'About',
+                item: absoluteCanonical,
+              },
+            ],
+          },
+          {
+            '@type': 'AboutPage',
+            '@id': `${absoluteCanonical}#aboutpage`,
+            name: pageTitle,
+            description: pageDescription,
+            url: absoluteCanonical,
+            breadcrumb: {
+              '@id': `${absoluteCanonical}#breadcrumb`,
+            },
+            mainEntity: {
+              '@id': `${baseUrl}/#softwareapplication`,
+            },
+            about: {
+              '@id': `${baseUrl}/#softwareapplication`,
+            },
+            author: {
+              '@id': `${baseUrl}/#author`,
+            },
+            publisher: {
+              '@id': `${baseUrl}/#organization`,
+            },
+            isPartOf: {
+              '@type': 'WebSite',
+              '@id': `${baseUrl}/#website`,
+              name: 'YAAD',
+              url: `${baseUrl}/`,
+            },
+            inLanguage: language === 'ur' ? 'ur' : 'en',
+          },
+        ],
+      };
+    } else {
+      // General Editorial / Legal Page Schema
+      let breadcrumbName = pageTitle.split('•')[0].split('|')[0].trim();
+      if (pageKey === 'about') breadcrumbName = 'About';
+      else if (pageKey === 'features') breadcrumbName = 'Features';
+      else if (pageKey === 'howItWorks') breadcrumbName = 'How It Works';
+      else if (pageKey === 'terms') breadcrumbName = 'Terms of Service';
+      else if (pageKey === 'privacy') breadcrumbName = 'Privacy Policy';
+      else if (pageKey === 'blog') breadcrumbName = 'Blog';
+      else if (pageKey === 'legal') breadcrumbName = 'Legal Hub';
+
+      structuredData = {
+        '@context': 'https://schema.org',
+        '@graph': [
+          organizationSchema,
+          {
+            '@type': 'BreadcrumbList',
+            '@id': `${absoluteCanonical}#breadcrumb`,
+            itemListElement: [
+              {
+                '@type': 'ListItem',
+                position: 1,
+                name: 'Home',
+                item: `${baseUrl}/home`,
+              },
+              {
+                '@type': 'ListItem',
+                position: 2,
+                name: breadcrumbName,
                 item: absoluteCanonical,
               },
             ],
           },
           {
             '@type': 'WebPage',
+            '@id': `${absoluteCanonical}#webpage`,
             name: pageTitle,
             description: pageDescription,
             url: absoluteCanonical,
+            breadcrumb: {
+              '@id': `${absoluteCanonical}#breadcrumb`,
+            },
+            isPartOf: {
+              '@type': 'WebSite',
+              '@id': `${baseUrl}/#website`,
+              name: 'YAAD',
+              url: `${baseUrl}/`,
+            },
+            publisher: {
+              '@id': `${baseUrl}/#organization`,
+            },
             inLanguage: language === 'ur' ? 'ur' : 'en',
           },
         ],

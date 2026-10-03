@@ -5,7 +5,7 @@ import { APP_IMAGES } from '../../data/initialData';
 interface AppPublicFooterProps {
   onOpenShopping?: () => void;
   onOpenRashan?: () => void;
-  onOpenLegal?: (page: 'about' | 'terms' | 'privacy' | 'help' | 'blog' | 'legal') => void;
+  onOpenLegal?: (page: 'about' | 'terms' | 'privacy' | 'help' | 'blog' | 'legal' | 'features' | 'how_it_works') => void;
 }
 
 export const AppPublicFooter: React.FC<AppPublicFooterProps> = ({
@@ -51,44 +51,68 @@ export const AppPublicFooter: React.FC<AppPublicFooterProps> = ({
         {/* Col 2: App & Features */}
         <div className="space-y-3">
           <h4 className="text-xs font-bold text-[#1c2826] uppercase tracking-wider">
-            App &amp; Features
+            Explore YAAD
           </h4>
           <ul className="space-y-2 text-xs text-[#556960]">
             <li>
-              <button
-                type="button"
-                onClick={onOpenShopping}
-                className="hover:text-[#005039] transition-colors cursor-pointer text-left"
+              <a
+                href="/features"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onOpenLegal?.('features');
+                }}
+                className="hover:text-[#005039] transition-colors cursor-pointer text-left block"
               >
-                Shopping Lists
-              </button>
+                Explore YAAD features
+              </a>
             </li>
             <li>
-              <button
-                type="button"
-                onClick={onOpenRashan}
-                className="hover:text-[#005039] transition-colors cursor-pointer text-left"
+              <a
+                href="/how-it-works"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onOpenLegal?.('how_it_works');
+                }}
+                className="hover:text-[#005039] transition-colors cursor-pointer text-left block"
+              >
+                See how YAAD works
+              </a>
+            </li>
+            <li>
+              <a
+                href="/about"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onOpenLegal?.('about');
+                }}
+                className="hover:text-[#005039] transition-colors cursor-pointer text-left block"
+              >
+                Learn about YAAD
+              </a>
+            </li>
+            <li>
+              <a
+                href="/faq"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onOpenLegal?.('help');
+                }}
+                className="hover:text-[#005039] transition-colors cursor-pointer text-left block"
+              >
+                Read frequently asked questions
+              </a>
+            </li>
+            <li>
+              <a
+                href="/rashan-list"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onOpenRashan?.();
+                }}
+                className="hover:text-[#005039] transition-colors cursor-pointer text-left block font-medium text-[#005039]"
               >
                 Monthly Rashan Guide
-              </button>
-            </li>
-            <li>
-              <button
-                type="button"
-                onClick={() => onOpenLegal?.('about')}
-                className="hover:text-[#005039] transition-colors cursor-pointer text-left"
-              >
-                About YAAD
-              </button>
-            </li>
-            <li>
-              <button
-                type="button"
-                onClick={() => onOpenLegal?.('help')}
-                className="hover:text-[#005039] transition-colors cursor-pointer text-left"
-              >
-                Help &amp; FAQ
-              </button>
+              </a>
             </li>
           </ul>
         </div>

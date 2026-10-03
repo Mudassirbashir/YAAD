@@ -29,10 +29,16 @@ import {
   RotateCcw,
   UtensilsCrossed,
   Layers,
+  Code,
+  CheckSquare,
+  Terminal,
+  ChevronRight,
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { useAppRouter } from '../../router/RouterContext';
+import { APP_IMAGES } from '../../data/initialData';
+import { BlueTickCheckCircle } from '../BlueTickCheckCircle';
 import {
   LegalPageType,
   LEGAL_METADATA,
@@ -41,6 +47,8 @@ import {
   ABOUT_HIGHLIGHTS,
   FAQS,
   BLOG_POSTS,
+  FEATURES_DATA,
+  HOW_IT_WORKS_DATA,
 } from './legalContent';
 import { AppPublicHeader } from '../common/AppPublicHeader';
 import { AppPublicFooter } from '../common/AppPublicFooter';
@@ -65,16 +73,40 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
   const [faqSearchQuery, setFaqSearchQuery] = useState('');
   const [selectedFaqCategory, setSelectedFaqCategory] = useState<string>('all');
-  const [openFaqIds, setOpenFaqIds] = useState<Set<string>>(new Set(['offline-how', 'language-switch']));
+  const [openFaqIds, setOpenFaqIds] = useState<Set<string>>(new Set(['what-is-yaad', 'offline-how', 'language-switch']));
+  const [expandedBlogPostId, setExpandedBlogPostId] = useState<string | null>(null);
+
+  // Authentic First-Party Example Shopping List State (derived from real catalog & rashan data)
+  const [exampleListItems, setExampleListItems] = useState([
+    { id: 'ex-1', category: 'Produce', name: 'Pyaz (Onions)', quantity: '2 kg', completed: true },
+    { id: 'ex-2', category: 'Produce', name: 'Aloo (Potatoes)', quantity: '1 Dharri (5kg)', completed: false },
+    { id: 'ex-3', category: 'Produce', name: 'Tamatar (Tomatoes)', quantity: '1 kg', completed: false },
+    { id: 'ex-4', category: 'Produce', name: 'Adrak (Ginger)', quantity: '1 Pao (250g)', completed: true },
+    { id: 'ex-5', category: 'Dairy & Breakfast', name: 'Fresh Milk (Doodh)', quantity: '2 Litres', completed: true },
+    { id: 'ex-6', category: 'Dairy & Breakfast', name: 'Desi Eggs', quantity: '1 Dozen', completed: false },
+    { id: 'ex-7', category: 'Dairy & Breakfast', name: 'Chai Patti (Tea)', quantity: '450 g', completed: false },
+    { id: 'ex-8', category: 'Pantry & Grains', name: 'Chakki Atta', quantity: '10 kg', completed: false },
+    { id: 'ex-9', category: 'Pantry & Grains', name: 'Basmati Rice', quantity: '5 kg', completed: true },
+    { id: 'ex-10', category: 'Pantry & Grains', name: 'Cooking Oil', quantity: '5 Litres', completed: false },
+    { id: 'ex-11', category: 'Spices & Seasoning', name: 'Haldi (Turmeric)', quantity: '100 g', completed: true },
+    { id: 'ex-12', category: 'Household', name: 'Dishwashing Bar', quantity: '1 Pack', completed: false },
+  ]);
+
+  const toggleExampleItem = (id: string) => {
+    setExampleListItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, completed: !item.completed } : item))
+    );
+  };
 
   const activeUser = propUser !== undefined ? propUser : authUser;
 
-  const rashanListPath =
-    language === 'ur'
-      ? '/rashan-list?lang=ur'
-      : language === 'roman-urdu'
-      ? '/rashan-list?lang=roman-urdu'
-      : '/rashan-list';
+  const langSuffix = language === 'ur' ? '?lang=ur' : language === 'roman-urdu' ? '?lang=roman-urdu' : '';
+  const rashanListPath = `/rashan-list${langSuffix}`;
+  const howItWorksPath = `/how-it-works${langSuffix}`;
+  const featuresPath = `/features${langSuffix}`;
+  const blogPath = `/blog${langSuffix}`;
+  const helpPath = `/help${langSuffix}`;
+  const aboutPath = `/about${langSuffix}`;
 
   const rashanListLabel =
     language === 'roman-urdu'
@@ -86,6 +118,20 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
     setCurrentPage(initialPage);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [initialPage]);
+
+  // Auto-expand blog article if URL has matching hash
+  useEffect(() => {
+    if (currentPage === 'blog' && typeof window !== 'undefined') {
+      const hash = window.location.hash.replace('#', '');
+      if (hash && BLOG_POSTS.some((p) => p.id === hash)) {
+        setExpandedBlogPostId(hash);
+        setTimeout(() => {
+          const el = document.getElementById(hash);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 150);
+      }
+    }
+  }, [currentPage]);
 
   // Update browser document title according to current page
   useEffect(() => {
@@ -211,28 +257,114 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
       >
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav
-            aria-label="Legal and About Pages"
+            aria-label="Public Information and Architecture Navigation"
             className="flex items-center gap-2 overflow-x-auto py-3 no-scrollbar"
           >
-            {/* Terms & Conditions Link */}
+            {/* 1. Features Link */}
             <a
-              id="legal_tab_terms"
-              href="/terms"
+              id="legal_tab_features"
+              href="/features"
               onClick={(e) => {
                 e.preventDefault();
-                handleTabClick('terms');
+                handleTabClick('features');
               }}
               className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
-                currentPage === 'terms'
+                currentPage === 'features'
                   ? 'bg-[#005039] text-white shadow-xs'
                   : 'bg-[#faf8f5] text-[#556960] hover:text-[#1c2826] hover:bg-[#f0ebe1] border border-[#e5e1d8]'
               }`}
             >
-              <FileText className="w-3.5 h-3.5 shrink-0" />
-              <span>{getLocalizedText(LEGAL_METADATA.terms.title)}</span>
+              <Sparkles className="w-3.5 h-3.5 shrink-0" />
+              <span>{getLocalizedText(LEGAL_METADATA.features.title)}</span>
             </a>
 
-            {/* Privacy Policy Link */}
+            {/* 2. How It Works Link */}
+            <a
+              id="legal_tab_how_it_works"
+              href="/how-it-works"
+              onClick={(e) => {
+                e.preventDefault();
+                handleTabClick('how_it_works');
+              }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
+                currentPage === 'how_it_works'
+                  ? 'bg-[#005039] text-white shadow-xs'
+                  : 'bg-[#faf8f5] text-[#556960] hover:text-[#1c2826] hover:bg-[#f0ebe1] border border-[#e5e1d8]'
+              }`}
+            >
+              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+              <span>{getLocalizedText(LEGAL_METADATA.how_it_works.title)}</span>
+            </a>
+
+            {/* 3. Help & FAQ Link */}
+            <a
+              id="legal_tab_help"
+              href="/help"
+              onClick={(e) => {
+                e.preventDefault();
+                handleTabClick('help');
+              }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
+                currentPage === 'help'
+                  ? 'bg-[#005039] text-white shadow-xs'
+                  : 'bg-[#faf8f5] text-[#556960] hover:text-[#1c2826] hover:bg-[#f0ebe1] border border-[#e5e1d8]'
+              }`}
+            >
+              <HelpCircle className="w-3.5 h-3.5 shrink-0" />
+              <span>{language === 'roman-urdu' ? 'FAQ & Madad' : 'FAQ & Help'}</span>
+            </a>
+
+            {/* 4. About YAAD Link */}
+            <a
+              id="legal_tab_about"
+              href="/about"
+              onClick={(e) => {
+                e.preventDefault();
+                handleTabClick('about');
+              }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
+                currentPage === 'about'
+                  ? 'bg-[#005039] text-white shadow-xs'
+                  : 'bg-[#faf8f5] text-[#556960] hover:text-[#1c2826] hover:bg-[#f0ebe1] border border-[#e5e1d8]'
+              }`}
+            >
+              <UserCheck className="w-3.5 h-3.5 shrink-0" />
+              <span>{getLocalizedText(LEGAL_METADATA.about.title)}</span>
+            </a>
+
+            {/* 5. Blog & Articles Link */}
+            <a
+              id="legal_tab_blog"
+              href="/blog"
+              onClick={(e) => {
+                e.preventDefault();
+                handleTabClick('blog');
+              }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
+                currentPage === 'blog'
+                  ? 'bg-[#005039] text-white shadow-xs'
+                  : 'bg-[#faf8f5] text-[#556960] hover:text-[#1c2826] hover:bg-[#f0ebe1] border border-[#e5e1d8]'
+              }`}
+            >
+              <Newspaper className="w-3.5 h-3.5 shrink-0" />
+              <span>{language === 'roman-urdu' ? 'Blog & Guides' : 'Blog'}</span>
+            </a>
+
+            {/* 6. Monthly Rashan List Guide */}
+            <a
+              id="legal_tab_rashan"
+              href={rashanListPath}
+              onClick={(e) => {
+                e.preventDefault();
+                navigate(rashanListPath);
+              }}
+              className="flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all bg-[#faf8f5] text-[#556960] hover:text-[#1c2826] hover:bg-[#f0ebe1] border border-[#e5e1d8] cursor-pointer"
+            >
+              <ShoppingBag className="w-3.5 h-3.5 shrink-0 text-[#005039]" />
+              <span>{rashanListLabel}</span>
+            </a>
+
+            {/* 7. Privacy Policy Link */}
             <a
               id="legal_tab_privacy"
               href="/privacy"
@@ -250,57 +382,25 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
               <span>{getLocalizedText(LEGAL_METADATA.privacy.title)}</span>
             </a>
 
-            {/* About YAAD Link */}
+            {/* 8. Terms & Conditions Link */}
             <a
-              id="legal_tab_about"
-              href="/about"
+              id="legal_tab_terms"
+              href="/terms"
               onClick={(e) => {
                 e.preventDefault();
-                handleTabClick('about');
+                handleTabClick('terms');
               }}
               className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
-                currentPage === 'about'
+                currentPage === 'terms'
                   ? 'bg-[#005039] text-white shadow-xs'
                   : 'bg-[#faf8f5] text-[#556960] hover:text-[#1c2826] hover:bg-[#f0ebe1] border border-[#e5e1d8]'
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5 shrink-0" />
-              <span>{getLocalizedText(LEGAL_METADATA.about.title)}</span>
+              <FileText className="w-3.5 h-3.5 shrink-0" />
+              <span>{getLocalizedText(LEGAL_METADATA.terms.title)}</span>
             </a>
 
-            {/* Help & Support Link */}
-            <a
-              id="legal_tab_help"
-              href="/help"
-              onClick={(e) => {
-                e.preventDefault();
-                handleTabClick('help');
-              }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
-                currentPage === 'help'
-                  ? 'bg-[#005039] text-white shadow-xs'
-                  : 'bg-[#faf8f5] text-[#556960] hover:text-[#1c2826] hover:bg-[#f0ebe1] border border-[#e5e1d8]'
-              }`}
-            >
-              <HelpCircle className="w-3.5 h-3.5 shrink-0" />
-              <span>{getLocalizedText(LEGAL_METADATA.help.title)}</span>
-            </a>
-
-            {/* Monthly Rashan List Guide */}
-            <a
-              id="legal_tab_rashan"
-              href={rashanListPath}
-              onClick={(e) => {
-                e.preventDefault();
-                navigate(rashanListPath);
-              }}
-              className="flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all bg-[#faf8f5] text-[#556960] hover:text-[#1c2826] hover:bg-[#f0ebe1] border border-[#e5e1d8] cursor-pointer"
-            >
-              <ShoppingBag className="w-3.5 h-3.5 shrink-0 text-[#005039]" />
-              <span>{rashanListLabel}</span>
-            </a>
-
-            {/* Hub Link */}
+            {/* 9. Hub Link */}
             <a
               id="legal_tab_legal"
               href="/legal"
@@ -316,24 +416,6 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
             >
               <Layers className="w-3.5 h-3.5 shrink-0" />
               <span>{getLocalizedText(LEGAL_METADATA.legal.title)}</span>
-            </a>
-
-            {/* Blog & Articles Link */}
-            <a
-              id="legal_tab_blog"
-              href="/blog"
-              onClick={(e) => {
-                e.preventDefault();
-                handleTabClick('blog');
-              }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
-                currentPage === 'blog'
-                  ? 'bg-[#005039] text-white shadow-xs'
-                  : 'bg-[#faf8f5] text-[#556960] hover:text-[#1c2826] hover:bg-[#f0ebe1] border border-[#e5e1d8]'
-              }`}
-            >
-              <Newspaper className="w-3.5 h-3.5 shrink-0" />
-              <span>{language === 'roman-urdu' ? 'Blog & Guides' : 'Blog'}</span>
             </a>
           </nav>
         </div>
@@ -529,38 +611,121 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
         )}
 
         {/* ================================================================ */}
-        {/* VIEW C: ABOUT YAAD (Polished Layout, Form, Spacing & Specific Icons) */}
+        {/* VIEW C: ABOUT YAAD (Ownership, Purpose, Problem & Verified Craft) */}
         {/* ================================================================ */}
         {currentPage === 'about' && (
           <div className="space-y-10">
-            {/* 1. Main Editorial Story Banner */}
-            <div className="p-7 sm:p-9 rounded-3xl bg-white border border-[#e5e1d8] shadow-xs space-y-4 relative overflow-hidden">
+            {/* 1. Main Editorial Story Banner: What YAAD Is & Why It Exists */}
+            <div className="p-7 sm:p-9 rounded-3xl bg-white border border-[#e5e1d8] shadow-xs space-y-5 relative overflow-hidden">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#005039]/10 text-[#005039] text-xs font-bold tracking-wide">
                 <Sparkles className="w-3.5 h-3.5" />
-                <span>Our Craft &amp; Purpose</span>
+                <span>Our Purpose &amp; Craft</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-[#1c2826] tracking-tight leading-snug">
-                Built to solve the real chaos of grocery shopping.
-              </h2>
-              <p className="text-sm sm:text-base text-[#556960] leading-relaxed">
-                Most shopping list applications are built for Western supermarkets. They don&apos;t understand that
-                Pakistani and South Asian kitchens buy in kilograms, need fresh coriander (&ldquo;hara dhaniya&rdquo;), cook
-                with specialty lentils (&ldquo;daal mash&rdquo;, &ldquo;daal chana&rdquo;), and prepare for weekend family gatherings.
-              </p>
-              <p className="text-sm sm:text-base text-[#556960] leading-relaxed">
-                YAAD was crafted from the ground up to bring thoughtful, respectful intelligence to daily shopping.
-                Whether you type in English, fast Roman Urdu, or authentic Nastaliq Urdu script, YAAD understands
-                your items instantly.
-              </p>
+              <div className="space-y-2">
+                <h2 className="text-2xl sm:text-3xl font-black text-[#1c2826] tracking-tight leading-snug">
+                  {language === 'ur'
+                    ? 'خریداری کے دوران ضروری اشیاء یاد رکھنے کے لیے ایک قابلِ اعتماد ساتھی'
+                    : language === 'roman-urdu'
+                    ? 'Shopping k waqt zaroori sauda salaf yaad rakhne ka aasan aur mustahkam zariya'
+                    : 'A calm, dependable tool built to help you remember what you need to buy.'}
+                </h2>
+                <p className="text-sm sm:text-base text-[#556960] leading-relaxed">
+                  YAAD is a shopping list and reminder app that helps people remember the things they need to buy before and during shopping.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                {/* What YAAD Is */}
+                <div className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] space-y-1.5">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#005039]">1. What YAAD Is</span>
+                  <p className="text-xs sm:text-sm text-[#556960] leading-relaxed">
+                    A focused shopping list and reminder utility designed for households, home cooks, and shoppers who need a dependable, ad-free tool to organize grocery items.
+                  </p>
+                </div>
+
+                {/* Why YAAD Exists */}
+                <div className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] space-y-1.5">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#005039]">2. Why YAAD Exists</span>
+                  <p className="text-xs sm:text-sm text-[#556960] leading-relaxed">
+                    Built to offer a quiet, practical alternative to generic list apps that freeze when internet signals drop inside basement supermarkets and ignore local grocery languages.
+                  </p>
+                </div>
+
+                {/* The Problem It Solves */}
+                <div className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] space-y-1.5">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#005039]">3. The Problem Solved</span>
+                  <p className="text-xs sm:text-sm text-[#556960] leading-relaxed">
+                    Forgetting essential groceries causes interrupted meal preparation, repeated trips to the store, and unnecessary household stress. YAAD eliminates reliance on working memory alone.
+                  </p>
+                </div>
+
+                {/* Who It Is For */}
+                <div className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] space-y-1.5">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#005039]">4. Who It Is For</span>
+                  <p className="text-xs sm:text-sm text-[#556960] leading-relaxed">
+                    Families, individuals, roommates, and household shoppers who value fast entry, natural language support (English, Roman Urdu, Urdu), and complete data privacy.
+                  </p>
+                </div>
+              </div>
             </div>
 
-            {/* 2. Four Pillars Grid with Specific, Elevated Lucide Icons */}
+            {/* 2. Ownership, Authorship & Independent Maintainer Information */}
+            <div className="p-7 sm:p-8 rounded-3xl bg-white border border-[#e5e1d8] shadow-xs space-y-5">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-[#005039]/10 text-[#005039] flex items-center justify-center shrink-0">
+                  <UserCheck className="w-6 h-6 text-[#005039]" />
+                </div>
+                <div>
+                  <h3 className="text-lg sm:text-xl font-black text-[#1c2826] tracking-tight">
+                    Ownership, Authorship &amp; Engineering
+                  </h3>
+                  <p className="text-xs text-[#556960]">
+                    Created and maintained independently by software engineer Mudassir Bashir
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-3 text-sm text-[#556960] leading-relaxed">
+                <p>
+                  YAAD is an independent software project created, designed, and actively maintained by software engineer <strong>Mudassir Bashir</strong>.
+                </p>
+                <p>
+                  The project was started to address real daily friction in Pakistani and bilingual households: conventional shopping applications are rarely optimized for regional pantry items (such as <em>chakki atta</em>, <em>daal mash</em>, or <em>Shan masalas</em>), stop functioning when phone signals vanish in supermarket basements, and compromise user experience with third-party tracking scripts and intrusive ads.
+                </p>
+                <p>
+                  YAAD is engineered with a strict local-first architecture using modern web technologies (React 19, TypeScript, Tailwind CSS, IndexedDB client storage). Direct contact with the author and maintainer is available via email at{' '}
+                  <a href="mailto:yaadapppk@gmail.com" className="text-[#005039] font-bold underline">
+                    yaadapppk@gmail.com
+                  </a>.
+                </p>
+              </div>
+
+              {/* Author & Entity Summary Card */}
+              <div className="p-5 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                <div>
+                  <span className="font-bold text-[#1c2826] block">Project Creator &amp; Maintainer</span>
+                  <span className="text-[#556960]">Mudassir Bashir</span>
+                </div>
+                <div>
+                  <span className="font-bold text-[#1c2826] block">Organization Entity</span>
+                  <span className="text-[#556960]">YAAD (https://yaadapppk.vercel.app)</span>
+                </div>
+                <div>
+                  <span className="font-bold text-[#1c2826] block">Official Contact</span>
+                  <a href="mailto:yaadapppk@gmail.com" className="text-[#005039] font-semibold hover:underline">
+                    yaadapppk@gmail.com
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* 3. Four Core Pillars */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg sm:text-xl font-black text-[#1c2826] tracking-tight">
-                  What Makes YAAD Different
+                  Core Engineering Principles
                 </h3>
-                <span className="text-xs font-semibold text-[#005039]">4 Core Pillars</span>
+                <span className="text-xs font-semibold text-[#005039]">4 Pillars</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -638,7 +803,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
               </div>
             </div>
 
-            {/* 3. Cultural Nuance & Pakistani Kitchen Catalog Showcase */}
+            {/* 4. Cultural Nuance & Pakistani Kitchen Catalog Showcase */}
             <div className="p-7 sm:p-8 rounded-3xl bg-white border-2 border-[#005039]/25 shadow-xs space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-[#005039] text-white flex items-center justify-center shrink-0 shadow-xs">
@@ -678,6 +843,208 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                   </span>
                 </a>
               </div>
+            </div>
+
+            {/* 5. Where Users Can Learn More (Comprehensive Exploration Hub) */}
+            <div className="p-7 sm:p-8 rounded-3xl bg-white border border-[#e5e1d8] shadow-xs space-y-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg sm:text-xl font-black text-[#1c2826] tracking-tight">
+                    Where to Learn More
+                  </h3>
+                  <p className="text-xs text-[#556960]">
+                    Explore interactive walkthroughs, technical guides, checklists, and direct assistance
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Link 1: How It Works */}
+                <a
+                  href={howItWorksPath}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate(howItWorksPath);
+                  }}
+                  className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] hover:border-[#005039]/40 hover:bg-white transition-all space-y-1.5 group cursor-pointer block"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-[#005039] uppercase tracking-wider">Interactive Guide</span>
+                    <ChevronRight className="w-4 h-4 text-[#005039] group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                  <h4 className="text-sm font-bold text-[#1c2826]">See How YAAD Works</h4>
+                  <p className="text-xs text-[#556960] leading-relaxed">
+                    Step-by-step interactive walkthrough of creating lists, auto-categorizing items, and checking off groceries.
+                  </p>
+                </a>
+
+                {/* Link 2: Features */}
+                <a
+                  href={featuresPath}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate(featuresPath);
+                  }}
+                  className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] hover:border-[#005039]/40 hover:bg-white transition-all space-y-1.5 group cursor-pointer block"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-[#005039] uppercase tracking-wider">Features</span>
+                    <ChevronRight className="w-4 h-4 text-[#005039] group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                  <h4 className="text-sm font-bold text-[#1c2826]">Explore Feature Suite</h4>
+                  <p className="text-xs text-[#556960] leading-relaxed">
+                    Bilingual intelligence, offline IndexedDB storage, Pakistani unit converters, and passkey authentication.
+                  </p>
+                </a>
+
+                {/* Link 3: Monthly Rashan List */}
+                <a
+                  href={rashanListPath}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate(rashanListPath);
+                  }}
+                  className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] hover:border-[#005039]/40 hover:bg-white transition-all space-y-1.5 group cursor-pointer block"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-[#005039] uppercase tracking-wider">Pantry Checklist</span>
+                    <ChevronRight className="w-4 h-4 text-[#005039] group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                  <h4 className="text-sm font-bold text-[#1c2826]">Monthly Rashan Guide</h4>
+                  <p className="text-xs text-[#556960] leading-relaxed">
+                    Pre-curated monthly grocery checklists tailored for Pakistani households with 1-click list import.
+                  </p>
+                </a>
+
+                {/* Link 4: Blog */}
+                <a
+                  href={blogPath}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate(blogPath);
+                  }}
+                  className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] hover:border-[#005039]/40 hover:bg-white transition-all space-y-1.5 group cursor-pointer block"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-[#005039] uppercase tracking-wider">Knowledge Hub</span>
+                    <ChevronRight className="w-4 h-4 text-[#005039] group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                  <h4 className="text-sm font-bold text-[#1c2826]">Shopping Knowledge &amp; Blog</h4>
+                  <p className="text-xs text-[#556960] leading-relaxed">
+                    In-depth articles on shopping psychology, memory limitations, budget planning, and kitchen organization.
+                  </p>
+                </a>
+
+                {/* Link 5: Help & FAQ */}
+                <a
+                  href={helpPath}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate(helpPath);
+                  }}
+                  className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] hover:border-[#005039]/40 hover:bg-white transition-all space-y-1.5 group cursor-pointer block"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-[#005039] uppercase tracking-wider">Help Center</span>
+                    <ChevronRight className="w-4 h-4 text-[#005039] group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                  <h4 className="text-sm font-bold text-[#1c2826]">Help &amp; Frequently Asked Questions</h4>
+                  <p className="text-xs text-[#556960] leading-relaxed">
+                    Answers regarding offline functionality, account security, Urdu typing, and device synchronization.
+                  </p>
+                </a>
+
+                {/* Link 6: Contact Maintainer */}
+                <a
+                  href="mailto:yaadapppk@gmail.com"
+                  className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] hover:border-[#005039]/40 hover:bg-white transition-all space-y-1.5 group cursor-pointer block"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-[#005039] uppercase tracking-wider">Direct Support</span>
+                    <ChevronRight className="w-4 h-4 text-[#005039] group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                  <h4 className="text-sm font-bold text-[#1c2826]">Contact Maintainer</h4>
+                  <p className="text-xs text-[#556960] leading-relaxed">
+                    Have questions or feedback? Email the engineer directly at yaadapppk@gmail.com.
+                  </p>
+                </a>
+              </div>
+            </div>
+
+            {/* 6. Early Testing & Automated Technical Verification */}
+            <div className="p-7 sm:p-8 rounded-3xl bg-white border border-[#e5e1d8] shadow-xs space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-[#005039]/10 text-[#005039] flex items-center justify-center shrink-0">
+                  <Terminal className="w-6 h-6 text-[#005039]" />
+                </div>
+                <div>
+                  <h3 className="text-lg sm:text-xl font-black text-[#1c2826] tracking-tight">
+                    Early Testing &amp; Technical Verification
+                  </h3>
+                  <p className="text-xs text-[#556960]">
+                    Verified through automated regression test suites covering recognition, offline sync, and data isolation
+                  </p>
+                </div>
+              </div>
+
+              <p className="text-xs sm:text-sm text-[#556960] leading-relaxed">
+                Prior to public release, YAAD undergoes automated regression testing across key functional layers to ensure complete offline reliability and zero data loss in supermarket aisles:
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+                <div className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] space-y-1">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-[#005039] shrink-0" />
+                    <span className="text-xs font-bold text-[#1c2826]">Bilingual Recognition Test Suite</span>
+                  </div>
+                  <p className="text-xs text-[#556960]">
+                    Validated across 2,000+ localized Pakistani kitchen staples in English, Roman Urdu, and Nastaliq Urdu (tests/recognition.test.ts).
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] space-y-1">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-[#005039] shrink-0" />
+                    <span className="text-xs font-bold text-[#1c2826]">Pakistani Units Parser</span>
+                  </div>
+                  <p className="text-xs text-[#556960]">
+                    Validated extraction and conversion of pao (250g), dharri (5kg), darjan (12), and chattak (tests/pakistani-units.test.ts).
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] space-y-1">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-[#005039] shrink-0" />
+                    <span className="text-xs font-bold text-[#1c2826]">Offline Mutation Queue</span>
+                  </div>
+                  <p className="text-xs text-[#556960]">
+                    Validated uninterrupted local IndexedDB storage and offline list mutations without cellular signal (tests/offline-queue.test.ts).
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] space-y-1">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-[#005039] shrink-0" />
+                    <span className="text-xs font-bold text-[#1c2826]">Row-Level Data Security</span>
+                  </div>
+                  <p className="text-xs text-[#556960]">
+                    Validated strict user data isolation preventing cross-account list leakage (tests/rls-logic.test.ts).
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* 7. Early Feedback Status & Integrity Notice */}
+            <div className="p-6 rounded-3xl bg-[#faf8f5] border border-[#e5e1d8] space-y-2">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-[#005039] shrink-0" />
+                <h4 className="text-xs font-bold text-[#005039] uppercase tracking-wider">
+                  Early Feedback &amp; Review Policy
+                </h4>
+              </div>
+              <p className="text-xs text-[#556960] leading-relaxed">
+                YAAD values transparency above all. Verified household tester feedback and community reviews will be published as formal submissions are gathered. No customer counts, review quotes, or star ratings are fabricated. To share feedback or report a bug, email <a href="mailto:yaadapppk@gmail.com" className="text-[#005039] underline font-bold">yaadapppk@gmail.com</a>.
+              </p>
             </div>
           </div>
         )}
@@ -964,13 +1331,13 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
             <div className="p-7 sm:p-9 rounded-3xl bg-white border border-[#e5e1d8] shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="space-y-1.5">
                 <span className="text-xs font-bold uppercase tracking-wider text-[#005039]">
-                  YAAD Editorial &amp; Guides
+                  YAAD Editorial &amp; Shopping Guides
                 </span>
                 <h2 className="text-xl sm:text-2xl font-black text-[#1c2826] tracking-tight">
-                  Smart Grocery &amp; Household Shopping Guides
+                  Practical Grocery &amp; Household Shopping Knowledge
                 </h2>
                 <p className="text-xs sm:text-sm text-[#556960] max-w-2xl">
-                  Practical articles crafted for Pakistani households to save money, avoid forgotten items, and master local grocery shopping.
+                  Real, actionable advice on monthly rashan budgeting, local bazaar measurements, kitchen pantry audits, and stress-free shopping trips.
                 </p>
               </div>
               <div className="w-12 h-12 rounded-2xl bg-[#005039]/10 flex items-center justify-center text-[#005039] shrink-0">
@@ -978,12 +1345,13 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
               </div>
             </div>
 
-            {/* Articles List */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Articles Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {BLOG_POSTS.map((post) => {
                 const title = getLocalizedText(post.title);
                 const summary = getLocalizedText(post.summary);
                 const category = getLocalizedText(post.category);
+                const isExpanded = expandedBlogPostId === post.id;
                 const paragraphs =
                   language === 'ur'
                     ? post.content.ur
@@ -995,7 +1363,9 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                   <article
                     key={post.id}
                     id={post.id}
-                    className="p-6 rounded-3xl bg-white border border-[#e5e1d8] hover:border-[#005039]/30 transition-all flex flex-col justify-between space-y-4 shadow-2xs"
+                    className={`p-6 sm:p-7 rounded-3xl bg-white border transition-all flex flex-col justify-between space-y-4 shadow-2xs ${
+                      isExpanded ? 'border-[#005039] ring-2 ring-[#005039]/10 md:col-span-2' : 'border-[#e5e1d8] hover:border-[#005039]/30'
+                    }`}
                   >
                     <div className="space-y-3">
                       <div className="flex items-center justify-between gap-2 text-xs">
@@ -1013,24 +1383,602 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                         {title}
                       </h3>
 
-                      <p className="text-xs sm:text-sm text-[#556960] leading-relaxed line-clamp-3">
+                      <p className="text-xs sm:text-sm text-[#556960] leading-relaxed">
                         {summary}
                       </p>
 
-                      <div className="pt-2 border-t border-[#f2efe9] space-y-2 text-xs text-[#556960] leading-relaxed">
-                        {paragraphs.slice(0, 2).map((p, idx) => (
-                          <p key={idx}>{p}</p>
-                        ))}
-                      </div>
-                    </div>
+                      {isExpanded ? (
+                        <div className="pt-4 border-t border-[#f2efe9] space-y-6 text-xs sm:text-sm text-[#1c2826] leading-relaxed">
+                          {/* Short Direct Answer Near Beginning */}
+                          {post.directAnswer && (
+                            <div className="p-4 sm:p-5 rounded-2xl bg-[#005039]/5 border border-[#005039]/20 space-y-1.5">
+                              <span className="text-xs font-bold uppercase tracking-wider text-[#005039] block">
+                                Quick Direct Answer
+                              </span>
+                              <p className="text-xs sm:text-sm text-[#1c2826] font-medium leading-relaxed">
+                                {getLocalizedText(post.directAnswer)}
+                              </p>
+                            </div>
+                          )}
 
-                    <div className="pt-2 text-xs text-[#788880] font-medium flex items-center justify-between">
-                      <span>{post.publishDate}</span>
-                      <span className="text-[#005039] font-bold">YAAD Editorial</span>
+                          {/* Logical H2/H3 Structured Sections */}
+                          {post.sections && post.sections.length > 0 ? (
+                            <div className="space-y-6">
+                              {post.sections.map((sec, sIdx) => (
+                                <section key={sIdx} className="space-y-3">
+                                  <h4 className="text-sm sm:text-base font-bold text-[#1c2826] tracking-tight border-b border-[#f2efe9] pb-1.5">
+                                    {getLocalizedText(sec.heading)}
+                                  </h4>
+                                  <div className="space-y-2.5">
+                                    {(language === 'ur'
+                                      ? sec.paragraphs.ur
+                                      : language === 'roman-urdu'
+                                      ? sec.paragraphs.romanUrdu
+                                      : sec.paragraphs.en
+                                    ).map((p, pIdx) => (
+                                      <p key={pIdx} className="text-[#556960] leading-relaxed">
+                                        {p}
+                                      </p>
+                                    ))}
+                                  </div>
+
+                                  {sec.bullets && (
+                                    <ul className="space-y-2 pt-1 pl-1">
+                                      {(language === 'ur'
+                                        ? sec.bullets.ur
+                                        : language === 'roman-urdu'
+                                        ? sec.bullets.romanUrdu
+                                        : sec.bullets.en
+                                      ).map((b, bIdx) => (
+                                        <li key={bIdx} className="flex items-start gap-2.5 text-xs sm:text-sm text-[#556960]">
+                                          <span className="text-[#005039] font-bold mt-0.5">•</span>
+                                          <span className="leading-relaxed">{b}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  )}
+                                </section>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="space-y-3">
+                              {paragraphs.map((p, idx) => (
+                                <p key={idx} className="text-[#556960]">{p}</p>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Internal Links to Relevant YAAD Pages */}
+                          {post.internalLinks && post.internalLinks.length > 0 && (
+                            <div className="p-4 sm:p-5 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] space-y-2.5">
+                              <span className="text-xs font-bold text-[#005039] uppercase tracking-wider block">
+                                Related YAAD Tools &amp; Guides
+                              </span>
+                              <div className="flex flex-wrap gap-2">
+                                {post.internalLinks.map((link, lIdx) => (
+                                  <a
+                                    key={lIdx}
+                                    href={link.path}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      if (link.path.startsWith('/blog#')) {
+                                        const targetId = link.path.replace('/blog#', '');
+                                        setExpandedBlogPostId(targetId);
+                                        const el = document.getElementById(targetId);
+                                        if (el) el.scrollIntoView({ behavior: 'smooth' });
+                                      } else if (link.path === '/features') {
+                                        handleTabClick('features');
+                                      } else if (link.path === '/how-it-works') {
+                                        handleTabClick('how_it_works');
+                                      } else if (link.path === '/faq' || link.path === '/help') {
+                                        handleTabClick('help');
+                                      } else if (link.path === '/about') {
+                                        handleTabClick('about');
+                                      } else if (link.path === '/rashan-list') {
+                                        navigate(rashanListPath);
+                                      } else {
+                                        navigate(link.path);
+                                      }
+                                    }}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-[#e5e1d8] text-xs font-bold text-[#005039] hover:bg-[#005039] hover:text-white transition-all cursor-pointer shadow-2xs"
+                                  >
+                                    <span>{link.label}</span>
+                                    <ArrowRight className="w-3 h-3" />
+                                  </a>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Credible Sources & Authoritative Research Foundations */}
+                          {post.citations && post.citations.length > 0 && (
+                            <div className="p-4 sm:p-5 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] space-y-2.5">
+                              <div className="flex items-center gap-2">
+                                <BookOpen className="w-4 h-4 text-[#005039]" />
+                                <span className="text-xs font-bold text-[#005039] uppercase tracking-wider block">
+                                  Credible Sources &amp; Research Foundations
+                                </span>
+                              </div>
+                              <ul className="space-y-2.5 text-xs text-[#556960] divide-y divide-[#e5e1d8]/60">
+                                {post.citations.map((cite, cIdx) => (
+                                  <li key={cIdx} className={`${cIdx > 0 ? 'pt-2' : ''} space-y-0.5`}>
+                                    <p className="font-semibold text-[#1c2826]">{cite.claim}</p>
+                                    <p className="text-[#788880]">
+                                      Source:{' '}
+                                      {cite.sourceUrl ? (
+                                        <a
+                                          href={cite.sourceUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-[#005039] underline font-medium hover:text-[#003d2b]"
+                                        >
+                                          {cite.sourceTitle}
+                                        </a>
+                                      ) : (
+                                        <span className="font-medium text-[#1c2826]">{cite.sourceTitle}</span>
+                                      )}{' '}
+                                      — {cite.sourcePublisher} {cite.citationYear ? `(${cite.citationYear})` : ''}
+                                    </p>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
+                          {/* Short Conclusion */}
+                          {post.conclusion && (
+                            <div className="p-4 sm:p-5 rounded-2xl bg-white border-l-4 border-l-[#005039] border border-[#e5e1d8] shadow-2xs space-y-1">
+                              <span className="text-xs font-bold text-[#005039] uppercase tracking-wider block">
+                                Key Takeaway
+                              </span>
+                              <p className="text-xs sm:text-sm text-[#556960] leading-relaxed">
+                                {getLocalizedText(post.conclusion)}
+                              </p>
+                            </div>
+                          )}
+
+                          <div className="pt-3 border-t border-[#f2efe9] flex items-center justify-between">
+                            <button
+                              type="button"
+                              onClick={() => setExpandedBlogPostId(null)}
+                              className="text-xs font-bold text-[#005039] hover:underline cursor-pointer"
+                            >
+                              ↑ Collapse Guide
+                            </button>
+                            <span className="text-xs text-[#788880] font-medium">Published {post.publishDate} • YAAD Editorial</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="pt-2 border-t border-[#f2efe9] flex items-center justify-between">
+                          <button
+                            type="button"
+                            onClick={() => setExpandedBlogPostId(post.id)}
+                            className="text-xs font-bold text-[#005039] hover:text-[#003d2b] flex items-center gap-1 cursor-pointer"
+                          >
+                            <span>Read Complete Guide</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                          <span className="text-xs text-[#788880]">{post.publishDate}</span>
+                        </div>
+                      )}
                     </div>
                   </article>
                 );
               })}
+            </div>
+
+            {/* Rashan Guide Cross-Link */}
+            <div className="p-6 rounded-3xl bg-[#faf8f5] border border-[#e5e1d8] flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="space-y-1 text-center sm:text-start">
+                <h4 className="text-sm sm:text-base font-bold text-[#1c2826]">
+                  Looking for the definitive household pantry checklist?
+                </h4>
+                <p className="text-xs text-[#556960]">
+                  Explore our comprehensive monthly rashan guide with traditional Pakistani measurements.
+                </p>
+              </div>
+              <a
+                href={rashanListPath}
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate(rashanListPath);
+                }}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-[#005039] hover:bg-[#003d2b] shadow-xs shrink-0 cursor-pointer"
+              >
+                <ShoppingBag className="w-4 h-4" />
+                <span>Open Rashan Checklist</span>
+              </a>
+            </div>
+          </div>
+        )}
+
+        {/* ================================================================ */}
+        {/* VIEW G: YAAD FEATURES */}
+        {/* ================================================================ */}
+        {currentPage === 'features' && (
+          <div className="space-y-10">
+            {/* 1. Header intro banner */}
+            <div className="p-7 sm:p-9 rounded-3xl bg-white border border-[#e5e1d8] shadow-xs space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#005039]/10 text-[#005039] text-xs font-bold tracking-wide">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>{LEGAL_METADATA.features.badge}</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-black text-[#1c2826] tracking-tight leading-snug">
+                {getLocalizedText(LEGAL_METADATA.features.title)}
+              </h2>
+              <p className="text-xs sm:text-sm text-[#556960] max-w-2xl leading-relaxed">
+                {getLocalizedText(LEGAL_METADATA.features.subtitle)}
+              </p>
+
+              {/* What / Problem / Solution / Audience Matrix */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                <div className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] space-y-1.5">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#005039]">What YAAD Does</span>
+                  <p className="text-xs sm:text-sm text-[#556960] leading-relaxed">
+                    Provides an offline-ready shopping list and reminder workspace that keeps all your household grocery items organized and accessible.
+                  </p>
+                </div>
+                <div className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] space-y-1.5">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#005039]">The Core Problem</span>
+                  <p className="text-xs sm:text-sm text-[#556960] leading-relaxed">
+                    Shoppers frequently forget items they intended to buy, wander back and forth across store aisles, and struggle with signal dead zones.
+                  </p>
+                </div>
+                <div className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] space-y-1.5">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#005039]">The Solution</span>
+                  <p className="text-xs sm:text-sm text-[#556960] leading-relaxed">
+                    Bilingual natural language entry (English, Roman Urdu, Urdu), automatic aisle sorting, and instant 1-tap item check-off that works 100% offline.
+                  </p>
+                </div>
+                <div className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] space-y-1.5">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#005039]">Target Audience</span>
+                  <p className="text-xs sm:text-sm text-[#556960] leading-relaxed">
+                    Everyday households, busy parents, home cooks, and anyone who shops for groceries and wants a calm, reliable checklist.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* 2. Core Features Deep Dive */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg sm:text-xl font-black text-[#1c2826] tracking-tight">
+                  Verified Core Features
+                </h3>
+                <span className="text-xs font-semibold text-[#005039]">Built for Real Market Trips</span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {FEATURES_DATA.map((feat) => {
+                  const title = getLocalizedText(feat.title);
+                  const desc = getLocalizedText(feat.description);
+                  const badge = getLocalizedText(feat.badge);
+
+                  return (
+                    <div
+                      key={feat.id}
+                      id={feat.id}
+                      className="p-6 rounded-3xl bg-white border border-[#e5e1d8] hover:border-[#005039]/30 transition-all flex flex-col justify-between space-y-4 shadow-2xs"
+                    >
+                      <div className="space-y-3">
+                        <span className="inline-flex px-2.5 py-1 rounded-full bg-[#005039]/10 text-[#005039] text-xs font-bold">
+                          {badge}
+                        </span>
+                        <h4 className="text-base sm:text-lg font-bold text-[#1c2826] leading-snug">
+                          {title}
+                        </h4>
+                        <p className="text-xs sm:text-sm text-[#556960] leading-relaxed">
+                          {desc}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 3. Comparison with Generic Notes Apps */}
+            <div className="p-7 sm:p-8 rounded-3xl bg-white border border-[#e5e1d8] shadow-xs space-y-5">
+              <div className="space-y-1">
+                <h3 className="text-lg sm:text-xl font-black text-[#1c2826] tracking-tight">
+                  How YAAD Compares with Generic Notepad Apps
+                </h3>
+                <p className="text-xs sm:text-sm text-[#556960]">
+                  Why a purpose-built grocery assistant creates a calmer store trip than generic phone notes.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] space-y-1.5">
+                  <div className="text-xs font-bold text-[#005039] uppercase">100% Offline Database</div>
+                  <p className="text-xs text-[#556960] leading-relaxed">
+                    Generic cloud notes spin endlessly in basement markets. YAAD stores your list directly in device IndexedDB, never locking you out.
+                  </p>
+                </div>
+                <div className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] space-y-1.5">
+                  <div className="text-xs font-bold text-[#005039] uppercase">Aisle Department Sorting</div>
+                  <p className="text-xs text-[#556960] leading-relaxed">
+                    Notes apps force you to read randomly scrambled items. YAAD automatically groups items into Produce, Dairy, and Pantry sections.
+                  </p>
+                </div>
+                <div className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] space-y-1.5">
+                  <div className="text-xs font-bold text-[#005039] uppercase">Urdu &amp; Local Weights</div>
+                  <p className="text-xs text-[#556960] leading-relaxed">
+                    Understands authentic grocery terms (&ldquo;doodh, aloo, daal&rdquo;) and local Pakistani units (pao, darjan, kg) natively.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* 4. Action Banner */}
+            <div className="p-6 rounded-3xl bg-[#005039] text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+              <div className="space-y-1 text-center sm:text-start">
+                <h4 className="text-base sm:text-lg font-bold">Ready to make grocery shopping simpler?</h4>
+                <p className="text-xs sm:text-sm text-emerald-100">Create your first organized shopping list in seconds. Works offline.</p>
+              </div>
+              <button
+                type="button"
+                onClick={onBack}
+                className="px-6 py-2.5 rounded-full bg-white text-[#005039] font-bold text-xs sm:text-sm shadow-xs hover:bg-[#faf8f5] transition-all cursor-pointer shrink-0"
+              >
+                Make First List Now
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ================================================================ */}
+        {/* VIEW H: SEE HOW YAAD WORKS */}
+        {/* ================================================================ */}
+        {currentPage === 'how_it_works' && (
+          <div className="space-y-10">
+            {/* 1. Header intro banner */}
+            <div className="p-7 sm:p-9 rounded-3xl bg-white border border-[#e5e1d8] shadow-xs space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#005039]/10 text-[#005039] text-xs font-bold tracking-wide">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>{LEGAL_METADATA.how_it_works.badge}</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-black text-[#1c2826] tracking-tight leading-snug">
+                {getLocalizedText(LEGAL_METADATA.how_it_works.title)}
+              </h2>
+              <p className="text-xs sm:text-sm text-[#556960] max-w-2xl leading-relaxed">
+                {getLocalizedText(LEGAL_METADATA.how_it_works.subtitle)}
+              </p>
+
+              {/* 3-Phase Workflow Overview */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                <div className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] space-y-1">
+                  <span className="text-xs font-bold text-[#005039]">Phase 1: At Home</span>
+                  <p className="text-xs text-[#556960]">Create a list, quick-capture items in English or Urdu, and tap suggested staples.</p>
+                </div>
+                <div className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] space-y-1">
+                  <span className="text-xs font-bold text-[#005039]">Phase 2: In the Store</span>
+                  <p className="text-xs text-[#556960]">Walk store aisles with an offline checklist. Tap items off as they enter your basket.</p>
+                </div>
+                <div className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] space-y-1">
+                  <span className="text-xs font-bold text-[#005039]">Phase 3: After Shopping</span>
+                  <p className="text-xs text-[#556960]">Complete the trip to archive items in your history and track restock cadence.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* 2. Step-by-Step Breakdown */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg sm:text-xl font-black text-[#1c2826] tracking-tight">
+                  Step-by-Step Walkthrough
+                </h3>
+                <span className="text-xs font-semibold text-[#005039]">Simple &amp; Repeatable</span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {HOW_IT_WORKS_DATA.map((step) => {
+                  const title = getLocalizedText(step.title);
+                  const desc = getLocalizedText(step.description);
+                  const badge = getLocalizedText(step.badge);
+                  const bullets =
+                    language === 'ur'
+                      ? step.details.ur
+                      : language === 'roman-urdu'
+                      ? step.details.romanUrdu
+                      : step.details.en;
+
+                  return (
+                    <div
+                      key={step.step}
+                      className="p-6 sm:p-7 rounded-3xl bg-white border border-[#e5e1d8] hover:border-[#005039]/30 transition-all flex flex-col justify-between space-y-4 shadow-2xs"
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="px-3 py-1 rounded-full bg-[#005039]/10 text-[#005039] text-xs font-bold">
+                            {badge}
+                          </span>
+                          <span className="w-7 h-7 rounded-full bg-[#005039] text-white flex items-center justify-center text-xs font-black">
+                            {step.step}
+                          </span>
+                        </div>
+                        <h4 className="text-base sm:text-lg font-bold text-[#1c2826] leading-snug">
+                          {title}
+                        </h4>
+                        <p className="text-xs sm:text-sm text-[#556960] leading-relaxed">
+                          {desc}
+                        </p>
+                        <ul className="pt-2 border-t border-[#f2efe9] space-y-1.5 text-xs text-[#556960]">
+                          {bullets.map((b, bIdx) => (
+                            <li key={bIdx} className="flex items-start gap-2">
+                              <span className="text-[#005039] font-bold">✓</span>
+                              <span>{b}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 3. Inside YAAD: Genuine Visual Walkthrough */}
+            <div className="p-7 sm:p-9 rounded-3xl bg-white border border-[#e5e1d8] shadow-xs space-y-6">
+              <div className="space-y-1">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#005039]">
+                  Inside YAAD
+                </span>
+                <h3 className="text-xl sm:text-2xl font-black text-[#1c2826] tracking-tight">
+                  Real Visuals of the In-Store Shopping Experience
+                </h3>
+                <p className="text-xs sm:text-sm text-[#556960] max-w-2xl leading-relaxed">
+                  Engineered with large touch targets, high contrast text for bright supermarket lighting, and instantaneous 1-tap item completion.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                {/* Visual 1: Aisle Navigation */}
+                <div className="p-5 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] flex flex-col items-center text-center space-y-3">
+                  <div className="w-full h-44 rounded-xl bg-white border border-[#e5e1d8]/80 overflow-hidden flex items-center justify-center p-3">
+                    <img
+                      src={APP_IMAGES.onboarding1}
+                      alt="YAAD onboarding illustration showing shopper checking digital items in store aisle"
+                      className="max-h-full max-w-full object-contain rounded-lg"
+                      loading="lazy"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-bold text-[#1c2826]">1. In-Store Navigation</h4>
+                    <p className="text-xs text-[#556960]">
+                      Items remain accessible 100% offline in basement grocery dead zones.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Visual 2: 1-Tap Checkoff */}
+                <div className="p-5 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] flex flex-col items-center text-center space-y-3">
+                  <div className="w-full h-44 rounded-xl bg-white border border-[#e5e1d8]/80 overflow-hidden flex items-center justify-center p-3">
+                    <img
+                      src={APP_IMAGES.onboarding2}
+                      alt="YAAD shopping list interface showing interactive 1-tap item completion and real-time counter"
+                      className="max-h-full max-w-full object-contain rounded-lg"
+                      loading="lazy"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-bold text-[#1c2826]">2. Fast 1-Tap Checkoff</h4>
+                    <p className="text-xs text-[#556960]">
+                      Tap items into the basket; completed items fade to prevent repeat buying.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Visual 3: Trip Completion */}
+                <div className="p-5 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] flex flex-col items-center text-center space-y-3">
+                  <div className="w-full h-44 rounded-xl bg-white border border-[#e5e1d8]/80 overflow-hidden flex items-center justify-center p-3">
+                    <img
+                      src={APP_IMAGES.onboarding3}
+                      alt="YAAD shopper with fresh grocery bag after completing an organized shopping trip"
+                      className="max-h-full max-w-full object-contain rounded-lg"
+                      loading="lazy"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-bold text-[#1c2826]">3. Trip Archive &amp; Restock</h4>
+                    <p className="text-xs text-[#556960]">
+                      Saves shopping records to calculate restock cadence for household staples.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 4. Example Shopping List: Real Categorized Pakistani Household Checklist */}
+            <div className="p-7 sm:p-9 rounded-3xl bg-white border border-[#e5e1d8] shadow-xs space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="space-y-1">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#005039]">
+                    Example Shopping List
+                  </span>
+                  <h3 className="text-xl sm:text-2xl font-black text-[#1c2826] tracking-tight">
+                    Authentic Household Grocery Checklist
+                  </h3>
+                  <p className="text-xs sm:text-sm text-[#556960]">
+                    Interactive demonstration of auto-categorization and native Pakistani units (kg, pao, dharri, darjan). Tap items to try checking off:
+                  </p>
+                </div>
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#005039]/10 text-[#005039] text-xs font-bold shrink-0 self-start sm:self-auto">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>{exampleListItems.filter((i) => i.completed).length} of {exampleListItems.length} Purchased</span>
+                </div>
+              </div>
+
+              {/* Categorized List Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {['Produce', 'Dairy & Breakfast', 'Pantry & Grains', 'Spices & Seasoning', 'Household'].map((catName) => {
+                  const catItems = exampleListItems.filter((i) => i.category === catName);
+                  if (catItems.length === 0) return null;
+
+                  return (
+                    <div key={catName} className="p-4 sm:p-5 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] space-y-3">
+                      <div className="flex items-center justify-between border-b border-[#e5e1d8]/70 pb-2">
+                        <span className="text-xs font-bold text-[#1c2826] uppercase tracking-wide">
+                          {catName}
+                        </span>
+                        <span className="text-[11px] font-semibold text-[#788880]">
+                          {catItems.filter((i) => i.completed).length}/{catItems.length} Done
+                        </span>
+                      </div>
+
+                      <div className="space-y-2">
+                        {catItems.map((item) => (
+                          <div
+                            key={item.id}
+                            onClick={() => toggleExampleItem(item.id)}
+                            className={`p-2.5 rounded-xl bg-white border border-[#e5e1d8]/80 flex items-center justify-between gap-2.5 transition-all select-none cursor-pointer ${
+                              item.completed ? 'opacity-60 bg-[#f9f7f2]' : 'hover:border-[#005039]/40 shadow-2xs'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                              <BlueTickCheckCircle
+                                isChecked={item.completed}
+                                size={20}
+                                className="shrink-0"
+                              />
+                              <span
+                                className={`text-xs sm:text-sm font-semibold truncate ${
+                                  item.completed ? 'line-through text-[#788880]' : 'text-[#1c2826]'
+                                }`}
+                              >
+                                {item.name}
+                              </span>
+                            </div>
+                            <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-[#f3efe6] text-[#3d5046] shrink-0">
+                              {item.quantity}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 5. Action Banner */}
+            <div className="p-6 rounded-3xl bg-[#faf8f5] border border-[#e5e1d8] flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="space-y-1 text-center sm:text-start">
+                <h4 className="text-sm sm:text-base font-bold text-[#1c2826]">
+                  Have questions about offline mode or passkeys?
+                </h4>
+                <p className="text-xs text-[#556960]">
+                  Read our interactive Frequently Asked Questions for direct, transparent answers.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleTabClick('help')}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-[#005039] bg-white border border-[#e5e1d8] hover:bg-[#f0ebe1] shadow-2xs transition-all cursor-pointer shrink-0"
+              >
+                <HelpCircle className="w-4 h-4" />
+                <span>Browse FAQ Hub</span>
+              </button>
             </div>
           </div>
         )}

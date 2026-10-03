@@ -6,8 +6,16 @@ User-agent: *
 
 # Allow Crawling of Public Marketing, Editorial & Information Pages
 Allow: /$
+Allow: /home$
+Allow: /home
 Allow: /about$
 Allow: /about
+Allow: /features$
+Allow: /features
+Allow: /how-it-works$
+Allow: /how-it-works
+Allow: /faq$
+Allow: /faq
 Allow: /help$
 Allow: /help
 Allow: /terms$
@@ -33,8 +41,6 @@ Allow: /manifest.json
 
 # Strictly Disallow Private User Shopping Lists & Sensitive App States
 # (Never index private user data, authenticated dashboards, or tokens)
-Disallow: /home
-Disallow: /home/
 Disallow: /auth
 Disallow: /auth/
 Disallow: /login

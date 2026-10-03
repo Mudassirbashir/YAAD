@@ -93,7 +93,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
   }, [lists]);
 
   // Determine time-of-day greeting with user first name
-  const greetingText = useMemo(() => {
+  const greetingData = useMemo(() => {
     const hour = new Date().getHours();
     let timeGreeting = t('home.greeting');
     if (hour < 12) {
@@ -106,12 +106,14 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
     const rawName =
       profile?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name;
-    if (rawName && typeof rawName === 'string') {
-      const firstName = rawName.trim().split(' ')[0];
-      return `${timeGreeting}, ${firstName} 👋`;
-    }
+    const userName =
+      rawName && typeof rawName === 'string' && rawName.trim().length > 0
+        ? rawName.trim().split(' ')[0]
+        : user?.email
+        ? user.email.split('@')[0]
+        : 'User';
 
-    return `${timeGreeting} 👋`;
+    return { timeGreeting, userName };
   }, [profile, user, t]);
 
   const buildCandidate = (item: EssentialDisplayItem): RecommendationCandidate => {
@@ -216,11 +218,17 @@ export const HomeView: React.FC<HomeViewProps> = ({
           className="flex items-center justify-between gap-3 select-none"
         >
           <div className="flex flex-col min-w-0">
-            <h1 className="font-['Plus_Jakarta_Sans'] text-2xl sm:text-[26px] font-bold text-on-surface tracking-tight leading-tight truncate">
-              {greetingText}
+            {/* Top: Time greeting slightly increased */}
+            <span className="font-['Manrope'] text-[13.5px] sm:text-[15px] font-semibold text-outline leading-tight">
+              {greetingData.timeGreeting}
+            </span>
+            {/* Middle: User's name with minimal vertical space */}
+            <h1 className="font-['Plus_Jakarta_Sans'] text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight leading-tight truncate -mt-0.5">
+              {greetingData.userName}
             </h1>
-            <p className="font-['Manrope'] text-xs sm:text-sm text-outline mt-0.5 font-normal">
-              {t('home.subtitle') || 'What would you like to buy today?'}
+            {/* Bottom: Let's make a list in solid proper black */}
+            <p className="font-['Manrope'] text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100 mt-0.5">
+              {t('home.letsMakeAList') || "Let's make a list"}
             </p>
           </div>
 
@@ -228,7 +236,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             type="button"
             onClick={onOpenProfile}
             aria-label="Open Profile & Settings"
-            className="w-10 h-10 rounded-full ring-2 ring-surface-dim hover:ring-primary/40 active:scale-95 transition-all shrink-0 cursor-pointer overflow-hidden flex items-center justify-center bg-surface-container"
+            className="w-11 h-11 rounded-full ring-2 ring-surface-dim hover:ring-primary/40 active:scale-95 transition-all shrink-0 cursor-pointer overflow-hidden flex items-center justify-center bg-surface-container shadow-2xs"
           >
             <Avatar
               name={profile?.full_name || user?.email || 'User'}
@@ -258,39 +266,19 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 onCreateList();
               }
             }}
-            className="w-full min-h-[86px] sm:min-h-[116px] rounded-2xl sm:rounded-3xl bg-gradient-to-br from-primary via-primary to-primary-container p-3.5 sm:p-5 text-on-primary flex items-center justify-between gap-3 shadow-[0_4px_20px_rgba(15,61,46,0.18)] hover:shadow-[0_6px_24px_rgba(15,61,46,0.25)] cursor-pointer relative overflow-hidden transition-all duration-200 active:scale-[0.99] select-none group border border-white/10"
+            className="w-full min-h-[76px] sm:min-h-[96px] rounded-2xl sm:rounded-3xl bg-gradient-to-br from-primary via-primary to-primary-container p-4 sm:p-5 text-on-primary flex items-center justify-between gap-3 shadow-[0_4px_20px_rgba(15,61,46,0.18)] hover:shadow-[0_6px_24px_rgba(15,61,46,0.25)] cursor-pointer relative overflow-hidden transition-all duration-200 active:scale-[0.99] select-none group border border-white/10"
           >
             {/* Background subtle radial glow */}
             <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-2xl pointer-events-none" />
 
-            {/* Left side: Plus icon + titles + category context badges */}
-            <div className="flex items-center gap-3 sm:gap-3.5 min-w-0 z-10">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-white/15 flex items-center justify-center shrink-0 border border-white/20 shadow-2xs group-hover:bg-white/25 transition-all">
-                <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-white stroke-[2.4] transition-transform duration-300 group-hover:rotate-90" />
+            {/* Left side: Plus icon + Enlarged Create List Title */}
+            <div className="flex items-center gap-3 sm:gap-4 min-w-0 z-10">
+              <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-white/15 flex items-center justify-center shrink-0 border border-white/20 shadow-2xs group-hover:bg-white/25 transition-all">
+                <Plus className="w-6 h-6 sm:w-7 sm:h-7 text-white stroke-[2.4] transition-transform duration-300 group-hover:rotate-90" />
               </div>
-              <div className="flex flex-col min-w-0">
-                <div className="flex items-center gap-2">
-                  <h2 className="font-['Plus_Jakarta_Sans'] text-base sm:text-xl font-bold tracking-tight text-white leading-tight">
-                    {t('home.createListTitle')}
-                  </h2>
-                  <span className="hidden sm:inline-block text-[11px] font-medium text-emerald-200/90 font-['Manrope']">
-                    · {t('home.quickStart') || 'Quick Start'}
-                  </span>
-                </div>
-                <p className="font-['Manrope'] text-xs sm:text-[13px] text-emerald-100/90 mt-0.5 sm:mt-1 font-normal leading-snug">
-                  {t('home.createListDesc')}
-                </p>
-                {/* Category Quick Tags */}
-                <div className="hidden xs:flex items-center gap-1.5 mt-2 text-[11px] font-['Manrope'] text-emerald-100/80">
-                  <span>{t('home.quickStartWeekly') || 'Weekly'}</span>
-                  <span aria-hidden="true" className="opacity-50">·</span>
-                  <span>{t('home.quickStartGrocery') || 'Grocery'}</span>
-                  <span aria-hidden="true" className="opacity-50">·</span>
-                  <span>{t('home.quickStartProduce') || 'Fruits & Sabzi'}</span>
-                  <span aria-hidden="true" className="opacity-50">·</span>
-                  <span>{t('home.quickStartBbq') || 'BBQ'}</span>
-                </div>
-              </div>
+              <h2 className="font-['Plus_Jakarta_Sans'] text-lg sm:text-2xl font-black tracking-tight text-white leading-tight">
+                {t('home.createListTitle')}
+              </h2>
             </div>
 
             {/* Right side: Grocery Basket Visual & Circular Arrow */}

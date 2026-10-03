@@ -24,6 +24,8 @@ export type AppRouteId =
   | 'privacy'
   | 'about'
   | 'help'
+  | 'features'
+  | 'how_it_works'
   | 'legal'
   | 'blog'
   | 'rashan_list'
@@ -55,7 +57,10 @@ export function isProtectedRoute(routeId: AppRouteId): boolean {
     case 'privacy':
     case 'about':
     case 'help':
+    case 'features':
+    case 'how_it_works':
     case 'legal':
+    case 'blog':
     case 'rashan_list':
     case 'auth':
     case 'reset_password':
@@ -318,13 +323,33 @@ export function parseRoute(rawPathname: string): ParsedRoute {
     };
   }
 
-  if (norm === '/help' || norm === '/support' || norm === '/contact') {
+  if (norm === '/help' || norm === '/support' || norm === '/contact' || norm === '/faq' || norm === '/faqs') {
     return {
       routeId: 'help',
       pathname: '/help',
       params: {},
       isProtected: false,
       canonicalPath: '/help',
+    };
+  }
+
+  if (norm === '/features' || norm === '/feature') {
+    return {
+      routeId: 'features',
+      pathname: '/features',
+      params: {},
+      isProtected: false,
+      canonicalPath: '/features',
+    };
+  }
+
+  if (norm === '/how-it-works' || norm === '/howitworks' || norm === '/how') {
+    return {
+      routeId: 'how_it_works',
+      pathname: '/how-it-works',
+      params: {},
+      isProtected: false,
+      canonicalPath: '/how-it-works',
     };
   }
 

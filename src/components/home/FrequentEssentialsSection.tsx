@@ -1,13 +1,13 @@
 import React, { useState, useMemo } from 'react';
-import { Sparkles, Plus, Check } from 'lucide-react';
+import { Sparkles, Plus, Check, ShoppingBag } from 'lucide-react';
 import { ShoppingList, CategoryId } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
-import { EssentialItemVisual } from '../EssentialItemVisual';
 import {
   getRankedPopularEssentials,
   getItemStatusInActiveList,
   EssentialDisplayItem,
 } from '../../lib/recommendations/popularEssentials';
+import { PAKISTANI_GROCERY_ITEMS } from '../../data/pakistaniGroceryData';
 import { playItemAddSound, triggerHaptic } from '../../lib/sound';
 
 interface FrequentEssentialsSectionProps {
@@ -23,7 +23,7 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
   onAddItem,
   onViewAllCategories,
 }) => {
-  const { t, language, getCategoryName } = useLanguage();
+  const { t, getCategoryName } = useLanguage();
 
   // Added items micro-feedback tracker: canonicalName -> boolean
   const [addedItemsMap, setAddedItemsMap] = useState<Record<string, boolean>>({});
@@ -66,72 +66,78 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
     }, 1600);
   };
 
-  const getLocalizedName = (item: EssentialDisplayItem) => {
-    if (language === 'ur' && item.nameUrdu) return item.nameUrdu;
-    if (language === 'roman-urdu' && item.nameRomanUrdu) return item.nameRomanUrdu;
-    return item.displayName;
+  /**
+   * Resolves the accurate Urdu name for an essential staple
+   */
+  const getUrduName = (item: EssentialDisplayItem): string => {
+    if (item.nameUrdu) return item.nameUrdu;
+    const canonicalNorm = (item.canonicalName || '').toLowerCase().trim();
+    const displayNorm = (item.displayName || '').toLowerCase().trim();
+    const match = PAKISTANI_GROCERY_ITEMS.find(
+      (g) =>
+        g.canonicalName.toLowerCase() === canonicalNorm ||
+        g.id.toLowerCase() === canonicalNorm ||
+        g.aliases.some(
+          (a) => a.toLowerCase() === canonicalNorm || a.toLowerCase() === displayNorm
+        )
+    );
+    return match?.nameUrdu || '';
   };
 
-  const getLocalizedSubtitle = (item: EssentialDisplayItem) => {
-    if (language === 'ur') {
-      return {
-        primarySub: item.displayName,
-        secondarySub: item.nameRomanUrdu,
-      };
-    }
-    return {
-      primarySub: item.nameUrdu,
-      secondarySub: item.nameRomanUrdu,
-    };
-  };
+  /**
+   * Resolves accurate, vibrant, hyper-realistic emojis for household staples
+   */
+  const getEssentialEmoji = (item: EssentialDisplayItem): string => {
+    const norm = (item.canonicalName || item.displayName || '').toLowerCase().trim();
 
-  const getCategoryTheme = (category: string) => {
-    switch (category) {
-      case 'vegetables':
-        return {
-          aura: 'from-emerald-500/12 via-green-500/5 to-transparent',
-          border: 'group-hover:border-emerald-500/40',
-          badge: 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border-emerald-500/20',
-        };
-      case 'dairy':
-        return {
-          aura: 'from-sky-500/12 via-blue-500/5 to-transparent',
-          border: 'group-hover:border-sky-500/40',
-          badge: 'bg-sky-500/10 text-sky-800 dark:text-sky-300 border-sky-500/20',
-        };
-      case 'poultry':
-      case 'meat':
-        return {
-          aura: 'from-rose-500/12 via-amber-500/5 to-transparent',
-          border: 'group-hover:border-rose-500/40',
-          badge: 'bg-rose-500/10 text-rose-800 dark:text-rose-300 border-rose-500/20',
-        };
-      case 'fruits':
-        return {
-          aura: 'from-amber-500/12 via-orange-500/5 to-transparent',
-          border: 'group-hover:border-amber-500/40',
-          badge: 'bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-500/20',
-        };
-      case 'cooking_essentials':
-      case 'rice':
-      case 'spices':
-        return {
-          aura: 'from-yellow-500/12 via-amber-500/5 to-transparent',
-          border: 'group-hover:border-yellow-500/40',
-          badge: 'bg-yellow-500/10 text-yellow-900 dark:text-yellow-200 border-yellow-500/25',
-        };
-      case 'bakery':
-        return {
-          aura: 'from-orange-500/12 via-stone-500/5 to-transparent',
-          border: 'group-hover:border-orange-500/40',
-          badge: 'bg-orange-500/10 text-orange-800 dark:text-orange-300 border-orange-500/20',
-        };
-      default:
-        return {
-          aura: 'from-primary/10 via-surface-container/20 to-transparent',
-          border: 'group-hover:border-primary/40',
-          badge: 'bg-primary/10 text-primary dark:text-primary-fixed border-primary/20',
-        };
+    if (norm.includes('milk') || norm.includes('doodh')) return '🥛';
+    if (norm.includes('egg') || norm.includes('anda')) return '🥚';
+    if (norm.includes('sugar') || norm.includes('cheeni')) return '🍬';
+    if (norm.includes('potato') || norm.includes('aloo')) return '🥔';
+    if (norm.includes('tomato') || norm.includes('tamatar')) return '🍅';
+    if (norm.includes('rice') || norm.includes('chawal')) return '🍚';
+    if (norm.includes('onion') || norm.includes('pyaz')) return '🧅';
+    if (norm.includes('oil') || norm.includes('ghee') || norm.includes('tel')) return '🛢️';
+    if (norm.includes('bread') || norm.includes('roti') || norm.includes('double')) return '🍞';
+    if (norm.includes('tea') || norm.includes('chai') || norm.includes('patti')) return '☕';
+    if (norm.includes('chicken') || norm.includes('murgh')) return '🍗';
+    if (norm.includes('meat') || norm.includes('beef') || norm.includes('mutton') || norm.includes('gosht')) return '🥩';
+    if (norm.includes('garlic') || norm.includes('lehsan')) return '🧄';
+    if (norm.includes('ginger') || norm.includes('adrak')) return '🫚';
+    if (norm.includes('salt') || norm.includes('namak')) return '🧂';
+    if (norm.includes('daal') || norm.includes('lentil') || norm.includes('pulse')) return '🍲';
+    if (norm.includes('yogurt') || norm.includes('dahi')) return '🥣';
+    if (norm.includes('butter') || norm.includes('makhan')) return '🧈';
+    if (norm.includes('cheese') || norm.includes('paneer')) return '🧀';
+    if (norm.includes('apple') || norm.includes('saib')) return '🍎';
+    if (norm.includes('banana') || norm.includes('kela')) return '🍌';
+    if (norm.includes('orange') || norm.includes('malta') || norm.includes('kinnu')) return '🍊';
+    if (norm.includes('lemon') || norm.includes('limo') || norm.includes('leemo')) return '🍋';
+    if (norm.includes('chili') || norm.includes('mirch')) return '🌶️';
+    if (norm.includes('coriander') || norm.includes('dhaniya') || norm.includes('mint') || norm.includes('podina')) return '🌿';
+    if (norm.includes('soap') || norm.includes('sabun')) return '🧼';
+    if (norm.includes('shampoo')) return '🧴';
+    if (norm.includes('detergent') || norm.includes('surf')) return '🫧';
+    if (norm.includes('flour') || norm.includes('atta') || norm.includes('maida')) return '🌾';
+    if (norm.includes('fish') || norm.includes('machli')) return '🐟';
+    if (norm.includes('biscuit') || norm.includes('cookie')) return '🍪';
+    if (norm.includes('juice') || norm.includes('drink')) return '🧃';
+    if (norm.includes('water') || norm.includes('pani')) return '💧';
+    if (norm.includes('tissue')) return '🧻';
+
+    switch (item.category) {
+      case 'dairy': return '🥛';
+      case 'poultry': return '🍗';
+      case 'meat': return '🥩';
+      case 'vegetables': return '🥬';
+      case 'fruits': return '🍎';
+      case 'bakery': return '🍞';
+      case 'beverages': return '☕';
+      case 'spices': return '🌶️';
+      case 'household': return '🧼';
+      case 'personal_care': return '🧴';
+      case 'cooking_essentials': return '🧂';
+      default: return '🛍️';
     }
   };
 
@@ -139,12 +145,12 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
     <section
       id="home_essentials_section"
       aria-label={t('home.essentials.title') || t('home.popularEssentials') || 'Frequent Essentials'}
-      className="flex flex-col gap-2.5 sm:gap-3.5 select-none"
+      className="flex flex-col gap-2 sm:gap-2.5 select-none"
     >
       {/* Section Header */}
       <div className="flex items-center justify-between px-0.5">
         <div className="flex items-center gap-2">
-          <h3 className="font-['Plus_Jakarta_Sans'] text-base sm:text-lg font-bold text-on-surface">
+          <h3 className="font-['Plus_Jakarta_Sans'] text-xl sm:text-2xl font-black text-on-surface tracking-tight">
             {hasPersonalized
               ? t('home.essentials.personalizedTitle') || 'Frequently Bought'
               : t('home.essentials.title') || 'Frequent Essentials'}
@@ -156,15 +162,6 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
             </span>
           )}
         </div>
-
-        <button
-          type="button"
-          id="essentials_view_all_btn"
-          onClick={onViewAllCategories}
-          className="text-xs sm:text-sm font-semibold text-primary hover:underline cursor-pointer"
-        >
-          {t('home.essentials.viewAll') || t('home.viewAll') || 'View All'}
-        </button>
       </div>
 
       {/* Target Active List notification chip */}
@@ -216,10 +213,8 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
         {filteredEssentials.map((item) => {
           const isAdded = !!addedItemsMap[item.canonicalName];
           const isAdding = addingItemId === item.canonicalName;
-          const displayName = getLocalizedName(item);
-          const subtitle = getLocalizedSubtitle(item);
+          const urduName = getUrduName(item);
           const activeStatus = getItemStatusInActiveList(item.canonicalName, mostRecentActiveList);
-          const theme = getCategoryTheme(item.category);
 
           return (
             <div
@@ -234,65 +229,53 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
                   handleAddClick(item);
                 }
               }}
-              className={`rounded-2xl sm:rounded-3xl bg-surface-container-lowest dark:bg-surface-container-low border border-surface-dim/75 shadow-[0_2px_10px_rgba(15,61,46,0.05)] hover:shadow-[0_8px_24px_rgba(15,61,46,0.12)] hover:-translate-y-1 transition-all duration-200 p-2.5 sm:p-3 flex flex-col justify-between gap-2 group cursor-pointer relative overflow-hidden ${theme.border}`}
+              className="rounded-2xl sm:rounded-3xl bg-surface-container-lowest dark:bg-surface-container-low border border-surface-dim/75 shadow-[0_2px_8px_rgba(15,61,46,0.04)] hover:shadow-[0_8px_20px_rgba(15,61,46,0.1)] hover:-translate-y-0.5 transition-all duration-200 p-2.5 sm:p-3 flex flex-col justify-between gap-2 group cursor-pointer relative overflow-hidden"
             >
-              {/* 1. Dedicated Illustration Showcase Stage */}
-              <div
-                className={`relative w-full h-24 sm:h-28 rounded-xl sm:rounded-2xl bg-gradient-to-b ${theme.aura} flex items-center justify-center overflow-hidden border border-black/[0.04] dark:border-white/[0.05] transition-all`}
-              >
-                {/* Category label on top left */}
-                <div className="absolute top-1.5 left-2 z-10">
-                  <span className="text-[10px] font-semibold text-outline-variant font-['Manrope']">
-                    {getCategoryName(item.category as CategoryId)}
+              {/* 1. Hyper-realistic, accurate staple emoji showcase stage */}
+              <div className="relative w-full h-22 sm:h-24 rounded-2xl bg-gradient-to-b from-surface-container/60 via-surface-container-low/40 to-surface-container-lowest/80 dark:from-stone-800 dark:via-stone-850 dark:to-stone-900 border border-surface-dim/60 flex items-center justify-center overflow-hidden group-hover:border-primary/30 transition-all">
+                <span className="text-4xl sm:text-[46px] select-none filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.12)] group-hover:scale-115 transition-transform duration-300">
+                  {getEssentialEmoji(item)}
+                </span>
+
+                {/* Top Right Corner: Packaging Quantity Badge (e.g. "1 kg", "1 dozen") */}
+                <div className="absolute top-1.5 right-1.5 z-10 pointer-events-none">
+                  <span className="px-2 py-0.5 rounded-md text-[10px] sm:text-[10.5px] font-bold bg-black/70 backdrop-blur-md text-white border border-white/20 shadow-xs font-['Manrope'] tracking-tight">
+                    {item.quantity} {item.unit}
                   </span>
                 </div>
 
-                {/* In List indicator on top right */}
+                {/* Top Left Corner: In-List Status Badge if already present in active list */}
                 {activeStatus.inList && (
-                  <div className="absolute top-1.5 right-1.5 z-10">
-                    <span className="px-2 py-0.5 rounded-full text-[9.5px] sm:text-[10px] font-bold bg-emerald-600 text-white shadow-2xs flex items-center gap-1">
+                  <div className="absolute top-1.5 left-1.5 z-10 pointer-events-none">
+                    <span className="px-2 py-0.5 rounded-md text-[9px] sm:text-[9.5px] font-bold bg-emerald-600/90 backdrop-blur-md text-white border border-white/20 shadow-xs flex items-center gap-1">
                       <Check className="w-2.5 h-2.5 stroke-[3]" />
                       <span>{t('home.essentials.inList')}</span>
                     </span>
                   </div>
                 )}
-
-                {/* Centered Large Vector Illustration with hover scale */}
-                <div className="transform group-hover:scale-110 transition-transform duration-300 drop-shadow-xs">
-                  <EssentialItemVisual
-                    canonicalName={item.canonicalName}
-                    displayName={displayName}
-                    categoryId={item.category}
-                    size={54}
-                  />
-                </div>
               </div>
 
-              {/* 2. Item Details & Pakistani Bilingual Subtitle */}
-              <div className="flex flex-col min-w-0 mt-0.5 px-0.5">
+              {/* 2. Item Details: English Name | Urdu Name on a single clean line */}
+              <div className="flex items-center gap-1.5 min-w-0 px-0.5 pt-0.5">
                 <span className="font-['Plus_Jakarta_Sans'] text-sm sm:text-[15px] font-bold text-on-surface truncate leading-tight group-hover:text-primary transition-colors">
-                  {displayName}
+                  {item.displayName}
                 </span>
-
-                {/* Urdu Nastaliq & Roman Urdu subtitle */}
-                <div className="flex items-center gap-1.5 text-xs text-outline font-medium mt-0.5 truncate">
-                  {subtitle.primarySub && (
-                    <span className="font-urdu text-[12px] sm:text-[13px] text-primary/85 font-bold leading-none shrink-0">
-                      {subtitle.primarySub}
+                {urduName && (
+                  <>
+                    <span
+                      className="text-outline/40 text-xs font-light select-none shrink-0"
+                      aria-hidden="true"
+                    >
+                      |
                     </span>
-                  )}
-                  {subtitle.primarySub && subtitle.secondarySub && (
-                    <span className="text-outline/40">·</span>
-                  )}
-                  {subtitle.secondarySub && (
-                    <span className="text-[11px] truncate">{subtitle.secondarySub}</span>
-                  )}
-                </div>
-
-                {/* Packaging Quantity indicator */}
-                <span className="inline-flex items-center text-[10.5px] font-semibold text-on-surface-variant font-['Manrope'] bg-surface-container/70 border border-surface-dim/60 px-2 py-0.5 rounded-md w-fit mt-1.5">
-                  {item.quantity} {item.unit}
-                </span>
+                    <span
+                      className="font-urdu text-[13px] sm:text-[14px] font-bold text-primary shrink-0 leading-none"
+                      dir="rtl"
+                    >
+                      {urduName}
+                    </span>
+                  </>
+                )}
               </div>
 
               {/* 3. Action Button (Add / Added / Add More) */}
@@ -303,8 +286,8 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
                   e.stopPropagation();
                   handleAddClick(item);
                 }}
-                aria-label={`Add ${displayName} ${item.quantity} ${item.unit} to shopping list`}
-                className={`w-full py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shrink-0 transition-all duration-200 active:scale-95 cursor-pointer select-none shadow-2xs hover:shadow-xs mt-1 ${
+                aria-label={`Add ${item.displayName} ${item.quantity} ${item.unit} to shopping list`}
+                className={`w-full py-1.5 sm:py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shrink-0 transition-all duration-200 active:scale-95 cursor-pointer select-none shadow-2xs hover:shadow-xs mt-0.5 ${
                   isAdded
                     ? 'bg-emerald-600 text-white shadow-xs scale-[1.02]'
                     : activeStatus.inList

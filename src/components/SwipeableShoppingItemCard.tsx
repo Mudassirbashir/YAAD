@@ -3,6 +3,7 @@ import { motion, useMotionValue, useTransform } from 'motion/react';
 import { Trash2 } from 'lucide-react';
 import { ShoppingItem, CategoryId, CATEGORIES_LIST } from '../types';
 import { ItemVisualIcon } from './ItemVisualIcon';
+import { CategoryIcon } from './CategoryIcon';
 import { BidiText } from '../utils/bidi';
 import { CelebrationCheckbox } from './CelebrationCheckbox';
 
@@ -54,10 +55,12 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
     onComplete(item.id);
   };
 
+  const itemCatId = (item.categoryId || 'other') as CategoryId;
+
   return (
     <div
       id={`shopping-item-wrapper-${item.id}`}
-      className="relative overflow-hidden rounded-2xl select-none touch-pan-y min-h-[54px] sm:min-h-[58px] w-full shrink-0 flex-shrink-0"
+      className="relative overflow-hidden rounded-2xl select-none touch-pan-y min-h-[64px] sm:min-h-[70px] w-full shrink-0 flex-shrink-0"
     >
       {/* Background Directional Feedback Layer */}
       {/* 1. Complete Background (Revealed on Swipe Right) */}
@@ -96,7 +99,7 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
         </motion.div>
       </motion.div>
 
-      {/* Foreground Draggable & Tappable Item Card - Slim & Easy to Understand */}
+      {/* Foreground Draggable & Tappable Item Card */}
       <motion.div
         id={`shopping-item-card-${item.id}`}
         tabIndex={0}
@@ -158,37 +161,24 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
                 scale: 1,
               }
         }
-        className={`relative flex items-center justify-between gap-2.5 sm:gap-3 py-2 sm:py-2.5 px-3 sm:px-3.5 rounded-2xl cursor-pointer select-none transition-all duration-200 outline-none w-full min-h-[54px] sm:min-h-[58px] focus-visible:ring-2 focus-visible:ring-primary ${
+        className={`relative flex items-center justify-between gap-3 py-2.5 px-3.5 rounded-2xl cursor-pointer select-none transition-all duration-200 outline-none w-full min-h-[64px] sm:min-h-[70px] focus-visible:ring-2 focus-visible:ring-primary ${
           isChecked
             ? 'bg-surface-container-low/70 opacity-70 border border-surface-container-high/40'
             : justCompletedLocally
             ? 'bg-emerald-50/95 dark:bg-emerald-950/40 border border-emerald-400/60 shadow-xs'
-            : 'bg-surface-bright hover:bg-surface-container-low active:bg-surface-container border border-surface-dim/60 shadow-2xs hover:shadow-xs'
+            : 'bg-surface-bright hover:bg-surface-container-low active:bg-surface-container border border-surface-dim/70 shadow-2xs hover:shadow-xs'
         }`}
       >
-        {/* Left Side: Check Circle + Visual Icon + Slim Item Name & Details */}
-        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
-          {/* Custom Celebration Checkbox & Burst Animation */}
-          <CelebrationCheckbox
-            isChecked={isChecked}
-            isJustCompleted={justCompletedLocally}
-            size={24}
-            className="shrink-0"
-            onClick={(e) => {
-              e.stopPropagation();
-              onComplete(item.id);
-            }}
-            ariaLabel={`Mark ${item.name} as ${isChecked ? 'incomplete' : 'complete'}`}
-          />
-
-          {/* Compact Item Visual Icon */}
+        {/* Left Side: Item Logo / Visual Icon + 3-line details (Name, Quantity, Category) */}
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          {/* Item Visual Icon */}
           <ItemVisualIcon
             name={item.name}
             canonicalName={item.canonicalName || item.canonical_name}
             displayName={item.name}
-            categoryId={item.categoryId}
-            size={32}
-            className={`w-8 h-8 rounded-xl shrink-0 transition-all duration-200 ${
+            categoryId={itemCatId}
+            size={36}
+            className={`w-9 h-9 rounded-xl shrink-0 transition-all duration-200 ${
               isChecked
                 ? 'opacity-50 grayscale-[35%] scale-95'
                 : justCompletedLocally
@@ -197,21 +187,22 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
             }`}
           />
 
-          {/* Slim, Clean Item Information */}
-          <div className="flex flex-col min-w-0 flex-1 justify-center py-0.5">
+          {/* 3-Tier Info: Name -> Quantity -> Category */}
+          <div className="min-w-0 flex-1 flex flex-col gap-0.5">
+            {/* Line 1: Item Name */}
             <div className="flex items-center gap-1.5 flex-wrap" dir="auto">
               <BidiText
                 as="span"
                 className={`font-['Plus_Jakarta_Sans'] text-sm sm:text-base font-bold leading-tight tracking-tight transition-all duration-200 truncate ${
                   isChecked
                     ? 'line-through text-outline opacity-60 decoration-emerald-600/70 dark:decoration-emerald-400/70 decoration-2'
-                    : 'text-on-surface'
+                    : 'text-primary'
                 }`}
               >
                 {item.name}
               </BidiText>
 
-              {/* Bilingual Secondary Name (e.g. Onion with Urdu پیاز) */}
+              {/* Secondary bilingual translation */}
               {item.nameUrdu && !isUrdu && item.nameUrdu !== item.name && (
                 <span className="font-urdu text-xs text-on-surface-variant font-normal shrink-0">
                   ({item.nameUrdu})
@@ -224,68 +215,66 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
               )}
             </div>
 
-            {/* Sub-line: Discreet category tag & category switcher */}
+            {/* Line 2: Quantity (below name) */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEditQuantity(item);
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
+              className="text-xs font-['Manrope'] font-medium text-primary/80 hover:text-primary transition-colors flex items-center gap-1 cursor-pointer w-fit text-start"
+              title="Tap to change quantity"
+            >
+              <span className="bg-surface-container px-2 py-0.5 rounded-md border border-surface-dim/60 font-semibold text-[11px]">
+                {formattedQty || (item.quantity ? `${item.quantity}${item.unit ? ' ' + item.unit : ''}` : '1x')}
+              </span>
+            </button>
+
+            {/* Line 3: Category (below quantity) */}
             <div
-              className="flex items-center gap-1.5 mt-0.5"
+              className="flex items-center gap-1 text-[11px] font-['Manrope'] text-on-surface-variant"
               onClick={(e) => e.stopPropagation()}
               onPointerDown={(e) => e.stopPropagation()}
             >
-              <div className="inline-flex items-center gap-1 text-[11px] font-['Manrope'] font-medium text-on-surface-variant bg-surface-container/60 hover:bg-surface-container px-1.5 py-0.5 rounded-md transition-colors">
-                <select
-                  value={item.categoryId || 'uncategorized'}
-                  onChange={(e) => onCategoryChange(item.id, e.target.value as CategoryId)}
-                  aria-label={`Change category for ${item.name}`}
-                  className="bg-transparent text-[11px] font-['Manrope'] font-medium text-on-surface-variant outline-none cursor-pointer hover:text-primary transition-colors pr-1"
-                >
-                  {CATEGORIES_LIST.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {getCategoryName(c.id)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {item.categoryId === 'uncategorized' && (
-                <span className="text-[10px] font-['Manrope'] text-amber-600 dark:text-amber-400 font-semibold">
-                  Tap to set category
-                </span>
-              )}
+              <CategoryIcon
+                categoryId={itemCatId}
+                className="w-3 h-3 text-primary/70 shrink-0"
+              />
+              <select
+                value={itemCatId}
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  onCategoryChange(item.id, e.target.value as CategoryId);
+                }}
+                aria-label={`Change category for ${item.name}`}
+                className="bg-transparent outline-none cursor-pointer hover:text-primary transition-colors truncate max-w-[140px] text-[11px]"
+              >
+                {CATEGORIES_LIST.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {getCategoryName(c.id)}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
 
-        {/* Right Side: Quantity & Unit Pill */}
-        {formattedQty ? (
-          <button
-            type="button"
+        {/* Right Side: Celebration Checkbox for marking completed / bought */}
+        <div className="flex items-center gap-2 shrink-0">
+          <CelebrationCheckbox
+            isChecked={isChecked}
+            isJustCompleted={justCompletedLocally}
+            size={26}
+            className="shrink-0"
             onClick={(e) => {
               e.stopPropagation();
-              onEditQuantity(item);
+              onComplete(item.id);
             }}
-            onPointerDown={(e) => e.stopPropagation()}
-            title="Tap to change quantity or unit"
-            className={`font-['Manrope'] tabular-nums text-xs font-bold px-2.5 py-1 rounded-xl shrink-0 transition-all active:scale-95 cursor-pointer ${
-              isChecked
-                ? 'bg-surface-container text-outline hover:bg-surface-container-high'
-                : 'bg-surface-container-high hover:bg-surface-container text-primary border border-surface-dim/70 shadow-2xs'
-            }`}
-          >
-            <bdi dir="ltr">{formattedQty}</bdi>
-          </button>
-        ) : !isChecked ? (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEditQuantity(item);
-            }}
-            onPointerDown={(e) => e.stopPropagation()}
-            title="Add quantity"
-            className="text-[11px] font-['Manrope'] font-semibold text-outline hover:text-primary px-2 py-0.5 rounded-lg hover:bg-surface-container transition-colors shrink-0 cursor-pointer"
-          >
-            + qty
-          </button>
-        ) : null}
+            ariaLabel={`Mark ${item.name} as ${isChecked ? 'incomplete' : 'complete'}`}
+          />
+        </div>
       </motion.div>
     </div>
   );

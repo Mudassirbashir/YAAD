@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   ArrowLeft,
+  ArrowRight,
   Plus,
   Trash2,
   Sparkles,
@@ -57,6 +58,17 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
     message: string;
     type: 'add' | 'merge' | 'remove';
   } | null>(null);
+  const [isBottomCartDriving, setIsBottomCartDriving] = useState<boolean>(false);
+
+  const handleStartShoppingWithAnimation = () => {
+    if (items.length === 0 || isBottomCartDriving) return;
+    triggerHaptic(18);
+    setIsBottomCartDriving(true);
+    setTimeout(() => {
+      onStartShopping(items);
+      setIsBottomCartDriving(false);
+    }, 380);
+  };
 
   const inputRef = useRef<HTMLInputElement>(null);
   const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -587,9 +599,6 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                 <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-primary text-xl">
                   {t('addItems.title') || 'Add Items'}
                 </h3>
-                <span className="text-xs font-['Manrope'] text-on-surface-variant font-medium">
-                  English & Roman Urdu
-                </span>
               </div>
 
               {/* Search Form */}
@@ -600,8 +609,8 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                 }}
                 className="space-y-3"
               >
-                <div className="relative">
-                  <div className="absolute start-4 top-3.5 text-outline pointer-events-none">
+                <div className="relative flex items-center w-full">
+                  <div className="absolute start-3.5 top-3.5 text-outline pointer-events-none">
                     <Search className="w-5 h-5" />
                   </div>
                   <input
@@ -614,8 +623,8 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                       setUserManuallySelectedCategory(false);
                       if (inputError) setInputError('');
                     }}
-                    placeholder="e.g. 2 kg chini, hari mirch, milk, fitkari..."
-                    className="w-full h-12 bg-surface-container-low rounded-2xl ps-11 pe-24 text-sm sm:text-base text-on-surface font-['Manrope'] border border-outline-variant/60 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline/70"
+                    placeholder={t('addItems.inputPlaceholder') || 'Add item (e.g. Milk, Apples)...'}
+                    className="w-full h-12 bg-surface-container-low rounded-full ps-11 pe-24 text-sm sm:text-base text-on-surface font-['Manrope'] border border-outline-variant/60 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
                     autoFocus
                   />
 
@@ -634,10 +643,10 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                     </button>
                   )}
 
-                  {/* Add Button */}
+                  {/* Add Button - Inside Circle */}
                   <button
                     type="submit"
-                    className="absolute end-1.5 top-1.5 w-9 h-9 rounded-xl bg-primary text-on-primary flex items-center justify-center hover:bg-primary-container active:scale-95 transition-all shadow-xs cursor-pointer"
+                    className="absolute end-1.5 top-1.5 bottom-1.5 w-9 h-9 rounded-full bg-primary text-on-primary flex items-center justify-center hover:bg-primary-container active:scale-95 transition-all shadow-xs cursor-pointer"
                     aria-label="Add item"
                   >
                     <Plus className="w-5 h-5" />
@@ -746,14 +755,13 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
               {!inputVal.trim() && (activeUnaddedSuggestions.length > 0 || addedSuggestions.length > 0) && (
                 <div className="space-y-2 pt-1 border-t border-surface-dim/60">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-['Manrope'] font-bold text-primary flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-primary shrink-0" />
+                    <span className="text-xs font-['Manrope'] font-bold text-primary flex items-center gap-2">
+                      <span className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                        <Sparkles className="w-3.5 h-3.5 stroke-[2.4]" />
+                      </span>
                       <span>
                         Suggested for {contextData.contextTitle || detectedContext.name || 'Your List'}:
                       </span>
-                    </span>
-                    <span className="text-[10px] font-['Manrope'] text-outline uppercase tracking-wider font-semibold">
-                      Context Essentials
                     </span>
                   </div>
 
@@ -854,7 +862,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-primary text-lg sm:text-xl">
-                    List Items ({items.length})
+                    {t('addItems.listItemsHeaderClean') || 'List Items'}
                   </h3>
                   <p className="font-['Manrope'] text-xs text-on-surface-variant mt-0.5">
                     {items.length === 0
@@ -866,10 +874,12 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                   type="button"
                   onClick={() => onStartShopping(items)}
                   disabled={items.length === 0}
-                  className="px-4 py-2.5 rounded-xl bg-primary text-on-primary font-['Manrope'] text-xs sm:text-sm font-bold flex items-center gap-2 hover:bg-primary-container disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-xs active:scale-95 cursor-pointer"
+                  className="px-4 py-2 sm:px-5 sm:py-2.5 rounded-full bg-primary text-on-primary font-['Manrope'] text-xs sm:text-sm font-bold flex items-center gap-2.5 hover:bg-primary-container disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-xs active:scale-95 cursor-pointer group"
                 >
-                  <span>Start Shopping</span>
-                  <ShoppingCart className="w-4 h-4" />
+                  <span>{t('addItems.startShoppingBtn') || 'Start Shopping'}</span>
+                  <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-white/20 dark:bg-black/20 flex items-center justify-center shrink-0 group-hover:translate-x-0.5 transition-transform">
+                    <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 rtl:rotate-180" />
+                  </div>
                 </button>
               </div>
 
@@ -909,7 +919,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                     return (
                       <div
                         key={item.id}
-                        className="flex items-center justify-between p-3 rounded-2xl bg-surface-container-low hover:bg-surface-container border border-surface-dim/70 transition-all gap-3"
+                        className="flex items-center justify-between p-2.5 sm:p-3 rounded-2xl bg-surface-container-low hover:bg-surface-container border border-surface-dim/70 transition-all gap-3"
                       >
                         <div className="flex items-center gap-3 min-w-0 flex-1">
                           <ItemVisualIcon
@@ -920,26 +930,48 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                             size={36}
                             className="w-9 h-9 rounded-xl shrink-0"
                           />
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="font-['Manrope'] text-sm font-semibold text-primary truncate">
-                                {item.name}
-                              </span>
-                            </div>
+                          <div className="min-w-0 flex-1 flex flex-col gap-0.5">
+                            {/* Line 1: Item Name */}
+                            <span className="font-['Plus_Jakarta_Sans'] font-bold text-sm text-primary truncate block">
+                              {item.name}
+                            </span>
 
-                            {/* Category selector */}
-                            <div className="flex items-center gap-1 mt-0.5">
+                            {/* Line 2: Quantity (one line below name) */}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingItem(item);
+                              }}
+                              className="text-xs font-['Manrope'] font-medium text-primary/80 hover:text-primary transition-colors flex items-center gap-1 cursor-pointer w-fit text-start"
+                              title="Tap to change quantity"
+                            >
+                              <span className="bg-surface-container px-2 py-0.5 rounded-md border border-surface-dim/60 font-semibold text-[11px]">
+                                {item.quantity
+                                  ? `${item.quantity}${item.unit ? ' ' + item.unit : ''}`
+                                  : '1x'}
+                              </span>
+                            </button>
+
+                            {/* Line 3: Category (below quantity) */}
+                            <div className="flex items-center gap-1 text-[11px] font-['Manrope'] text-on-surface-variant">
+                              <CategoryIcon
+                                categoryId={itemCatId}
+                                className="w-3 h-3 text-primary/60 shrink-0"
+                              />
                               <select
                                 value={itemCatId}
-                                onChange={(e) =>
+                                onClick={(e) => e.stopPropagation()}
+                                onChange={(e) => {
+                                  e.stopPropagation();
                                   handleItemCategoryChange(
                                     item.id,
                                     e.target.value as CategoryId,
                                     item.name
-                                  )
-                                }
+                                  );
+                                }}
                                 aria-label={`Change category for ${item.name}`}
-                                className="text-[11px] font-['Manrope'] text-on-surface-variant bg-transparent outline-none cursor-pointer hover:text-primary transition-colors"
+                                className="bg-transparent outline-none cursor-pointer hover:text-primary transition-colors truncate max-w-[140px]"
                               >
                                 {CATEGORIES_LIST.map((c) => (
                                   <option key={c.id} value={c.id}>
@@ -951,30 +983,18 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                           </div>
                         </div>
 
-                        {/* Quantity pill & Delete action */}
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => setEditingItem(item)}
-                            className="px-2.5 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high text-primary font-['Manrope'] text-xs font-bold border border-surface-dim transition-colors active:scale-95 cursor-pointer"
-                            title="Tap to edit quantity"
-                          >
-                            <span>
-                              {item.quantity
-                                ? `${item.quantity}${item.unit ? ' ' + item.unit : ''}`
-                                : '1x'}
-                            </span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveItem(item.id)}
-                            aria-label="Remove item"
-                            className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-error hover:bg-error-container/20 transition-colors cursor-pointer"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                        {/* Explicit Delete Button - isolated from row */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveItem(item.id);
+                          }}
+                          aria-label="Remove item"
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-error hover:bg-error-container/20 transition-colors cursor-pointer shrink-0"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     );
                   })}
@@ -996,12 +1016,20 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
       {/* Floating Bottom Action for Mobile */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 w-full max-w-xl md:max-w-2xl mx-auto p-4 bg-background/95 backdrop-blur-md border-t border-surface-dim/40 z-40">
         <button
-          onClick={() => onStartShopping(items)}
-          disabled={items.length === 0}
-          className="w-full h-14 rounded-2xl bg-primary text-on-primary font-['Manrope'] text-base font-bold shadow-md hover:bg-primary-container disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
+          onClick={handleStartShoppingWithAnimation}
+          disabled={items.length === 0 || isBottomCartDriving}
+          className="relative overflow-hidden w-full h-14 rounded-2xl bg-primary text-on-primary font-['Manrope'] text-base font-bold shadow-md hover:bg-primary-container disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] transition-all flex items-center justify-center gap-2.5 cursor-pointer group"
         >
-          <span>{t('addItems.startShoppingBtn') || 'Start Shopping'} ({items.length})</span>
-          <ShoppingCart className="w-5 h-5" />
+          <span>{t('addItems.startShoppingBtn') || 'Start Shopping'}</span>
+          <span
+            className={`transition-all duration-300 ease-out inline-flex items-center ${
+              isBottomCartDriving
+                ? 'translate-x-32 sm:translate-x-44 opacity-0 scale-125'
+                : 'translate-x-0 opacity-100'
+            }`}
+          >
+            <ShoppingCart className="w-5 h-5" />
+          </span>
         </button>
       </div>
     </div>

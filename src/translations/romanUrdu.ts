@@ -160,6 +160,10 @@ export const romanUrdu: typeof en = {
     browseAll: 'Sab Dekhein',
     noListsYet: 'Abhi koi list nahi hai',
     noListsDesc: 'Apni pehli shopping list banayein taakay sauda yaad rahe.',
+    letsMakeAList: 'Aayein list banayein',
+    listsAvailable: '{count} Lists Dastiyab',
+    listsAvailableOne: '1 List Dastiyab',
+    listsAvailableZero: '0 Lists Dastiyab',
     quickActions: {
       recentLists: 'Pichli Lists',
       favorites: 'Favorites',
@@ -232,11 +236,12 @@ export const romanUrdu: typeof en = {
     title: 'Nayi List Banayein',
     subtitle: 'Koi suggested list type chunein ya apna custom naam likhein.',
     customSectionTitle: 'Custom List',
-    customPlaceholder: 'List ka naam likhein (e.g. Dawat, Eid Shopping)...',
+    customPlaceholder: 'List Name',
     continueBtn: 'Aage Barhein',
     suggestedSectionTitle: 'Suggested Lists',
     suggestedSubtitle: 'Kisi bhi list par tap karein aur fauran shuru karein',
-    errorEmpty: 'Pehle list ka naam likhein.',
+    categoriesHeading: 'Categories',
+    errorEmpty: 'Pehle list ka naam darj karein, phir continue karein.',
     types: {
       weekly_grocery: {
         title: 'Hafte Ka Sauda',
@@ -291,7 +296,7 @@ export const romanUrdu: typeof en = {
   // Add Items Screen
   addItems: {
     title: 'Apni list mein cheezein dalein',
-    inputPlaceholder: 'Maslan: Aloo, Doodh, Double Roti, Sabun...',
+    inputPlaceholder: 'Item likhein (jaise Doodh, Seb)...',
     errorEmpty: 'Cheez ka naam likhein.',
     categoryLabel: 'Category',
     chooseCategory: 'Category chunein',

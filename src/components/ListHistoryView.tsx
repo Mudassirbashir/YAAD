@@ -12,6 +12,7 @@ import {
   Database,
   ArrowLeft,
   RotateCcw,
+  ClipboardList,
 } from 'lucide-react';
 import { ShoppingList } from '../types';
 import { TopHeader } from './TopHeader';
@@ -139,45 +140,18 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
         onSettingsClick={onOpenMenu || onOpenProfile}
         onAvatarClick={onOpenProfile}
         onMenuClick={onOpenMenu}
-        rightAction={
-          onBack ? (
-            <button
-              type="button"
-              onClick={onBack}
-              className="text-xs sm:text-sm font-semibold text-primary hover:bg-emerald-50 px-3 py-1.5 rounded-full transition-colors active:scale-95 cursor-pointer"
-            >
-              {t('history.backToHome') || 'Home'}
-            </button>
-          ) : undefined
-        }
       />
 
       {/* Main Content Area */}
       <main className="flex-1 px-4 sm:px-6 lg:px-8 pt-4 flex flex-col gap-5">
-        {/* Header Title and Subtitle + Always-active Create List Action */}
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h1 className="font-['Plus_Jakarta_Sans'] text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight">
-              {t('history.title')}
-            </h1>
-            <p className="font-['Manrope'] text-xs sm:text-sm text-outline mt-0.5">
-              {t('history.subtitle')}
-            </p>
-          </div>
-
-          {/* Primary Create List Button (Direct route to create_list) */}
-          <button
-            type="button"
-            id="history_create_new_btn"
-            onClick={() => {
-              triggerHaptic(14);
-              onCreateNewList();
-            }}
-            className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-full bg-primary hover:bg-primary/90 text-white text-xs sm:text-sm font-bold transition-all shadow-xs flex items-center gap-1.5 active:scale-95 cursor-pointer shrink-0"
-          >
-            <Plus className="w-4 h-4 stroke-[2.4]" />
-            <span>{t('history.createListBtn')}</span>
-          </button>
+        {/* Header Title and Subtitle */}
+        <div className="flex flex-col gap-1">
+          <h1 className="font-['Plus_Jakarta_Sans'] text-3xl sm:text-4xl font-black text-on-surface tracking-tight">
+            {t('history.title')}
+          </h1>
+          <p className="font-['Manrope'] text-xs sm:text-sm text-outline mt-0.5">
+            Track your past shopping trips and easily reorder your favorite items.
+          </p>
         </div>
 
         {/* Offline cached notice banner if offline */}
@@ -322,8 +296,8 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
         ) : lists.length === 0 ? (
           /* Clean Empty State (When no history exists) */
           <div className="flex-1 flex flex-col items-center justify-center p-8 sm:p-12 bg-white rounded-3xl border border-surface-dim/70 my-6 text-center shadow-xs">
-            <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-primary mb-4">
-              <ShoppingBag className="w-8 h-8 text-primary stroke-[2]" />
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mb-4">
+              <ClipboardList className="w-8 h-8 text-primary stroke-[2.2]" />
             </div>
             <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-on-surface text-lg sm:text-xl">
               {t('history.emptyTitle')}
@@ -338,9 +312,9 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
                 triggerHaptic(14);
                 onCreateNewList();
               }}
-              className="bg-primary hover:bg-primary/90 text-white font-['Manrope'] text-xs sm:text-sm font-bold px-6 py-3 rounded-full shadow-xs transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
+              className="bg-primary hover:bg-primary/90 text-white font-['Manrope'] text-sm sm:text-base font-bold px-7 py-3.5 rounded-full shadow-md transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
             >
-              <Plus className="w-4 h-4 stroke-[2.4]" />
+              <Plus className="w-5 h-5 stroke-[2.4]" />
               <span>{t('history.createListBtn')}</span>
             </button>
           </div>

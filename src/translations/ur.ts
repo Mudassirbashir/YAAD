@@ -84,6 +84,21 @@ export const ur = {
     guestUser: 'مہمان صارف',
     guestSubtitle: 'لسٹیں سنک اور محفوظ رکھنے کے لیے سائن ان کریں۔',
   },
+  createList: {
+    ...en.createList,
+    title: 'نئی لسٹ بنائیں',
+    customPlaceholder: 'لسٹ کا نام',
+    categoriesHeading: 'کیٹگریز',
+    errorEmpty: 'پہلے لسٹ کا نام درج کریں، پھر آگے بڑھیں',
+    continueBtn: 'آگے بڑھیں',
+  },
+  addItems: {
+    ...en.addItems,
+    title: 'لسٹ میں اشیاء شامل کریں',
+    inputPlaceholder: 'آئٹم درج کریں (مثلاً دودھ، سیب)...',
+    listItemsHeader: 'لسٹ کی اشیاء',
+    startShoppingBtn: 'خریداری شروع کریں',
+  },
   appUpdate: {
     ...en.appUpdate,
     title: 'یاد ایپ کی نئی اپ ڈیٹ',

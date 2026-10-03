@@ -6,37 +6,37 @@
   <!-- 1. Home / Landing Page (English, Urdu, Roman Urdu) -->
   <!-- ================================================================ -->
   <url>
-    <loc>https://yaadapppk.vercel.app/</loc>
-    <lastmod>2026-09-14</lastmod>
+    <loc>https://yaadapppk.vercel.app/home</loc>
+    <lastmod>2026-10-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://yaadapppk.vercel.app/" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://yaadapppk.vercel.app/" />
-    <xhtml:link rel="alternate" hreflang="ur" href="https://yaadapppk.vercel.app/?lang=ur" />
-    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaadapppk.vercel.app/?lang=ur" />
-    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaadapppk.vercel.app/?lang=roman-urdu" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yaadapppk.vercel.app/home" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://yaadapppk.vercel.app/home" />
+    <xhtml:link rel="alternate" hreflang="ur" href="https://yaadapppk.vercel.app/home?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaadapppk.vercel.app/home?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaadapppk.vercel.app/home?lang=roman-urdu" />
   </url>
   <url>
-    <loc>https://yaadapppk.vercel.app/?lang=ur</loc>
-    <lastmod>2026-09-14</lastmod>
+    <loc>https://yaadapppk.vercel.app/home?lang=ur</loc>
+    <lastmod>2026-10-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://yaadapppk.vercel.app/" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://yaadapppk.vercel.app/" />
-    <xhtml:link rel="alternate" hreflang="ur" href="https://yaadapppk.vercel.app/?lang=ur" />
-    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaadapppk.vercel.app/?lang=ur" />
-    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaadapppk.vercel.app/?lang=roman-urdu" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yaadapppk.vercel.app/home" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://yaadapppk.vercel.app/home" />
+    <xhtml:link rel="alternate" hreflang="ur" href="https://yaadapppk.vercel.app/home?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaadapppk.vercel.app/home?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaadapppk.vercel.app/home?lang=roman-urdu" />
   </url>
   <url>
-    <loc>https://yaadapppk.vercel.app/?lang=roman-urdu</loc>
-    <lastmod>2026-09-14</lastmod>
+    <loc>https://yaadapppk.vercel.app/home?lang=roman-urdu</loc>
+    <lastmod>2026-10-02</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://yaadapppk.vercel.app/" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://yaadapppk.vercel.app/" />
-    <xhtml:link rel="alternate" hreflang="ur" href="https://yaadapppk.vercel.app/?lang=ur" />
-    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaadapppk.vercel.app/?lang=ur" />
-    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaadapppk.vercel.app/?lang=roman-urdu" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yaadapppk.vercel.app/home" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://yaadapppk.vercel.app/home" />
+    <xhtml:link rel="alternate" hreflang="ur" href="https://yaadapppk.vercel.app/home?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaadapppk.vercel.app/home?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaadapppk.vercel.app/home?lang=roman-urdu" />
   </url>
 
   <!-- ================================================================ -->
@@ -74,6 +74,36 @@
     <xhtml:link rel="alternate" hreflang="ur" href="https://yaadapppk.vercel.app/about?lang=ur" />
     <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaadapppk.vercel.app/about?lang=ur" />
     <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaadapppk.vercel.app/about?lang=roman-urdu" />
+  </url>
+
+  <!-- ================================================================ -->
+  <!-- 2b. YAAD Features & Capabilities -->
+  <!-- ================================================================ -->
+  <url>
+    <loc>https://yaadapppk.vercel.app/features</loc>
+    <lastmod>2026-10-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yaadapppk.vercel.app/features" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://yaadapppk.vercel.app/features" />
+    <xhtml:link rel="alternate" hreflang="ur" href="https://yaadapppk.vercel.app/features?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaadapppk.vercel.app/features?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaadapppk.vercel.app/features?lang=roman-urdu" />
+  </url>
+
+  <!-- ================================================================ -->
+  <!-- 2c. See How YAAD Works -->
+  <!-- ================================================================ -->
+  <url>
+    <loc>https://yaadapppk.vercel.app/how-it-works</loc>
+    <lastmod>2026-10-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yaadapppk.vercel.app/how-it-works" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://yaadapppk.vercel.app/how-it-works" />
+    <xhtml:link rel="alternate" hreflang="ur" href="https://yaadapppk.vercel.app/how-it-works?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaadapppk.vercel.app/how-it-works?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaadapppk.vercel.app/how-it-works?lang=roman-urdu" />
   </url>
 
   <!-- ================================================================ -->
@@ -259,6 +289,43 @@
     <xhtml:link rel="alternate" hreflang="ur" href="https://yaadapppk.vercel.app/rashan-list?lang=ur" />
     <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaadapppk.vercel.app/rashan-list?lang=ur" />
     <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaadapppk.vercel.app/rashan-list?lang=roman-urdu" />
+  </url>
+
+  <!-- ================================================================ -->
+  <!-- 8. YAAD Blog & Practical Shopping Knowledge Hub -->
+  <!-- ================================================================ -->
+  <url>
+    <loc>https://yaadapppk.vercel.app/blog</loc>
+    <lastmod>2026-10-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yaadapppk.vercel.app/blog" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://yaadapppk.vercel.app/blog" />
+    <xhtml:link rel="alternate" hreflang="ur" href="https://yaadapppk.vercel.app/blog?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaadapppk.vercel.app/blog?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaadapppk.vercel.app/blog?lang=roman-urdu" />
+  </url>
+  <url>
+    <loc>https://yaadapppk.vercel.app/blog?lang=ur</loc>
+    <lastmod>2026-10-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yaadapppk.vercel.app/blog" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://yaadapppk.vercel.app/blog" />
+    <xhtml:link rel="alternate" hreflang="ur" href="https://yaadapppk.vercel.app/blog?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaadapppk.vercel.app/blog?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaadapppk.vercel.app/blog?lang=roman-urdu" />
+  </url>
+  <url>
+    <loc>https://yaadapppk.vercel.app/blog?lang=roman-urdu</loc>
+    <lastmod>2026-10-02</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://yaadapppk.vercel.app/blog" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://yaadapppk.vercel.app/blog" />
+    <xhtml:link rel="alternate" hreflang="ur" href="https://yaadapppk.vercel.app/blog?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-PK" href="https://yaadapppk.vercel.app/blog?lang=ur" />
+    <xhtml:link rel="alternate" hreflang="ur-Latn" href="https://yaadapppk.vercel.app/blog?lang=roman-urdu" />
   </url>
 
 </urlset>

@@ -69,15 +69,19 @@ export const SITE_CONFIG = {
   // Public SEO Pages Metadata
   pages: {
     home: {
-      canonicalPath: '/',
+      canonicalPath: '/home',
       isIndexable: true,
       priority: 1.0,
       changeFreq: 'daily',
       title: {
-        en: 'YAAD • Smart Shopping Memory & Grocery Reminder App', romanUrdu: 'YAAD • Sauda Salaf Yaad Rakhne Ki Aasan Grocery App', ur: 'YAAD • Smart Shopping Memory & Grocery Reminder App',
+        en: 'YAAD | Smart Shopping List & Reminder App',
+        romanUrdu: 'YAAD | Sauda Salaf Yaad Rakhne Ki Aasan Grocery App',
+        ur: 'YAAD | Smart Shopping List & Reminder App',
       },
       description: {
-        en: 'Never forget what you need to buy. YAAD is a smart shopping reminder that organizes grocery items automatically. Works offline.', romanUrdu: 'Shopping k waqt koi cheez na bhoolein. YAAD sauda salaf aur grocery yaad rakhne ki tez aur aasan app hai jo offline bhi kaam karti hai.', ur: 'Never forget what you need to buy. YAAD is a smart shopping reminder that organizes grocery items automatically. Works offline.',
+        en: 'Never forget what you need to buy. YAAD is a shopping list and reminder app that helps people remember the things they need to buy before and during shopping. Works offline.',
+        romanUrdu: 'Shopping k waqt koi cheez na bhoolein. YAAD sauda salaf aur grocery yaad rakhne ki tez aur aasan app hai jo offline bhi kaam karti hai.',
+        ur: 'Never forget what you need to buy. YAAD is a shopping list and reminder app that helps people remember the things they need to buy before and during shopping. Works offline.',
       },
     },
     about: {
@@ -90,6 +94,38 @@ export const SITE_CONFIG = {
       },
       description: {
         en: 'Discover how YAAD solves the universal problem of forgetting grocery items with native Pakistani grocery intelligence, trilingual support, and complete offline privacy.', romanUrdu: 'Janiye k YAAD kis tarah aapki grocery aur sauda salaf ko asaan banati hai. Trilingual support aur offline privacy k sath.', ur: 'Discover how YAAD solves the universal problem of forgetting grocery items with native Pakistani grocery intelligence, trilingual support, and complete offline privacy.',
+      },
+    },
+    features: {
+      canonicalPath: '/features',
+      isIndexable: true,
+      priority: 0.8,
+      changeFreq: 'weekly',
+      title: {
+        en: 'YAAD Features • Bilingual Grocery Lists & Offline Memory',
+        romanUrdu: 'YAAD Features • Grocery List Aur Offline Memory',
+        ur: 'YAAD Features • Bilingual Grocery Lists & Offline Memory',
+      },
+      description: {
+        en: 'Explore YAAD features: bilingual Urdu and English grocery intelligence, 100% offline lists, Pakistani units, and cross-device sync.',
+        romanUrdu: 'YAAD ki tamam features: bilingual grocery lists, offline memory aur Pakistani units k sath.',
+        ur: 'Explore YAAD features: bilingual Urdu and English grocery intelligence, 100% offline lists, Pakistani units, and cross-device sync.',
+      },
+    },
+    howItWorks: {
+      canonicalPath: '/how-it-works',
+      isIndexable: true,
+      priority: 0.8,
+      changeFreq: 'weekly',
+      title: {
+        en: 'See How YAAD Works • Easy Grocery Planning & Offline Checklist',
+        romanUrdu: 'YAAD Kaise Kaam Karti Hai • Step by Step Guide',
+        ur: 'See How YAAD Works • Easy Grocery Planning & Offline Checklist',
+      },
+      description: {
+        en: 'Learn how YAAD works in 4 easy steps: create your list, add groceries in English or Urdu, shop offline in the market, and save your trip history.',
+        romanUrdu: 'YAAD istemal karne ka asan tareeqa: list banayein, grocery items likhein, aur offline check off karein.',
+        ur: 'Learn how YAAD works in 4 easy steps: create your list, add groceries in English or Urdu, shop offline in the market, and save your trip history.',
       },
     },
     help: {

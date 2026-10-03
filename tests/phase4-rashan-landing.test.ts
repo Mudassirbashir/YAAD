@@ -90,7 +90,7 @@ assert(hasChanaDaal, 'Curated items contain Daal Chana categorized under pulses'
 
 // 6. Private Route Defense Unbroken
 console.log('\n--- 6. Private Route Shielding Verification ---');
-const privateRoutes = ['/home', '/lists/xyz', '/history', '/settings', '/stats'];
+const privateRoutes = ['/lists/xyz', '/history', '/settings', '/stats'];
 privateRoutes.forEach((route) => {
   const parsed = parseRoute(route);
   assert(parsed.isProtected, `Private route ${route} remains protected`);

@@ -8,8 +8,10 @@ import {
   PenLine,
   Plus,
   ShoppingBag,
+  Sparkles,
   Store,
 } from 'lucide-react';
+import { useAppRouter } from '../router/RouterContext';
 import { AppPublicHeader } from './common/AppPublicHeader';
 import { AppPublicFooter } from './common/AppPublicFooter';
 import { BlueTickCheckCircle } from './BlueTickCheckCircle';
@@ -36,6 +38,8 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
   onOpenLegalPage,
   onOpenRashanList,
 }) => {
+  const { navigate } = useAppRouter();
+
   // Interactive grocery preview state
   const [demoItems, setDemoItems] = useState<DemoItem[]>([
     { id: '1', name: 'Basmati Rice', quantity: '5 kg', completed: false },
@@ -92,12 +96,17 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
 
           {/* Primary Headline */}
           <h1 className="text-3xl sm:text-5xl md:text-6xl font-black text-[#1c2826] tracking-tight leading-[1.15]">
-            Never forget what you came to buy.
+            Never Forget What You Need to Buy
           </h1>
 
-          {/* Clean subheadline */}
-          <p className="mt-4 sm:mt-5 text-sm sm:text-base md:text-lg text-[#556960] max-w-2xl mx-auto leading-relaxed">
-            Fast, clutter-free shopping lists designed for real grocery trips. Works 100% offline, anywhere.
+          {/* Direct AEO Primary Definition Answer */}
+          <p className="mt-4 sm:mt-5 text-base sm:text-lg md:text-xl font-semibold text-[#1c2826] max-w-2xl mx-auto leading-snug">
+            YAAD is a shopping list and reminder app that helps people remember the things they need to buy before and during shopping.
+          </p>
+
+          {/* Supporting explanation answering problem, audience, and capabilities */}
+          <p className="mt-3 text-sm sm:text-base text-[#556960] max-w-2xl mx-auto leading-relaxed">
+            Most people head to the market with a mental note, only to realize they forgot salt, milk, or cooking oil once they get home. Built for busy households and everyday errand-runners, YAAD makes it effortless to jot down needed groceries in English or Urdu, tick them off aisle by aisle, and keep an active list on hand that works anywhere—even without mobile data.
           </p>
 
           {/* Two Prominent Action Buttons with Tactile Embossed Feel */}
@@ -139,6 +148,52 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
             </span>
           </div>
 
+          {/* Internal Quick Links with Descriptive Anchors */}
+          <div className="mt-8 pt-6 border-t border-[#e5e1d8]/60 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 text-xs sm:text-sm font-semibold text-[#005039]">
+            <a
+              href="/features"
+              onClick={(e) => {
+                e.preventDefault();
+                navigate('/features');
+              }}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white border border-[#e5e1d8] hover:border-[#005039]/40 hover:bg-[#faf8f5] transition-all shadow-2xs"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-[#005039]" />
+              <span>Explore YAAD features</span>
+            </a>
+            <a
+              href="/how-it-works"
+              onClick={(e) => {
+                e.preventDefault();
+                navigate('/how-it-works');
+              }}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white border border-[#e5e1d8] hover:border-[#005039]/40 hover:bg-[#faf8f5] transition-all shadow-2xs"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#005039]" />
+              <span>See how YAAD works</span>
+            </a>
+            <a
+              href="/faq"
+              onClick={(e) => {
+                e.preventDefault();
+                navigate('/faq');
+              }}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white border border-[#e5e1d8] hover:border-[#005039]/40 hover:bg-[#faf8f5] transition-all shadow-2xs"
+            >
+              <span>Read frequently asked questions</span>
+            </a>
+            <a
+              href="/about"
+              onClick={(e) => {
+                e.preventDefault();
+                navigate('/about');
+              }}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white border border-[#e5e1d8] hover:border-[#005039]/40 hover:bg-[#faf8f5] transition-all shadow-2xs"
+            >
+              <span>Learn about YAAD</span>
+            </a>
+          </div>
+
           {/* Invisible Crawlable SEO Content for Search Engines */}
           <div className="sr-only" aria-hidden="false">
             <h2>About YAAD Smart Grocery Memory &amp; Shopping Assistant</h2>
@@ -178,8 +233,19 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
                   Add items the moment you remember them at home. Add quantities, units, and brands in seconds before leaving.
                 </p>
               </div>
-              <div className="mt-5 pt-3 border-t border-[#f2efe9] text-xs font-bold text-[#005039]">
-                Zero clutter
+              <div className="mt-5 pt-3 border-t border-[#f2efe9] text-xs font-bold text-[#005039] flex items-center justify-between">
+                <span>Zero clutter</span>
+                <a
+                  href="/features"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/features');
+                  }}
+                  className="hover:underline inline-flex items-center gap-1"
+                >
+                  <span>Explore YAAD features</span>
+                  <ArrowRight className="w-3 h-3" />
+                </a>
               </div>
             </div>
 
@@ -199,8 +265,19 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
                   Take YAAD into grocery stores and basement bazaars. No Wi-Fi or mobile data needed to view your list.
                 </p>
               </div>
-              <div className="mt-5 pt-3 border-t border-[#f2efe9] text-xs font-bold text-[#005039]">
-                100% offline ready
+              <div className="mt-5 pt-3 border-t border-[#f2efe9] text-xs font-bold text-[#005039] flex items-center justify-between">
+                <span>100% offline ready</span>
+                <a
+                  href="/how-it-works"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/how-it-works');
+                  }}
+                  className="hover:underline inline-flex items-center gap-1"
+                >
+                  <span>See how YAAD works</span>
+                  <ArrowRight className="w-3 h-3" />
+                </a>
               </div>
             </div>
 
@@ -220,8 +297,19 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
                   Tap each item as you put it in your basket. Completed items fade out so you never buy duplicates or miss a thing.
                 </p>
               </div>
-              <div className="mt-5 pt-3 border-t border-[#f2efe9] text-xs font-bold text-[#005039]">
-                Clear satisfaction
+              <div className="mt-5 pt-3 border-t border-[#f2efe9] text-xs font-bold text-[#005039] flex items-center justify-between">
+                <span>Clear satisfaction</span>
+                <a
+                  href="/faq"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/faq');
+                  }}
+                  className="hover:underline inline-flex items-center gap-1"
+                >
+                  <span>Read frequently asked questions</span>
+                  <ArrowRight className="w-3 h-3" />
+                </a>
               </div>
             </div>
           </div>

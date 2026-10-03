@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Clock, Heart, Grid, TrendingUp } from 'lucide-react';
+import { ListChecks, Bookmark, LayoutGrid, BarChart3 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { ShoppingList } from '../../types';
 
@@ -18,7 +18,7 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({
   onOpenCategories,
   onOpenStatistics,
 }) => {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
 
   // Compute real statistics from Supabase lists
   const stats = useMemo(() => {
@@ -35,83 +35,101 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({
     return { totalLists, activeLists, totalItems, completedItems, completionRate };
   }, [lists]);
 
+  const recentListsSubtitle = useMemo(() => {
+    if (stats.totalLists === 0) {
+      return t('home.listsAvailableZero') || '0 Lists Available';
+    }
+    if (stats.totalLists === 1) {
+      return t('home.listsAvailableOne') || '1 List Available';
+    }
+    return t('home.listsAvailable', { count: stats.totalLists }) || `${stats.totalLists} Lists Available`;
+  }, [stats.totalLists, t]);
+
   return (
     <section id="home_quick_actions" aria-label={t('home.quickActions.title') || 'Quick Actions'}>
-      <div className="grid grid-cols-4 gap-1.5 sm:gap-3 select-none">
-        {/* Recent Lists */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-2.5 select-none">
+        {/* 1. Recent Lists */}
         <button
           type="button"
           id="quick_action_recent_lists"
           onClick={onOpenRecentLists}
-          className="min-h-[74px] sm:min-h-[88px] rounded-2xl bg-surface-container-lowest border border-surface-dim/75 shadow-2xs hover:border-emerald-500/40 hover:shadow-xs active:scale-[0.96] transition-all flex flex-col items-center justify-center p-1.5 sm:p-2.5 gap-0.5 sm:gap-1 group cursor-pointer"
+          className="h-12 sm:h-13 rounded-xl sm:rounded-2xl bg-surface-container-lowest border border-surface-dim/75 shadow-2xs hover:border-zinc-400 dark:hover:border-zinc-600 hover:shadow-xs active:scale-[0.98] transition-all flex items-center px-2.5 py-1.5 sm:px-3 sm:py-2 gap-2 group cursor-pointer text-start"
         >
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500/20 transition-all shrink-0 group-hover:scale-105">
-            <Clock className="w-4 h-4 sm:w-4.5 sm:h-4.5 stroke-[2.2]" />
+          <div className="w-7.5 h-7.5 sm:w-8 sm:h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200/80 dark:border-zinc-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+            <ListChecks className="w-4 h-4 stroke-[2.2]" />
           </div>
-          <span className="text-[11px] sm:text-xs font-bold text-on-surface font-['Plus_Jakarta_Sans'] truncate max-w-[96%] leading-tight text-center">
-            {t('home.quickActions.recentLists')}
-          </span>
-          <span className="text-[9.5px] sm:text-[10.5px] font-medium text-outline font-['Manrope'] truncate max-w-[96%] text-center">
-            {stats.activeLists > 0
-              ? `${stats.activeLists} ${t('home.active') || 'Active'}`
-              : `${stats.totalLists} ${t('nav.lists') || 'Lists'}`}
-          </span>
+          <div className="flex flex-col min-w-0">
+            <span className="text-xs sm:text-[13px] font-bold text-on-surface font-['Plus_Jakarta_Sans'] truncate leading-tight group-hover:text-primary transition-colors">
+              {t('home.quickActions.recentLists')}
+            </span>
+            <span className="text-[9.5px] sm:text-[10px] font-medium text-outline font-['Manrope'] truncate mt-0.5">
+              {recentListsSubtitle}
+            </span>
+          </div>
         </button>
 
-        {/* Favorites */}
+        {/* 2. Favorites */}
         <button
           type="button"
           id="quick_action_favorites"
           onClick={onOpenFavorites}
-          className="min-h-[74px] sm:min-h-[88px] rounded-2xl bg-surface-container-lowest border border-surface-dim/75 shadow-2xs hover:border-rose-500/40 hover:shadow-xs active:scale-[0.96] transition-all flex flex-col items-center justify-center p-1.5 sm:p-2.5 gap-0.5 sm:gap-1 group cursor-pointer"
+          className="h-12 sm:h-13 rounded-xl sm:rounded-2xl bg-surface-container-lowest border border-surface-dim/75 shadow-2xs hover:border-zinc-400 dark:hover:border-zinc-600 hover:shadow-xs active:scale-[0.98] transition-all flex items-center px-2.5 py-1.5 sm:px-3 sm:py-2 gap-2 group cursor-pointer text-start"
         >
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 flex items-center justify-center group-hover:bg-rose-500/20 transition-all shrink-0 group-hover:scale-105">
-            <Heart className="w-4 h-4 sm:w-4.5 sm:h-4.5 fill-rose-500/20 stroke-[2.2]" />
+          <div className="w-7.5 h-7.5 sm:w-8 sm:h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200/80 dark:border-zinc-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+            <Bookmark className="w-4 h-4 stroke-[2.2]" />
           </div>
-          <span className="text-[11px] sm:text-xs font-bold text-on-surface font-['Plus_Jakarta_Sans'] truncate max-w-[96%] leading-tight text-center">
-            {t('home.quickActions.favorites')}
-          </span>
-          <span className="text-[9.5px] sm:text-[10.5px] font-medium text-outline font-['Manrope'] truncate max-w-[96%] text-center">
-            {t('home.quickAdd') || 'Quick Add'}
-          </span>
+          <div className="flex flex-col min-w-0">
+            <span className="text-xs sm:text-[13px] font-bold text-on-surface font-['Plus_Jakarta_Sans'] truncate leading-tight group-hover:text-primary transition-colors">
+              {t('home.quickActions.favorites')}
+            </span>
+            <span className="text-[9.5px] sm:text-[10px] font-medium text-outline font-['Manrope'] truncate mt-0.5">
+              {stats.totalItems > 0
+                ? `${stats.totalItems} ${t('nav.lists') ? 'Items' : 'Items'}`
+                : t('home.quickAdd') || 'Quick Add'}
+            </span>
+          </div>
         </button>
 
-        {/* Categories */}
+        {/* 3. Categories */}
         <button
           type="button"
           id="quick_action_categories"
           onClick={onOpenCategories}
-          className="min-h-[74px] sm:min-h-[88px] rounded-2xl bg-surface-container-lowest border border-surface-dim/75 shadow-2xs hover:border-blue-500/40 hover:shadow-xs active:scale-[0.96] transition-all flex flex-col items-center justify-center p-1.5 sm:p-2.5 gap-0.5 sm:gap-1 group cursor-pointer"
+          className="h-12 sm:h-13 rounded-xl sm:rounded-2xl bg-surface-container-lowest border border-surface-dim/75 shadow-2xs hover:border-zinc-400 dark:hover:border-zinc-600 hover:shadow-xs active:scale-[0.98] transition-all flex items-center px-2.5 py-1.5 sm:px-3 sm:py-2 gap-2 group cursor-pointer text-start"
         >
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 flex items-center justify-center group-hover:bg-blue-500/20 transition-all shrink-0 group-hover:scale-105">
-            <Grid className="w-4 h-4 sm:w-4.5 sm:h-4.5 stroke-[2.2]" />
+          <div className="w-7.5 h-7.5 sm:w-8 sm:h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200/80 dark:border-zinc-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+            <LayoutGrid className="w-4 h-4 stroke-[2.2]" />
           </div>
-          <span className="text-[11px] sm:text-xs font-bold text-on-surface font-['Plus_Jakarta_Sans'] truncate max-w-[96%] leading-tight text-center">
-            {t('home.quickActions.categories')}
-          </span>
-          <span className="text-[9.5px] sm:text-[10.5px] font-medium text-outline font-['Manrope'] truncate max-w-[96%] text-center">
-            {t('home.browseAll') || 'Browse All'}
-          </span>
+          <div className="flex flex-col min-w-0">
+            <span className="text-xs sm:text-[13px] font-bold text-on-surface font-['Plus_Jakarta_Sans'] truncate leading-tight group-hover:text-primary transition-colors">
+              {t('home.quickActions.categories')}
+            </span>
+            <span className="text-[9.5px] sm:text-[10px] font-medium text-outline font-['Manrope'] truncate mt-0.5">
+              {t('home.browseAll') || 'Browse All'}
+            </span>
+          </div>
         </button>
 
-        {/* Statistics */}
+        {/* 4. Statistics */}
         <button
           type="button"
           id="quick_action_statistics"
           onClick={onOpenStatistics}
-          className="min-h-[74px] sm:min-h-[88px] rounded-2xl bg-surface-container-lowest border border-surface-dim/75 shadow-2xs hover:border-amber-500/40 hover:shadow-xs active:scale-[0.96] transition-all flex flex-col items-center justify-center p-1.5 sm:p-2.5 gap-0.5 sm:gap-1 group cursor-pointer"
+          className="h-12 sm:h-13 rounded-xl sm:rounded-2xl bg-surface-container-lowest border border-surface-dim/75 shadow-2xs hover:border-zinc-400 dark:hover:border-zinc-600 hover:shadow-xs active:scale-[0.98] transition-all flex items-center px-2.5 py-1.5 sm:px-3 sm:py-2 gap-2 group cursor-pointer text-start"
         >
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center group-hover:bg-amber-500/20 transition-all shrink-0 group-hover:scale-105">
-            <TrendingUp className="w-4 h-4 sm:w-4.5 sm:h-4.5 stroke-[2.2]" />
+          <div className="w-7.5 h-7.5 sm:w-8 sm:h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200/80 dark:border-zinc-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+            <BarChart3 className="w-4 h-4 stroke-[2.2]" />
           </div>
-          <span className="text-[11px] sm:text-xs font-bold text-on-surface font-['Plus_Jakarta_Sans'] truncate max-w-[96%] leading-tight text-center">
-            {t('home.quickActions.statistics')}
-          </span>
-          <span className="text-[9.5px] sm:text-[10.5px] font-medium text-outline font-['Manrope'] truncate max-w-[96%] text-center">
-            {stats.completionRate > 0
-              ? `${stats.completionRate}% ${t('done') || 'Done'}`
-              : `${stats.totalItems} ${t('nav.lists') ? 'Items' : 'Items'}`}
-          </span>
+          <div className="flex flex-col min-w-0">
+            <span className="text-xs sm:text-[13px] font-bold text-on-surface font-['Plus_Jakarta_Sans'] truncate leading-tight group-hover:text-primary transition-colors">
+              {t('home.quickActions.statistics')}
+            </span>
+            <span className="text-[9.5px] sm:text-[10px] font-medium text-outline font-['Manrope'] truncate mt-0.5">
+              {stats.completionRate > 0
+                ? `${stats.completionRate}% ${t('done') || 'Done'}`
+                : `${stats.totalItems} Items`}
+            </span>
+          </div>
         </button>
       </div>
     </section>
