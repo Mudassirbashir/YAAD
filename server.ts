@@ -3,16 +3,9 @@ import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
-import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Type } from '@google/genai';
 import { adminRouter } from './server/admin/routes';
 import { adminStore } from './server/admin/store';
-import {
-  generateRegistrationOptions,
-  verifyRegistrationResponse,
-  generateAuthenticationOptions,
-  verifyAuthenticationResponse,
-} from '@simplewebauthn/server';
 
 dotenv.config();
 
@@ -1092,470 +1085,6 @@ app.post('/api/account/delete', async (req, res) => {
   }
 });
 
-// ====================================================================
-// WEBAUTHN / PASSKEY AUTHENTICATION ENDPOINTS
-// ====================================================================
-
-app.get('/api/auth/passkey-config', (req, res) => {
-  try {
-    const hostHeader = req.headers['x-forwarded-host'] || req.headers.host || 'localhost';
-    const rawHost = Array.isArray(hostHeader) ? hostHeader[0] : hostHeader;
-    const host = rawHost.split(':')[0].toLowerCase();
-
-    const configuredRpId = (
-      process.env.PASSKEY_RP_ID ||
-      'yaadapppk.vercel.app'
-    ).toLowerCase().trim();
-
-    const isProductionMatch = host === configuredRpId || host.endsWith('.' + configuredRpId);
-    const isLegacyDomain =
-      host === 'yaad-three.vercel.app' ||
-      host === 'yaad-mudassirbashir530-creators-projects.vercel.app' ||
-      host === 'yaadapppk-mudassirbashir530-creators-projects.vercel.app';
-    const isLocalhost = host === 'localhost' || host === '127.0.0.1';
-    const supported = isProductionMatch || isLegacyDomain || isLocalhost;
-
-    return res.json({
-      supported,
-      rpId: isLegacyDomain ? host : configuredRpId,
-      currentHost: host,
-      isProduction: isProductionMatch,
-      reason: supported
-        ? undefined
-        : `Passkey authentication is domain-bound to production (${configuredRpId}). On this preview environment, please continue with Email or Google.`,
-    });
-  } catch (err: any) {
-    return res.status(500).json({
-      supported: false,
-      rpId: 'yaadapppk.vercel.app',
-      reason: 'Failed to retrieve passkey configuration.',
-    });
-  }
-});
-
-function getRpId(req: express.Request): string {
-  const hostHeader = req.headers['x-forwarded-host'] || req.headers.host || 'localhost';
-  const host = Array.isArray(hostHeader) ? hostHeader[0] : hostHeader;
-  return host.split(':')[0];
-}
-
-function getExpectedOrigins(req: express.Request): string[] {
-  const origins = new Set<string>();
-  const originHeader = req.headers.origin;
-  if (originHeader) origins.add(originHeader);
-  const host = req.headers['x-forwarded-host'] || req.headers.host;
-  if (host) {
-    origins.add(`https://${host}`);
-    origins.add(`http://${host}`);
-  }
-  origins.add('https://yaadapppk.vercel.app');
-  origins.add('https://yaad-three.vercel.app');
-  origins.add('https://yaad-mudassirbashir530-creators-projects.vercel.app');
-  origins.add('https://yaadapppk-mudassirbashir530-creators-projects.vercel.app');
-  origins.add('http://localhost:3000');
-  origins.add('http://127.0.0.1:3000');
-  if (process.env.APP_URL) {
-    origins.add(process.env.APP_URL.replace(/\/$/, ''));
-  }
-  return Array.from(origins);
-}
-
-// In-memory challenge store with automatic cleanup
-const passkeyChallenges = new Map<string, { challenge: string; userId?: string; expiresAt: number }>();
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, val] of passkeyChallenges.entries()) {
-    if (val.expiresAt < now) {
-      passkeyChallenges.delete(key);
-    }
-  }
-}, 60000);
-
-// Helper to get Supabase Admin client
-async function getSupabaseAdmin() {
-  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
-  if (!supabaseUrl || !serviceKey) {
-    return null;
-  }
-  const { createClient } = await import('@supabase/supabase-js');
-  return createClient(supabaseUrl, serviceKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-}
-
-// 1. Passkey Registration: Generate Registration Options
-app.post('/api/passkey/register-options', async (req, res) => {
-  try {
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.replace('Bearer ', '');
-    if (!token) {
-      return res.status(401).json({ error: 'Authentication required to register passkey' });
-    }
-
-    const supabaseAdmin = await getSupabaseAdmin();
-    if (!supabaseAdmin) {
-      return res.status(503).json({ error: 'Backend auth service is not configured' });
-    }
-
-    const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
-    if (userError || !userData?.user) {
-      return res.status(401).json({ error: 'Invalid authentication session' });
-    }
-
-    const user = userData.user;
-    const rpID = getRpId(req);
-
-    // Fetch existing passkeys for user to prevent registering the same authenticator twice
-    const { data: existingKeys } = await supabaseAdmin
-      .from('user_passkeys')
-      .select('credential_id, transports')
-      .eq('user_id', user.id);
-
-    const excludeCredentials = (existingKeys || []).map((k: any) => ({
-      id: k.credential_id,
-      transports: k.transports || [],
-    }));
-
-    const options = await generateRegistrationOptions({
-      rpName: 'YAAD',
-      rpID,
-      userID: new Uint8Array(Buffer.from(user.id)),
-      userName: user.email || 'user',
-      userDisplayName: user.user_metadata?.full_name || user.email || 'YAAD User',
-      attestationType: 'none',
-      excludeCredentials,
-      authenticatorSelection: {
-        residentKey: 'preferred',
-        userVerification: 'preferred',
-      },
-    });
-
-    const challengeId = crypto.randomUUID();
-    passkeyChallenges.set(challengeId, {
-      challenge: options.challenge,
-      userId: user.id,
-      expiresAt: Date.now() + 300000, // 5 minutes
-    });
-
-    return res.json({ options, challengeId });
-  } catch (err: any) {
-    console.error('Error generating passkey registration options:', err);
-    return res.status(500).json({ error: err?.message || 'Failed to start passkey registration' });
-  }
-});
-
-// 2. Passkey Registration: Verify and Save Credential
-app.post('/api/passkey/register-verify', async (req, res) => {
-  try {
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.replace('Bearer ', '');
-    if (!token) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
-
-    const { response, challengeId, deviceName } = req.body;
-    if (!response || !challengeId) {
-      return res.status(400).json({ error: 'Missing registration response or challenge' });
-    }
-
-    const challengeObj = passkeyChallenges.get(challengeId);
-    if (!challengeObj || challengeObj.expiresAt < Date.now()) {
-      return res.status(400).json({ error: 'Passkey registration timed out. Please try again.' });
-    }
-
-    const supabaseAdmin = await getSupabaseAdmin();
-    if (!supabaseAdmin) {
-      return res.status(503).json({ error: 'Backend auth service is not configured' });
-    }
-
-    const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
-    if (userError || !userData?.user || userData.user.id !== challengeObj.userId) {
-      return res.status(401).json({ error: 'User mismatch or session expired' });
-    }
-
-    const rpID = getRpId(req);
-    const expectedOrigin = getExpectedOrigins(req);
-
-    const verification = await verifyRegistrationResponse({
-      response,
-      expectedChallenge: challengeObj.challenge,
-      expectedOrigin,
-      expectedRPID: rpID,
-      requireUserVerification: false,
-    });
-
-    if (!verification.verified || !verification.registrationInfo) {
-      return res.status(400).json({ error: 'Passkey verification failed' });
-    }
-
-    // Clean up used challenge
-    passkeyChallenges.delete(challengeId);
-
-    const { credential } = verification.registrationInfo;
-    const publicKeyBase64 = Buffer.from(credential.publicKey).toString('base64url');
-
-    // Save to user_passkeys table
-    const { data: savedKey, error: saveErr } = await supabaseAdmin
-      .from('user_passkeys')
-      .insert({
-        user_id: userData.user.id,
-        credential_id: credential.id,
-        public_key: publicKeyBase64,
-        counter: credential.counter,
-        device_name: deviceName || 'Passkey Device',
-        transports: credential.transports || [],
-        created_at: new Date().toISOString(),
-        last_used_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
-
-    if (saveErr) {
-      console.error('Error saving passkey record to database:', saveErr);
-      return res.status(500).json({ error: 'Failed to record passkey in database' });
-    }
-
-    // Keep user_metadata in sync so account state reflects passkey active
-    try {
-      const existingMeta = userData.user.user_metadata || {};
-      await supabaseAdmin.auth.admin.updateUserById(userData.user.id, {
-        user_metadata: {
-          ...existingMeta,
-          has_passkey: true,
-        },
-      });
-    } catch (metaErr) {
-      console.warn('Notice updating user has_passkey metadata:', metaErr);
-    }
-
-    return res.json({
-      verified: true,
-      passkey: {
-        id: savedKey.id,
-        device_name: savedKey.device_name,
-        created_at: savedKey.created_at,
-        last_used_at: savedKey.last_used_at,
-      },
-    });
-  } catch (err: any) {
-    console.error('Error verifying passkey registration:', err);
-    return res.status(500).json({ error: err?.message || 'Passkey registration verification failed' });
-  }
-});
-
-// 3. Passkey Login: Generate Authentication Options
-app.post('/api/passkey/login-options', async (req, res) => {
-  try {
-    const rpID = getRpId(req);
-    const options = await generateAuthenticationOptions({
-      rpID,
-      userVerification: 'preferred',
-    });
-
-    const challengeId = crypto.randomUUID();
-    passkeyChallenges.set(challengeId, {
-      challenge: options.challenge,
-      expiresAt: Date.now() + 300000,
-    });
-
-    return res.json({ options, challengeId });
-  } catch (err: any) {
-    console.error('Error generating passkey login options:', err);
-    return res.status(500).json({ error: err?.message || 'Unable to generate passkey login options' });
-  }
-});
-
-// 4. Passkey Login: Verify Assertion & Generate Supabase Session Link
-app.post('/api/passkey/login-verify', async (req, res) => {
-  try {
-    const { response, challengeId } = req.body;
-    if (!response || !challengeId) {
-      return res.status(400).json({ error: 'Missing passkey authentication response or challenge' });
-    }
-
-    const challengeObj = passkeyChallenges.get(challengeId);
-    if (!challengeObj || challengeObj.expiresAt < Date.now()) {
-      return res.status(400).json({ error: 'Passkey login session timed out. Please try again.' });
-    }
-
-    const supabaseAdmin = await getSupabaseAdmin();
-    if (!supabaseAdmin) {
-      return res.status(503).json({ error: 'Backend auth service is not configured' });
-    }
-
-    // Find passkey record by credential_id
-    const { data: passkey, error: findErr } = await supabaseAdmin
-      .from('user_passkeys')
-      .select('*')
-      .eq('credential_id', response.id)
-      .maybeSingle();
-
-    if (findErr || !passkey) {
-      return res.status(404).json({
-        error: 'Passkey was not found on this account. Please sign in with email or register your passkey first.',
-      });
-    }
-
-    const rpID = getRpId(req);
-    const expectedOrigin = getExpectedOrigins(req);
-
-    const verification = await verifyAuthenticationResponse({
-      response,
-      expectedChallenge: challengeObj.challenge,
-      expectedOrigin,
-      expectedRPID: rpID,
-      credential: {
-        id: passkey.credential_id,
-        publicKey: Buffer.from(passkey.public_key, 'base64url'),
-        counter: Number(passkey.counter || 0),
-        transports: passkey.transports,
-      },
-      requireUserVerification: false,
-    });
-
-    if (!verification.verified) {
-      return res.status(400).json({ error: 'Passkey verification failed. Invalid credentials.' });
-    }
-
-    // Clean up challenge
-    passkeyChallenges.delete(challengeId);
-
-    // Update counter and last_used_at on the passkey
-    await supabaseAdmin
-      .from('user_passkeys')
-      .update({
-        counter: verification.authenticationInfo.newCounter,
-        last_used_at: new Date().toISOString(),
-      })
-      .eq('id', passkey.id);
-
-    // Retrieve user from auth.users to get email
-    const { data: userData, error: userErr } = await supabaseAdmin.auth.admin.getUserById(passkey.user_id);
-    if (userErr || !userData?.user?.email) {
-      return res.status(404).json({ error: 'Associated user account not found.' });
-    }
-
-    // Generate Supabase session link/token for the user
-    const { data: linkData, error: linkErr } = await supabaseAdmin.auth.admin.generateLink({
-      type: 'magiclink',
-      email: userData.user.email,
-    });
-
-    if (linkErr || !linkData?.properties?.hashed_token) {
-      console.warn('Notice generating Supabase session link for passkey user:', linkErr?.message);
-      return res.status(500).json({ error: 'Unable to establish authenticated session.' });
-    }
-
-    return res.json({
-      verified: true,
-      token_hash: linkData.properties.hashed_token,
-      email: userData.user.email,
-    });
-  } catch (err: any) {
-    console.error('Error verifying passkey login:', err);
-    return res.status(500).json({ error: err?.message || 'Passkey authentication failed' });
-  }
-});
-
-// 5. Passkey Management: List Registered Passkeys for User
-app.get('/api/passkey/list', async (req, res) => {
-  try {
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.replace('Bearer ', '');
-    if (!token) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
-
-    const supabaseAdmin = await getSupabaseAdmin();
-    if (!supabaseAdmin) {
-      return res.status(503).json({ error: 'Auth service unavailable' });
-    }
-
-    const { data: userData, error: userErr } = await supabaseAdmin.auth.getUser(token);
-    if (userErr || !userData?.user) {
-      return res.status(401).json({ error: 'Invalid session' });
-    }
-
-    const { data: passkeys, error: listErr } = await supabaseAdmin
-      .from('user_passkeys')
-      .select('id, device_name, created_at, last_used_at')
-      .eq('user_id', userData.user.id)
-      .order('created_at', { ascending: false });
-
-    if (listErr) {
-      console.warn('Notice querying user_passkeys:', listErr.message);
-      return res.json({ passkeys: [] });
-    }
-
-    return res.json({ passkeys: passkeys || [] });
-  } catch (err: any) {
-    console.error('Error listing passkeys:', err);
-    return res.status(500).json({ error: 'Failed to retrieve passkeys' });
-  }
-});
-
-// 6. Passkey Management: Delete Passkey
-app.post('/api/passkey/delete', async (req, res) => {
-  try {
-    const authHeader = req.headers.authorization;
-    const token = authHeader?.replace('Bearer ', '');
-    if (!token) {
-      return res.status(401).json({ error: 'Authentication required' });
-    }
-
-    const { passkeyId } = req.body;
-    if (!passkeyId) {
-      return res.status(400).json({ error: 'passkeyId is required' });
-    }
-
-    const supabaseAdmin = await getSupabaseAdmin();
-    if (!supabaseAdmin) {
-      return res.status(503).json({ error: 'Auth service unavailable' });
-    }
-
-    const { data: userData, error: userErr } = await supabaseAdmin.auth.getUser(token);
-    if (userErr || !userData?.user) {
-      return res.status(401).json({ error: 'Invalid session' });
-    }
-
-    const { error: delErr } = await supabaseAdmin
-      .from('user_passkeys')
-      .delete()
-      .eq('id', passkeyId)
-      .eq('user_id', userData.user.id);
-
-    if (delErr) {
-      return res.status(500).json({ error: delErr.message });
-    }
-
-    // Check if any passkeys remain for this user
-    try {
-      const { count } = await supabaseAdmin
-        .from('user_passkeys')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userData.user.id);
-
-      if (count === 0) {
-        const existingMeta = userData.user.user_metadata || {};
-        await supabaseAdmin.auth.admin.updateUserById(userData.user.id, {
-          user_metadata: {
-            ...existingMeta,
-            has_passkey: false,
-          },
-        });
-      }
-    } catch (metaErr) {
-      console.warn('Notice updating user metadata after passkey delete:', metaErr);
-    }
-
-    return res.json({ success: true });
-  } catch (err: any) {
-    console.error('Error deleting passkey:', err);
-    return res.status(500).json({ error: 'Failed to delete passkey' });
-  }
-});
-
 // AI Categorization API Endpoint with robust fallback hierarchy
 app.post('/api/categorize', async (req, res) => {
   const { item } = req.body;
@@ -1745,14 +1274,14 @@ function getInjectedHtml(originalHtml: string, reqPath: string, reqLang?: string
   } else if (cleanPath === '/help') {
     if (isUrdu) {
       title = 'مدد اور عمومی سوالات • یاد ایپ کے استعمال کا طریقہ';
-      description = 'یاد ایپ کے بارے میں اکثر پوچھے جانے والے سوالات۔ آف لائن موڈ، اردو میں لسٹ بنانا اور پاس کیز کے استعمال کی رہنمائی۔';
+      description = 'یاد ایپ کے بارے میں اکثر پوچھے جانے والے سوالات۔ آف لائن موڈ، اردو میں لسٹ بنانا اور لاگ ان کے استعمال کی رہنمائی۔';
     } else if (isRomanUrdu) {
       title = 'Madad Aur Sawalat • YAAD App Kaise Use Karein';
-      description = 'Aksar pooche gaye sawalat. Offline mode, passkeys login, aur Roman Urdu mein items add karne ka tareeqa.';
+      description = 'Aksar pooche gaye sawalat. Offline mode, Google aur Email login, aur Roman Urdu mein items add karne ka tareeqa.';
     } else {
       title = 'Help & FAQ • How to Use YAAD Shopping Reminder';
       description =
-        'Frequently asked questions about YAAD. Learn how to use offline mode, organize grocery items by aisle, log in with Passkeys, and add items in Urdu or Roman Urdu.';
+        'Frequently asked questions about YAAD. Learn how to use offline mode, organize grocery items by aisle, log in with Google and Email, and add items in Urdu or Roman Urdu.';
     }
   } else if (cleanPath === '/terms') {
     title = isUrdu ? 'شرائط و ضوابط • یاد ایپ' : 'Terms & Conditions • YAAD Smart Shopping Memory';
@@ -1872,6 +1401,7 @@ async function startServer() {
   const isProduction = process.env.NODE_ENV === 'production' || (typeof __filename !== 'undefined' && __filename.endsWith('server.cjs'));
 
   if (!isProduction) {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
@@ -1897,7 +1427,15 @@ async function startServer() {
 }
 
 // Only start the standalone HTTP listener when not running as a Vercel Serverless Function
-if (process.env.VERCEL !== '1' && !process.env.AWS_LAMBDA_FUNCTION_NAME) {
+const isServerlessRuntime = Boolean(
+  process.env.VERCEL === '1' ||
+  process.env.VERCEL ||
+  process.env.AWS_LAMBDA_FUNCTION_NAME ||
+  process.env.LAMBDA_TASK_ROOT ||
+  process.env.VERCEL_ENV
+);
+
+if (!isServerlessRuntime) {
   startServer();
 }
 

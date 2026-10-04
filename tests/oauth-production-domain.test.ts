@@ -20,7 +20,6 @@ import {
   isPreviewDeploymentHost,
 } from '../src/config/siteConfig';
 import { formatAuthErrorMessage, cleanAuthUrlParams } from '../src/lib/supabase';
-import { PRODUCTION_PASSKEY_RP_ID } from '../src/lib/passkey';
 
 function assert(condition: boolean, message: string) {
   if (!condition) {
@@ -41,7 +40,6 @@ console.log('--- 1. Production URL Source of Truth ---');
 assert(PRODUCTION_APP_URL === 'https://yaadapppk.vercel.app', 'PRODUCTION_APP_URL is https://yaadapppk.vercel.app');
 assert(SITE_CONFIG.defaultProductionUrl === 'https://yaadapppk.vercel.app', 'SITE_CONFIG.defaultProductionUrl is https://yaadapppk.vercel.app');
 assert(getBaseSiteUrl() === 'https://yaadapppk.vercel.app', 'getBaseSiteUrl() resolves to https://yaadapppk.vercel.app');
-assert(PRODUCTION_PASSKEY_RP_ID === 'yaadapppk.vercel.app', 'Passkey RP ID is configured to yaadapppk.vercel.app');
 
 // -----------------------------------------------------------------------------
 // 2. PRODUCTION OAUTH REDIRECT RESOLUTION

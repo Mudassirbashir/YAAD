@@ -23,14 +23,8 @@ import {
 import { purgeAllUserOfflineData, getOfflineProfile, saveOfflineProfile, enqueueOfflineOperation, migrateOfflineUserData } from '../lib/offlineDb';
 import { generateUUID } from '../lib/uuid';
 import { cleanPhoneNumber } from '../utils/phone';
-import { UserProfile, AppLanguage, PasskeyCredentialInfo } from '../types';
+import { UserProfile, AppLanguage } from '../types';
 import { getAuthRedirectUrl } from '../config/siteConfig';
-import {
-  signInWithPasskey as clientSignInWithPasskey,
-  registerPasskey as clientRegisterPasskey,
-  listUserPasskeys as clientListPasskeys,
-  deleteUserPasskey as clientDeletePasskey,
-} from '../lib/passkey';
 
 export type AuthState =
   | 'AUTH_LOADING'
@@ -58,14 +52,6 @@ export interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, fullName: string, phoneNumber?: string) => Promise<{ error: Error | null; needsEmailConfirmation?: boolean; user?: User | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
-  signInWithPasskey: () => Promise<{ error: Error | null }>;
-  registerPasskey: (deviceName?: string) => Promise<{ success: boolean; passkey?: PasskeyCredentialInfo; error: Error | null }>;
-  listPasskeys: () => Promise<PasskeyCredentialInfo[]>;
-  removePasskey: (passkeyId: string) => Promise<{ success: boolean; error: Error | null }>;
-  passkeys: PasskeyCredentialInfo[];
-  hasPasskey: boolean;
-  isLoadingPasskeys: boolean;
-  refreshPasskeys: (force?: boolean) => Promise<PasskeyCredentialInfo[]>;
   signOut: () => Promise<void>;
   deleteAccount: () => Promise<{ error: Error | null }>;
   updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
@@ -187,12 +173,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       cleanAuthUrlParams(true);
     }
   }, []);
-
-  // Native Supabase Passkey State
-  const [passkeys, setPasskeys] = useState<PasskeyCredentialInfo[]>([]);
-  const [hasPasskey, setHasPasskey] = useState<boolean>(false);
-  const [isLoadingPasskeys, setIsLoadingPasskeys] = useState<boolean>(false);
-  const passkeyRefreshInProgressRef = useRef<boolean>(false);
 
   const isAuthenticatingRef = useRef<boolean>(false);
   const isExplicitSignOutRef = useRef<boolean>(false);
@@ -892,199 +872,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const signInWithPasskey = async (): Promise<{ error: Error | null }> => {
-    if (isAuthenticatingRef.current) {
-      return { error: new Error('An authentication request is already in progress.') };
-    }
-
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      return { error: new Error("You're offline. Please reconnect to sign in.") };
-    }
-    if (!supabase) {
-      return { error: new Error('Backend service is not configured.') };
-    }
-
-    isAuthenticatingRef.current = true;
-    try {
-      const result = await clientSignInWithPasskey();
-      if (result.error) {
-        return { error: result.error };
-      }
-
-      if (result.data?.session && result.data?.user) {
-        setSession(result.data.session);
-        setUser(result.data.user);
-
-        const cached = await getOfflineProfile<UserProfile>(result.data.user.id);
-        const activeProfile: UserProfile = cached || {
-          id: result.data.user.id,
-          full_name: result.data.user.user_metadata?.full_name || result.data.user.user_metadata?.name || null,
-          email: result.data.user.email || null,
-          phone_number: result.data.user.user_metadata?.phone_number || result.data.user.user_metadata?.phone || null,
-          avatar_url: result.data.user.user_metadata?.avatar_url || null,
-          has_completed_setup: true,
-        };
-        setProfile(activeProfile);
-        saveOfflineProfile(result.data.user.id, activeProfile).catch(() => {});
-        localStorage.setItem('yaad_profile_setup_done', 'true');
-        localStorage.setItem('yaad_profile_setup_completed', 'true');
-        localStorage.setItem('yaad_has_onboarded_v2', 'true');
-        localStorage.setItem('yaad_has_onboarded', 'true');
-      }
-
-      return { error: null };
-    } catch (err: unknown) {
-      return { error: new Error(formatAuthErrorMessage(err)) };
-    } finally {
-      isAuthenticatingRef.current = false;
-    }
-  };
-
-  // Passkey Refresh and Hydration Lifecycle
-  const refreshPasskeys = useCallback(
-    async (force = false): Promise<PasskeyCredentialInfo[]> => {
-      if (!user) {
-        setPasskeys([]);
-        setHasPasskey(false);
-        return [];
-      }
-
-      if (passkeyRefreshInProgressRef.current && !force) {
-        return passkeys;
-      }
-      passkeyRefreshInProgressRef.current = true;
-      setIsLoadingPasskeys(true);
-
-      try {
-        const list = await clientListPasskeys(session?.access_token);
-        setPasskeys(list);
-        const active = list.length > 0;
-        setHasPasskey(active);
-
-        if (typeof window !== 'undefined') {
-          try {
-            localStorage.setItem(
-              `yaad_passkeys_${user.id}`,
-              JSON.stringify({
-                hasPasskey: active,
-                count: list.length,
-                passkeys: list,
-                updatedAt: Date.now(),
-              })
-            );
-          } catch {}
-        }
-
-        // Non-blocking sync with user metadata if discrepancy exists
-        if (supabase && user.user_metadata?.has_passkey !== active) {
-          supabase.auth.updateUser({ data: { has_passkey: active } }).catch(() => {});
-        }
-
-        return list;
-      } catch (err) {
-        console.warn('Notice refreshing user passkeys from Supabase:', err);
-        return passkeys;
-      } finally {
-        passkeyRefreshInProgressRef.current = false;
-        setIsLoadingPasskeys(false);
-      }
-    },
-    [user, session?.access_token, passkeys]
-  );
-
-  // Sync passkey state from local cache instantly, then authoritatively refresh from Supabase
-  useEffect(() => {
-    if (!user?.id) {
-      setPasskeys([]);
-      setHasPasskey(false);
-      return;
-    }
-
-    let foundInCache = false;
-    if (typeof window !== 'undefined') {
-      try {
-        const raw = localStorage.getItem(`yaad_passkeys_${user.id}`);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed.passkeys)) {
-            setPasskeys(parsed.passkeys);
-            setHasPasskey(parsed.passkeys.length > 0 || Boolean(parsed.hasPasskey));
-            foundInCache = true;
-          }
-        }
-      } catch {}
-    }
-
-    if (!foundInCache && user.user_metadata?.has_passkey) {
-      setHasPasskey(true);
-    }
-
-    // Refresh real Supabase passkey state
-    refreshPasskeys(true);
-
-    // Refresh when user returns to app/tab/PWA
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') {
-        refreshPasskeys(true);
-      }
-    };
-
-    window.addEventListener('focus', handleVisibility);
-    document.addEventListener('visibilitychange', handleVisibility);
-
-    return () => {
-      window.removeEventListener('focus', handleVisibility);
-      document.removeEventListener('visibilitychange', handleVisibility);
-    };
-  }, [user?.id]);
-
-  const registerPasskey = async (
-    deviceName?: string
-  ): Promise<{ success: boolean; passkey?: PasskeyCredentialInfo; error: Error | null }> => {
-    if (!session?.access_token) {
-      return { success: false, error: new Error('You must be signed in to register a passkey.') };
-    }
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      return { success: false, error: new Error("You're offline. Please reconnect to register a passkey.") };
-    }
-
-    const res = await clientRegisterPasskey(deviceName);
-    if (!res.success) {
-      return { success: false, error: res.error || new Error('Failed to register passkey.') };
-    }
-
-    // Immediately refresh authoritative passkey state from Supabase
-    await refreshPasskeys(true);
-
-    return { success: true, passkey: res.passkey, error: null };
-  };
-
-  const listPasskeys = async (): Promise<PasskeyCredentialInfo[]> => {
-    if (!session?.access_token) return passkeys;
-    return refreshPasskeys(true);
-  };
-
-  const removePasskey = async (passkeyId: string): Promise<{ success: boolean; error: Error | null }> => {
-    if (!session?.access_token) {
-      return { success: false, error: new Error('You must be signed in.') };
-    }
-    const res = await clientDeletePasskey(passkeyId);
-    if (!res.success) {
-      return { success: false, error: res.error || new Error('Failed to remove passkey.') };
-    }
-
-    // Immediately refresh authoritative passkey state from Supabase
-    await refreshPasskeys(true);
-
-    return { success: true, error: null };
-  };
-
   const signOut = async () => {
     isExplicitSignOutRef.current = true;
     setIsPasswordRecovery(false);
     setPasswordResetError(null);
-    setPasskeys([]);
-    setHasPasskey(false);
     persistUser(null);
     if (typeof window !== 'undefined') {
       try {
@@ -1576,14 +1367,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         signIn,
         signUp,
         signInWithGoogle,
-        signInWithPasskey,
-        registerPasskey,
-        listPasskeys,
-        removePasskey,
-        passkeys,
-        hasPasskey,
-        isLoadingPasskeys,
-        refreshPasskeys,
         signOut,
         deleteAccount,
         updatePassword,

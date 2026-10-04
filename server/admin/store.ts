@@ -365,8 +365,15 @@ export interface AdminDatabase {
   cannedReplies?: CannedReply[];
 }
 
-const DATA_DIR = path.join(process.cwd(), 'data');
-const DATA_FILE = path.join(DATA_DIR, 'admin_data.json');
+const isServerless = Boolean(
+  process.env.VERCEL ||
+  process.env.AWS_LAMBDA_FUNCTION_NAME ||
+  process.env.LAMBDA_TASK_ROOT ||
+  process.env.VERCEL_ENV
+);
+
+const DATA_DIR = isServerless ? '/tmp' : path.join(process.cwd(), 'data');
+const DATA_FILE = isServerless ? '/tmp/admin_data.json' : path.join(DATA_DIR, 'admin_data.json');
 
 // Inactivity timeout: 30 minutes
 export const SESSION_INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
@@ -496,7 +503,7 @@ function getInitialAppUsers(): AppUser[] {
         { id: 'lst_3', title: 'Baking & Desserts', itemCount: 12, completedCount: 10, createdAt: now - 2 * oneDay, updatedAt: now - 1 * oneDay, isCompleted: false },
       ],
       timeline: [
-        { id: 'tl_4', timestamp: now - 28 * oneDay, type: 'signup', title: 'User Registered', description: 'Joined via Passkey Biometrics' },
+        { id: 'tl_4', timestamp: now - 28 * oneDay, type: 'signup', title: 'User Registered', description: 'Joined via Email Verification' },
         { id: 'tl_5', timestamp: now - 1 * oneDay, type: 'create_list', title: 'Created Shopping List', description: 'Added 12 baking ingredients' },
       ],
     },
@@ -862,12 +869,16 @@ class AdminStore {
 
   private load(): void {
     try {
-      if (!fs.existsSync(DATA_DIR)) {
-        fs.mkdirSync(DATA_DIR, { recursive: true });
+      let sourcePath = DATA_FILE;
+      if (isServerless && !fs.existsSync(DATA_FILE)) {
+        const bundledPath = path.join(process.cwd(), 'data', 'admin_data.json');
+        if (fs.existsSync(bundledPath)) {
+          sourcePath = bundledPath;
+        }
       }
 
-      if (fs.existsSync(DATA_FILE)) {
-        const raw = fs.readFileSync(DATA_FILE, 'utf-8');
+      if (fs.existsSync(sourcePath)) {
+        const raw = fs.readFileSync(sourcePath, 'utf-8');
         const parsed = JSON.parse(raw);
         this.db = {
           admins: parsed.admins || [],
@@ -906,6 +917,9 @@ class AdminStore {
           supportTickets: (parsed.supportTickets && parsed.supportTickets.length > 0) ? parsed.supportTickets : getInitialSupportTickets(),
           cannedReplies: parsed.cannedReplies || getInitialCannedReplies(),
         };
+        if (isServerless && sourcePath !== DATA_FILE) {
+          this.save();
+        }
       } else {
         this.save();
       }
@@ -921,7 +935,7 @@ class AdminStore {
       }
       fs.writeFileSync(DATA_FILE, JSON.stringify(this.db, null, 2), 'utf-8');
     } catch (err) {
-      console.error('[AdminStore] Error saving database:', err);
+      console.error('[AdminStore] Notice: Persistent disk write skipped (in-memory mode):', err);
     }
   }
 

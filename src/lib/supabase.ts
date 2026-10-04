@@ -2113,51 +2113,7 @@ export function formatAuthErrorMessage(
     return 'Incorrect email or password. Please check your credentials and try again.';
   }
 
-  // 7. WEBAUTHN / PASSKEY ERRORS
-  if (
-    lower.includes('notallowederror') ||
-    lower.includes('operation either timed out or was not allowed') ||
-    (lower.includes('passkey') && (lower.includes('cancelled') || lower.includes('canceled'))) ||
-    lower.includes('ceremony was cancelled')
-  ) {
-    return 'Passkey sign-in was cancelled.';
-  }
-
-  if (
-    lower.includes('notsupportederror') ||
-    lower.includes('does not support webauthn') ||
-    lower.includes('passkeys are not supported') ||
-    lower.includes('authenticator is not available')
-  ) {
-    return 'Passkeys are not supported on this browser or device. Please continue with Email or Google.';
-  }
-
-  if (
-    lower.includes('no passkey') ||
-    lower.includes('no credentials') ||
-    lower.includes('not found on this account') ||
-    lower.includes('passkey was not found') ||
-    lower.includes('failed to find') ||
-    lower.includes('credential not found')
-  ) {
-    return 'Passkey not found on this device. Continue with Email or Google.';
-  }
-
-  if (
-    lower.includes('securityerror') ||
-    lower.includes('relying party id') ||
-    lower.includes('rp id') ||
-    lower.includes('not a valid domain string') ||
-    lower.includes('domain-bound') ||
-    lower.includes('yaadapppk.vercel.app') ||
-    lower.includes('yaad-three.vercel.app') ||
-    lower.includes('yaad-mudassirbashir530-creators-projects.vercel.app') ||
-    lower.includes('yaadapppk-mudassirbashir530-creators-projects.vercel.app')
-  ) {
-    return 'Passkey authentication is domain-bound to production (yaadapppk.vercel.app). On this preview environment, please continue with Email or Google.';
-  }
-
-  // 8. OAUTH PROVIDER, CANCELLATION & ERRORS
+  // 7. OAUTH PROVIDER, CANCELLATION & ERRORS
   if (
     lower.includes('unsupported provider') ||
     lower.includes('provider is not enabled') ||
@@ -2207,14 +2163,13 @@ export function formatAuthErrorMessage(
     return 'Google sign-in could not be completed. Please try again or sign in with Email.';
   }
 
-  // 9. TECHNICAL / DATABASE / UNKNOWN JARGON
-  // Strictly filter out any technical jargon: PGRST, PostgREST, Supabase, JWT, WebAuthn, stack traces
+  // 8. TECHNICAL / DATABASE / UNKNOWN JARGON
+  // Strictly filter out any technical jargon: PGRST, PostgREST, Supabase, JWT, stack traces
   if (
     lower.includes('pgrst') ||
     lower.includes('postgrest') ||
     lower.includes('supabase') ||
     lower.includes('jwt') ||
-    lower.includes('webauthn') ||
     lower.includes('authapierror') ||
     lower.includes('schema cache') ||
     lower.includes('relation does not exist') ||
@@ -2243,16 +2198,13 @@ export function formatAuthErrorMessage(
       }
       return 'Your authentication session has expired. Please sign in again.';
     }
-    if (lower.includes('webauthn')) {
-      return 'Passkey authentication could not be completed on this device. Please continue with Email or Google.';
-    }
     if (context === 'password_reset') {
       return 'Failed to update password. Please try again or request a new reset link.';
     }
     return 'Something went wrong while signing you in. Please try again.';
   }
 
-  // 10. PASSWORD RESET RATE LIMITS & FEEDBACK
+  // 9. PASSWORD RESET RATE LIMITS & FEEDBACK
   if (lower.includes('for security purposes') || lower.includes('over_email_send_rate_limit')) {
     return 'For security purposes, please wait a moment before requesting another password reset email.';
   }

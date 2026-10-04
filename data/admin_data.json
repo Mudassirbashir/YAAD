@@ -12,7 +12,7 @@
       "status": "active",
       "failedAttempts": 0,
       "createdAt": 1791123839719,
-      "updatedAt": 1791125374666,
+      "updatedAt": 1791129738338,
       "deletedAt": null,
       "recoveryCodes": [
         {
@@ -64,6 +64,48 @@
     }
   ],
   "auditLogs": [
+    {
+      "id": "audit_b92a703f-4a4b-4d39-a5d5-05d472b747cb",
+      "timestamp": 1791129738339,
+      "action": "admin_2fa_failed",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "auth",
+      "afterValue": {
+        "reason": "invalid_totp_code",
+        "remainingAttempts": 4,
+        "isLocked": false
+      },
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit_1e1057ce-7182-4c67-b5e3-3b847cec2f72",
+      "timestamp": 1791129681183,
+      "action": "admin_2fa_failed",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "auth",
+      "afterValue": {
+        "reason": "invalid_totp_code",
+        "remainingAttempts": 3,
+        "isLocked": false
+      },
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit_e64c59c2-8790-440e-a85b-988d9e9f3549",
+      "timestamp": 1791129332175,
+      "action": "admin_2fa_failed",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "auth",
+      "afterValue": {
+        "reason": "invalid_totp_code",
+        "remainingAttempts": 4,
+        "isLocked": false
+      },
+      "ip": "127.0.0.1"
+    },
     {
       "id": "audit_f6d16510-2520-4948-9c5c-9c9850e21409",
       "timestamp": 1791128411418,

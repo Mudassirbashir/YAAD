@@ -411,14 +411,6 @@ export interface UserProfile {
   created_at?: string;
 }
 
-export interface PasskeyCredentialInfo {
-  id: string;
-  deviceName?: string;
-  device_name?: string;
-  createdAt: string;
-  lastUsedAt: string;
-}
-
 export interface FrequentlyBoughtItem {
   id: string;
   userId?: string;
