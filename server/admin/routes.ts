@@ -210,14 +210,15 @@ adminRouter.post('/setup/create-admin', rateLimit(5, 15 * 60 * 1000), (req: Requ
 });
 
 // -----------------------------------------------------------------------------
-// 1. Admin Login (Step 1: Email + Password)
+// 1. Admin Login (Passwordless Email + TOTP, or 2-Step)
 // -----------------------------------------------------------------------------
 adminRouter.post('/auth/login', rateLimit(10, 60 * 1000), (req: Request, res: Response) => {
-  const { email, password } = req.body;
+  const { email, password, code, totpCode, recoveryCode } = req.body;
   const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+  const userAgent = (req.headers['user-agent'] as string) || '';
 
-  if (!email || !password) {
-    res.status(400).json({ error: 'Email and password are required.' });
+  if (!email) {
+    res.status(400).json({ error: 'Staff email address is required.' });
     return;
   }
 
@@ -231,7 +232,7 @@ adminRouter.post('/auth/login', rateLimit(10, 60 * 1000), (req: Request, res: Re
       afterValue: { email: cleanEmail, reason: 'user_not_found' },
       ip: clientIp,
     });
-    res.status(401).json({ error: 'Invalid admin credentials.' });
+    res.status(401).json({ error: 'No admin account found with that email address.' });
     return;
   }
 
@@ -263,40 +264,11 @@ adminRouter.post('/auth/login', rateLimit(10, 60 * 1000), (req: Request, res: Re
     return;
   }
 
-  // Verify password
-  const isValidPassword = adminStore.verifyPassword(admin, String(password));
-  if (!isValidPassword) {
-    const { isLocked, remainingAttempts, lockoutUntil } = adminStore.recordFailedLogin(admin.id, clientIp);
-    adminStore.writeAuditLog({
-      action: 'admin_login_failed',
-      adminId: admin.id,
-      adminEmail: admin.email,
-      targetType: 'auth',
-      afterValue: { reason: 'invalid_password', remainingAttempts, isLocked },
-      ip: clientIp,
-    });
+  const authCode = String(code || totpCode || recoveryCode || '').trim().toUpperCase();
 
-    if (isLocked) {
-      res.status(429).json({
-        error: `Account locked due to 5 consecutive failed attempts. All Super Admins have been alerted. Please wait 15 minutes.`,
-        code: 'ACCOUNT_LOCKED',
-        lockoutUntil,
-      });
-      return;
-    }
-
-    res.status(401).json({
-      error: `Invalid admin credentials. ${remainingAttempts} attempt(s) remaining before 15-minute account lockout.`,
-      remainingAttempts,
-    });
-    return;
-  }
-
-  // Password is correct. Check 2FA requirement.
-  const tempToken = createTempLoginToken(admin);
-
+  // If 2FA is not yet configured for this admin
   if (!admin.isTotpEnabled || !admin.totpSecret) {
-    // Admin needs to configure 2FA (enforced)
+    const tempToken = createTempLoginToken(admin);
     res.status(200).json({
       requires2faSetup: true,
       tempToken,
@@ -311,7 +283,124 @@ adminRouter.post('/auth/login', rateLimit(10, 60 * 1000), (req: Request, res: Re
     return;
   }
 
-  // 2FA is enabled; proceed to step 2 verification
+  // Direct passwordless authentication with TOTP / recovery code
+  if (authCode) {
+    let isRecovery = false;
+    let isValidCode = false;
+
+    if (/^[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(authCode)) {
+      isRecovery = true;
+      isValidCode = adminStore.consumeRecoveryCode(admin.id, authCode);
+    } else if (/^\d{6}$/.test(authCode)) {
+      isValidCode = verifyTotpToken(admin.totpSecret, authCode);
+    }
+
+    if (!isValidCode) {
+      const { isLocked, remainingAttempts, lockoutUntil } = adminStore.recordFailedLogin(admin.id, clientIp);
+      adminStore.writeAuditLog({
+        action: isRecovery ? 'admin_recovery_code_failed' : 'admin_2fa_failed',
+        adminId: admin.id,
+        adminEmail: admin.email,
+        targetType: 'auth',
+        afterValue: { reason: isRecovery ? 'invalid_recovery_code' : 'invalid_totp_code', remainingAttempts, isLocked },
+        ip: clientIp,
+      });
+
+      if (isLocked) {
+        res.status(429).json({
+          error: `Account locked due to 5 consecutive failed attempts. Please wait 15 minutes.`,
+          code: 'ACCOUNT_LOCKED',
+          lockoutUntil,
+        });
+        return;
+      }
+
+      res.status(401).json({
+        error: isRecovery
+          ? 'Invalid or already-used emergency recovery code.'
+          : `Invalid 6-digit authenticator code. ${remainingAttempts} attempt(s) remaining.`,
+        remainingAttempts,
+      });
+      return;
+    }
+
+    // Success!
+    adminStore.resetFailedAttempts(admin.id);
+    const session = adminStore.createSession(admin, clientIp, userAgent);
+
+    adminStore.writeAuditLog({
+      action: isRecovery ? 'admin_recovery_code_used' : 'admin_login_success',
+      adminId: admin.id,
+      adminEmail: admin.email,
+      targetType: 'session',
+      targetId: session.sessionId,
+      ip: clientIp,
+      userAgent,
+      metadata: { role: admin.role, authMethod: isRecovery ? 'recovery_code' : 'totp_passwordless' },
+    });
+
+    const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
+    res.setHeader(
+      'Set-Cookie',
+      `yaad_admin_session=${encodeURIComponent(session.token)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${12 * 3600}; ${isSecure ? 'Secure;' : ''}`
+    );
+
+    res.status(200).json({
+      success: true,
+      token: session.token,
+      admin: sanitizeAdmin(admin),
+      expiresAt: session.expiresAt,
+    });
+    return;
+  }
+
+  // If password provided (fallback compatibility)
+  if (password) {
+    const isValidPassword = adminStore.verifyPassword(admin, String(password));
+    if (!isValidPassword) {
+      const { isLocked, remainingAttempts, lockoutUntil } = adminStore.recordFailedLogin(admin.id, clientIp);
+      adminStore.writeAuditLog({
+        action: 'admin_login_failed',
+        adminId: admin.id,
+        adminEmail: admin.email,
+        targetType: 'auth',
+        afterValue: { reason: 'invalid_password', remainingAttempts, isLocked },
+        ip: clientIp,
+      });
+
+      if (isLocked) {
+        res.status(429).json({
+          error: `Account locked due to 5 consecutive failed attempts. All Super Admins have been alerted. Please wait 15 minutes.`,
+          code: 'ACCOUNT_LOCKED',
+          lockoutUntil,
+        });
+        return;
+      }
+
+      res.status(401).json({
+        error: `Invalid admin credentials. ${remainingAttempts} attempt(s) remaining before 15-minute account lockout.`,
+        remainingAttempts,
+      });
+      return;
+    }
+
+    const tempToken = createTempLoginToken(admin);
+    res.status(200).json({
+      requires2faVerify: true,
+      tempToken,
+      admin: {
+        id: admin.id,
+        email: admin.email,
+        name: admin.name,
+        role: admin.role,
+      },
+      message: 'Please enter the 6-digit TOTP code from your authenticator app or emergency recovery code.',
+    });
+    return;
+  }
+
+  // If only email was sent
+  const tempToken = createTempLoginToken(admin);
   res.status(200).json({
     requires2faVerify: true,
     tempToken,
@@ -321,7 +410,7 @@ adminRouter.post('/auth/login', rateLimit(10, 60 * 1000), (req: Request, res: Re
       name: admin.name,
       role: admin.role,
     },
-    message: 'Please enter the 6-digit TOTP code from your authenticator app or emergency recovery code.',
+    message: 'Please enter your 6-digit authenticator code.',
   });
 });
 

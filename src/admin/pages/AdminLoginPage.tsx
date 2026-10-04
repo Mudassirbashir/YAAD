@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Lock, Mail, KeyRound, AlertCircle, ArrowRight, Loader2, ArrowLeft, Key, Shield } from 'lucide-react';
+import { ShieldCheck, Lock, Mail, KeyRound, AlertCircle, ArrowRight, Loader2, Key, HelpCircle } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { useAdminToast } from '../components/AdminToasts';
 
@@ -12,95 +12,64 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
   onNavigate,
   onRequires2faSetup,
 }) => {
-  const { loginStep1, verify2fa } = useAdminAuth();
+  const { loginPasswordless } = useAdminAuth();
   const toast = useAdminToast();
 
-  // Step 1: credentials, Step 2: TOTP code or Recovery code
-  const [step, setStep] = useState<'credentials' | 'totp'>('credentials');
-  const [useRecoveryCode, setUseRecoveryCode] = useState(false);
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [totpCode, setTotpCode] = useState('');
-  const [recoveryCode, setRecoveryCode] = useState('');
-  const [tempToken, setTempToken] = useState<string | null>(null);
+  const [code, setCode] = useState('');
+  const [useRecoveryCode, setUseRecoveryCode] = useState(false);
 
   // Errors & Loading
-  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string; code?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; code?: string }>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Validate Step 1
-  const validateStep1 = () => {
-    const errors: { email?: string; password?: string } = {};
-    if (!email.trim()) {
-      errors.email = 'Staff email is required.';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+  const validate = () => {
+    const errors: { email?: string; code?: string } = {};
+    const cleanEmail = email.trim();
+    if (!cleanEmail) {
+      errors.email = 'Staff email address is required.';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
       errors.email = 'Please provide a valid email format.';
     }
 
-    if (!password) {
-      errors.password = 'Password is required.';
+    const cleanCode = code.trim();
+    if (!cleanCode) {
+      errors.code = useRecoveryCode ? 'Emergency recovery code is required.' : '6-digit authenticator code is required.';
+    } else if (!useRecoveryCode && !/^\d{6}$/.test(cleanCode)) {
+      errors.code = 'Authenticator code must consist of exactly 6 digits.';
     }
 
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
-  const handleStep1Submit = async (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setGeneralError(null);
-    if (!validateStep1() || isLoading) return;
+    if (!validate() || isLoading) return;
 
     setIsLoading(true);
     try {
-      const result = await loginStep1(email, password);
-      if (result.error) {
-        setGeneralError(result.error);
-        toast.error('Authentication Failed', result.error);
-        return;
-      }
+      const cleanEmail = email.trim().toLowerCase();
+      const cleanCode = code.trim().toUpperCase();
+
+      const result = await loginPasswordless(cleanEmail, cleanCode);
 
       if (result.requires2faSetup && result.tempToken) {
-        toast.info('2FA Enrollment Required', 'Enforcing mandatory TOTP setup on first login.');
+        toast.info('2FA Enrollment Required', 'Please set up mandatory TOTP authenticator.');
         onRequires2faSetup(result.tempToken);
         return;
       }
 
-      if (result.requires2faVerify && result.tempToken) {
-        setTempToken(result.tempToken);
-        setStep('totp');
-        toast.info('Credentials Verified', 'Please enter your 6-digit authenticator code.');
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleStep2Submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setGeneralError(null);
-
-    const submissionCode = useRecoveryCode ? recoveryCode.trim() : totpCode.trim();
-    if (!submissionCode || !tempToken || isLoading) {
-      setFieldErrors({ code: useRecoveryCode ? 'Please enter your recovery code.' : 'Please enter your 6-digit code.' });
-      return;
-    }
-
-    if (!useRecoveryCode && !/^\d{6}$/.test(submissionCode)) {
-      setFieldErrors({ code: 'Code must consist of exactly 6 digits.' });
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const res = await verify2fa(tempToken, submissionCode);
-      if (!res.success) {
-        setGeneralError(res.error || 'Invalid 2FA code or recovery code.');
-        toast.error('Verification Failed', res.error || 'Code was rejected.');
+      if (!result.success) {
+        const errMsg = result.error || 'Authentication failed. Please verify your code.';
+        setGeneralError(errMsg);
+        toast.error('Sign In Failed', errMsg);
         return;
       }
 
-      toast.success('Welcome Back', 'Staff session established securely.');
+      toast.success('Welcome Back', 'Staff session authenticated successfully.');
       onNavigate('/admin');
     } finally {
       setIsLoading(false);
@@ -108,215 +77,165 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center p-4 sm:p-6 text-slate-100 font-['Plus_Jakarta_Sans',sans-serif]">
+    <div className="min-h-screen bg-[#FDF6E3]/30 flex flex-col justify-center items-center p-4 sm:p-6 text-neutral-900 font-['Plus_Jakarta_Sans',sans-serif]">
       {/* Brand Header */}
-      <div className="w-full max-w-md mb-6 text-center space-y-2">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-extrabold text-xl shadow-lg mb-1">
-          Y
+      <div className="w-full max-w-md mb-6 text-center space-y-3">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white border border-emerald-900/10 shadow-md p-2">
+          <img src="/logo.png" alt="YAAD Official Logo" className="w-full h-full object-contain" />
         </div>
-        <h1 className="text-2xl font-black text-white tracking-tight font-['Manrope']">
-          YAAD Admin Portal
-        </h1>
-        <p className="text-xs text-slate-400">
-          Internal operations gateway &amp; management console
-        </p>
+        <div>
+          <h1 className="text-2xl font-black text-[#003527] tracking-tight font-['Manrope']">
+            YAAD Admin Portal
+          </h1>
+          <p className="text-xs text-neutral-500 mt-1">
+            Internal Operations &amp; Management Gateway
+          </p>
+        </div>
       </div>
 
       {/* Main Card */}
-      <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 relative">
-        {/* Security Banner */}
-        <div className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-[11px] text-slate-400">
+      <div className="w-full max-w-md bg-white border border-neutral-200/90 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6 relative">
+        {/* Security Badge */}
+        <div className="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-emerald-50/80 border border-emerald-100 text-xs text-[#003527]">
           <div className="flex items-center gap-2 font-medium">
-            <Lock className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Encrypted Staff Authorization</span>
+            <Lock className="w-3.5 h-3.5 text-[#003527]" />
+            <span>Passwordless Staff Security</span>
           </div>
-          <span className="font-mono text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 font-bold">
+          <span className="font-mono text-[10px] text-[#003527] bg-[#FCBC1F]/20 px-2 py-0.5 rounded border border-[#FCBC1F]/40 font-bold">
             TOTP 2FA
           </span>
         </div>
 
         {generalError && (
-          <div className="flex items-start gap-3 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
-            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
+          <div className="flex items-start gap-3 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
             <div className="flex-1 leading-relaxed">{generalError}</div>
           </div>
         )}
 
-        {step === 'credentials' ? (
-          <form onSubmit={handleStep1Submit} className="space-y-4">
-            {/* Email Field */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-300 block">Staff Email</label>
-              <div className="relative">
-                <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5 pointer-events-none" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    if (fieldErrors.email) setFieldErrors({ ...fieldErrors, email: undefined });
-                  }}
-                  placeholder="admin@domain.com"
-                  disabled={isLoading}
-                  className={`w-full bg-slate-950 border rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none transition-all ${
-                    fieldErrors.email
-                      ? 'border-rose-500 focus:ring-1 focus:ring-rose-500'
-                      : 'border-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500'
-                  }`}
-                  autoFocus
-                />
-              </div>
-              {fieldErrors.email && <p className="text-[11px] text-rose-400 mt-1">{fieldErrors.email}</p>}
+        <form onSubmit={handleLoginSubmit} className="space-y-4">
+          {/* Email Field */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-neutral-700 block">
+              Staff Email
+            </label>
+            <div className="relative">
+              <input
+                type="email"
+                required
+                autoComplete="email"
+                placeholder="staff@yaadapp.pk"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (fieldErrors.email) setFieldErrors({ ...fieldErrors, email: undefined });
+                }}
+                className={`w-full pl-10 pr-4 py-3 bg-neutral-50 border rounded-xl text-xs text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#003527] focus:bg-white transition-all ${
+                  fieldErrors.email ? 'border-rose-400 focus:ring-rose-400' : 'border-neutral-200'
+                }`}
+              />
+              <Mail className="w-4 h-4 text-neutral-400 absolute left-3.5 top-3.5 pointer-events-none" />
             </div>
-
-            {/* Password Field */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-slate-300 block">Password</label>
-                <button
-                  type="button"
-                  onClick={() => onNavigate('/admin/forgot-password')}
-                  className="text-[11px] text-emerald-400 hover:underline cursor-pointer"
-                >
-                  Forgot password?
-                </button>
-              </div>
-              <div className="relative">
-                <KeyRound className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5 pointer-events-none" />
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    if (fieldErrors.password) setFieldErrors({ ...fieldErrors, password: undefined });
-                  }}
-                  placeholder="••••••••••••"
-                  disabled={isLoading}
-                  className={`w-full bg-slate-950 border rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none transition-all ${
-                    fieldErrors.password
-                      ? 'border-rose-500 focus:ring-1 focus:ring-rose-500'
-                      : 'border-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500'
-                  }`}
-                />
-              </div>
-              {fieldErrors.password && <p className="text-[11px] text-rose-400 mt-1">{fieldErrors.password}</p>}
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full mt-2 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-xs shadow-lg shadow-emerald-950/40 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-            >
-              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-              <span>Verify Credentials</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={handleStep2Submit} className="space-y-5 animate-in fade-in">
-            <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800/80 space-y-1.5 text-center">
-              <ShieldCheck className="w-8 h-8 text-emerald-400 mx-auto" />
-              <h3 className="text-sm font-bold text-white">
-                {useRecoveryCode ? 'Emergency Recovery Code' : 'Two-Factor Authentication'}
-              </h3>
-              <p className="text-xs text-slate-400">
-                {useRecoveryCode
-                  ? 'Enter one of your 10 single-use emergency recovery codes (e.g. ABCD-EFGH).'
-                  : `Enter the 6-digit code from your authenticator app for ${email}.`}
-              </p>
-            </div>
-
-            {!useRecoveryCode ? (
-              <div className="space-y-2 text-center">
-                <label className="text-xs font-bold text-slate-300 block">6-Digit TOTP Token</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={6}
-                  value={totpCode}
-                  onChange={(e) => {
-                    const cleaned = e.target.value.replace(/\D/g, '');
-                    setTotpCode(cleaned);
-                    if (fieldErrors.code) setFieldErrors({ ...fieldErrors, code: undefined });
-                  }}
-                  placeholder="123456"
-                  disabled={isLoading}
-                  className="w-48 mx-auto bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-center text-2xl tracking-[0.4em] font-mono text-white rounded-xl py-2.5 outline-none font-bold"
-                  autoFocus
-                />
-                {fieldErrors.code && <p className="text-[11px] text-rose-400">{fieldErrors.code}</p>}
-              </div>
-            ) : (
-              <div className="space-y-2 text-center">
-                <label className="text-xs font-bold text-slate-300 block">Emergency Recovery Code</label>
-                <input
-                  type="text"
-                  value={recoveryCode}
-                  onChange={(e) => {
-                    setRecoveryCode(e.target.value.toUpperCase());
-                    if (fieldErrors.code) setFieldErrors({ ...fieldErrors, code: undefined });
-                  }}
-                  placeholder="ABCD-EFGH"
-                  disabled={isLoading}
-                  className="w-56 mx-auto bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-center text-lg tracking-[0.2em] font-mono text-white rounded-xl py-2.5 outline-none font-bold uppercase"
-                  autoFocus
-                />
-                {fieldErrors.code && <p className="text-[11px] text-rose-400">{fieldErrors.code}</p>}
-              </div>
+            {fieldErrors.email && (
+              <p className="text-[11px] text-rose-600 font-medium pl-1">{fieldErrors.email}</p>
             )}
+          </div>
 
-            <div className="space-y-2">
+          {/* Authenticator Code / Recovery Code Field (NO PASSWORD FIELD) */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-neutral-700 block">
+                {useRecoveryCode ? 'Emergency Recovery Code' : '6-Digit Authenticator Code'}
+              </label>
               <button
-                type="submit"
-                disabled={isLoading || (useRecoveryCode ? recoveryCode.trim().length < 8 : totpCode.length !== 6)}
-                className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-xs shadow-lg shadow-emerald-950/40 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                type="button"
+                onClick={() => {
+                  setUseRecoveryCode(!useRecoveryCode);
+                  setCode('');
+                  setFieldErrors({});
+                }}
+                className="text-[11px] font-semibold text-[#003527] hover:underline"
               >
-                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                <span>Authorize Admin Session</span>
+                {useRecoveryCode ? 'Use 6-digit TOTP' : 'Use recovery code'}
               </button>
-
-              <div className="flex items-center justify-between pt-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setUseRecoveryCode(!useRecoveryCode);
-                    setFieldErrors({});
-                  }}
-                  disabled={isLoading}
-                  className="text-xs text-slate-400 hover:text-emerald-400 transition-colors flex items-center gap-1 cursor-pointer"
-                >
-                  <Key className="w-3.5 h-3.5" />
-                  <span>{useRecoveryCode ? 'Use 6-digit Authenticator app' : 'Use recovery code'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setStep('credentials');
-                    setTotpCode('');
-                    setRecoveryCode('');
-                    setGeneralError(null);
-                  }}
-                  disabled={isLoading}
-                  className="text-xs text-slate-400 hover:text-white transition-colors flex items-center gap-1 cursor-pointer"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>Back</span>
-                </button>
-              </div>
             </div>
-          </form>
-        )}
 
-        {/* Security Footer Notice */}
-        <div className="pt-3 border-t border-slate-800 text-[11px] text-slate-500 text-center space-y-0.5">
-          <p className="flex items-center justify-center gap-1.5">
-            <Shield className="w-3 h-3 text-emerald-400" />
-            <span>Invite-only administrative access</span>
-          </p>
-          <p className="text-[10px] text-slate-600">5 failed attempts trigger 15-min lockout</p>
+            <div className="relative">
+              <input
+                type="text"
+                required
+                autoComplete="one-time-code"
+                inputMode={useRecoveryCode ? 'text' : 'numeric'}
+                maxLength={useRecoveryCode ? 10 : 6}
+                placeholder={useRecoveryCode ? 'ABCD-EFGH' : '123456'}
+                value={code}
+                onChange={(e) => {
+                  const val = useRecoveryCode
+                    ? e.target.value.toUpperCase()
+                    : e.target.value.replace(/\D/g, '');
+                  setCode(val);
+                  if (fieldErrors.code) setFieldErrors({ ...fieldErrors, code: undefined });
+                }}
+                className={`w-full pl-10 pr-4 py-3 bg-neutral-50 border rounded-xl font-mono text-center tracking-widest text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#003527] focus:bg-white transition-all ${
+                  fieldErrors.code ? 'border-rose-400 focus:ring-rose-400' : 'border-neutral-200'
+                }`}
+              />
+              {useRecoveryCode ? (
+                <Key className="w-4 h-4 text-neutral-400 absolute left-3.5 top-3.5 pointer-events-none" />
+              ) : (
+                <KeyRound className="w-4 h-4 text-neutral-400 absolute left-3.5 top-3.5 pointer-events-none" />
+              )}
+            </div>
+            {fieldErrors.code ? (
+              <p className="text-[11px] text-rose-600 font-medium pl-1">{fieldErrors.code}</p>
+            ) : (
+              <p className="text-[10px] text-neutral-400 pl-1">
+                {useRecoveryCode
+                  ? 'Enter one of your 10 single-use emergency backup codes.'
+                  : 'Open Google Authenticator or your 2FA app to view current code.'}
+              </p>
+            )}
+          </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full py-3.5 px-4 rounded-xl bg-[#003527] hover:bg-[#004734] active:bg-[#00251b] text-white font-bold text-xs shadow-lg shadow-emerald-950/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed mt-2"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Verifying Authorization...</span>
+              </>
+            ) : (
+              <>
+                <span>Sign In to Admin Workspace</span>
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
+          </button>
+        </form>
+
+        {/* Informative Footer */}
+        <div className="pt-4 border-t border-neutral-100 flex items-center justify-between text-[11px] text-neutral-500">
+          <span className="flex items-center gap-1">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#003527]" />
+            Strict Invite-Only Access
+          </span>
+          <button
+            type="button"
+            onClick={() => onNavigate('/admin/signup')}
+            className="text-neutral-500 hover:text-[#003527] hover:underline cursor-pointer"
+          >
+            Need an account?
+          </button>
         </div>
+      </div>
+
+      {/* Page Footer */}
+      <div className="mt-8 text-center text-xs text-neutral-400">
+        &copy; 2026 YAAD (yaadapppk) &bull; Internal Security Standard
       </div>
     </div>
   );

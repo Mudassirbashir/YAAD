@@ -24,6 +24,7 @@ interface AdminAuthContextType {
   error: string | null;
   inactivitySecondsRemaining: number;
   loginStep1: (email: string, password: string) => Promise<LoginStep1Result>;
+  loginPasswordless: (email: string, code: string) => Promise<{ success: boolean; requires2faSetup?: boolean; tempToken?: string; error?: string }>;
   verify2fa: (tempToken: string, code: string) => Promise<{ success: boolean; error?: string }>;
   get2faSetupData: (tempToken?: string) => Promise<{ secret: string; otpAuthUri: string; qrCodeDataUrl: string; email: string } | null>;
   confirm2faSetup: (secret: string, code: string, tempToken?: string) => Promise<{ success: boolean; error?: string; recoveryCodes?: string[] }>;
@@ -155,6 +156,41 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const msg = err.message || 'Network error connecting to Admin API.';
       setError(msg);
       return { error: msg };
+    }
+  };
+
+  const loginPasswordless = async (email: string, code: string): Promise<{ success: boolean; requires2faSetup?: boolean; tempToken?: string; error?: string }> => {
+    setError(null);
+    try {
+      const res = await fetch('/api/admin/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Authentication failed.');
+        return { success: false, error: data.error || 'Authentication failed.' };
+      }
+
+      if (data.requires2faSetup) {
+        return { success: false, requires2faSetup: true, tempToken: data.tempToken };
+      }
+
+      if (data.token && data.admin) {
+        setToken(data.token);
+        setAdmin(data.admin);
+        localStorage.setItem(TOKEN_STORAGE_KEY, data.token);
+        lastActivityTimestamp.current = Date.now();
+        return { success: true };
+      }
+
+      return { success: false, error: data.message || 'Unexpected login response.' };
+    } catch (err: any) {
+      const msg = err.message || 'Network error connecting to Admin API.';
+      setError(msg);
+      return { success: false, error: msg };
     }
   };
 
@@ -290,6 +326,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         error,
         inactivitySecondsRemaining,
         loginStep1,
+        loginPasswordless,
         verify2fa,
         get2faSetupData,
         confirm2faSetup,
