@@ -1,9 +1,221 @@
 {
-  "admins": [],
+  "admins": [
+    {
+      "id": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "name": "Mudassir Bashir",
+      "email": "mudassirbashir530@gmail.com",
+      "passwordHash": "47e359565a30c53072c01ba0c3538f288c9f945929e95acac72ed095b7cfa16ddcd010ec19adbf58bb0206cc71058a07cff3aa3f9f1a36d2e289b23c513152aa",
+      "salt": "9490031ea9a456ed882c17a66c0402ad",
+      "role": "super_admin",
+      "totpSecret": "B3UTPFEXD667BJW2UDNNYDVOJDL45HRX",
+      "isTotpEnabled": true,
+      "status": "active",
+      "failedAttempts": 0,
+      "createdAt": 1791123839719,
+      "updatedAt": 1791125374666,
+      "deletedAt": null,
+      "recoveryCodes": [
+        {
+          "codeHash": "4f2b528eb80c90bd24cf30d7a0ec65c2b520f6e3644d41b2cc27c594abd53dfe"
+        },
+        {
+          "codeHash": "afdfd96abd985d4a3aa490bc6b5dac490b839631a2b3414ea4c2a0f394a76dfb"
+        },
+        {
+          "codeHash": "a0f619ef8a87a8aaf470ea5067c1c4b645ff63773481b0997d3dfc1a1fc5186c"
+        },
+        {
+          "codeHash": "993fb6dc3ea7d29161f641243623fd74667b1b3ae326fb2659e991532100ad47"
+        },
+        {
+          "codeHash": "97b411aa7c0e506510ae8f00affcf88f6d2261b2dd94daff1a7d5705eef8dfbe"
+        },
+        {
+          "codeHash": "0aa7eb31e537e6021b9f754eb555069a8f9f090c4d8fb5c7baa504616f34ea30"
+        },
+        {
+          "codeHash": "53361ee65c8942f5c4f405ee804c0a5f4a2734e89bf21f2b791dc0694103caa4"
+        },
+        {
+          "codeHash": "e30033800e02c432bb8944a14848312f1e993affdf7a01c265d72b8ee63c143b"
+        },
+        {
+          "codeHash": "142dcdfbce60dfb58b45578b4c8b6a9ca74407f107369daac13d8e0f6c303553"
+        },
+        {
+          "codeHash": "24b4a30d44e448fe3196d408fddd8131432af20fecdfbfa3293d5f5d3560568c"
+        }
+      ],
+      "lastLoginAt": 1791123971897
+    }
+  ],
   "invites": [],
   "resets": [],
-  "sessions": [],
+  "sessions": [
+    {
+      "sessionId": "sess_1f7ed317-9ea9-449f-9b8f-a9b74875ce5a",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "da2e805ce6148b0102acc288d5b020c00e604898977803c8eb4421cb3cadeae0",
+      "createdAt": 1791125374666,
+      "lastActivityAt": 1791125375550,
+      "expiresAt": 1791168574666,
+      "ip": "111.92.142.107, 169.254.169.126",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36"
+    }
+  ],
   "auditLogs": [
+    {
+      "id": "audit_f6d16510-2520-4948-9c5c-9c9850e21409",
+      "timestamp": 1791128411418,
+      "action": "admin_login_failed",
+      "targetType": "auth",
+      "afterValue": {
+        "email": "test@example.com",
+        "reason": "user_not_found"
+      },
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit_226f099a-5b90-4972-aa07-6e0cc8910895",
+      "timestamp": 1791128390987,
+      "action": "admin_login_failed",
+      "targetType": "auth",
+      "afterValue": {
+        "email": "test@example.com",
+        "reason": "user_not_found"
+      },
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit_884d7c10-5536-4a5a-bee4-1e41ea46ff1c",
+      "timestamp": 1791125374667,
+      "action": "admin_login_success",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "session",
+      "targetId": "sess_1f7ed317-9ea9-449f-9b8f-a9b74875ce5a",
+      "ip": "111.92.142.107, 169.254.169.126",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36",
+      "metadata": {
+        "role": "super_admin",
+        "authMethod": "totp"
+      }
+    },
+    {
+      "id": "audit_4e646b83-65f3-4ea3-b03d-6477ac9ffd19",
+      "timestamp": 1791125347387,
+      "action": "admin_logout",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "session",
+      "targetId": "sess_7f8e472b-9ce5-470e-802a-e267aed7b031",
+      "ip": "111.92.142.107, 169.254.169.126"
+    },
+    {
+      "id": "audit_67ba800f-76c9-499a-ba87-73b8fab6c7e8",
+      "timestamp": 1791123971897,
+      "action": "admin_login_success",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "session",
+      "targetId": "sess_7f8e472b-9ce5-470e-802a-e267aed7b031",
+      "ip": "111.92.142.107, 169.254.169.126",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36",
+      "metadata": {
+        "role": "super_admin",
+        "authMethod": "totp"
+      }
+    },
+    {
+      "id": "audit_0799587e-508a-46ef-891f-7f902a7593af",
+      "timestamp": 1791123937858,
+      "action": "admin_logout",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "session",
+      "targetId": "sess_264ae18f-541d-46ea-8917-046f6392ddca",
+      "ip": "111.92.142.107, 169.254.169.126"
+    },
+    {
+      "id": "audit_e6b1877f-c1e3-451a-8853-9100affee7ff",
+      "timestamp": 1791123883049,
+      "action": "admin_2fa_enabled",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "admin_user",
+      "targetId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "ip": "111.92.142.107, 169.254.169.126",
+      "metadata": {
+        "note": "Mandatory TOTP 2FA enabled, 10 emergency recovery codes generated"
+      }
+    },
+    {
+      "id": "audit_4f8c19b6-ff26-4fa6-8bbc-3a3b2dc76361",
+      "timestamp": 1791123839720,
+      "action": "setup_permanently_disabled",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "system_security",
+      "afterValue": {
+        "status": "disabled"
+      },
+      "ip": "111.92.142.107, 169.254.169.126",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36",
+      "metadata": {
+        "note": "One-time setup route permanently closed"
+      }
+    },
+    {
+      "id": "audit_60d8170d-c070-430d-bdf7-01f4142bf9fd",
+      "timestamp": 1791123839719,
+      "action": "first_super_admin_bootstrapped",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "admin_user",
+      "targetId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "afterValue": {
+        "email": "mudassirbashir530@gmail.com",
+        "role": "super_admin"
+      },
+      "ip": "111.92.142.107, 169.254.169.126",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36",
+      "metadata": {
+        "note": "Initial Super Admin bootstrapped via secure setup key"
+      }
+    },
+    {
+      "id": "audit_f548a2c9-0a10-4452-b361-2e099e883c76",
+      "timestamp": 1791123693322,
+      "action": "setup_key_verified",
+      "targetType": "system_security",
+      "ip": "111.92.142.107, 169.254.169.126",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36",
+      "metadata": {
+        "note": "Valid setup key provided, temporary bootstrap session granted"
+      }
+    },
+    {
+      "id": "audit_c7947fe7-bd53-4038-9424-bc2a5d4f1fe2",
+      "timestamp": 1791123652881,
+      "action": "setup_visited",
+      "targetType": "system_security",
+      "ip": "111.92.142.107, 169.254.169.126",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36",
+      "metadata": {
+        "note": "Initial setup route accessed while 0 admins exist in database"
+      }
+    },
+    {
+      "id": "audit_46c46be9-2db5-4051-bbfd-afb70b55a0ce",
+      "timestamp": 1791123652377,
+      "action": "setup_visited",
+      "targetType": "system_security",
+      "ip": "111.92.142.107, 169.254.169.126",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36",
+      "metadata": {
+        "note": "Initial setup route accessed while 0 admins exist in database"
+      }
+    },
     {
       "id": "audit_5b0cb4e4-e86a-4afc-b8d9-7f3d6dfdb574",
       "timestamp": 1791105640136,
@@ -69,5 +281,765 @@
       }
     }
   ],
-  "securityAlerts": []
+  "securityAlerts": [],
+  "settings": {
+    "emailAllowlist": [],
+    "setupCompletedAt": 1791123839719,
+    "sessionTimeoutMinutes": 30,
+    "featureFlags": {
+      "enableAiCategorizer": true,
+      "enableSoundEffects": true,
+      "enableOfflineSync": true,
+      "enablePushNotifications": true,
+      "enableRashanGuide": true,
+      "enableUserPublicRegistration": true,
+      "enableFamilySharing": true
+    },
+    "maintenanceBanner": {
+      "enabled": false,
+      "message": "YAAD system is undergoing scheduled cloud maintenance.",
+      "bannerType": "info"
+    }
+  },
+  "permissionMatrix": {
+    "users.view": {
+      "super_admin": true,
+      "support_agent": true,
+      "content_editor": false,
+      "analyst": true
+    },
+    "users.suspend": {
+      "super_admin": true,
+      "support_agent": false,
+      "content_editor": false,
+      "analyst": false
+    },
+    "moderation.manage": {
+      "super_admin": true,
+      "support_agent": false,
+      "content_editor": false,
+      "analyst": false
+    },
+    "catalog.edit": {
+      "super_admin": true,
+      "support_agent": false,
+      "content_editor": true,
+      "analyst": false
+    },
+    "content.publish": {
+      "super_admin": true,
+      "support_agent": false,
+      "content_editor": true,
+      "analyst": false
+    },
+    "notifications.send": {
+      "super_admin": true,
+      "support_agent": false,
+      "content_editor": false,
+      "analyst": false
+    },
+    "reports.view": {
+      "super_admin": true,
+      "support_agent": true,
+      "content_editor": false,
+      "analyst": true
+    },
+    "tickets.manage": {
+      "super_admin": true,
+      "support_agent": true,
+      "content_editor": false,
+      "analyst": false
+    },
+    "settings.edit": {
+      "super_admin": true,
+      "support_agent": false,
+      "content_editor": false,
+      "analyst": false
+    }
+  },
+  "appUsers": [
+    {
+      "id": "usr_lahore_01",
+      "name": "Ahmed Tariq",
+      "email": "ahmed.tariq@gmail.com",
+      "phone": "+92 300 4528190",
+      "signupDate": 1787236867318,
+      "lastActiveAt": 1791117667318,
+      "status": "active",
+      "listsCount": 8,
+      "completedTripsCount": 14,
+      "notes": "Frequent shopper at Metro Cash & Carry, Model Town Lahore.",
+      "lists": [
+        {
+          "id": "lst_1",
+          "title": "Monthly Kiryana Rashan",
+          "itemCount": 18,
+          "completedCount": 18,
+          "createdAt": 1790779267318,
+          "updatedAt": 1790779267318,
+          "isCompleted": true
+        },
+        {
+          "id": "lst_2",
+          "title": "Weekend Fresh Sabzi & Fruits",
+          "itemCount": 7,
+          "completedCount": 5,
+          "createdAt": 1791038467318,
+          "updatedAt": 1791117667318,
+          "isCompleted": false
+        }
+      ],
+      "timeline": [
+        {
+          "id": "tl_1",
+          "timestamp": 1787236867318,
+          "type": "signup",
+          "title": "User Registered",
+          "description": "Joined via Google Sign-In"
+        },
+        {
+          "id": "tl_2",
+          "timestamp": 1790779267318,
+          "type": "complete_trip",
+          "title": "Completed Shopping Trip",
+          "description": "Checked off 18 items in Monthly Rashan"
+        },
+        {
+          "id": "tl_3",
+          "timestamp": 1791117667318,
+          "type": "login",
+          "title": "Active Session",
+          "description": "Opened YAAD PWA on Android"
+        }
+      ]
+    },
+    {
+      "id": "usr_karachi_02",
+      "name": "Fatima Noor",
+      "email": "fatima.noor92@outlook.com",
+      "phone": "+92 321 8894120",
+      "signupDate": 1788705667318,
+      "lastActiveAt": 1791038467318,
+      "status": "active",
+      "listsCount": 5,
+      "completedTripsCount": 9,
+      "notes": "Uses Urdu Roman voice dictation extensively.",
+      "lists": [
+        {
+          "id": "lst_3",
+          "title": "Baking & Desserts",
+          "itemCount": 12,
+          "completedCount": 10,
+          "createdAt": 1790952067318,
+          "updatedAt": 1791038467318,
+          "isCompleted": false
+        }
+      ],
+      "timeline": [
+        {
+          "id": "tl_4",
+          "timestamp": 1788705667318,
+          "type": "signup",
+          "title": "User Registered",
+          "description": "Joined via Passkey Biometrics"
+        },
+        {
+          "id": "tl_5",
+          "timestamp": 1791038467318,
+          "type": "create_list",
+          "title": "Created Shopping List",
+          "description": "Added 12 baking ingredients"
+        }
+      ]
+    },
+    {
+      "id": "usr_isb_03",
+      "name": "Usman Ali Khan",
+      "email": "usman.akhan@yahoo.com",
+      "phone": "+92 333 5129988",
+      "signupDate": 1785940867318,
+      "lastActiveAt": 1790692867318,
+      "status": "active",
+      "listsCount": 12,
+      "completedTripsCount": 22,
+      "notes": "Family list sync enabled with spouse.",
+      "lists": [
+        {
+          "id": "lst_4",
+          "title": "F-10 Weekly Grocery",
+          "itemCount": 15,
+          "completedCount": 15,
+          "createdAt": 1790692867318,
+          "updatedAt": 1790692867318,
+          "isCompleted": true
+        }
+      ],
+      "timeline": [
+        {
+          "id": "tl_6",
+          "timestamp": 1790692867318,
+          "type": "complete_trip",
+          "title": "Completed Trip",
+          "description": "Completed F-10 Weekly Grocery checklist"
+        }
+      ]
+    },
+    {
+      "id": "usr_pindi_04",
+      "name": "Zainab Bibi",
+      "email": "zainab.pindi@gmail.com",
+      "phone": "+92 345 7761234",
+      "signupDate": 1783348867318,
+      "lastActiveAt": 1787496067318,
+      "status": "inactive",
+      "listsCount": 2,
+      "completedTripsCount": 3,
+      "notes": "Inactive for over 40 days. Candidate for re-engagement notification campaign.",
+      "lists": [
+        {
+          "id": "lst_5",
+          "title": "Old Rashan List",
+          "itemCount": 6,
+          "completedCount": 6,
+          "createdAt": 1787236867318,
+          "updatedAt": 1787496067318,
+          "isCompleted": true
+        }
+      ]
+    },
+    {
+      "id": "usr_multan_05",
+      "name": "Bilal Farooq (Suspended Demo)",
+      "email": "bilal.farooq.sp@test.com",
+      "phone": "+92 312 9940112",
+      "signupDate": 1789828867318,
+      "lastActiveAt": 1790865667318,
+      "status": "suspended",
+      "suspendReason": "Automated list spamming / policy violation reported by system moderation.",
+      "listsCount": 1,
+      "completedTripsCount": 0,
+      "notes": "Account suspended on audit review."
+    },
+    {
+      "id": "usr_peshawar_06",
+      "name": "Dr. Maria Siddiqui",
+      "email": "maria.siddiqui@gmail.com",
+      "phone": "+92 301 6239910",
+      "signupDate": 1790088067318,
+      "lastActiveAt": 1791110467318,
+      "status": "active",
+      "listsCount": 4,
+      "completedTripsCount": 7,
+      "notes": "Uses Pakistani traditional units (pao, ser, darjan).",
+      "lists": [
+        {
+          "id": "lst_6",
+          "title": "Dawat Preparation List",
+          "itemCount": 22,
+          "completedCount": 19,
+          "createdAt": 1791038467318,
+          "updatedAt": 1791110467318,
+          "isCompleted": false
+        }
+      ]
+    }
+  ],
+  "moderationLists": [
+    {
+      "id": "mod_lst_101",
+      "userId": "usr_multan_05",
+      "userName": "Bilal Farooq",
+      "userEmail": "bilal.farooq.sp@test.com",
+      "title": "Bulk Crypto Links & Promotional Spam",
+      "status": "flagged",
+      "itemsCount": 4,
+      "flaggedItemsCount": 3,
+      "createdAt": 1790865667318,
+      "updatedAt": 1790865667318,
+      "items": [
+        {
+          "id": "item_m1",
+          "name": "http://free-crypto-giveaway.fake",
+          "category": "other",
+          "completed": false,
+          "isFlagged": true,
+          "flagReason": "External promotional URL injected in list",
+          "moderationStatus": "pending"
+        },
+        {
+          "id": "item_m2",
+          "name": "Telegram bot discount promo @fake123",
+          "category": "other",
+          "completed": false,
+          "isFlagged": true,
+          "flagReason": "Contact spam / phishing handle",
+          "moderationStatus": "pending"
+        },
+        {
+          "id": "item_m3",
+          "name": "Regular White Bread",
+          "category": "bakery",
+          "quantity": "1",
+          "unit": "piece",
+          "completed": false,
+          "isFlagged": false,
+          "moderationStatus": "approved"
+        }
+      ]
+    },
+    {
+      "id": "mod_lst_102",
+      "userId": "usr_lahore_01",
+      "userName": "Ahmed Tariq",
+      "userEmail": "ahmed.tariq@gmail.com",
+      "title": "Monthly Kiryana Rashan",
+      "status": "clean",
+      "itemsCount": 5,
+      "flaggedItemsCount": 0,
+      "createdAt": 1790779267318,
+      "updatedAt": 1790779267318,
+      "items": [
+        {
+          "id": "item_m4",
+          "name": "Chakki Atta (Whole Wheat Flour)",
+          "category": "grains",
+          "quantity": "10",
+          "unit": "kg",
+          "completed": true,
+          "isFlagged": false,
+          "moderationStatus": "approved"
+        },
+        {
+          "id": "item_m5",
+          "name": "Super Kernel Basmati Rice",
+          "category": "rice",
+          "quantity": "5",
+          "unit": "kg",
+          "completed": true,
+          "isFlagged": false,
+          "moderationStatus": "approved"
+        },
+        {
+          "id": "item_m6",
+          "name": "Habib Banaspati Ghee",
+          "category": "oils",
+          "quantity": "2.5",
+          "unit": "kg",
+          "completed": true,
+          "isFlagged": false,
+          "moderationStatus": "approved"
+        }
+      ]
+    }
+  ],
+  "catalogProducts": [
+    {
+      "id": "prod_1",
+      "nameEn": "Chakki Atta (Whole Wheat)",
+      "nameUr": "چکی کا آٹا",
+      "category": "grains",
+      "subcategory": "Flour",
+      "brand": "Sunridge",
+      "unit": "kg",
+      "pricePkr": 1450,
+      "barcode": "896400123401",
+      "isActive": true,
+      "createdAt": 1791124867318,
+      "updatedAt": 1791124867318
+    },
+    {
+      "id": "prod_2",
+      "nameEn": "Super Kernel Basmati Rice",
+      "nameUr": "باسمتی چاول",
+      "category": "rice",
+      "subcategory": "Rice",
+      "brand": "Guard",
+      "unit": "kg",
+      "pricePkr": 380,
+      "barcode": "896400123402",
+      "isActive": true,
+      "createdAt": 1791124867318,
+      "updatedAt": 1791124867318
+    },
+    {
+      "id": "prod_3",
+      "nameEn": "Banaspati Cooking Oil / Ghee",
+      "nameUr": "کوکنگ آئل / گھی",
+      "category": "oils",
+      "subcategory": "Ghee & Oils",
+      "brand": "Dalda",
+      "unit": "litre",
+      "pricePkr": 520,
+      "barcode": "896400123403",
+      "isActive": true,
+      "createdAt": 1791124867318,
+      "updatedAt": 1791124867318
+    },
+    {
+      "id": "prod_4",
+      "nameEn": "Daal Chana (Split Chickpeas)",
+      "nameUr": "دال چنا",
+      "category": "pulses",
+      "subcategory": "Pulses",
+      "brand": "Pansari Essentials",
+      "unit": "kg",
+      "pricePkr": 280,
+      "barcode": "896400123404",
+      "isActive": true,
+      "createdAt": 1791124867318,
+      "updatedAt": 1791124867318
+    },
+    {
+      "id": "prod_5",
+      "nameEn": "Tapal Danedar Black Tea",
+      "nameUr": "ٹپال دانے دار چائے",
+      "category": "beverages",
+      "subcategory": "Tea & Coffee",
+      "brand": "Tapal",
+      "unit": "packet",
+      "pricePkr": 650,
+      "barcode": "896400123405",
+      "isActive": true,
+      "createdAt": 1791124867318,
+      "updatedAt": 1791124867318
+    },
+    {
+      "id": "prod_6",
+      "nameEn": "Olpers UHT Full Cream Milk",
+      "nameUr": "اولپرز دودھ",
+      "category": "dairy",
+      "subcategory": "Milk",
+      "brand": "Olpers",
+      "unit": "litre",
+      "pricePkr": 290,
+      "barcode": "896400123406",
+      "isActive": true,
+      "createdAt": 1791124867318,
+      "updatedAt": 1791124867318
+    },
+    {
+      "id": "prod_7",
+      "nameEn": "National Red Chilli Powder",
+      "nameUr": "سرخ مرچ پاؤڈر",
+      "category": "spices",
+      "subcategory": "Spices",
+      "brand": "National Foods",
+      "unit": "grams",
+      "pricePkr": 240,
+      "barcode": "896400123407",
+      "isActive": true,
+      "createdAt": 1791124867318,
+      "updatedAt": 1791124867318
+    },
+    {
+      "id": "prod_8",
+      "nameEn": "Farm Fresh White Eggs",
+      "nameUr": "فارم انڈے",
+      "category": "poultry",
+      "subcategory": "Eggs",
+      "brand": "Desi Farm",
+      "unit": "darjan",
+      "pricePkr": 320,
+      "barcode": "896400123408",
+      "isActive": true,
+      "createdAt": 1791124867318,
+      "updatedAt": 1791124867318
+    },
+    {
+      "id": "prod_9",
+      "nameEn": "Surf Excel Detergent Powder",
+      "nameUr": "سرف ایکسل",
+      "category": "cleaning",
+      "subcategory": "Laundry",
+      "brand": "Unilever",
+      "unit": "kg",
+      "pricePkr": 620,
+      "barcode": "896400123409",
+      "isActive": true,
+      "createdAt": 1791124867318,
+      "updatedAt": 1791124867318
+    },
+    {
+      "id": "prod_10",
+      "nameEn": "Rooh Afza Syrup",
+      "nameUr": "روح افزاء",
+      "category": "beverages",
+      "subcategory": "Syrups",
+      "brand": "Hamdard",
+      "unit": "bottle",
+      "pricePkr": 390,
+      "barcode": "896400123410",
+      "isActive": true,
+      "createdAt": 1791124867318,
+      "updatedAt": 1791124867318
+    }
+  ],
+  "catalogCategories": [
+    {
+      "id": "grains",
+      "nameEn": "Grains & Atta",
+      "nameUr": "اناج اور آٹا",
+      "icon": "wheat",
+      "itemCount": 12
+    },
+    {
+      "id": "rice",
+      "nameEn": "Rice & Biryani Staples",
+      "nameUr": "چاول اور برریانی",
+      "icon": "wheat",
+      "itemCount": 8
+    },
+    {
+      "id": "oils",
+      "nameEn": "Cooking Oil & Ghee",
+      "nameUr": "کوکنگ آئل اور گھی",
+      "icon": "droplets",
+      "itemCount": 14
+    },
+    {
+      "id": "pulses",
+      "nameEn": "Pulses & Daalein",
+      "nameUr": "دالیں",
+      "icon": "soup",
+      "itemCount": 16
+    },
+    {
+      "id": "dairy",
+      "nameEn": "Dairy & Milk",
+      "nameUr": "دودھ اور ڈیری",
+      "icon": "milk",
+      "itemCount": 10
+    },
+    {
+      "id": "spices",
+      "nameEn": "Spices & Masalay",
+      "nameUr": "مصالحہ جات",
+      "icon": "flame",
+      "itemCount": 28
+    },
+    {
+      "id": "beverages",
+      "nameEn": "Beverages & Chai",
+      "nameUr": "چائے اور مشروبات",
+      "icon": "coffee",
+      "itemCount": 18
+    },
+    {
+      "id": "poultry",
+      "nameEn": "Poultry & Meat",
+      "nameUr": "مرغی اور گوشت",
+      "icon": "drumstick",
+      "itemCount": 9
+    },
+    {
+      "id": "cleaning",
+      "nameEn": "Household & Cleaning",
+      "nameUr": "صفائی اور برتن",
+      "icon": "sparkles",
+      "itemCount": 22
+    }
+  ],
+  "cmsArticles": [
+    {
+      "id": "art_1",
+      "slug": "why-do-we-forget-things-when-shopping",
+      "title": "Why Do We Forget Things When Shopping?",
+      "titleUr": "ہم خریداری کے وقت چیزیں کیوں بھول جاتے ہیں؟",
+      "titleRomanUrdu": "Hum Shopping K Waqt Cheezein Kyun Bhool Jaate Hain?",
+      "excerpt": "Why walking into a grocery store without an external list causes mental blanks, and what cognitive science reveals about shopping memory.",
+      "excerptUr": "مارکیٹ میں داخل ہوتے ہی دماغ سے سامان کیوں نکل جاتا ہے اور اس کا آسان حل کیا ہے۔",
+      "excerptRomanUrdu": "Market mein dakhil hotay hi dimagh se saman kyun nikal jata hai aur iska asan hal kya hai.",
+      "body": "### The Science of Shopping Memory\n\nCognitive scientists have long observed that human working memory has a strictly limited capacity—typically holding only **4 to 7 discrete items** in active attention at once. When you enter a bustling Pakistani grocery store or hypermarket, your brain is simultaneously dodging other shoppers, reading price tags, checking expiry dates, and keeping track of family requests.\n\nUnder this heavy cognitive load, mental items that lack immediate visual cues vanish rapidly.\n\n#### Key Strategies to Never Forget Grocery Items:\n1. **Always use an external list** rather than mental recall.\n2. **Organize items by shop aisles or categories** (Grains, Oils, Dairy, Spices) to prevent zig-zagging.\n3. **Use Pakistani native units** like *pao* and *darjan* to communicate exact quantities.\n4. **Mark items off immediately as they enter the shopping cart.**",
+      "coverImageUrl": "https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&q=80",
+      "authorName": "Mudassir Bashir",
+      "category": "Shopping Psychology & Tips",
+      "tags": [
+        "Memory",
+        "Grocery Planning",
+        "Smart Shopping",
+        "Pakistan Kiryana"
+      ],
+      "status": "published",
+      "publishedAt": 1789828867318,
+      "readTimeMinutes": 4,
+      "viewsCount": 2430,
+      "seoTitle": "Why Do We Forget Things When Shopping? • YAAD Guide",
+      "seoDescription": "Discover why human working memory fails in busy supermarkets and how external grocery lists solve shopping forgetfulness.",
+      "versions": [
+        {
+          "versionNumber": 1,
+          "timestamp": 1789828867318,
+          "savedBy": "Mudassir Bashir",
+          "title": "Why Do We Forget Things When Shopping?",
+          "body": "Initial draft published."
+        }
+      ],
+      "createdAt": 1789828867318,
+      "updatedAt": 1790952067318
+    },
+    {
+      "id": "art_2",
+      "slug": "monthly-rashan-budget-guide-pakistan",
+      "title": "5 Smart Ways to Plan Monthly Rashan on a Budget",
+      "titleUr": "کم بجٹ میں ماہانہ راشن کی سمارٹ منصوبہ بندی کے 5 طریقے",
+      "titleRomanUrdu": "Kam Budget Mein Mahana Rashan Plan Karne K 5 Tareeqay",
+      "excerpt": "Practical budgeting strategies for middle-class Pakistani households to manage inflation and eliminate grocery wastage.",
+      "excerptUr": "پاکستانی گھرانوں کے لیے ماہانہ راشن میں بجٹ بچانے اور فضول خرچی روکنے کے عملی طریقے",
+      "excerptRomanUrdu": "Mahana rashan mein budget bachane aur faaltu kharch rokne k mufeed mashwaray.",
+      "body": "### Smart Monthly Rashan Planning for Pakistani Families\n\nInflation and food price fluctuation in Pakistan make monthly pantry planning essential. Here are 5 battle-tested principles:\n\n#### 1. Audit Your Pantry Before Stepping Out\nNever purchase a 10kg flour bag or 5-litre ghee tin without checking your existing kitchen jars. Many households double-buy spices, pulses, and tea simply because they did not inspect the pantry cupboard.\n\n#### 2. Buy Staples in Bulk, Perishables Weekly\nItems with long shelf lives (Chakki Atta, Basmati Rice, Ghee, Daalein) should be purchased in bulk at whole-sale prices. Perishables like tomatoes, coriander, and milk should be bought fresh weekly.\n\n#### 3. Standardize Traditional Pakistani Units\nClear quantity measurement (e.g. 250 grams / 1 pao, 1 darjan eggs) stops accidental over-purchasing and keeps bazaar bills predictable.",
+      "coverImageUrl": "https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=1200&q=80",
+      "authorName": "Editorial Team",
+      "category": "Budgeting & Rashan",
+      "tags": [
+        "Monthly Rashan",
+        "Budgeting",
+        "Inflation",
+        "Family Shopping"
+      ],
+      "status": "published",
+      "publishedAt": 1790260867318,
+      "readTimeMinutes": 5,
+      "viewsCount": 1890,
+      "seoTitle": "5 Smart Ways to Plan Monthly Rashan on a Budget • YAAD",
+      "seoDescription": "Learn how to plan your monthly kiryana and grocery budget efficiently without compromising quality.",
+      "createdAt": 1790260867318,
+      "updatedAt": 1790865667318
+    }
+  ],
+  "pushCampaigns": [
+    {
+      "id": "push_101",
+      "titleEn": "Weekend Rashan Reminder 🛒",
+      "titleUr": "ہفتہ وار سودا سلف کی یاد دہانی 🛒",
+      "bodyEn": "Review your shopping list before heading to the market. Check off pantry essentials in YAAD!",
+      "bodyUr": "مارکیٹ جانے سے پہلے اپنی راشن لسٹ چیک کر لیں۔ یاد ایپ کے ساتھ کوئی چیز نہ بھولیں!",
+      "targetAudience": "all_active",
+      "deepLink": "/home",
+      "status": "sent",
+      "sentAt": 1790952067318,
+      "estimatedRecipients": 4,
+      "actualSentCount": 4,
+      "deliveredCount": 4,
+      "openedCount": 3,
+      "createdBy": "Super Admin",
+      "createdAt": 1790952067318
+    }
+  ],
+  "pushTemplates": [
+    {
+      "id": "tmpl_1",
+      "name": "Monthly Rashan Checklist",
+      "category": "Shopping Reminder",
+      "titleEn": "Monthly Rashan Planning Time! 🌾",
+      "titleUr": "ماہانہ راشن کی لسٹ تیار کرنے کا وقت! 🌾",
+      "bodyEn": "Create your household checklist with 1-tap using YAAD Monthly Rashan Guide.",
+      "bodyUr": "یاد ایپ کی ماہانہ راشن گائیڈ کے ساتھ اپنے گھر کا سودا سلف فوری ترتیب دیں۔",
+      "deepLink": "/rashan-list"
+    },
+    {
+      "id": "tmpl_2",
+      "name": "Offline Market Notice",
+      "category": "Tips & Education",
+      "titleEn": "Did you know? YAAD works 100% offline 📶",
+      "titleUr": "کیا آپ جانتے ہیں؟ یاد ایپ انٹرنیٹ کے بغیر بھی چلتی ہے 📶",
+      "bodyEn": "Shop seamlessly in basement markets without worrying about internet signals.",
+      "bodyUr": "بغیر انٹرنیٹ کے بھی مارکیٹ میں اشیاء باآسانی چیک آف کریں۔",
+      "deepLink": "/help"
+    }
+  ],
+  "supportTickets": [
+    {
+      "id": "tkt_201",
+      "ticketNumber": "YAD-8921",
+      "userId": "usr_lahore_01",
+      "userName": "Ahmed Tariq",
+      "userEmail": "ahmed.tariq@gmail.com",
+      "userPhone": "+92 300 4528190",
+      "subject": "How to export monthly shopping history to Excel?",
+      "description": "Hi support team, I want to calculate my monthly household expense. Is there an export button for previous shopping trips?",
+      "category": "lists",
+      "priority": "medium",
+      "status": "open",
+      "assignedTo": {
+        "id": "admin_support",
+        "name": "Support Agent",
+        "email": "support@yaad.app"
+      },
+      "messages": [
+        {
+          "id": "msg_1",
+          "sender": "user",
+          "senderName": "Ahmed Tariq",
+          "text": "Hi support team, I want to calculate my monthly expense. How can I export my completed lists?",
+          "timestamp": 1791103267318
+        }
+      ],
+      "internalNotes": [
+        {
+          "id": "note_1",
+          "adminId": "admin_1",
+          "adminName": "Super Admin",
+          "text": "Verified user has 14 completed trips. Feature is in Statistics tab.",
+          "timestamp": 1791106867318
+        }
+      ],
+      "createdAt": 1791103267318,
+      "updatedAt": 1791106867318
+    },
+    {
+      "id": "tkt_202",
+      "ticketNumber": "YAD-8922",
+      "userId": "usr_karachi_02",
+      "userName": "Fatima Noor",
+      "userEmail": "fatima.noor92@outlook.com",
+      "subject": "Urdu voice input suggestion for regional spices",
+      "description": "The app recognized \"zeera\" and \"dhania\" wonderfully. Please add \"kalonji\" and \"ajwain\" to the quick catalog!",
+      "category": "feature_request",
+      "priority": "low",
+      "status": "resolved",
+      "resolvedAt": 1791038467318,
+      "messages": [
+        {
+          "id": "msg_2",
+          "sender": "user",
+          "senderName": "Fatima Noor",
+          "text": "Please add kalonji and ajwain to quick recognition.",
+          "timestamp": 1790952067318
+        },
+        {
+          "id": "msg_3",
+          "sender": "staff",
+          "senderName": "YAAD Support Team",
+          "text": "Thank you Fatima! We have added Kalonji and Ajwain directly to the national master spices catalog in the latest update.",
+          "timestamp": 1791038467318
+        }
+      ],
+      "internalNotes": [],
+      "createdAt": 1790952067318,
+      "updatedAt": 1791038467318
+    }
+  ],
+  "cannedReplies": [
+    {
+      "id": "can_1",
+      "title": "Offline Mode Explanation",
+      "shortcut": "!offline",
+      "category": "General",
+      "text": "YAAD is built with an offline-first architecture. Any items you check off or add while inside basement markets are saved directly to your device storage and automatically synced as soon as internet connection resumes."
+    },
+    {
+      "id": "can_2",
+      "title": "Family Sharing Instructions",
+      "shortcut": "!sync",
+      "category": "Features",
+      "text": "To share your shopping list with a family member, log in to the same household account or use the Share List button to send an instant WhatsApp / SMS checklist copy."
+    },
+    {
+      "id": "can_3",
+      "title": "Feature Request Acknowledgment",
+      "shortcut": "!feature",
+      "category": "Product",
+      "text": "Thank you for your valuable suggestion! We have logged this request with our product engineering team for our upcoming Pakistani kiryana intelligence release."
+    }
+  ]
 }

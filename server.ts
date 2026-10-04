@@ -1858,6 +1858,14 @@ app.get('/sitemap.xml', (req, res) => {
   return res.status(404).send('Sitemap not found');
 });
 
+// Fallback for unmatched API routes (guarantee JSON response, never HTML)
+app.use('/api', (req, res) => {
+  res.status(404).json({
+    error: `API endpoint not found: ${req.method} ${req.originalUrl || req.url}`,
+    code: 'API_ENDPOINT_NOT_FOUND',
+  });
+});
+
 // Vite middleware & Static serving
 async function startServer() {
   const distPath = path.join(process.cwd(), 'dist');
@@ -1888,5 +1896,11 @@ async function startServer() {
   });
 }
 
-startServer();
+// Only start the standalone HTTP listener when not running as a Vercel Serverless Function
+if (process.env.VERCEL !== '1' && !process.env.AWS_LAMBDA_FUNCTION_NAME) {
+  startServer();
+}
+
+export { app };
+export default app;
 

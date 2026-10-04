@@ -1091,3 +1091,35 @@ adminRouter.get(
     });
   }
 );
+
+// -----------------------------------------------------------------------------
+// 15. Method Not Allowed Guards for POST-Only Endpoints
+// -----------------------------------------------------------------------------
+adminRouter.get(
+  [
+    '/auth/login',
+    '/auth/verify-2fa',
+    '/auth/confirm-2fa',
+    '/auth/forgot-password',
+    '/auth/reset-password',
+    '/setup/verify-key',
+    '/setup/create-admin',
+    '/invites/accept',
+  ],
+  (req: Request, res: Response) => {
+    res.status(405).json({
+      error: `Method Not Allowed: ${req.method} is not supported for ${req.path}. Please send a POST request.`,
+      code: 'METHOD_NOT_ALLOWED',
+    });
+  }
+);
+
+// -----------------------------------------------------------------------------
+// 16. Admin Router Catch-All Fallback (guarantees JSON response, never HTML)
+// -----------------------------------------------------------------------------
+adminRouter.use((req: Request, res: Response) => {
+  res.status(404).json({
+    error: `Admin API endpoint not found: ${req.method} ${req.originalUrl || req.url}`,
+    code: 'ADMIN_ENDPOINT_NOT_FOUND',
+  });
+});

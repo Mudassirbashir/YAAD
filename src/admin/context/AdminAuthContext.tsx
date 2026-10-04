@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { AdminUser, AdminSessionInfo } from '../types';
+import { safeFetchJson } from '../utils/apiClient';
 
 interface LoginStep1Result {
   requires2faVerify?: boolean;
@@ -29,7 +30,7 @@ interface AdminAuthContextType {
   get2faSetupData: (tempToken?: string) => Promise<{ secret: string; otpAuthUri: string; qrCodeDataUrl: string; email: string } | null>;
   confirm2faSetup: (secret: string, code: string, tempToken?: string) => Promise<{ success: boolean; error?: string; recoveryCodes?: string[] }>;
   logout: () => Promise<void>;
-  requestPasswordReset: (email: string) => Promise<{ message: string; devResetLink?: string; error?: string }>;
+  requestPasswordReset: (email: string) => Promise<{ message?: string; devResetLink?: string; error?: string }>;
   completePasswordReset: (token: string, newPassword: string) => Promise<{ success: boolean; message?: string; error?: string }>;
   refreshProfile: () => Promise<void>;
 }
@@ -83,7 +84,6 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setInactivitySecondsRemaining(remaining);
 
       if (remaining <= 0) {
-        // Enforce inactivity logout
         logout();
       }
     }, 1000);
@@ -102,13 +102,13 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
 
     try {
-      const res = await fetch('/api/admin/auth/me', {
+      const res = await safeFetchJson<{ admin: AdminUser; session: AdminSessionInfo }>('/api/admin/auth/me', {
         headers: {
           Authorization: `Bearer ${activeToken}`,
         },
       });
 
-      if (!res.ok) {
+      if (!res.ok || !res.data) {
         // Invalid or expired session
         localStorage.removeItem(TOKEN_STORAGE_KEY);
         setToken(null);
@@ -118,9 +118,8 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         return;
       }
 
-      const data = await res.json();
-      setAdmin(data.admin);
-      setSession(data.session);
+      setAdmin(res.data.admin);
+      setSession(res.data.session);
     } catch (err: any) {
       console.error('[AdminAuth] Error checking me:', err);
     } finally {
@@ -134,105 +133,81 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const loginStep1 = async (email: string, password: string): Promise<LoginStep1Result> => {
     setError(null);
-    try {
-      const res = await fetch('/api/admin/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
+    const res = await safeFetchJson<any>('/api/admin/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
 
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || 'Failed to authenticate admin credentials.');
-        return {
-          error: data.error || 'Failed to authenticate.',
-          remainingAttempts: data.remainingAttempts,
-          lockoutUntil: data.lockoutUntil,
-        };
-      }
-
-      return data;
-    } catch (err: any) {
-      const msg = err.message || 'Network error connecting to Admin API.';
-      setError(msg);
-      return { error: msg };
+    if (!res.ok) {
+      setError(res.error || 'Failed to authenticate admin credentials.');
+      return {
+        error: res.error || 'Failed to authenticate.',
+        remainingAttempts: res.remainingAttempts,
+        lockoutUntil: res.lockoutUntil,
+      };
     }
+
+    return res.data || {};
   };
 
   const loginPasswordless = async (email: string, code: string): Promise<{ success: boolean; requires2faSetup?: boolean; tempToken?: string; error?: string }> => {
     setError(null);
-    try {
-      const res = await fetch('/api/admin/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, code }),
-      });
+    const res = await safeFetchJson<any>('/api/admin/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, code }),
+    });
 
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || 'Authentication failed.');
-        return { success: false, error: data.error || 'Authentication failed.' };
-      }
-
-      if (data.requires2faSetup) {
-        return { success: false, requires2faSetup: true, tempToken: data.tempToken };
-      }
-
-      if (data.token && data.admin) {
-        setToken(data.token);
-        setAdmin(data.admin);
-        localStorage.setItem(TOKEN_STORAGE_KEY, data.token);
-        lastActivityTimestamp.current = Date.now();
-        return { success: true };
-      }
-
-      return { success: false, error: data.message || 'Unexpected login response.' };
-    } catch (err: any) {
-      const msg = err.message || 'Network error connecting to Admin API.';
-      setError(msg);
-      return { success: false, error: msg };
+    if (!res.ok) {
+      setError(res.error || 'Authentication failed.');
+      return { success: false, error: res.error || 'Authentication failed.' };
     }
-  };
 
-  const verify2fa = async (tempToken: string, code: string): Promise<{ success: boolean; error?: string }> => {
-    setError(null);
-    try {
-      const res = await fetch('/api/admin/auth/verify-2fa', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tempToken, code }),
-      });
+    const data = res.data || {};
+    if (data.requires2faSetup) {
+      return { success: false, requires2faSetup: true, tempToken: data.tempToken };
+    }
 
-      const data = await res.json();
-      if (!res.ok) {
-        return { success: false, error: data.error || 'Invalid 2FA code.' };
-      }
-
+    if (data.token && data.admin) {
       setToken(data.token);
       setAdmin(data.admin);
       localStorage.setItem(TOKEN_STORAGE_KEY, data.token);
       lastActivityTimestamp.current = Date.now();
       return { success: true };
-    } catch (err: any) {
-      return { success: false, error: err.message || 'Failed to verify 2FA code.' };
     }
+
+    return { success: false, error: data.message || 'Unexpected login response.' };
+  };
+
+  const verify2fa = async (tempToken: string, code: string): Promise<{ success: boolean; error?: string }> => {
+    setError(null);
+    const res = await safeFetchJson<any>('/api/admin/auth/verify-2fa', {
+      method: 'POST',
+      body: JSON.stringify({ tempToken, code }),
+    });
+
+    if (!res.ok || !res.data) {
+      return { success: false, error: res.error || 'Invalid 2FA code.' };
+    }
+
+    setToken(res.data.token);
+    setAdmin(res.data.admin);
+    localStorage.setItem(TOKEN_STORAGE_KEY, res.data.token);
+    lastActivityTimestamp.current = Date.now();
+    return { success: true };
   };
 
   const get2faSetupData = async (tempToken?: string) => {
     try {
-      const res = await fetch('/api/admin/auth/setup-2fa', {
+      const res = await safeFetchJson<any>('/api/admin/auth/setup-2fa', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: JSON.stringify({ tempToken, token }),
       });
 
-      if (!res.ok) {
+      if (!res.ok || !res.data) {
         return null;
       }
-      return await res.json();
+      return res.data;
     } catch (err) {
       console.error('[AdminAuth] Error fetching 2FA setup:', err);
       return null;
@@ -240,36 +215,28 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const confirm2faSetup = async (secret: string, code: string, tempToken?: string): Promise<{ success: boolean; error?: string; recoveryCodes?: string[] }> => {
-    try {
-      const res = await fetch('/api/admin/auth/confirm-2fa', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ secret, code, tempToken, token }),
-      });
+    const res = await safeFetchJson<any>('/api/admin/auth/confirm-2fa', {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: JSON.stringify({ secret, code, tempToken, token }),
+    });
 
-      const data = await res.json();
-      if (!res.ok) {
-        return { success: false, error: data.error || 'Failed to confirm 2FA setup.' };
-      }
-
-      if (data.token) {
-        setToken(data.token);
-        setAdmin(data.admin);
-        localStorage.setItem(TOKEN_STORAGE_KEY, data.token);
-      }
-      return { success: true, recoveryCodes: data.recoveryCodes };
-    } catch (err: any) {
-      return { success: false, error: err.message || 'Error confirming 2FA.' };
+    if (!res.ok || !res.data) {
+      return { success: false, error: res.error || 'Failed to confirm 2FA setup.' };
     }
+
+    if (res.data.token) {
+      setToken(res.data.token);
+      setAdmin(res.data.admin);
+      localStorage.setItem(TOKEN_STORAGE_KEY, res.data.token);
+    }
+    return { success: true, recoveryCodes: res.data.recoveryCodes };
   };
 
   const logout = async () => {
     try {
       if (token) {
-        await fetch('/api/admin/auth/logout', {
+        await safeFetchJson('/api/admin/auth/logout', {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -286,34 +253,25 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const requestPasswordReset = async (email: string) => {
-    try {
-      const res = await fetch('/api/admin/auth/forgot-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-      const data = await res.json();
-      return data;
-    } catch (err: any) {
-      return { error: err.message || 'Failed to request password reset.' };
+    const res = await safeFetchJson<any>('/api/admin/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+    if (!res.ok) {
+      return { error: res.error || 'Failed to request password reset.' };
     }
+    return res.data || {};
   };
 
   const completePasswordReset = async (resetToken: string, newPassword: string) => {
-    try {
-      const res = await fetch('/api/admin/auth/reset-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: resetToken, newPassword }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        return { success: false, error: data.error || 'Failed to reset password.' };
-      }
-      return { success: true, message: data.message };
-    } catch (err: any) {
-      return { success: false, error: err.message || 'Failed to reset password.' };
+    const res = await safeFetchJson<any>('/api/admin/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token: resetToken, newPassword }),
+    });
+    if (!res.ok) {
+      return { success: false, error: res.error || 'Failed to reset password.' };
     }
+    return { success: true, message: res.data?.message };
   };
 
   return (
