@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Lock, Mail, KeyRound, AlertCircle, ArrowRight, Loader2, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, Lock, Mail, KeyRound, AlertCircle, ArrowRight, Loader2, ArrowLeft, Key, Shield } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { useAdminToast } from '../components/AdminToasts';
 
@@ -15,11 +15,13 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
   const { loginStep1, verify2fa } = useAdminAuth();
   const toast = useAdminToast();
 
-  // Step 1: credentials, Step 2: TOTP code
+  // Step 1: credentials, Step 2: TOTP code or Recovery code
   const [step, setStep] = useState<'credentials' | 'totp'>('credentials');
+  const [useRecoveryCode, setUseRecoveryCode] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [totpCode, setTotpCode] = useState('');
+  const [recoveryCode, setRecoveryCode] = useState('');
   const [tempToken, setTempToken] = useState<string | null>(null);
 
   // Errors & Loading
@@ -59,7 +61,7 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
       }
 
       if (result.requires2faSetup && result.tempToken) {
-        toast.info('2FA Setup Required', 'Enforcing mandatory TOTP setup before first entry.');
+        toast.info('2FA Enrollment Required', 'Enforcing mandatory TOTP setup on first login.');
         onRequires2faSetup(result.tempToken);
         return;
       }
@@ -77,26 +79,28 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
   const handleStep2Submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setGeneralError(null);
-    if (!totpCode.trim() || !tempToken || isLoading) {
-      setFieldErrors({ code: 'Please enter your 6-digit code.' });
+
+    const submissionCode = useRecoveryCode ? recoveryCode.trim() : totpCode.trim();
+    if (!submissionCode || !tempToken || isLoading) {
+      setFieldErrors({ code: useRecoveryCode ? 'Please enter your recovery code.' : 'Please enter your 6-digit code.' });
       return;
     }
 
-    if (!/^\d{6}$/.test(totpCode.trim())) {
+    if (!useRecoveryCode && !/^\d{6}$/.test(submissionCode)) {
       setFieldErrors({ code: 'Code must consist of exactly 6 digits.' });
       return;
     }
 
     setIsLoading(true);
     try {
-      const res = await verify2fa(tempToken, totpCode.trim());
+      const res = await verify2fa(tempToken, submissionCode);
       if (!res.success) {
-        setGeneralError(res.error || 'Invalid 2FA code. Please check your app.');
-        toast.error('2FA Verification Failed', res.error || 'Code was rejected.');
+        setGeneralError(res.error || 'Invalid 2FA code or recovery code.');
+        toast.error('Verification Failed', res.error || 'Code was rejected.');
         return;
       }
 
-      toast.success('Welcome Back', 'Admin session established securely.');
+      toast.success('Welcome Back', 'Staff session established securely.');
       onNavigate('/admin');
     } finally {
       setIsLoading(false);
@@ -114,7 +118,7 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
           YAAD Admin Portal
         </h1>
         <p className="text-xs text-slate-400">
-          Internal management console &amp; operations gateway
+          Internal operations gateway &amp; management console
         </p>
       </div>
 
@@ -152,7 +156,7 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
                     setEmail(e.target.value);
                     if (fieldErrors.email) setFieldErrors({ ...fieldErrors, email: undefined });
                   }}
-                  placeholder="admin@yaad.app"
+                  placeholder="admin@domain.com"
                   disabled={isLoading}
                   className={`w-full bg-slate-950 border rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none transition-all ${
                     fieldErrors.email
@@ -202,7 +206,7 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full mt-2 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-sm shadow-lg shadow-emerald-950/40 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="w-full mt-2 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-xs shadow-lg shadow-emerald-950/40 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
               <span>Verify Credentials</span>
@@ -213,66 +217,105 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
           <form onSubmit={handleStep2Submit} className="space-y-5 animate-in fade-in">
             <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800/80 space-y-1.5 text-center">
               <ShieldCheck className="w-8 h-8 text-emerald-400 mx-auto" />
-              <h3 className="text-sm font-bold text-white">Two-Factor Authentication</h3>
+              <h3 className="text-sm font-bold text-white">
+                {useRecoveryCode ? 'Emergency Recovery Code' : 'Two-Factor Authentication'}
+              </h3>
               <p className="text-xs text-slate-400">
-                Enter the 6-digit code generated by your Google Authenticator or 2FA app for{' '}
-                <span className="text-slate-200 font-semibold">{email}</span>.
+                {useRecoveryCode
+                  ? 'Enter one of your 10 single-use emergency recovery codes (e.g. ABCD-EFGH).'
+                  : `Enter the 6-digit code from your authenticator app for ${email}.`}
               </p>
             </div>
 
-            <div className="space-y-2 text-center">
-              <label className="text-xs font-bold text-slate-300 block">6-Digit TOTP Token</label>
-              <input
-                type="text"
-                inputMode="numeric"
-                maxLength={6}
-                value={totpCode}
-                onChange={(e) => {
-                  const cleaned = e.target.value.replace(/\D/g, '');
-                  setTotpCode(cleaned);
-                  if (fieldErrors.code) setFieldErrors({ ...fieldErrors, code: undefined });
-                }}
-                placeholder="123456"
-                disabled={isLoading}
-                className="w-48 mx-auto bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-center text-2xl tracking-[0.4em] font-mono text-white rounded-xl py-2.5 outline-none font-bold"
-                autoFocus
-              />
-              {fieldErrors.code && <p className="text-[11px] text-rose-400">{fieldErrors.code}</p>}
-            </div>
+            {!useRecoveryCode ? (
+              <div className="space-y-2 text-center">
+                <label className="text-xs font-bold text-slate-300 block">6-Digit TOTP Token</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={totpCode}
+                  onChange={(e) => {
+                    const cleaned = e.target.value.replace(/\D/g, '');
+                    setTotpCode(cleaned);
+                    if (fieldErrors.code) setFieldErrors({ ...fieldErrors, code: undefined });
+                  }}
+                  placeholder="123456"
+                  disabled={isLoading}
+                  className="w-48 mx-auto bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-center text-2xl tracking-[0.4em] font-mono text-white rounded-xl py-2.5 outline-none font-bold"
+                  autoFocus
+                />
+                {fieldErrors.code && <p className="text-[11px] text-rose-400">{fieldErrors.code}</p>}
+              </div>
+            ) : (
+              <div className="space-y-2 text-center">
+                <label className="text-xs font-bold text-slate-300 block">Emergency Recovery Code</label>
+                <input
+                  type="text"
+                  value={recoveryCode}
+                  onChange={(e) => {
+                    setRecoveryCode(e.target.value.toUpperCase());
+                    if (fieldErrors.code) setFieldErrors({ ...fieldErrors, code: undefined });
+                  }}
+                  placeholder="ABCD-EFGH"
+                  disabled={isLoading}
+                  className="w-56 mx-auto bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-center text-lg tracking-[0.2em] font-mono text-white rounded-xl py-2.5 outline-none font-bold uppercase"
+                  autoFocus
+                />
+                {fieldErrors.code && <p className="text-[11px] text-rose-400">{fieldErrors.code}</p>}
+              </div>
+            )}
 
             <div className="space-y-2">
               <button
                 type="submit"
-                disabled={isLoading || totpCode.length !== 6}
-                className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-sm shadow-lg shadow-emerald-950/40 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                disabled={isLoading || (useRecoveryCode ? recoveryCode.trim().length < 8 : totpCode.length !== 6)}
+                className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-xs shadow-lg shadow-emerald-950/40 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                 <span>Authorize Admin Session</span>
               </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setStep('credentials');
-                  setTotpCode('');
-                  setGeneralError(null);
-                }}
-                disabled={isLoading}
-                className="w-full py-2.5 text-xs text-slate-400 hover:text-white transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Back to email and password</span>
-              </button>
+              <div className="flex items-center justify-between pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUseRecoveryCode(!useRecoveryCode);
+                    setFieldErrors({});
+                  }}
+                  disabled={isLoading}
+                  className="text-xs text-slate-400 hover:text-emerald-400 transition-colors flex items-center gap-1 cursor-pointer"
+                >
+                  <Key className="w-3.5 h-3.5" />
+                  <span>{useRecoveryCode ? 'Use 6-digit Authenticator app' : 'Use recovery code'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStep('credentials');
+                    setTotpCode('');
+                    setRecoveryCode('');
+                    setGeneralError(null);
+                  }}
+                  disabled={isLoading}
+                  className="text-xs text-slate-400 hover:text-white transition-colors flex items-center gap-1 cursor-pointer"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Back</span>
+                </button>
+              </div>
             </div>
           </form>
         )}
 
-        {/* Demo Seed Credentials Notice in Dev */}
-        <div className="pt-3 border-t border-slate-800 text-[11px] text-slate-500 text-center">
-          <p>
-            Default Dev Super Admin: <span className="font-mono text-slate-400">admin@yaad.app</span>
+        {/* Security Footer Notice */}
+        <div className="pt-3 border-t border-slate-800 text-[11px] text-slate-500 text-center space-y-0.5">
+          <p className="flex items-center justify-center gap-1.5">
+            <Shield className="w-3 h-3 text-emerald-400" />
+            <span>Invite-only administrative access</span>
           </p>
-          <p className="mt-0.5">Password: <span className="font-mono text-slate-400">YaadAdmin2026!</span></p>
+          <p className="text-[10px] text-slate-600">5 failed attempts trigger 15-min lockout</p>
         </div>
       </div>
     </div>

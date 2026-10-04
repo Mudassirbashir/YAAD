@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { KeyRound, Lock, AlertCircle, CheckCircle2, Loader2, ArrowRight } from 'lucide-react';
+import { KeyRound, Lock, AlertCircle, CheckCircle2, Loader2, ArrowRight, Check, X } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { useAdminToast } from '../components/AdminToasts';
 
@@ -21,6 +21,21 @@ export const AdminResetPasswordPage: React.FC<AdminResetPasswordPageProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
+  const passwordChecks = {
+    length: password.length >= 12,
+    hasUpper: /[A-Z]/.test(password),
+    hasLower: /[a-z]/.test(password),
+    hasNumber: /[0-9]/.test(password),
+    hasSymbol: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(password),
+    matchesConfirm: Boolean(password && confirmPassword && password === confirmPassword),
+  };
+  const isPasswordValid =
+    passwordChecks.length &&
+    passwordChecks.hasUpper &&
+    passwordChecks.hasLower &&
+    passwordChecks.hasNumber &&
+    passwordChecks.hasSymbol;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -30,8 +45,8 @@ export const AdminResetPasswordPage: React.FC<AdminResetPasswordPageProps> = ({
       return;
     }
 
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters in length.');
+    if (!isPasswordValid) {
+      setError('Password must meet complexity requirements (min 12 chars, upper/lower/number/symbol).');
       return;
     }
 
@@ -97,7 +112,7 @@ export const AdminResetPasswordPage: React.FC<AdminResetPasswordPageProps> = ({
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-300 block">New Password (Min 8 characters)</label>
+              <label className="text-xs font-bold text-slate-300 block">New Password (Min 12 characters)</label>
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5 pointer-events-none" />
                 <input
@@ -127,9 +142,39 @@ export const AdminResetPasswordPage: React.FC<AdminResetPasswordPageProps> = ({
               </div>
             </div>
 
+            {/* Live Password Complexity Checklist */}
+            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs space-y-1.5">
+              <div className="grid grid-cols-2 gap-1.5 text-[11px]">
+                <div className={`flex items-center gap-1.5 ${passwordChecks.length ? 'text-emerald-400 font-semibold' : 'text-slate-500'}`}>
+                  {passwordChecks.length ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                  <span>Min 12 characters</span>
+                </div>
+                <div className={`flex items-center gap-1.5 ${passwordChecks.hasUpper ? 'text-emerald-400 font-semibold' : 'text-slate-500'}`}>
+                  {passwordChecks.hasUpper ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                  <span>Uppercase (A-Z)</span>
+                </div>
+                <div className={`flex items-center gap-1.5 ${passwordChecks.hasLower ? 'text-emerald-400 font-semibold' : 'text-slate-500'}`}>
+                  {passwordChecks.hasLower ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                  <span>Lowercase (a-z)</span>
+                </div>
+                <div className={`flex items-center gap-1.5 ${passwordChecks.hasNumber ? 'text-emerald-400 font-semibold' : 'text-slate-500'}`}>
+                  {passwordChecks.hasNumber ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                  <span>Number (0-9)</span>
+                </div>
+                <div className={`flex items-center gap-1.5 ${passwordChecks.hasSymbol ? 'text-emerald-400 font-semibold' : 'text-slate-500'}`}>
+                  {passwordChecks.hasSymbol ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                  <span>Symbol (!@#$...)</span>
+                </div>
+                <div className={`flex items-center gap-1.5 ${passwordChecks.matchesConfirm ? 'text-emerald-400 font-semibold' : 'text-slate-500'}`}>
+                  {passwordChecks.matchesConfirm ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                  <span>Passwords match</span>
+                </div>
+              </div>
+            </div>
+
             <button
               type="submit"
-              disabled={isLoading || !password || !confirmPassword}
+              disabled={isLoading || !isPasswordValid || password !== confirmPassword}
               className="w-full mt-2 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-950/40 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}

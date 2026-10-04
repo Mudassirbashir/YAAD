@@ -6,6 +6,9 @@ import {
   AdminUser,
   LOCKOUT_DURATION_MS,
   MAX_FAILED_ATTEMPTS,
+  generateRecoveryCodes,
+  verifySetupKey,
+  isStrongPassword,
 } from './store';
 import {
   generateTotpSecret,
@@ -50,6 +53,34 @@ function validateTempLoginToken(token: string): TempLoginState | null {
   return state;
 }
 
+// In-memory temporary bootstrap tokens (valid for 10 minutes)
+interface BootstrapState {
+  token: string;
+  createdAt: number;
+  expiresAt: number;
+}
+const bootstrapTokens = new Map<string, BootstrapState>();
+
+function createBootstrapToken(): string {
+  const token = 'boot_' + crypto.randomBytes(32).toString('hex');
+  bootstrapTokens.set(token, {
+    token,
+    createdAt: Date.now(),
+    expiresAt: Date.now() + 10 * 60 * 1000,
+  });
+  return token;
+}
+
+function validateBootstrapToken(token: string): boolean {
+  if (!token) return false;
+  const state = bootstrapTokens.get(token);
+  if (!state || Date.now() > state.expiresAt) {
+    bootstrapTokens.delete(token);
+    return false;
+  }
+  return true;
+}
+
 function sanitizeAdmin(admin: AdminUser) {
   return {
     id: admin.id,
@@ -63,6 +94,120 @@ function sanitizeAdmin(admin: AdminUser) {
     updatedAt: admin.updatedAt,
   };
 }
+
+// -----------------------------------------------------------------------------
+// 0. FIRST SUPER ADMIN BOOTSTRAP ENDPOINTS (One-time, self-destructing)
+// -----------------------------------------------------------------------------
+
+// Check if initial setup is currently allowed
+adminRouter.get('/setup/status', (req: Request, res: Response) => {
+  const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+  const userAgent = (req.headers['user-agent'] as string) || '';
+
+  if (!adminStore.isSetupAllowed()) {
+    res.status(404).json({ error: 'Setup route not found.', code: 'SETUP_DISABLED' });
+    return;
+  }
+
+  // Audit setup visited
+  adminStore.writeAuditLog({
+    action: 'setup_visited',
+    targetType: 'system_security',
+    ip: clientIp,
+    userAgent,
+    metadata: { note: 'Initial setup route accessed while 0 admins exist in database' },
+  });
+
+  res.status(200).json({ allowed: true });
+});
+
+// Verify ADMIN_SETUP_KEY from environment variables
+adminRouter.post('/setup/verify-key', rateLimit(5, 15 * 60 * 1000), (req: Request, res: Response) => {
+  const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+  const userAgent = (req.headers['user-agent'] as string) || '';
+  const { setupKey } = req.body;
+
+  if (!adminStore.isSetupAllowed()) {
+    res.status(404).json({ error: 'Setup route not found.', code: 'SETUP_DISABLED' });
+    return;
+  }
+
+  if (!setupKey || typeof setupKey !== 'string') {
+    res.status(400).json({ error: 'Setup key is required.' });
+    return;
+  }
+
+  const isKeyValid = verifySetupKey(setupKey.trim());
+  if (!isKeyValid) {
+    adminStore.writeAuditLog({
+      action: 'setup_key_failed',
+      targetType: 'system_security',
+      ip: clientIp,
+      userAgent,
+      metadata: { reason: 'Incorrect setup key submitted' },
+    });
+    res.status(401).json({ error: 'Invalid secret key or setup access denied.' });
+    return;
+  }
+
+  const bootstrapToken = createBootstrapToken();
+  adminStore.writeAuditLog({
+    action: 'setup_key_verified',
+    targetType: 'system_security',
+    ip: clientIp,
+    userAgent,
+    metadata: { note: 'Valid setup key provided, temporary bootstrap session granted' },
+  });
+
+  res.status(200).json({
+    success: true,
+    bootstrapToken,
+    message: 'Secret key verified. Please complete first Super Admin account creation.',
+  });
+});
+
+// Create exactly ONE Super Admin, then permanently self-destructs
+adminRouter.post('/setup/create-admin', rateLimit(5, 15 * 60 * 1000), (req: Request, res: Response) => {
+  const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+  const userAgent = (req.headers['user-agent'] as string) || '';
+  const { bootstrapToken, name, email, password } = req.body;
+
+  if (!adminStore.isSetupAllowed()) {
+    res.status(404).json({ error: 'Setup route not found.', code: 'SETUP_DISABLED' });
+    return;
+  }
+
+  if (!bootstrapToken || !validateBootstrapToken(bootstrapToken)) {
+    res.status(401).json({ error: 'Invalid or expired setup token. Please re-enter the secret key.' });
+    return;
+  }
+
+  if (!name || !email || !password) {
+    res.status(400).json({ error: 'Full name, email, and password are required.' });
+    return;
+  }
+
+  try {
+    const superAdmin = adminStore.createFirstSuperAdmin({
+      name: String(name),
+      email: String(email),
+      passwordPlain: String(password),
+      ip: clientIp,
+      userAgent,
+    });
+
+    // Invalidate temporary bootstrap token immediately
+    bootstrapTokens.delete(bootstrapToken);
+
+    res.status(201).json({
+      success: true,
+      message: 'Super Admin created successfully. Setup route is now permanently disabled. Please log in to complete mandatory 2FA enrollment.',
+      admin: sanitizeAdmin(superAdmin),
+    });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message || 'Failed to bootstrap Super Admin.' });
+  }
+});
 
 // -----------------------------------------------------------------------------
 // 1. Admin Login (Step 1: Email + Password)
@@ -121,19 +266,19 @@ adminRouter.post('/auth/login', rateLimit(10, 60 * 1000), (req: Request, res: Re
   // Verify password
   const isValidPassword = adminStore.verifyPassword(admin, String(password));
   if (!isValidPassword) {
-    const { isLocked, remainingAttempts, lockoutUntil } = adminStore.recordFailedLogin(admin.id);
+    const { isLocked, remainingAttempts, lockoutUntil } = adminStore.recordFailedLogin(admin.id, clientIp);
     adminStore.writeAuditLog({
       action: 'admin_login_failed',
       adminId: admin.id,
       adminEmail: admin.email,
       targetType: 'auth',
-      afterValue: { reason: 'invalid_password', remainingAttempts },
+      afterValue: { reason: 'invalid_password', remainingAttempts, isLocked },
       ip: clientIp,
     });
 
     if (isLocked) {
       res.status(429).json({
-        error: `Account locked due to 5 consecutive failed attempts. Please wait 15 minutes.`,
+        error: `Account locked due to 5 consecutive failed attempts. All Super Admins have been alerted. Please wait 15 minutes.`,
         code: 'ACCOUNT_LOCKED',
         lockoutUntil,
       });
@@ -141,7 +286,7 @@ adminRouter.post('/auth/login', rateLimit(10, 60 * 1000), (req: Request, res: Re
     }
 
     res.status(401).json({
-      error: `Invalid admin credentials. ${remainingAttempts} attempt(s) remaining before temporary lockout.`,
+      error: `Invalid admin credentials. ${remainingAttempts} attempt(s) remaining before 15-minute account lockout.`,
       remainingAttempts,
     });
     return;
@@ -176,12 +321,12 @@ adminRouter.post('/auth/login', rateLimit(10, 60 * 1000), (req: Request, res: Re
       name: admin.name,
       role: admin.role,
     },
-    message: 'Please enter the 6-digit TOTP code from your authenticator app.',
+    message: 'Please enter the 6-digit TOTP code from your authenticator app or emergency recovery code.',
   });
 });
 
 // -----------------------------------------------------------------------------
-// 2. Admin Login (Step 2: TOTP Verification)
+// 2. Admin Login (Step 2: TOTP Verification or Emergency Recovery Code)
 // -----------------------------------------------------------------------------
 adminRouter.post('/auth/verify-2fa', rateLimit(10, 60 * 1000), (req: Request, res: Response) => {
   const { tempToken, code } = req.body;
@@ -203,23 +348,36 @@ adminRouter.post('/auth/verify-2fa', rateLimit(10, 60 * 1000), (req: Request, re
     return;
   }
 
-  if (!code || !/^\d{6}$/.test(String(code).trim())) {
-    res.status(400).json({ error: 'Please enter a valid 6-digit TOTP code.' });
+  const cleanCode = String(code || '').trim().toUpperCase();
+  if (!cleanCode) {
+    res.status(400).json({ error: 'Please enter your 6-digit TOTP code or emergency recovery code.' });
     return;
   }
 
-  const isValidCode = verifyTotpToken(admin.totpSecret, String(code).trim());
+  let isRecovery = false;
+  let isValidCode = false;
+
+  // Check if format is emergency recovery code (e.g. ABCD-EFGH)
+  if (/^[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(cleanCode)) {
+    isRecovery = true;
+    isValidCode = adminStore.consumeRecoveryCode(admin.id, cleanCode);
+  } else if (/^\d{6}$/.test(cleanCode)) {
+    isValidCode = verifyTotpToken(admin.totpSecret, cleanCode);
+  }
+
   if (!isValidCode) {
     adminStore.writeAuditLog({
-      action: 'admin_2fa_failed',
+      action: isRecovery ? 'admin_recovery_code_failed' : 'admin_2fa_failed',
       adminId: admin.id,
       adminEmail: admin.email,
       targetType: 'auth',
-      afterValue: { reason: 'invalid_totp_code' },
+      afterValue: { reason: isRecovery ? 'invalid_or_used_recovery_code' : 'invalid_totp_code' },
       ip: clientIp,
     });
     res.status(401).json({
-      error: 'Invalid 2FA code. Please check your authenticator app and try again.',
+      error: isRecovery
+        ? 'Invalid or already-used emergency recovery code.'
+        : 'Invalid 2FA code. Please check your authenticator app and try again.',
       code: 'INVALID_2FA_CODE',
     });
     return;
@@ -231,20 +389,20 @@ adminRouter.post('/auth/verify-2fa', rateLimit(10, 60 * 1000), (req: Request, re
   const session = adminStore.createSession(admin.id, clientIp, userAgent);
 
   adminStore.writeAuditLog({
-    action: 'admin_login_success',
+    action: isRecovery ? 'admin_recovery_code_used' : 'admin_login_success',
     adminId: admin.id,
     adminEmail: admin.email,
     targetType: 'session',
     targetId: session.sessionId,
     ip: clientIp,
     userAgent,
-    metadata: { role: admin.role },
+    metadata: { role: admin.role, authMethod: isRecovery ? 'recovery_code' : 'totp' },
   });
 
-  // Set HTTP-only cookie if needed, and return token for client header storage
+  const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
   res.setHeader(
     'Set-Cookie',
-    `yaad_admin_session=${encodeURIComponent(session.token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${12 * 3600}`
+    `yaad_admin_session=${encodeURIComponent(session.token)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${12 * 3600}; ${isSecure ? 'Secure;' : ''}`
   );
 
   res.status(200).json({
@@ -327,6 +485,10 @@ adminRouter.post('/auth/confirm-2fa', (req: Request, res: Response) => {
   adminStore.enableTotp(admin.id, secret);
   if (tempToken) tempLogins.delete(tempToken);
 
+  // Generate 10 single-use emergency recovery codes
+  const recoveryCodes = generateRecoveryCodes(10);
+  adminStore.setRecoveryCodes(admin.id, recoveryCodes);
+
   adminStore.writeAuditLog({
     action: 'admin_2fa_enabled',
     adminId: admin.id,
@@ -334,19 +496,22 @@ adminRouter.post('/auth/confirm-2fa', (req: Request, res: Response) => {
     targetType: 'admin_user',
     targetId: admin.id,
     ip: clientIp,
+    metadata: { note: 'Mandatory TOTP 2FA enabled, 10 emergency recovery codes generated' },
   });
 
   // Issue active session
   const session = adminStore.createSession(admin.id, clientIp, userAgent);
+  const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
   res.setHeader(
     'Set-Cookie',
-    `yaad_admin_session=${encodeURIComponent(session.token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${12 * 3600}`
+    `yaad_admin_session=${encodeURIComponent(session.token)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${12 * 3600}; ${isSecure ? 'Secure;' : ''}`
   );
 
   res.status(200).json({
     message: '2FA has been successfully configured and activated.',
     token: session.token,
     admin: sanitizeAdmin(admin),
+    recoveryCodes, // Exactly 10 codes shown once
   });
 });
 
@@ -667,8 +832,9 @@ adminRouter.post('/invites/accept', (req: Request, res: Response) => {
     return;
   }
 
-  if (String(password).length < 8) {
-    res.status(400).json({ error: 'Password must be at least 8 characters.' });
+  const { isValid: isStrong, reason: pwdReason } = isStrongPassword(String(password));
+  if (!isStrong) {
+    res.status(400).json({ error: pwdReason || 'Password must meet complexity requirements (min 12 chars, upper/lower/number/symbol).' });
     return;
   }
 
@@ -686,6 +852,10 @@ adminRouter.post('/invites/accept', (req: Request, res: Response) => {
     return;
   }
 
+  // Generate 10 single-use emergency recovery codes for invitee
+  const recoveryCodes = generateRecoveryCodes(10);
+  adminStore.setRecoveryCodes(newAdmin.id, recoveryCodes);
+
   const session = adminStore.createSession(newAdmin.id, clientIp, userAgent);
 
   adminStore.writeAuditLog({
@@ -696,22 +866,113 @@ adminRouter.post('/invites/accept', (req: Request, res: Response) => {
     targetId: newAdmin.id,
     afterValue: { role: newAdmin.role },
     ip: clientIp,
+    metadata: { note: 'Staff invitation accepted with mandatory 2FA enrollment' },
   });
 
+  const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
   res.setHeader(
     'Set-Cookie',
-    `yaad_admin_session=${encodeURIComponent(session.token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${12 * 3600}`
+    `yaad_admin_session=${encodeURIComponent(session.token)}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${12 * 3600}; ${isSecure ? 'Secure;' : ''}`
   );
 
   res.status(200).json({
     message: 'Welcome to the YAAD Admin Team! Your account has been activated.',
     token: session.token,
     admin: sanitizeAdmin(newAdmin),
+    recoveryCodes, // Exactly 10 codes shown once
   });
 });
 
 // -----------------------------------------------------------------------------
-// 11. Audit Logs Viewer (Super Admin Only)
+// 11. Security Alerts for Super Admins
+// -----------------------------------------------------------------------------
+adminRouter.get(
+  '/security-alerts',
+  requireAdminAuth,
+  requireRoles('super_admin'),
+  (req: AdminAuthRequest, res: Response) => {
+    res.status(200).json({
+      alerts: adminStore.getSecurityAlerts(),
+    });
+  }
+);
+
+adminRouter.post(
+  '/security-alerts/dismiss',
+  requireAdminAuth,
+  requireRoles('super_admin'),
+  (req: AdminAuthRequest, res: Response) => {
+    const { alertId } = req.body;
+    if (!alertId) {
+      res.status(400).json({ error: 'alertId is required.' });
+      return;
+    }
+    adminStore.dismissSecurityAlert(String(alertId));
+    res.status(200).json({ success: true, message: 'Alert dismissed.' });
+  }
+);
+
+// -----------------------------------------------------------------------------
+// 12. Email Allowlist Settings (Super Admin Only)
+// -----------------------------------------------------------------------------
+adminRouter.get(
+  '/settings/allowlist',
+  requireAdminAuth,
+  requireRoles('super_admin'),
+  (req: AdminAuthRequest, res: Response) => {
+    res.status(200).json({
+      allowlist: adminStore.getEmailAllowlist(),
+    });
+  }
+);
+
+adminRouter.post(
+  '/settings/allowlist',
+  requireAdminAuth,
+  requireRoles('super_admin'),
+  (req: AdminAuthRequest, res: Response) => {
+    const { allowlist } = req.body;
+    const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+
+    if (!Array.isArray(allowlist)) {
+      res.status(400).json({ error: 'Allowlist must be an array of strings (e.g. "@company.com" or "user@domain.com").' });
+      return;
+    }
+
+    const before = adminStore.getEmailAllowlist();
+    adminStore.setEmailAllowlist(allowlist);
+    const after = adminStore.getEmailAllowlist();
+
+    adminStore.writeAuditLog({
+      action: 'email_allowlist_updated',
+      adminId: req.admin!.id,
+      adminEmail: req.admin!.email,
+      targetType: 'system_security',
+      beforeValue: before,
+      afterValue: after,
+      ip: clientIp,
+      metadata: { count: after.length },
+    });
+
+    res.status(200).json({
+      message: 'Email allowlist successfully updated.',
+      allowlist: after,
+    });
+  }
+);
+
+// -----------------------------------------------------------------------------
+// 13. Public Signup Hard-Block (Invite-only enforcement, returns 404)
+// -----------------------------------------------------------------------------
+adminRouter.all(['/signup', '/register', '/auth/signup', '/auth/register'], (req: Request, res: Response) => {
+  res.status(404).json({
+    error: 'Registration is closed. Access to YAAD Admin is strictly by Super Admin invitation only.',
+    code: 'PUBLIC_SIGNUP_FORBIDDEN',
+  });
+});
+
+// -----------------------------------------------------------------------------
+// 14. Audit Logs Viewer (Super Admin Only)
 // -----------------------------------------------------------------------------
 adminRouter.get(
   '/audit-logs',

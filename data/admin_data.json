@@ -1,0 +1,20 @@
+{
+  "admins": [],
+  "invites": [],
+  "resets": [],
+  "sessions": [],
+  "auditLogs": [
+    {
+      "id": "audit_bootstrap_ready",
+      "timestamp": 1791100000000,
+      "action": "system_bootstrap_ready",
+      "targetType": "system_security",
+      "metadata": {
+        "note": "Awaiting initial Super Admin bootstrap via /admin/setup"
+      }
+    }
+  ],
+  "settings": {
+    "emailAllowlist": []
+  }
+}

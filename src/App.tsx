@@ -50,6 +50,7 @@ import { LegalPageType } from './components/legal/legalContent';
 import { RashanListPage } from './components/rashan/RashanListPage';
 import { LandingPageView } from './components/LandingPageView';
 import { HeadManager } from './seo/HeadManager';
+import { AdminApp } from './admin/AdminApp';
 
 const STORAGE_ONBOARDED_KEY = 'yaad_has_onboarded_v2';
 const STORAGE_PROFILE_SETUP_KEY = 'yaad_profile_setup_done';
@@ -1537,6 +1538,26 @@ function AppContent() {
 }
 
 export default function App() {
+  const [isAdminPath, setIsAdminPath] = useState(() => {
+    return typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
+  });
+
+  useEffect(() => {
+    const handlePopState = () => {
+      setIsAdminPath(typeof window !== 'undefined' && window.location.pathname.startsWith('/admin'));
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  if (isAdminPath) {
+    return (
+      <ErrorBoundary>
+        <AdminApp />
+      </ErrorBoundary>
+    );
+  }
+
   return (
     <ErrorBoundary>
       <RouterProvider>

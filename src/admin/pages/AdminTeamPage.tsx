@@ -16,6 +16,9 @@ import {
   Trash2,
   Ban,
   RefreshCw,
+  Globe,
+  Plus,
+  Lock,
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { useAdminToast } from '../components/AdminToasts';
@@ -29,8 +32,8 @@ export const AdminTeamPage: React.FC = () => {
 
   const isSuperAdmin = admin?.role === 'super_admin';
 
-  // Active Tab: 'members' | 'invites'
-  const [activeTab, setActiveTab] = useState<'members' | 'invites'>('members');
+  // Active Tab: 'members' | 'invites' | 'allowlist'
+  const [activeTab, setActiveTab] = useState<'members' | 'invites' | 'allowlist'>('members');
 
   // Staff Members State
   const [staff, setStaff] = useState<AdminUser[]>([]);
@@ -44,6 +47,12 @@ export const AdminTeamPage: React.FC = () => {
   // Invites State
   const [invites, setInvites] = useState<AdminInvite[]>([]);
   const [isLoadingInvites, setIsLoadingInvites] = useState(false);
+
+  // Allowlist State
+  const [allowlist, setAllowlist] = useState<string[]>([]);
+  const [newAllowlistEntry, setNewAllowlistEntry] = useState('');
+  const [isLoadingAllowlist, setIsLoadingAllowlist] = useState(false);
+  const [isSavingAllowlist, setIsSavingAllowlist] = useState(false);
 
   // Invite Modal State
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
@@ -117,6 +126,25 @@ export const AdminTeamPage: React.FC = () => {
     }
   }, [token, isSuperAdmin]);
 
+  // 3. Fetch Allowlist
+  const fetchAllowlist = useCallback(async () => {
+    if (!token || !isSuperAdmin) return;
+    setIsLoadingAllowlist(true);
+    try {
+      const res = await fetch('/api/admin/settings/allowlist', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAllowlist(data.allowlist || []);
+      }
+    } catch (err: any) {
+      console.error('Error fetching allowlist:', err);
+    } finally {
+      setIsLoadingAllowlist(false);
+    }
+  }, [token, isSuperAdmin]);
+
   useEffect(() => {
     fetchStaff();
   }, [fetchStaff]);
@@ -124,8 +152,10 @@ export const AdminTeamPage: React.FC = () => {
   useEffect(() => {
     if (activeTab === 'invites' && isSuperAdmin) {
       fetchInvites();
+    } else if (activeTab === 'allowlist' && isSuperAdmin) {
+      fetchAllowlist();
     }
-  }, [activeTab, isSuperAdmin, fetchInvites]);
+  }, [activeTab, isSuperAdmin, fetchInvites, fetchAllowlist]);
 
   // Handle Invite Creation
   const handleCreateInvite = async (e: React.FormEvent) => {
@@ -153,38 +183,43 @@ export const AdminTeamPage: React.FC = () => {
         return;
       }
 
-      toast.success('Staff Invited', `Expiring invite generated for ${inviteEmail}.`);
+      toast.success('Staff Invited', `Single-use 24-hour invite generated for ${inviteEmail}.`);
       setCreatedInviteResult({
         inviteUrl: data.inviteUrl,
         email: inviteEmail.trim(),
       });
-      setInviteName('');
-      setInviteEmail('');
       fetchInvites();
     } catch (err: any) {
-      toast.error('Error', err.message);
+      toast.error('Network Error', err.message);
     } finally {
       setIsSubmittingInvite(false);
     }
   };
 
-  // Handle Suspend / Reactivate
+  // Copy Invite Link
+  const copyInviteLink = (url: string) => {
+    const fullUrl = `${window.location.origin}${url}`;
+    navigator.clipboard.writeText(fullUrl);
+    setCopiedLink(true);
+    toast.info('Link Copied', 'Invitation onboarding URL copied to clipboard.');
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+
+  // Handle Status Change (Suspend / Reactivate)
   const handleConfirmStatusChange = async () => {
-    const { targetAdmin, action, reason } = actionModal;
-    if (!targetAdmin || isActionLoading) return;
+    if (!actionModal.targetAdmin || !token) return;
 
     setIsActionLoading(true);
     try {
-      const newStatus = action === 'suspend' ? 'suspended' : 'active';
-      const res = await fetch(`/api/admin/team/${targetAdmin.id}/status`, {
+      const res = await fetch(`/api/admin/team/${actionModal.targetAdmin.id}/status`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          status: newStatus,
-          reason: reason.trim() || undefined,
+          status: actionModal.action === 'suspend' ? 'suspended' : 'active',
+          reason: actionModal.reason || undefined,
         }),
       });
 
@@ -195,21 +230,22 @@ export const AdminTeamPage: React.FC = () => {
       }
 
       toast.success(
-        action === 'suspend' ? 'Admin Suspended' : 'Admin Reactivated',
-        `Account for ${targetAdmin.email} updated.`
+        actionModal.action === 'suspend' ? 'Account Suspended' : 'Account Reactivated',
+        data.message
       );
       setActionModal({ targetAdmin: null, action: 'suspend', reason: '' });
       fetchStaff();
     } catch (err: any) {
-      toast.error('Error', err.message);
+      toast.error('Network Error', err.message);
     } finally {
       setIsActionLoading(false);
     }
   };
 
-  // Handle Revoke Invite
+  // Handle Revoking an Invite
   const handleConfirmRevokeInvite = async () => {
-    if (!revokeInviteTarget || isRevoking) return;
+    if (!revokeInviteTarget || !token) return;
+
     setIsRevoking(true);
     try {
       const res = await fetch(`/api/admin/invites/${revokeInviteTarget.id}`, {
@@ -217,39 +253,80 @@ export const AdminTeamPage: React.FC = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
+      const data = await res.json();
       if (!res.ok) {
-        toast.error('Failed to revoke invite');
+        toast.error('Failed to revoke invite', data.error);
         return;
       }
 
-      toast.success('Invite Revoked', `Invitation for ${revokeInviteTarget.email} is no longer valid.`);
+      toast.success('Invite Revoked', `Invitation for ${revokeInviteTarget.email} was invalidated.`);
       setRevokeInviteTarget(null);
       fetchInvites();
     } catch (err: any) {
-      toast.error('Error', err.message);
+      toast.error('Network Error', err.message);
     } finally {
       setIsRevoking(false);
     }
   };
 
-  const copyInviteLink = (url: string) => {
-    const fullUrl = `${window.location.origin}${url}`;
-    navigator.clipboard.writeText(fullUrl);
-    setCopiedLink(true);
-    toast.info('Copied', 'Invite link copied to clipboard.');
-    setTimeout(() => setCopiedLink(false), 2000);
+  // Allowlist Handlers
+  const handleAddAllowlistRule = () => {
+    const clean = newAllowlistEntry.trim().toLowerCase();
+    if (!clean) return;
+    if (!clean.startsWith('@') && !clean.includes('@')) {
+      toast.error('Invalid Format', 'Rule must be a domain (e.g. "@company.com") or specific email.');
+      return;
+    }
+    if (allowlist.includes(clean)) {
+      toast.info('Duplicate Rule', 'This rule is already in the allowlist.');
+      return;
+    }
+    setAllowlist([...allowlist, clean]);
+    setNewAllowlistEntry('');
+  };
+
+  const handleRemoveAllowlistRule = (ruleToRemove: string) => {
+    setAllowlist(allowlist.filter((r) => r !== ruleToRemove));
+  };
+
+  const handleSaveAllowlist = async () => {
+    if (!token) return;
+    setIsSavingAllowlist(true);
+    try {
+      const res = await fetch('/api/admin/settings/allowlist', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ allowlist }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error('Save Failed', data.error);
+        return;
+      }
+
+      toast.success('Allowlist Updated', 'Email domain restrictions successfully saved.');
+      setAllowlist(data.allowlist || []);
+    } catch (err: any) {
+      toast.error('Network Error', err.message);
+    } finally {
+      setIsSavingAllowlist(false);
+    }
   };
 
   return (
     <div className="space-y-6 animate-in fade-in">
-      {/* Header with Title & Action */}
+      {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight font-['Manrope']">
-            Staff &amp; Team Management
+            Staff &amp; Access Governance
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            Manage authorized staff members, role tiers, and secure staff invitations
+            Manage authorized staff members, role tiers, 24-hour expiring invites, and organization allowlists
           </p>
         </div>
 
@@ -297,9 +374,24 @@ export const AdminTeamPage: React.FC = () => {
             )
           </button>
         )}
+
+        {isSuperAdmin && (
+          <button
+            type="button"
+            onClick={() => setActiveTab('allowlist')}
+            className={`pb-3 px-4 text-xs font-bold transition-colors cursor-pointer relative ${
+              activeTab === 'allowlist'
+                ? 'text-emerald-400 border-b-2 border-emerald-400'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            Email Allowlist ({allowlist.length})
+          </button>
+        )}
       </div>
 
-      {activeTab === 'members' ? (
+      {/* TAB 1: MEMBERS DIRECTORY */}
+      {activeTab === 'members' && (
         <div className="space-y-4">
           {/* Search & Filters */}
           <div className="flex flex-col sm:flex-row gap-3">
@@ -341,97 +433,99 @@ export const AdminTeamPage: React.FC = () => {
                 }}
                 className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 outline-none focus:border-emerald-500"
               >
-                <option value="all">All Statuses</option>
+                <option value="all">All Status</option>
                 <option value="active">Active</option>
                 <option value="suspended">Suspended</option>
               </select>
             </div>
           </div>
 
-          {/* Staff Table */}
+          {/* Table */}
           {isLoadingStaff ? (
-            <AdminTableSkeleton rows={5} columns={5} />
+            <AdminTableSkeleton rows={5} cols={5} />
           ) : staff.length === 0 ? (
-            <div className="p-12 text-center bg-slate-900/50 border border-slate-800 rounded-3xl space-y-3">
-              <Users className="w-10 h-10 text-slate-600 mx-auto" />
-              <h4 className="text-sm font-bold text-white">No Staff Members Found</h4>
-              <p className="text-xs text-slate-400">
-                {search || roleFilter !== 'all' || statusFilter !== 'all'
-                  ? 'Try adjusting your search query or filters.'
-                  : 'No admin staff members currently in directory.'}
-              </p>
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center space-y-3">
+              <Users className="w-8 h-8 text-slate-600 mx-auto" />
+              <p className="text-sm font-bold text-white">No staff members found</p>
+              <p className="text-xs text-slate-400">Try adjusting your search query or role filter.</p>
             </div>
           ) : (
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-950/80 border-b border-slate-800 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                <table className="w-full text-left text-xs text-slate-300">
+                  <thead className="bg-slate-950/70 border-b border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                     <tr>
-                      <th className="px-5 py-3.5">Staff Member</th>
-                      <th className="px-5 py-3.5">Role</th>
-                      <th className="px-5 py-3.5">2FA Status</th>
-                      <th className="px-5 py-3.5">Account Status</th>
-                      <th className="px-5 py-3.5">Last Active</th>
-                      {isSuperAdmin && <th className="px-5 py-3.5 text-right">Actions</th>}
+                      <th className="py-3.5 px-4">Staff Member</th>
+                      <th className="py-3.5 px-4">Role Tier</th>
+                      <th className="py-3.5 px-4">2FA Security</th>
+                      <th className="py-3.5 px-4">Status</th>
+                      <th className="py-3.5 px-4">Last Login</th>
+                      {isSuperAdmin && <th className="py-3.5 px-4 text-right">Governance Actions</th>}
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/60">
                     {staff.map((member) => {
-                      const roleMeta = ROLE_LABELS[member.role];
                       const isSelf = member.id === admin?.id;
+                      const roleConfig = ROLE_LABELS[member.role];
                       return (
                         <tr key={member.id} className="hover:bg-slate-800/30 transition-colors">
-                          <td className="px-5 py-3.5">
-                            <div className="font-bold text-white flex items-center gap-1.5">
-                              <span>{member.name}</span>
-                              {isSelf && (
-                                <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-800 text-slate-400 font-normal">
-                                  You
-                                </span>
-                              )}
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-extrabold flex items-center justify-center font-mono text-xs">
+                                {member.name.charAt(0).toUpperCase()}
+                              </div>
+                              <div>
+                                <div className="font-bold text-white flex items-center gap-1.5">
+                                  <span>{member.name}</span>
+                                  {isSelf && (
+                                    <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20">
+                                      YOU
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-[11px] text-slate-400 font-mono">{member.email}</div>
+                              </div>
                             </div>
-                            <div className="text-[11px] text-slate-400 font-mono mt-0.5">{member.email}</div>
                           </td>
 
-                          <td className="px-5 py-3.5">
-                            {roleMeta ? (
-                              <span
-                                className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border ${roleMeta.badgeClass}`}
-                              >
-                                {roleMeta.title}
+                          <td className="py-3.5 px-4">
+                            <span className="font-semibold text-slate-200">{roleConfig?.title || member.role}</span>
+                          </td>
+
+                          <td className="py-3.5 px-4">
+                            {member.isTotpEnabled ? (
+                              <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                                <CheckCircle2 className="w-3 h-3" />
+                                <span>Enforced</span>
                               </span>
                             ) : (
-                              member.role
+                              <span className="inline-flex items-center gap-1 text-[11px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                                <Clock className="w-3 h-3" />
+                                <span>Pending 1st Login</span>
+                              </span>
                             )}
                           </td>
 
-                          <td className="px-5 py-3.5">
-                            <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400 font-medium">
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              <span>Enforced</span>
-                            </span>
-                          </td>
-
-                          <td className="px-5 py-3.5">
+                          <td className="py-3.5 px-4">
                             {member.status === 'active' ? (
-                              <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400">
-                                <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                              <span className="inline-flex items-center gap-1.5 text-emerald-400 text-xs font-semibold">
+                                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                                 <span>Active</span>
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 text-[11px] text-rose-400">
+                              <span className="inline-flex items-center gap-1.5 text-rose-400 text-xs font-semibold">
                                 <span className="w-2 h-2 rounded-full bg-rose-400" />
                                 <span>Suspended</span>
                               </span>
                             )}
                           </td>
 
-                          <td className="px-5 py-3.5 text-slate-400 font-mono text-[11px]">
+                          <td className="py-3.5 px-4 font-mono text-[11px] text-slate-400">
                             {member.lastLoginAt ? new Date(member.lastLoginAt).toLocaleDateString() : 'Never'}
                           </td>
 
                           {isSuperAdmin && (
-                            <td className="px-5 py-3.5 text-right">
+                            <td className="py-3.5 px-4 text-right">
                               {!isSelf && (
                                 <button
                                   type="button"
@@ -442,10 +536,10 @@ export const AdminTeamPage: React.FC = () => {
                                       reason: '',
                                     })
                                   }
-                                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
                                     member.status === 'active'
-                                      ? 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20'
-                                      : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20'
+                                      ? 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                                      : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                                   }`}
                                 >
                                   {member.status === 'active' ? 'Suspend' : 'Reactivate'}
@@ -462,90 +556,80 @@ export const AdminTeamPage: React.FC = () => {
             </div>
           )}
         </div>
-      ) : (
-        /* Pending Invites Tab */
+      )}
+
+      {/* TAB 2: PENDING INVITATIONS */}
+      {activeTab === 'invites' && isSuperAdmin && (
         <div className="space-y-4">
           {isLoadingInvites ? (
-            <AdminTableSkeleton rows={3} columns={4} />
+            <AdminTableSkeleton rows={3} cols={4} />
           ) : invites.length === 0 ? (
-            <div className="p-12 text-center bg-slate-900/50 border border-slate-800 rounded-3xl space-y-3">
-              <Mail className="w-10 h-10 text-slate-600 mx-auto" />
-              <h4 className="text-sm font-bold text-white">No Invitations Sent</h4>
-              <p className="text-xs text-slate-400">
-                You can invite new team members using the "Invite New Admin" button.
-              </p>
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center space-y-3">
+              <Clock className="w-8 h-8 text-slate-600 mx-auto" />
+              <p className="text-sm font-bold text-white">No active invitations</p>
+              <p className="text-xs text-slate-400">Click &quot;Invite New Admin&quot; to issue single-use onboarding tokens.</p>
             </div>
           ) : (
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-950/80 border-b border-slate-800 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                <table className="w-full text-left text-xs text-slate-300">
+                  <thead className="bg-slate-950/70 border-b border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                     <tr>
-                      <th className="px-5 py-3.5">Invitee</th>
-                      <th className="px-5 py-3.5">Assigned Role</th>
-                      <th className="px-5 py-3.5">Invited By</th>
-                      <th className="px-5 py-3.5">Status &amp; Expiry</th>
-                      <th className="px-5 py-3.5 text-right">Actions</th>
+                      <th className="py-3.5 px-4">Invited Recipient</th>
+                      <th className="py-3.5 px-4">Target Role</th>
+                      <th className="py-3.5 px-4">Token Expiration</th>
+                      <th className="py-3.5 px-4">Status</th>
+                      <th className="py-3.5 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/60">
                     {invites.map((inv) => {
                       const isExpired = Date.now() > inv.expiresAt;
-                      const roleMeta = ROLE_LABELS[inv.role];
                       return (
                         <tr key={inv.id} className="hover:bg-slate-800/30 transition-colors">
-                          <td className="px-5 py-3.5">
+                          <td className="py-3.5 px-4">
                             <div className="font-bold text-white">{inv.name}</div>
-                            <div className="text-[11px] text-slate-400 font-mono mt-0.5">{inv.email}</div>
+                            <div className="text-[11px] text-slate-400 font-mono">{inv.email}</div>
                           </td>
 
-                          <td className="px-5 py-3.5">
-                            {roleMeta && (
-                              <span
-                                className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border ${roleMeta.badgeClass}`}
-                              >
-                                {roleMeta.title}
-                              </span>
-                            )}
+                          <td className="py-3.5 px-4">
+                            <span className="font-semibold text-slate-200">
+                              {ROLE_LABELS[inv.role]?.title || inv.role}
+                            </span>
                           </td>
 
-                          <td className="px-5 py-3.5 text-slate-400">
-                            {inv.invitedBy?.name || inv.invitedBy?.email || 'Super Admin'}
+                          <td className="py-3.5 px-4 font-mono text-[11px] text-slate-400">
+                            {new Date(inv.expiresAt).toLocaleString()}
                           </td>
 
-                          <td className="px-5 py-3.5">
+                          <td className="py-3.5 px-4">
                             {inv.status === 'accepted' ? (
                               <span className="text-emerald-400 text-xs font-semibold">Accepted</span>
                             ) : inv.status === 'revoked' ? (
-                              <span className="text-rose-400 text-xs font-semibold">Revoked</span>
+                              <span className="text-slate-500 text-xs">Revoked</span>
                             ) : isExpired ? (
-                              <span className="text-amber-400 text-xs font-semibold">Expired</span>
+                              <span className="text-rose-400 text-xs font-semibold">Expired</span>
                             ) : (
-                              <div className="text-xs">
-                                <span className="text-sky-400 font-semibold">Pending</span>
-                                <div className="text-[10px] text-slate-500">
-                                  Expires {new Date(inv.expiresAt).toLocaleDateString()}
-                                </div>
-                              </div>
+                              <span className="text-amber-400 text-xs font-semibold">Pending (24h)</span>
                             )}
                           </td>
 
-                          <td className="px-5 py-3.5 text-right">
+                          <td className="py-3.5 px-4 text-right">
                             {inv.status === 'pending' && !isExpired && (
                               <div className="flex items-center justify-end gap-2">
                                 <button
                                   type="button"
                                   onClick={() => copyInviteLink(`/admin/accept-invite?token=${inv.token}`)}
-                                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                                  className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium cursor-pointer"
                                   title="Copy invite link"
                                 >
-                                  <Copy className="w-3.5 h-3.5" />
+                                  Copy Link
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => setRevokeInviteTarget(inv)}
-                                  className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 transition-colors cursor-pointer"
-                                  title="Revoke invitation"
+                                  className="p-1 rounded-lg hover:bg-rose-500/20 text-rose-400 cursor-pointer"
+                                  title="Revoke invite"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>
@@ -563,6 +647,99 @@ export const AdminTeamPage: React.FC = () => {
         </div>
       )}
 
+      {/* TAB 3: EMAIL ALLOWLIST & DOMAIN RESTRICTION */}
+      {activeTab === 'allowlist' && isSuperAdmin && (
+        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
+          <div>
+            <h3 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
+              <Globe className="w-5 h-5 text-emerald-400" />
+              <span>Email Allowlist &amp; Domain Restrictions</span>
+            </h3>
+            <p className="text-xs text-slate-400 mt-1">
+              Restrict staff invitations and Super Admin logins to specific email domains (e.g.{' '}
+              <code className="text-emerald-400 font-mono">@yaad.app</code>) or individual email addresses.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+            <label className="text-xs font-bold text-slate-300 block">Add Allowed Domain or Email</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newAllowlistEntry}
+                onChange={(e) => setNewAllowlistEntry(e.target.value)}
+                placeholder="e.g. @yaad.app or security-lead@yaad.app"
+                className="flex-1 bg-slate-900 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-2.5 text-xs text-white placeholder:text-slate-500 outline-none"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddAllowlistRule();
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={handleAddAllowlistRule}
+                className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Rule</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Current Rules List */}
+          <div className="space-y-3">
+            <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Configured Allowlist Rules ({allowlist.length})
+            </div>
+
+            {allowlist.length === 0 ? (
+              <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 text-xs text-slate-400 text-center">
+                Allowlist is currently open (unrestricted). Any email address can be invited by a Super Admin.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {allowlist.map((rule) => (
+                  <div
+                    key={rule}
+                    className="flex items-center justify-between p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs"
+                  >
+                    <div className="flex items-center gap-2 font-mono text-emerald-400">
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>{rule}</span>
+                      <span className="text-[10px] text-slate-500 font-sans">
+                        {rule.startsWith('@') ? '(Domain Rule)' : '(Exact Email Rule)'}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveAllowlistRule(rule)}
+                      className="text-slate-500 hover:text-rose-400 p-1 rounded-lg"
+                      title="Remove rule"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="pt-3 border-t border-slate-800 flex justify-end">
+            <button
+              type="button"
+              onClick={handleSaveAllowlist}
+              disabled={isSavingAllowlist}
+              className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-xs shadow-lg shadow-emerald-950/40 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+            >
+              {isSavingAllowlist ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+              <span>Save Allowlist Configuration</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Invite Admin Modal */}
       {inviteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
@@ -570,7 +747,7 @@ export const AdminTeamPage: React.FC = () => {
             <button
               type="button"
               onClick={() => setInviteModalOpen(false)}
-              className="absolute top-5 right-5 text-slate-400 hover:text-white p-1 rounded-lg"
+              className="absolute top-5 right-5 text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -581,7 +758,7 @@ export const AdminTeamPage: React.FC = () => {
                 <span>Invite New Staff Member</span>
               </h3>
               <p className="text-xs text-slate-400 mt-1">
-                Generates a secure 7-day single-use token requiring mandatory TOTP 2FA setup.
+                Generates a single-use 24-hour token requiring mandatory TOTP 2FA enrollment and recovery codes.
               </p>
             </div>
 
@@ -594,7 +771,7 @@ export const AdminTeamPage: React.FC = () => {
                   </div>
                   <p className="text-xs text-slate-300">
                     Share this onboarding link with{' '}
-                    <strong className="text-white">{createdInviteResult.email}</strong>:
+                    <strong className="text-white">{createdInviteResult.email}</strong> (valid for 24 hours):
                   </p>
                   <div className="flex items-center gap-2 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
                     <input
@@ -617,7 +794,7 @@ export const AdminTeamPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setInviteModalOpen(false)}
-                  className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold"
+                  className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold cursor-pointer"
                 >
                   Close
                 </button>
@@ -642,7 +819,7 @@ export const AdminTeamPage: React.FC = () => {
                     type="email"
                     value={inviteEmail}
                     onChange={(e) => setInviteEmail(e.target.value)}
-                    placeholder="colleague@yaad.app"
+                    placeholder="colleague@domain.com"
                     required
                     className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none"
                   />
@@ -669,7 +846,7 @@ export const AdminTeamPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setInviteModalOpen(false)}
-                    className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold"
+                    className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -679,7 +856,7 @@ export const AdminTeamPage: React.FC = () => {
                     className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-950/40 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                   >
                     {isSubmittingInvite ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                    <span>Generate Invitation</span>
+                    <span>Generate 24h Invitation</span>
                   </button>
                 </div>
               </form>

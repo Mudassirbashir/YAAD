@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Type } from '@google/genai';
 import { adminRouter } from './server/admin/routes';
+import { adminStore } from './server/admin/store';
 import {
   generateRegistrationOptions,
   verifyRegistrationResponse,
@@ -19,6 +20,33 @@ const app = express();
 const PORT = 3000;
 
 app.use(express.json());
+
+// Standard security headers and strict noindex for all Staff Admin endpoints
+app.use((req, res, next) => {
+  if (req.path.startsWith('/admin') || req.path.startsWith('/api/admin')) {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Content-Security-Policy', "frame-ancestors 'none';");
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet');
+  }
+  next();
+});
+
+// Guard: /admin/setup permanently returns 404 once initial admin is created or if disabled
+app.get('/admin/setup', (req, res, next) => {
+  if (!adminStore.isSetupAllowed()) {
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet');
+    return res.status(404).type('text/plain').send('404 Not Found');
+  }
+  next();
+});
+
+// Guard: Hard block public admin registration URLs
+app.all(['/admin/signup', '/admin/register', '/admin/join'], (req, res) => {
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet');
+  return res.status(404).type('text/plain').send('404 Not Found - Admin access is invite-only');
+});
 
 // Dedicated Staff Admin API routes (Module 1-12)
 app.use('/api/admin', adminRouter);
@@ -1791,6 +1819,14 @@ function getInjectedHtml(originalHtml: string, reqPath: string, reqLang?: string
   modified = modified.replace(/<meta property="og:url" content=".*?"\s*\/?>/i, `<meta property="og:url" content="${canonical}" />`);
   modified = modified.replace(/<meta name="twitter:title" content=".*?"\s*\/?>/i, `<meta name="twitter:title" content="${title}" />`);
   modified = modified.replace(/<meta name="twitter:description" content=".*?"\s*\/?>/i, `<meta name="twitter:description" content="${description}" />`);
+
+  if (cleanPath.startsWith('/admin')) {
+    modified = modified.replace(/<title>.*?<\/title>/i, '<title>YAAD Admin Portal</title>');
+    modified = modified.replace(/<meta name="robots" content=".*?"\s*\/?>/i, '<meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />');
+    if (!modified.includes('noindex, nofollow')) {
+      modified = modified.replace('</head>', '  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />\n</head>');
+    }
+  }
 
   return modified;
 }

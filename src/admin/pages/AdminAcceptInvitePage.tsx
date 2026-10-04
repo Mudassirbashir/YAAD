@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserCheck, Shield, Lock, AlertCircle, CheckCircle2, Loader2, ArrowRight, Copy, Check } from 'lucide-react';
+import { UserCheck, Shield, Lock, AlertCircle, CheckCircle2, Loader2, ArrowRight, Copy, Check, Download, ShieldAlert, X } from 'lucide-react';
 import { useAdminToast } from '../components/AdminToasts';
 import { ROLE_LABELS, AdminRole } from '../types';
 
@@ -35,6 +35,11 @@ export const AdminAcceptInvitePage: React.FC<AdminAcceptInvitePageProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Recovery codes stage
+  const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null);
+  const [copiedAllCodes, setCopiedAllCodes] = useState(false);
+  const [hasSavedCodes, setHasSavedCodes] = useState(false);
+
   // 1. Verify invite token on load
   useEffect(() => {
     const verifyToken = async () => {
@@ -54,7 +59,7 @@ export const AdminAcceptInvitePage: React.FC<AdminAcceptInvitePageProps> = ({
         const qrRes = await fetch('/api/admin/auth/setup-2fa', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tempToken: token }), // token acts as seed
+          body: JSON.stringify({ tempToken: token }),
         });
         if (qrRes.ok) {
           const qrData = await qrRes.json();
@@ -75,6 +80,21 @@ export const AdminAcceptInvitePage: React.FC<AdminAcceptInvitePageProps> = ({
     }
   }, [token]);
 
+  const passwordChecks = {
+    length: password.length >= 12,
+    hasUpper: /[A-Z]/.test(password),
+    hasLower: /[a-z]/.test(password),
+    hasNumber: /[0-9]/.test(password),
+    hasSymbol: /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]/.test(password),
+    matchesConfirm: Boolean(password && confirmPassword && password === confirmPassword),
+  };
+  const isPasswordValid =
+    passwordChecks.length &&
+    passwordChecks.hasUpper &&
+    passwordChecks.hasLower &&
+    passwordChecks.hasNumber &&
+    passwordChecks.hasSymbol;
+
   const handleCopySecret = () => {
     if (!setupData?.secret) return;
     navigator.clipboard.writeText(setupData.secret);
@@ -83,12 +103,40 @@ export const AdminAcceptInvitePage: React.FC<AdminAcceptInvitePageProps> = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleCopyAllCodes = () => {
+    if (!recoveryCodes || recoveryCodes.length === 0) return;
+    const text = `YAAD ADMIN EMERGENCY RECOVERY CODES\nGenerated: ${new Date().toISOString()}\nAccount: ${inviteData?.email}\n\n` +
+      recoveryCodes.map((c, i) => `${i + 1}. ${c}`).join('\n') +
+      '\n\nNote: Each code can only be used once if you lose access to your 2FA authenticator app.';
+    navigator.clipboard.writeText(text);
+    setCopiedAllCodes(true);
+    toast.info('Codes Copied', 'All 10 recovery codes copied to clipboard.');
+    setTimeout(() => setCopiedAllCodes(false), 2500);
+  };
+
+  const handleDownloadCodes = () => {
+    if (!recoveryCodes || recoveryCodes.length === 0) return;
+    const text = `YAAD ADMIN EMERGENCY RECOVERY CODES\nGenerated: ${new Date().toISOString()}\nAccount: ${inviteData?.email}\n\n` +
+      recoveryCodes.map((c, i) => `${i + 1}. ${c}`).join('\n') +
+      '\n\nNote: Each code can only be used once if you lose access to your 2FA authenticator app.';
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `yaad-admin-recovery-codes-${Date.now()}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success('Downloaded', 'Recovery codes text file saved.');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (!password || password.length < 8) {
-      setError('Password must be at least 8 characters in length.');
+    if (!isPasswordValid) {
+      setError('Password must meet all complexity requirements (min 12 chars, upper/lower/number/symbol).');
       return;
     }
 
@@ -131,8 +179,13 @@ export const AdminAcceptInvitePage: React.FC<AdminAcceptInvitePageProps> = ({
         localStorage.setItem('yaad_admin_bearer_token', data.token);
       }
 
-      toast.success('Account Activated', 'Welcome to the YAAD Admin Portal!');
-      onNavigate('/admin');
+      toast.success('Account Activated', 'Welcome to the YAAD Admin Team!');
+
+      if (data.recoveryCodes && data.recoveryCodes.length > 0) {
+        setRecoveryCodes(data.recoveryCodes);
+      } else {
+        onNavigate('/admin');
+      }
     } catch (err: any) {
       setError(err.message || 'Error accepting invitation.');
     } finally {
@@ -149,10 +202,12 @@ export const AdminAcceptInvitePage: React.FC<AdminAcceptInvitePageProps> = ({
           <UserCheck className="w-6 h-6" />
         </div>
         <h1 className="text-2xl font-black text-white tracking-tight font-['Manrope']">
-          Accept Staff Invitation
+          {recoveryCodes ? 'Save Emergency Recovery Codes' : 'Accept Staff Invitation'}
         </h1>
         <p className="text-xs text-slate-400">
-          Configure your staff credentials and enforce mandatory 2FA
+          {recoveryCodes
+            ? 'Store these 10 single-use codes safely. They will only be shown ONCE.'
+            : 'Configure your staff credentials and enforce mandatory 2FA'}
         </p>
       </div>
 
@@ -164,7 +219,79 @@ export const AdminAcceptInvitePage: React.FC<AdminAcceptInvitePageProps> = ({
           </div>
         )}
 
-        {isVerifying ? (
+        {/* RECOVERY CODES STAGE */}
+        {recoveryCodes ? (
+          <div className="space-y-5 animate-in fade-in">
+            <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs space-y-1">
+              <div className="flex items-center gap-1.5 font-bold text-amber-400">
+                <ShieldAlert className="w-4 h-4 shrink-0" />
+                <span>Critical Security Notice</span>
+              </div>
+              <p className="leading-relaxed text-[11px] text-slate-300">
+                These 10 emergency recovery codes allow you to regain access if you lose your phone or authenticator app. Each code can only be used once.
+              </p>
+            </div>
+
+            <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
+              <div className="flex items-center justify-between text-[11px] text-slate-400 font-bold uppercase tracking-wider">
+                <span>10 Emergency Recovery Codes</span>
+                <span className="text-emerald-400 font-mono">10 / 10 Remaining</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 font-mono text-xs">
+                {recoveryCodes.map((code, idx) => (
+                  <div
+                    key={idx}
+                    className="p-2 rounded-xl bg-slate-900 border border-slate-800/80 text-emerald-300 flex items-center justify-between"
+                  >
+                    <span className="text-slate-500 text-[10px] w-4">{idx + 1}.</span>
+                    <span className="font-bold tracking-wider">{code}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleCopyAllCodes}
+                className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
+              >
+                {copiedAllCodes ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                <span>{copiedAllCodes ? 'Copied All' : 'Copy All Codes'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadCodes}
+                className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
+              >
+                <Download className="w-4 h-4" />
+                <span>Download (.txt)</span>
+              </button>
+            </div>
+
+            <label className="flex items-start gap-3 p-3 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={hasSavedCodes}
+                onChange={(e) => setHasSavedCodes(e.target.checked)}
+                className="mt-0.5 accent-emerald-500 w-4 h-4 rounded cursor-pointer"
+              />
+              <span className="text-xs text-slate-300 leading-snug">
+                I have securely saved these 10 recovery codes in my password manager or offline storage.
+              </span>
+            </label>
+
+            <button
+              type="button"
+              disabled={!hasSavedCodes}
+              onClick={() => onNavigate('/admin')}
+              className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-xs shadow-lg shadow-emerald-950/40 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <span>Enter YAAD Admin Panel</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        ) : isVerifying ? (
           <div className="py-12 flex flex-col items-center justify-center gap-3">
             <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
             <span className="text-xs text-slate-400">Verifying staff invite authorization...</span>
@@ -192,14 +319,14 @@ export const AdminAcceptInvitePage: React.FC<AdminAcceptInvitePageProps> = ({
             {/* Set Password */}
             <div className="space-y-3">
               <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                1. Create Password
+                1. Create Strong Password (min 12 chars)
               </div>
               <div className="space-y-2">
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Create password (min 8 chars)"
+                  placeholder="Create strong password (min 12 chars)"
                   disabled={isSubmitting}
                   className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none"
                 />
@@ -211,6 +338,36 @@ export const AdminAcceptInvitePage: React.FC<AdminAcceptInvitePageProps> = ({
                   disabled={isSubmitting}
                   className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none"
                 />
+              </div>
+
+              {/* Password complexity checklist */}
+              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs space-y-1.5">
+                <div className="grid grid-cols-2 gap-1.5 text-[11px]">
+                  <div className={`flex items-center gap-1.5 ${passwordChecks.length ? 'text-emerald-400 font-semibold' : 'text-slate-500'}`}>
+                    {passwordChecks.length ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                    <span>Min 12 characters</span>
+                  </div>
+                  <div className={`flex items-center gap-1.5 ${passwordChecks.hasUpper ? 'text-emerald-400 font-semibold' : 'text-slate-500'}`}>
+                    {passwordChecks.hasUpper ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                    <span>Uppercase (A-Z)</span>
+                  </div>
+                  <div className={`flex items-center gap-1.5 ${passwordChecks.hasLower ? 'text-emerald-400 font-semibold' : 'text-slate-500'}`}>
+                    {passwordChecks.hasLower ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                    <span>Lowercase (a-z)</span>
+                  </div>
+                  <div className={`flex items-center gap-1.5 ${passwordChecks.hasNumber ? 'text-emerald-400 font-semibold' : 'text-slate-500'}`}>
+                    {passwordChecks.hasNumber ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                    <span>Number (0-9)</span>
+                  </div>
+                  <div className={`flex items-center gap-1.5 ${passwordChecks.hasSymbol ? 'text-emerald-400 font-semibold' : 'text-slate-500'}`}>
+                    {passwordChecks.hasSymbol ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                    <span>Symbol (!@#$...)</span>
+                  </div>
+                  <div className={`flex items-center gap-1.5 ${passwordChecks.matchesConfirm ? 'text-emerald-400 font-semibold' : 'text-slate-500'}`}>
+                    {passwordChecks.matchesConfirm ? <Check className="w-3.5 h-3.5" /> : <X className="w-3.5 h-3.5" />}
+                    <span>Passwords match</span>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -266,7 +423,7 @@ export const AdminAcceptInvitePage: React.FC<AdminAcceptInvitePageProps> = ({
 
             <button
               type="submit"
-              disabled={isSubmitting || !password || !confirmPassword || totpCode.length !== 6}
+              disabled={isSubmitting || !isPasswordValid || password !== confirmPassword || totpCode.length !== 6}
               className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-sm shadow-lg shadow-emerald-950/40 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
@@ -277,12 +434,12 @@ export const AdminAcceptInvitePage: React.FC<AdminAcceptInvitePageProps> = ({
         ) : (
           <div className="text-center py-6 space-y-4">
             <p className="text-xs text-slate-400">
-              The invitation token is invalid or has expired. Please contact a Super Admin to re-issue your invite.
+              The invitation token is invalid or has expired (invitations expire after 24 hours). Please contact a Super Admin to re-issue your invite.
             </p>
             <button
               type="button"
               onClick={() => onNavigate('/admin/login')}
-              className="py-2.5 px-5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold"
+              className="py-2.5 px-5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold cursor-pointer"
             >
               Back to Admin Login
             </button>

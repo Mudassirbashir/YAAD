@@ -26,7 +26,7 @@ interface AdminAuthContextType {
   loginStep1: (email: string, password: string) => Promise<LoginStep1Result>;
   verify2fa: (tempToken: string, code: string) => Promise<{ success: boolean; error?: string }>;
   get2faSetupData: (tempToken?: string) => Promise<{ secret: string; otpAuthUri: string; qrCodeDataUrl: string; email: string } | null>;
-  confirm2faSetup: (secret: string, code: string, tempToken?: string) => Promise<{ success: boolean; error?: string }>;
+  confirm2faSetup: (secret: string, code: string, tempToken?: string) => Promise<{ success: boolean; error?: string; recoveryCodes?: string[] }>;
   logout: () => Promise<void>;
   requestPasswordReset: (email: string) => Promise<{ message: string; devResetLink?: string; error?: string }>;
   completePasswordReset: (token: string, newPassword: string) => Promise<{ success: boolean; message?: string; error?: string }>;
@@ -203,7 +203,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  const confirm2faSetup = async (secret: string, code: string, tempToken?: string): Promise<{ success: boolean; error?: string }> => {
+  const confirm2faSetup = async (secret: string, code: string, tempToken?: string): Promise<{ success: boolean; error?: string; recoveryCodes?: string[] }> => {
     try {
       const res = await fetch('/api/admin/auth/confirm-2fa', {
         method: 'POST',
@@ -224,7 +224,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         setAdmin(data.admin);
         localStorage.setItem(TOKEN_STORAGE_KEY, data.token);
       }
-      return { success: true };
+      return { success: true, recoveryCodes: data.recoveryCodes };
     } catch (err: any) {
       return { success: false, error: err.message || 'Error confirming 2FA.' };
     }
