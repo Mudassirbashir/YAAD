@@ -5,6 +5,61 @@
   "sessions": [],
   "auditLogs": [
     {
+      "id": "audit_5b0cb4e4-e86a-4afc-b8d9-7f3d6dfdb574",
+      "timestamp": 1791105640136,
+      "action": "setup_visited",
+      "targetType": "system_security",
+      "ip": "127.0.0.1",
+      "userAgent": "curl/7.88.1",
+      "metadata": {
+        "note": "Initial setup route accessed while 0 admins exist in database"
+      }
+    },
+    {
+      "id": "audit_da923b22-a369-42f2-b6e1-97afd4271668",
+      "timestamp": 1791105607873,
+      "action": "setup_key_verified",
+      "targetType": "system_security",
+      "ip": "127.0.0.1",
+      "userAgent": "curl/7.88.1",
+      "metadata": {
+        "note": "Valid setup key provided, temporary bootstrap session granted"
+      }
+    },
+    {
+      "id": "audit_03512afe-8e9d-435d-875d-13ac69dc856e",
+      "timestamp": 1791105597880,
+      "action": "setup_key_failed",
+      "targetType": "system_security",
+      "ip": "127.0.0.1",
+      "userAgent": "curl/7.88.1",
+      "metadata": {
+        "reason": "Incorrect setup key submitted"
+      }
+    },
+    {
+      "id": "audit_6974e05b-9f57-4ede-825e-61c2b54df7de",
+      "timestamp": 1791105592389,
+      "action": "setup_key_failed",
+      "targetType": "system_security",
+      "ip": "127.0.0.1",
+      "userAgent": "curl/7.88.1",
+      "metadata": {
+        "reason": "Incorrect setup key submitted"
+      }
+    },
+    {
+      "id": "audit_b7d05129-4811-48b3-b65a-8778cb9b0732",
+      "timestamp": 1791105586440,
+      "action": "setup_visited",
+      "targetType": "system_security",
+      "ip": "127.0.0.1",
+      "userAgent": "curl/7.88.1",
+      "metadata": {
+        "note": "Initial setup route accessed while 0 admins exist in database"
+      }
+    },
+    {
       "id": "audit_bootstrap_ready",
       "timestamp": 1791100000000,
       "action": "system_bootstrap_ready",
@@ -14,7 +69,5 @@
       }
     }
   ],
-  "settings": {
-    "emailAllowlist": []
-  }
+  "securityAlerts": []
 }

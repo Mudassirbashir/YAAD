@@ -442,7 +442,7 @@ export const AdminTeamPage: React.FC = () => {
 
           {/* Table */}
           {isLoadingStaff ? (
-            <AdminTableSkeleton rows={5} cols={5} />
+            <AdminTableSkeleton rows={5} columns={5} />
           ) : staff.length === 0 ? (
             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center space-y-3">
               <Users className="w-8 h-8 text-slate-600 mx-auto" />
@@ -562,7 +562,7 @@ export const AdminTeamPage: React.FC = () => {
       {activeTab === 'invites' && isSuperAdmin && (
         <div className="space-y-4">
           {isLoadingInvites ? (
-            <AdminTableSkeleton rows={3} cols={4} />
+            <AdminTableSkeleton rows={3} columns={4} />
           ) : invites.length === 0 ? (
             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center space-y-3">
               <Clock className="w-8 h-8 text-slate-600 mx-auto" />

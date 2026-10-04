@@ -398,6 +398,9 @@ const CATEGORY_MAP: Record<
   uncategorized: { icon: ShoppingBag, bgGradient: 'bg-surface-container', borderColor: 'border-surface-dim', iconColor: 'text-on-surface-variant', label: 'General' },
   other: { icon: Tag, bgGradient: 'bg-surface-container', borderColor: 'border-surface-dim', iconColor: 'text-on-surface-variant', label: 'Other' },
   // Backward compatibility keys
+  oil: { icon: Droplets, bgGradient: 'bg-amber-50', borderColor: 'border-amber-200/80', iconColor: 'text-amber-700', label: 'Oils & Ghee' },
+  oils: { icon: Droplets, bgGradient: 'bg-amber-50', borderColor: 'border-amber-200/80', iconColor: 'text-amber-700', label: 'Oils & Ghee' },
+  perishables: { icon: Salad, bgGradient: 'bg-emerald-50', borderColor: 'border-emerald-200/80', iconColor: 'text-emerald-700', label: 'Perishables' },
   eggs: { icon: Egg, bgGradient: 'bg-amber-50', borderColor: 'border-amber-200/80', iconColor: 'text-amber-700', label: 'Eggs' },
   grocery: { icon: Archive, bgGradient: 'bg-orange-50', borderColor: 'border-orange-200/80', iconColor: 'text-orange-700', label: 'Grocery' },
   herbal: { icon: Leaf, bgGradient: 'bg-emerald-50', borderColor: 'border-emerald-200/80', iconColor: 'text-emerald-700', label: 'Herbal' },

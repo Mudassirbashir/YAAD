@@ -62,6 +62,9 @@ const ICON_MAP: Record<CategoryId, LucideIcon> = {
   uncategorized: Tag,
   other: Tag,
   // Backward compatibility
+  oil: Droplets,
+  oils: Droplets,
+  perishables: Salad,
   eggs: Egg,
   grocery: Archive,
   herbal: Leaf,

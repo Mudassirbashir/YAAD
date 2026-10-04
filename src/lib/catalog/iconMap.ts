@@ -43,6 +43,9 @@ const CATEGORY_DEFAULT_EMOJIS: Record<CategoryId, string> = {
   electronics: '📱',
   uncategorized: '📦',
   other: '📦',
+  oil: '🛢️',
+  oils: '🛢️',
+  perishables: '🥗',
   grains_staples: '🌾',
   medicines: '💊',
 };
