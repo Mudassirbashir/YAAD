@@ -446,6 +446,10 @@ export function buildCanonicalPath(
       return '/legal';
     case 'blog':
       return '/blog';
+    case 'features':
+      return '/features';
+    case 'how_it_works':
+      return '/how-it-works';
     case 'rashan_list':
       return '/rashan-list';
     case 'not_found':

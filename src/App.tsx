@@ -24,7 +24,7 @@ import { PhoneNumberReminderModal } from './components/PhoneNumberReminderModal'
 import { usePhoneNumberReminder } from './hooks/usePhoneNumberReminder';
 import { useAuth } from './context/AuthContext';
 import { RouterProvider, useAppRouter } from './router/RouterContext';
-import { AppRouteId, SettingsSubSection } from './router/routes';
+import { AppRouteId, SettingsSubSection, buildCanonicalPath } from './router/routes';
 import { generateUUID } from './lib/uuid';
 import {
   loadUserShoppingLists,
@@ -1164,7 +1164,7 @@ function AppContent() {
 
   // Open Legal page with URL update
   const handleOpenLegalPage = (page: LegalPageType) => {
-    navigate(`/${page}`);
+    navigate(buildCanonicalPath(page as AppRouteId));
   };
 
   const handleBackFromLegal = () => {
