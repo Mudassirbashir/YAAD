@@ -86,7 +86,7 @@ const PUBLIC_CRAWL_ROUTES: SimulatedCrawlRecord[] = [
     hasJsonLd: true,
     isInSitemap: true,
   },
-  // Priority 3: Localized Variations (Urdu Nastaliq & Roman Urdu)
+  // Priority 3: Localized Variations (Discovered via hreflang, NOT in sitemap)
   {
     route: '/?lang=ur',
     expectedStatus: 200,
@@ -95,7 +95,7 @@ const PUBLIC_CRAWL_ROUTES: SimulatedCrawlRecord[] = [
     expectedTitleSnippet: 'یاد',
     expectedLanguage: 'ur-PK',
     hasJsonLd: true,
-    isInSitemap: true,
+    isInSitemap: false,
   },
   {
     route: '/?lang=roman-urdu',
@@ -105,7 +105,7 @@ const PUBLIC_CRAWL_ROUTES: SimulatedCrawlRecord[] = [
     expectedTitleSnippet: 'YAAD',
     expectedLanguage: 'ur-Latn',
     hasJsonLd: true,
-    isInSitemap: true,
+    isInSitemap: false,
   },
   {
     route: '/about?lang=ur',
@@ -115,7 +115,7 @@ const PUBLIC_CRAWL_ROUTES: SimulatedCrawlRecord[] = [
     expectedTitleSnippet: 'یاد',
     expectedLanguage: 'ur-PK',
     hasJsonLd: true,
-    isInSitemap: true,
+    isInSitemap: false,
   },
   {
     route: '/about?lang=roman-urdu',
@@ -125,7 +125,7 @@ const PUBLIC_CRAWL_ROUTES: SimulatedCrawlRecord[] = [
     expectedTitleSnippet: 'About YAAD',
     expectedLanguage: 'ur-Latn',
     hasJsonLd: true,
-    isInSitemap: true,
+    isInSitemap: false,
   },
   {
     route: '/help?lang=ur',
@@ -135,7 +135,7 @@ const PUBLIC_CRAWL_ROUTES: SimulatedCrawlRecord[] = [
     expectedTitleSnippet: 'مدد',
     expectedLanguage: 'ur-PK',
     hasJsonLd: true,
-    isInSitemap: true,
+    isInSitemap: false,
   },
   {
     route: '/help?lang=roman-urdu',
@@ -145,7 +145,7 @@ const PUBLIC_CRAWL_ROUTES: SimulatedCrawlRecord[] = [
     expectedTitleSnippet: 'Madad',
     expectedLanguage: 'ur-Latn',
     hasJsonLd: true,
-    isInSitemap: true,
+    isInSitemap: false,
   },
   // Phase 4: Monthly Rashan List & Pantry Guide
   {
@@ -166,7 +166,7 @@ const PUBLIC_CRAWL_ROUTES: SimulatedCrawlRecord[] = [
     expectedTitleSnippet: 'راشن',
     expectedLanguage: 'ur-PK',
     hasJsonLd: true,
-    isInSitemap: true,
+    isInSitemap: false,
   },
   {
     route: '/rashan-list?lang=roman-urdu',
@@ -176,7 +176,7 @@ const PUBLIC_CRAWL_ROUTES: SimulatedCrawlRecord[] = [
     expectedTitleSnippet: 'Rashan',
     expectedLanguage: 'ur-Latn',
     hasJsonLd: true,
-    isInSitemap: true,
+    isInSitemap: false,
   },
 ];
 

@@ -69,19 +69,19 @@ export const SITE_CONFIG = {
   // Public SEO Pages Metadata
   pages: {
     home: {
-      canonicalPath: '/home',
+      canonicalPath: '/',
       isIndexable: true,
       priority: 1.0,
       changeFreq: 'daily',
       title: {
-        en: 'YAAD | Smart Shopping List & Reminder App',
-        romanUrdu: 'YAAD | Sauda Salaf Yaad Rakhne Ki Aasan Grocery App',
-        ur: 'YAAD | Smart Shopping List & Reminder App',
+        en: 'YAAD (yaadapppk) | Smart Shopping List & Reminder App',
+        romanUrdu: 'YAAD (yaadapppk) | Sauda Salaf Yaad Rakhne Ki Aasan Grocery App',
+        ur: 'YAAD (yaadapppk) | Smart Shopping List & Reminder App',
       },
       description: {
-        en: 'Never forget what you need to buy. YAAD is a shopping list and reminder app that helps people remember the things they need to buy before and during shopping. Works offline.',
-        romanUrdu: 'Shopping k waqt koi cheez na bhoolein. YAAD sauda salaf aur grocery yaad rakhne ki tez aur aasan app hai jo offline bhi kaam karti hai.',
-        ur: 'Never forget what you need to buy. YAAD is a shopping list and reminder app that helps people remember the things they need to buy before and during shopping. Works offline.',
+        en: 'YAAD (yaadapppk) is a simple shopping memory assistant — never forget what you came to buy. Made for everyday shopping in Pakistan. Works offline.',
+        romanUrdu: 'YAAD (yaadapppk) grocery aur sauda salaf yaad rakhne ki tez aur aasan app hai jo offline bhi kaam karti hai. Kabhi koi cheez na bhoolein.',
+        ur: 'YAAD (yaadapppk) خریداری کی یاد دہانی اور سودا سلف کی ایپ ہے — تاکہ آپ خریداری کے وقت کوئی چیز نہ بھولیں۔ پاکستان کے روزمرہ سودا سلف کے لیے تیار کردہ۔',
       },
     },
     about: {

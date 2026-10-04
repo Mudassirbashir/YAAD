@@ -447,7 +447,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 text-xs text-[#556960]">
               <div className="bg-[#faf8f5] p-3.5 rounded-xl border border-[#e5e1d8]/70">
                 <strong className="text-[#1c2826] block mb-1">What we use:</strong>
-                Name &amp; email strictly for authentication and list sync. Read our <button type="button" onClick={() => onOpenLegalPage('privacy')} className="underline font-semibold text-[#005039]">Privacy Policy</button> and <button type="button" onClick={() => onOpenLegalPage('terms')} className="underline font-semibold text-[#005039]">Terms of Service</button>.
+                Name &amp; email strictly for authentication and list sync. Read our <a href="/privacy" onClick={(e) => { e.preventDefault(); onOpenLegalPage('privacy'); }} className="underline font-semibold text-[#005039] hover:text-[#003828] cursor-pointer">Privacy Policy</a> and <a href="/terms" onClick={(e) => { e.preventDefault(); onOpenLegalPage('terms'); }} className="underline font-semibold text-[#005039] hover:text-[#003828] cursor-pointer">Terms of Service</a>.
               </div>
               <div className="bg-[#faf8f5] p-3.5 rounded-xl border border-[#e5e1d8]/70">
                 <strong className="text-[#1c2826] block mb-1">Support &amp; Verification:</strong>

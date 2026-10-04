@@ -6,8 +6,6 @@ User-agent: *
 
 # Allow Crawling of Public Marketing, Editorial & Information Pages
 Allow: /$
-Allow: /home$
-Allow: /home
 Allow: /about$
 Allow: /about
 Allow: /features$

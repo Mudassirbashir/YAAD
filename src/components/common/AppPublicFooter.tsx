@@ -127,40 +127,52 @@ export const AppPublicFooter: React.FC<AppPublicFooterProps> = ({
           </div>
           <ul className="space-y-2 text-xs text-[#556960]">
             <li>
-              <button
-                type="button"
-                onClick={() => onOpenLegal?.('blog')}
-                className="text-[#005039] font-bold hover:underline transition-colors cursor-pointer text-left"
+              <a
+                href="/blog"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onOpenLegal?.('blog');
+                }}
+                className="text-[#005039] font-bold hover:underline transition-colors cursor-pointer text-left block"
               >
                 Browse All Articles &rarr;
-              </button>
+              </a>
             </li>
             <li>
-              <button
-                type="button"
-                onClick={() => onOpenLegal?.('blog')}
-                className="hover:text-[#005039] transition-colors cursor-pointer text-left"
+              <a
+                href="/blog"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onOpenLegal?.('blog');
+                }}
+                className="hover:text-[#005039] transition-colors cursor-pointer text-left block"
               >
                 5 Smart Ways to Plan Monthly Rashan
-              </button>
+              </a>
             </li>
             <li>
-              <button
-                type="button"
-                onClick={() => onOpenLegal?.('blog')}
-                className="hover:text-[#005039] transition-colors cursor-pointer text-left"
+              <a
+                href="/blog"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onOpenLegal?.('blog');
+                }}
+                className="hover:text-[#005039] transition-colors cursor-pointer text-left block"
               >
                 Understanding Pakistani Units
-              </button>
+              </a>
             </li>
             <li>
-              <button
-                type="button"
-                onClick={() => onOpenLegal?.('blog')}
-                className="hover:text-[#005039] transition-colors cursor-pointer text-left"
+              <a
+                href="/blog"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onOpenLegal?.('blog');
+                }}
+                className="hover:text-[#005039] transition-colors cursor-pointer text-left block"
               >
                 Offline Shopping in Basement Bazaars
-              </button>
+              </a>
             </li>
           </ul>
         </div>
@@ -172,40 +184,52 @@ export const AppPublicFooter: React.FC<AppPublicFooterProps> = ({
           </h4>
           <ul className="space-y-2 text-xs text-[#556960]">
             <li>
-              <button
-                type="button"
-                onClick={() => onOpenLegal?.('privacy')}
-                className="hover:text-[#005039] transition-colors cursor-pointer text-left"
+              <a
+                href="/privacy"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onOpenLegal?.('privacy');
+                }}
+                className="hover:text-[#005039] transition-colors cursor-pointer text-left block"
               >
                 Privacy Policy
-              </button>
+              </a>
             </li>
             <li>
-              <button
-                type="button"
-                onClick={() => onOpenLegal?.('terms')}
-                className="hover:text-[#005039] transition-colors cursor-pointer text-left"
+              <a
+                href="/terms"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onOpenLegal?.('terms');
+                }}
+                className="hover:text-[#005039] transition-colors cursor-pointer text-left block"
               >
                 Terms of Service
-              </button>
+              </a>
             </li>
             <li>
-              <button
-                type="button"
-                onClick={() => onOpenLegal?.('legal')}
-                className="hover:text-[#005039] transition-colors cursor-pointer text-left"
+              <a
+                href="/legal"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onOpenLegal?.('legal');
+                }}
+                className="hover:text-[#005039] transition-colors cursor-pointer text-left block"
               >
                 Legal Information Hub
-              </button>
+              </a>
             </li>
             <li>
-              <button
-                type="button"
-                onClick={() => onOpenLegal?.('help')}
-                className="hover:text-[#005039] transition-colors cursor-pointer text-left"
+              <a
+                href="/help"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onOpenLegal?.('help');
+                }}
+                className="hover:text-[#005039] transition-colors cursor-pointer text-left block"
               >
-                Customer Support
-              </button>
+                Customer Support &amp; FAQs
+              </a>
             </li>
           </ul>
         </div>
@@ -213,31 +237,40 @@ export const AppPublicFooter: React.FC<AppPublicFooterProps> = ({
 
       {/* Bottom Copyright Strip */}
       <div className="max-w-6xl mx-auto pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#788880]">
-        <p>&copy; {currentYear} YAAD. All rights reserved.</p>
+        <p>&copy; 2026 YAAD (yaadapppk). All rights reserved.</p>
         <div className="flex items-center gap-4">
-          <button
-            type="button"
-            onClick={() => onOpenLegal?.('privacy')}
+          <a
+            href="/privacy"
+            onClick={(e) => {
+              e.preventDefault();
+              onOpenLegal?.('privacy');
+            }}
             className="hover:text-[#1c2826] transition-colors cursor-pointer"
           >
             Privacy
-          </button>
+          </a>
           <span>&bull;</span>
-          <button
-            type="button"
-            onClick={() => onOpenLegal?.('terms')}
+          <a
+            href="/terms"
+            onClick={(e) => {
+              e.preventDefault();
+              onOpenLegal?.('terms');
+            }}
             className="hover:text-[#1c2826] transition-colors cursor-pointer"
           >
             Terms
-          </button>
+          </a>
           <span>&bull;</span>
-          <button
-            type="button"
-            onClick={() => onOpenLegal?.('blog')}
+          <a
+            href="/blog"
+            onClick={(e) => {
+              e.preventDefault();
+              onOpenLegal?.('blog');
+            }}
             className="hover:text-[#1c2826] transition-colors cursor-pointer"
           >
             Blog
-          </button>
+          </a>
         </div>
       </div>
     </footer>

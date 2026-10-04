@@ -1718,16 +1718,16 @@ function getInjectedHtml(originalHtml: string, reqPath: string, reqLang?: string
   const isUrdu = langParam === 'ur';
   const isRomanUrdu = langParam === 'roman-urdu';
 
-  let title = 'YAAD • Smart Shopping Memory & Grocery Reminder';
+  let title = 'YAAD (yaadapppk) | Smart Shopping List & Reminder App';
   let description =
-    'Never forget what you need to buy. YAAD (یاد) is a smart, bilingual shopping reminder that organizes grocery items automatically. Works offline in English, Urdu, and Roman Urdu.';
+    'YAAD (yaadapppk) is a simple shopping memory assistant — never forget what you came to buy. Made for everyday shopping in Pakistan. Works offline.';
   
   if (isUrdu) {
-    title = 'یاد • سودا سلف اور گروسری کی سمارٹ یاد دہانی ایپ';
-    description = 'خریداری کی کوئی چیز نہ بھولیں۔ یاد (YAAD) ایک سمارٹ دو لسانی گروسری ایپ ہے جو سودا سلف اور گھریلو اشیاء کو خودکار طریقے سے منظم کرتی ہے۔';
+    title = 'YAAD (yaadapppk) | Smart Shopping List & Reminder App';
+    description = 'YAAD (yaadapppk) خریداری کی یاد دہانی اور سودا سلف کی ایپ ہے — تاکہ آپ خریداری کے وقت کوئی چیز نہ بھولیں۔ پاکستان کے روزمرہ سودا سلف کے لیے تیار کردہ۔';
   } else if (isRomanUrdu) {
-    title = 'YAAD • Smart Grocery Reminder & Sauda Salaf App';
-    description = 'Khareedari ki koi cheez na bhoolein. YAAD ek smart bilingual shopping reminder hai jo grocery items aur sauda salaf ko automatically organize karta hai.';
+    title = 'YAAD (yaadapppk) | Sauda Salaf Yaad Rakhne Ki Aasan Grocery App';
+    description = 'YAAD (yaadapppk) grocery aur sauda salaf yaad rakhne ki tez aur aasan app hai jo offline bhi kaam karti hai. Kabhi koi cheez na bhoolein.';
   }
 
   if (cleanPath === '/about') {

@@ -55,19 +55,19 @@ console.log('\n--- 4. Sitemap.xml Audit ---');
 const sitemapContent = fs.readFileSync(path.join(process.cwd(), 'public', 'sitemap.xml'), 'utf-8');
 assert(
   sitemapContent.includes('<loc>https://yaadapppk.vercel.app/rashan-list</loc>'),
-  'sitemap.xml contains English canonical loc for /rashan-list'
-);
-assert(
-  sitemapContent.includes('<loc>https://yaadapppk.vercel.app/rashan-list?lang=ur</loc>'),
-  'sitemap.xml contains Urdu loc for /rashan-list?lang=ur'
-);
-assert(
-  sitemapContent.includes('<loc>https://yaadapppk.vercel.app/rashan-list?lang=roman-urdu</loc>'),
-  'sitemap.xml contains Roman Urdu loc for /rashan-list?lang=roman-urdu'
+  'sitemap.xml contains canonical loc for /rashan-list'
 );
 assert(
   sitemapContent.includes('hreflang="ur-PK" href="https://yaadapppk.vercel.app/rashan-list?lang=ur"'),
   'sitemap.xml includes valid xhtml:link hreflang="ur-PK" for /rashan-list'
+);
+assert(
+  sitemapContent.includes('hreflang="ur-Latn" href="https://yaadapppk.vercel.app/rashan-list?lang=roman-urdu"'),
+  'sitemap.xml includes valid xhtml:link hreflang="ur-Latn" for /rashan-list'
+);
+assert(
+  !sitemapContent.includes('<loc>https://yaadapppk.vercel.app/rashan-list?lang='),
+  'sitemap.xml does NOT duplicate parameter variants in <loc>'
 );
 
 // 5. Content Data Layer Quality (Anti-Spam & Real Utility)

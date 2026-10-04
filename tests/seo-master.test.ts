@@ -127,12 +127,13 @@ async function runSeoTests() {
   assert(kwStrategy.includes('راشن لسٹ'), 'SEO_KEYWORD_STRATEGY.md includes Rashan list cluster in Urdu');
   assert(kwStrategy.includes('rashan list'), 'SEO_KEYWORD_STRATEGY.md includes rashan list in Roman Urdu');
 
-  // Verify Sitemap URL count across language alternates
+  // Verify Sitemap contains ONLY canonical URLs (no ?lang= parameters in <loc>)
   const sitemapUrlMatches = sitemapContent.match(/<loc>/g);
   assert(
-    sitemapUrlMatches !== null && sitemapUrlMatches.length >= 21,
-    `Sitemap contains at least 21 URLs across language alternates (found: ${sitemapUrlMatches?.length})`
+    sitemapUrlMatches !== null && sitemapUrlMatches.length === 10,
+    `Sitemap contains exactly 10 canonical URLs (found: ${sitemapUrlMatches?.length})`
   );
+  assert(!sitemapContent.match(/<loc>[^<]*\?lang=/i), 'Sitemap loc tags contain zero ?lang= parameter URLs');
 
   console.log('\n🎉 ALL SEO & ARCHITECTURAL VERIFICATION TESTS PASSED PERFECTLY!\n');
 }

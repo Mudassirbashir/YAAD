@@ -99,6 +99,13 @@ export const HeadManager: React.FC = () => {
     const routeId = route.routeId;
     const currentLangKey = (language === 'ur' ? 'ur' : language === 'roman-urdu' ? 'romanUrdu' : 'en') as 'en' | 'romanUrdu' | 'ur';
 
+    // 0. Staging domain guard: Staging deployments (e.g. yaad-three.vercel.app) must NEVER be indexed
+    const host = typeof window !== 'undefined' ? (window.location.hostname || '').toLowerCase() : '';
+    const isStagingDeployment = host === 'yaad-three.vercel.app' || (host.endsWith('.vercel.app') && host !== 'yaadapppk.vercel.app');
+    if (isStagingDeployment) {
+      setMetaTag('robots', 'noindex, nofollow, noarchive');
+    }
+
     // 1. Sync <html> attributes (lang & dir)
     const htmlElement = document.documentElement;
     if (htmlElement) {
@@ -258,6 +265,7 @@ export const HeadManager: React.FC = () => {
       '@type': 'Organization',
       '@id': `${baseUrl}/#organization`,
       name: 'YAAD',
+      alternateName: ['yaadapppk', 'YAAD App'],
       url: `${baseUrl}/`,
       logo: `${baseUrl}/logo.png`,
       email: SITE_CONFIG.supportEmail,
@@ -281,8 +289,9 @@ export const HeadManager: React.FC = () => {
             '@type': 'SoftwareApplication',
             '@id': `${baseUrl}/#softwareapplication`,
             name: 'YAAD',
+            alternateName: ['yaadapppk', 'YAAD App'],
             url: `${baseUrl}/`,
-            description: 'YAAD is a shopping list and reminder app that helps people remember the things they need to buy before and during shopping.',
+            description: 'YAAD (yaadapppk) is a simple shopping memory assistant — never forget what you came to buy. Made for everyday shopping in Pakistan.',
             applicationCategory: 'ShoppingApplication',
             operatingSystem: 'All (iOS, Android, Windows, macOS, Linux, ChromeOS)',
             browserRequirements: 'Requires modern web browser with HTML5 and IndexedDB support',
@@ -308,14 +317,15 @@ export const HeadManager: React.FC = () => {
           },
           {
             '@type': 'WebPage',
-            '@id': `${baseUrl}/home#webpage`,
-            url: `${baseUrl}/home`,
+            '@id': `${baseUrl}/#webpage`,
+            url: `${baseUrl}/`,
             name: pageTitle,
             description: pageDescription,
             isPartOf: {
               '@type': 'WebSite',
               '@id': `${baseUrl}/#website`,
               name: 'YAAD',
+              alternateName: ['yaadapppk', 'YAAD App'],
               url: `${baseUrl}/`,
               description: SITE_CONFIG.pages.home.description.en,
               inLanguage: ['en', 'ur'],
