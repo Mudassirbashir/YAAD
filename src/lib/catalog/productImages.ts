@@ -296,10 +296,12 @@ export function getProductImageUrl(name?: string, categoryId?: string): string {
       return ITEM_PHOTO_MAP[norm];
     }
 
-    // Try sub-term matching for compound names like "Chai Patti", "Double Roti", "Green Tea", etc.
+    // Try word-boundary matching for compound names like "Chai Patti", "Double Roti", "Green Tea", etc.
     for (const [key, url] of Object.entries(ITEM_PHOTO_MAP)) {
       if (key.length > 2) {
-        if (norm.includes(key) || raw.includes(key)) {
+        const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`(^|\\s|[\\-_/()])${escaped}(\\s|$|[\\-_/()])`, 'i');
+        if (regex.test(norm) || regex.test(raw)) {
           return url;
         }
       }
@@ -331,8 +333,12 @@ export function hasSpecificProductImage(name?: string): boolean {
   const norm = normalizeKey(name);
   if (ITEM_PHOTO_MAP[norm]) return true;
   for (const key of Object.keys(ITEM_PHOTO_MAP)) {
-    if (key.length > 2 && (norm.includes(key) || raw.includes(key))) {
-      return true;
+    if (key.length > 2) {
+      const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`(^|\\s|[\\-_/()])${escaped}(\\s|$|[\\-_/()])`, 'i');
+      if (regex.test(norm) || regex.test(raw)) {
+        return true;
+      }
     }
   }
   return false;

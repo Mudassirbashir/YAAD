@@ -30,6 +30,9 @@ export type CategoryId =
   | 'uncategorized'
   | 'other'
   // Backward compatibility aliases:
+  | 'oils'
+  | 'oil'
+  | 'perishables'
   | 'eggs'
   | 'grocery'
   | 'herbal'
@@ -57,27 +60,28 @@ export const CATEGORIES_LIST: CategoryInfo[] = [
   { id: 'poultry', icon: 'egg', defaultName: 'Poultry & Eggs', order: 5 },
   { id: 'seafood', icon: 'phishing', defaultName: 'Seafood', order: 6 },
   { id: 'bakery', icon: 'bakery_dining', defaultName: 'Bakery', order: 7 },
-  { id: 'cooking_essentials', icon: 'inventory_2', defaultName: 'Cooking Essentials', order: 8 },
-  { id: 'rice', icon: 'grain', defaultName: 'Rice', order: 9 },
-  { id: 'grains', icon: 'grain', defaultName: 'Grains', order: 10 },
-  { id: 'pulses', icon: 'soup', defaultName: 'Pulses & Lentils', order: 11 },
-  { id: 'spices', icon: 'local_fire_department', defaultName: 'Spices', order: 12 },
-  { id: 'herbs', icon: 'spa', defaultName: 'Herbs', order: 13 },
-  { id: 'dry_fruits', icon: 'grain', defaultName: 'Dry Fruits', order: 14 },
-  { id: 'beverages', icon: 'local_cafe', defaultName: 'Beverages', order: 15 },
-  { id: 'snacks', icon: 'cookie', defaultName: 'Snacks', order: 16 },
-  { id: 'frozen', icon: 'ac_unit', defaultName: 'Frozen Food', order: 17 },
-  { id: 'sauces_condiments', icon: 'liquor', defaultName: 'Sauces & Condiments', order: 18 },
-  { id: 'household', icon: 'home', defaultName: 'Household', order: 19 },
-  { id: 'kitchen', icon: 'home', defaultName: 'Kitchen', order: 20 },
-  { id: 'cleaning', icon: 'cleaning_services', defaultName: 'Cleaning', order: 21 },
-  { id: 'personal_care', icon: 'soap', defaultName: 'Personal Care', order: 22 },
-  { id: 'baby_care', icon: 'child_care', defaultName: 'Baby Care', order: 23 },
-  { id: 'health', icon: 'medication', defaultName: 'Medicines / Health', order: 24 },
-  { id: 'stationery', icon: 'edit_note', defaultName: 'Stationery', order: 25 },
-  { id: 'electronics', icon: 'devices', defaultName: 'Electronics', order: 26 },
-  { id: 'uncategorized', icon: 'category', defaultName: 'Uncategorized', order: 27 },
-  { id: 'other', icon: 'category', defaultName: 'Other', order: 28 },
+  { id: 'oils', icon: 'inventory_2', defaultName: 'Cooking Oil & Ghee', order: 8 },
+  { id: 'cooking_essentials', icon: 'inventory_2', defaultName: 'Cooking Essentials', order: 9 },
+  { id: 'rice', icon: 'grain', defaultName: 'Rice', order: 10 },
+  { id: 'grains', icon: 'grain', defaultName: 'Grains', order: 11 },
+  { id: 'pulses', icon: 'soup', defaultName: 'Pulses & Lentils', order: 12 },
+  { id: 'spices', icon: 'local_fire_department', defaultName: 'Spices', order: 13 },
+  { id: 'herbs', icon: 'spa', defaultName: 'Herbs', order: 14 },
+  { id: 'dry_fruits', icon: 'grain', defaultName: 'Dry Fruits', order: 15 },
+  { id: 'beverages', icon: 'local_cafe', defaultName: 'Beverages', order: 16 },
+  { id: 'snacks', icon: 'cookie', defaultName: 'Snacks', order: 17 },
+  { id: 'frozen', icon: 'ac_unit', defaultName: 'Frozen Food', order: 18 },
+  { id: 'sauces_condiments', icon: 'liquor', defaultName: 'Sauces & Condiments', order: 19 },
+  { id: 'household', icon: 'home', defaultName: 'Household', order: 20 },
+  { id: 'kitchen', icon: 'home', defaultName: 'Kitchen', order: 21 },
+  { id: 'cleaning', icon: 'cleaning_services', defaultName: 'Cleaning', order: 22 },
+  { id: 'personal_care', icon: 'soap', defaultName: 'Personal Care', order: 23 },
+  { id: 'baby_care', icon: 'child_care', defaultName: 'Baby Care', order: 24 },
+  { id: 'health', icon: 'medication', defaultName: 'Medicines / Health', order: 25 },
+  { id: 'stationery', icon: 'edit_note', defaultName: 'Stationery', order: 26 },
+  { id: 'electronics', icon: 'devices', defaultName: 'Electronics', order: 27 },
+  { id: 'uncategorized', icon: 'category', defaultName: 'Uncategorized', order: 28 },
+  { id: 'other', icon: 'category', defaultName: 'Other', order: 29 },
 ];
 
 export const CATEGORY_MAP: Record<CategoryId, CategoryInfo> = CATEGORIES_LIST.reduce(
@@ -87,19 +91,71 @@ export const CATEGORY_MAP: Record<CategoryId, CategoryInfo> = CATEGORIES_LIST.re
   },
   {
     // Aliases mapped to their primary targets
+    oils: { id: 'oils', icon: 'inventory_2', defaultName: 'Cooking Oil & Ghee', order: 8 },
+    oil: { id: 'oils', icon: 'inventory_2', defaultName: 'Cooking Oil & Ghee', order: 8 },
+    perishables: { id: 'vegetables', icon: 'eco', defaultName: 'Vegetables', order: 1 },
     eggs: { id: 'poultry', icon: 'egg', defaultName: 'Poultry & Eggs', order: 5 },
-    grocery: { id: 'cooking_essentials', icon: 'inventory_2', defaultName: 'Cooking Essentials', order: 8 },
-    herbal: { id: 'herbs', icon: 'spa', defaultName: 'Herbs', order: 13 },
-    baby: { id: 'baby_care', icon: 'child_care', defaultName: 'Baby Care', order: 23 },
-    pet_supplies: { id: 'household', icon: 'pets', defaultName: 'Pet Supplies', order: 29 },
-    home: { id: 'household', icon: 'home', defaultName: 'Household', order: 19 },
-    hardware: { id: 'household', icon: 'build', defaultName: 'Household', order: 19 },
-    clothing: { id: 'household', icon: 'checkroom', defaultName: 'Clothing', order: 30 },
-    canned_food: { id: 'cooking_essentials', icon: 'inventory_2', defaultName: 'Canned Food', order: 8 },
-    grains_staples: { id: 'cooking_essentials', icon: 'inventory_2', defaultName: 'Cooking Essentials', order: 8 },
-    medicines: { id: 'health', icon: 'medication', defaultName: 'Medicines / Health', order: 24 },
+    grocery: { id: 'cooking_essentials', icon: 'inventory_2', defaultName: 'Cooking Essentials', order: 9 },
+    herbal: { id: 'herbs', icon: 'spa', defaultName: 'Herbs', order: 14 },
+    baby: { id: 'baby_care', icon: 'child_care', defaultName: 'Baby Care', order: 24 },
+    pet_supplies: { id: 'household', icon: 'pets', defaultName: 'Pet Supplies', order: 30 },
+    home: { id: 'household', icon: 'home', defaultName: 'Household', order: 20 },
+    hardware: { id: 'household', icon: 'build', defaultName: 'Household', order: 20 },
+    clothing: { id: 'household', icon: 'checkroom', defaultName: 'Clothing', order: 31 },
+    canned_food: { id: 'cooking_essentials', icon: 'inventory_2', defaultName: 'Canned Food', order: 9 },
+    grains_staples: { id: 'cooking_essentials', icon: 'inventory_2', defaultName: 'Cooking Essentials', order: 9 },
+    medicines: { id: 'health', icon: 'medication', defaultName: 'Medicines / Health', order: 25 },
   } as Record<CategoryId, CategoryInfo>
 );
+
+/**
+ * Normalizes any category ID string, mapping legacy aliases to valid canonical CategoryId values.
+ * Prevents HTML select dropdowns from falling back to the first item (Vegetables).
+ */
+export function normalizeCategoryId(id?: string | null): CategoryId {
+  if (!id) return 'other';
+  const clean = id.toLowerCase().trim();
+  if (
+    clean === 'oils' ||
+    clean === 'oil' ||
+    clean === 'cooking_oil' ||
+    clean === 'ghee'
+  ) {
+    return 'oils';
+  }
+  if (
+    clean === 'grocery' ||
+    clean === 'canned_food' ||
+    clean === 'grains_staples'
+  ) {
+    return 'cooking_essentials';
+  }
+  if (clean === 'perishables' || clean === 'fresh_produce') {
+    return 'vegetables';
+  }
+  if (clean === 'eggs') {
+    return 'poultry';
+  }
+  if (clean === 'baby') {
+    return 'baby_care';
+  }
+  if (clean === 'medicines') {
+    return 'health';
+  }
+  if (clean === 'herbal') {
+    return 'herbs';
+  }
+  if (
+    clean === 'home' ||
+    clean === 'hardware' ||
+    clean === 'clothing' ||
+    clean === 'pet_supplies'
+  ) {
+    return 'household';
+  }
+  const found = CATEGORIES_LIST.find((c) => c.id === clean);
+  return found ? found.id : 'other';
+}
 
 // Backward compatibility alias for CategoryType
 export type CategoryType = string;

@@ -71,6 +71,16 @@ export function useOnlineStatus(onSyncSuccess?: () => void): UseOnlineStatusRetu
     refreshPendingCount();
   }, [refreshPendingCount]);
 
+  // Automatically attempt background sync when online with pending operations
+  useEffect(() => {
+    if (isOnline && pendingCount > 0 && isConfigured && user?.id) {
+      const timer = setTimeout(() => {
+        triggerSync().catch(() => {});
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [isOnline, pendingCount, isConfigured, user?.id, triggerSync]);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
 

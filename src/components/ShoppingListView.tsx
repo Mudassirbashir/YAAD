@@ -139,7 +139,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
     onUpdateList(updatedList);
     triggerHaptic(12);
 
-    // Show undo toast with 4.5s countdown
+    // Show undo toast with 10s countdown
     setUndoToast({
       item: targetItem,
       listId: list.id,
@@ -149,7 +149,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
     if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
     undoTimerRef.current = setTimeout(() => {
       setUndoToast((prev) => (prev?.item.id === itemId ? null : prev));
-    }, 4500);
+    }, 10000);
 
     // If deleting remaining items completed the entire list, auto-transition!
     if (isCompleted) {
@@ -356,7 +356,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
       if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
       undoTimerRef.current = setTimeout(() => {
         setUndoToast((prev) => (prev?.item.id === itemId ? null : prev));
-      }, 4500);
+      }, 8000);
     } else {
       // Un-marking item
       triggerHaptic(8);
@@ -401,21 +401,34 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
       };
       onUpdateList(updatedList);
       triggerHaptic(8);
+      showFeedbackToast(
+        language === 'ur'
+          ? `"${item.name}" واپس لسٹ میں بحال ہو گیا`
+          : `Restored "${item.name}"`,
+        'add'
+      );
     } else {
       completeShoppingItem(item.id, false);
+      showFeedbackToast(
+        language === 'ur'
+          ? `"${item.name}" واپس غیر مکمل نشان زد ہو گیا`
+          : `Unmarked "${item.name}"`,
+        'add'
+      );
     }
   };
 
-  // Add new inline item using natural language parser and smart categorizer
-  const handleAddInlineItem = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    const trimmed = newItemText.trim();
+  // Process addition of one or multiple items (from form submit or clipboard paste)
+  const processAddItems = async (textToAdd: string) => {
+    const trimmed = textToAdd.trim();
     if (!trimmed) return;
 
     const parsedItems = parseMultiItemInput(trimmed);
     if (parsedItems.length === 0) return;
 
     let updatedItems = [...list.items];
+    let newItemsCount = 0;
+    const mergedNames: string[] = [];
 
     for (const parsed of parsedItems) {
       // Check if equivalent item already exists in the list (e.g. aloo vs potato)
@@ -453,6 +466,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
               }
             : it
         );
+        mergedNames.push(duplicateCheck.existingItem.name);
       } else {
         const newItemId = generateUUID();
         const newItem: ShoppingItem = {
@@ -481,6 +495,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
         };
 
         updatedItems = [newItem, ...updatedItems];
+        newItemsCount++;
 
         // Record alias for repeated learning (offline-first)
         if (parsed.rawInput) {
@@ -502,14 +517,32 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
     onUpdateList(updatedList);
     setNewItemText('');
     setSelectedCategoryFilter('all');
-    showFeedbackToast(
-      language === 'ur'
-        ? `"${trimmed}" لسٹ میں شامل ہو گیا`
-        : `Added "${trimmed}" to list`,
-      'add'
-    );
+
+    // Build transparent, honest feedback toast
+    let toastMessage = '';
+    if (newItemsCount > 0 && mergedNames.length > 0) {
+      toastMessage = language === 'ur'
+        ? `${newItemsCount} نئی اشیاء شامل، ${mergedNames.length} پہلے سے موجود اشیاء اپڈیٹ ہو گئیں`
+        : `Added ${newItemsCount} new item${newItemsCount > 1 ? 's' : ''}, updated ${mergedNames.length} existing (${mergedNames.join(', ')})`;
+    } else if (newItemsCount > 0) {
+      toastMessage = language === 'ur'
+        ? `${newItemsCount === 1 ? `"${parsedItems[0].name}"` : `${newItemsCount} اشیاء`} لسٹ میں شامل ہو گئیں`
+        : (newItemsCount === 1 ? `Added "${parsedItems[0].name}" to list` : `Added ${newItemsCount} items to list`);
+    } else if (mergedNames.length > 0) {
+      toastMessage = language === 'ur'
+        ? `${mergedNames.join('، ')} کی مقدار اپڈیٹ ہو گئی (پہلے سے موجود)`
+        : `Updated quantity for ${mergedNames.join(', ')} (already in list)`;
+    }
+
+    showFeedbackToast(toastMessage, mergedNames.length > 0 && newItemsCount === 0 ? 'merge' : 'add');
     triggerHaptic(15);
     playItemCheckSound();
+  };
+
+  // Add new inline item using natural language parser and smart categorizer
+  const handleAddInlineItem = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    await processAddItems(newItemText);
   };
 
   const handleItemCategoryChange = (itemId: string, newCategoryId: CategoryId) => {
@@ -628,18 +661,18 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
 
   // Extract unique categoryIds in this list
   const uniqueCategoryIds: CategoryId[] = Array.from(
-    new Set(list.items.map((i) => (i.categoryId || 'other') as CategoryId))
+    new Set(list.items.map((i) => normalizeCategoryId(i.categoryId)))
   );
 
   // Filter items by category if selected
   const displayedItems =
     selectedCategoryFilter === 'all'
       ? list.items
-      : list.items.filter((i) => (i.categoryId || 'other') === selectedCategoryFilter);
+      : list.items.filter((i) => normalizeCategoryId(i.categoryId) === selectedCategoryFilter);
 
   // Group displayed items by categoryId
   const groupedCategoryIds: CategoryId[] = Array.from(
-    new Set(displayedItems.map((i) => (i.categoryId || 'other') as CategoryId))
+    new Set(displayedItems.map((i) => normalizeCategoryId(i.categoryId)))
   );
 
   // Next category navigation helper for fast store shopping
@@ -727,6 +760,13 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
               dir="auto"
               value={newItemText}
               onChange={(e) => setNewItemText(e.target.value)}
+              onPaste={(e) => {
+                const pasteText = e.clipboardData?.getData('text');
+                if (pasteText && (pasteText.includes('\n') || pasteText.includes(',') || pasteText.includes('،') || pasteText.includes(';'))) {
+                  e.preventDefault();
+                  processAddItems(pasteText);
+                }
+              }}
               className="w-full h-[54px] ps-5 pe-14 rounded-full border-none bg-transparent focus:ring-2 focus:ring-primary/20 text-base text-on-surface placeholder:text-outline font-['Manrope'] outline-none"
               placeholder={t('shoppingList.inputPlaceholder')}
               type="text"
@@ -943,7 +983,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4 items-stretch w-full">
             {groupedCategoryIds.map((catId) => {
               const categoryItems = displayedItems.filter(
-                (i) => (i.categoryId || 'other') === catId
+                (i) => normalizeCategoryId(i.categoryId) === catId
               );
               if (categoryItems.length === 0) return null;
 
@@ -1101,31 +1141,38 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.22, ease: 'easeOut' }}
-            className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between gap-3 px-4 py-3 rounded-2xl text-white shadow-[0_10px_25px_rgba(0,0,0,0.3)] border max-w-sm w-[92vw] sm:w-auto min-w-[290px] ${
+            className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between gap-3 px-4 py-3 rounded-2xl text-white shadow-2xl border max-w-md w-[92vw] sm:w-auto min-w-[320px] ${
               undoToast.type === 'deleted'
-                ? 'bg-rose-950/95 border-rose-500/40 shadow-rose-950/40'
-                : 'bg-primary border-emerald-500/30 shadow-[0_10px_25px_rgba(15,61,46,0.35)]'
+                ? 'bg-rose-950 border-rose-500/60 shadow-rose-950/60'
+                : 'bg-[#005039] border-emerald-400/40 shadow-emerald-950/50'
             }`}
           >
-            <div className="flex items-center gap-2.5 min-w-0">
-              <span className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-white shrink-0">
+            <div className="flex items-center gap-3 min-w-0">
+              <span className={`w-8 h-8 rounded-full flex items-center justify-center text-white shrink-0 ${
+                undoToast.type === 'deleted' ? 'bg-rose-600/40 text-rose-200' : 'bg-white/20'
+              }`}>
                 {undoToast.type === 'deleted' ? (
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-4 h-4 stroke-[2.2]" />
                 ) : (
-                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                  <Check className="w-4 h-4 stroke-[3]" />
                 )}
               </span>
-              <span className="text-xs sm:text-sm font-['Manrope'] font-medium truncate">
-                {undoToast.type === 'deleted'
-                  ? `${undoToast.item.name} (${t('delete') || 'deleted'})`
-                  : `${undoToast.item.name} ${t('shoppingList.markedPurchased') || 'purchased'}`}
-              </span>
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs sm:text-sm font-['Plus_Jakarta_Sans'] font-bold truncate">
+                  {undoToast.type === 'deleted'
+                    ? `Deleted "${undoToast.item.name}"`
+                    : `Marked "${undoToast.item.name}"`}
+                </span>
+                <span className="text-[11px] font-['Manrope'] text-white/70">
+                  Tap Undo to restore (10s)
+                </span>
+              </div>
             </div>
             <button
               id="shopping-undo-btn"
               type="button"
               onClick={handleUndoAction}
-              className="px-3 py-1 bg-white/20 hover:bg-white/30 active:scale-95 rounded-lg text-xs font-bold text-white uppercase tracking-wider transition-all cursor-pointer shrink-0"
+              className="px-4 py-2 bg-white text-slate-900 hover:bg-slate-100 active:scale-95 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer shrink-0 shadow-sm border border-white/60 min-h-[40px] flex items-center justify-center"
             >
               {t('shoppingList.undo') || 'Undo'}
             </button>

@@ -13,7 +13,7 @@ import {
   X,
   Pencil,
 } from 'lucide-react';
-import { CategoryId, CATEGORIES_LIST, ShoppingItem } from '../types';
+import { CategoryId, CATEGORIES_LIST, ShoppingItem, normalizeCategoryId } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { CategoryIcon } from './CategoryIcon';
 import { ItemVisualIcon } from './ItemVisualIcon';
@@ -353,8 +353,9 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
       return;
     }
 
-    let updatedList = [...items];
-    const addedNames: string[] = [];
+    let updatedList: ShoppingItem[] = [...items];
+    let newItemsCount = 0;
+    const mergedNames: string[] = [];
 
     for (const parsed of parsedItems) {
       let finalCategory = selectedCategory;
@@ -397,9 +398,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
               }
             : item
         );
-        addedNames.push(
-          `Updated ${duplicateCheck.existingItem.name} (${merged.quantity || '1'}${merged.unit ? ' ' + merged.unit : ''})`
-        );
+        mergedNames.push(duplicateCheck.existingItem.name);
       } else {
         const newItemId = generateUUID();
         const displayName = parsed.name || (isUrdu && parsed.nameUrdu ? parsed.nameUrdu : (parsed.canonicalName || parsed.rawInput));
@@ -428,14 +427,34 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
         };
 
         updatedList = [newItem, ...updatedList];
-        addedNames.push(`Added ${displayName}`);
+        newItemsCount++;
       }
     }
 
     updateItems(updatedList);
-    if (addedNames.length > 0) {
-      showToast(addedNames[0]);
+
+    // Honest, scannable toast
+    if (newItemsCount > 0 && mergedNames.length > 0) {
+      showToast(
+        language === 'ur'
+          ? `${newItemsCount} نئی اشیاء شامل، ${mergedNames.length} پہلے سے موجود اشیاء اپڈیٹ ہو گئیں`
+          : `Added ${newItemsCount} new item${newItemsCount > 1 ? 's' : ''}, updated ${mergedNames.length} existing in list (${mergedNames.join(', ')})`,
+        'add'
+      );
+    } else if (newItemsCount > 0) {
+      showToast(
+        newItemsCount === 1
+          ? `Added "${parsedItems[0].name}"`
+          : `Added ${newItemsCount} items to list`,
+        'add'
+      );
+    } else if (mergedNames.length > 0) {
+      showToast(
+        `Updated quantity for ${mergedNames.join(', ')} (already in list)`,
+        'merge'
+      );
     }
+
     setInputVal('');
     setInputError('');
     setUserManuallySelectedCategory(false);
@@ -690,6 +709,13 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                       setInputVal(e.target.value);
                       setUserManuallySelectedCategory(false);
                       if (inputError) setInputError('');
+                    }}
+                    onPaste={(e) => {
+                      const pasteText = e.clipboardData?.getData('text');
+                      if (pasteText && (pasteText.includes('\n') || pasteText.includes(',') || pasteText.includes('،') || pasteText.includes(';'))) {
+                        e.preventDefault();
+                        handleUnifiedAddItem(pasteText);
+                      }
                     }}
                     placeholder={t('addItems.inputPlaceholder') || 'Add item (e.g. Milk, Apples)...'}
                     className="w-full h-12 bg-surface-container-low rounded-full ps-11 pe-24 text-sm sm:text-base text-on-surface font-['Manrope'] border border-outline-variant/60 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
@@ -983,7 +1009,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
               ) : (
                 <div className="space-y-2 max-h-[520px] overflow-y-auto pr-0.5">
                   {items.map((item) => {
-                    const itemCatId = item.categoryId || 'uncategorized';
+                    const itemCatId = normalizeCategoryId(item.categoryId);
                     return (
                       <div
                         key={item.id}

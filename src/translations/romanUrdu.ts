@@ -610,6 +610,7 @@ export const romanUrdu: typeof en = {
     rice: 'Chawal Varieties',
     pulses: 'Daalain & Chanay',
     beverages: 'Mashroobaat & Chai',
+    oils: 'Cooking Oil ya Ghee',
     grocery: 'Cooking Essentials',
     cooking_essentials: 'Cooking Essentials',
     spices: 'Masalay & Spices',

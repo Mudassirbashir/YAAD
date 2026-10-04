@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Plus, Search, Trash2, Check, ArrowLeft } from 'lucide-react';
-import { ShoppingList, ShoppingItem, CategoryId, CATEGORIES_LIST } from '../types';
+import { ShoppingList, ShoppingItem, CategoryId, CATEGORIES_LIST, normalizeCategoryId } from '../types';
 import { TopHeader } from './TopHeader';
 import { CategoryIcon } from './CategoryIcon';
 import { ItemVisualIcon } from './ItemVisualIcon';
@@ -164,7 +164,7 @@ export const EditListView: React.FC<EditListViewProps> = ({
 
   // Group items by categoryId for organized sections
   const categoryIds: CategoryId[] = Array.from(
-    new Set(items.map((i) => (i.categoryId || 'other') as CategoryId))
+    new Set(items.map((i) => normalizeCategoryId(i.categoryId)))
   );
 
   return (
@@ -222,6 +222,44 @@ export const EditListView: React.FC<EditListViewProps> = ({
               dir="auto"
               value={newItemName}
               onChange={(e) => setNewItemName(e.target.value)}
+              onPaste={(e) => {
+                const pasteText = e.clipboardData?.getData('text');
+                if (pasteText && (pasteText.includes('\n') || pasteText.includes(',') || pasteText.includes('،') || pasteText.includes(';'))) {
+                  e.preventDefault();
+                  const parsedItems = parseMultiItemInput(pasteText.trim());
+                  if (parsedItems.length === 0) return;
+                  const newShoppingItems: ShoppingItem[] = parsedItems.map((parsed) => {
+                    const catId = parsed.suggestedCategoryId || selectedCategory;
+                    return {
+                      id: generateUUID(),
+                      name: parsed.name,
+                      canonicalName: parsed.canonicalName,
+                      canonical_name: parsed.canonicalName || parsed.name,
+                      original_input: pasteText.trim(),
+                      original_name: parsed.rawInput || pasteText.trim(),
+                      normalized_item: parsed.canonicalName || parsed.name,
+                      normalized_name: parsed.rawInput || parsed.name.toLowerCase(),
+                      nameUrdu: parsed.nameUrdu,
+                      nameRomanUrdu: parsed.nameRomanUrdu,
+                      quantity: parsed.quantity,
+                      unit: parsed.unit,
+                      planned_quantity: parsed.quantity,
+                      planned_unit: parsed.unit,
+                      rawInput: parsed.rawInput,
+                      categoryId: catId,
+                      category: getCategoryName(catId),
+                      completed: false,
+                      confidence: parsed.confidence,
+                      isRecognized: parsed.isRecognized,
+                      unresolved: parsed.unresolved,
+                      emoji: parsed.emoji,
+                    };
+                  });
+                  setItems((prev) => [...newShoppingItems, ...prev]);
+                  setNewItemName('');
+                  showFeedbackToast(`Added ${newShoppingItems.length} items to list`, 'add');
+                }
+              }}
               className="w-full h-[54px] ps-5 pe-14 rounded-full border-none bg-transparent focus:ring-2 focus:ring-primary/20 text-base text-on-surface placeholder:text-outline font-['Manrope'] outline-none"
               placeholder={t('editList.inputPlaceholder')}
               type="text"
@@ -264,7 +302,7 @@ export const EditListView: React.FC<EditListViewProps> = ({
             </div>
           ) : (
             categoryIds.map((catId) => {
-              const catItems = items.filter((i) => (i.categoryId || 'other') === catId);
+              const catItems = items.filter((i) => normalizeCategoryId(i.categoryId) === catId);
               if (catItems.length === 0) return null;
 
               return (
@@ -284,7 +322,7 @@ export const EditListView: React.FC<EditListViewProps> = ({
 
                   <div className="space-y-2">
                     {catItems.map((item) => {
-                      const itemCatId = (item.categoryId || 'other') as CategoryId;
+                      const itemCatId = normalizeCategoryId(item.categoryId);
                       return (
                         <div
                           key={item.id}

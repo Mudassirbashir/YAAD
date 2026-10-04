@@ -28,7 +28,7 @@ import {
   RashanCategory,
 } from './rashanData';
 import { generateUUID } from '../../lib/uuid';
-import { ShoppingList, ShoppingItem } from '../../types';
+import { ShoppingList, ShoppingItem, normalizeCategoryId } from '../../types';
 import { AppPublicHeader } from '../common/AppPublicHeader';
 import { AppPublicFooter } from '../common/AppPublicFooter';
 
@@ -111,7 +111,7 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
     const newItems: ShoppingItem[] = [];
     RASHAN_CATEGORIES.forEach((cat) => {
       cat.items.forEach((item) => {
-        const mappedCat = item.category === 'perishables' ? 'vegetables' : (item.category as any);
+        const mappedCat = normalizeCategoryId(item.category);
         newItems.push({
           id: generateUUID(),
           name: item.name[currentLangKey] || item.name.en,

@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { motion, useMotionValue, useTransform } from 'motion/react';
 import { Trash2 } from 'lucide-react';
-import { ShoppingItem, CategoryId, CATEGORIES_LIST } from '../types';
+import { ShoppingItem, CategoryId, CATEGORIES_LIST, normalizeCategoryId } from '../types';
 import { ItemVisualIcon } from './ItemVisualIcon';
 import { CategoryIcon } from './CategoryIcon';
 import { BidiText } from '../utils/bidi';
@@ -56,7 +56,7 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
     onComplete(item.id);
   };
 
-  const itemCatId = (item.categoryId || 'other') as CategoryId;
+  const itemCatId = normalizeCategoryId(item.categoryId);
 
   return (
     <div

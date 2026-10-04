@@ -1821,7 +1821,7 @@ export async function syncPendingOfflineChanges(
             syncedCount++;
           } else {
             const errCode = (listErr as any)?.code;
-            const isTerminalError = item.retryCount >= 5 || errCode === '23503' || errCode === '42501';
+            const isTerminalError = item.retryCount >= 2 || errCode === '23503' || errCode === '42501';
             if (isTerminalError) {
               console.warn('Terminal error syncing list mutation, dropping from queue:', listErr.message);
               await removePendingOfflineOperation(item.id);
@@ -1855,7 +1855,7 @@ export async function syncPendingOfflineChanges(
             await removePendingOfflineOperation(item.id);
             syncedCount++;
           } else {
-            const isTerminalError = item.retryCount >= 5 || delErr.code === '42501';
+            const isTerminalError = item.retryCount >= 2 || delErr.code === '42501';
             if (isTerminalError) {
               await removePendingOfflineOperation(item.id);
             } else {
@@ -1883,7 +1883,7 @@ export async function syncPendingOfflineChanges(
             await removePendingOfflineOperation(item.id);
             syncedCount++;
           } else {
-            const isTerminalError = item.retryCount >= 5 || delItemErr.code === '42501';
+            const isTerminalError = item.retryCount >= 2 || delItemErr.code === '42501';
             if (isTerminalError) {
               await removePendingOfflineOperation(item.id);
             } else {
@@ -1905,7 +1905,7 @@ export async function syncPendingOfflineChanges(
           } else if (isNetworkOrOfflineError(profileErr)) {
             break;
           } else {
-            const isTerminalError = item.retryCount >= 5;
+            const isTerminalError = item.retryCount >= 2;
             if (isTerminalError) {
               await removePendingOfflineOperation(item.id);
             } else {

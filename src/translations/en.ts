@@ -614,6 +614,7 @@ export const en = {
     snacks: 'Snacks & Sweets',
     frozen: 'Frozen Food',
     sauces_condiments: 'Sauces & Condiments',
+    oils: 'Cooking Oil & Ghee',
     cooking_essentials: 'Cooking Essentials',
     grocery: 'Cooking Essentials',
     household: 'Household',

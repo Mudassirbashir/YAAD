@@ -412,7 +412,20 @@ export async function getPendingOfflineOperations(userId: string): Promise<Pendi
  */
 export async function getPendingOperationsCount(userId: string): Promise<number> {
   const ops = await getPendingOfflineOperations(userId);
-  return ops.length;
+  // Auto-prune dead operations with retryCount >= 2 or older than 10 minutes so they never get stuck indefinitely
+  const now = Date.now();
+  const activeOps = ops.filter(
+    (op) => (op.retryCount || 0) < 2 && (now - (op.timestamp || now)) < 10 * 60 * 1000
+  );
+  const deadOps = ops.filter(
+    (op) => (op.retryCount || 0) >= 2 || (now - (op.timestamp || now)) >= 10 * 60 * 1000
+  );
+  if (deadOps.length > 0) {
+    for (const d of deadOps) {
+      removePendingOfflineOperation(d.id).catch(() => {});
+    }
+  }
+  return activeOps.length;
 }
 
 /**

@@ -31,11 +31,16 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
   const rawKey = canonicalName || displayName || name || '';
   const normKey = normalizeBaseText(rawKey);
 
-  // Helper to match against aliases or substrings
+  // Helper to match against aliases using exact match or whole-word token matching
   const matches = (keywords: string[]): boolean => {
     return keywords.some((kw) => {
       const nkw = normalizeBaseText(kw);
-      return normKey === nkw || normKey.includes(nkw) || nkw.includes(normKey);
+      if (!nkw) return false;
+      if (normKey === nkw) return true;
+      // Word boundary match: ensures "ande" does not match "coriander", "oil" does not match "toilet", "chini" does not match "darchini"
+      const escaped = nkw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`(^|\\s|[\\-_/()])${escaped}(\\s|$|[\\-_/()])`, 'i');
+      return regex.test(normKey);
     });
   };
 
@@ -867,7 +872,7 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
   }
 
   // 25. SPICES / MASALA (Spice jar with vibrant turmeric/chili blend)
-  // Handles: spices, masala, haldi, zeera, dhaniya, turmeric,  , , 
+  // Handles: spices, masala, haldi, zeera, dhaniya, coriander, darchini, laung, cinnamon, cloves
   if (
     matches([
       'spices',
@@ -879,9 +884,22 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
       'zeera',
       'cumin',
       'dhaniya',
+      'dhanya',
+      'pissa dhanya',
+      'pisa dhaniya',
+      'coriander',
       'coriander powder',
+      'darchini',
+      'dar chini',
+      'cinnamon',
+      'laung',
+      'clove',
+      'cloves',
+      'kali mirch',
+      'black pepper',
       'lal mirch',
       'red chili powder',
+      'kuti mirch',
       'garam masala',
       'shan',
       'national masala',
@@ -932,8 +950,8 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
     );
   }
 
-  // 27. DETERGENT / SURF (Washing powder box with fresh sparkles)
-  // Handles: detergent, surf, surf excel, ariel, bonus, 
+  // 27. DETERGENT / CLEANING / HARPIC (Cleaning bottle & powder with fresh sparkles)
+  // Handles: detergent, surf, harpic, toilet cleaner, bathroom cleaner, ariel, bonus
   if (
     matches([
       'detergent',
@@ -942,6 +960,17 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
       'ariel',
       'bonus',
       'washing powder',
+      'harpic',
+      'toilet cleaner',
+      'bathroom cleaner',
+      'floor cleaner',
+      'bleach',
+      'finis',
+      'express cleaner',
+      'phenyl',
+      'dishwash',
+      'lemon max',
+      'vim',
     ])
   ) {
     return (
