@@ -817,7 +817,7 @@ export const HOW_IT_WORKS_DATA: HowItWorksStep[] = [
     details: {
       en: [
         'Organize different trips separately (Supermarket vs Local Kiryana).',
-        'Reuse frequent list templates or start completely fresh with one tap.',
+        'Reuse past lists or start completely fresh with one tap.',
       ],
       romanUrdu: [
         'Mukhtalif trips k liye alag alag lists banayein.',
@@ -825,7 +825,7 @@ export const HOW_IT_WORKS_DATA: HowItWorksStep[] = [
       ],
       ur: [
         'Organize different trips separately (Supermarket vs Local Kiryana).',
-        'Reuse frequent list templates or start completely fresh with one tap.',
+        'Reuse past lists or start completely fresh with one tap.',
       ],
     },
   },

@@ -62,6 +62,8 @@ Disallow: /onboarding
 Disallow: /reset-password
 Disallow: /reset_password
 Disallow: /api/
+Disallow: /admin/
+Disallow: /admin$
 
 # Sitemap Location
 Sitemap: https://yaadapppk.vercel.app/sitemap.xml

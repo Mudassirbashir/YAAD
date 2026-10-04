@@ -6,6 +6,7 @@ import { ItemVisualIcon } from './ItemVisualIcon';
 import { CategoryIcon } from './CategoryIcon';
 import { BidiText } from '../utils/bidi';
 import { CelebrationCheckbox } from './CelebrationCheckbox';
+import { formatItemTitle } from '../lib/recognition/normalizer';
 
 interface SwipeableShoppingItemCardProps {
   item: ShoppingItem;
@@ -208,9 +209,9 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
                   ({item.nameUrdu})
                 </span>
               )}
-              {item.canonicalName && isUrdu && item.canonicalName.toLowerCase() !== item.name.toLowerCase() && (
+              {item.canonicalName && isUrdu && formatItemTitle(item.canonicalName.replace(/_/g, ' ')).toLowerCase() !== item.name.toLowerCase() && (
                 <span className="font-['Manrope'] text-xs text-on-surface-variant font-medium shrink-0">
-                  ({item.canonicalName})
+                  ({formatItemTitle(item.canonicalName.replace(/_/g, ' '))})
                 </span>
               )}
             </div>

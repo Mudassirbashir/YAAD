@@ -1,0 +1,743 @@
+import { Router, Request, Response } from 'express';
+import crypto from 'crypto';
+import {
+  adminStore,
+  AdminRole,
+  AdminUser,
+  LOCKOUT_DURATION_MS,
+  MAX_FAILED_ATTEMPTS,
+} from './store';
+import {
+  generateTotpSecret,
+  verifyTotpToken,
+  buildOtpAuthUri,
+  generateQrCodeDataUrl,
+} from './totp';
+import {
+  AdminAuthRequest,
+  requireAdminAuth,
+  requireRoles,
+  rateLimit,
+} from './middleware';
+
+export const adminRouter = Router();
+
+// In-memory temp tokens for multi-step 2FA login (valid for 5 minutes)
+interface TempLoginState {
+  adminId: string;
+  email: string;
+  expiresAt: number;
+}
+const tempLogins = new Map<string, TempLoginState>();
+
+function createTempLoginToken(admin: AdminUser): string {
+  const token = crypto.randomBytes(24).toString('hex');
+  tempLogins.set(token, {
+    adminId: admin.id,
+    email: admin.email,
+    expiresAt: Date.now() + 5 * 60 * 1000,
+  });
+  return token;
+}
+
+function validateTempLoginToken(token: string): TempLoginState | null {
+  if (!token) return null;
+  const state = tempLogins.get(token);
+  if (!state || Date.now() > state.expiresAt) {
+    tempLogins.delete(token);
+    return null;
+  }
+  return state;
+}
+
+function sanitizeAdmin(admin: AdminUser) {
+  return {
+    id: admin.id,
+    name: admin.name,
+    email: admin.email,
+    role: admin.role,
+    status: admin.status,
+    isTotpEnabled: admin.isTotpEnabled,
+    lastLoginAt: admin.lastLoginAt,
+    createdAt: admin.createdAt,
+    updatedAt: admin.updatedAt,
+  };
+}
+
+// -----------------------------------------------------------------------------
+// 1. Admin Login (Step 1: Email + Password)
+// -----------------------------------------------------------------------------
+adminRouter.post('/auth/login', rateLimit(10, 60 * 1000), (req: Request, res: Response) => {
+  const { email, password } = req.body;
+  const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+
+  if (!email || !password) {
+    res.status(400).json({ error: 'Email and password are required.' });
+    return;
+  }
+
+  const cleanEmail = String(email).trim().toLowerCase();
+  const admin = adminStore.findAdminByEmail(cleanEmail);
+
+  if (!admin) {
+    adminStore.writeAuditLog({
+      action: 'admin_login_failed',
+      targetType: 'auth',
+      afterValue: { email: cleanEmail, reason: 'user_not_found' },
+      ip: clientIp,
+    });
+    res.status(401).json({ error: 'Invalid admin credentials.' });
+    return;
+  }
+
+  // Check account suspension
+  if (admin.status === 'suspended') {
+    adminStore.writeAuditLog({
+      action: 'admin_login_blocked',
+      adminId: admin.id,
+      adminEmail: admin.email,
+      targetType: 'auth',
+      afterValue: { reason: 'account_suspended' },
+      ip: clientIp,
+    });
+    res.status(403).json({
+      error: `Your admin account has been suspended. Reason: ${admin.suspendReason || 'Contact a Super Admin.'}`,
+      code: 'ACCOUNT_SUSPENDED',
+    });
+    return;
+  }
+
+  // Check temporary lockout
+  if (admin.lockoutUntil && Date.now() < admin.lockoutUntil) {
+    const minutesLeft = Math.ceil((admin.lockoutUntil - Date.now()) / (60 * 1000));
+    res.status(429).json({
+      error: `Account is temporarily locked due to multiple failed login attempts. Please try again in ${minutesLeft} minutes.`,
+      code: 'ACCOUNT_LOCKED',
+      lockoutUntil: admin.lockoutUntil,
+    });
+    return;
+  }
+
+  // Verify password
+  const isValidPassword = adminStore.verifyPassword(admin, String(password));
+  if (!isValidPassword) {
+    const { isLocked, remainingAttempts, lockoutUntil } = adminStore.recordFailedLogin(admin.id);
+    adminStore.writeAuditLog({
+      action: 'admin_login_failed',
+      adminId: admin.id,
+      adminEmail: admin.email,
+      targetType: 'auth',
+      afterValue: { reason: 'invalid_password', remainingAttempts },
+      ip: clientIp,
+    });
+
+    if (isLocked) {
+      res.status(429).json({
+        error: `Account locked due to 5 consecutive failed attempts. Please wait 15 minutes.`,
+        code: 'ACCOUNT_LOCKED',
+        lockoutUntil,
+      });
+      return;
+    }
+
+    res.status(401).json({
+      error: `Invalid admin credentials. ${remainingAttempts} attempt(s) remaining before temporary lockout.`,
+      remainingAttempts,
+    });
+    return;
+  }
+
+  // Password is correct. Check 2FA requirement.
+  const tempToken = createTempLoginToken(admin);
+
+  if (!admin.isTotpEnabled || !admin.totpSecret) {
+    // Admin needs to configure 2FA (enforced)
+    res.status(200).json({
+      requires2faSetup: true,
+      tempToken,
+      admin: {
+        id: admin.id,
+        email: admin.email,
+        name: admin.name,
+        role: admin.role,
+      },
+      message: '2FA setup is required to access the YAAD Admin Panel.',
+    });
+    return;
+  }
+
+  // 2FA is enabled; proceed to step 2 verification
+  res.status(200).json({
+    requires2faVerify: true,
+    tempToken,
+    admin: {
+      id: admin.id,
+      email: admin.email,
+      name: admin.name,
+      role: admin.role,
+    },
+    message: 'Please enter the 6-digit TOTP code from your authenticator app.',
+  });
+});
+
+// -----------------------------------------------------------------------------
+// 2. Admin Login (Step 2: TOTP Verification)
+// -----------------------------------------------------------------------------
+adminRouter.post('/auth/verify-2fa', rateLimit(10, 60 * 1000), (req: Request, res: Response) => {
+  const { tempToken, code } = req.body;
+  const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+  const userAgent = (req.headers['user-agent'] as string) || '';
+
+  const state = validateTempLoginToken(tempToken);
+  if (!state) {
+    res.status(400).json({
+      error: 'Login session expired or invalid. Please sign in again.',
+      code: 'TEMP_SESSION_EXPIRED',
+    });
+    return;
+  }
+
+  const admin = adminStore.findAdminById(state.adminId);
+  if (!admin) {
+    res.status(404).json({ error: 'Admin account not found.' });
+    return;
+  }
+
+  if (!code || !/^\d{6}$/.test(String(code).trim())) {
+    res.status(400).json({ error: 'Please enter a valid 6-digit TOTP code.' });
+    return;
+  }
+
+  const isValidCode = verifyTotpToken(admin.totpSecret, String(code).trim());
+  if (!isValidCode) {
+    adminStore.writeAuditLog({
+      action: 'admin_2fa_failed',
+      adminId: admin.id,
+      adminEmail: admin.email,
+      targetType: 'auth',
+      afterValue: { reason: 'invalid_totp_code' },
+      ip: clientIp,
+    });
+    res.status(401).json({
+      error: 'Invalid 2FA code. Please check your authenticator app and try again.',
+      code: 'INVALID_2FA_CODE',
+    });
+    return;
+  }
+
+  // Successful 2FA verification!
+  tempLogins.delete(tempToken);
+  adminStore.resetFailedAttempts(admin.id);
+  const session = adminStore.createSession(admin.id, clientIp, userAgent);
+
+  adminStore.writeAuditLog({
+    action: 'admin_login_success',
+    adminId: admin.id,
+    adminEmail: admin.email,
+    targetType: 'session',
+    targetId: session.sessionId,
+    ip: clientIp,
+    userAgent,
+    metadata: { role: admin.role },
+  });
+
+  // Set HTTP-only cookie if needed, and return token for client header storage
+  res.setHeader(
+    'Set-Cookie',
+    `yaad_admin_session=${encodeURIComponent(session.token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${12 * 3600}`
+  );
+
+  res.status(200).json({
+    token: session.token,
+    admin: sanitizeAdmin(admin),
+    expiresAt: session.expiresAt,
+  });
+});
+
+// -----------------------------------------------------------------------------
+// 3. Setup 2FA (Generate Secret & QR Code)
+// -----------------------------------------------------------------------------
+adminRouter.post('/auth/setup-2fa', async (req: Request, res: Response) => {
+  const { tempToken, token } = req.body;
+  let admin: AdminUser | undefined;
+
+  if (tempToken) {
+    const state = validateTempLoginToken(tempToken);
+    if (state) {
+      admin = adminStore.findAdminById(state.adminId);
+    }
+  } else if (token) {
+    const sessionRes = adminStore.validateSession(token);
+    admin = sessionRes.admin;
+  }
+
+  if (!admin) {
+    res.status(401).json({ error: 'Valid session or temp login token required.' });
+    return;
+  }
+
+  const secret = generateTotpSecret();
+  const otpAuthUri = buildOtpAuthUri(admin.email, secret, 'YAAD Admin');
+  const qrCodeDataUrl = await generateQrCodeDataUrl(otpAuthUri);
+
+  res.status(200).json({
+    secret,
+    otpAuthUri,
+    qrCodeDataUrl,
+    email: admin.email,
+  });
+});
+
+// -----------------------------------------------------------------------------
+// 4. Confirm 2FA Setup
+// -----------------------------------------------------------------------------
+adminRouter.post('/auth/confirm-2fa', (req: Request, res: Response) => {
+  const { tempToken, token, secret, code } = req.body;
+  const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+  const userAgent = (req.headers['user-agent'] as string) || '';
+
+  let admin: AdminUser | undefined;
+  if (tempToken) {
+    const state = validateTempLoginToken(tempToken);
+    if (state) admin = adminStore.findAdminById(state.adminId);
+  } else if (token) {
+    const sessionRes = adminStore.validateSession(token);
+    admin = sessionRes.admin;
+  }
+
+  if (!admin) {
+    res.status(401).json({ error: 'Valid session or temp login token required.' });
+    return;
+  }
+
+  if (!secret || !code) {
+    res.status(400).json({ error: 'Secret and verification code are required.' });
+    return;
+  }
+
+  const isValid = verifyTotpToken(secret, String(code).trim());
+  if (!isValid) {
+    res.status(400).json({
+      error: 'Verification code incorrect. Please verify the code on your authenticator app.',
+    });
+    return;
+  }
+
+  // Save TOTP secret and activate 2FA
+  adminStore.enableTotp(admin.id, secret);
+  if (tempToken) tempLogins.delete(tempToken);
+
+  adminStore.writeAuditLog({
+    action: 'admin_2fa_enabled',
+    adminId: admin.id,
+    adminEmail: admin.email,
+    targetType: 'admin_user',
+    targetId: admin.id,
+    ip: clientIp,
+  });
+
+  // Issue active session
+  const session = adminStore.createSession(admin.id, clientIp, userAgent);
+  res.setHeader(
+    'Set-Cookie',
+    `yaad_admin_session=${encodeURIComponent(session.token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${12 * 3600}`
+  );
+
+  res.status(200).json({
+    message: '2FA has been successfully configured and activated.',
+    token: session.token,
+    admin: sanitizeAdmin(admin),
+  });
+});
+
+// -----------------------------------------------------------------------------
+// 5. Forgot Password Request
+// -----------------------------------------------------------------------------
+adminRouter.post('/auth/forgot-password', rateLimit(5, 60 * 1000), (req: Request, res: Response) => {
+  const { email } = req.body;
+  const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+
+  if (!email) {
+    res.status(400).json({ error: 'Email address is required.' });
+    return;
+  }
+
+  const reset = adminStore.createPasswordReset(String(email).trim());
+  if (reset) {
+    const resetUrl = `/admin/reset-password?token=${reset.token}`;
+    adminStore.writeAuditLog({
+      action: 'admin_password_reset_requested',
+      adminEmail: reset.email,
+      targetType: 'auth',
+      afterValue: { tokenHash: reset.token.substring(0, 8) + '...' },
+      ip: clientIp,
+    });
+
+    console.log(`[YAAD Admin] Password reset link for ${email}: ${resetUrl}`);
+    res.status(200).json({
+      message: 'If an account exists with that email, a password reset link has been dispatched.',
+      // In dev environment, return the direct link so the admin can test immediately without an SMTP server
+      devResetLink: resetUrl,
+    });
+    return;
+  }
+
+  // Consistent response to prevent user enumeration
+  res.status(200).json({
+    message: 'If an account exists with that email, a password reset link has been dispatched.',
+  });
+});
+
+// -----------------------------------------------------------------------------
+// 6. Complete Password Reset
+// -----------------------------------------------------------------------------
+adminRouter.post('/auth/reset-password', rateLimit(5, 60 * 1000), (req: Request, res: Response) => {
+  const { token, newPassword } = req.body;
+  const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+
+  if (!token || !newPassword) {
+    res.status(400).json({ error: 'Reset token and new password are required.' });
+    return;
+  }
+
+  if (String(newPassword).length < 8) {
+    res.status(400).json({ error: 'Password must be at least 8 characters in length.' });
+    return;
+  }
+
+  const admin = adminStore.completePasswordReset(token, newPassword);
+  if (!admin) {
+    res.status(400).json({
+      error: 'Invalid or expired password reset link. Please request a new link.',
+      code: 'INVALID_RESET_TOKEN',
+    });
+    return;
+  }
+
+  adminStore.writeAuditLog({
+    action: 'admin_password_reset_completed',
+    adminId: admin.id,
+    adminEmail: admin.email,
+    targetType: 'admin_user',
+    targetId: admin.id,
+    ip: clientIp,
+  });
+
+  res.status(200).json({
+    message: 'Your password has been successfully reset. You can now sign in with your new credentials.',
+  });
+});
+
+// -----------------------------------------------------------------------------
+// 7. Get Current Admin Profile & Check Inactivity
+// -----------------------------------------------------------------------------
+adminRouter.get('/auth/me', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
+  res.status(200).json({
+    admin: sanitizeAdmin(req.admin!),
+    session: {
+      lastActivityAt: req.adminSession!.lastActivityAt,
+      expiresAt: req.adminSession!.expiresAt,
+    },
+  });
+});
+
+// -----------------------------------------------------------------------------
+// 8. Admin Logout
+// -----------------------------------------------------------------------------
+adminRouter.post('/auth/logout', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
+  const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+
+  adminStore.destroySession(req.adminSession!.token);
+  adminStore.writeAuditLog({
+    action: 'admin_logout',
+    adminId: req.admin!.id,
+    adminEmail: req.admin!.email,
+    targetType: 'session',
+    targetId: req.adminSession!.sessionId,
+    ip: clientIp,
+  });
+
+  res.setHeader('Set-Cookie', 'yaad_admin_session=; Path=/; HttpOnly; Max-Age=0');
+  res.status(200).json({ message: 'Signed out successfully.' });
+});
+
+// -----------------------------------------------------------------------------
+// 9. Staff & Team Management (Super Admin only for mutations)
+// -----------------------------------------------------------------------------
+adminRouter.get('/team', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
+  const { search, role, status, page = '1', limit = '10' } = req.query;
+
+  let admins = adminStore.getAllAdmins();
+
+  if (search) {
+    const q = String(search).toLowerCase();
+    admins = admins.filter(
+      (a) => a.name.toLowerCase().includes(q) || a.email.toLowerCase().includes(q)
+    );
+  }
+
+  if (role && role !== 'all') {
+    admins = admins.filter((a) => a.role === role);
+  }
+
+  if (status && status !== 'all') {
+    admins = admins.filter((a) => a.status === status);
+  }
+
+  const total = admins.length;
+  const p = Math.max(1, parseInt(String(page), 10));
+  const l = Math.max(1, parseInt(String(limit), 10));
+  const paged = admins.slice((p - 1) * l, p * l).map(sanitizeAdmin);
+
+  res.status(200).json({
+    admins: paged,
+    total,
+    page: p,
+    limit: l,
+    totalPages: Math.ceil(total / l),
+  });
+});
+
+adminRouter.post(
+  '/team/:id/status',
+  requireAdminAuth,
+  requireRoles('super_admin'),
+  (req: AdminAuthRequest, res: Response) => {
+    const targetId = req.params.id;
+    const { status, reason } = req.body;
+    const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+
+    if (targetId === req.admin!.id) {
+      res.status(400).json({ error: 'You cannot suspend your own admin account.' });
+      return;
+    }
+
+    if (!['active', 'suspended'].includes(status)) {
+      res.status(400).json({ error: 'Invalid status value.' });
+      return;
+    }
+
+    const targetAdmin = adminStore.findAdminById(targetId);
+    if (!targetAdmin) {
+      res.status(404).json({ error: 'Admin user not found.' });
+      return;
+    }
+
+    const before = { status: targetAdmin.status, reason: targetAdmin.suspendReason };
+    adminStore.setAdminStatus(targetId, status, reason);
+    const after = { status, reason };
+
+    adminStore.writeAuditLog({
+      action: status === 'suspended' ? 'admin_suspended' : 'admin_reactivated',
+      adminId: req.admin!.id,
+      adminEmail: req.admin!.email,
+      targetType: 'admin_user',
+      targetId,
+      beforeValue: before,
+      afterValue: after,
+      ip: clientIp,
+      metadata: { targetEmail: targetAdmin.email, reason },
+    });
+
+    res.status(200).json({
+      message: `Admin ${targetAdmin.email} has been ${status === 'suspended' ? 'suspended' : 'reactivated'}.`,
+    });
+  }
+);
+
+// -----------------------------------------------------------------------------
+// 10. Admin Invitations (Super Admin Only)
+// -----------------------------------------------------------------------------
+adminRouter.get('/invites', requireAdminAuth, requireRoles('super_admin'), (req: AdminAuthRequest, res: Response) => {
+  const invites = adminStore.getAllInvites();
+  res.status(200).json({ invites });
+});
+
+adminRouter.post('/invites', requireAdminAuth, requireRoles('super_admin'), (req: AdminAuthRequest, res: Response) => {
+  const { email, name, role } = req.body;
+  const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+
+  if (!email || !name || !role) {
+    res.status(400).json({ error: 'Name, email, and role are required for inviting an admin.' });
+    return;
+  }
+
+  const validRoles: AdminRole[] = ['super_admin', 'support_agent', 'content_editor', 'analyst'];
+  if (!validRoles.includes(role)) {
+    res.status(400).json({ error: `Invalid role. Allowed roles: ${validRoles.join(', ')}` });
+    return;
+  }
+
+  const existing = adminStore.findAdminByEmail(String(email).trim());
+  if (existing) {
+    res.status(400).json({ error: `An admin account with email ${email} already exists.` });
+    return;
+  }
+
+  const invite = adminStore.createInvite({
+    email: String(email).trim(),
+    name: String(name).trim(),
+    role,
+    invitedBy: {
+      id: req.admin!.id,
+      email: req.admin!.email,
+      name: req.admin!.name,
+    },
+  });
+
+  const inviteUrl = `/admin/accept-invite?token=${invite.token}`;
+
+  adminStore.writeAuditLog({
+    action: 'admin_invited',
+    adminId: req.admin!.id,
+    adminEmail: req.admin!.email,
+    targetType: 'admin_invite',
+    targetId: invite.id,
+    afterValue: { email: invite.email, role: invite.role, name: invite.name },
+    ip: clientIp,
+  });
+
+  console.log(`[YAAD Admin] Admin invite generated for ${invite.email}: ${inviteUrl}`);
+
+  res.status(201).json({
+    message: `Invite generated successfully for ${invite.email}.`,
+    invite,
+    inviteUrl,
+  });
+});
+
+adminRouter.delete(
+  '/invites/:id',
+  requireAdminAuth,
+  requireRoles('super_admin'),
+  (req: AdminAuthRequest, res: Response) => {
+    const inviteId = req.params.id;
+    const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+
+    const success = adminStore.revokeInvite(inviteId);
+    if (!success) {
+      res.status(404).json({ error: 'Pending invite not found.' });
+      return;
+    }
+
+    adminStore.writeAuditLog({
+      action: 'admin_invite_revoked',
+      adminId: req.admin!.id,
+      adminEmail: req.admin!.email,
+      targetType: 'admin_invite',
+      targetId: inviteId,
+      ip: clientIp,
+    });
+
+    res.status(200).json({ message: 'Invite revoked.' });
+  }
+);
+
+// Verify an invite token before rendering form
+adminRouter.get('/invites/verify', (req: Request, res: Response) => {
+  const token = String(req.query.token || '').trim();
+  const invite = adminStore.findInviteByToken(token);
+
+  if (!invite || invite.status !== 'pending' || Date.now() > invite.expiresAt) {
+    res.status(400).json({
+      error: 'This invitation link is invalid or has expired. Please contact a Super Admin.',
+      code: 'INVALID_INVITE',
+    });
+    return;
+  }
+
+  res.status(200).json({
+    email: invite.email,
+    name: invite.name,
+    role: invite.role,
+    expiresAt: invite.expiresAt,
+  });
+});
+
+// Accept invite & complete 2FA setup
+adminRouter.post('/invites/accept', (req: Request, res: Response) => {
+  const { token, password, totpSecret, totpCode } = req.body;
+  const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+  const userAgent = (req.headers['user-agent'] as string) || '';
+
+  if (!token || !password || !totpSecret || !totpCode) {
+    res.status(400).json({
+      error: 'Token, password, 2FA secret, and verification code are required.',
+    });
+    return;
+  }
+
+  if (String(password).length < 8) {
+    res.status(400).json({ error: 'Password must be at least 8 characters.' });
+    return;
+  }
+
+  const isValidCode = verifyTotpToken(totpSecret, String(totpCode).trim());
+  if (!isValidCode) {
+    res.status(400).json({
+      error: 'Verification code incorrect. Please verify your authenticator app code.',
+    });
+    return;
+  }
+
+  const newAdmin = adminStore.acceptInvite(token, String(password), totpSecret);
+  if (!newAdmin) {
+    res.status(400).json({ error: 'Invitation could not be accepted. It may be expired or already used.' });
+    return;
+  }
+
+  const session = adminStore.createSession(newAdmin.id, clientIp, userAgent);
+
+  adminStore.writeAuditLog({
+    action: 'admin_invite_accepted',
+    adminId: newAdmin.id,
+    adminEmail: newAdmin.email,
+    targetType: 'admin_user',
+    targetId: newAdmin.id,
+    afterValue: { role: newAdmin.role },
+    ip: clientIp,
+  });
+
+  res.setHeader(
+    'Set-Cookie',
+    `yaad_admin_session=${encodeURIComponent(session.token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${12 * 3600}`
+  );
+
+  res.status(200).json({
+    message: 'Welcome to the YAAD Admin Team! Your account has been activated.',
+    token: session.token,
+    admin: sanitizeAdmin(newAdmin),
+  });
+});
+
+// -----------------------------------------------------------------------------
+// 11. Audit Logs Viewer (Super Admin Only)
+// -----------------------------------------------------------------------------
+adminRouter.get(
+  '/audit-logs',
+  requireAdminAuth,
+  requireRoles('super_admin'),
+  (req: AdminAuthRequest, res: Response) => {
+    const { action, adminEmail, search, page = '1', limit = '50' } = req.query;
+
+    const p = Math.max(1, parseInt(String(page), 10));
+    const l = Math.max(1, parseInt(String(limit), 10));
+    const offset = (p - 1) * l;
+
+    const { logs, total } = adminStore.getAuditLogs({
+      action: action ? String(action) : undefined,
+      adminEmail: adminEmail ? String(adminEmail) : undefined,
+      search: search ? String(search) : undefined,
+      limit: l,
+      offset,
+    });
+
+    res.status(200).json({
+      logs,
+      total,
+      page: p,
+      limit: l,
+      totalPages: Math.ceil(total / l),
+    });
+  }
+);

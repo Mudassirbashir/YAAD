@@ -5,6 +5,7 @@ import crypto from 'crypto';
 import dotenv from 'dotenv';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Type } from '@google/genai';
+import { adminRouter } from './server/admin/routes';
 import {
   generateRegistrationOptions,
   verifyRegistrationResponse,
@@ -19,9 +20,16 @@ const PORT = 3000;
 
 app.use(express.json());
 
+// Dedicated Staff Admin API routes (Module 1-12)
+app.use('/api/admin', adminRouter);
+
 // Canonical production domain migration middleware:
 // Redirect requests arriving on deployment-specific URLs or legacy domains to https://yaadapppk.vercel.app
 app.use((req, res, next) => {
+  // Never redirect internal admin endpoints
+  if (req.path.startsWith('/admin') || req.path.startsWith('/api/admin')) {
+    return next();
+  }
   const hostHeader = req.headers['x-forwarded-host'] || req.headers.host || '';
   const rawHost = Array.isArray(hostHeader) ? hostHeader[0] : hostHeader;
   const host = rawHost.split(':')[0].toLowerCase();
