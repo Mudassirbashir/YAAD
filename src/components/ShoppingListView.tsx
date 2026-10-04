@@ -28,6 +28,7 @@ interface ShoppingListViewProps {
   onCompleteTrip: (completedList: ShoppingList) => void;
   onEditList: (list: ShoppingList) => void;
   onOpenProfile: () => void;
+  onDeleteList?: (listId: string) => void;
   isCompletingTrip?: boolean;
   completionError?: string | null;
   onClearCompletionError?: () => void;
@@ -40,6 +41,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
   onCompleteTrip,
   onEditList,
   onOpenProfile,
+  onDeleteList,
   isCompletingTrip = false,
   completionError = null,
   onClearCompletionError,
@@ -51,6 +53,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
   const [newItemText, setNewItemText] = useState<string>('');
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
 
   // Transient feedback banner for added/updated items
   const [feedbackToast, setFeedbackToast] = useState<{ message: string; type: 'add' | 'merge' } | null>(null);
@@ -665,13 +668,26 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
         onBack={onBack}
         onAvatarClick={onOpenProfile}
         rightAction={
-          <button
-            onClick={() => onEditList(list)}
-            className="font-['Manrope'] text-sm font-bold text-primary hover:bg-surface-container-low px-3 py-1.5 rounded-full transition-colors active:scale-95 flex items-center gap-1"
-          >
-            <Edit3 className="w-3.5 h-3.5" />
-            <span>{t('shoppingList.editList')}</span>
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => onEditList(list)}
+              className="font-['Manrope'] text-sm font-bold text-primary hover:bg-surface-container-low px-3 py-1.5 rounded-full transition-colors active:scale-95 flex items-center gap-1 cursor-pointer"
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span>{t('shoppingList.editList')}</span>
+            </button>
+            {onDeleteList && (
+              <button
+                type="button"
+                id="shopping_list_delete_btn"
+                onClick={() => setShowDeleteConfirm(true)}
+                aria-label={t('delete') || 'Delete list'}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors active:scale-95 cursor-pointer"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         }
       />
 
@@ -1125,6 +1141,58 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
         onSave={handleSaveQuantity}
         onDeleteItem={handleDeleteItem}
       />
+
+      {/* Delete List Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div
+          onClick={() => setShowDeleteConfirm(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-fade-in"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white dark:bg-stone-900 rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-surface-dim space-y-4 animate-scale-in"
+          >
+            <div className="flex items-center gap-3 text-rose-700 dark:text-rose-400">
+              <div className="w-10 h-10 rounded-full bg-rose-50 dark:bg-rose-950/40 flex items-center justify-center shrink-0">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-base text-on-surface truncate">
+                  {t('delete') || 'Delete List'}
+                </h3>
+                <p className="text-xs text-outline font-['Manrope'] truncate">
+                  {list.title}
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-on-surface-variant leading-relaxed">
+              Are you sure you want to delete this shopping list? This action cannot be undone.
+            </p>
+
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                className="h-11 rounded-full bg-surface-container text-on-surface font-['Manrope'] text-xs sm:text-sm font-semibold hover:bg-surface-container-high transition-colors cursor-pointer"
+              >
+                {t('cancel')}
+              </button>
+              <button
+                type="button"
+                id="confirm_delete_list_btn"
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  onDeleteList?.(list.id);
+                }}
+                className="h-11 rounded-full bg-rose-600 text-white font-['Manrope'] text-xs sm:text-sm font-semibold hover:bg-rose-700 transition-colors shadow-xs active:scale-95 cursor-pointer"
+              >
+                {t('delete')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

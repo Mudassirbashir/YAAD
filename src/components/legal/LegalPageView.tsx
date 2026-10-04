@@ -84,7 +84,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
     { id: 'ex-4', category: 'Produce', name: 'Adrak (Ginger)', quantity: '1 Pao (250g)', completed: true },
     { id: 'ex-5', category: 'Dairy & Breakfast', name: 'Fresh Milk (Doodh)', quantity: '2 Litres', completed: true },
     { id: 'ex-6', category: 'Dairy & Breakfast', name: 'Desi Eggs', quantity: '1 Dozen', completed: false },
-    { id: 'ex-7', category: 'Dairy & Breakfast', name: 'Chai Patti (Tea)', quantity: '450 g', completed: false },
+    { id: 'ex-7', category: 'Dairy & Breakfast', name: 'Chai Patti', quantity: '450 g', completed: false },
     { id: 'ex-8', category: 'Pantry & Grains', name: 'Chakki Atta', quantity: '10 kg', completed: false },
     { id: 'ex-9', category: 'Pantry & Grains', name: 'Basmati Rice', quantity: '5 kg', completed: true },
     { id: 'ex-10', category: 'Pantry & Grains', name: 'Cooking Oil', quantity: '5 Litres', completed: false },
@@ -893,7 +893,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                   </div>
                   <h4 className="text-sm font-bold text-[#1c2826]">Explore Feature Suite</h4>
                   <p className="text-xs text-[#556960] leading-relaxed">
-                    Bilingual intelligence, offline IndexedDB storage, Pakistani unit converters, and passkey authentication.
+                    Bilingual intelligence, offline IndexedDB storage, Pakistani unit converters, and secure cloud sync.
                   </p>
                 </a>
 
@@ -1062,7 +1062,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                   type="text"
                   value={faqSearchQuery}
                   onChange={(e) => setFaqSearchQuery(e.target.value)}
-                  placeholder="Search questions (e.g. offline, passkey, urdu)..."
+                  placeholder="Search questions (e.g. offline, sync, urdu)..."
                   className="w-full h-11 bg-white rounded-2xl ps-10 pe-4 text-sm border border-[#e5e1d8] focus:border-[#005039] focus:ring-2 focus:ring-[#005039]/20 outline-none text-[#1c2826] placeholder:text-[#788880] shadow-2xs"
                 />
               </div>
@@ -1227,7 +1227,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                     Privacy Policy
                   </h3>
                   <p className="text-xs text-[#556960] leading-relaxed">
-                    Zero ad selling guarantee, database isolation, passkeys, and account deletion.
+                    Zero ad selling guarantee, database isolation, secure authentication, and account deletion.
                   </p>
                   <code className="text-xs text-[#005039] font-mono block">/privacy</code>
                 </div>
@@ -1965,7 +1965,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
             <div className="p-6 rounded-3xl bg-[#faf8f5] border border-[#e5e1d8] flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="space-y-1 text-center sm:text-start">
                 <h4 className="text-sm sm:text-base font-bold text-[#1c2826]">
-                  Have questions about offline mode or passkeys?
+                  Have questions about offline mode or syncing?
                 </h4>
                 <p className="text-xs text-[#556960]">
                   Read our interactive Frequently Asked Questions for direct, transparent answers.

@@ -71,7 +71,7 @@ export const AppearanceSection: React.FC = () => {
         </div>
 
         <span className="text-[11px] font-bold text-primary bg-primary-fixed/40 px-2.5 py-1 rounded-full">
-          {themes.length} {language === 'ur' ? 'تھیمز' : 'Themes'}
+          {themes.length} {language === 'ur' ? 'تھیمز' : themes.length === 1 ? 'Theme' : 'Themes'}
         </span>
       </div>
 

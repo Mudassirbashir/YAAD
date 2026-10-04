@@ -600,12 +600,17 @@ export async function loadUserShoppingLists(
     }
 
     if (!listsData || listsData.length === 0) {
-      // Check if user has offline-created lists that are pending sync
+      // Check if user has offline-created lists that are pending sync or local cache
       const pendingOps = await getPendingOfflineOperations(verifiedUserId);
-      if (pendingOps.length > 0) {
-        return { lists: cachedOfflineLists, error: null };
+      const pendingDeleteListIds = new Set(
+        pendingOps.filter((op) => op.type === 'DELETE_LIST').map((op) => op.listId)
+      );
+      // If user has local cached lists that have not been explicitly deleted, preserve them!
+      const nonDeletedCached = cachedOfflineLists.filter((l) => !pendingDeleteListIds.has(l.id));
+      if (nonDeletedCached.length > 0) {
+        return { lists: nonDeletedCached, error: null };
       }
-      // If user has 0 lists on remote Supabase and no pending offline ops, synchronize local IndexedDB
+      // Only synchronize empty array if user genuinely has no local or pending lists
       await saveOfflineListsBatch(verifiedUserId, []);
       return { lists: [], error: null };
     }
@@ -738,18 +743,17 @@ export async function loadUserShoppingLists(
       return remoteList;
     });
 
-    // Include only genuinely new, unsynced local drafts that have not yet reached Supabase
-    // If a list was previously synced (isSynced !== false) and is missing from activeRemoteLists,
-    // it was deleted from Supabase and must NOT be resurrected as a ghost card!
+    // Include local lists that have not been explicitly deleted:
+    // If a list was created or modified locally, preserve it so it never vanishes unexpectedly
     cachedOfflineLists.forEach((localList) => {
       const isPendingSave = pendingSaveListIds.has(localList.id);
       const isUnsyncedDraft = localList.isSynced === false;
-      if (
-        !pendingDeleteListIds.has(localList.id) &&
-        !activeRemoteLists.some((rl) => rl.id === localList.id) &&
-        (isPendingSave || isUnsyncedDraft)
-      ) {
-        mergedLists.push({ ...localList, isSynced: false });
+      const isNotDeleted = !pendingDeleteListIds.has(localList.id);
+      const existsInRemote = activeRemoteLists.some((rl) => rl.id === localList.id);
+
+      if (isNotDeleted && !existsInRemote) {
+        // Keep the local list active so it doesn't vanish
+        mergedLists.push({ ...localList, isSynced: isPendingSave || isUnsyncedDraft ? false : true });
       }
     });
 
@@ -833,11 +837,12 @@ async function executeInternalSaveUserShoppingList(
       icon: list.icon || 'shopping_basket',
       is_completed: isCompleted,
       completed_at: list.completedAt ? (list.completedAt.includes('T') ? list.completedAt : new Date().toISOString()) : (isCompleted ? new Date().toISOString() : null),
+      items: list.items || [],
       created_at: createdIso,
       updated_at: new Date().toISOString(),
     };
 
-    const { error: listError } = await resilientUpsert('shopping_lists', listPayload);
+    const { error: listError } = await resilientUpsert('shopping_lists', listPayload, { onConflict: 'id' });
 
     if (listError) {
       console.warn('Error saving list to Supabase, queuing offline mutation:', listError.message);

@@ -675,6 +675,16 @@ export const en = {
     sun: 'Sun',
   },
 
+  // Error States & Access Errors
+  errors: {
+    sessionUnavailable: 'Shopping Session Unavailable',
+    sessionUnavailableDesc: 'This shopping session could not be found or you do not have permission to view it.',
+    listUnavailable: 'Shopping List Unavailable',
+    listUnavailableDesc: 'This shopping list is either private, has been removed, or you do not have permission to view it.',
+    pageNotFound: 'Page Not Found',
+    pageNotFoundDesc: "The link you followed doesn't exist, may have been moved, or requires a different account.",
+  },
+
   // App Update Notification
   appUpdate: {
     badge: 'New Update',

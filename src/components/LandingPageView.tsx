@@ -45,7 +45,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
     { id: '1', name: 'Basmati Rice', quantity: '5 kg', completed: false },
     { id: '2', name: 'Cooking Oil', quantity: '2 Liters', completed: false },
     { id: '3', name: 'Desi Eggs', quantity: '1 Dozen', completed: true },
-    { id: '4', name: 'Chai Patti (Tea)', quantity: '450 g', completed: false },
+    { id: '4', name: 'Chai Patti', quantity: '450 g', completed: false },
   ]);
 
   const toggleDemoItem = (id: string) => {

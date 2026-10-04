@@ -178,7 +178,7 @@ export const CategoryBrowserModal: React.FC<CategoryBrowserModalProps> = ({
           <button
             type="button"
             onClick={() => setSelectedCategory('all')}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 transition-all ${
               selectedCategory === 'all'
                 ? 'bg-primary text-white shadow-xs'
                 : 'bg-surface-container text-outline hover:text-on-surface'
@@ -191,7 +191,7 @@ export const CategoryBrowserModal: React.FC<CategoryBrowserModalProps> = ({
               key={cat.id}
               type="button"
               onClick={() => setSelectedCategory(cat.id)}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap flex items-center gap-1.5 transition-all ${
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 flex items-center gap-1.5 transition-all ${
                 selectedCategory === cat.id
                   ? 'bg-primary text-white shadow-xs'
                   : 'bg-surface-container text-outline hover:text-on-surface'

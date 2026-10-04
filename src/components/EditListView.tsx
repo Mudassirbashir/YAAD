@@ -18,6 +18,7 @@ interface EditListViewProps {
   onBack: () => void;
   onSave: (updatedList: ShoppingList) => void;
   onOpenProfile: () => void;
+  onDeleteList?: (listId: string) => void;
 }
 
 export const EditListView: React.FC<EditListViewProps> = ({
@@ -25,6 +26,7 @@ export const EditListView: React.FC<EditListViewProps> = ({
   onBack,
   onSave,
   onOpenProfile,
+  onDeleteList,
 }) => {
   const { t, getCategoryName, language } = useLanguage();
   const { theme, currentThemeConfig } = useAppTheme();
@@ -35,6 +37,7 @@ export const EditListView: React.FC<EditListViewProps> = ({
   const [newItemName, setNewItemName] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<CategoryId>('vegetables');
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
 
   // Transient feedback banner for added/removed items
   const [feedbackToast, setFeedbackToast] = useState<{ message: string; type: 'add' | 'remove' } | null>(null);
@@ -384,8 +387,75 @@ export const EditListView: React.FC<EditListViewProps> = ({
               );
             })
           )}
+
+          {/* Delete List Button */}
+          {onDeleteList && (
+            <div className="pt-8 pb-24 flex justify-center">
+              <button
+                type="button"
+                id="edit_list_delete_btn"
+                onClick={() => setShowDeleteConfirm(true)}
+                className="rounded-full bg-transparent text-rose-700 dark:text-rose-400 font-['Manrope'] text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 hover:bg-rose-50 dark:hover:bg-rose-950/30 px-5 py-2.5 transition-colors active:scale-95 cursor-pointer border border-rose-200 dark:border-rose-900/50"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>{t('delete') || 'Delete List'}</span>
+              </button>
+            </div>
+          )}
         </div>
       </main>
+
+      {/* Delete List Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div
+          onClick={() => setShowDeleteConfirm(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-fade-in"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white dark:bg-stone-900 rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-surface-dim space-y-4 animate-scale-in"
+          >
+            <div className="flex items-center gap-3 text-rose-700 dark:text-rose-400">
+              <div className="w-10 h-10 rounded-full bg-rose-50 dark:bg-rose-950/40 flex items-center justify-center shrink-0">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-base text-on-surface truncate">
+                  {t('delete') || 'Delete List'}
+                </h3>
+                <p className="text-xs text-outline font-['Manrope'] truncate">
+                  {list.title}
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-on-surface-variant leading-relaxed">
+              Are you sure you want to delete this shopping list? This action cannot be undone.
+            </p>
+
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                className="h-11 rounded-full bg-surface-container text-on-surface font-['Manrope'] text-xs sm:text-sm font-semibold hover:bg-surface-container-high transition-colors cursor-pointer"
+              >
+                {t('cancel')}
+              </button>
+              <button
+                type="button"
+                id="confirm_delete_list_edit_btn"
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  onDeleteList?.(list.id);
+                }}
+                className="h-11 rounded-full bg-rose-600 text-white font-['Manrope'] text-xs sm:text-sm font-semibold hover:bg-rose-700 transition-colors shadow-xs active:scale-95 cursor-pointer"
+              >
+                {t('delete')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Quantity Edit Modal */}
       <QuantityEditModal

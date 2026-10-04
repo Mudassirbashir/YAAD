@@ -7,6 +7,7 @@ import { computeFuzzyConfidence, FUZZY_MIN_ACCEPTABLE_SCORE } from './fuzzyMatch
 import { classifyUnknownItem } from './aiClassifier';
 import { splitMultiItemInput, parseMultiItemInput } from './multiItemParser';
 import { getUserCustomAlias } from './userAliases';
+import { containsUrdu } from '../../utils/bidi';
 
 export { splitMultiItemInput, parseMultiItemInput };
 
@@ -315,7 +316,10 @@ export interface ParsedItemResult extends RecognitionResult {
  */
 export function parseShoppingItem(rawInput: string): ParsedItemResult {
   const recognized = recognizeItem(rawInput);
-  const displayName = recognized.canonicalName || recognized.rawInput;
+  const isUrduInput = containsUrdu(rawInput);
+  const displayName = isUrduInput
+    ? (recognized.nameUrdu || recognized.rawInput)
+    : (recognized.canonicalName || recognized.rawInput);
   return {
     ...recognized,
     name: displayName,
@@ -328,7 +332,10 @@ export function parseShoppingItem(rawInput: string): ParsedItemResult {
  */
 export async function parseShoppingItemWithAI(rawInput: string): Promise<ParsedItemResult> {
   const recognized = await recognizeItemWithAI(rawInput);
-  const displayName = recognized.canonicalName || recognized.rawInput;
+  const isUrduInput = containsUrdu(rawInput);
+  const displayName = isUrduInput
+    ? (recognized.nameUrdu || recognized.rawInput)
+    : (recognized.canonicalName || recognized.rawInput);
   return {
     ...recognized,
     name: displayName,

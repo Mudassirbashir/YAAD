@@ -678,6 +678,16 @@ export const romanUrdu: typeof en = {
     sun: 'Itwar',
   },
 
+  // Error States & Access Errors
+  errors: {
+    sessionUnavailable: 'Shopping Session Dastyab Nahi',
+    sessionUnavailableDesc: 'Yeh shopping session nahi mila ya aapke paas isko dekhne ki permission nahi hai.',
+    listUnavailable: 'Shopping List Dastyab Nahi',
+    listUnavailableDesc: 'Yeh shopping list private hai, delete ho chuki hai, ya aapke paas access nahi hai.',
+    pageNotFound: 'Page Nahi Mila (404)',
+    pageNotFoundDesc: 'Aap jis link par aaye hain woh dastyab nahi hai, hata diya gaya hai, ya galat address hai.',
+  },
+
   // App Update Notification
   appUpdate: {
     badge: 'Nayi Update',

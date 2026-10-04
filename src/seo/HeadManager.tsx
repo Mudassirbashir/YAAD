@@ -302,7 +302,7 @@ export const HeadManager: React.FC = () => {
               'Roman Urdu natural kitchen item input',
               'Offline-first shopping list with local IndexedDB storage',
               'Pakistani units (kg, grams, pao, darjan)',
-              'Passkey biometric authentication',
+              'Secure Google OAuth and password sign-in',
               'Zero ad tracking and private data security',
             ],
           },

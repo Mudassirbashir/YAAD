@@ -190,6 +190,16 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
       current = resolveInObj(translations.en, parts);
     }
 
+    // 2b. Automatically use singular form when count === 1 if available
+    if (params && (params.count === 1 || params.count === '1')) {
+      const singularParts = [...parts];
+      singularParts[singularParts.length - 1] = singularParts[singularParts.length - 1] + 'One';
+      const singular = resolveInObj(translations[language], singularParts) || resolveInObj(translations.en, singularParts);
+      if (typeof singular === 'string') {
+        current = singular;
+      }
+    }
+
     // 3. Try matching direct top-level key or last token in en
     if (current === undefined && parts.length > 1) {
       const lastKey = parts[parts.length - 1];

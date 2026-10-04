@@ -99,6 +99,15 @@ export const ur = {
     listItemsHeader: 'لسٹ کی اشیاء',
     startShoppingBtn: 'خریداری شروع کریں',
   },
+  errors: {
+    ...en.errors,
+    sessionUnavailable: 'شاپنگ سیشن دستیاب نہیں',
+    sessionUnavailableDesc: 'یہ شاپنگ سیشن نہیں مل سکا یا آپ کے پاس اسے دیکھنے کی اجازت نہیں ہے۔',
+    listUnavailable: 'شاپنگ لسٹ دستیاب نہیں',
+    listUnavailableDesc: 'یہ شاپنگ لسٹ یا تو پرائیویٹ ہے، ہٹا دی گئی ہے، یا آپ کے پاس رسائی نہیں ہے۔',
+    pageNotFound: 'صفحہ نہیں ملا',
+    pageNotFoundDesc: 'آپ جس لنک پر آئے ہیں وہ دستیاب نہیں ہے، یا تو ہٹا دیا گیا ہے یا ایڈریس درست نہیں ہے۔',
+  },
   appUpdate: {
     ...en.appUpdate,
     title: 'یاد ایپ کی نئی اپ ڈیٹ',

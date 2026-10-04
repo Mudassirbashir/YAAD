@@ -343,7 +343,7 @@ export function parseRoute(rawPathname: string): ParsedRoute {
     };
   }
 
-  if (norm === '/how-it-works' || norm === '/howitworks' || norm === '/how') {
+  if (norm === '/how-it-works' || norm === '/howitworks' || norm === '/how' || norm === '/how_it_works') {
     return {
       routeId: 'how_it_works',
       pathname: '/how-it-works',

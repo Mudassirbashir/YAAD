@@ -245,23 +245,23 @@ export const TERMS_SECTIONS: LegalSection[] = [
   {
     id: 'accounts',
     title: {
-      en: '3. User Accounts, Phone Verification, & Passkeys',
-      romanUrdu: '3. User Account, Phone Aur Passkeys',
-      ur: '3. User Accounts, Phone Verification, & Passkeys',
+      en: '3. User Accounts, Profile Details, & Security',
+      romanUrdu: '3. User Account, Profile Aur Security',
+      ur: '3. User Accounts, Profile Details, & Security',
     },
     content: {
       en: [
-        'To synchronize shopping lists across multiple devices, users create an account using email, verified phone number, Google OAuth, or FIDO2/WebAuthn Passkeys.',
+        'To synchronize shopping lists across multiple devices, users create an account using email and password or Google OAuth. You can optionally add a contact phone number and display name in your profile settings.',
         'You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. If you suspect unauthorized access, notify us immediately at yaadapppk@gmail.com.',
         'We reserve the right to suspend or terminate accounts that provide fraudulent information or violate security integrity.',
       ],
       romanUrdu: [
-        'Apni shopping lists ko mukhtalif phones par sync karne k liye aap email, verified phone number, Google ya Passkey ke zariye account banate hain.',
+        'Apni shopping lists ko mukhtalif phones par sync karne k liye aap email aur password ya Google ke zariye account banate hain. Profile settings mein optional phone number aur naam bhi shamil kiya ja sakta hai.',
         'Apne account aur password ki hifazat aapki zimadari hai. Agar aapko shak ho k kisi ne aapka account khola hai to foran yaadapppk@gmail.com par rabta karein.',
         'Ghalat ya jaali maloomat faraham karne walay accounts ko band karne ka haq mehfooz hai.',
       ],
       ur: [
-        'To synchronize shopping lists across multiple devices, users create an account using email, verified phone number, Google OAuth, or FIDO2/WebAuthn Passkeys.',
+        'To synchronize shopping lists across multiple devices, users create an account using email and password or Google OAuth. You can optionally add a contact phone number and display name in your profile settings.',
         'You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. If you suspect unauthorized access, notify us immediately at yaadapppk@gmail.com.',
         'We reserve the right to suspend or terminate accounts that provide fraudulent information or violate security integrity.',
       ],
@@ -392,21 +392,21 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
     },
     content: {
       en: [
-        'Account Information: When creating an account, we collect your email address, chosen display name, optional phone number for SMS verification/recovery, and avatar selection.',
+        'Account Information: When creating an account, we collect your email address, chosen display name, optional phone number for profile contact, and avatar selection.',
         'Shopping Data: Shopping list titles, items added, checked/completed statuses, quantities, units, and timestamps.',
-        'Authentication Security: If you enable WebAuthn Passkeys, we store the public credential ID and public key. Your actual biometric fingerprint or face scan NEVER leaves your local phone or hardware security enclave.',
+        'Authentication Security: Account passwords are cryptographically hashed and salted. When signing in with Google, authentication tokens are verified securely via Google OAuth without exposing sensitive credentials.',
         'Diagnostic & Network Telemetry: Basic anonymous error logs and online/offline connectivity status to ensure dependable synchronization.',
       ],
       romanUrdu: [
-        'Account Data: Account banate waqt aapka email, naam, phone number aur avatar save hota hai.',
+        'Account Data: Account banate waqt aapka email, naam, optional phone number aur avatar save hota hai.',
         'Shopping Lists: Lists k naam, items, unki tadaad (quantity) aur mukammal hone ki tareekh.',
-        'Passkey Data: Agar aap biometric passkey lagayein to sirf public key save hoti hai, aapka fingerprint hamesha aapke phone k andar hi rehta hai.',
+        'Account Security: Passwords ko cryptographic hash k zariye mehfooz banaya jata hai aur Google sign-in k zariye baghair password k mehfooz login hota hai.',
         'Technical Logs: App k errors theek karne aur sync behtar karne k liye bunyadi technical logs.',
       ],
       ur: [
-        'Account Information: When creating an account, we collect your email address, chosen display name, optional phone number for SMS verification/recovery, and avatar selection.',
+        'Account Information: When creating an account, we collect your email address, chosen display name, optional phone number for profile contact, and avatar selection.',
         'Shopping Data: Shopping list titles, items added, checked/completed statuses, quantities, units, and timestamps.',
-        'Authentication Security: If you enable WebAuthn Passkeys, we store the public credential ID and public key. Your actual biometric fingerprint or face scan NEVER leaves your local phone or hardware security enclave.',
+        'Authentication Security: Account passwords are cryptographically hashed and salted. When signing in with Google, authentication tokens are verified securely via Google OAuth without exposing sensitive credentials.',
         'Diagnostic & Network Telemetry: Basic anonymous error logs and online/offline connectivity status to ensure dependable synchronization.',
       ],
     },
@@ -648,17 +648,17 @@ export const FAQS: FAQItem[] = [
     },
   },
   {
-    id: 'passkeys-how',
+    id: 'account-security-how',
     category: 'security',
     question: {
-      en: 'What is a Passkey and why should I use it?',
-      romanUrdu: 'Passkey kya hai aur iska kya faida hai?',
-      ur: 'What is a Passkey and why should I use it?',
+      en: 'How do I sign in and keep my account secure?',
+      romanUrdu: 'YAAD par sign in kaise karein aur account mehfooz kaise rakhein?',
+      ur: 'How do I sign in and keep my account secure?',
     },
     answer: {
-      en: 'Passkeys allow you to sign in instantly using your fingerprint, Face ID, or screen lock. Passkeys are phishing-resistant, require no password to remember, and your biometric scan stays 100% secure on your device.',
-      romanUrdu: 'Passkey k zariye aap fingerprint ya Face ID se foran sign in kar sakte hain. Password yaad rakhne ki zaroorat nahi rehti aur yeh nihayat mehfooz hai.',
-      ur: 'Passkeys allow you to sign in instantly using your fingerprint, Face ID, or screen lock. Passkeys are phishing-resistant, require no password to remember, and your biometric scan stays 100% secure on your device.',
+      en: 'You can sign in securely using Google Sign-In or your email and password. You can also change your password at any time in Settings → Security.',
+      romanUrdu: 'Aap Google Sign-In ya email aur password k zariye aasani se sign in kar sakte hain. Password tabdeel karne k liye Settings → Security mein jayein.',
+      ur: 'You can sign in securely using Google Sign-In or your email and password. You can also change your password at any time in Settings → Security.',
     },
   },
   {
@@ -684,9 +684,9 @@ export const FAQS: FAQItem[] = [
       ur: 'How do I delete my account and erase all my lists?',
     },
     answer: {
-      en: 'Go to Settings > Account > Delete Account. Confirm your request, and all your shopping lists, profile data, and passkeys will be immediately and permanently deleted from our servers.',
+      en: 'Go to Settings > Account > Delete Account. Confirm your request, and all your shopping lists and profile data will be immediately and permanently deleted from our servers.',
       romanUrdu: 'Settings mein jayein aur "Delete Account" par click karein. Tasdeeq karne par aapka tamam data server se foran mita diya jayega.',
-      ur: 'Go to Settings > Account > Delete Account. Confirm your request, and all your shopping lists, profile data, and passkeys will be immediately and permanently deleted from our servers.',
+      ur: 'Go to Settings > Account > Delete Account. Confirm your request, and all your shopping lists and profile data will be immediately and permanently deleted from our servers.',
     },
   },
 ];
@@ -785,9 +785,9 @@ export const FEATURES_DATA: FeatureItem[] = [
       ur: 'Zero Ad-Tracking & Private Data Isolation',
     },
     description: {
-      en: 'No intrusive popups, no third-party ad pixels, and no selling your shopping data to brokers. Protected with Row Level Security (RLS) and Passkey authentication.',
+      en: 'No intrusive popups, no third-party ad pixels, and no selling your shopping data to brokers. Protected with Row Level Security (RLS) and secure authentication.',
       romanUrdu: 'Koi ads nahi, koi tracking nahi. Aapka shopping data sirf aapka hai aur mukammal secure hai.',
-      ur: 'No intrusive popups, no third-party ad pixels, and no selling your shopping data to brokers. Protected with Row Level Security (RLS) and Passkey authentication.',
+      ur: 'No intrusive popups, no third-party ad pixels, and no selling your shopping data to brokers. Protected with Row Level Security (RLS) and secure authentication.',
     },
   },
 ];

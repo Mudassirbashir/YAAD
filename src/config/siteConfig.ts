@@ -137,7 +137,7 @@ export const SITE_CONFIG = {
         en: 'Help & FAQ • How to Use YAAD Shopping Reminder', romanUrdu: 'Madad Aur FAQ • YAAD App Istemal Karne Ka Tareeqa', ur: 'Help & FAQ • How to Use YAAD Shopping Reminder',
       },
       description: {
-        en: 'Frequently asked questions about YAAD. Learn how to use offline mode, organize grocery items by aisle, log in with Passkeys, and add items in Urdu or Roman Urdu.', romanUrdu: 'YAAD k baray mein aam sawalat k jawabat. Offline mode, passkey login aur grocery items organize karne ka tareeqa seekhein.', ur: 'Frequently asked questions about YAAD. Learn how to use offline mode, organize grocery items by aisle, log in with Passkeys, and add items in Urdu or Roman Urdu.',
+        en: 'Frequently asked questions about YAAD. Learn how to use offline mode, organize grocery items by aisle, sync household lists, and add items in Urdu or Roman Urdu.', romanUrdu: 'YAAD k baray mein aam sawalat k jawabat. Offline mode, sync aur grocery items organize karne ka tareeqa seekhein.', ur: 'Frequently asked questions about YAAD. Learn how to use offline mode, organize grocery items by aisle, sync household lists, and add items in Urdu or Roman Urdu.',
       },
     },
     terms: {

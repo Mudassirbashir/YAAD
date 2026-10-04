@@ -11,12 +11,13 @@ import {
   Check,
   Search,
   X,
+  Pencil,
 } from 'lucide-react';
 import { CategoryId, CATEGORIES_LIST, ShoppingItem } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { CategoryIcon } from './CategoryIcon';
 import { ItemVisualIcon } from './ItemVisualIcon';
-import { BidiText } from '../utils/bidi';
+import { BidiText, containsUrdu } from '../utils/bidi';
 import { saveUserCategoryOverride } from '../lib/categorizer';
 import { parseShoppingItem, parseMultiItemInput } from '../lib/recognition/engine';
 import { detectDuplicateItem, mergeQuantities } from '../lib/recognition';
@@ -37,6 +38,7 @@ export interface AddItemsViewProps {
   onBack: () => void;
   onStartShopping: (items: ShoppingItem[]) => void;
   onItemsChange?: (items: ShoppingItem[]) => void;
+  onRenameList?: (newTitle: string) => void;
 }
 
 export const AddItemsView: React.FC<AddItemsViewProps> = ({
@@ -46,9 +48,14 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
   onBack,
   onStartShopping,
   onItemsChange,
+  onRenameList,
 }) => {
-  const { t, getCategoryName } = useLanguage();
+  const { t, getCategoryName, language } = useLanguage();
+  const isUrdu = language === 'ur';
   const [items, setItems] = useState<ShoppingItem[]>(initialItems);
+  const [currentTitle, setCurrentTitle] = useState<string>(listTitle);
+  const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
+  const [titleInputVal, setTitleInputVal] = useState<string>(listTitle);
   const [inputVal, setInputVal] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<CategoryId>('vegetables');
   const [userManuallySelectedCategory, setUserManuallySelectedCategory] = useState<boolean>(false);
@@ -260,7 +267,8 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
     // If options provided directly from catalog search result
     if (options && options.canonicalName) {
       const finalCategory = options.categoryId || selectedCategory || 'vegetables';
-      const displayName = options.englishName || options.canonicalName;
+      const isUrduInput = containsUrdu(trimmed) || isUrdu;
+      const displayName = (isUrduInput && options.urduName) ? options.urduName : (options.englishName || options.canonicalName);
 
       // Duplicate detection
       const duplicateCheck = detectDuplicateItem(items, {
@@ -394,7 +402,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
         );
       } else {
         const newItemId = generateUUID();
-        const displayName = parsed.canonicalName || parsed.name;
+        const displayName = parsed.name || (isUrdu && parsed.nameUrdu ? parsed.nameUrdu : (parsed.canonicalName || parsed.rawInput));
         const newItem: ShoppingItem = {
           id: newItemId,
           name: displayName,
@@ -574,12 +582,72 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
           >
             <ArrowLeft className="w-5 h-5 rtl:rotate-180 text-primary" />
           </button>
-          <BidiText
-            as="h2"
-            className="font-['Plus_Jakarta_Sans'] text-base sm:text-lg font-bold text-primary truncate max-w-[220px] sm:max-w-md text-center"
-          >
-            {listTitle}
-          </BidiText>
+          {isEditingTitle ? (
+            <div className="flex items-center gap-1.5 flex-1 max-w-[260px] sm:max-w-md mx-2">
+              <input
+                type="text"
+                value={titleInputVal}
+                onChange={(e) => setTitleInputVal(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    const trimmed = titleInputVal.trim() || 'Shopping List';
+                    setCurrentTitle(trimmed);
+                    setIsEditingTitle(false);
+                    onRenameList?.(trimmed);
+                  } else if (e.key === 'Escape') {
+                    setIsEditingTitle(false);
+                  }
+                }}
+                className="w-full text-sm sm:text-base font-bold text-primary bg-surface-container-low px-2.5 py-1 rounded-lg border border-primary/30 outline-none focus:ring-1 focus:ring-primary"
+                autoFocus
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const trimmed = titleInputVal.trim() || 'Shopping List';
+                  setCurrentTitle(trimmed);
+                  setIsEditingTitle(false);
+                  onRenameList?.(trimmed);
+                }}
+                aria-label="Save list name"
+                className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center hover:bg-primary/90 transition-colors cursor-pointer shrink-0"
+              >
+                <Check className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setTitleInputVal(currentTitle);
+                  setIsEditingTitle(false);
+                }}
+                aria-label="Cancel editing"
+                className="w-8 h-8 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center hover:bg-surface-container-high transition-colors cursor-pointer shrink-0"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center gap-1.5 max-w-[220px] sm:max-w-md truncate">
+              <BidiText
+                as="h2"
+                className="font-['Plus_Jakarta_Sans'] text-base sm:text-lg font-bold text-primary truncate text-center"
+              >
+                {currentTitle}
+              </BidiText>
+              <button
+                type="button"
+                onClick={() => {
+                  setTitleInputVal(currentTitle);
+                  setIsEditingTitle(true);
+                }}
+                aria-label="Rename list"
+                className="p-1.5 rounded-full text-primary/60 hover:text-primary hover:bg-surface-container-low transition-colors cursor-pointer shrink-0"
+                title="Rename list"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
           <div className="w-10 flex justify-end">
             <span className="text-xs font-bold px-2 py-1 rounded-full bg-surface-container text-primary">
               {items.length}
@@ -760,7 +828,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                         <Sparkles className="w-3.5 h-3.5 stroke-[2.4]" />
                       </span>
                       <span>
-                        Suggested for {contextData.contextTitle || detectedContext.name || 'Your List'}:
+                        Suggested for {listTitle || contextData.contextTitle || detectedContext.name || 'Your List'}:
                       </span>
                     </span>
                   </div>

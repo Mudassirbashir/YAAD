@@ -312,6 +312,30 @@ function AppContent() {
     return cleanup;
   }, [user?.id, isConfigured, fetchShoppingLists]);
 
+  // Re-fetch shopping lists whenever navigating to /home or /history to ensure fresh state
+  useEffect(() => {
+    if (user?.id && (route.routeId === 'home' || route.routeId === 'history')) {
+      fetchShoppingLists(user.id);
+    }
+  }, [route.routeId, user?.id, fetchShoppingLists]);
+
+  // Check for pending imported rashan list upon user sign-in
+  useEffect(() => {
+    if (!user?.id) return;
+    try {
+      const raw = localStorage.getItem('yaad_pending_imported_rashan_list');
+      if (raw) {
+        localStorage.removeItem('yaad_pending_imported_rashan_list');
+        const imported = JSON.parse(raw);
+        if (imported && imported.id) {
+          const userList: ShoppingList = { ...imported, userId: user.id };
+          setLists((prev) => [userList, ...prev.filter((l) => l.id !== userList.id)]);
+          saveUserShoppingList(user.id, userList).catch((e) => console.warn(e));
+        }
+      }
+    } catch {}
+  }, [user?.id]);
+
   // Cross-device realtime broadcast listener (instant cross-device sync)
   useEffect(() => {
     if (!user?.id || !isConfigured) return;
@@ -1215,12 +1239,21 @@ function AppContent() {
             navigate(user ? '/home' : '/');
           }}
           onOpenAppWithList={async (newList) => {
-            setLists((prev) => [newList, ...prev]);
-            if (user && isConfigured) {
-              await saveUserShoppingList(user.id, newList);
+            if (user) {
+              setLists((prev) => [newList, ...prev]);
+              if (isConfigured) {
+                await saveUserShoppingList(user.id, newList);
+              }
+              setActiveListId(newList.id);
+              navigate(`/lists/${newList.id}`);
+            } else {
+              // Persist pending imported list across auth redirect so it is never lost
+              try {
+                localStorage.setItem('yaad_pending_imported_rashan_list', JSON.stringify(newList));
+              } catch {}
+              saveIntendedDestination(`/lists/${newList.id}`);
+              navigate('/auth');
             }
-            setActiveListId(newList.id);
-            navigate(`/lists/${newList.id}`);
           }}
           onNavigatePage={(path) => {
             navigate(path);
@@ -1318,6 +1351,15 @@ function AppContent() {
           onBack={() => navigate('/home')}
           onStartShopping={handleStartShoppingFromNewItems}
           onItemsChange={handleItemsChangeInAddView}
+          onRenameList={(newTitle) => {
+            setTempNewListTitle(newTitle);
+            if (currentActiveList) {
+              handleUpdateList({
+                ...currentActiveList,
+                title: newTitle,
+              });
+            }
+          }}
         />
       )}
 
@@ -1346,6 +1388,7 @@ function AppContent() {
           onUpdateList={handleUpdateList}
           onCompleteTrip={handleCompleteTrip}
           onEditList={handleEditList}
+          onDeleteList={handleDeleteList}
           onOpenProfile={() => navigate('/settings/profile')}
           isCompletingTrip={isCompletingTrip}
           completionError={completionError}
@@ -1409,6 +1452,7 @@ function AppContent() {
           list={currentActiveList}
           onBack={() => navigate(`/lists/${currentActiveList.id}`)}
           onSave={handleSaveEditedList}
+          onDeleteList={handleDeleteList}
           onOpenProfile={() => navigate('/settings/profile')}
         />
       )}
