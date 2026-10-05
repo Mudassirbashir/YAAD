@@ -22,63 +22,49 @@ import {
   requireRoles,
   rateLimit,
 } from './middleware';
+import {
+  saveSharedTempToken,
+  validateSharedTempToken,
+  deleteSharedTempToken,
+} from './supabaseAdmin';
 
 export const adminRouter = Router();
 
-// In-memory temp tokens for multi-step 2FA login (valid for 5 minutes)
+// Temp tokens for multi-step 2FA login (valid for 5 minutes)
 interface TempLoginState {
   adminId: string;
   email: string;
   expiresAt: number;
 }
-const tempLogins = new Map<string, TempLoginState>();
 
-function createTempLoginToken(admin: AdminUser): string {
+async function createTempLoginToken(admin: AdminUser): Promise<string> {
   const token = crypto.randomBytes(24).toString('hex');
-  tempLogins.set(token, {
-    adminId: admin.id,
-    email: admin.email,
-    expiresAt: Date.now() + 5 * 60 * 1000,
-  });
+  await saveSharedTempToken(token, admin.id, admin.email, 'login', 5 * 60 * 1000);
   return token;
 }
 
-function validateTempLoginToken(token: string): TempLoginState | null {
+async function validateTempLoginToken(token: string): Promise<TempLoginState | null> {
   if (!token) return null;
-  const state = tempLogins.get(token);
-  if (!state || Date.now() > state.expiresAt) {
-    tempLogins.delete(token);
-    return null;
-  }
-  return state;
+  const record = await validateSharedTempToken(token, 'login');
+  if (!record) return null;
+  return {
+    adminId: record.adminId,
+    email: record.email,
+    expiresAt: record.expiresAt,
+  };
 }
 
-// In-memory temporary bootstrap tokens (valid for 10 minutes)
-interface BootstrapState {
-  token: string;
-  createdAt: number;
-  expiresAt: number;
-}
-const bootstrapTokens = new Map<string, BootstrapState>();
-
-function createBootstrapToken(): string {
+// Temporary bootstrap tokens (valid for 10 minutes)
+async function createBootstrapToken(): Promise<string> {
   const token = 'boot_' + crypto.randomBytes(32).toString('hex');
-  bootstrapTokens.set(token, {
-    token,
-    createdAt: Date.now(),
-    expiresAt: Date.now() + 10 * 60 * 1000,
-  });
+  await saveSharedTempToken(token, 'bootstrap_admin', 'bootstrap@yaad.app', 'bootstrap', 10 * 60 * 1000);
   return token;
 }
 
-function validateBootstrapToken(token: string): boolean {
+async function validateBootstrapToken(token: string): Promise<boolean> {
   if (!token) return false;
-  const state = bootstrapTokens.get(token);
-  if (!state || Date.now() > state.expiresAt) {
-    bootstrapTokens.delete(token);
-    return false;
-  }
-  return true;
+  const record = await validateSharedTempToken(token, 'bootstrap');
+  return Boolean(record);
 }
 
 function sanitizeAdmin(admin: AdminUser) {
@@ -122,10 +108,10 @@ adminRouter.get('/setup/status', (req: Request, res: Response) => {
 });
 
 // Verify ADMIN_SETUP_KEY from environment variables
-adminRouter.post('/setup/verify-key', rateLimit(5, 15 * 60 * 1000), (req: Request, res: Response) => {
+adminRouter.post('/setup/verify-key', rateLimit(5, 15 * 60 * 1000), async (req: Request, res: Response) => {
   const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
   const userAgent = (req.headers['user-agent'] as string) || '';
-  const { setupKey } = req.body;
+  const { setupKey } = req.body || {};
 
   if (!adminStore.isSetupAllowed()) {
     res.status(404).json({ error: 'Setup route not found.', code: 'SETUP_DISABLED' });
@@ -150,7 +136,7 @@ adminRouter.post('/setup/verify-key', rateLimit(5, 15 * 60 * 1000), (req: Reques
     return;
   }
 
-  const bootstrapToken = createBootstrapToken();
+  const bootstrapToken = await createBootstrapToken();
   adminStore.writeAuditLog({
     action: 'setup_key_verified',
     targetType: 'system_security',
@@ -167,17 +153,17 @@ adminRouter.post('/setup/verify-key', rateLimit(5, 15 * 60 * 1000), (req: Reques
 });
 
 // Create exactly ONE Super Admin, then permanently self-destructs
-adminRouter.post('/setup/create-admin', rateLimit(5, 15 * 60 * 1000), (req: Request, res: Response) => {
+adminRouter.post('/setup/create-admin', rateLimit(5, 15 * 60 * 1000), async (req: Request, res: Response) => {
   const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
   const userAgent = (req.headers['user-agent'] as string) || '';
-  const { bootstrapToken, name, email, password } = req.body;
+  const { bootstrapToken, name, email, password } = req.body || {};
 
   if (!adminStore.isSetupAllowed()) {
     res.status(404).json({ error: 'Setup route not found.', code: 'SETUP_DISABLED' });
     return;
   }
 
-  if (!bootstrapToken || !validateBootstrapToken(bootstrapToken)) {
+  if (!bootstrapToken || !(await validateBootstrapToken(bootstrapToken))) {
     res.status(401).json({ error: 'Invalid or expired setup token. Please re-enter the secret key.' });
     return;
   }
@@ -197,7 +183,7 @@ adminRouter.post('/setup/create-admin', rateLimit(5, 15 * 60 * 1000), (req: Requ
     });
 
     // Invalidate temporary bootstrap token immediately
-    bootstrapTokens.delete(bootstrapToken);
+    deleteSharedTempToken(bootstrapToken).catch(() => null);
 
     res.status(201).json({
       success: true,
@@ -212,8 +198,8 @@ adminRouter.post('/setup/create-admin', rateLimit(5, 15 * 60 * 1000), (req: Requ
 // -----------------------------------------------------------------------------
 // 1. Admin Login (Passwordless Email + TOTP, or 2-Step)
 // -----------------------------------------------------------------------------
-adminRouter.post('/auth/login', rateLimit(10, 60 * 1000), (req: Request, res: Response) => {
-  const { email, password, code, totpCode, recoveryCode } = req.body;
+adminRouter.post('/auth/login', rateLimit(10, 60 * 1000), async (req: Request, res: Response) => {
+  const { email, password, code, totpCode, recoveryCode } = req.body || {};
   const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
   const userAgent = (req.headers['user-agent'] as string) || '';
 
@@ -223,7 +209,7 @@ adminRouter.post('/auth/login', rateLimit(10, 60 * 1000), (req: Request, res: Re
   }
 
   const cleanEmail = String(email).trim().toLowerCase();
-  const admin = adminStore.findAdminByEmail(cleanEmail);
+  const admin = await adminStore.findAdminByEmailAsync(cleanEmail);
 
   if (!admin) {
     adminStore.writeAuditLog({
@@ -268,7 +254,7 @@ adminRouter.post('/auth/login', rateLimit(10, 60 * 1000), (req: Request, res: Re
 
   // If 2FA is not yet configured for this admin
   if (!admin.isTotpEnabled || !admin.totpSecret) {
-    const tempToken = createTempLoginToken(admin);
+    const tempToken = await createTempLoginToken(admin);
     res.status(200).json({
       requires2faSetup: true,
       tempToken,
@@ -384,7 +370,7 @@ adminRouter.post('/auth/login', rateLimit(10, 60 * 1000), (req: Request, res: Re
       return;
     }
 
-    const tempToken = createTempLoginToken(admin);
+    const tempToken = await createTempLoginToken(admin);
     res.status(200).json({
       requires2faVerify: true,
       tempToken,
@@ -400,7 +386,7 @@ adminRouter.post('/auth/login', rateLimit(10, 60 * 1000), (req: Request, res: Re
   }
 
   // If only email was sent
-  const tempToken = createTempLoginToken(admin);
+  const tempToken = await createTempLoginToken(admin);
   res.status(200).json({
     requires2faVerify: true,
     tempToken,
@@ -417,12 +403,12 @@ adminRouter.post('/auth/login', rateLimit(10, 60 * 1000), (req: Request, res: Re
 // -----------------------------------------------------------------------------
 // 2. Admin Login (Step 2: TOTP Verification or Emergency Recovery Code)
 // -----------------------------------------------------------------------------
-adminRouter.post('/auth/verify-2fa', rateLimit(10, 60 * 1000), (req: Request, res: Response) => {
+adminRouter.post('/auth/verify-2fa', rateLimit(10, 60 * 1000), async (req: Request, res: Response) => {
   const { tempToken, code } = req.body;
   const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
   const userAgent = (req.headers['user-agent'] as string) || '';
 
-  const state = validateTempLoginToken(tempToken);
+  const state = await validateTempLoginToken(tempToken);
   if (!state) {
     res.status(400).json({
       error: 'Login session expired or invalid. Please sign in again.',
@@ -431,7 +417,7 @@ adminRouter.post('/auth/verify-2fa', rateLimit(10, 60 * 1000), (req: Request, re
     return;
   }
 
-  const admin = adminStore.findAdminById(state.adminId);
+  const admin = await adminStore.findAdminByIdAsync(state.adminId);
   if (!admin) {
     res.status(404).json({ error: 'Admin account not found.' });
     return;
@@ -473,7 +459,7 @@ adminRouter.post('/auth/verify-2fa', rateLimit(10, 60 * 1000), (req: Request, re
   }
 
   // Successful 2FA verification!
-  tempLogins.delete(tempToken);
+  deleteSharedTempToken(tempToken).catch(() => null);
   adminStore.resetFailedAttempts(admin.id);
   const session = adminStore.createSession(admin.id, clientIp, userAgent);
 
@@ -505,16 +491,35 @@ adminRouter.post('/auth/verify-2fa', rateLimit(10, 60 * 1000), (req: Request, re
 // 3. Setup 2FA (Generate Secret & QR Code)
 // -----------------------------------------------------------------------------
 adminRouter.post('/auth/setup-2fa', async (req: Request, res: Response) => {
-  const { tempToken, token } = req.body;
+  const { tempToken, token } = req.body || {};
   let admin: AdminUser | undefined;
 
   if (tempToken) {
-    const state = validateTempLoginToken(tempToken);
+    const state = await validateTempLoginToken(tempToken);
     if (state) {
-      admin = adminStore.findAdminById(state.adminId);
+      admin = await adminStore.findAdminByIdAsync(state.adminId);
+    } else {
+      // Check if tempToken is a valid pending staff invite token
+      const invite = await adminStore.findInviteByTokenAsync(tempToken);
+      if (invite && invite.status === 'pending' && Date.now() <= invite.expiresAt) {
+        admin = {
+          id: `invite_${invite.id}`,
+          email: invite.email,
+          name: invite.name,
+          role: invite.role,
+          totpSecret: '',
+          isTotpEnabled: false,
+          status: 'active',
+          failedAttempts: 0,
+          createdAt: invite.createdAt,
+          updatedAt: invite.createdAt,
+          deletedAt: null,
+          recoveryCodes: [],
+        };
+      }
     }
   } else if (token) {
-    const sessionRes = adminStore.validateSession(token);
+    const sessionRes = await adminStore.validateSessionAsync(token);
     admin = sessionRes.admin;
   }
 
@@ -523,32 +528,37 @@ adminRouter.post('/auth/setup-2fa', async (req: Request, res: Response) => {
     return;
   }
 
-  const secret = generateTotpSecret();
-  const otpAuthUri = buildOtpAuthUri(admin.email, secret, 'YAAD Admin');
-  const qrCodeDataUrl = await generateQrCodeDataUrl(otpAuthUri);
+  try {
+    const secret = generateTotpSecret();
+    const otpAuthUri = buildOtpAuthUri(admin.email, secret, 'YAAD Admin');
+    const qrCodeDataUrl = await generateQrCodeDataUrl(otpAuthUri);
 
-  res.status(200).json({
-    secret,
-    otpAuthUri,
-    qrCodeDataUrl,
-    email: admin.email,
-  });
+    res.status(200).json({
+      secret,
+      otpAuthUri,
+      qrCodeDataUrl,
+      email: admin.email,
+    });
+  } catch (err: any) {
+    console.error('[2FA Setup Error]:', err);
+    res.status(500).json({ error: 'Failed to generate 2FA setup QR code. Please try again.' });
+  }
 });
 
 // -----------------------------------------------------------------------------
 // 4. Confirm 2FA Setup
 // -----------------------------------------------------------------------------
-adminRouter.post('/auth/confirm-2fa', (req: Request, res: Response) => {
-  const { tempToken, token, secret, code } = req.body;
+adminRouter.post('/auth/confirm-2fa', async (req: Request, res: Response) => {
+  const { tempToken, token, secret, code } = req.body || {};
   const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
   const userAgent = (req.headers['user-agent'] as string) || '';
 
   let admin: AdminUser | undefined;
   if (tempToken) {
-    const state = validateTempLoginToken(tempToken);
-    if (state) admin = adminStore.findAdminById(state.adminId);
+    const state = await validateTempLoginToken(tempToken);
+    if (state) admin = await adminStore.findAdminByIdAsync(state.adminId);
   } else if (token) {
-    const sessionRes = adminStore.validateSession(token);
+    const sessionRes = await adminStore.validateSessionAsync(token);
     admin = sessionRes.admin;
   }
 
@@ -572,7 +582,7 @@ adminRouter.post('/auth/confirm-2fa', (req: Request, res: Response) => {
 
   // Save TOTP secret and activate 2FA
   adminStore.enableTotp(admin.id, secret);
-  if (tempToken) tempLogins.delete(tempToken);
+  if (tempToken) await deleteSharedTempToken(tempToken);
 
   // Generate 10 single-use emergency recovery codes
   const recoveryCodes = generateRecoveryCodes(10);
@@ -608,7 +618,7 @@ adminRouter.post('/auth/confirm-2fa', (req: Request, res: Response) => {
 // 5. Forgot Password Request
 // -----------------------------------------------------------------------------
 adminRouter.post('/auth/forgot-password', rateLimit(5, 60 * 1000), (req: Request, res: Response) => {
-  const { email } = req.body;
+  const { email } = req.body || {};
   const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
 
   if (!email) {
@@ -646,7 +656,7 @@ adminRouter.post('/auth/forgot-password', rateLimit(5, 60 * 1000), (req: Request
 // 6. Complete Password Reset
 // -----------------------------------------------------------------------------
 adminRouter.post('/auth/reset-password', rateLimit(5, 60 * 1000), (req: Request, res: Response) => {
-  const { token, newPassword } = req.body;
+  const { token, newPassword } = req.body || {};
   const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
 
   if (!token || !newPassword) {
@@ -888,9 +898,9 @@ adminRouter.delete(
 );
 
 // Verify an invite token before rendering form
-adminRouter.get('/invites/verify', (req: Request, res: Response) => {
+adminRouter.get('/invites/verify', async (req: Request, res: Response) => {
   const token = String(req.query.token || '').trim();
-  const invite = adminStore.findInviteByToken(token);
+  const invite = await adminStore.findInviteByTokenAsync(token);
 
   if (!invite || invite.status !== 'pending' || Date.now() > invite.expiresAt) {
     res.status(400).json({
@@ -909,21 +919,15 @@ adminRouter.get('/invites/verify', (req: Request, res: Response) => {
 });
 
 // Accept invite & complete 2FA setup
-adminRouter.post('/invites/accept', (req: Request, res: Response) => {
+adminRouter.post('/invites/accept', async (req: Request, res: Response) => {
   const { token, password, totpSecret, totpCode } = req.body;
   const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
   const userAgent = (req.headers['user-agent'] as string) || '';
 
-  if (!token || !password || !totpSecret || !totpCode) {
+  if (!token || !totpSecret || !totpCode) {
     res.status(400).json({
-      error: 'Token, password, 2FA secret, and verification code are required.',
+      error: 'Token, 2FA secret, and verification code are required.',
     });
-    return;
-  }
-
-  const { isValid: isStrong, reason: pwdReason } = isStrongPassword(String(password));
-  if (!isStrong) {
-    res.status(400).json({ error: pwdReason || 'Password must meet complexity requirements (min 12 chars, upper/lower/number/symbol).' });
     return;
   }
 
@@ -935,7 +939,14 @@ adminRouter.post('/invites/accept', (req: Request, res: Response) => {
     return;
   }
 
-  const newAdmin = adminStore.acceptInvite(token, String(password), totpSecret);
+  const invite = await adminStore.findInviteByTokenAsync(token);
+  if (!invite || invite.status !== 'pending' || Date.now() > invite.expiresAt) {
+    res.status(400).json({ error: 'Invitation could not be accepted. It may be expired or already used.' });
+    return;
+  }
+
+  const plainPassword = password ? String(password) : `Aa1!${crypto.randomBytes(24).toString('hex')}`;
+  const newAdmin = adminStore.acceptInvite(invite, plainPassword, totpSecret);
   if (!newAdmin) {
     res.status(400).json({ error: 'Invitation could not be accepted. It may be expired or already used.' });
     return;

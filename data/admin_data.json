@@ -4,66 +4,580 @@
       "id": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
       "name": "Mudassir Bashir",
       "email": "mudassirbashir530@gmail.com",
-      "passwordHash": "47e359565a30c53072c01ba0c3538f288c9f945929e95acac72ed095b7cfa16ddcd010ec19adbf58bb0206cc71058a07cff3aa3f9f1a36d2e289b23c513152aa",
-      "salt": "9490031ea9a456ed882c17a66c0402ad",
       "role": "super_admin",
-      "totpSecret": "B3UTPFEXD667BJW2UDNNYDVOJDL45HRX",
+      "totpSecret": "XSF6AE2WA2IK5WFAGFREND3WVJNXOAWQ",
       "isTotpEnabled": true,
       "status": "active",
       "failedAttempts": 0,
       "createdAt": 1791123839719,
-      "updatedAt": 1791129738338,
+      "updatedAt": 1791191543807,
       "deletedAt": null,
       "recoveryCodes": [
         {
-          "codeHash": "4f2b528eb80c90bd24cf30d7a0ec65c2b520f6e3644d41b2cc27c594abd53dfe"
+          "codeHash": "c3e6925287847040e8200419249234d15ca02ca1a3a84d992ed1d0927fd23a61",
+          "usedAt": 1791191543807
         },
         {
-          "codeHash": "afdfd96abd985d4a3aa490bc6b5dac490b839631a2b3414ea4c2a0f394a76dfb"
+          "codeHash": "da32c11cea5cf89c92fcb6a570f45fb47dd26411f136a1acbbc53760ea070767"
         },
         {
-          "codeHash": "a0f619ef8a87a8aaf470ea5067c1c4b645ff63773481b0997d3dfc1a1fc5186c"
+          "codeHash": "cf47f02726201058d2a62e70c0b340a23178c8be5fd9c5f2b3f04159d8167157"
         },
         {
-          "codeHash": "993fb6dc3ea7d29161f641243623fd74667b1b3ae326fb2659e991532100ad47"
+          "codeHash": "2de9e69a457807751fad93bf8f459d5e4af2ce734b17f8fc7e8e3f13dad8c913"
         },
         {
-          "codeHash": "97b411aa7c0e506510ae8f00affcf88f6d2261b2dd94daff1a7d5705eef8dfbe"
+          "codeHash": "f60c35da9fb42adad9a0fbc06f16cc0517453b2324af28d7b18e3fdbbf22da0e"
         },
         {
-          "codeHash": "0aa7eb31e537e6021b9f754eb555069a8f9f090c4d8fb5c7baa504616f34ea30"
+          "codeHash": "424f4f8cddc6d8a09dbca0323d0fb5221de561551ab8d81fbb935a56db6a9a5c"
         },
         {
-          "codeHash": "53361ee65c8942f5c4f405ee804c0a5f4a2734e89bf21f2b791dc0694103caa4"
+          "codeHash": "80bc285cd2c65d1ff99dffadf3cc56dcdcd64f27e41db94c55565b5974c11470"
         },
         {
-          "codeHash": "e30033800e02c432bb8944a14848312f1e993affdf7a01c265d72b8ee63c143b"
+          "codeHash": "579fe3be38a7c8ad4f0d1795b0314d6eb820130e86fb50f276df50cf363e0d49"
         },
         {
-          "codeHash": "142dcdfbce60dfb58b45578b4c8b6a9ca74407f107369daac13d8e0f6c303553"
+          "codeHash": "b58a19e757195a07c0e0a03c2c9819747fb84a86eb1a7ee5c7fd6c294cb1e52f"
         },
         {
-          "codeHash": "24b4a30d44e448fe3196d408fddd8131432af20fecdfbfa3293d5f5d3560568c"
+          "codeHash": "7daa364029a4b27edec865d99ad7dabb454a40b8fad1d026138561717dc177a6"
         }
-      ],
-      "lastLoginAt": 1791123971897
+      ]
+    },
+    {
+      "id": "admin_cd880078-b49d-4e86-8b61-9f873ea4182e",
+      "name": "Support Agent 3",
+      "email": "support_agent_3@yaad.pk",
+      "passwordHash": "475fedff8d7c706fcde729e44e6ee21f79f1cd0c617c2aee0294e81ac4dd2e7bd58da4b669826a1194a95f01a709a0700aee123af899396fc8c025511228882f",
+      "salt": "f3090972348e6630611cf7dba6a25d1f",
+      "role": "support_agent",
+      "totpSecret": "ATLIBRO2DP3P4NJ2AJN2G4OKOPW26EPW",
+      "isTotpEnabled": true,
+      "status": "active",
+      "failedAttempts": 0,
+      "createdAt": 1791191531135,
+      "updatedAt": 1791191531170,
+      "deletedAt": null,
+      "recoveryCodes": [
+        {
+          "codeHash": "5e443afe37c64155dff25b73440c523d8ac5c98e4c91dbb7dbd1cf404feed3a7"
+        },
+        {
+          "codeHash": "9ff85a1d973b013c94a7eb4aeaeb323b574919ce48f53881f00aa986a0e4c381"
+        },
+        {
+          "codeHash": "ca7b3be3be1681e0c04be0dba9086c3510f2cf58c699ad69655ecb2f19866223"
+        },
+        {
+          "codeHash": "92d93f0f4bfdac6763c085aa738384ac2942a86f8e1c7d4b874227ff11ec25df"
+        },
+        {
+          "codeHash": "e9a3633de32f887bc3e83f06b6ec13178f180c47fe302804445f658323d593aa"
+        },
+        {
+          "codeHash": "18e3f101dc7db54f941d3ec2f0e59f263cd7c367c76ef3a64c07ea04f3c43931"
+        },
+        {
+          "codeHash": "3cdde0154299848671ad24e8d8c72a81efead0774ae221618f7702313fc6412c"
+        },
+        {
+          "codeHash": "59c6e969150dc3539ee1477847f07a3c9f18863eae82213bc54998c7807c2b49"
+        },
+        {
+          "codeHash": "33a4fe4738a5213f4da6e65214dbb4da86d7723cacd60f1b630c06877ddfeea1"
+        },
+        {
+          "codeHash": "d1b6374218a1754ab34e4e0adf4d1dad7ac2ca80399f2630b0359653fffd4e71"
+        }
+      ]
+    },
+    {
+      "id": "admin_e3cd7c33-5c27-416a-8d05-6e7c5e42c6ac",
+      "name": "Support Agent",
+      "email": "staff_1791191543724@yaad.app",
+      "passwordHash": "d2291d46bd76c3637f565f58659be3bf8b8d9464ad75298ab94ac4aca4860c644c27c62857fa09a08864fb0b2399fe6d6b6df477a19518dd7aae604188379db5",
+      "salt": "8d960a70f5921564c3e06ff998442f3e",
+      "role": "support_agent",
+      "totpSecret": "ZRBPFXM5ZPNIRNNYDM3S3IZDJLTR32RR",
+      "isTotpEnabled": true,
+      "status": "active",
+      "failedAttempts": 0,
+      "createdAt": 1791191543803,
+      "updatedAt": 1791191543803,
+      "deletedAt": null
     }
   ],
-  "invites": [],
+  "invites": [
+    {
+      "id": "inv_93926e5b-4d11-48c9-8e56-a90ea364112f",
+      "email": "testnewadmin@yaad.pk",
+      "name": "Test New Admin",
+      "role": "support_agent",
+      "token": "6a383488e5c42e0963800d95b6a5c690da05dfb69309b6a60f0cff9c5186cee9",
+      "invitedBy": {
+        "id": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+        "email": "mudassirbashir530@gmail.com",
+        "name": "Mudassir Bashir"
+      },
+      "expiresAt": 1791277864338,
+      "status": "pending",
+      "createdAt": 1791191464338
+    },
+    {
+      "id": "inv_d514858d-8e12-4e8a-b7f0-c6013298405f",
+      "email": "staff_agent@yaad.pk",
+      "name": "Staff Agent",
+      "role": "support_agent",
+      "token": "a24867982454b73f55bcce088507d3e1eea0d57bc94a5a8e574ad37dc6a0265c",
+      "invitedBy": {
+        "id": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+        "email": "mudassirbashir530@gmail.com",
+        "name": "Mudassir Bashir"
+      },
+      "expiresAt": 1791277873462,
+      "status": "pending",
+      "createdAt": 1791191473462
+    },
+    {
+      "id": "inv_ba6a4f91-b08f-4781-b7b0-5f0c64fef896",
+      "email": "support_agent_2@yaad.pk",
+      "name": "Support Agent 2",
+      "role": "support_agent",
+      "token": "ab00511d6c8389701cd6abe35681914288d79bd299c3e8274eb990883cbcc630",
+      "invitedBy": {
+        "id": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+        "email": "mudassirbashir530@gmail.com",
+        "name": "Mudassir Bashir"
+      },
+      "expiresAt": 1791277918857,
+      "status": "pending",
+      "createdAt": 1791191518857
+    },
+    {
+      "id": "inv_b5705cc1-351a-4570-85b0-cf44141383cb",
+      "email": "support_agent_3@yaad.pk",
+      "name": "Support Agent 3",
+      "role": "support_agent",
+      "token": "5bb5f984970f3e482ed55ca629aea813362ce75458dbf35190350c444c5c716c",
+      "invitedBy": {
+        "id": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+        "email": "mudassirbashir530@gmail.com",
+        "name": "Mudassir Bashir"
+      },
+      "expiresAt": 1791277930635,
+      "status": "accepted",
+      "createdAt": 1791191530635,
+      "acceptedAt": 1791191531135
+    },
+    {
+      "id": "inv_96c7e79a-3154-4785-96e2-d5a2cfb441d8",
+      "email": "staff_1791191543724@yaad.app",
+      "name": "Support Agent",
+      "role": "support_agent",
+      "token": "3f9d285e979a7d089fc2d885baac440a43d11173e00b680f775518dab5957c83",
+      "invitedBy": {
+        "id": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+        "email": "mudassirbashir530@gmail.com",
+        "name": "Mudassir Bashir"
+      },
+      "expiresAt": 1791277943724,
+      "status": "accepted",
+      "createdAt": 1791191543724,
+      "acceptedAt": 1791191543803
+    }
+  ],
   "resets": [],
   "sessions": [
     {
-      "sessionId": "sess_1f7ed317-9ea9-449f-9b8f-a9b74875ce5a",
+      "sessionId": "sess_dd995812-4d02-4695-b943-5fc090c94ff1",
       "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
-      "token": "da2e805ce6148b0102acc288d5b020c00e604898977803c8eb4421cb3cadeae0",
-      "createdAt": 1791125374666,
-      "lastActivityAt": 1791125375550,
-      "expiresAt": 1791168574666,
-      "ip": "111.92.142.107, 169.254.169.126",
-      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36"
+      "token": "c76c389348a76b50745dd97d2770572a6a6dacaed53e79f23db1899524676300",
+      "createdAt": 1791191442310,
+      "lastActivityAt": 1791191442317,
+      "expiresAt": 1791234642310,
+      "ip": "127.0.0.1",
+      "userAgent": "Python-urllib/3.10"
+    },
+    {
+      "sessionId": "sess_8471b17a-e29a-47f6-973a-f25dd19f7c77",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "3bd7e1185bfecd5e8f6bb91ebf56dcc3ad9ddeda84f8bddad66127c00aae3ad2",
+      "createdAt": 1791191447051,
+      "lastActivityAt": 1791191447051,
+      "expiresAt": 1791234647051,
+      "ip": "127.0.0.1",
+      "userAgent": "Python-urllib/3.10"
+    },
+    {
+      "sessionId": "sess_fa1f6d47-ff04-45dc-b901-ed3dca384bdb",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "07bc6074bf12639117f351b9987717d9e3b8019f4d14ea037a6dad1a490160e1",
+      "createdAt": 1791191453439,
+      "lastActivityAt": 1791191453449,
+      "expiresAt": 1791234653439,
+      "ip": "127.0.0.1",
+      "userAgent": "Python-urllib/3.10"
+    },
+    {
+      "sessionId": "sess_b38751b7-48ec-4951-882c-2d9c19dca0e4",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "1b251fcf901cc0de22d84bfcd9ee77cbe33e91c2db17a58d89ce03ab382d1d7a",
+      "createdAt": 1791191458733,
+      "lastActivityAt": 1791191458740,
+      "expiresAt": 1791234658733,
+      "ip": "127.0.0.1",
+      "userAgent": "Python-urllib/3.10"
+    },
+    {
+      "sessionId": "sess_3f1419fa-e15b-47a3-b8d9-9d952b70822c",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "b45cdfe359afa918c18fce0a8a8290720e55acb741c434f7800e250b4599e588",
+      "createdAt": 1791191464311,
+      "lastActivityAt": 1791191464336,
+      "expiresAt": 1791234664311,
+      "ip": "127.0.0.1",
+      "userAgent": "Python-urllib/3.10"
+    },
+    {
+      "sessionId": "sess_6ea017e1-d89b-403f-9d6a-3dabfe49c0d2",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "4042b479e879e9aed80e3ed5a362a067ea2f4fe0c188bce137c2b146564de50e",
+      "createdAt": 1791191473456,
+      "lastActivityAt": 1791191473461,
+      "expiresAt": 1791234673456,
+      "ip": "127.0.0.1",
+      "userAgent": "Python-urllib/3.10"
+    },
+    {
+      "sessionId": "sess_2e0c93ae-b17e-4055-be00-f6a50ae11aed",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "7f109d16161cb80d2f9aa6e85a2dbcf70316f545934d1250ba68b783702391e0",
+      "createdAt": 1791191518849,
+      "lastActivityAt": 1791191518856,
+      "expiresAt": 1791234718849,
+      "ip": "127.0.0.1",
+      "userAgent": "Python-urllib/3.10"
+    },
+    {
+      "sessionId": "sess_f2eb210b-8424-4857-9737-e70ffa8a43eb",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "112a203ef4efc06022b658cfd75b60f144885dc25fd90286773f00830e2b3504",
+      "createdAt": 1791191530607,
+      "lastActivityAt": 1791191530633,
+      "expiresAt": 1791234730607,
+      "ip": "127.0.0.1",
+      "userAgent": "Python-urllib/3.10"
+    },
+    {
+      "sessionId": "sess_91e95ea6-0e60-4e9a-818e-495c565bcb17",
+      "adminId": "admin_cd880078-b49d-4e86-8b61-9f873ea4182e",
+      "token": "9116bb4a22646b718c55ac1adebbcf6d040400b1649f1d75f71b2eebefcae320",
+      "createdAt": 1791191531140,
+      "lastActivityAt": 1791191531140,
+      "expiresAt": 1791234731140,
+      "ip": "127.0.0.1",
+      "userAgent": "Python-urllib/3.10"
+    },
+    {
+      "sessionId": "sess_5022de51-4ba8-4bd7-b014-9f5bab40dc99",
+      "adminId": "admin_cd880078-b49d-4e86-8b61-9f873ea4182e",
+      "token": "d70a5a528f187f164a0f71ed1147137759251d74ae05d3b89be14f104b80ecc3",
+      "createdAt": 1791191531171,
+      "lastActivityAt": 1791191531171,
+      "expiresAt": 1791234731171,
+      "ip": "127.0.0.1",
+      "userAgent": "Python-urllib/3.10"
+    },
+    {
+      "sessionId": "sess_a80d4ce0-1ed1-4098-b803-68b4d2486dce",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "7bb243a8353c0d3ca8e23dc3e254a14b412d6f4c29dfb208b6234d14e1856c6d",
+      "createdAt": 1791191543196,
+      "lastActivityAt": 1791191543197,
+      "expiresAt": 1791234743196,
+      "ip": "127.0.0.1",
+      "userAgent": "Node-Test-Runner"
+    },
+    {
+      "sessionId": "sess_3fc66c47-5e81-4e74-8399-53caaa7aaf52",
+      "adminId": "admin_e3cd7c33-5c27-416a-8d05-6e7c5e42c6ac",
+      "token": "df91dd83e916865ab9797c17eea8104a5cae99df5cb510ce37fae6acf6943725",
+      "createdAt": 1791191543804,
+      "lastActivityAt": 1791191543805,
+      "expiresAt": 1791234743804,
+      "ip": "127.0.0.1",
+      "userAgent": "Staff-Client"
     }
   ],
   "auditLogs": [
+    {
+      "id": "audit_8cacc605-522a-43d2-8888-212693459b36",
+      "timestamp": 1791191531171,
+      "action": "admin_login_success",
+      "adminId": "admin_cd880078-b49d-4e86-8b61-9f873ea4182e",
+      "adminEmail": "support_agent_3@yaad.pk",
+      "targetType": "session",
+      "targetId": "sess_5022de51-4ba8-4bd7-b014-9f5bab40dc99",
+      "ip": "127.0.0.1",
+      "userAgent": "Python-urllib/3.10",
+      "metadata": {
+        "role": "support_agent",
+        "authMethod": "totp_passwordless"
+      }
+    },
+    {
+      "id": "audit_758f5ec5-72ae-4b6c-a677-cfc88d9966e7",
+      "timestamp": 1791191531141,
+      "action": "admin_invite_accepted",
+      "adminId": "admin_cd880078-b49d-4e86-8b61-9f873ea4182e",
+      "adminEmail": "support_agent_3@yaad.pk",
+      "targetType": "admin_user",
+      "targetId": "admin_cd880078-b49d-4e86-8b61-9f873ea4182e",
+      "afterValue": {
+        "role": "support_agent"
+      },
+      "ip": "127.0.0.1",
+      "metadata": {
+        "note": "Staff invitation accepted with mandatory 2FA enrollment"
+      }
+    },
+    {
+      "id": "audit_96610af3-fd16-4c5a-9a97-fa75bee6a595",
+      "timestamp": 1791191530636,
+      "action": "admin_invited",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "admin_invite",
+      "targetId": "inv_b5705cc1-351a-4570-85b0-cf44141383cb",
+      "afterValue": {
+        "email": "support_agent_3@yaad.pk",
+        "role": "support_agent",
+        "name": "Support Agent 3"
+      },
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit_6159ff9b-3ada-413a-adc6-2da14705ea56",
+      "timestamp": 1791191530608,
+      "action": "admin_login_success",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "session",
+      "targetId": "sess_f2eb210b-8424-4857-9737-e70ffa8a43eb",
+      "ip": "127.0.0.1",
+      "userAgent": "Python-urllib/3.10",
+      "metadata": {
+        "role": "super_admin",
+        "authMethod": "totp_passwordless"
+      }
+    },
+    {
+      "id": "audit_a389dc5b-fd9a-4c7d-a9ad-625a1359134c",
+      "timestamp": 1791191518858,
+      "action": "admin_invited",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "admin_invite",
+      "targetId": "inv_ba6a4f91-b08f-4781-b7b0-5f0c64fef896",
+      "afterValue": {
+        "email": "support_agent_2@yaad.pk",
+        "role": "support_agent",
+        "name": "Support Agent 2"
+      },
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit_1ef2860a-91df-449c-961a-5c14e846ee49",
+      "timestamp": 1791191518850,
+      "action": "admin_login_success",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "session",
+      "targetId": "sess_2e0c93ae-b17e-4055-be00-f6a50ae11aed",
+      "ip": "127.0.0.1",
+      "userAgent": "Python-urllib/3.10",
+      "metadata": {
+        "role": "super_admin",
+        "authMethod": "totp_passwordless"
+      }
+    },
+    {
+      "id": "audit_c7377233-9421-4105-aac1-ed472fb619fc",
+      "timestamp": 1791191473464,
+      "action": "admin_invited",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "admin_invite",
+      "targetId": "inv_d514858d-8e12-4e8a-b7f0-c6013298405f",
+      "afterValue": {
+        "email": "staff_agent@yaad.pk",
+        "role": "support_agent",
+        "name": "Staff Agent"
+      },
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit_ad532076-37a0-4806-af3d-8d1e284b04f1",
+      "timestamp": 1791191473457,
+      "action": "admin_login_success",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "session",
+      "targetId": "sess_6ea017e1-d89b-403f-9d6a-3dabfe49c0d2",
+      "ip": "127.0.0.1",
+      "userAgent": "Python-urllib/3.10",
+      "metadata": {
+        "role": "super_admin",
+        "authMethod": "totp_passwordless"
+      }
+    },
+    {
+      "id": "audit_3c8f16c7-5aea-4512-a7dd-2eaab6155a5d",
+      "timestamp": 1791191464340,
+      "action": "admin_invited",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "admin_invite",
+      "targetId": "inv_93926e5b-4d11-48c9-8e56-a90ea364112f",
+      "afterValue": {
+        "email": "testnewadmin@yaad.pk",
+        "role": "support_agent",
+        "name": "Test New Admin"
+      },
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit_d2e3cfc9-c8c0-4580-9683-590478d770b2",
+      "timestamp": 1791191464313,
+      "action": "admin_login_success",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "session",
+      "targetId": "sess_3f1419fa-e15b-47a3-b8d9-9d952b70822c",
+      "ip": "127.0.0.1",
+      "userAgent": "Python-urllib/3.10",
+      "metadata": {
+        "role": "super_admin",
+        "authMethod": "totp_passwordless"
+      }
+    },
+    {
+      "id": "audit_43b3d058-e8c0-4e63-bb98-e24ac118ead7",
+      "timestamp": 1791191458734,
+      "action": "admin_login_success",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "session",
+      "targetId": "sess_b38751b7-48ec-4951-882c-2d9c19dca0e4",
+      "ip": "127.0.0.1",
+      "userAgent": "Python-urllib/3.10",
+      "metadata": {
+        "role": "super_admin",
+        "authMethod": "totp_passwordless"
+      }
+    },
+    {
+      "id": "audit_e97c4124-1066-40c1-be37-9e0d17ba9ab4",
+      "timestamp": 1791191453442,
+      "action": "admin_login_success",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "session",
+      "targetId": "sess_fa1f6d47-ff04-45dc-b901-ed3dca384bdb",
+      "ip": "127.0.0.1",
+      "userAgent": "Python-urllib/3.10",
+      "metadata": {
+        "role": "super_admin",
+        "authMethod": "totp_passwordless"
+      }
+    },
+    {
+      "id": "audit_a7757e26-3148-4ce4-9402-8c2c9eac6f39",
+      "timestamp": 1791191447068,
+      "action": "admin_2fa_failed",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "auth",
+      "afterValue": {
+        "reason": "invalid_totp_code",
+        "remainingAttempts": 4,
+        "isLocked": false
+      },
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit_de9e852d-0a81-4ede-a78c-e0608f3fc98a",
+      "timestamp": 1791191447052,
+      "action": "admin_login_success",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "session",
+      "targetId": "sess_8471b17a-e29a-47f6-973a-f25dd19f7c77",
+      "ip": "127.0.0.1",
+      "userAgent": "Python-urllib/3.10",
+      "metadata": {
+        "role": "super_admin",
+        "authMethod": "totp_passwordless"
+      }
+    },
+    {
+      "id": "audit_8871af75-f89c-46aa-aa1f-8a5f5b2c84c8",
+      "timestamp": 1791191442309,
+      "action": "admin_2fa_enabled",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "admin_user",
+      "targetId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "ip": "127.0.0.1",
+      "metadata": {
+        "note": "Mandatory TOTP 2FA enabled, 10 emergency recovery codes generated"
+      }
+    },
+    {
+      "id": "audit_8715a861-bb8d-4f56-aa47-f00fba48abb3",
+      "timestamp": 1791189747572,
+      "action": "admin_2fa_failed",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "auth",
+      "afterValue": {
+        "reason": "invalid_totp_code",
+        "remainingAttempts": 4,
+        "isLocked": false
+      },
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit_552b0e50-bbdc-4410-8433-fc524d613b82",
+      "timestamp": 1791189590511,
+      "action": "admin_login_success",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "session",
+      "targetId": "sess_120dd3e0-c0d5-40fd-95d7-aef3b4b0a17b",
+      "ip": "127.0.0.1",
+      "userAgent": "Python-urllib/3.10",
+      "metadata": {
+        "role": "super_admin",
+        "authMethod": "totp_passwordless"
+      }
+    },
+    {
+      "id": "audit_e343dbf3-2b1e-45a1-bd7f-057c7c0a5f35",
+      "timestamp": 1791189462846,
+      "action": "admin_2fa_failed",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "auth",
+      "afterValue": {
+        "reason": "invalid_totp_code",
+        "remainingAttempts": 4,
+        "isLocked": false
+      },
+      "ip": "127.0.0.1"
+    },
     {
       "id": "audit_b92a703f-4a4b-4d39-a5d5-05d472b747cb",
       "timestamp": 1791129738339,

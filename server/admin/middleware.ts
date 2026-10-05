@@ -32,7 +32,7 @@ export function extractAdminToken(req: Request): string | null {
  * Middleware: Enforces that the request comes from an authenticated admin staff member.
  * Checks token validity, account status, and 30-minute inactivity timeout.
  */
-export function requireAdminAuth(req: AdminAuthRequest, res: Response, next: NextFunction): void {
+export async function requireAdminAuth(req: AdminAuthRequest, res: Response, next: NextFunction): Promise<void> {
   const token = extractAdminToken(req);
   if (!token) {
     res.status(401).json({
@@ -42,7 +42,7 @@ export function requireAdminAuth(req: AdminAuthRequest, res: Response, next: Nex
     return;
   }
 
-  const { session, admin, error } = adminStore.validateSession(token);
+  const { session, admin, error } = await adminStore.validateSessionAsync(token);
   if (error || !session || !admin) {
     res.status(401).json({
       error: error || 'Your admin session is invalid or has expired.',

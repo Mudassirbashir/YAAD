@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { UserCheck, Shield, Lock, AlertCircle, CheckCircle2, Loader2, ArrowRight, Copy, Check, Download, ShieldAlert, X } from 'lucide-react';
 import { useAdminToast } from '../components/AdminToasts';
+import { safeFetchJson } from '../utils/apiClient';
 import { ROLE_LABELS, AdminRole } from '../types';
 
 interface AdminAcceptInvitePageProps {
@@ -46,24 +47,26 @@ export const AdminAcceptInvitePage: React.FC<AdminAcceptInvitePageProps> = ({
       setIsVerifying(true);
       setError(null);
       try {
-        const res = await fetch(`/api/admin/invites/verify?token=${encodeURIComponent(token)}`);
-        const data = await res.json();
-        if (!res.ok) {
-          setError(data.error || 'Invalid or expired invitation token.');
+        const res = await safeFetchJson<{ email: string; name: string; role: AdminRole; expiresAt: number }>(
+          `/api/admin/invites/verify?token=${encodeURIComponent(token)}`
+        );
+        if (!res.ok || !res.data) {
+          setError(res.error || 'Invalid or expired invitation token.');
           return;
         }
 
-        setInviteData(data);
+        setInviteData(res.data);
 
         // Fetch 2FA secret & QR code for onboarding
-        const qrRes = await fetch('/api/admin/auth/setup-2fa', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tempToken: token }),
-        });
-        if (qrRes.ok) {
-          const qrData = await qrRes.json();
-          setSetupData(qrData);
+        const qrRes = await safeFetchJson<{ secret: string; qrCodeDataUrl: string }>(
+          '/api/admin/auth/setup-2fa',
+          {
+            method: 'POST',
+            body: JSON.stringify({ tempToken: token }),
+          }
+        );
+        if (qrRes.ok && qrRes.data) {
+          setSetupData(qrRes.data);
         }
       } catch (err: any) {
         setError(err.message || 'Error connecting to server.');
@@ -157,32 +160,33 @@ export const AdminAcceptInvitePage: React.FC<AdminAcceptInvitePageProps> = ({
 
     setIsSubmitting(true);
     try {
-      const res = await fetch('/api/admin/invites/accept', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          token,
-          password,
-          totpSecret: setupData.secret,
-          totpCode: totpCode.trim(),
-        }),
-      });
+      const res = await safeFetchJson<{ token?: string; recoveryCodes?: string[]; error?: string }>(
+        '/api/admin/invites/accept',
+        {
+          method: 'POST',
+          body: JSON.stringify({
+            token,
+            password,
+            totpSecret: setupData.secret,
+            totpCode: totpCode.trim(),
+          }),
+        }
+      );
 
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || 'Failed to accept invitation.');
-        toast.error('Onboarding Failed', data.error);
+      if (!res.ok || !res.data) {
+        setError(res.error || 'Failed to accept invitation.');
+        toast.error('Onboarding Failed', res.error || 'Failed to accept invitation.');
         return;
       }
 
-      if (data.token) {
-        localStorage.setItem('yaad_admin_bearer_token', data.token);
+      if (res.data.token) {
+        localStorage.setItem('yaad_admin_bearer_token', res.data.token);
       }
 
       toast.success('Account Activated', 'Welcome to the YAAD Admin Team!');
 
-      if (data.recoveryCodes && data.recoveryCodes.length > 0) {
-        setRecoveryCodes(data.recoveryCodes);
+      if (res.data.recoveryCodes && res.data.recoveryCodes.length > 0) {
+        setRecoveryCodes(res.data.recoveryCodes);
       } else {
         onNavigate('/admin');
       }

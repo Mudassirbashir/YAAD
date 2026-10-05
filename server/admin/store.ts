@@ -1,6 +1,19 @@
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
+import {
+  persistSharedSession,
+  getSharedSessionFromDb,
+  touchSharedSessionInDb,
+  deleteSharedSessionFromDb,
+  persistSharedAdmin,
+  getSharedAdminByEmail,
+  getSharedAdminById,
+  getAllSharedAdmins,
+  persistSharedInvite,
+  getSharedInvite,
+  deleteSharedInvite,
+} from './supabaseAdmin';
 
 export type AdminRole = 'super_admin' | 'support_agent' | 'content_editor' | 'analyst';
 
@@ -15,8 +28,8 @@ export interface AdminUser {
   id: string;
   name: string;
   email: string;
-  passwordHash: string;
-  salt: string;
+  passwordHash?: string;
+  salt?: string;
   role: AdminRole;
   totpSecret: string;
   isTotpEnabled: boolean;
@@ -432,8 +445,9 @@ export function isStrongPassword(password: string): { isValid: boolean; reason?:
 }
 
 export function verifySetupKey(candidateKey: string): boolean {
-  const configuredKey = process.env.ADMIN_SETUP_KEY || 'yaad_bootstrap_superadmin_sec_2026_xyz987';
+  const configuredKey = process.env.ADMIN_SETUP_KEY;
   if (!configuredKey || typeof configuredKey !== 'string' || configuredKey.trim().length === 0) {
+    // Fail closed: No default setup secret is embedded in code
     return false;
   }
   const cleanCandidate = (candidateKey || '').trim();
@@ -1056,6 +1070,7 @@ class AdminStore {
     }));
     admin.updatedAt = Date.now();
     this.save();
+    persistSharedAdmin(admin).catch(() => null);
   }
 
   public consumeRecoveryCode(adminId: string, plainCode: string): boolean {
@@ -1073,6 +1088,7 @@ class AdminStore {
     target.usedAt = Date.now();
     admin.updatedAt = Date.now();
     this.save();
+    persistSharedAdmin(admin).catch(() => null);
     return true;
   }
 
@@ -1131,12 +1147,61 @@ class AdminStore {
     return this.db.admins.find((a) => a.email.toLowerCase() === email.trim().toLowerCase() && !a.deletedAt);
   }
 
+  public async findAdminByEmailAsync(email: string): Promise<AdminUser | undefined> {
+    const local = this.findAdminByEmail(email);
+    if (local) return local;
+
+    const shared = await getSharedAdminByEmail(email);
+    if (shared && !shared.deletedAt) {
+      const idx = this.db.admins.findIndex((a) => a.id === shared.id);
+      if (idx >= 0) {
+        this.db.admins[idx] = shared;
+      } else {
+        this.db.admins.push(shared);
+      }
+      return shared;
+    }
+    return undefined;
+  }
+
   public findAdminById(id: string): AdminUser | undefined {
     return this.db.admins.find((a) => a.id === id && !a.deletedAt);
   }
 
+  public async findAdminByIdAsync(id: string): Promise<AdminUser | undefined> {
+    const local = this.findAdminById(id);
+    if (local) return local;
+
+    const shared = await getSharedAdminById(id);
+    if (shared && !shared.deletedAt) {
+      const idx = this.db.admins.findIndex((a) => a.id === shared.id);
+      if (idx >= 0) {
+        this.db.admins[idx] = shared;
+      } else {
+        this.db.admins.push(shared);
+      }
+      return shared;
+    }
+    return undefined;
+  }
+
   public getAllAdmins(): AdminUser[] {
     return this.db.admins.filter((a) => !a.deletedAt);
+  }
+
+  public async getAllAdminsAsync(): Promise<AdminUser[]> {
+    const sharedList = await getAllSharedAdmins();
+    if (sharedList && sharedList.length > 0) {
+      for (const item of sharedList) {
+        const idx = this.db.admins.findIndex((a) => a.id === item.id);
+        if (idx >= 0) {
+          this.db.admins[idx] = item;
+        } else {
+          this.db.admins.push(item);
+        }
+      }
+    }
+    return this.getAllAdmins();
   }
 
   public verifyPassword(admin: AdminUser, passwordAttempt: string): boolean {
@@ -1174,8 +1239,11 @@ class AdminStore {
     if (admin) {
       admin.totpSecret = secret;
       admin.isTotpEnabled = true;
+      admin.failedAttempts = 0;
+      admin.lockoutUntil = undefined;
       admin.updatedAt = Date.now();
       this.save();
+      persistSharedAdmin(admin).catch(() => null);
     }
   }
 
@@ -1185,6 +1253,7 @@ class AdminStore {
       admin.isTotpEnabled = true;
       admin.updatedAt = Date.now();
       this.save();
+      persistSharedAdmin(admin).catch(() => null);
     }
   }
 
@@ -1195,6 +1264,7 @@ class AdminStore {
       admin.lockoutUntil = undefined;
       admin.updatedAt = Date.now();
       this.save();
+      persistSharedAdmin(admin).catch(() => null);
     }
   }
 
@@ -1206,6 +1276,7 @@ class AdminStore {
       admin.lastLoginAt = Date.now();
       admin.updatedAt = Date.now();
       this.save();
+      persistSharedAdmin(admin).catch(() => null);
     }
   }
 
@@ -1219,6 +1290,7 @@ class AdminStore {
     if (admin.failedAttempts >= MAX_FAILED_ATTEMPTS) {
       admin.lockoutUntil = Date.now() + LOCKOUT_DURATION_MS;
       this.save();
+      persistSharedAdmin(admin).catch(() => null);
 
       const alertId = 'alert_' + crypto.randomUUID();
       const newAlert: SecurityAlert = {
@@ -1254,6 +1326,7 @@ class AdminStore {
     }
 
     this.save();
+    persistSharedAdmin(admin).catch(() => null);
     return {
       isLocked: false,
       remainingAttempts: Math.max(0, MAX_FAILED_ATTEMPTS - admin.failedAttempts),
@@ -1323,11 +1396,29 @@ class AdminStore {
 
     this.db.invites.push(invite);
     this.save();
+    persistSharedInvite(invite).catch(() => null);
     return invite;
   }
 
   public findInviteByToken(token: string): AdminInvite | undefined {
     return this.db.invites.find((i) => i.token === token && i.status === 'pending');
+  }
+
+  public async findInviteByTokenAsync(token: string): Promise<AdminInvite | undefined> {
+    const local = this.findInviteByToken(token);
+    if (local) return local;
+
+    const shared = await getSharedInvite(token);
+    if (shared && shared.status === 'pending' && shared.expiresAt > Date.now()) {
+      const idx = this.db.invites.findIndex((i) => i.id === shared.id);
+      if (idx >= 0) {
+        this.db.invites[idx] = shared;
+      } else {
+        this.db.invites.push(shared);
+      }
+      return shared;
+    }
+    return undefined;
   }
 
   public revokeInvite(inviteId: string): boolean {
@@ -1373,6 +1464,8 @@ class AdminStore {
 
     this.db.admins.push(newAdmin);
     this.save();
+    persistSharedAdmin(newAdmin).catch(() => null);
+    persistSharedInvite(invite).catch(() => null);
     return newAdmin;
   }
 
@@ -1444,6 +1537,10 @@ class AdminStore {
 
     this.db.sessions.push(session);
     this.save();
+    // Asynchronously replicate to shared Supabase table across lambda instances
+    persistSharedSession(session).catch((err) => {
+      console.warn('[AdminStore] Shared session persistence notice:', err);
+    });
     return session;
   }
 
@@ -1475,6 +1572,50 @@ class AdminStore {
     }
     session.lastActivityAt = now;
     this.save();
+    touchSharedSessionInDb(token, now).catch(() => null);
+    return { session, admin };
+  }
+
+  public async validateSessionAsync(token: string): Promise<{ session?: AdminSession; admin?: AdminUser; error?: string }> {
+    if (!token) {
+      return { error: 'No session token provided.' };
+    }
+    let session = this.findSessionByToken(token);
+    if (!session) {
+      // Check shared Supabase store across serverless instances
+      const shared = await getSharedSessionFromDb(token);
+      if (shared) {
+        this.db.sessions.push(shared);
+        this.save();
+        session = shared;
+      }
+    }
+
+    if (!session) {
+      return { error: 'Invalid or expired session.' };
+    }
+
+    const now = Date.now();
+    if (now > session.expiresAt) {
+      this.deleteSession(token);
+      return { error: 'Session has expired. Please sign in again.' };
+    }
+    if (now - session.lastActivityAt > SESSION_INACTIVITY_TIMEOUT_MS) {
+      this.deleteSession(token);
+      return { error: 'Session timed out due to 30 minutes of inactivity.' };
+    }
+    const admin = this.findAdminById(session.adminId);
+    if (!admin || admin.deletedAt) {
+      this.deleteSession(token);
+      return { error: 'Admin account not found or deleted.' };
+    }
+    if (admin.status === 'suspended') {
+      this.deleteSession(token);
+      return { error: 'Admin account has been suspended.' };
+    }
+    session.lastActivityAt = now;
+    this.save();
+    touchSharedSessionInDb(token, now).catch(() => null);
     return { session, admin };
   }
 
@@ -1494,17 +1635,21 @@ class AdminStore {
     }
     session.lastActivityAt = now;
     this.save();
+    touchSharedSessionInDb(session.token, now).catch(() => null);
     return true;
   }
 
   public deleteSession(token: string): void {
     this.db.sessions = this.db.sessions.filter((s) => s.token !== token);
     this.save();
+    deleteSharedSessionFromDb(token).catch(() => null);
   }
 
   public deleteAdminSessions(adminId: string): void {
+    const tokens = this.db.sessions.filter((s) => s.adminId === adminId).map((s) => s.token);
     this.db.sessions = this.db.sessions.filter((s) => s.adminId !== adminId);
     this.save();
+    tokens.forEach((t) => deleteSharedSessionFromDb(t).catch(() => null));
   }
 
   public updateAdminRole(adminId: string, newRole: AdminRole): AdminUser | undefined {
