@@ -21,6 +21,7 @@ import {
   requireAdminAuth,
   requireRoles,
   rateLimit,
+  getClientIp,
 } from './middleware';
 import {
   saveSharedTempToken,
@@ -87,7 +88,7 @@ function sanitizeAdmin(admin: AdminUser) {
 
 // Check if initial setup is currently allowed
 adminRouter.get('/setup/status', (req: Request, res: Response) => {
-  const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+  const clientIp = getClientIp(req);
   const userAgent = (req.headers['user-agent'] as string) || '';
 
   if (!adminStore.isSetupAllowed()) {
@@ -109,7 +110,7 @@ adminRouter.get('/setup/status', (req: Request, res: Response) => {
 
 // Verify ADMIN_SETUP_KEY from environment variables
 adminRouter.post('/setup/verify-key', rateLimit(5, 15 * 60 * 1000), async (req: Request, res: Response) => {
-  const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+  const clientIp = getClientIp(req);
   const userAgent = (req.headers['user-agent'] as string) || '';
   const { setupKey } = req.body || {};
 
@@ -154,7 +155,7 @@ adminRouter.post('/setup/verify-key', rateLimit(5, 15 * 60 * 1000), async (req: 
 
 // Create exactly ONE Super Admin, then permanently self-destructs
 adminRouter.post('/setup/create-admin', rateLimit(5, 15 * 60 * 1000), async (req: Request, res: Response) => {
-  const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+  const clientIp = getClientIp(req);
   const userAgent = (req.headers['user-agent'] as string) || '';
   const { bootstrapToken, name, email, password } = req.body || {};
 
@@ -200,7 +201,7 @@ adminRouter.post('/setup/create-admin', rateLimit(5, 15 * 60 * 1000), async (req
 // -----------------------------------------------------------------------------
 adminRouter.post('/auth/login', rateLimit(10, 60 * 1000), async (req: Request, res: Response) => {
   const { email, password, code, totpCode, recoveryCode } = req.body || {};
-  const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+  const clientIp = getClientIp(req);
   const userAgent = (req.headers['user-agent'] as string) || '';
 
   if (!email) {
@@ -405,7 +406,7 @@ adminRouter.post('/auth/login', rateLimit(10, 60 * 1000), async (req: Request, r
 // -----------------------------------------------------------------------------
 adminRouter.post('/auth/verify-2fa', rateLimit(10, 60 * 1000), async (req: Request, res: Response) => {
   const { tempToken, code } = req.body;
-  const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+  const clientIp = getClientIp(req);
   const userAgent = (req.headers['user-agent'] as string) || '';
 
   const state = await validateTempLoginToken(tempToken);
@@ -550,7 +551,7 @@ adminRouter.post('/auth/setup-2fa', async (req: Request, res: Response) => {
 // -----------------------------------------------------------------------------
 adminRouter.post('/auth/confirm-2fa', async (req: Request, res: Response) => {
   const { tempToken, token, secret, code } = req.body || {};
-  const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+  const clientIp = getClientIp(req);
   const userAgent = (req.headers['user-agent'] as string) || '';
 
   let admin: AdminUser | undefined;
@@ -619,7 +620,7 @@ adminRouter.post('/auth/confirm-2fa', async (req: Request, res: Response) => {
 // -----------------------------------------------------------------------------
 adminRouter.post('/auth/forgot-password', rateLimit(5, 60 * 1000), (req: Request, res: Response) => {
   const { email } = req.body || {};
-  const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+  const clientIp = getClientIp(req);
 
   if (!email) {
     res.status(400).json({ error: 'Email address is required.' });
@@ -657,7 +658,7 @@ adminRouter.post('/auth/forgot-password', rateLimit(5, 60 * 1000), (req: Request
 // -----------------------------------------------------------------------------
 adminRouter.post('/auth/reset-password', rateLimit(5, 60 * 1000), (req: Request, res: Response) => {
   const { token, newPassword } = req.body || {};
-  const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+  const clientIp = getClientIp(req);
 
   if (!token || !newPassword) {
     res.status(400).json({ error: 'Reset token and new password are required.' });
@@ -709,7 +710,7 @@ adminRouter.get('/auth/me', requireAdminAuth, (req: AdminAuthRequest, res: Respo
 // 8. Admin Logout
 // -----------------------------------------------------------------------------
 adminRouter.post('/auth/logout', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
-  const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+  const clientIp = getClientIp(req);
 
   adminStore.destroySession(req.adminSession!.token);
   adminStore.writeAuditLog({
@@ -769,7 +770,7 @@ adminRouter.post(
   (req: AdminAuthRequest, res: Response) => {
     const targetId = req.params.id;
     const { status, reason } = req.body;
-    const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+    const clientIp = getClientIp(req);
 
     if (targetId === req.admin!.id) {
       res.status(400).json({ error: 'You cannot suspend your own admin account.' });
@@ -819,7 +820,7 @@ adminRouter.get('/invites', requireAdminAuth, requireRoles('super_admin'), (req:
 
 adminRouter.post('/invites', requireAdminAuth, requireRoles('super_admin'), (req: AdminAuthRequest, res: Response) => {
   const { email, name, role } = req.body;
-  const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+  const clientIp = getClientIp(req);
 
   if (!email || !name || !role) {
     res.status(400).json({ error: 'Name, email, and role are required for inviting an admin.' });
@@ -876,7 +877,7 @@ adminRouter.delete(
   requireRoles('super_admin'),
   (req: AdminAuthRequest, res: Response) => {
     const inviteId = req.params.id;
-    const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+    const clientIp = getClientIp(req);
 
     const success = adminStore.revokeInvite(inviteId);
     if (!success) {
@@ -921,7 +922,7 @@ adminRouter.get('/invites/verify', async (req: Request, res: Response) => {
 // Accept invite & complete 2FA setup
 adminRouter.post('/invites/accept', async (req: Request, res: Response) => {
   const { token, password, totpSecret, totpCode } = req.body;
-  const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+  const clientIp = getClientIp(req);
   const userAgent = (req.headers['user-agent'] as string) || '';
 
   if (!token || !totpSecret || !totpCode) {
@@ -1032,7 +1033,7 @@ adminRouter.post(
   requireRoles('super_admin'),
   (req: AdminAuthRequest, res: Response) => {
     const { allowlist } = req.body;
-    const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+    const clientIp = getClientIp(req);
 
     if (!Array.isArray(allowlist)) {
       res.status(400).json({ error: 'Allowlist must be an array of strings (e.g. "@company.com" or "user@domain.com").' });

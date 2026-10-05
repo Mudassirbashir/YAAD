@@ -88,9 +88,22 @@ interface RateLimitRecord {
 
 const ipLimits = new Map<string, RateLimitRecord>();
 
+export function getClientIp(req: Request): string {
+  return (
+    req.ip ||
+    (typeof req.headers['x-forwarded-for'] === 'string'
+      ? req.headers['x-forwarded-for'].split(',')[0].trim()
+      : Array.isArray(req.headers['x-forwarded-for'])
+      ? req.headers['x-forwarded-for'][0].trim()
+      : '') ||
+    req.socket?.remoteAddress ||
+    '127.0.0.1'
+  );
+}
+
 export function rateLimit(maxRequests: number = 10, windowMs: number = 60 * 1000) {
   return (req: Request, res: Response, next: NextFunction): void => {
-    const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+    const clientIp = getClientIp(req);
     const now = Date.now();
     const record = ipLimits.get(clientIp);
 

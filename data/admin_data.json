@@ -5,44 +5,44 @@
       "name": "Mudassir Bashir",
       "email": "mudassirbashir530@gmail.com",
       "role": "super_admin",
-      "totpSecret": "YNDDU5HFMMUBWY4T66THXU3B4UYVZOAO",
+      "totpSecret": "BXFJ35R327S2TYDAF22HP7SHHMWL4XKZ",
       "isTotpEnabled": true,
       "status": "active",
       "failedAttempts": 0,
       "createdAt": 1791123839719,
-      "updatedAt": 1791193436147,
+      "updatedAt": 1791193946902,
       "deletedAt": null,
       "recoveryCodes": [
         {
-          "codeHash": "f44686e3990b7bd5ac4e0f6e900faf7d2036e98c718b34f3bc227629699fc1ca",
-          "usedAt": 1791193436147
+          "codeHash": "f94e3c3bf63e6ed218951c6785bc44972026a4ff81aea5fc47492db7b89c8a41",
+          "usedAt": 1791193946902
         },
         {
-          "codeHash": "2e8e99a76ddba2c25ed1bc001e3b5fe74fa566a336eb6a247d6d94c69202274a"
+          "codeHash": "d4d61ff86c561b583daacb19037dcc2b311fb59a3445fe23c7d2a4b64cdad3c5"
         },
         {
-          "codeHash": "a66336520e1a97c9e6db17f606bd98deadc084e4e62072dfc3238d40de7a4383"
+          "codeHash": "42211421406342c40e853160ece1d73fdd2acad1868fc59c5b3487f7bd429189"
         },
         {
-          "codeHash": "0e0065dd56633c61113563c1a178a110a6661ef7c622526a4165c7595a72c092"
+          "codeHash": "3ddf0b029b67fe8fa5929f82e006de34c86fdda568ffea5a966e44b2414664b9"
         },
         {
-          "codeHash": "03110c47e342c450faff78a85adb13b5c080bf6440104122628fa7df01ad1dce"
+          "codeHash": "ac443e24d797c4ebdbc9b68269b1460830e09abae667bcd303d24f1c50c7b051"
         },
         {
-          "codeHash": "fd1075935a8b7f563e55965905eb418610fcf94e1db3ad4a8730c0ed548810d7"
+          "codeHash": "fafacbf37c57e06cfa7e645c8dabe4e73a82a059b23a044604107a63f8558d4b"
         },
         {
-          "codeHash": "599c33bc6c9c92a52ff1b2f62c8da6c2a4702c8e9257e43d99c5f285831404a0"
+          "codeHash": "a51153bc33e45c2de1be030331350e49d06a57ed1d90d41ad933e9f33c2b9056"
         },
         {
-          "codeHash": "f3874b61723471bdd611f41e018eddd3409ef05c4ee75d1dbd39abd44433ec40"
+          "codeHash": "c3e7d8e276bc8f9cdafb297590a724973f666f45e3bde37dcdd9a4e2afed95fb"
         },
         {
-          "codeHash": "5cba9e0969839ed8251be2ed3eaa94de8faad090005428bfd4dec755489bc032"
+          "codeHash": "238103ee5866fc73d04e8fc4e248f6eaf80fa5cf5ca2bad85832330e28f035e7"
         },
         {
-          "codeHash": "4080f3196e3998bedca8ff9b3ab231fe794588c6608fe34afaf73738fd210499"
+          "codeHash": "47ef4bb774d48cfd71447b6707a5124629074ec2a28a10c649b6fee61d4ddb75"
         }
       ]
     },
@@ -121,6 +121,21 @@
       "failedAttempts": 0,
       "createdAt": 1791193436143,
       "updatedAt": 1791193436143,
+      "deletedAt": null
+    },
+    {
+      "id": "admin_0fdde33e-9022-45d4-968b-c3824feef9f8",
+      "name": "Support Agent",
+      "email": "staff_1791193946823@yaad.app",
+      "passwordHash": "6ec7d4349c512a24f23ca29f71e0546ab566758c7beae28a2e79f240bc2a3b8c3ee7eb3f132af0d98a4cc320806908ea9db6fc38780fd2314d8e5fe97fe83748",
+      "salt": "248bddddf88d78c8a4c1642d757367d0",
+      "role": "support_agent",
+      "totpSecret": "6GU6YIMAUNBFMV3ZOEVU3SKVFGIB2GE4",
+      "isTotpEnabled": true,
+      "status": "active",
+      "failedAttempts": 0,
+      "createdAt": 1791193946899,
+      "updatedAt": 1791193946899,
       "deletedAt": null
     }
   ],
@@ -217,6 +232,22 @@
       "status": "accepted",
       "createdAt": 1791193436050,
       "acceptedAt": 1791193436143
+    },
+    {
+      "id": "inv_0d4368c2-1376-4e89-aee0-7987cc5b8106",
+      "email": "staff_1791193946823@yaad.app",
+      "name": "Support Agent",
+      "role": "support_agent",
+      "token": "34eb1c2da0033dd85c5a8278e085f3900ab7c1484ac9f2cee9beb5f5e88dc3ee",
+      "invitedBy": {
+        "id": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+        "email": "mudassirbashir530@gmail.com",
+        "name": "Mudassir Bashir"
+      },
+      "expiresAt": 1791280346824,
+      "status": "accepted",
+      "createdAt": 1791193946824,
+      "acceptedAt": 1791193946899
     }
   ],
   "resets": [],
@@ -358,6 +389,26 @@
       "createdAt": 1791193436144,
       "lastActivityAt": 1791193436145,
       "expiresAt": 1791236636144,
+      "ip": "127.0.0.1",
+      "userAgent": "Staff-Client"
+    },
+    {
+      "sessionId": "sess_f13e6410-2f6b-4d0d-8442-3678da18ab62",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "afe99dddfbba339df188722edcea1a9b70afc455027a210b914458b39032ea34",
+      "createdAt": 1791193945284,
+      "lastActivityAt": 1791193945285,
+      "expiresAt": 1791237145284,
+      "ip": "127.0.0.1",
+      "userAgent": "Node-Test-Runner"
+    },
+    {
+      "sessionId": "sess_8650302e-54af-4d97-8680-6ac48245a258",
+      "adminId": "admin_0fdde33e-9022-45d4-968b-c3824feef9f8",
+      "token": "356896d8bef800d7bc5b4a6640409ef20efed423a62e0587664dfb265ed938e5",
+      "createdAt": 1791193946900,
+      "lastActivityAt": 1791193946900,
+      "expiresAt": 1791237146900,
       "ip": "127.0.0.1",
       "userAgent": "Staff-Client"
     }
