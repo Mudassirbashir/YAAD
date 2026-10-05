@@ -42,7 +42,7 @@ export interface AuthoritativeDashboardStats {
 }
 
 export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNavigate }) => {
-  const { admin, token } = useAdminAuth();
+  const { admin, token, logout } = useAdminAuth();
 
   const [stats, setStats] = useState<AuthoritativeDashboardStats>({
     totalUsers: 0,
@@ -77,6 +77,10 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNaviga
       ]);
 
       if (!statsRes.ok) {
+        if (statsRes.status === 401) {
+          logout();
+          return;
+        }
         const err = await statsRes.json().catch(() => ({}));
         throw new Error(err.error || `HTTP ${statsRes.status}: Failed to load authoritative metrics`);
       }
@@ -111,7 +115,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNaviga
     } finally {
       setIsLoading(false);
     }
-  }, [token]);
+  }, [token, logout]);
 
   // Phase 6: Authoritative Supabase Realtime subscription
   useAdminRealtime({

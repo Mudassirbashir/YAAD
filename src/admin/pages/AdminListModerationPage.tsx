@@ -36,7 +36,7 @@ export interface AuthoritativeList {
 }
 
 export const AdminListModerationPage: React.FC = () => {
-  const { token } = useAdminAuth();
+  const { token, logout } = useAdminAuth();
 
   const [lists, setLists] = useState<AuthoritativeList[]>([]);
   const [total, setTotal] = useState(0);
@@ -66,6 +66,10 @@ export const AdminListModerationPage: React.FC = () => {
       });
 
       if (!res.ok) {
+        if (res.status === 401) {
+          logout();
+          return;
+        }
         const errData = await res.json().catch(() => ({}));
         throw new Error(errData.error || `HTTP ${res.status}: Failed to load shopping lists`);
       }
@@ -79,7 +83,7 @@ export const AdminListModerationPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [token, page, searchQuery, completionFilter]);
+  }, [token, page, searchQuery, completionFilter, logout]);
 
   useEffect(() => {
     fetchLists();

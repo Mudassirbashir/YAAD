@@ -15,7 +15,7 @@ import { useAdminAuth } from '../context/AdminAuthContext';
 import { useAdminToast } from '../components/AdminToasts';
 
 export const AdminSettingsPage: React.FC = () => {
-  const { token, admin } = useAdminAuth();
+  const { token, admin, logout } = useAdminAuth();
   const { showToast } = useAdminToast();
 
   const [settings, setSettings] = useState<any>(null);
@@ -38,6 +38,11 @@ export const AdminSettingsPage: React.FC = () => {
         fetch('/api/admin/role-matrix', { headers: { Authorization: `Bearer ${token}` } }),
       ]);
 
+      if (settingsRes.status === 401 || rolesRes.status === 401) {
+        logout();
+        return;
+      }
+
       if (!settingsRes.ok || !rolesRes.ok) {
         throw new Error('Failed to load settings or role matrix.');
       }
@@ -51,7 +56,7 @@ export const AdminSettingsPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [token]);
+  }, [token, logout]);
 
   useEffect(() => {
     fetchData();

@@ -27,7 +27,7 @@ import { AdminTableSkeleton } from '../components/AdminSkeleton';
 import { AdminUser, AdminInvite, AdminRole, ROLE_LABELS } from '../types';
 
 export const AdminTeamPage: React.FC = () => {
-  const { admin, token } = useAdminAuth();
+  const { admin, token, logout } = useAdminAuth();
   const toast = useAdminToast();
 
   const isSuperAdmin = admin?.role === 'super_admin';
@@ -93,6 +93,14 @@ export const AdminTeamPage: React.FC = () => {
       });
 
       if (!res.ok) {
+        if (res.status === 401) {
+          logout();
+          return;
+        }
+        if (res.status === 403) {
+          // Permission denied / forbidden: do not trigger infinite toast loops
+          return;
+        }
         toast.error('Failed to load team members');
         return;
       }
@@ -101,11 +109,11 @@ export const AdminTeamPage: React.FC = () => {
       setStaff(data.admins || []);
       setTotalStaff(data.total || 0);
     } catch (err: any) {
-      toast.error('Network Error', err.message);
+      console.error('Error fetching staff members:', err);
     } finally {
       setIsLoadingStaff(false);
     }
-  }, [token, page, search, roleFilter, statusFilter, toast]);
+  }, [token, page, search, roleFilter, statusFilter, logout]);
 
   // 2. Fetch Invites
   const fetchInvites = useCallback(async () => {
@@ -115,6 +123,10 @@ export const AdminTeamPage: React.FC = () => {
       const res = await fetch('/api/admin/invites', {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (res.status === 401) {
+        logout();
+        return;
+      }
       if (res.ok) {
         const data = await res.json();
         setInvites(data.invites || []);
@@ -124,7 +136,7 @@ export const AdminTeamPage: React.FC = () => {
     } finally {
       setIsLoadingInvites(false);
     }
-  }, [token, isSuperAdmin]);
+  }, [token, isSuperAdmin, logout]);
 
   // 3. Fetch Allowlist
   const fetchAllowlist = useCallback(async () => {
@@ -134,6 +146,10 @@ export const AdminTeamPage: React.FC = () => {
       const res = await fetch('/api/admin/settings/allowlist', {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (res.status === 401) {
+        logout();
+        return;
+      }
       if (res.ok) {
         const data = await res.json();
         setAllowlist(data.allowlist || []);
@@ -143,7 +159,7 @@ export const AdminTeamPage: React.FC = () => {
     } finally {
       setIsLoadingAllowlist(false);
     }
-  }, [token, isSuperAdmin]);
+  }, [token, isSuperAdmin, logout]);
 
   useEffect(() => {
     fetchStaff();

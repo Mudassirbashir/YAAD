@@ -235,12 +235,13 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return { success: true, recoveryCodes: res.data.recoveryCodes };
   };
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
+    const activeToken = localStorage.getItem(TOKEN_STORAGE_KEY);
     try {
-      if (token) {
+      if (activeToken) {
         await safeFetchJson('/api/admin/auth/logout', {
           method: 'POST',
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${activeToken}` },
         });
       }
     } catch {
@@ -250,9 +251,11 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setToken(null);
       setAdmin(null);
       setSession(null);
-      window.location.href = '/admin/login';
+      if (window.location.pathname !== '/admin/login') {
+        window.location.href = '/admin/login';
+      }
     }
-  };
+  }, []);
 
   const requestPasswordReset = async (email: string) => {
     const res = await safeFetchJson<any>('/api/admin/auth/forgot-password', {

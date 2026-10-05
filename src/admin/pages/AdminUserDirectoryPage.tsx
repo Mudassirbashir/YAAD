@@ -33,7 +33,7 @@ export interface AuthoritativeUser {
 }
 
 export const AdminUserDirectoryPage: React.FC = () => {
-  const { token, admin } = useAdminAuth();
+  const { token, admin, logout } = useAdminAuth();
   const { showToast } = useAdminToast();
 
   const [users, setUsers] = useState<AuthoritativeUser[]>([]);
@@ -67,6 +67,10 @@ export const AdminUserDirectoryPage: React.FC = () => {
       });
 
       if (!res.ok) {
+        if (res.status === 401) {
+          logout();
+          return;
+        }
         const errData = await res.json().catch(() => ({}));
         throw new Error(errData.error || `HTTP ${res.status}: Failed to load users`);
       }
@@ -80,7 +84,7 @@ export const AdminUserDirectoryPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [token, page, searchQuery, statusFilter]);
+  }, [token, page, searchQuery, statusFilter, logout]);
 
   useEffect(() => {
     fetchUsers();

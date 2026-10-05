@@ -21,7 +21,7 @@ export interface CatalogItem {
 }
 
 export const AdminCatalogPage: React.FC = () => {
-  const { token } = useAdminAuth();
+  const { token, logout } = useAdminAuth();
 
   const [items, setItems] = useState<CatalogItem[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
@@ -50,6 +50,10 @@ export const AdminCatalogPage: React.FC = () => {
       });
 
       if (!res.ok) {
+        if (res.status === 401) {
+          logout();
+          return;
+        }
         const errData = await res.json().catch(() => ({}));
         throw new Error(errData.error || `HTTP ${res.status}: Failed to load catalog`);
       }
@@ -64,7 +68,7 @@ export const AdminCatalogPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [token, page, searchQuery, selectedCategory]);
+  }, [token, page, searchQuery, selectedCategory, logout]);
 
   useEffect(() => {
     fetchCatalog();

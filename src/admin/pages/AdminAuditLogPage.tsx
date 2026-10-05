@@ -18,7 +18,7 @@ import { AdminTableSkeleton } from '../components/AdminSkeleton';
 import { AuditLogEntry } from '../types';
 
 export const AdminAuditLogPage: React.FC = () => {
-  const { token, admin } = useAdminAuth();
+  const { token, admin, logout } = useAdminAuth();
   const toast = useAdminToast();
 
   const [logs, setLogs] = useState<AuditLogEntry[]>([]);
@@ -48,10 +48,12 @@ export const AdminAuditLogPage: React.FC = () => {
       });
 
       if (!res.ok) {
+        if (res.status === 401) {
+          logout();
+          return;
+        }
         if (res.status === 403) {
-          toast.error('Permission Denied', 'Only Super Admins can view the system audit trail.');
-        } else {
-          toast.error('Error', 'Failed to load audit logs.');
+          return;
         }
         return;
       }
@@ -60,11 +62,11 @@ export const AdminAuditLogPage: React.FC = () => {
       setLogs(data.logs || []);
       setTotal(data.total || 0);
     } catch (err: any) {
-      toast.error('Network Error', err.message);
+      console.error('Error fetching audit logs:', err);
     } finally {
       setIsLoading(false);
     }
-  }, [token, page, limit, search, actionFilter, toast]);
+  }, [token, page, limit, search, actionFilter, logout]);
 
   useEffect(() => {
     fetchLogs();
