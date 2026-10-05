@@ -370,6 +370,7 @@ export interface AdminSettings {
   featureFlags?: FeatureFlags;
   maintenanceBanner?: MaintenanceBanner;
   sessionTimeoutMinutes?: number;
+  systemSecret?: string;
 }
 
 export interface AdminDatabase {
@@ -417,6 +418,87 @@ export function hashPassword(password: string, salt: string): string {
 
 export function generateSecureToken(): string {
   return crypto.randomBytes(32).toString('hex');
+}
+
+export interface SignedSessionPayload {
+  sid: string;
+  aid: string;
+  cat: number;
+  exp: number;
+  nonce: string;
+}
+
+export function getSessionSigningSecret(): string {
+  return (
+    process.env.ADMIN_SESSION_SECRET ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.ADMIN_SETUP_KEY ||
+    adminStore.getSystemSecret()
+  );
+}
+
+export function createSignedSessionToken(
+  sessionId: string,
+  adminId: string,
+  createdAt: number,
+  expiresAt: number
+): string {
+  const payload: SignedSessionPayload = {
+    sid: sessionId,
+    aid: adminId,
+    cat: createdAt,
+    exp: expiresAt,
+    nonce: crypto.randomBytes(8).toString('hex'),
+  };
+  const payloadStr = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const signature = crypto
+    .createHmac('sha256', getSessionSigningSecret())
+    .update(`yaad_sess.${payloadStr}`)
+    .digest('hex');
+  return `yaad_sess.${payloadStr}.${signature}`;
+}
+
+export function verifySignedSessionToken(token: string): SignedSessionPayload | null {
+  if (!token || typeof token !== 'string' || !token.startsWith('yaad_sess.')) {
+    return null;
+  }
+  const parts = token.split('.');
+  if (parts.length !== 3) {
+    return null;
+  }
+  const [prefix, payloadStr, signature] = parts;
+  if (
+    prefix !== 'yaad_sess' ||
+    !payloadStr ||
+    !signature ||
+    signature.length !== 64 ||
+    !/^[0-9a-f]{64}$/i.test(signature)
+  ) {
+    return null;
+  }
+
+  try {
+    const expectedSig = crypto
+      .createHmac('sha256', getSessionSigningSecret())
+      .update(`yaad_sess.${payloadStr}`)
+      .digest('hex');
+
+    const sigBuf = Buffer.from(signature, 'hex');
+    const expectedBuf = Buffer.from(expectedSig, 'hex');
+
+    if (sigBuf.length !== expectedBuf.length || !crypto.timingSafeEqual(sigBuf, expectedBuf)) {
+      return null;
+    }
+
+    const json = Buffer.from(payloadStr, 'base64url').toString('utf-8');
+    const parsed = JSON.parse(json) as SignedSessionPayload;
+    if (!parsed || !parsed.sid || !parsed.aid || typeof parsed.exp !== 'number') {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
 }
 
 export function hashCode(code: string): string {
@@ -651,6 +733,19 @@ class AdminStore {
       return false;
     }
     return this.getActiveAdminsCount() === 0;
+  }
+
+  public getSystemSecret(): string {
+    if (this.db.settings?.systemSecret) {
+      return this.db.settings.systemSecret;
+    }
+    const secret = 'yaad_sec_c940b5f14e7a83d7a8e8b2f901cb4d88e63a890937b2d28f74a01c385b';
+    if (!this.db.settings) {
+      this.db.settings = {};
+    }
+    this.db.settings.systemSecret = secret;
+    this.save();
+    return secret;
   }
 
   public getEmailAllowlist(): string[] {
@@ -1262,14 +1357,18 @@ class AdminStore {
   // --- Session Management ---
   public createSession(adminOrId: AdminUser | string, ip?: string, userAgent?: string): AdminSession {
     const adminId = typeof adminOrId === 'string' ? adminOrId : adminOrId.id;
-    const token = generateSecureToken();
+    const sessionId = 'sess_' + crypto.randomUUID();
+    const createdAt = Date.now();
+    const expiresAt = createdAt + SESSION_MAX_AGE_MS;
+    const token = createSignedSessionToken(sessionId, adminId, createdAt, expiresAt);
+
     const session: AdminSession = {
-      sessionId: 'sess_' + crypto.randomUUID(),
+      sessionId,
       adminId,
       token,
-      createdAt: Date.now(),
-      lastActivityAt: Date.now(),
-      expiresAt: Date.now() + SESSION_MAX_AGE_MS,
+      createdAt,
+      lastActivityAt: createdAt,
+      expiresAt,
       ip,
       userAgent,
     };
@@ -1287,6 +1386,41 @@ class AdminStore {
     if (!token) {
       return { error: 'No session token provided.' };
     }
+
+    // 1. Verify stateless signed token first
+    const signedPayload = verifySignedSessionToken(token);
+    if (signedPayload) {
+      const now = Date.now();
+      if (now > signedPayload.exp) {
+        return { error: 'Session has expired. Please sign in again.' };
+      }
+
+      const admin = this.findAdminById(signedPayload.aid);
+      if (!admin || admin.deletedAt) {
+        return { error: 'Admin account not found or deleted.' };
+      }
+      if (admin.status === 'suspended') {
+        return { error: 'Admin account has been suspended.' };
+      }
+
+      let session = this.findSessionByToken(token);
+      if (!session) {
+        session = {
+          sessionId: signedPayload.sid,
+          adminId: signedPayload.aid,
+          token,
+          createdAt: signedPayload.cat,
+          lastActivityAt: now,
+          expiresAt: signedPayload.exp,
+        };
+        this.db.sessions.push(session);
+      } else {
+        session.lastActivityAt = now;
+      }
+      return { session, admin };
+    }
+
+    // 2. Legacy / local token check
     const session = this.findSessionByToken(token);
     if (!session) {
       return { error: 'Invalid or expired session.' };
@@ -1319,6 +1453,41 @@ class AdminStore {
     if (!token) {
       return { error: 'No session token provided.' };
     }
+
+    // 1. Verify stateless signed token first
+    const signedPayload = verifySignedSessionToken(token);
+    if (signedPayload) {
+      const now = Date.now();
+      if (now > signedPayload.exp) {
+        return { error: 'Session has expired. Please sign in again.' };
+      }
+
+      const admin = await this.findAdminByIdAsync(signedPayload.aid);
+      if (!admin || admin.deletedAt) {
+        return { error: 'Admin account not found or deleted.' };
+      }
+      if (admin.status === 'suspended') {
+        return { error: 'Admin account has been suspended.' };
+      }
+
+      let session = this.findSessionByToken(token);
+      if (!session) {
+        session = {
+          sessionId: signedPayload.sid,
+          adminId: signedPayload.aid,
+          token,
+          createdAt: signedPayload.cat,
+          lastActivityAt: now,
+          expiresAt: signedPayload.exp,
+        };
+        this.db.sessions.push(session);
+      } else {
+        session.lastActivityAt = now;
+      }
+      return { session, admin };
+    }
+
+    // 2. Local memory lookup
     let session = this.findSessionByToken(token);
     if (!session) {
       // Check shared Supabase store across serverless instances

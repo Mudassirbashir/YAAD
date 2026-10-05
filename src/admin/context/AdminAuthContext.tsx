@@ -111,11 +111,13 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       });
 
       if (!res.ok || !res.data) {
-        // Invalid or expired session
-        localStorage.removeItem(TOKEN_STORAGE_KEY);
-        setToken(null);
-        setAdmin(null);
-        setSession(null);
+        // Only clear session if explicitly unauthorized (401)
+        if (res.status === 401) {
+          localStorage.removeItem(TOKEN_STORAGE_KEY);
+          setToken(null);
+          setAdmin(null);
+          setSession(null);
+        }
         setIsLoading(false);
         return;
       }

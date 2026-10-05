@@ -521,6 +521,16 @@
       "expiresAt": 1791250518666,
       "ip": "127.0.0.1",
       "userAgent": "node"
+    },
+    {
+      "sessionId": "sess_380135cf-be3c-4296-9e94-b541c9f57724",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "yaad_sess.eyJzaWQiOiJzZXNzXzM4MDEzNWNmLWJlM2MtNDI5Ni05ZTk0LWI1NDFjOWY1NzcyNCIsImFpZCI6ImFkbWluX2UzOTg4MzYxLWNmMTMtNDRmZi1iZWQxLWVlZDUzZmMxZTY2YSIsImNhdCI6MTc5MTIyNjQ0ODc4MCwiZXhwIjoxNzkxMjY5NjQ4NzgwLCJub25jZSI6IjJlNDYzOTAzMWU4YThjMWQifQ.e584e7facc711190c06dff5aca39d1c47bd99a89c4d06caa03175bfe946cdafb",
+      "createdAt": 1791226448780,
+      "lastActivityAt": 1791226448780,
+      "expiresAt": 1791269648780,
+      "ip": "127.0.0.1",
+      "userAgent": "Node-Test"
     }
   ],
   "auditLogs": [
@@ -1219,7 +1229,8 @@
       "enabled": false,
       "message": "YAAD system is undergoing scheduled cloud maintenance.",
       "bannerType": "info"
-    }
+    },
+    "systemSecret": "yaad_sec_c940b5f14e7a83d7a8e8b2f901cb4d88e63a890937b2d28f74a01c385b"
   },
   "permissionMatrix": {
     "users.view": {
