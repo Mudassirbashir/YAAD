@@ -791,10 +791,10 @@ adminRouter.post('/auth/logout', requireAdminAuth, (req: AdminAuthRequest, res: 
 // -----------------------------------------------------------------------------
 // 9. Staff & Team Management (Super Admin only for mutations)
 // -----------------------------------------------------------------------------
-adminRouter.get('/team', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
+adminRouter.get('/team', requireAdminAuth, async (req: AdminAuthRequest, res: Response) => {
   const { search, role, status, page = '1', limit = '10' } = req.query;
 
-  let admins = adminStore.getAllAdmins();
+  let admins = await adminStore.getAllAdminsAsync();
 
   if (search) {
     const q = String(search).toLowerCase();
@@ -875,8 +875,8 @@ adminRouter.post(
 // -----------------------------------------------------------------------------
 // 10. Admin Invitations (Super Admin Only)
 // -----------------------------------------------------------------------------
-adminRouter.get('/invites', requireAdminAuth, requireRoles('super_admin'), (req: AdminAuthRequest, res: Response) => {
-  const invites = adminStore.getAllInvites();
+adminRouter.get('/invites', requireAdminAuth, requireRoles('super_admin'), async (req: AdminAuthRequest, res: Response) => {
+  const invites = await adminStore.getAllInvitesAsync();
   res.status(200).json({ invites });
 });
 
@@ -1141,14 +1141,14 @@ adminRouter.get(
   '/audit-logs',
   requireAdminAuth,
   requireRoles('super_admin'),
-  (req: AdminAuthRequest, res: Response) => {
+  async (req: AdminAuthRequest, res: Response) => {
     const { action, adminEmail, search, page = '1', limit = '50' } = req.query;
 
     const p = Math.max(1, parseInt(String(page), 10));
     const l = Math.max(1, parseInt(String(limit), 10));
     const offset = (p - 1) * l;
 
-    const { logs, total } = adminStore.getAuditLogs({
+    const { logs, total } = await adminStore.getAuditLogsAsync({
       action: action ? String(action) : undefined,
       adminEmail: adminEmail ? String(adminEmail) : undefined,
       search: search ? String(search) : undefined,
@@ -1165,6 +1165,215 @@ adminRouter.get(
     });
   }
 );
+
+// -----------------------------------------------------------------------------
+// 14b. Authoritative Dashboard Metrics (Phase 8: Live Supabase counts)
+// -----------------------------------------------------------------------------
+adminRouter.get('/dashboard/stats', requireAdminAuth, async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const stats = await adminStore.getDashboardMetricsAsync();
+    res.status(200).json(stats);
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to retrieve authoritative metrics from Supabase.', details: err.message });
+  }
+});
+
+// -----------------------------------------------------------------------------
+// 14c. Authoritative User Directory (Phase 9: Profiles + Shopping activity)
+// -----------------------------------------------------------------------------
+adminRouter.get('/users', requireAdminAuth, async (req: AdminAuthRequest, res: Response) => {
+  const { search, status, page = '1', limit = '25' } = req.query;
+  const p = Math.max(1, parseInt(String(page), 10));
+  const l = Math.max(1, parseInt(String(limit), 10));
+  const offset = (p - 1) * l;
+
+  try {
+    const result = await adminStore.getAppUsersAsync({
+      search: search ? String(search) : undefined,
+      status: status && status !== 'all' ? String(status) : undefined,
+      offset,
+      limit: l,
+    });
+
+    res.status(200).json({
+      users: result.users,
+      total: result.total,
+      kpis: result.kpis,
+      page: p,
+      limit: l,
+      totalPages: Math.ceil(result.total / l),
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to retrieve users from database.', details: err.message });
+  }
+});
+
+adminRouter.post('/users/:id/status', requireAdminAuth, requireRoles('super_admin'), async (req: AdminAuthRequest, res: Response) => {
+  const { id } = req.params;
+  const { status, reason } = req.body;
+  const clientIp = getClientIp(req);
+
+  try {
+    const user = adminStore.setAppUserStatus(id, status, reason);
+    adminStore.writeAuditLog({
+      action: status === 'suspended' ? 'user_suspended' : 'user_reactivated',
+      adminId: req.admin!.id,
+      adminEmail: req.admin!.email,
+      targetType: 'app_user',
+      targetId: id,
+      afterValue: { status, reason },
+      ip: clientIp,
+    });
+    res.status(200).json({ success: true, message: `User status changed to ${status}.`, user });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to update user status.', details: err.message });
+  }
+});
+
+// -----------------------------------------------------------------------------
+// 14d. Authoritative Shopping List Moderation (Phase 10: Lists + Items)
+// -----------------------------------------------------------------------------
+adminRouter.get('/lists', requireAdminAuth, async (req: AdminAuthRequest, res: Response) => {
+  const { search, isCompleted, page = '1', limit = '25' } = req.query;
+  const p = Math.max(1, parseInt(String(page), 10));
+  const l = Math.max(1, parseInt(String(limit), 10));
+  const offset = (p - 1) * l;
+
+  try {
+    const result = await adminStore.getModerationListsAsync({
+      search: search ? String(search) : undefined,
+      offset,
+      limit: l,
+    });
+
+    res.status(200).json({
+      lists: result.lists,
+      total: result.total,
+      page: p,
+      limit: l,
+      totalPages: Math.ceil(result.total / l),
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to retrieve shopping lists from database.', details: err.message });
+  }
+});
+
+// -----------------------------------------------------------------------------
+// 14e. Authoritative Product Catalog (Phase 2 & Module 6)
+// -----------------------------------------------------------------------------
+adminRouter.get('/catalog/products', requireAdminAuth, async (req: AdminAuthRequest, res: Response) => {
+  const { search, category, page = '1', limit = '50' } = req.query;
+  const p = Math.max(1, parseInt(String(page), 10));
+  const l = Math.max(1, parseInt(String(limit), 10));
+  const offset = (p - 1) * l;
+
+  try {
+    const result = await adminStore.getCatalogProductsAsync({
+      search: search ? String(search) : undefined,
+      category: category ? String(category) : undefined,
+      offset,
+      limit: l,
+    });
+
+    res.status(200).json({
+      items: result.items,
+      categories: result.categories,
+      total: result.total,
+      page: p,
+      limit: l,
+      totalPages: Math.ceil(result.total / l),
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to retrieve catalog items.', details: err.message });
+  }
+});
+
+// -----------------------------------------------------------------------------
+// 14f. System Settings & Role Matrix (Modules 2 & 12)
+// -----------------------------------------------------------------------------
+adminRouter.get('/settings', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
+  res.status(200).json(adminStore.getSystemSettings());
+});
+
+adminRouter.post('/settings', requireAdminAuth, requireRoles('super_admin'), (req: AdminAuthRequest, res: Response) => {
+  const settings = adminStore.updateSystemSettings(req.body);
+  adminStore.writeAuditLog({
+    action: 'system_settings_updated',
+    adminId: req.admin!.id,
+    adminEmail: req.admin!.email,
+    targetType: 'system_settings',
+    afterValue: settings,
+  });
+  res.status(200).json({ success: true, settings });
+});
+
+adminRouter.get('/role-matrix', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
+  res.status(200).json(adminStore.getPermissionMatrix());
+});
+
+adminRouter.post('/role-matrix', requireAdminAuth, requireRoles('super_admin'), (req: AdminAuthRequest, res: Response) => {
+  const matrix = adminStore.updatePermissionMatrix(req.body);
+  adminStore.writeAuditLog({
+    action: 'role_matrix_updated',
+    adminId: req.admin!.id,
+    adminEmail: req.admin!.email,
+    targetType: 'role_matrix',
+    afterValue: matrix,
+  });
+  res.status(200).json({ success: true, matrix });
+});
+
+// -----------------------------------------------------------------------------
+// 14g. Support Tickets, CMS, Push & Analytics (Modules 7, 8, 10, 11)
+// -----------------------------------------------------------------------------
+adminRouter.get('/tickets', requireAdminAuth, async (req: AdminAuthRequest, res: Response) => {
+  const { status, priority, search, page = '1', limit = '25' } = req.query;
+  const p = Math.max(1, parseInt(String(page), 10));
+  const l = Math.max(1, parseInt(String(limit), 10));
+  const offset = (p - 1) * l;
+
+  try {
+    const result = await adminStore.getSupportTicketsAsync({
+      status: status ? String(status) : undefined,
+      priority: priority ? String(priority) : undefined,
+      search: search ? String(search) : undefined,
+      offset,
+      limit: l,
+    });
+    res.status(200).json({
+      tickets: result.tickets,
+      total: result.total,
+      page: p,
+      limit: l,
+      totalPages: Math.ceil(result.total / l),
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to retrieve support tickets.', details: err.message });
+  }
+});
+
+adminRouter.get('/cms/articles', requireAdminAuth, async (req: AdminAuthRequest, res: Response) => {
+  const { status, search } = req.query;
+  try {
+    const result = await adminStore.getCmsArticlesAsync({
+      status: status as any,
+      search: search ? String(search) : undefined,
+    });
+    res.status(200).json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to retrieve CMS articles.', details: err.message });
+  }
+});
+
+adminRouter.get('/push/campaigns', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
+  res.status(200).json({ campaigns: adminStore.getPushCampaigns() });
+});
+
+adminRouter.get('/analytics', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
+  const { range = '30d' } = req.query;
+  const validRange = range === '7d' || range === '90d' ? range : '30d';
+  res.status(200).json(adminStore.getAnalyticsReport(validRange));
+});
 
 // -----------------------------------------------------------------------------
 // 15. Method Not Allowed Guards for POST-Only Endpoints

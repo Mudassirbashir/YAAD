@@ -51,20 +51,19 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', path: '/admin', icon: LayoutDashboard },
-    { id: 'team', label: 'Staff & Team', path: '/admin/team', icon: Users },
+    { id: 'users', label: 'User Directory', path: '/admin/users', icon: Users },
+    { id: 'lists', label: 'List Moderation', path: '/admin/lists', icon: ShoppingBag },
+    { id: 'catalog', label: 'Product Catalog', path: '/admin/catalog', icon: FileText },
+    { id: 'team', label: 'Staff & Team', path: '/admin/team', icon: Shield },
     { id: 'audit', label: 'Audit Trail', path: '/admin/audit-log', icon: History },
+    { id: 'settings', label: 'System Settings', path: '/admin/settings', icon: Settings },
   ];
 
   const futureModules = [
-    { label: 'Role Matrix', icon: Shield, note: 'Module 2' },
-    { label: 'User Directory', icon: Users, note: 'Module 4' },
-    { label: 'List Moderation', icon: ShoppingBag, note: 'Module 5' },
-    { label: 'Product Catalog', icon: FileText, note: 'Module 6' },
-    { label: 'Content CMS', icon: FileText, note: 'Module 7' },
-    { label: 'Push Notifications', icon: Bell, note: 'Module 8' },
-    { label: 'Reports & Analytics', icon: BarChart3, note: 'Module 10' },
-    { label: 'Support Tickets', icon: HelpCircle, note: 'Module 11' },
-    { label: 'System Settings', icon: Settings, note: 'Module 12' },
+    { label: 'Content CMS', icon: FileText, note: 'Supabase API' },
+    { label: 'Push Notifications', icon: Bell, note: 'Supabase API' },
+    { label: 'Reports & Analytics', icon: BarChart3, note: 'Supabase API' },
+    { label: 'Support Tickets', icon: HelpCircle, note: 'Supabase API' },
   ];
 
   return (

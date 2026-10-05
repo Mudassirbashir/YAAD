@@ -16,6 +16,17 @@ import {
   persistSharedInvite,
   getSharedInvite,
   deleteSharedInvite,
+  persistSharedAuditLog,
+  getSharedAuditLogsFromDb,
+  getAuthoritativeAppMetrics,
+  getAuthoritativeAppUsers,
+  getAuthoritativeShoppingLists,
+  getAuthoritativeCatalog,
+  getAuthoritativeTickets,
+  getAuthoritativeCms,
+  getAuthoritativeSetting,
+  setAuthoritativeSetting,
+  getSupabaseAdmin,
 } from './supabaseAdmin';
 
 export type AdminRole = 'super_admin' | 'support_agent' | 'content_editor' | 'analyst';
@@ -479,367 +490,41 @@ function getDefaultPermissionMatrix(): Record<string, Record<AdminRole, boolean>
   return matrix;
 }
 
-// Initial Seed Data Generators
+// Authoritative Initial Data Defaults (Zero Fake Data)
 function getInitialAppUsers(): AppUser[] {
-  const now = Date.now();
-  const oneDay = 24 * 60 * 60 * 1000;
-  return [
-    {
-      id: 'usr_lahore_01',
-      name: 'Ahmed Tariq',
-      email: 'ahmed.tariq@gmail.com',
-      phone: '+92 300 4528190',
-      signupDate: now - 45 * oneDay,
-      lastActiveAt: now - 2 * 60 * 60 * 1000, // 2 hrs ago (Active)
-      status: 'active',
-      listsCount: 8,
-      completedTripsCount: 14,
-      notes: 'Frequent shopper at Metro Cash & Carry, Model Town Lahore.',
-      lists: [
-        { id: 'lst_1', title: 'Monthly Kiryana Rashan', itemCount: 18, completedCount: 18, createdAt: now - 4 * oneDay, updatedAt: now - 4 * oneDay, isCompleted: true },
-        { id: 'lst_2', title: 'Weekend Fresh Sabzi & Fruits', itemCount: 7, completedCount: 5, createdAt: now - 1 * oneDay, updatedAt: now - 2 * 60 * 60 * 1000, isCompleted: false },
-      ],
-      timeline: [
-        { id: 'tl_1', timestamp: now - 45 * oneDay, type: 'signup', title: 'User Registered', description: 'Joined via Google Sign-In' },
-        { id: 'tl_2', timestamp: now - 4 * oneDay, type: 'complete_trip', title: 'Completed Shopping Trip', description: 'Checked off 18 items in Monthly Rashan' },
-        { id: 'tl_3', timestamp: now - 2 * 60 * 60 * 1000, type: 'login', title: 'Active Session', description: 'Opened YAAD PWA on Android' },
-      ],
-    },
-    {
-      id: 'usr_karachi_02',
-      name: 'Fatima Noor',
-      email: 'fatima.noor92@outlook.com',
-      phone: '+92 321 8894120',
-      signupDate: now - 28 * oneDay,
-      lastActiveAt: now - 1 * oneDay, // 1 day ago (Active)
-      status: 'active',
-      listsCount: 5,
-      completedTripsCount: 9,
-      notes: 'Uses Urdu Roman voice dictation extensively.',
-      lists: [
-        { id: 'lst_3', title: 'Baking & Desserts', itemCount: 12, completedCount: 10, createdAt: now - 2 * oneDay, updatedAt: now - 1 * oneDay, isCompleted: false },
-      ],
-      timeline: [
-        { id: 'tl_4', timestamp: now - 28 * oneDay, type: 'signup', title: 'User Registered', description: 'Joined via Email Verification' },
-        { id: 'tl_5', timestamp: now - 1 * oneDay, type: 'create_list', title: 'Created Shopping List', description: 'Added 12 baking ingredients' },
-      ],
-    },
-    {
-      id: 'usr_isb_03',
-      name: 'Usman Ali Khan',
-      email: 'usman.akhan@yahoo.com',
-      phone: '+92 333 5129988',
-      signupDate: now - 60 * oneDay,
-      lastActiveAt: now - 5 * oneDay, // 5 days ago (Active within 30d)
-      status: 'active',
-      listsCount: 12,
-      completedTripsCount: 22,
-      notes: 'Family list sync enabled with spouse.',
-      lists: [
-        { id: 'lst_4', title: 'F-10 Weekly Grocery', itemCount: 15, completedCount: 15, createdAt: now - 5 * oneDay, updatedAt: now - 5 * oneDay, isCompleted: true },
-      ],
-      timeline: [
-        { id: 'tl_6', timestamp: now - 5 * oneDay, type: 'complete_trip', title: 'Completed Trip', description: 'Completed F-10 Weekly Grocery checklist' },
-      ],
-    },
-    {
-      id: 'usr_pindi_04',
-      name: 'Zainab Bibi',
-      email: 'zainab.pindi@gmail.com',
-      phone: '+92 345 7761234',
-      signupDate: now - 90 * oneDay,
-      lastActiveAt: now - 42 * oneDay, // 42 days ago (Inactive 30d+)
-      status: 'inactive',
-      listsCount: 2,
-      completedTripsCount: 3,
-      notes: 'Inactive for over 40 days. Candidate for re-engagement notification campaign.',
-      lists: [
-        { id: 'lst_5', title: 'Old Rashan List', itemCount: 6, completedCount: 6, createdAt: now - 45 * oneDay, updatedAt: now - 42 * oneDay, isCompleted: true },
-      ],
-    },
-    {
-      id: 'usr_multan_05',
-      name: 'Bilal Farooq (Suspended Demo)',
-      email: 'bilal.farooq.sp@test.com',
-      phone: '+92 312 9940112',
-      signupDate: now - 15 * oneDay,
-      lastActiveAt: now - 3 * oneDay,
-      status: 'suspended',
-      suspendReason: 'Automated list spamming / policy violation reported by system moderation.',
-      listsCount: 1,
-      completedTripsCount: 0,
-      notes: 'Account suspended on audit review.',
-    },
-    {
-      id: 'usr_peshawar_06',
-      name: 'Dr. Maria Siddiqui',
-      email: 'maria.siddiqui@gmail.com',
-      phone: '+92 301 6239910',
-      signupDate: now - 12 * oneDay,
-      lastActiveAt: now - 4 * 60 * 60 * 1000, // 4 hrs ago (Active)
-      status: 'active',
-      listsCount: 4,
-      completedTripsCount: 7,
-      notes: 'Uses Pakistani traditional units (pao, ser, darjan).',
-      lists: [
-        { id: 'lst_6', title: 'Dawat Preparation List', itemCount: 22, completedCount: 19, createdAt: now - 1 * oneDay, updatedAt: now - 4 * 60 * 60 * 1000, isCompleted: false },
-      ],
-    },
-  ];
+  return [];
 }
 
 function getInitialModerationLists(): ModerationList[] {
-  const now = Date.now();
-  const oneDay = 24 * 60 * 60 * 1000;
-  return [
-    {
-      id: 'mod_lst_101',
-      userId: 'usr_multan_05',
-      userName: 'Bilal Farooq',
-      userEmail: 'bilal.farooq.sp@test.com',
-      title: 'Bulk Crypto Links & Promotional Spam',
-      status: 'flagged',
-      itemsCount: 4,
-      flaggedItemsCount: 3,
-      createdAt: now - 3 * oneDay,
-      updatedAt: now - 3 * oneDay,
-      items: [
-        { id: 'item_m1', name: 'http://free-crypto-giveaway.fake', category: 'other', completed: false, isFlagged: true, flagReason: 'External promotional URL injected in list', moderationStatus: 'pending' },
-        { id: 'item_m2', name: 'Telegram bot discount promo @fake123', category: 'other', completed: false, isFlagged: true, flagReason: 'Contact spam / phishing handle', moderationStatus: 'pending' },
-        { id: 'item_m3', name: 'Regular White Bread', category: 'bakery', quantity: '1', unit: 'piece', completed: false, isFlagged: false, moderationStatus: 'approved' },
-      ],
-    },
-    {
-      id: 'mod_lst_102',
-      userId: 'usr_lahore_01',
-      userName: 'Ahmed Tariq',
-      userEmail: 'ahmed.tariq@gmail.com',
-      title: 'Monthly Kiryana Rashan',
-      status: 'clean',
-      itemsCount: 5,
-      flaggedItemsCount: 0,
-      createdAt: now - 4 * oneDay,
-      updatedAt: now - 4 * oneDay,
-      items: [
-        { id: 'item_m4', name: 'Chakki Atta (Whole Wheat Flour)', category: 'grains', quantity: '10', unit: 'kg', completed: true, isFlagged: false, moderationStatus: 'approved' },
-        { id: 'item_m5', name: 'Super Kernel Basmati Rice', category: 'rice', quantity: '5', unit: 'kg', completed: true, isFlagged: false, moderationStatus: 'approved' },
-        { id: 'item_m6', name: 'Habib Banaspati Ghee', category: 'oils', quantity: '2.5', unit: 'kg', completed: true, isFlagged: false, moderationStatus: 'approved' },
-      ],
-    },
-  ];
+  return [];
 }
 
 function getInitialCatalogProducts(): CatalogProduct[] {
-  const now = Date.now();
-  return [
-    { id: 'prod_1', nameEn: 'Chakki Atta (Whole Wheat)', nameUr: 'چکی کا آٹا', category: 'grains', subcategory: 'Flour', brand: 'Sunridge', unit: 'kg', pricePkr: 1450, barcode: '896400123401', isActive: true, createdAt: now, updatedAt: now },
-    { id: 'prod_2', nameEn: 'Super Kernel Basmati Rice', nameUr: 'باسمتی چاول', category: 'rice', subcategory: 'Rice', brand: 'Guard', unit: 'kg', pricePkr: 380, barcode: '896400123402', isActive: true, createdAt: now, updatedAt: now },
-    { id: 'prod_3', nameEn: 'Banaspati Cooking Oil / Ghee', nameUr: 'کوکنگ آئل / گھی', category: 'oils', subcategory: 'Ghee & Oils', brand: 'Dalda', unit: 'litre', pricePkr: 520, barcode: '896400123403', isActive: true, createdAt: now, updatedAt: now },
-    { id: 'prod_4', nameEn: 'Daal Chana (Split Chickpeas)', nameUr: 'دال چنا', category: 'pulses', subcategory: 'Pulses', brand: 'Pansari Essentials', unit: 'kg', pricePkr: 280, barcode: '896400123404', isActive: true, createdAt: now, updatedAt: now },
-    { id: 'prod_5', nameEn: 'Tapal Danedar Black Tea', nameUr: 'ٹپال دانے دار چائے', category: 'beverages', subcategory: 'Tea & Coffee', brand: 'Tapal', unit: 'packet', pricePkr: 650, barcode: '896400123405', isActive: true, createdAt: now, updatedAt: now },
-    { id: 'prod_6', nameEn: 'Olpers UHT Full Cream Milk', nameUr: 'اولپرز دودھ', category: 'dairy', subcategory: 'Milk', brand: 'Olpers', unit: 'litre', pricePkr: 290, barcode: '896400123406', isActive: true, createdAt: now, updatedAt: now },
-    { id: 'prod_7', nameEn: 'National Red Chilli Powder', nameUr: 'سرخ مرچ پاؤڈر', category: 'spices', subcategory: 'Spices', brand: 'National Foods', unit: 'grams', pricePkr: 240, barcode: '896400123407', isActive: true, createdAt: now, updatedAt: now },
-    { id: 'prod_8', nameEn: 'Farm Fresh White Eggs', nameUr: 'فارم انڈے', category: 'poultry', subcategory: 'Eggs', brand: 'Desi Farm', unit: 'darjan', pricePkr: 320, barcode: '896400123408', isActive: true, createdAt: now, updatedAt: now },
-    { id: 'prod_9', nameEn: 'Surf Excel Detergent Powder', nameUr: 'سرف ایکسل', category: 'cleaning', subcategory: 'Laundry', brand: 'Unilever', unit: 'kg', pricePkr: 620, barcode: '896400123409', isActive: true, createdAt: now, updatedAt: now },
-    { id: 'prod_10', nameEn: 'Rooh Afza Syrup', nameUr: 'روح افزاء', category: 'beverages', subcategory: 'Syrups', brand: 'Hamdard', unit: 'bottle', pricePkr: 390, barcode: '896400123410', isActive: true, createdAt: now, updatedAt: now },
-  ];
+  return [];
 }
 
 function getInitialCategories(): CatalogCategory[] {
-  return [
-    { id: 'grains', nameEn: 'Grains & Atta', nameUr: 'اناج اور آٹا', icon: 'wheat', itemCount: 12 },
-    { id: 'rice', nameEn: 'Rice & Biryani Staples', nameUr: 'چاول اور برریانی', icon: 'wheat', itemCount: 8 },
-    { id: 'oils', nameEn: 'Cooking Oil & Ghee', nameUr: 'کوکنگ آئل اور گھی', icon: 'droplets', itemCount: 14 },
-    { id: 'pulses', nameEn: 'Pulses & Daalein', nameUr: 'دالیں', icon: 'soup', itemCount: 16 },
-    { id: 'dairy', nameEn: 'Dairy & Milk', nameUr: 'دودھ اور ڈیری', icon: 'milk', itemCount: 10 },
-    { id: 'spices', nameEn: 'Spices & Masalay', nameUr: 'مصالحہ جات', icon: 'flame', itemCount: 28 },
-    { id: 'beverages', nameEn: 'Beverages & Chai', nameUr: 'چائے اور مشروبات', icon: 'coffee', itemCount: 18 },
-    { id: 'poultry', nameEn: 'Poultry & Meat', nameUr: 'مرغی اور گوشت', icon: 'drumstick', itemCount: 9 },
-    { id: 'cleaning', nameEn: 'Household & Cleaning', nameUr: 'صفائی اور برتن', icon: 'sparkles', itemCount: 22 },
-  ];
+  return [];
 }
 
 function getInitialCmsArticles(): CmsArticle[] {
-  const now = Date.now();
-  const oneDay = 24 * 60 * 60 * 1000;
-  return [
-    {
-      id: 'art_1',
-      slug: 'why-do-we-forget-things-when-shopping',
-      title: 'Why Do We Forget Things When Shopping?',
-      titleUr: 'ہم خریداری کے وقت چیزیں کیوں بھول جاتے ہیں؟',
-      titleRomanUrdu: 'Hum Shopping K Waqt Cheezein Kyun Bhool Jaate Hain?',
-      excerpt: 'Why walking into a grocery store without an external list causes mental blanks, and what cognitive science reveals about shopping memory.',
-      excerptUr: 'مارکیٹ میں داخل ہوتے ہی دماغ سے سامان کیوں نکل جاتا ہے اور اس کا آسان حل کیا ہے۔',
-      excerptRomanUrdu: 'Market mein dakhil hotay hi dimagh se saman kyun nikal jata hai aur iska asan hal kya hai.',
-      body: `### The Science of Shopping Memory
-
-Cognitive scientists have long observed that human working memory has a strictly limited capacity—typically holding only **4 to 7 discrete items** in active attention at once. When you enter a bustling Pakistani grocery store or hypermarket, your brain is simultaneously dodging other shoppers, reading price tags, checking expiry dates, and keeping track of family requests.
-
-Under this heavy cognitive load, mental items that lack immediate visual cues vanish rapidly.
-
-#### Key Strategies to Never Forget Grocery Items:
-1. **Always use an external list** rather than mental recall.
-2. **Organize items by shop aisles or categories** (Grains, Oils, Dairy, Spices) to prevent zig-zagging.
-3. **Use Pakistani native units** like *pao* and *darjan* to communicate exact quantities.
-4. **Mark items off immediately as they enter the shopping cart.**`,
-      coverImageUrl: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&q=80',
-      authorName: 'Mudassir Bashir',
-      category: 'Shopping Psychology & Tips',
-      tags: ['Memory', 'Grocery Planning', 'Smart Shopping', 'Pakistan Kiryana'],
-      status: 'published',
-      publishedAt: now - 15 * oneDay,
-      readTimeMinutes: 4,
-      viewsCount: 2430,
-      seoTitle: 'Why Do We Forget Things When Shopping? • YAAD Guide',
-      seoDescription: 'Discover why human working memory fails in busy supermarkets and how external grocery lists solve shopping forgetfulness.',
-      versions: [
-        { versionNumber: 1, timestamp: now - 15 * oneDay, savedBy: 'Mudassir Bashir', title: 'Why Do We Forget Things When Shopping?', body: 'Initial draft published.' },
-      ],
-      createdAt: now - 15 * oneDay,
-      updatedAt: now - 2 * oneDay,
-    },
-    {
-      id: 'art_2',
-      slug: 'monthly-rashan-budget-guide-pakistan',
-      title: '5 Smart Ways to Plan Monthly Rashan on a Budget',
-      titleUr: 'کم بجٹ میں ماہانہ راشن کی سمارٹ منصوبہ بندی کے 5 طریقے',
-      titleRomanUrdu: 'Kam Budget Mein Mahana Rashan Plan Karne K 5 Tareeqay',
-      excerpt: 'Practical budgeting strategies for middle-class Pakistani households to manage inflation and eliminate grocery wastage.',
-      excerptUr: 'پاکستانی گھرانوں کے لیے ماہانہ راشن میں بجٹ بچانے اور فضول خرچی روکنے کے عملی طریقے',
-      excerptRomanUrdu: 'Mahana rashan mein budget bachane aur faaltu kharch rokne k mufeed mashwaray.',
-      body: `### Smart Monthly Rashan Planning for Pakistani Families
-
-Inflation and food price fluctuation in Pakistan make monthly pantry planning essential. Here are 5 battle-tested principles:
-
-#### 1. Audit Your Pantry Before Stepping Out
-Never purchase a 10kg flour bag or 5-litre ghee tin without checking your existing kitchen jars. Many households double-buy spices, pulses, and tea simply because they did not inspect the pantry cupboard.
-
-#### 2. Buy Staples in Bulk, Perishables Weekly
-Items with long shelf lives (Chakki Atta, Basmati Rice, Ghee, Daalein) should be purchased in bulk at whole-sale prices. Perishables like tomatoes, coriander, and milk should be bought fresh weekly.
-
-#### 3. Standardize Traditional Pakistani Units
-Clear quantity measurement (e.g. 250 grams / 1 pao, 1 darjan eggs) stops accidental over-purchasing and keeps bazaar bills predictable.`,
-      coverImageUrl: 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=1200&q=80',
-      authorName: 'Editorial Team',
-      category: 'Budgeting & Rashan',
-      tags: ['Monthly Rashan', 'Budgeting', 'Inflation', 'Family Shopping'],
-      status: 'published',
-      publishedAt: now - 10 * oneDay,
-      readTimeMinutes: 5,
-      viewsCount: 1890,
-      seoTitle: '5 Smart Ways to Plan Monthly Rashan on a Budget • YAAD',
-      seoDescription: 'Learn how to plan your monthly kiryana and grocery budget efficiently without compromising quality.',
-      createdAt: now - 10 * oneDay,
-      updatedAt: now - 3 * oneDay,
-    },
-  ];
+  return [];
 }
 
 function getInitialPushCampaigns(): PushCampaign[] {
-  const now = Date.now();
-  const oneDay = 24 * 60 * 60 * 1000;
-  return [
-    {
-      id: 'push_101',
-      titleEn: 'Weekend Rashan Reminder 🛒',
-      titleUr: 'ہفتہ وار سودا سلف کی یاد دہانی 🛒',
-      bodyEn: 'Review your shopping list before heading to the market. Check off pantry essentials in YAAD!',
-      bodyUr: 'مارکیٹ جانے سے پہلے اپنی راشن لسٹ چیک کر لیں۔ یاد ایپ کے ساتھ کوئی چیز نہ بھولیں!',
-      targetAudience: 'all_active',
-      deepLink: '/home',
-      status: 'sent',
-      sentAt: now - 2 * oneDay,
-      estimatedRecipients: 4,
-      actualSentCount: 4,
-      deliveredCount: 4,
-      openedCount: 3,
-      createdBy: 'Super Admin',
-      createdAt: now - 2 * oneDay,
-    },
-  ];
+  return [];
 }
 
 function getInitialPushTemplates(): PushTemplate[] {
-  return [
-    {
-      id: 'tmpl_1',
-      name: 'Monthly Rashan Checklist',
-      category: 'Shopping Reminder',
-      titleEn: 'Monthly Rashan Planning Time! 🌾',
-      titleUr: 'ماہانہ راشن کی لسٹ تیار کرنے کا وقت! 🌾',
-      bodyEn: 'Create your household checklist with 1-tap using YAAD Monthly Rashan Guide.',
-      bodyUr: 'یاد ایپ کی ماہانہ راشن گائیڈ کے ساتھ اپنے گھر کا سودا سلف فوری ترتیب دیں۔',
-      deepLink: '/rashan-list',
-    },
-    {
-      id: 'tmpl_2',
-      name: 'Offline Market Notice',
-      category: 'Tips & Education',
-      titleEn: 'Did you know? YAAD works 100% offline 📶',
-      titleUr: 'کیا آپ جانتے ہیں؟ یاد ایپ انٹرنیٹ کے بغیر بھی چلتی ہے 📶',
-      bodyEn: 'Shop seamlessly in basement markets without worrying about internet signals.',
-      bodyUr: 'بغیر انٹرنیٹ کے بھی مارکیٹ میں اشیاء باآسانی چیک آف کریں۔',
-      deepLink: '/help',
-    },
-  ];
+  return [];
 }
 
 function getInitialSupportTickets(): SupportTicket[] {
-  const now = Date.now();
-  const oneDay = 24 * 60 * 60 * 1000;
-  return [
-    {
-      id: 'tkt_201',
-      ticketNumber: 'YAD-8921',
-      userId: 'usr_lahore_01',
-      userName: 'Ahmed Tariq',
-      userEmail: 'ahmed.tariq@gmail.com',
-      userPhone: '+92 300 4528190',
-      subject: 'How to export monthly shopping history to Excel?',
-      description: 'Hi support team, I want to calculate my monthly household expense. Is there an export button for previous shopping trips?',
-      category: 'lists',
-      priority: 'medium',
-      status: 'open',
-      assignedTo: { id: 'admin_support', name: 'Support Agent', email: 'support@yaad.app' },
-      messages: [
-        { id: 'msg_1', sender: 'user', senderName: 'Ahmed Tariq', text: 'Hi support team, I want to calculate my monthly expense. How can I export my completed lists?', timestamp: now - 6 * 60 * 60 * 1000 },
-      ],
-      internalNotes: [
-        { id: 'note_1', adminId: 'admin_1', adminName: 'Super Admin', text: 'Verified user has 14 completed trips. Feature is in Statistics tab.', timestamp: now - 5 * 60 * 60 * 1000 },
-      ],
-      createdAt: now - 6 * 60 * 60 * 1000,
-      updatedAt: now - 5 * 60 * 60 * 1000,
-    },
-    {
-      id: 'tkt_202',
-      ticketNumber: 'YAD-8922',
-      userId: 'usr_karachi_02',
-      userName: 'Fatima Noor',
-      userEmail: 'fatima.noor92@outlook.com',
-      subject: 'Urdu voice input suggestion for regional spices',
-      description: 'The app recognized "zeera" and "dhania" wonderfully. Please add "kalonji" and "ajwain" to the quick catalog!',
-      category: 'feature_request',
-      priority: 'low',
-      status: 'resolved',
-      resolvedAt: now - 1 * oneDay,
-      messages: [
-        { id: 'msg_2', sender: 'user', senderName: 'Fatima Noor', text: 'Please add kalonji and ajwain to quick recognition.', timestamp: now - 2 * oneDay },
-        { id: 'msg_3', sender: 'staff', senderName: 'YAAD Support Team', text: 'Thank you Fatima! We have added Kalonji and Ajwain directly to the national master spices catalog in the latest update.', timestamp: now - 1 * oneDay },
-      ],
-      internalNotes: [],
-      createdAt: now - 2 * oneDay,
-      updatedAt: now - 1 * oneDay,
-    },
-  ];
+  return [];
 }
 
 function getInitialCannedReplies(): CannedReply[] {
-  return [
-    { id: 'can_1', title: 'Offline Mode Explanation', shortcut: '!offline', category: 'General', text: 'YAAD is built with an offline-first architecture. Any items you check off or add while inside basement markets are saved directly to your device storage and automatically synced as soon as internet connection resumes.' },
-    { id: 'can_2', title: 'Family Sharing Instructions', shortcut: '!sync', category: 'Features', text: 'To share your shopping list with a family member, log in to the same household account or use the Share List button to send an instant WhatsApp / SMS checklist copy.' },
-    { id: 'can_3', title: 'Feature Request Acknowledgment', shortcut: '!feature', category: 'Product', text: 'Thank you for your valuable suggestion! We have logged this request with our product engineering team for our upcoming Pakistani kiryana intelligence release.' },
-  ];
+  return [];
 }
 
 class AdminStore {
@@ -924,15 +609,15 @@ class AdminStore {
             },
           },
           permissionMatrix: parsed.permissionMatrix || getDefaultPermissionMatrix(),
-          appUsers: (parsed.appUsers && parsed.appUsers.length > 0) ? parsed.appUsers : getInitialAppUsers(),
-          moderationLists: (parsed.moderationLists && parsed.moderationLists.length > 0) ? parsed.moderationLists : getInitialModerationLists(),
-          catalogProducts: (parsed.catalogProducts && parsed.catalogProducts.length > 0) ? parsed.catalogProducts : getInitialCatalogProducts(),
-          catalogCategories: (parsed.catalogCategories && parsed.catalogCategories.length > 0) ? parsed.catalogCategories : getInitialCategories(),
-          cmsArticles: (parsed.cmsArticles && parsed.cmsArticles.length > 0) ? parsed.cmsArticles : getInitialCmsArticles(),
-          pushCampaigns: parsed.pushCampaigns || getInitialPushCampaigns(),
-          pushTemplates: parsed.pushTemplates || getInitialPushTemplates(),
-          supportTickets: (parsed.supportTickets && parsed.supportTickets.length > 0) ? parsed.supportTickets : getInitialSupportTickets(),
-          cannedReplies: parsed.cannedReplies || getInitialCannedReplies(),
+          appUsers: Array.isArray(parsed.appUsers) ? parsed.appUsers : [],
+          moderationLists: Array.isArray(parsed.moderationLists) ? parsed.moderationLists : [],
+          catalogProducts: Array.isArray(parsed.catalogProducts) ? parsed.catalogProducts : [],
+          catalogCategories: Array.isArray(parsed.catalogCategories) ? parsed.catalogCategories : [],
+          cmsArticles: Array.isArray(parsed.cmsArticles) ? parsed.cmsArticles : [],
+          pushCampaigns: Array.isArray(parsed.pushCampaigns) ? parsed.pushCampaigns : [],
+          pushTemplates: Array.isArray(parsed.pushTemplates) ? parsed.pushTemplates : [],
+          supportTickets: Array.isArray(parsed.supportTickets) ? parsed.supportTickets : [],
+          cannedReplies: Array.isArray(parsed.cannedReplies) ? parsed.cannedReplies : [],
         };
         if (isServerless && sourcePath !== DATA_FILE) {
           this.save();
@@ -1116,6 +801,7 @@ class AdminStore {
       this.db.auditLogs = this.db.auditLogs.slice(0, 10000);
     }
     this.save();
+    persistSharedAuditLog(log).catch(() => null);
     return log;
   }
 
@@ -1152,6 +838,20 @@ class AdminStore {
     const paged = list.slice(offset, offset + limit);
 
     return { logs: paged, total };
+  }
+
+  public async getAuditLogsAsync(options?: {
+    limit?: number;
+    offset?: number;
+    action?: string;
+    adminEmail?: string;
+    search?: string;
+  }): Promise<{ logs: AuditLogEntry[]; total: number }> {
+    const shared = await getSharedAuditLogsFromDb(options);
+    if (shared) {
+      return shared;
+    }
+    return this.getAuditLogs(options);
   }
 
   // --- Admin User Operations ---
@@ -1485,6 +1185,33 @@ class AdminStore {
     return this.db.invites;
   }
 
+  public async getAllInvitesAsync(): Promise<AdminInvite[]> {
+    const supabase = getSupabaseAdmin();
+    if (supabase) {
+      try {
+        const { data, error } = await supabase.from('admin_invites').select('*');
+        if (!error && data) {
+          const mapped: AdminInvite[] = data.map((d: any) => ({
+            id: d.id,
+            email: d.email,
+            name: d.name,
+            role: d.role,
+            token: d.token,
+            invitedBy: d.invited_by,
+            expiresAt: new Date(d.expires_at).getTime(),
+            status: d.status,
+            createdAt: new Date(d.created_at).getTime(),
+            acceptedAt: d.accepted_at ? new Date(d.accepted_at).getTime() : undefined,
+          }));
+          return mapped;
+        }
+      } catch (err) {
+        console.warn('[AdminStore] Error loading invites from Supabase:', err);
+      }
+    }
+    return this.getAllInvites();
+  }
+
   // --- Password Reset Tokens ---
   public createPasswordReset(email: string): PasswordResetToken | null {
     return this.createPasswordResetToken(email);
@@ -1775,6 +1502,50 @@ class AdminStore {
     };
   }
 
+  public async getAppUsersAsync(options?: {
+    search?: string;
+    status?: string;
+    offset?: number;
+    limit?: number;
+  }): Promise<{ users: any[]; total: number; kpis: any }> {
+    const authResult = await getAuthoritativeAppUsers(options);
+    if (authResult) {
+      const allMetrics = await getAuthoritativeAppMetrics();
+      return {
+        users: authResult.users,
+        total: authResult.total,
+        kpis: {
+          totalUsers: allMetrics?.totalUsers ?? authResult.total,
+          activeUsers30d: allMetrics?.activeUsers30d ?? 0,
+          activeUsers7d: allMetrics?.activeUsers7d ?? 0,
+          suspendedUsers: authResult.users.filter((u) => u.status === 'suspended').length,
+        },
+      };
+    }
+    return this.getAppUsers(options);
+  }
+
+  public async getDashboardMetricsAsync(): Promise<any> {
+    const authoritative = await getAuthoritativeAppMetrics();
+    if (authoritative) {
+      return authoritative;
+    }
+    return {
+      totalUsers: (this.db.appUsers || []).length,
+      activeUsers30d: 0,
+      activeUsers7d: 0,
+      totalLists: (this.db.moderationLists || []).length,
+      completedLists: 0,
+      totalItems: 0,
+      completedItems: 0,
+      totalAdmins: this.getAllAdmins().length,
+      activeAdmins: this.getAllAdmins().filter((a) => a.status === 'active').length,
+      pendingInvites: this.getAllInvites().filter((i) => i.status === 'pending').length,
+      totalAuditLogs: this.db.auditLogs.length,
+      openTickets: (this.db.supportTickets || []).filter((t) => t.status === 'open').length,
+    };
+  }
+
   public getAppUserById(id: string): AppUser | undefined {
     return (this.db.appUsers || []).find((u) => u.id === id);
   }
@@ -1809,6 +1580,19 @@ class AdminStore {
       lists = lists.filter((l) => l.title.toLowerCase().includes(q) || l.userName.toLowerCase().includes(q));
     }
     return lists;
+  }
+
+  public async getModerationListsAsync(options?: { search?: string; status?: string; offset?: number; limit?: number }): Promise<{ lists: any[]; total: number }> {
+    const authResult = await getAuthoritativeShoppingLists({
+      search: options?.search,
+      offset: options?.offset,
+      limit: options?.limit,
+    });
+    if (authResult) {
+      return authResult;
+    }
+    const local = this.getModerationLists(options);
+    return { lists: local, total: local.length };
   }
 
   public moderateListItem(listId: string, itemId: string, action: 'approved' | 'removed', reason?: string): boolean {
@@ -1848,6 +1632,15 @@ class AdminStore {
     const offset = options?.offset || 0;
     const limit = options?.limit || 50;
     return { products: list.slice(offset, offset + limit), total };
+  }
+
+  public async getCatalogProductsAsync(options?: { category?: string; search?: string; limit?: number; offset?: number }): Promise<{ items: any[]; categories: any[]; total: number }> {
+    const authResult = await getAuthoritativeCatalog(options);
+    if (authResult) {
+      return authResult;
+    }
+    const local = this.getCatalogProducts(options);
+    return { items: local.products, categories: this.getCatalogCategories(), total: local.total };
   }
 
   public saveCatalogProduct(product: Partial<CatalogProduct>): CatalogProduct {
@@ -1925,6 +1718,15 @@ class AdminStore {
       list = list.filter((a) => a.title.toLowerCase().includes(q) || a.tags.some((t) => t.toLowerCase().includes(q)));
     }
     return list;
+  }
+
+  public async getCmsArticlesAsync(options?: { status?: 'draft' | 'published' | 'all'; search?: string }): Promise<{ articles: any[]; total: number }> {
+    const authCms = await getAuthoritativeCms(options);
+    if (authCms) {
+      return authCms;
+    }
+    const local = this.getCmsArticles(options);
+    return { articles: local, total: local.length };
   }
 
   public getPublicPublishedArticles(): CmsArticle[] {
@@ -2077,6 +1879,7 @@ class AdminStore {
   // =========================================================================
   public getAnalyticsReport(dateRange: '7d' | '30d' | '90d' = '30d') {
     const users = this.db.appUsers || [];
+    const lists = this.db.moderationLists || [];
     const now = Date.now();
     const oneDay = 24 * 60 * 60 * 1000;
     const days = dateRange === '7d' ? 7 : dateRange === '90d' ? 90 : 30;
@@ -2084,58 +1887,48 @@ class AdminStore {
     const totalUsers = users.length;
     const activeUsers30d = users.filter((u) => u.status !== 'suspended' && now - u.lastActiveAt <= 30 * oneDay).length;
     const activeUsers7d = users.filter((u) => u.status !== 'suspended' && now - u.lastActiveAt <= 7 * oneDay).length;
-    const totalListsCreated = users.reduce((acc, u) => acc + u.listsCount, 0);
-    const totalCompletedTrips = users.reduce((acc, u) => acc + u.completedTripsCount, 0);
-    const tripCompletionRate = totalListsCreated > 0 ? Math.min(100, Math.round((totalCompletedTrips / (totalListsCreated + 5)) * 100)) : 82;
+    const totalListsCreated = lists.length || users.reduce((acc, u) => acc + (u.listsCount || 0), 0);
+    const totalCompletedTrips = lists.filter((l: any) => l.isCompleted || l.status === 'resolved').length || users.reduce((acc, u) => acc + (u.completedTripsCount || 0), 0);
+    const tripCompletionRate = totalListsCreated > 0 ? Math.round((totalCompletedTrips / totalListsCreated) * 100) : 0;
 
-    // Time series generation
-    const signupsTimeSeries = [];
-    const activeUsersTimeSeries = [];
-    const listsTimeSeries = [];
+    // Time series calculated from actual records
+    const signupsTimeSeries: Array<{ label: string; value: number }> = [];
+    const activeUsersTimeSeries: Array<{ label: string; value: number }> = [];
+    const listsTimeSeries: Array<{ label: string; value: number }> = [];
 
     for (let i = days - 1; i >= 0; i--) {
-      const dayTimestamp = now - i * oneDay;
-      const dayDate = new Date(dayTimestamp);
+      const dayStart = now - (i + 1) * oneDay;
+      const dayEnd = now - i * oneDay;
+      const dayDate = new Date(dayEnd);
       const label = `${dayDate.getDate()} ${dayDate.toLocaleString('default', { month: 'short' })}`;
-      
-      const seedVal = (dayDate.getDate() * 7 + dayDate.getMonth() * 3) % 15;
-      signupsTimeSeries.push({ label, value: Math.max(1, seedVal + 2) });
-      activeUsersTimeSeries.push({ label, value: Math.max(4, seedVal * 2 + 8) });
-      listsTimeSeries.push({ label, value: Math.max(3, seedVal * 3 + 6) });
+
+      const daySignups = users.filter((u) => u.signupDate >= dayStart && u.signupDate < dayEnd).length;
+      const dayActive = users.filter((u) => u.lastActiveAt >= dayStart && u.lastActiveAt < dayEnd).length;
+      const dayLists = lists.filter((l) => l.createdAt >= dayStart && l.createdAt < dayEnd).length;
+
+      signupsTimeSeries.push({ label, value: daySignups });
+      activeUsersTimeSeries.push({ label, value: dayActive });
+      listsTimeSeries.push({ label, value: dayLists });
     }
-
-    // Top categories by volume
-    const topCategories = [
-      { name: 'Grains & Atta', count: 340, percentage: 32 },
-      { name: 'Cooking Oil & Ghee', count: 280, percentage: 26 },
-      { name: 'Dairy & Milk', count: 195, percentage: 18 },
-      { name: 'Pulses & Daal', count: 140, percentage: 13 },
-      { name: 'Spices & Masalay', count: 115, percentage: 11 },
-    ];
-
-    // Retention cohorts (D1, D7, D30)
-    const retentionCohorts = [
-      { cohort: 'September 2026', newUsers: 142, d1: '78%', d7: '54%', d30: '42%' },
-      { cohort: 'August 2026', newUsers: 118, d1: '74%', d7: '49%', d30: '38%' },
-      { cohort: 'July 2026', newUsers: 95, d1: '71%', d7: '46%', d30: '35%' },
-    ];
 
     return {
       kpis: {
-        totalUsers: { value: totalUsers, delta: '+18.5% vs prior period' },
-        activeUsersMAU: { value: activeUsers30d, delta: '+12.4% MAU' },
-        activeUsersDAU: { value: activeUsers7d, delta: '+9.1% DAU' },
-        listsCreated: { value: totalListsCreated, delta: '+24.2% lists' },
-        completionRate: { value: `${tripCompletionRate}%`, delta: '+3.8% completed' },
+        totalUsers: { value: totalUsers, delta: 'Authoritative database count' },
+        activeUsersMAU: { value: activeUsers30d, delta: 'Verified 30-day activity' },
+        activeUsersDAU: { value: activeUsers7d, delta: 'Verified 7-day activity' },
+        listsCreated: { value: totalListsCreated, delta: 'Total lists in database' },
+        completionRate: { value: `${tripCompletionRate}%`, delta: 'Completed trip ratio' },
       },
       timeSeries: {
         signups: signupsTimeSeries,
         activeUsers: activeUsersTimeSeries,
         lists: listsTimeSeries,
       },
-      topCategories,
-      retentionCohorts,
-      summary: `In the last ${days} days, user engagement increased with ${activeUsers30d} active shoppers. Grains & Cooking Oils continue to be the highest volume categories across Pakistani households with an 82% shopping trip completion rate.`,
+      topCategories: [],
+      retentionCohorts: [],
+      summary: totalUsers > 0
+        ? `Database reflects ${totalUsers} registered shopper(s), ${activeUsers30d} active in the last 30 days, and ${totalListsCreated} total shopping list(s).`
+        : 'No registered shoppers recorded in database yet.',
     };
   }
 
@@ -2155,6 +1948,15 @@ class AdminStore {
       tickets = tickets.filter((t) => t.subject.toLowerCase().includes(q) || t.userName.toLowerCase().includes(q) || t.ticketNumber.toLowerCase().includes(q));
     }
     return tickets;
+  }
+
+  public async getSupportTicketsAsync(options?: { status?: string; priority?: string; search?: string; offset?: number; limit?: number }): Promise<{ tickets: any[]; total: number }> {
+    const authTickets = await getAuthoritativeTickets(options);
+    if (authTickets) {
+      return authTickets;
+    }
+    const local = this.getSupportTickets(options);
+    return { tickets: local, total: local.length };
   }
 
   public getTicketById(id: string): SupportTicket | undefined {

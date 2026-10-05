@@ -8,6 +8,10 @@ import { AdminForgotPasswordPage } from './pages/AdminForgotPasswordPage';
 import { AdminResetPasswordPage } from './pages/AdminResetPasswordPage';
 import { AdminAcceptInvitePage } from './pages/AdminAcceptInvitePage';
 import { AdminDashboardPage } from './pages/AdminDashboardPage';
+import { AdminUserDirectoryPage } from './pages/AdminUserDirectoryPage';
+import { AdminListModerationPage } from './pages/AdminListModerationPage';
+import { AdminCatalogPage } from './pages/AdminCatalogPage';
+import { AdminSettingsPage } from './pages/AdminSettingsPage';
 import { AdminTeamPage } from './pages/AdminTeamPage';
 import { AdminAuditLogPage } from './pages/AdminAuditLogPage';
 import { AdminNotFoundPage } from './pages/AdminNotFoundPage';
@@ -133,6 +137,38 @@ function AdminRouter() {
     return (
       <AdminLayout activePath="/admin/audit-log" onNavigate={navigate}>
         <AdminAuditLogPage />
+      </AdminLayout>
+    );
+  }
+
+  if (currentPath === '/admin/users') {
+    return (
+      <AdminLayout activePath="/admin/users" onNavigate={navigate}>
+        <AdminUserDirectoryPage />
+      </AdminLayout>
+    );
+  }
+
+  if (currentPath === '/admin/lists') {
+    return (
+      <AdminLayout activePath="/admin/lists" onNavigate={navigate}>
+        <AdminListModerationPage />
+      </AdminLayout>
+    );
+  }
+
+  if (currentPath === '/admin/catalog') {
+    return (
+      <AdminLayout activePath="/admin/catalog" onNavigate={navigate}>
+        <AdminCatalogPage />
+      </AdminLayout>
+    );
+  }
+
+  if (currentPath === '/admin/settings') {
+    return (
+      <AdminLayout activePath="/admin/settings" onNavigate={navigate}>
+        <AdminSettingsPage />
       </AdminLayout>
     );
   }

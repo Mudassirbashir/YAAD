@@ -446,3 +446,620 @@ export async function deleteSharedInvite(token: string): Promise<void> {
   }
 }
 
+/**
+ * -----------------------------------------------------------------------------
+ * AUTHORITATIVE AUDIT LOG PERSISTENCE & RETRIEVAL
+ * -----------------------------------------------------------------------------
+ */
+
+export interface SharedAuditLogEntry {
+  id: string;
+  timestamp: number;
+  adminId?: string;
+  adminEmail?: string;
+  action: string;
+  targetType: string;
+  targetId?: string;
+  beforeValue?: any;
+  afterValue?: any;
+  ip?: string;
+  userAgent?: string;
+  metadata?: Record<string, any>;
+}
+
+export async function persistSharedAuditLog(entry: SharedAuditLogEntry): Promise<void> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return;
+
+  try {
+    await supabase.from('admin_audit_logs').insert({
+      id: entry.id,
+      timestamp: new Date(entry.timestamp).toISOString(),
+      admin_id: entry.adminId || null,
+      admin_email: entry.adminEmail || null,
+      action: entry.action,
+      target_type: entry.targetType,
+      target_id: entry.targetId || null,
+      before_value: entry.beforeValue || null,
+      after_value: entry.afterValue || null,
+      ip: entry.ip || null,
+      user_agent: entry.userAgent || null,
+      metadata: entry.metadata || null,
+    });
+  } catch (err) {
+    console.warn('[Supabase Admin] Error persisting audit log to Supabase:', err);
+  }
+}
+
+export async function getSharedAuditLogsFromDb(options?: {
+  action?: string;
+  adminEmail?: string;
+  search?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<{ logs: SharedAuditLogEntry[]; total: number } | null> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return null;
+
+  try {
+    let query = supabase
+      .from('admin_audit_logs')
+      .select('*', { count: 'exact' })
+      .order('timestamp', { ascending: false });
+
+    if (options?.action) {
+      query = query.eq('action', options.action);
+    }
+    if (options?.adminEmail) {
+      query = query.ilike('admin_email', `%${options.adminEmail}%`);
+    }
+    if (options?.search) {
+      const q = options.search.trim();
+      query = query.or(`action.ilike.%${q}%,admin_email.ilike.%${q}%,target_type.ilike.%${q}%`);
+    }
+
+    const offset = options?.offset || 0;
+    const limit = options?.limit || 50;
+    query = query.range(offset, offset + limit - 1);
+
+    const { data, count, error } = await query;
+    if (error) {
+      console.warn('[Supabase Admin] Error fetching audit logs from Supabase:', error.message);
+      return null;
+    }
+
+    const logs: SharedAuditLogEntry[] = (data || []).map((row: any) => ({
+      id: row.id,
+      timestamp: new Date(row.timestamp).getTime(),
+      adminId: row.admin_id || undefined,
+      adminEmail: row.admin_email || undefined,
+      action: row.action,
+      targetType: row.target_type,
+      targetId: row.target_id || undefined,
+      beforeValue: row.before_value || undefined,
+      afterValue: row.after_value || undefined,
+      ip: row.ip || undefined,
+      userAgent: row.user_agent || undefined,
+      metadata: row.metadata || undefined,
+    }));
+
+    return { logs, total: count ?? logs.length };
+  } catch (err) {
+    console.warn('[Supabase Admin] Exception in getSharedAuditLogsFromDb:', err);
+    return null;
+  }
+}
+
+/**
+ * -----------------------------------------------------------------------------
+ * AUTHORITATIVE LIVE APPLICATION METRICS & STATISTICS (PHASE 8)
+ * -----------------------------------------------------------------------------
+ */
+
+export interface AuthoritativeDashboardStats {
+  totalUsers: number;
+  activeUsers30d: number;
+  activeUsers7d: number;
+  totalLists: number;
+  completedLists: number;
+  totalItems: number;
+  completedItems: number;
+  totalAdmins: number;
+  activeAdmins: number;
+  pendingInvites: number;
+  totalAuditLogs: number;
+  openTickets: number;
+}
+
+export async function getAuthoritativeAppMetrics(): Promise<AuthoritativeDashboardStats | null> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return null;
+
+  try {
+    const thirtyDaysAgoIso = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const sevenDaysAgoIso = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    const [
+      usersCountRes,
+      activeUsers30dRes,
+      activeUsers7dRes,
+      listsCountRes,
+      completedListsRes,
+      itemsCountRes,
+      completedItemsRes,
+      adminsRes,
+      invitesRes,
+      auditLogsRes,
+      ticketsRes,
+    ] = await Promise.all([
+      supabase.from('profiles').select('*', { count: 'exact', head: true }),
+      supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('updated_at', thirtyDaysAgoIso),
+      supabase.from('profiles').select('*', { count: 'exact', head: true }).gte('updated_at', sevenDaysAgoIso),
+      supabase.from('shopping_lists').select('*', { count: 'exact', head: true }),
+      supabase.from('shopping_lists').select('*', { count: 'exact', head: true }).eq('is_completed', true),
+      supabase.from('shopping_items').select('*', { count: 'exact', head: true }),
+      supabase.from('shopping_items').select('*', { count: 'exact', head: true }).eq('is_completed', true),
+      supabase.from('admin_users').select('status', { count: 'exact' }),
+      supabase.from('admin_invites').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+      (async () => {
+        try {
+          return await supabase.from('admin_audit_logs').select('*', { count: 'exact', head: true });
+        } catch {
+          return { count: 0 };
+        }
+      })(),
+      (async () => {
+        try {
+          return await supabase.from('support_tickets').select('*', { count: 'exact', head: true }).eq('status', 'open');
+        } catch {
+          return { count: 0 };
+        }
+      })(),
+    ]);
+
+    const totalUsers = usersCountRes.count ?? 0;
+    const activeUsers30d = activeUsers30dRes.count ?? 0;
+    const activeUsers7d = activeUsers7dRes.count ?? 0;
+    const totalLists = listsCountRes.count ?? 0;
+    const completedLists = completedListsRes.count ?? 0;
+    const totalItems = itemsCountRes.count ?? 0;
+    const completedItems = completedItemsRes.count ?? 0;
+
+    const adminsList = adminsRes.data || [];
+    const totalAdmins = adminsRes.count ?? adminsList.length;
+    const activeAdmins = adminsList.filter((a: any) => a.status === 'active').length;
+    const pendingInvites = invitesRes.count ?? 0;
+    const totalAuditLogs = auditLogsRes.count ?? 0;
+    const openTickets = ticketsRes.count ?? 0;
+
+    return {
+      totalUsers,
+      activeUsers30d,
+      activeUsers7d,
+      totalLists,
+      completedLists,
+      totalItems,
+      completedItems,
+      totalAdmins,
+      activeAdmins,
+      pendingInvites,
+      totalAuditLogs,
+      openTickets,
+    };
+  } catch (err) {
+    console.warn('[Supabase Admin] Exception calculating authoritative metrics:', err);
+    return null;
+  }
+}
+
+/**
+ * -----------------------------------------------------------------------------
+ * AUTHORITATIVE USER DIRECTORY (PHASE 9)
+ * -----------------------------------------------------------------------------
+ */
+
+export interface AuthoritativeAppUser {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  language?: string;
+  avatarUrl?: string;
+  signupDate: number;
+  lastActiveAt: number;
+  status: 'active' | 'suspended';
+  suspendReason?: string;
+  listsCount: number;
+  completedTripsCount: number;
+}
+
+export async function getAuthoritativeAppUsers(options?: {
+  search?: string;
+  status?: string;
+  offset?: number;
+  limit?: number;
+}): Promise<{ users: AuthoritativeAppUser[]; total: number } | null> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return null;
+
+  try {
+    let query = supabase
+      .from('profiles')
+      .select('*', { count: 'exact' })
+      .order('created_at', { ascending: false });
+
+    if (options?.search) {
+      const q = options.search.trim();
+      query = query.or(`full_name.ilike.%${q}%,email.ilike.%${q}%,phone_number.ilike.%${q}%`);
+    }
+
+    const offset = options?.offset || 0;
+    const limit = options?.limit || 25;
+    query = query.range(offset, offset + limit - 1);
+
+    const { data: profiles, count, error } = await query;
+    if (error) {
+      console.warn('[Supabase Admin] Error fetching profiles from Supabase:', error.message);
+      return null;
+    }
+
+    if (!profiles || profiles.length === 0) {
+      return { users: [], total: count ?? 0 };
+    }
+
+    // Fetch actual shopping list counts per user
+    const userIds = profiles.map((p: any) => p.id);
+    const { data: userLists } = await supabase
+      .from('shopping_lists')
+      .select('id, user_id, is_completed')
+      .in('user_id', userIds);
+
+    const listCountsByUser = new Map<string, { total: number; completed: number }>();
+    (userLists || []).forEach((l: any) => {
+      const current = listCountsByUser.get(l.user_id) || { total: 0, completed: 0 };
+      current.total += 1;
+      if (l.is_completed) current.completed += 1;
+      listCountsByUser.set(l.user_id, current);
+    });
+
+    const users: AuthoritativeAppUser[] = profiles.map((p: any) => {
+      const counts = listCountsByUser.get(p.id) || { total: 0, completed: 0 };
+      const createdAt = p.created_at ? new Date(p.created_at).getTime() : Date.now();
+      const updatedAt = p.updated_at ? new Date(p.updated_at).getTime() : createdAt;
+
+      return {
+        id: p.id,
+        name: p.full_name || 'Anonymous User',
+        email: p.email || undefined,
+        phone: p.phone_number || p.phone || undefined,
+        language: p.language || 'en',
+        avatarUrl: p.avatar_url || undefined,
+        signupDate: createdAt,
+        lastActiveAt: updatedAt,
+        status: p.is_suspended ? 'suspended' : 'active',
+        suspendReason: p.suspend_reason || undefined,
+        listsCount: counts.total,
+        completedTripsCount: counts.completed,
+      };
+    });
+
+    return { users, total: count ?? users.length };
+  } catch (err) {
+    console.warn('[Supabase Admin] Exception in getAuthoritativeAppUsers:', err);
+    return null;
+  }
+}
+
+/**
+ * -----------------------------------------------------------------------------
+ * AUTHORITATIVE SHOPPING LIST MODERATION (PHASE 10)
+ * -----------------------------------------------------------------------------
+ */
+
+export interface AuthoritativeShoppingListSummary {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail?: string;
+  title: string;
+  isCompleted: boolean;
+  itemsCount: number;
+  createdAt: number;
+  updatedAt: number;
+  items: Array<{
+    id: string;
+    name: string;
+    category: string;
+    quantity?: string;
+    unit?: string;
+    completed: boolean;
+  }>;
+}
+
+export async function getAuthoritativeShoppingLists(options?: {
+  search?: string;
+  isCompleted?: boolean;
+  offset?: number;
+  limit?: number;
+}): Promise<{ lists: AuthoritativeShoppingListSummary[]; total: number } | null> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return null;
+
+  try {
+    let query = supabase
+      .from('shopping_lists')
+      .select('*', { count: 'exact' })
+      .order('created_at', { ascending: false });
+
+    if (options?.search) {
+      query = query.ilike('title', `%${options.search.trim()}%`);
+    }
+    if (options?.isCompleted !== undefined) {
+      query = query.eq('is_completed', options.isCompleted);
+    }
+
+    const offset = options?.offset || 0;
+    const limit = options?.limit || 25;
+    query = query.range(offset, offset + limit - 1);
+
+    const { data: listsData, count, error } = await query;
+    if (error) {
+      console.warn('[Supabase Admin] Error fetching shopping lists:', error.message);
+      return null;
+    }
+
+    if (!listsData || listsData.length === 0) {
+      return { lists: [], total: count ?? 0 };
+    }
+
+    const listIds = listsData.map((l: any) => l.id);
+    const userIds = [...new Set(listsData.map((l: any) => l.user_id))];
+
+    const [itemsRes, profilesRes] = await Promise.all([
+      supabase.from('shopping_items').select('*').in('list_id', listIds),
+      supabase.from('profiles').select('id, full_name, email').in('id', userIds),
+    ]);
+
+    const userMap = new Map<string, { name: string; email?: string }>();
+    (profilesRes.data || []).forEach((p: any) => {
+      userMap.set(p.id, { name: p.full_name || 'Anonymous User', email: p.email || undefined });
+    });
+
+    const itemsByList = new Map<string, any[]>();
+    (itemsRes.data || []).forEach((item: any) => {
+      const arr = itemsByList.get(item.list_id) || [];
+      arr.push({
+        id: item.id,
+        name: item.item_name || item.name || '',
+        category: item.category || 'other',
+        quantity: item.quantity ? String(item.quantity) : undefined,
+        unit: item.unit || undefined,
+        completed: Boolean(item.is_completed),
+      });
+      itemsByList.set(item.list_id, arr);
+    });
+
+    const lists: AuthoritativeShoppingListSummary[] = listsData.map((l: any) => {
+      const userInfo = userMap.get(l.user_id) || { name: 'App User' };
+      const items = itemsByList.get(l.id) || (Array.isArray(l.items) ? l.items : []);
+
+      return {
+        id: l.id,
+        userId: l.user_id,
+        userName: userInfo.name,
+        userEmail: userInfo.email,
+        title: l.title || 'Untitled List',
+        isCompleted: Boolean(l.is_completed),
+        itemsCount: items.length,
+        createdAt: l.created_at ? new Date(l.created_at).getTime() : Date.now(),
+        updatedAt: l.updated_at ? new Date(l.updated_at).getTime() : Date.now(),
+        items,
+      };
+    });
+
+    return { lists, total: count ?? lists.length };
+  } catch (err) {
+    console.warn('[Supabase Admin] Exception in getAuthoritativeShoppingLists:', err);
+    return null;
+  }
+}
+
+/**
+ * -----------------------------------------------------------------------------
+ * AUTHORITATIVE PRODUCT CATALOG (PHASE 2 & MODULE 6)
+ * -----------------------------------------------------------------------------
+ */
+
+export interface AuthoritativeCatalogItem {
+  id: string;
+  canonicalName: string;
+  englishName: string;
+  urduName: string;
+  categoryId: string;
+  categoryName?: string;
+  defaultUnit: string;
+  emoji?: string;
+  active: boolean;
+  createdAt: number;
+}
+
+export async function getAuthoritativeCatalog(options?: {
+  search?: string;
+  categoryId?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<{ items: AuthoritativeCatalogItem[]; categories: Array<{ id: string; nameEn: string; nameUr: string; icon: string }>; total: number } | null> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return null;
+
+  try {
+    const { data: categoriesData } = await supabase
+      .from('categories')
+      .select('id, name_en, name_ur, icon')
+      .order('sort_order', { ascending: true });
+
+    const categories = (categoriesData || []).map((c: any) => ({
+      id: c.id,
+      nameEn: c.name_en,
+      nameUr: c.name_ur,
+      icon: c.icon || 'category',
+    }));
+
+    let query = supabase
+      .from('items')
+      .select('*', { count: 'exact' })
+      .order('canonical_name', { ascending: true });
+
+    if (options?.categoryId && options.categoryId !== 'all') {
+      query = query.eq('category_id', options.categoryId);
+    }
+    if (options?.search) {
+      const q = options.search.trim();
+      query = query.or(`canonical_name.ilike.%${q}%,english_name.ilike.%${q}%,urdu_name.ilike.%${q}%`);
+    }
+
+    const offset = options?.offset || 0;
+    const limit = options?.limit || 50;
+    query = query.range(offset, offset + limit - 1);
+
+    const { data: itemsData, count, error } = await query;
+    if (error) {
+      console.warn('[Supabase Admin] Error fetching catalog items:', error.message);
+      return null;
+    }
+
+    const catNameMap = new Map(categories.map((c) => [c.id, c.nameEn]));
+
+    const items: AuthoritativeCatalogItem[] = (itemsData || []).map((it: any) => ({
+      id: it.id,
+      canonicalName: it.canonical_name,
+      englishName: it.english_name,
+      urduName: it.urdu_name,
+      categoryId: it.category_id,
+      categoryName: catNameMap.get(it.category_id) || it.category_id,
+      defaultUnit: it.default_unit || 'kg',
+      emoji: it.emoji || undefined,
+      active: it.active !== false,
+      createdAt: it.created_at ? new Date(it.created_at).getTime() : Date.now(),
+    }));
+
+    return { items, categories, total: count ?? items.length };
+  } catch (err) {
+    console.warn('[Supabase Admin] Exception in getAuthoritativeCatalog:', err);
+    return null;
+  }
+}
+
+/**
+ * -----------------------------------------------------------------------------
+ * AUTHORITATIVE SUPPORT TICKETS & CMS (MODULES 7 & 11)
+ * -----------------------------------------------------------------------------
+ */
+
+export async function getAuthoritativeTickets(options?: {
+  status?: string;
+  search?: string;
+  offset?: number;
+  limit?: number;
+}): Promise<{ tickets: any[]; total: number } | null> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return null;
+
+  try {
+    let query = supabase
+      .from('support_tickets')
+      .select('*', { count: 'exact' })
+      .order('created_at', { ascending: false });
+
+    if (options?.status && options.status !== 'all') {
+      query = query.eq('status', options.status);
+    }
+    if (options?.search) {
+      const q = options.search.trim();
+      query = query.or(`ticket_number.ilike.%${q}%,subject.ilike.%${q}%,user_name.ilike.%${q}%,user_email.ilike.%${q}%`);
+    }
+
+    const offset = options?.offset || 0;
+    const limit = options?.limit || 25;
+    query = query.range(offset, offset + limit - 1);
+
+    const { data, count, error } = await query;
+    if (error) return null;
+
+    return { tickets: data || [], total: count ?? (data?.length || 0) };
+  } catch {
+    return null;
+  }
+}
+
+export async function getAuthoritativeCms(options?: {
+  status?: string;
+  search?: string;
+}): Promise<{ articles: any[]; total: number } | null> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return null;
+
+  try {
+    let query = supabase
+      .from('cms_articles')
+      .select('*', { count: 'exact' })
+      .order('created_at', { ascending: false });
+
+    if (options?.status && options.status !== 'all') {
+      query = query.eq('status', options.status);
+    }
+    if (options?.search) {
+      query = query.ilike('title', `%${options.search.trim()}%`);
+    }
+
+    const { data, count, error } = await query;
+    if (error) return null;
+
+    return { articles: data || [], total: count ?? (data?.length || 0) };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * -----------------------------------------------------------------------------
+ * AUTHORITATIVE SETTINGS KEY-VALUE STORE (MODULE 12)
+ * -----------------------------------------------------------------------------
+ */
+
+export async function getAuthoritativeSetting<T>(key: string): Promise<T | null> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return null;
+
+  try {
+    const { data, error } = await supabase
+      .from('admin_settings')
+      .select('value')
+      .eq('key', key)
+      .maybeSingle();
+
+    if (error || !data) return null;
+    return data.value as T;
+  } catch {
+    return null;
+  }
+}
+
+export async function setAuthoritativeSetting<T>(key: string, value: T, updatedBy?: string): Promise<boolean> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return false;
+
+  try {
+    await supabase.from('admin_settings').upsert({
+      key,
+      value: value as any,
+      updated_at: new Date().toISOString(),
+      updated_by: updatedBy || null,
+    });
+    return true;
+  } catch (err) {
+    console.warn(`[Supabase Admin] Error saving setting '${key}':`, err);
+    return false;
+  }
+}
+
