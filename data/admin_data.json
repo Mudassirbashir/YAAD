@@ -10,7 +10,7 @@
       "status": "active",
       "failedAttempts": 0,
       "createdAt": 1791123839719,
-      "updatedAt": 1791207318664,
+      "updatedAt": 1791230750578,
       "deletedAt": null,
       "recoveryCodes": [
         {
@@ -531,9 +531,67 @@
       "expiresAt": 1791269648780,
       "ip": "127.0.0.1",
       "userAgent": "Node-Test"
+    },
+    {
+      "sessionId": "sess_3933c6c5-ca96-40f0-82d1-0a02c0e24ada",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "yaad_sess.eyJzaWQiOiJzZXNzXzM5MzNjNmM1LWNhOTYtNDBmMC04MmQxLTBhMDJjMGUyNGFkYSIsImFpZCI6ImFkbWluX2UzOTg4MzYxLWNmMTMtNDRmZi1iZWQxLWVlZDUzZmMxZTY2YSIsImNhdCI6MTc5MTIyNjc4NzAyMiwiZXhwIjoxNzkxMjY5OTg3MDIyLCJub25jZSI6IjVmYmY1YjUzMGFmYTBmNGEifQ.87cf811045925449935e3c9f518c059e24f59ea0871346fbe69adb7f453f9b2d",
+      "createdAt": 1791226787022,
+      "lastActivityAt": 1791226787238,
+      "expiresAt": 1791269987022
+    },
+    {
+      "sessionId": "sess_a74a5eed-54a9-4ec8-9707-e70b0413173e",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "yaad_sess.eyJzaWQiOiJzZXNzX2E3NGE1ZWVkLTU0YTktNGVjOC05NzA3LWU3MGIwNDEzMTczZSIsImFpZCI6ImFkbWluX2UzOTg4MzYxLWNmMTMtNDRmZi1iZWQxLWVlZDUzZmMxZTY2YSIsImNhdCI6MTc5MTIzMDI1NDA5NCwiZXhwIjoxNzkxMjczNDU0MDk0LCJub25jZSI6ImIxNmFhOTcwMTZmZTU3MGMifQ.b3971ef9b392d08e63ff4987fb3d926aa40265a05b911d97fb6fb7985260e5ec",
+      "createdAt": 1791230254094,
+      "lastActivityAt": 1791230254179,
+      "expiresAt": 1791273454094,
+      "ip": "127.0.0.1",
+      "userAgent": "node"
+    },
+    {
+      "sessionId": "sess_d6b4c011-99d3-4221-aeb8-97e7990d8afb",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "yaad_sess.eyJzaWQiOiJzZXNzX2Q2YjRjMDExLTk5ZDMtNDIyMS1hZWI4LTk3ZTc5OTBkOGFmYiIsImFpZCI6ImFkbWluX2UzOTg4MzYxLWNmMTMtNDRmZi1iZWQxLWVlZDUzZmMxZTY2YSIsImNhdCI6MTc5MTIzMDc1MDU4NSwiZXhwIjoxNzkxMjczOTUwNTg1LCJub25jZSI6IjAxNTNmYjhlZjRiNjNmNzAifQ.8ba937cf1cd1ba9291b2fba1a7454f56b63970c039c0df571fb0175b678a0e0f",
+      "createdAt": 1791230750585,
+      "lastActivityAt": 1791230750585,
+      "expiresAt": 1791273950585,
+      "ip": "127.0.0.1",
+      "userAgent": "node"
     }
   ],
   "auditLogs": [
+    {
+      "id": "audit_b14bc95a-a21a-4ae8-bbcc-9e62e6767774",
+      "timestamp": 1791230750593,
+      "action": "admin_login_success",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "session",
+      "targetId": "sess_d6b4c011-99d3-4221-aeb8-97e7990d8afb",
+      "ip": "127.0.0.1",
+      "userAgent": "node",
+      "metadata": {
+        "role": "super_admin",
+        "authMethod": "totp_passwordless"
+      }
+    },
+    {
+      "id": "audit_abb5fb36-0574-46d1-af46-bc301052f0b2",
+      "timestamp": 1791230254100,
+      "action": "admin_login_success",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "session",
+      "targetId": "sess_a74a5eed-54a9-4ec8-9707-e70b0413173e",
+      "ip": "127.0.0.1",
+      "userAgent": "node",
+      "metadata": {
+        "role": "super_admin",
+        "authMethod": "totp_passwordless"
+      }
+    },
     {
       "id": "audit_5487292e-0f4e-450a-9364-fe9651aae742",
       "timestamp": 1791207318667,

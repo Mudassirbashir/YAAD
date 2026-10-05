@@ -237,25 +237,31 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return { success: true, recoveryCodes: res.data.recoveryCodes };
   };
 
+  const isLoggingOutRef = useRef<boolean>(false);
+
   const logout = useCallback(async () => {
+    if (isLoggingOutRef.current) return;
+    isLoggingOutRef.current = true;
+
     const activeToken = localStorage.getItem(TOKEN_STORAGE_KEY);
+    // Immediately clear local authentication state to prevent cascading 401 fetches
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    setToken(null);
+    setAdmin(null);
+    setSession(null);
+
     try {
       if (activeToken) {
-        await safeFetchJson('/api/admin/auth/logout', {
+        safeFetchJson('/api/admin/auth/logout', {
           method: 'POST',
           headers: { Authorization: `Bearer ${activeToken}` },
-        });
+        }).catch(() => null);
       }
-    } catch {
-      // Ignore network errors on logout
     } finally {
-      localStorage.removeItem(TOKEN_STORAGE_KEY);
-      setToken(null);
-      setAdmin(null);
-      setSession(null);
       if (window.location.pathname !== '/admin/login') {
         window.location.href = '/admin/login';
       }
+      isLoggingOutRef.current = false;
     }
   }, []);
 

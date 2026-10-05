@@ -655,9 +655,17 @@ class AdminStore {
     try {
       let sourcePath = DATA_FILE;
       if (isServerless && !fs.existsSync(DATA_FILE)) {
-        const bundledPath = path.join(process.cwd(), 'data', 'admin_data.json');
-        if (fs.existsSync(bundledPath)) {
-          sourcePath = bundledPath;
+        const candidateDataPaths = [
+          path.join(process.cwd(), 'data', 'admin_data.json'),
+          path.resolve('data/admin_data.json'),
+          '/var/task/data/admin_data.json',
+          path.join(__dirname, '..', '..', 'data', 'admin_data.json'),
+        ];
+        for (const p of candidateDataPaths) {
+          if (fs.existsSync(p)) {
+            sourcePath = p;
+            break;
+          }
         }
       }
 
