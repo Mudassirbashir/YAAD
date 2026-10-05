@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import { adminStore, generateRecoveryCodes } from '../server/admin/store';
 import { generateTotpSecret, computeTotpToken, verifyTotpToken } from '../server/admin/totp';
 import {
@@ -15,9 +17,13 @@ function assert(condition: boolean, message: string) {
 }
 
 async function runServerlessAuthTests() {
-  console.log('==================================================');
-  console.log('🧪 RUNNING YAAD ADMIN SERVERLESS AUTH & SECURITY QA');
-  console.log('==================================================');
+  const dataPath = path.join(process.cwd(), 'data', 'admin_data.json');
+  const originalDataBackup = fs.readFileSync(dataPath, 'utf-8');
+
+  try {
+    console.log('==================================================');
+    console.log('🧪 RUNNING YAAD ADMIN SERVERLESS AUTH & SECURITY QA');
+    console.log('==================================================');
 
   // --- 1. Compromised Secret Invalidation ---
   console.log('--- 1. Testing Compromised Secret Invalidation ---');
@@ -122,6 +128,10 @@ async function runServerlessAuthTests() {
   console.log('==================================================');
   console.log('🎉 ALL ADMIN SERVERLESS AUTH QA TESTS PASSED!');
   console.log('==================================================');
+  } finally {
+    fs.writeFileSync(dataPath, originalDataBackup, 'utf-8');
+    (adminStore as any).load();
+  }
 }
 
 runServerlessAuthTests().catch((err) => {

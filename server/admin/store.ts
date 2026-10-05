@@ -1079,8 +1079,17 @@ class AdminStore {
       return false;
     }
 
-    const testHash = hashCode(plainCode);
-    const target = admin.recoveryCodes.find((c) => c.codeHash === testHash && !c.usedAt);
+    const raw = String(plainCode || '').trim().toUpperCase();
+    const cleanNoDashes = raw.replace(/[\s-]/g, '');
+    const withDash = cleanNoDashes.length === 8 ? `${cleanNoDashes.slice(0, 4)}-${cleanNoDashes.slice(4)}` : raw;
+
+    const candidateHashes = new Set([
+      hashCode(raw),
+      hashCode(cleanNoDashes),
+      hashCode(withDash),
+    ]);
+
+    const target = admin.recoveryCodes.find((c) => candidateHashes.has(c.codeHash) && !c.usedAt);
     if (!target) {
       return false;
     }

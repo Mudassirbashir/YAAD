@@ -5,46 +5,46 @@
       "name": "Mudassir Bashir",
       "email": "mudassirbashir530@gmail.com",
       "role": "super_admin",
-      "totpSecret": "BXFJ35R327S2TYDAF22HP7SHHMWL4XKZ",
+      "totpSecret": "B3UTPFEXD667BJW2UDNNYDVOJDL45HRX",
       "isTotpEnabled": true,
       "status": "active",
       "failedAttempts": 0,
       "createdAt": 1791123839719,
-      "updatedAt": 1791193946902,
+      "updatedAt": 1791195794114,
       "deletedAt": null,
       "recoveryCodes": [
         {
-          "codeHash": "f94e3c3bf63e6ed218951c6785bc44972026a4ff81aea5fc47492db7b89c8a41",
-          "usedAt": 1791193946902
+          "codeHash": "4f2b528eb80c90bd24cf30d7a0ec65c2b520f6e3644d41b2cc27c594abd53dfe"
         },
         {
-          "codeHash": "d4d61ff86c561b583daacb19037dcc2b311fb59a3445fe23c7d2a4b64cdad3c5"
+          "codeHash": "afdfd96abd985d4a3aa490bc6b5dac490b839631a2b3414ea4c2a0f394a76dfb"
         },
         {
-          "codeHash": "42211421406342c40e853160ece1d73fdd2acad1868fc59c5b3487f7bd429189"
+          "codeHash": "a0f619ef8a87a8aaf470ea5067c1c4b645ff63773481b0997d3dfc1a1fc5186c"
         },
         {
-          "codeHash": "3ddf0b029b67fe8fa5929f82e006de34c86fdda568ffea5a966e44b2414664b9"
+          "codeHash": "993fb6dc3ea7d29161f641243623fd74667b1b3ae326fb2659e991532100ad47"
         },
         {
-          "codeHash": "ac443e24d797c4ebdbc9b68269b1460830e09abae667bcd303d24f1c50c7b051"
+          "codeHash": "97b411aa7c0e506510ae8f00affcf88f6d2261b2dd94daff1a7d5705eef8dfbe"
         },
         {
-          "codeHash": "fafacbf37c57e06cfa7e645c8dabe4e73a82a059b23a044604107a63f8558d4b"
+          "codeHash": "0aa7eb31e537e6021b9f754eb555069a8f9f090c4d8fb5c7baa504616f34ea30"
         },
         {
-          "codeHash": "a51153bc33e45c2de1be030331350e49d06a57ed1d90d41ad933e9f33c2b9056"
+          "codeHash": "53361ee65c8942f5c4f405ee804c0a5f4a2734e89bf21f2b791dc0694103caa4"
         },
         {
-          "codeHash": "c3e7d8e276bc8f9cdafb297590a724973f666f45e3bde37dcdd9a4e2afed95fb"
+          "codeHash": "e30033800e02c432bb8944a14848312f1e993affdf7a01c265d72b8ee63c143b"
         },
         {
-          "codeHash": "238103ee5866fc73d04e8fc4e248f6eaf80fa5cf5ca2bad85832330e28f035e7"
+          "codeHash": "142dcdfbce60dfb58b45578b4c8b6a9ca74407f107369daac13d8e0f6c303553"
         },
         {
-          "codeHash": "47ef4bb774d48cfd71447b6707a5124629074ec2a28a10c649b6fee61d4ddb75"
+          "codeHash": "24b4a30d44e448fe3196d408fddd8131432af20fecdfbfa3293d5f5d3560568c"
         }
-      ]
+      ],
+      "lockoutUntil": null
     },
     {
       "id": "admin_cd880078-b49d-4e86-8b61-9f873ea4182e",
@@ -136,6 +136,21 @@
       "failedAttempts": 0,
       "createdAt": 1791193946899,
       "updatedAt": 1791193946899,
+      "deletedAt": null
+    },
+    {
+      "id": "admin_39c1882d-ccc3-4557-9676-bf1e26768d54",
+      "name": "Support Agent",
+      "email": "staff_1791195794005@yaad.app",
+      "passwordHash": "9d4a78930e4dc68f09ff659ffdffa803d0e93d9cb19e05e38a01809ebedb0b96a96d0e3e21ab152241059347e113fe01f044351ac56b48d3439331fefff4314c",
+      "salt": "476612b47cb0611cece0089111f67536",
+      "role": "support_agent",
+      "totpSecret": "SF2VHFFOVJP5BZ25375PJ6CMY2LDXV7T",
+      "isTotpEnabled": true,
+      "status": "active",
+      "failedAttempts": 0,
+      "createdAt": 1791195794110,
+      "updatedAt": 1791195794110,
       "deletedAt": null
     }
   ],
@@ -248,6 +263,22 @@
       "status": "accepted",
       "createdAt": 1791193946824,
       "acceptedAt": 1791193946899
+    },
+    {
+      "id": "inv_dba2120b-9717-466d-9962-eca159248a11",
+      "email": "staff_1791195794005@yaad.app",
+      "name": "Support Agent",
+      "role": "support_agent",
+      "token": "54088d9f1d34b3fa85e63eafddf94bd64a1e13c43d489752de27716c8d55732b",
+      "invitedBy": {
+        "id": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+        "email": "mudassirbashir530@gmail.com",
+        "name": "Mudassir Bashir"
+      },
+      "expiresAt": 1791282194006,
+      "status": "accepted",
+      "createdAt": 1791195794006,
+      "acceptedAt": 1791195794110
     }
   ],
   "resets": [],
@@ -411,9 +442,107 @@
       "expiresAt": 1791237146900,
       "ip": "127.0.0.1",
       "userAgent": "Staff-Client"
+    },
+    {
+      "sessionId": "sess_3913485e-106b-4e93-b189-a1f31953d650",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "4dcae3c12398a1c3dde465452bf4bf4b49298f76f7ed498915c3d385b4bdd003",
+      "createdAt": 1791195609478,
+      "lastActivityAt": 1791195609478,
+      "expiresAt": 1791238809478,
+      "ip": "127.0.0.1",
+      "userAgent": "Python-urllib/3.10"
+    },
+    {
+      "sessionId": "sess_b5ca3dc3-33ef-413a-826d-db41529cf226",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "aabaecc519a8a931973adeab2d414c360f60ea43594645b3d9f27c5ae81d00c0",
+      "createdAt": 1791195690391,
+      "lastActivityAt": 1791195690391,
+      "expiresAt": 1791238890391,
+      "ip": "127.0.0.1",
+      "userAgent": "Python-urllib/3.10"
+    },
+    {
+      "sessionId": "sess_cf637bff-d4a8-45b8-be40-3353a30540f3",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "e45e9a14e9a583555574988da3111e6474b659da66183057689a490ec33373ed",
+      "createdAt": 1791195792913,
+      "lastActivityAt": 1791195792916,
+      "expiresAt": 1791238992913,
+      "ip": "127.0.0.1",
+      "userAgent": "Node-Test-Runner"
+    },
+    {
+      "sessionId": "sess_793ecfd1-45ef-48d8-9c0a-723a59b48955",
+      "adminId": "admin_39c1882d-ccc3-4557-9676-bf1e26768d54",
+      "token": "aecfb463f3311017168e9467832f7b41b3419527b8020068bb3ecd74771ba934",
+      "createdAt": 1791195794111,
+      "lastActivityAt": 1791195794112,
+      "expiresAt": 1791238994111,
+      "ip": "127.0.0.1",
+      "userAgent": "Staff-Client"
     }
   ],
   "auditLogs": [
+    {
+      "id": "audit_6df7ef75-f1a3-4be7-aa9b-8a20eaf071d0",
+      "timestamp": 1791195690393,
+      "action": "admin_recovery_code_used",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "session",
+      "targetId": "sess_b5ca3dc3-33ef-413a-826d-db41529cf226",
+      "ip": "127.0.0.1",
+      "userAgent": "Python-urllib/3.10",
+      "metadata": {
+        "role": "super_admin",
+        "authMethod": "recovery_code"
+      }
+    },
+    {
+      "id": "audit_d20bb4e5-cfb6-4d42-a8e5-b3bb235e147d",
+      "timestamp": 1791195662800,
+      "action": "admin_recovery_code_failed",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "auth",
+      "afterValue": {
+        "reason": "invalid_recovery_code",
+        "remainingAttempts": 3,
+        "isLocked": false
+      },
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit_5528ee3c-a81c-4735-8b05-16b6f0da5753",
+      "timestamp": 1791195615968,
+      "action": "admin_2fa_failed",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "auth",
+      "afterValue": {
+        "reason": "invalid_totp_code",
+        "remainingAttempts": 4,
+        "isLocked": false
+      },
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit_26b4f225-99fa-42bc-85f3-59f1bfb9fd0c",
+      "timestamp": 1791195609480,
+      "action": "admin_recovery_code_used",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "session",
+      "targetId": "sess_3913485e-106b-4e93-b189-a1f31953d650",
+      "ip": "127.0.0.1",
+      "userAgent": "Python-urllib/3.10",
+      "metadata": {
+        "role": "super_admin",
+        "authMethod": "recovery_code"
+      }
+    },
     {
       "id": "audit_8cacc605-522a-43d2-8888-212693459b36",
       "timestamp": 1791191531171,
@@ -1294,7 +1423,7 @@
     {
       "id": "prod_1",
       "nameEn": "Chakki Atta (Whole Wheat)",
-      "nameUr": "چکی کا آٹا",
+      "nameUr": "\u0686\u06a9\u06cc \u06a9\u0627 \u0622\u0679\u0627",
       "category": "grains",
       "subcategory": "Flour",
       "brand": "Sunridge",
@@ -1308,7 +1437,7 @@
     {
       "id": "prod_2",
       "nameEn": "Super Kernel Basmati Rice",
-      "nameUr": "باسمتی چاول",
+      "nameUr": "\u0628\u0627\u0633\u0645\u062a\u06cc \u0686\u0627\u0648\u0644",
       "category": "rice",
       "subcategory": "Rice",
       "brand": "Guard",
@@ -1322,7 +1451,7 @@
     {
       "id": "prod_3",
       "nameEn": "Banaspati Cooking Oil / Ghee",
-      "nameUr": "کوکنگ آئل / گھی",
+      "nameUr": "\u06a9\u0648\u06a9\u0646\u06af \u0622\u0626\u0644 / \u06af\u06be\u06cc",
       "category": "oils",
       "subcategory": "Ghee & Oils",
       "brand": "Dalda",
@@ -1336,7 +1465,7 @@
     {
       "id": "prod_4",
       "nameEn": "Daal Chana (Split Chickpeas)",
-      "nameUr": "دال چنا",
+      "nameUr": "\u062f\u0627\u0644 \u0686\u0646\u0627",
       "category": "pulses",
       "subcategory": "Pulses",
       "brand": "Pansari Essentials",
@@ -1350,7 +1479,7 @@
     {
       "id": "prod_5",
       "nameEn": "Tapal Danedar Black Tea",
-      "nameUr": "ٹپال دانے دار چائے",
+      "nameUr": "\u0679\u067e\u0627\u0644 \u062f\u0627\u0646\u06d2 \u062f\u0627\u0631 \u0686\u0627\u0626\u06d2",
       "category": "beverages",
       "subcategory": "Tea & Coffee",
       "brand": "Tapal",
@@ -1364,7 +1493,7 @@
     {
       "id": "prod_6",
       "nameEn": "Olpers UHT Full Cream Milk",
-      "nameUr": "اولپرز دودھ",
+      "nameUr": "\u0627\u0648\u0644\u067e\u0631\u0632 \u062f\u0648\u062f\u06be",
       "category": "dairy",
       "subcategory": "Milk",
       "brand": "Olpers",
@@ -1378,7 +1507,7 @@
     {
       "id": "prod_7",
       "nameEn": "National Red Chilli Powder",
-      "nameUr": "سرخ مرچ پاؤڈر",
+      "nameUr": "\u0633\u0631\u062e \u0645\u0631\u0686 \u067e\u0627\u0624\u0688\u0631",
       "category": "spices",
       "subcategory": "Spices",
       "brand": "National Foods",
@@ -1392,7 +1521,7 @@
     {
       "id": "prod_8",
       "nameEn": "Farm Fresh White Eggs",
-      "nameUr": "فارم انڈے",
+      "nameUr": "\u0641\u0627\u0631\u0645 \u0627\u0646\u0688\u06d2",
       "category": "poultry",
       "subcategory": "Eggs",
       "brand": "Desi Farm",
@@ -1406,7 +1535,7 @@
     {
       "id": "prod_9",
       "nameEn": "Surf Excel Detergent Powder",
-      "nameUr": "سرف ایکسل",
+      "nameUr": "\u0633\u0631\u0641 \u0627\u06cc\u06a9\u0633\u0644",
       "category": "cleaning",
       "subcategory": "Laundry",
       "brand": "Unilever",
@@ -1420,7 +1549,7 @@
     {
       "id": "prod_10",
       "nameEn": "Rooh Afza Syrup",
-      "nameUr": "روح افزاء",
+      "nameUr": "\u0631\u0648\u062d \u0627\u0641\u0632\u0627\u0621",
       "category": "beverages",
       "subcategory": "Syrups",
       "brand": "Hamdard",
@@ -1436,63 +1565,63 @@
     {
       "id": "grains",
       "nameEn": "Grains & Atta",
-      "nameUr": "اناج اور آٹا",
+      "nameUr": "\u0627\u0646\u0627\u062c \u0627\u0648\u0631 \u0622\u0679\u0627",
       "icon": "wheat",
       "itemCount": 12
     },
     {
       "id": "rice",
       "nameEn": "Rice & Biryani Staples",
-      "nameUr": "چاول اور برریانی",
+      "nameUr": "\u0686\u0627\u0648\u0644 \u0627\u0648\u0631 \u0628\u0631\u0631\u06cc\u0627\u0646\u06cc",
       "icon": "wheat",
       "itemCount": 8
     },
     {
       "id": "oils",
       "nameEn": "Cooking Oil & Ghee",
-      "nameUr": "کوکنگ آئل اور گھی",
+      "nameUr": "\u06a9\u0648\u06a9\u0646\u06af \u0622\u0626\u0644 \u0627\u0648\u0631 \u06af\u06be\u06cc",
       "icon": "droplets",
       "itemCount": 14
     },
     {
       "id": "pulses",
       "nameEn": "Pulses & Daalein",
-      "nameUr": "دالیں",
+      "nameUr": "\u062f\u0627\u0644\u06cc\u06ba",
       "icon": "soup",
       "itemCount": 16
     },
     {
       "id": "dairy",
       "nameEn": "Dairy & Milk",
-      "nameUr": "دودھ اور ڈیری",
+      "nameUr": "\u062f\u0648\u062f\u06be \u0627\u0648\u0631 \u0688\u06cc\u0631\u06cc",
       "icon": "milk",
       "itemCount": 10
     },
     {
       "id": "spices",
       "nameEn": "Spices & Masalay",
-      "nameUr": "مصالحہ جات",
+      "nameUr": "\u0645\u0635\u0627\u0644\u062d\u06c1 \u062c\u0627\u062a",
       "icon": "flame",
       "itemCount": 28
     },
     {
       "id": "beverages",
       "nameEn": "Beverages & Chai",
-      "nameUr": "چائے اور مشروبات",
+      "nameUr": "\u0686\u0627\u0626\u06d2 \u0627\u0648\u0631 \u0645\u0634\u0631\u0648\u0628\u0627\u062a",
       "icon": "coffee",
       "itemCount": 18
     },
     {
       "id": "poultry",
       "nameEn": "Poultry & Meat",
-      "nameUr": "مرغی اور گوشت",
+      "nameUr": "\u0645\u0631\u063a\u06cc \u0627\u0648\u0631 \u06af\u0648\u0634\u062a",
       "icon": "drumstick",
       "itemCount": 9
     },
     {
       "id": "cleaning",
       "nameEn": "Household & Cleaning",
-      "nameUr": "صفائی اور برتن",
+      "nameUr": "\u0635\u0641\u0627\u0626\u06cc \u0627\u0648\u0631 \u0628\u0631\u062a\u0646",
       "icon": "sparkles",
       "itemCount": 22
     }
@@ -1502,12 +1631,12 @@
       "id": "art_1",
       "slug": "why-do-we-forget-things-when-shopping",
       "title": "Why Do We Forget Things When Shopping?",
-      "titleUr": "ہم خریداری کے وقت چیزیں کیوں بھول جاتے ہیں؟",
+      "titleUr": "\u06c1\u0645 \u062e\u0631\u06cc\u062f\u0627\u0631\u06cc \u06a9\u06d2 \u0648\u0642\u062a \u0686\u06cc\u0632\u06cc\u06ba \u06a9\u06cc\u0648\u06ba \u0628\u06be\u0648\u0644 \u062c\u0627\u062a\u06d2 \u06c1\u06cc\u06ba\u061f",
       "titleRomanUrdu": "Hum Shopping K Waqt Cheezein Kyun Bhool Jaate Hain?",
       "excerpt": "Why walking into a grocery store without an external list causes mental blanks, and what cognitive science reveals about shopping memory.",
-      "excerptUr": "مارکیٹ میں داخل ہوتے ہی دماغ سے سامان کیوں نکل جاتا ہے اور اس کا آسان حل کیا ہے۔",
+      "excerptUr": "\u0645\u0627\u0631\u06a9\u06cc\u0679 \u0645\u06cc\u06ba \u062f\u0627\u062e\u0644 \u06c1\u0648\u062a\u06d2 \u06c1\u06cc \u062f\u0645\u0627\u063a \u0633\u06d2 \u0633\u0627\u0645\u0627\u0646 \u06a9\u06cc\u0648\u06ba \u0646\u06a9\u0644 \u062c\u0627\u062a\u0627 \u06c1\u06d2 \u0627\u0648\u0631 \u0627\u0633 \u06a9\u0627 \u0622\u0633\u0627\u0646 \u062d\u0644 \u06a9\u06cc\u0627 \u06c1\u06d2\u06d4",
       "excerptRomanUrdu": "Market mein dakhil hotay hi dimagh se saman kyun nikal jata hai aur iska asan hal kya hai.",
-      "body": "### The Science of Shopping Memory\n\nCognitive scientists have long observed that human working memory has a strictly limited capacity—typically holding only **4 to 7 discrete items** in active attention at once. When you enter a bustling Pakistani grocery store or hypermarket, your brain is simultaneously dodging other shoppers, reading price tags, checking expiry dates, and keeping track of family requests.\n\nUnder this heavy cognitive load, mental items that lack immediate visual cues vanish rapidly.\n\n#### Key Strategies to Never Forget Grocery Items:\n1. **Always use an external list** rather than mental recall.\n2. **Organize items by shop aisles or categories** (Grains, Oils, Dairy, Spices) to prevent zig-zagging.\n3. **Use Pakistani native units** like *pao* and *darjan* to communicate exact quantities.\n4. **Mark items off immediately as they enter the shopping cart.**",
+      "body": "### The Science of Shopping Memory\n\nCognitive scientists have long observed that human working memory has a strictly limited capacity\u2014typically holding only **4 to 7 discrete items** in active attention at once. When you enter a bustling Pakistani grocery store or hypermarket, your brain is simultaneously dodging other shoppers, reading price tags, checking expiry dates, and keeping track of family requests.\n\nUnder this heavy cognitive load, mental items that lack immediate visual cues vanish rapidly.\n\n#### Key Strategies to Never Forget Grocery Items:\n1. **Always use an external list** rather than mental recall.\n2. **Organize items by shop aisles or categories** (Grains, Oils, Dairy, Spices) to prevent zig-zagging.\n3. **Use Pakistani native units** like *pao* and *darjan* to communicate exact quantities.\n4. **Mark items off immediately as they enter the shopping cart.**",
       "coverImageUrl": "https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&q=80",
       "authorName": "Mudassir Bashir",
       "category": "Shopping Psychology & Tips",
@@ -1521,7 +1650,7 @@
       "publishedAt": 1789828867318,
       "readTimeMinutes": 4,
       "viewsCount": 2430,
-      "seoTitle": "Why Do We Forget Things When Shopping? • YAAD Guide",
+      "seoTitle": "Why Do We Forget Things When Shopping? \u2022 YAAD Guide",
       "seoDescription": "Discover why human working memory fails in busy supermarkets and how external grocery lists solve shopping forgetfulness.",
       "versions": [
         {
@@ -1539,10 +1668,10 @@
       "id": "art_2",
       "slug": "monthly-rashan-budget-guide-pakistan",
       "title": "5 Smart Ways to Plan Monthly Rashan on a Budget",
-      "titleUr": "کم بجٹ میں ماہانہ راشن کی سمارٹ منصوبہ بندی کے 5 طریقے",
+      "titleUr": "\u06a9\u0645 \u0628\u062c\u0679 \u0645\u06cc\u06ba \u0645\u0627\u06c1\u0627\u0646\u06c1 \u0631\u0627\u0634\u0646 \u06a9\u06cc \u0633\u0645\u0627\u0631\u0679 \u0645\u0646\u0635\u0648\u0628\u06c1 \u0628\u0646\u062f\u06cc \u06a9\u06d2 5 \u0637\u0631\u06cc\u0642\u06d2",
       "titleRomanUrdu": "Kam Budget Mein Mahana Rashan Plan Karne K 5 Tareeqay",
       "excerpt": "Practical budgeting strategies for middle-class Pakistani households to manage inflation and eliminate grocery wastage.",
-      "excerptUr": "پاکستانی گھرانوں کے لیے ماہانہ راشن میں بجٹ بچانے اور فضول خرچی روکنے کے عملی طریقے",
+      "excerptUr": "\u067e\u0627\u06a9\u0633\u062a\u0627\u0646\u06cc \u06af\u06be\u0631\u0627\u0646\u0648\u06ba \u06a9\u06d2 \u0644\u06cc\u06d2 \u0645\u0627\u06c1\u0627\u0646\u06c1 \u0631\u0627\u0634\u0646 \u0645\u06cc\u06ba \u0628\u062c\u0679 \u0628\u0686\u0627\u0646\u06d2 \u0627\u0648\u0631 \u0641\u0636\u0648\u0644 \u062e\u0631\u0686\u06cc \u0631\u0648\u06a9\u0646\u06d2 \u06a9\u06d2 \u0639\u0645\u0644\u06cc \u0637\u0631\u06cc\u0642\u06d2",
       "excerptRomanUrdu": "Mahana rashan mein budget bachane aur faaltu kharch rokne k mufeed mashwaray.",
       "body": "### Smart Monthly Rashan Planning for Pakistani Families\n\nInflation and food price fluctuation in Pakistan make monthly pantry planning essential. Here are 5 battle-tested principles:\n\n#### 1. Audit Your Pantry Before Stepping Out\nNever purchase a 10kg flour bag or 5-litre ghee tin without checking your existing kitchen jars. Many households double-buy spices, pulses, and tea simply because they did not inspect the pantry cupboard.\n\n#### 2. Buy Staples in Bulk, Perishables Weekly\nItems with long shelf lives (Chakki Atta, Basmati Rice, Ghee, Daalein) should be purchased in bulk at whole-sale prices. Perishables like tomatoes, coriander, and milk should be bought fresh weekly.\n\n#### 3. Standardize Traditional Pakistani Units\nClear quantity measurement (e.g. 250 grams / 1 pao, 1 darjan eggs) stops accidental over-purchasing and keeps bazaar bills predictable.",
       "coverImageUrl": "https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=1200&q=80",
@@ -1558,7 +1687,7 @@
       "publishedAt": 1790260867318,
       "readTimeMinutes": 5,
       "viewsCount": 1890,
-      "seoTitle": "5 Smart Ways to Plan Monthly Rashan on a Budget • YAAD",
+      "seoTitle": "5 Smart Ways to Plan Monthly Rashan on a Budget \u2022 YAAD",
       "seoDescription": "Learn how to plan your monthly kiryana and grocery budget efficiently without compromising quality.",
       "createdAt": 1790260867318,
       "updatedAt": 1790865667318
@@ -1567,10 +1696,10 @@
   "pushCampaigns": [
     {
       "id": "push_101",
-      "titleEn": "Weekend Rashan Reminder 🛒",
-      "titleUr": "ہفتہ وار سودا سلف کی یاد دہانی 🛒",
+      "titleEn": "Weekend Rashan Reminder \ud83d\uded2",
+      "titleUr": "\u06c1\u0641\u062a\u06c1 \u0648\u0627\u0631 \u0633\u0648\u062f\u0627 \u0633\u0644\u0641 \u06a9\u06cc \u06cc\u0627\u062f \u062f\u06c1\u0627\u0646\u06cc \ud83d\uded2",
       "bodyEn": "Review your shopping list before heading to the market. Check off pantry essentials in YAAD!",
-      "bodyUr": "مارکیٹ جانے سے پہلے اپنی راشن لسٹ چیک کر لیں۔ یاد ایپ کے ساتھ کوئی چیز نہ بھولیں!",
+      "bodyUr": "\u0645\u0627\u0631\u06a9\u06cc\u0679 \u062c\u0627\u0646\u06d2 \u0633\u06d2 \u067e\u06c1\u0644\u06d2 \u0627\u067e\u0646\u06cc \u0631\u0627\u0634\u0646 \u0644\u0633\u0679 \u0686\u06cc\u06a9 \u06a9\u0631 \u0644\u06cc\u06ba\u06d4 \u06cc\u0627\u062f \u0627\u06cc\u067e \u06a9\u06d2 \u0633\u0627\u062a\u06be \u06a9\u0648\u0626\u06cc \u0686\u06cc\u0632 \u0646\u06c1 \u0628\u06be\u0648\u0644\u06cc\u06ba!",
       "targetAudience": "all_active",
       "deepLink": "/home",
       "status": "sent",
@@ -1588,20 +1717,20 @@
       "id": "tmpl_1",
       "name": "Monthly Rashan Checklist",
       "category": "Shopping Reminder",
-      "titleEn": "Monthly Rashan Planning Time! 🌾",
-      "titleUr": "ماہانہ راشن کی لسٹ تیار کرنے کا وقت! 🌾",
+      "titleEn": "Monthly Rashan Planning Time! \ud83c\udf3e",
+      "titleUr": "\u0645\u0627\u06c1\u0627\u0646\u06c1 \u0631\u0627\u0634\u0646 \u06a9\u06cc \u0644\u0633\u0679 \u062a\u06cc\u0627\u0631 \u06a9\u0631\u0646\u06d2 \u06a9\u0627 \u0648\u0642\u062a! \ud83c\udf3e",
       "bodyEn": "Create your household checklist with 1-tap using YAAD Monthly Rashan Guide.",
-      "bodyUr": "یاد ایپ کی ماہانہ راشن گائیڈ کے ساتھ اپنے گھر کا سودا سلف فوری ترتیب دیں۔",
+      "bodyUr": "\u06cc\u0627\u062f \u0627\u06cc\u067e \u06a9\u06cc \u0645\u0627\u06c1\u0627\u0646\u06c1 \u0631\u0627\u0634\u0646 \u06af\u0627\u0626\u06cc\u0688 \u06a9\u06d2 \u0633\u0627\u062a\u06be \u0627\u067e\u0646\u06d2 \u06af\u06be\u0631 \u06a9\u0627 \u0633\u0648\u062f\u0627 \u0633\u0644\u0641 \u0641\u0648\u0631\u06cc \u062a\u0631\u062a\u06cc\u0628 \u062f\u06cc\u06ba\u06d4",
       "deepLink": "/rashan-list"
     },
     {
       "id": "tmpl_2",
       "name": "Offline Market Notice",
       "category": "Tips & Education",
-      "titleEn": "Did you know? YAAD works 100% offline 📶",
-      "titleUr": "کیا آپ جانتے ہیں؟ یاد ایپ انٹرنیٹ کے بغیر بھی چلتی ہے 📶",
+      "titleEn": "Did you know? YAAD works 100% offline \ud83d\udcf6",
+      "titleUr": "\u06a9\u06cc\u0627 \u0622\u067e \u062c\u0627\u0646\u062a\u06d2 \u06c1\u06cc\u06ba\u061f \u06cc\u0627\u062f \u0627\u06cc\u067e \u0627\u0646\u0679\u0631\u0646\u06cc\u0679 \u06a9\u06d2 \u0628\u063a\u06cc\u0631 \u0628\u06be\u06cc \u0686\u0644\u062a\u06cc \u06c1\u06d2 \ud83d\udcf6",
       "bodyEn": "Shop seamlessly in basement markets without worrying about internet signals.",
-      "bodyUr": "بغیر انٹرنیٹ کے بھی مارکیٹ میں اشیاء باآسانی چیک آف کریں۔",
+      "bodyUr": "\u0628\u063a\u06cc\u0631 \u0627\u0646\u0679\u0631\u0646\u06cc\u0679 \u06a9\u06d2 \u0628\u06be\u06cc \u0645\u0627\u0631\u06a9\u06cc\u0679 \u0645\u06cc\u06ba \u0627\u0634\u06cc\u0627\u0621 \u0628\u0627\u0622\u0633\u0627\u0646\u06cc \u0686\u06cc\u06a9 \u0622\u0641 \u06a9\u0631\u06cc\u06ba\u06d4",
       "deepLink": "/help"
     }
   ],

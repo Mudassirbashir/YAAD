@@ -275,7 +275,8 @@ adminRouter.post('/auth/login', rateLimit(10, 60 * 1000), async (req: Request, r
     let isRecovery = false;
     let isValidCode = false;
 
-    if (/^[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(authCode)) {
+    const cleanAuth = authCode.replace(/[\s-]/g, '');
+    if (Boolean(recoveryCode) || (/^[A-Z0-9]{4}[-\s]?[A-Z0-9]{4}$/.test(authCode) && !/^\d{6}$/.test(authCode))) {
       isRecovery = true;
       isValidCode = adminStore.consumeRecoveryCode(admin.id, authCode);
     } else if (/^\d{6}$/.test(authCode)) {
