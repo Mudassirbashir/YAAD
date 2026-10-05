@@ -707,6 +707,67 @@ adminRouter.get('/auth/me', requireAdminAuth, (req: AdminAuthRequest, res: Respo
   });
 });
 
+// Update / Set Password for Authenticated Staff Member
+adminRouter.post('/auth/change-password', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
+  const { newPassword } = req.body || {};
+  const clientIp = getClientIp(req);
+
+  if (!newPassword || typeof newPassword !== 'string') {
+    res.status(400).json({ error: 'New password is required.' });
+    return;
+  }
+
+  const check = isStrongPassword(newPassword);
+  if (!check.isValid) {
+    res.status(400).json({ error: check.reason || 'Password does not meet complexity requirements.' });
+    return;
+  }
+
+  const success = adminStore.updatePassword(req.admin!.id, newPassword);
+  if (!success) {
+    res.status(500).json({ error: 'Failed to update password.' });
+    return;
+  }
+
+  adminStore.writeAuditLog({
+    action: 'admin_password_updated',
+    adminId: req.admin!.id,
+    adminEmail: req.admin!.email,
+    targetType: 'admin_user',
+    targetId: req.admin!.id,
+    ip: clientIp,
+  });
+
+  res.status(200).json({
+    success: true,
+    message: 'Staff password has been securely updated.',
+  });
+});
+
+// Regenerate 10 Single-Use Emergency Recovery Codes (Super Admin only)
+adminRouter.post('/auth/regenerate-recovery-codes', requireAdminAuth, requireRoles('super_admin'), (req: AdminAuthRequest, res: Response) => {
+  const clientIp = getClientIp(req);
+  const recoveryCodes = generateRecoveryCodes(10);
+
+  adminStore.setRecoveryCodes(req.admin!.id, recoveryCodes);
+
+  adminStore.writeAuditLog({
+    action: 'admin_recovery_codes_regenerated',
+    adminId: req.admin!.id,
+    adminEmail: req.admin!.email,
+    targetType: 'admin_user',
+    targetId: req.admin!.id,
+    ip: clientIp,
+    metadata: { note: '10 new emergency recovery codes generated' },
+  });
+
+  res.status(200).json({
+    success: true,
+    recoveryCodes,
+    message: '10 new single-use emergency recovery codes generated.',
+  });
+});
+
 // -----------------------------------------------------------------------------
 // 8. Admin Logout
 // -----------------------------------------------------------------------------

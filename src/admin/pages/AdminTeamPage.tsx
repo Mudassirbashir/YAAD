@@ -322,10 +322,10 @@ export const AdminTeamPage: React.FC = () => {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight font-['Manrope']">
+          <h2 className="text-xl sm:text-2xl font-black text-[#003527] tracking-tight font-['Manrope']">
             Staff &amp; Access Governance
           </h2>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-neutral-500 mt-1">
             Manage authorized staff members, role tiers, 24-hour expiring invites, and organization allowlists
           </p>
         </div>
@@ -337,7 +337,7 @@ export const AdminTeamPage: React.FC = () => {
               setCreatedInviteResult(null);
               setInviteModalOpen(true);
             }}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-950/40 transition-all cursor-pointer shrink-0"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#003527] hover:bg-[#00271c] text-white font-bold text-xs shadow-xs transition-all cursor-pointer shrink-0"
           >
             <UserPlus className="w-4 h-4" />
             <span>Invite New Admin</span>
@@ -346,14 +346,14 @@ export const AdminTeamPage: React.FC = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-800">
+      <div className="flex items-center gap-2 border-b border-neutral-200">
         <button
           type="button"
           onClick={() => setActiveTab('members')}
           className={`pb-3 px-4 text-xs font-bold transition-colors cursor-pointer relative ${
             activeTab === 'members'
-              ? 'text-emerald-400 border-b-2 border-emerald-400'
-              : 'text-slate-400 hover:text-white'
+              ? 'text-[#003527] border-b-2 border-[#003527]'
+              : 'text-neutral-500 hover:text-neutral-900'
           }`}
         >
           Staff Directory ({totalStaff})
@@ -365,8 +365,8 @@ export const AdminTeamPage: React.FC = () => {
             onClick={() => setActiveTab('invites')}
             className={`pb-3 px-4 text-xs font-bold transition-colors cursor-pointer relative ${
               activeTab === 'invites'
-                ? 'text-emerald-400 border-b-2 border-emerald-400'
-                : 'text-slate-400 hover:text-white'
+                ? 'text-[#003527] border-b-2 border-[#003527]'
+                : 'text-neutral-500 hover:text-neutral-900'
             }`}
           >
             Pending Invitations (
@@ -381,8 +381,8 @@ export const AdminTeamPage: React.FC = () => {
             onClick={() => setActiveTab('allowlist')}
             className={`pb-3 px-4 text-xs font-bold transition-colors cursor-pointer relative ${
               activeTab === 'allowlist'
-                ? 'text-emerald-400 border-b-2 border-emerald-400'
-                : 'text-slate-400 hover:text-white'
+                ? 'text-[#003527] border-b-2 border-[#003527]'
+                : 'text-neutral-500 hover:text-neutral-900'
             }`}
           >
             Email Allowlist ({allowlist.length})
@@ -396,7 +396,7 @@ export const AdminTeamPage: React.FC = () => {
           {/* Search & Filters */}
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
-              <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-3 pointer-events-none" />
+              <Search className="w-4 h-4 text-neutral-400 absolute left-3.5 top-3 pointer-events-none" />
               <input
                 type="text"
                 value={search}
@@ -405,7 +405,7 @@ export const AdminTeamPage: React.FC = () => {
                   setPage(1);
                 }}
                 placeholder="Search staff by name or email..."
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder:text-slate-500 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                className="w-full bg-white border border-neutral-200 rounded-xl pl-10 pr-4 py-2 text-xs text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-[#003527] focus:ring-1 focus:ring-[#003527]"
               />
             </div>
 
@@ -416,7 +416,7 @@ export const AdminTeamPage: React.FC = () => {
                   setRoleFilter(e.target.value);
                   setPage(1);
                 }}
-                className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 outline-none focus:border-emerald-500"
+                className="bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs text-neutral-700 outline-none focus:border-[#003527]"
               >
                 <option value="all">All Roles</option>
                 <option value="super_admin">Super Admin</option>
@@ -431,7 +431,7 @@ export const AdminTeamPage: React.FC = () => {
                   setStatusFilter(e.target.value);
                   setPage(1);
                 }}
-                className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 outline-none focus:border-emerald-500"
+                className="bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs text-neutral-700 outline-none focus:border-[#003527]"
               >
                 <option value="all">All Status</option>
                 <option value="active">Active</option>
@@ -444,16 +444,16 @@ export const AdminTeamPage: React.FC = () => {
           {isLoadingStaff ? (
             <AdminTableSkeleton rows={5} columns={5} />
           ) : staff.length === 0 ? (
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center space-y-3">
-              <Users className="w-8 h-8 text-slate-600 mx-auto" />
-              <p className="text-sm font-bold text-white">No staff members found</p>
-              <p className="text-xs text-slate-400">Try adjusting your search query or role filter.</p>
+            <div className="bg-white border border-neutral-200 rounded-3xl p-12 text-center space-y-3 shadow-xs">
+              <Users className="w-8 h-8 text-neutral-300 mx-auto" />
+              <p className="text-sm font-bold text-neutral-800">No staff members found</p>
+              <p className="text-xs text-neutral-500">Try adjusting your search query or role filter.</p>
             </div>
           ) : (
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
+            <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-xs">
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs text-slate-300">
-                  <thead className="bg-slate-950/70 border-b border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                <table className="w-full text-left text-xs text-neutral-700">
+                  <thead className="bg-neutral-50 border-b border-neutral-200 text-[11px] font-bold text-neutral-500 uppercase tracking-wider">
                     <tr>
                       <th className="py-3.5 px-4">Staff Member</th>
                       <th className="py-3.5 px-4">Role Tier</th>
@@ -463,44 +463,44 @@ export const AdminTeamPage: React.FC = () => {
                       {isSuperAdmin && <th className="py-3.5 px-4 text-right">Governance Actions</th>}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/60">
+                  <tbody className="divide-y divide-neutral-100">
                     {staff.map((member) => {
                       const isSelf = member.id === admin?.id;
                       const roleConfig = ROLE_LABELS[member.role];
                       return (
-                        <tr key={member.id} className="hover:bg-slate-800/30 transition-colors">
+                        <tr key={member.id} className="hover:bg-neutral-50/70 transition-colors">
                           <td className="py-3.5 px-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-extrabold flex items-center justify-center font-mono text-xs">
+                              <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-200 text-[#003527] font-extrabold flex items-center justify-center font-mono text-xs">
                                 {member.name.charAt(0).toUpperCase()}
                               </div>
                               <div>
-                                <div className="font-bold text-white flex items-center gap-1.5">
+                                <div className="font-bold text-neutral-900 flex items-center gap-1.5">
                                   <span>{member.name}</span>
                                   {isSelf && (
-                                    <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.2 rounded border border-emerald-500/20">
+                                    <span className="text-[10px] font-mono text-[#003527] bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200">
                                       YOU
                                     </span>
                                   )}
                                 </div>
-                                <div className="text-[11px] text-slate-400 font-mono">{member.email}</div>
+                                <div className="text-[11px] text-neutral-500 font-mono">{member.email}</div>
                               </div>
                             </div>
                           </td>
 
                           <td className="py-3.5 px-4">
-                            <span className="font-semibold text-slate-200">{roleConfig?.title || member.role}</span>
+                            <span className="font-semibold text-neutral-800">{roleConfig?.title || member.role}</span>
                           </td>
 
                           <td className="py-3.5 px-4">
                             {member.isTotpEnabled ? (
-                              <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                                <CheckCircle2 className="w-3 h-3" />
+                              <span className="inline-flex items-center gap-1 text-[11px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                                 <span>Enforced</span>
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 text-[11px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
-                                <Clock className="w-3 h-3" />
+                              <span className="inline-flex items-center gap-1 text-[11px] text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                                <Clock className="w-3 h-3 text-amber-600" />
                                 <span>Pending 1st Login</span>
                               </span>
                             )}
@@ -508,19 +508,19 @@ export const AdminTeamPage: React.FC = () => {
 
                           <td className="py-3.5 px-4">
                             {member.status === 'active' ? (
-                              <span className="inline-flex items-center gap-1.5 text-emerald-400 text-xs font-semibold">
-                                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                              <span className="inline-flex items-center gap-1.5 text-emerald-700 text-xs font-semibold">
+                                <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
                                 <span>Active</span>
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1.5 text-rose-400 text-xs font-semibold">
-                                <span className="w-2 h-2 rounded-full bg-rose-400" />
+                              <span className="inline-flex items-center gap-1.5 text-rose-700 text-xs font-semibold">
+                                <span className="w-2 h-2 rounded-full bg-rose-600" />
                                 <span>Suspended</span>
                               </span>
                             )}
                           </td>
 
-                          <td className="py-3.5 px-4 font-mono text-[11px] text-slate-400">
+                          <td className="py-3.5 px-4 font-mono text-[11px] text-neutral-500">
                             {member.lastLoginAt ? new Date(member.lastLoginAt).toLocaleDateString() : 'Never'}
                           </td>
 
@@ -538,8 +538,8 @@ export const AdminTeamPage: React.FC = () => {
                                   }
                                   className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
                                     member.status === 'active'
-                                      ? 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30'
-                                      : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                                      ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
+                                      : 'bg-emerald-50 hover:bg-emerald-100 text-[#003527] border border-emerald-200'
                                   }`}
                                 >
                                   {member.status === 'active' ? 'Suspend' : 'Reactivate'}
@@ -564,16 +564,16 @@ export const AdminTeamPage: React.FC = () => {
           {isLoadingInvites ? (
             <AdminTableSkeleton rows={3} columns={4} />
           ) : invites.length === 0 ? (
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-12 text-center space-y-3">
-              <Clock className="w-8 h-8 text-slate-600 mx-auto" />
-              <p className="text-sm font-bold text-white">No active invitations</p>
-              <p className="text-xs text-slate-400">Click &quot;Invite New Admin&quot; to issue single-use onboarding tokens.</p>
+            <div className="bg-white border border-neutral-200 rounded-3xl p-12 text-center space-y-3 shadow-xs">
+              <Clock className="w-8 h-8 text-neutral-300 mx-auto" />
+              <p className="text-sm font-bold text-neutral-800">No active invitations</p>
+              <p className="text-xs text-neutral-500">Click &quot;Invite New Admin&quot; to issue single-use onboarding tokens.</p>
             </div>
           ) : (
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
+            <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-xs">
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs text-slate-300">
-                  <thead className="bg-slate-950/70 border-b border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                <table className="w-full text-left text-xs text-neutral-700">
+                  <thead className="bg-neutral-50 border-b border-neutral-200 text-[11px] font-bold text-neutral-500 uppercase tracking-wider">
                     <tr>
                       <th className="py-3.5 px-4">Invited Recipient</th>
                       <th className="py-3.5 px-4">Target Role</th>
@@ -582,35 +582,43 @@ export const AdminTeamPage: React.FC = () => {
                       <th className="py-3.5 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/60">
+                  <tbody className="divide-y divide-neutral-100">
                     {invites.map((inv) => {
                       const isExpired = Date.now() > inv.expiresAt;
                       return (
-                        <tr key={inv.id} className="hover:bg-slate-800/30 transition-colors">
+                        <tr key={inv.id} className="hover:bg-neutral-50/70 transition-colors">
                           <td className="py-3.5 px-4">
-                            <div className="font-bold text-white">{inv.name}</div>
-                            <div className="text-[11px] text-slate-400 font-mono">{inv.email}</div>
+                            <div className="font-bold text-neutral-900">{inv.name}</div>
+                            <div className="text-[11px] text-neutral-500 font-mono">{inv.email}</div>
                           </td>
 
                           <td className="py-3.5 px-4">
-                            <span className="font-semibold text-slate-200">
+                            <span className="font-semibold text-neutral-800">
                               {ROLE_LABELS[inv.role]?.title || inv.role}
                             </span>
                           </td>
 
-                          <td className="py-3.5 px-4 font-mono text-[11px] text-slate-400">
+                          <td className="py-3.5 px-4 font-mono text-[11px] text-neutral-500">
                             {new Date(inv.expiresAt).toLocaleString()}
                           </td>
 
                           <td className="py-3.5 px-4">
                             {inv.status === 'accepted' ? (
-                              <span className="text-emerald-400 text-xs font-semibold">Accepted</span>
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                Accepted
+                              </span>
                             ) : inv.status === 'revoked' ? (
-                              <span className="text-slate-500 text-xs">Revoked</span>
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-neutral-100 text-neutral-500 border border-neutral-200">
+                                Revoked
+                              </span>
                             ) : isExpired ? (
-                              <span className="text-rose-400 text-xs font-semibold">Expired</span>
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                                Expired
+                              </span>
                             ) : (
-                              <span className="text-amber-400 text-xs font-semibold">Pending (24h)</span>
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                                Pending (24h)
+                              </span>
                             )}
                           </td>
 
@@ -620,7 +628,7 @@ export const AdminTeamPage: React.FC = () => {
                                 <button
                                   type="button"
                                   onClick={() => copyInviteLink(`/admin/accept-invite?token=${inv.token}`)}
-                                  className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium cursor-pointer"
+                                  className="px-2.5 py-1 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-700 hover:text-neutral-900 text-xs font-medium cursor-pointer transition-colors"
                                   title="Copy invite link"
                                 >
                                   Copy Link
@@ -628,7 +636,7 @@ export const AdminTeamPage: React.FC = () => {
                                 <button
                                   type="button"
                                   onClick={() => setRevokeInviteTarget(inv)}
-                                  className="p-1 rounded-lg hover:bg-rose-500/20 text-rose-400 cursor-pointer"
+                                  className="p-1 rounded-lg hover:bg-rose-50 text-rose-600 cursor-pointer transition-colors"
                                   title="Revoke invite"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
@@ -649,27 +657,27 @@ export const AdminTeamPage: React.FC = () => {
 
       {/* TAB 3: EMAIL ALLOWLIST & DOMAIN RESTRICTION */}
       {activeTab === 'allowlist' && isSuperAdmin && (
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
+        <div className="bg-white border border-neutral-200 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
           <div>
-            <h3 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
-              <Globe className="w-5 h-5 text-emerald-400" />
+            <h3 className="text-base font-bold text-[#003527] tracking-tight flex items-center gap-2 font-['Manrope']">
+              <Globe className="w-5 h-5 text-emerald-600" />
               <span>Email Allowlist &amp; Domain Restrictions</span>
             </h3>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-neutral-500 mt-1">
               Restrict staff invitations and Super Admin logins to specific email domains (e.g.{' '}
-              <code className="text-emerald-400 font-mono">@yaad.app</code>) or individual email addresses.
+              <code className="text-[#003527] font-mono bg-emerald-50 px-1 py-0.5 rounded border border-emerald-200">@yaad.app</code>) or individual email addresses.
             </p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
-            <label className="text-xs font-bold text-slate-300 block">Add Allowed Domain or Email</label>
+          <div className="p-4 rounded-2xl bg-neutral-50 border border-neutral-200 space-y-3">
+            <label className="text-xs font-bold text-neutral-700 block">Add Allowed Domain or Email</label>
             <div className="flex gap-2">
               <input
                 type="text"
                 value={newAllowlistEntry}
                 onChange={(e) => setNewAllowlistEntry(e.target.value)}
                 placeholder="e.g. @yaad.app or security-lead@yaad.app"
-                className="flex-1 bg-slate-900 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-2.5 text-xs text-white placeholder:text-slate-500 outline-none"
+                className="flex-1 bg-white border border-neutral-200 focus:border-[#003527] rounded-xl px-4 py-2.5 text-xs text-neutral-900 placeholder:text-neutral-400 outline-none"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
@@ -680,7 +688,7 @@ export const AdminTeamPage: React.FC = () => {
               <button
                 type="button"
                 onClick={handleAddAllowlistRule}
-                className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-2.5 rounded-xl bg-[#003527] hover:bg-[#00271c] text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 <span>Add Rule</span>
@@ -690,12 +698,12 @@ export const AdminTeamPage: React.FC = () => {
 
           {/* Current Rules List */}
           <div className="space-y-3">
-            <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+            <div className="text-xs font-bold text-neutral-500 uppercase tracking-wider">
               Configured Allowlist Rules ({allowlist.length})
             </div>
 
             {allowlist.length === 0 ? (
-              <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 text-xs text-slate-400 text-center">
+              <div className="p-4 rounded-2xl bg-neutral-50 border border-neutral-200 text-xs text-neutral-500 text-center">
                 Allowlist is currently open (unrestricted). Any email address can be invited by a Super Admin.
               </div>
             ) : (
@@ -703,19 +711,19 @@ export const AdminTeamPage: React.FC = () => {
                 {allowlist.map((rule) => (
                   <div
                     key={rule}
-                    className="flex items-center justify-between p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs"
+                    className="flex items-center justify-between p-3 rounded-xl bg-neutral-50 border border-neutral-200 text-xs"
                   >
-                    <div className="flex items-center gap-2 font-mono text-emerald-400">
-                      <Lock className="w-3.5 h-3.5" />
+                    <div className="flex items-center gap-2 font-mono text-[#003527] font-semibold">
+                      <Lock className="w-3.5 h-3.5 text-emerald-600" />
                       <span>{rule}</span>
-                      <span className="text-[10px] text-slate-500 font-sans">
+                      <span className="text-[10px] text-neutral-400 font-sans font-normal">
                         {rule.startsWith('@') ? '(Domain Rule)' : '(Exact Email Rule)'}
                       </span>
                     </div>
                     <button
                       type="button"
                       onClick={() => handleRemoveAllowlistRule(rule)}
-                      className="text-slate-500 hover:text-rose-400 p-1 rounded-lg"
+                      className="text-neutral-400 hover:text-rose-600 p-1 rounded-lg cursor-pointer transition-colors"
                       title="Remove rule"
                     >
                       <X className="w-4 h-4" />
@@ -726,12 +734,12 @@ export const AdminTeamPage: React.FC = () => {
             )}
           </div>
 
-          <div className="pt-3 border-t border-slate-800 flex justify-end">
+          <div className="pt-3 border-t border-neutral-200 flex justify-end">
             <button
               type="button"
               onClick={handleSaveAllowlist}
               disabled={isSavingAllowlist}
-              className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-xs shadow-lg shadow-emerald-950/40 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              className="px-5 py-2.5 rounded-xl bg-[#003527] hover:bg-[#00271c] active:bg-[#001d14] text-white font-bold text-xs shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50 transition-colors"
             >
               {isSavingAllowlist ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
               <span>Save Allowlist Configuration</span>
@@ -742,48 +750,48 @@ export const AdminTeamPage: React.FC = () => {
 
       {/* Invite Admin Modal */}
       {inviteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl space-y-5 text-slate-100 relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-900/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white border border-neutral-200 rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl space-y-5 text-neutral-900 relative">
             <button
               type="button"
               onClick={() => setInviteModalOpen(false)}
-              className="absolute top-5 right-5 text-slate-400 hover:text-white p-1 rounded-lg cursor-pointer"
+              className="absolute top-5 right-5 text-neutral-400 hover:text-neutral-700 p-1.5 rounded-lg hover:bg-neutral-100 cursor-pointer transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
 
             <div>
-              <h3 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
-                <UserPlus className="w-5 h-5 text-emerald-400" />
+              <h3 className="text-lg font-bold text-[#003527] tracking-tight flex items-center gap-2 font-['Manrope']">
+                <UserPlus className="w-5 h-5 text-emerald-600" />
                 <span>Invite New Staff Member</span>
               </h3>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs text-neutral-500 mt-1">
                 Generates a single-use 24-hour token requiring mandatory TOTP 2FA enrollment and recovery codes.
               </p>
             </div>
 
             {createdInviteResult ? (
               <div className="space-y-4 py-2 animate-in fade-in">
-                <div className="p-4 rounded-2xl bg-emerald-950/40 border border-emerald-500/30 space-y-2">
-                  <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs">
-                    <CheckCircle2 className="w-4 h-4" />
+                <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 space-y-2">
+                  <div className="flex items-center gap-2 text-[#003527] font-bold text-xs">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                     <span>Invitation Successfully Generated</span>
                   </div>
-                  <p className="text-xs text-slate-300">
+                  <p className="text-xs text-neutral-600">
                     Share this onboarding link with{' '}
-                    <strong className="text-white">{createdInviteResult.email}</strong> (valid for 24 hours):
+                    <strong className="text-neutral-900">{createdInviteResult.email}</strong> (valid for 24 hours):
                   </p>
-                  <div className="flex items-center gap-2 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                  <div className="flex items-center gap-2 bg-white p-2.5 rounded-xl border border-neutral-200">
                     <input
                       type="text"
                       readOnly
                       value={`${window.location.origin}${createdInviteResult.inviteUrl}`}
-                      className="bg-transparent text-xs text-emerald-300 font-mono flex-1 outline-none truncate"
+                      className="bg-transparent text-xs text-[#003527] font-mono flex-1 outline-none truncate"
                     />
                     <button
                       type="button"
                       onClick={() => copyInviteLink(createdInviteResult.inviteUrl)}
-                      className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shrink-0 flex items-center gap-1.5 transition-all cursor-pointer"
+                      className="px-3 py-1.5 rounded-lg bg-[#003527] hover:bg-[#00271c] text-white font-bold text-xs shrink-0 flex items-center gap-1.5 transition-all cursor-pointer"
                     >
                       {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                       <span>{copiedLink ? 'Copied' : 'Copy'}</span>
@@ -794,7 +802,7 @@ export const AdminTeamPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setInviteModalOpen(false)}
-                  className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold cursor-pointer"
+                  className="w-full py-2.5 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-bold cursor-pointer transition-colors"
                 >
                   Close
                 </button>
@@ -802,42 +810,42 @@ export const AdminTeamPage: React.FC = () => {
             ) : (
               <form onSubmit={handleCreateInvite} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-300 block">Full Name</label>
+                  <label className="text-xs font-bold text-neutral-700 block">Full Name</label>
                   <input
                     type="text"
                     value={inviteName}
                     onChange={(e) => setInviteName(e.target.value)}
                     placeholder="e.g. Mudassir Bashir"
                     required
-                    className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none"
+                    className="w-full bg-white border border-neutral-200 focus:border-[#003527] rounded-xl px-4 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-300 block">Staff Email</label>
+                  <label className="text-xs font-bold text-neutral-700 block">Staff Email</label>
                   <input
                     type="email"
                     value={inviteEmail}
                     onChange={(e) => setInviteEmail(e.target.value)}
                     placeholder="colleague@domain.com"
                     required
-                    className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-600 outline-none"
+                    className="w-full bg-white border border-neutral-200 focus:border-[#003527] rounded-xl px-4 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-300 block">Assigned Staff Role</label>
+                  <label className="text-xs font-bold text-neutral-700 block">Assigned Staff Role</label>
                   <select
                     value={inviteRole}
                     onChange={(e) => setInviteRole(e.target.value as AdminRole)}
-                    className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-4 py-2.5 text-sm text-white outline-none"
+                    className="w-full bg-white border border-neutral-200 focus:border-[#003527] rounded-xl px-4 py-2.5 text-sm text-neutral-900 outline-none"
                   >
                     <option value="support_agent">Support Agent (User help &amp; tickets)</option>
                     <option value="content_editor">Content Editor (Catalog &amp; in-app content)</option>
                     <option value="analyst">Analyst (Read-only reports)</option>
                     <option value="super_admin">Super Admin (Full system control)</option>
                   </select>
-                  <p className="text-[11px] text-slate-400 mt-1">
+                  <p className="text-[11px] text-neutral-500 mt-1">
                     {ROLE_LABELS[inviteRole].description}
                   </p>
                 </div>
@@ -846,14 +854,14 @@ export const AdminTeamPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setInviteModalOpen(false)}
-                    className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold cursor-pointer"
+                    className="flex-1 py-2.5 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 text-xs font-semibold cursor-pointer transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmittingInvite || !inviteName || !inviteEmail}
-                    className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-950/40 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    className="flex-1 py-2.5 rounded-xl bg-[#003527] hover:bg-[#00271c] text-white text-xs font-bold shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 transition-colors"
                   >
                     {isSubmittingInvite ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                     <span>Generate 24h Invitation</span>

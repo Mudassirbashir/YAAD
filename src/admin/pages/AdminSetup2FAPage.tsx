@@ -120,25 +120,27 @@ export const AdminSetup2FAPage: React.FC<AdminSetup2FAPageProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center p-4 sm:p-6 text-slate-100 font-['Plus_Jakarta_Sans',sans-serif]">
-      <div className="w-full max-w-lg mb-6 text-center space-y-2">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-extrabold text-xl shadow-lg mb-1">
-          <ShieldCheck className="w-6 h-6" />
+    <div className="min-h-screen bg-[#FDF6E3]/35 flex flex-col justify-center items-center p-4 sm:p-6 text-neutral-900 font-['Plus_Jakarta_Sans',sans-serif] relative selection:bg-[#FCBC1F]/30">
+      <div className="w-full max-w-lg mb-6 text-center space-y-3">
+        <div className="inline-flex items-center justify-center p-2 rounded-2xl bg-white border border-neutral-200/80 shadow-xs mb-1">
+          <img src="/logo.png" alt="YAAD" className="w-10 h-10 object-contain" />
         </div>
-        <h1 className="text-2xl font-black text-white tracking-tight font-['Manrope']">
-          {recoveryCodes ? 'Save Emergency Recovery Codes' : 'Configure Mandatory 2FA'}
-        </h1>
-        <p className="text-xs text-slate-400">
-          {recoveryCodes
-            ? 'Store these 10 single-use codes safely. They will only be shown ONCE.'
-            : 'YAAD Admin requires Time-based One-Time Password (TOTP) two-factor authentication'}
-        </p>
+        <div>
+          <h1 className="text-2xl font-black text-[#003527] tracking-tight font-['Manrope']">
+            {recoveryCodes ? 'Save Emergency Recovery Codes' : 'Configure Mandatory 2FA'}
+          </h1>
+          <p className="text-xs text-neutral-500 mt-1">
+            {recoveryCodes
+              ? 'Store these 10 single-use codes safely. They will only be shown ONCE.'
+              : 'YAAD Admin requires Time-based One-Time Password (TOTP) two-factor authentication'}
+          </p>
+        </div>
       </div>
 
-      <div className="w-full max-w-lg bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
+      <div className="w-full max-w-lg bg-white border border-neutral-200/80 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6 text-neutral-900">
         {error && (
-          <div className="flex items-start gap-3 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
-            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
+          <div className="flex items-start gap-3 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
             <div className="flex-1 leading-relaxed">{error}</div>
           </div>
         )}
@@ -146,29 +148,29 @@ export const AdminSetup2FAPage: React.FC<AdminSetup2FAPageProps> = ({
         {/* STAGE: RECOVERY CODES DISPLAY */}
         {recoveryCodes ? (
           <div className="space-y-5 animate-in fade-in">
-            <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs space-y-1">
-              <div className="flex items-center gap-1.5 font-bold text-amber-400">
-                <ShieldAlert className="w-4 h-4 shrink-0" />
+            <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs space-y-1">
+              <div className="flex items-center gap-1.5 font-bold text-amber-900">
+                <ShieldAlert className="w-4 h-4 shrink-0 text-amber-600" />
                 <span>Critical Security Warning</span>
               </div>
-              <p className="leading-relaxed text-[11px] text-slate-300">
+              <p className="leading-relaxed text-[11px] text-amber-800">
                 These 10 emergency recovery codes allow you to regain access if you ever lose your phone or authenticator app. Each code can be used exactly once.
               </p>
             </div>
 
             {/* 10 Codes Grid */}
-            <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
-              <div className="flex items-center justify-between text-[11px] text-slate-400 font-bold uppercase tracking-wider">
+            <div className="bg-neutral-50 p-4 rounded-2xl border border-neutral-200 space-y-3">
+              <div className="flex items-center justify-between text-[11px] text-neutral-500 font-bold uppercase tracking-wider">
                 <span>10 Single-Use Recovery Codes</span>
-                <span className="text-emerald-400 font-mono">10 / 10 Remaining</span>
+                <span className="text-[#003527] font-mono font-bold">10 / 10 Remaining</span>
               </div>
               <div className="grid grid-cols-2 gap-2 font-mono text-xs">
                 {recoveryCodes.map((code, idx) => (
                   <div
                     key={idx}
-                    className="p-2 rounded-xl bg-slate-900 border border-slate-800/80 text-emerald-300 flex items-center justify-between"
+                    className="p-2 rounded-xl bg-white border border-neutral-200 text-[#003527] flex items-center justify-between shadow-2xs"
                   >
-                    <span className="text-slate-500 text-[10px] w-4">{idx + 1}.</span>
+                    <span className="text-neutral-400 text-[10px] w-4">{idx + 1}.</span>
                     <span className="font-bold tracking-wider">{code}</span>
                   </div>
                 ))}
@@ -180,15 +182,15 @@ export const AdminSetup2FAPage: React.FC<AdminSetup2FAPageProps> = ({
               <button
                 type="button"
                 onClick={handleCopyAllCodes}
-                className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                className="flex-1 py-2.5 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
               >
-                {copiedAllCodes ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                {copiedAllCodes ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
                 <span>{copiedAllCodes ? 'Copied All' : 'Copy All Codes'}</span>
               </button>
               <button
                 type="button"
                 onClick={handleDownloadCodes}
-                className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                className="flex-1 py-2.5 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-colors"
               >
                 <Download className="w-4 h-4" />
                 <span>Download (.txt)</span>
@@ -196,14 +198,14 @@ export const AdminSetup2FAPage: React.FC<AdminSetup2FAPageProps> = ({
             </div>
 
             {/* Acknowledgment Checkbox */}
-            <label className="flex items-start gap-3 p-3 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer select-none">
+            <label className="flex items-start gap-3 p-3 rounded-xl bg-neutral-50 border border-neutral-200 cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={hasSavedCodes}
                 onChange={(e) => setHasSavedCodes(e.target.checked)}
-                className="mt-0.5 accent-emerald-500 w-4 h-4 rounded cursor-pointer"
+                className="mt-0.5 accent-[#003527] w-4 h-4 rounded cursor-pointer"
               />
-              <span className="text-xs text-slate-300 leading-snug">
+              <span className="text-xs text-neutral-700 leading-snug">
                 I have securely saved these 10 recovery codes in my password manager or offline storage.
               </span>
             </label>
@@ -212,7 +214,7 @@ export const AdminSetup2FAPage: React.FC<AdminSetup2FAPageProps> = ({
               type="button"
               disabled={!hasSavedCodes}
               onClick={() => onNavigate('/admin')}
-              className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-xs shadow-lg shadow-emerald-950/40 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full py-3 px-4 rounded-xl bg-[#003527] hover:bg-[#00271c] active:bg-[#001d14] text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <span>Enter YAAD Admin Panel</span>
               <ArrowRight className="w-4 h-4" />
@@ -220,26 +222,26 @@ export const AdminSetup2FAPage: React.FC<AdminSetup2FAPageProps> = ({
           </div>
         ) : isFetching ? (
           <div className="py-12 flex flex-col items-center justify-center gap-3">
-            <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
-            <span className="text-xs text-slate-400">Generating secure 2FA keys...</span>
+            <Loader2 className="w-8 h-8 text-[#003527] animate-spin" />
+            <span className="text-xs text-neutral-500">Generating secure 2FA keys...</span>
           </div>
         ) : setupData ? (
           <div className="space-y-6">
             {/* Step 1: Scan QR Code */}
             <div className="space-y-3">
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400">
-                <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[11px]">
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-neutral-600">
+                <span className="w-5 h-5 rounded-full bg-emerald-100 text-[#003527] flex items-center justify-center text-[11px] font-bold">
                   1
                 </span>
                 <span>Scan QR Code with Authenticator App</span>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-neutral-500">
                 Use Google Authenticator, Microsoft Authenticator, 1Password, or Apple Passwords to scan:
               </p>
 
-              <div className="flex flex-col sm:flex-row items-center gap-4 bg-slate-950 p-4 rounded-2xl border border-slate-800">
+              <div className="flex flex-col sm:flex-row items-center gap-4 bg-neutral-50 p-4 rounded-2xl border border-neutral-200">
                 {setupData.qrCodeDataUrl ? (
-                  <div className="bg-white p-2 rounded-xl shrink-0 shadow-md">
+                  <div className="bg-white p-2.5 rounded-xl shrink-0 shadow-xs border border-neutral-200">
                     <img
                       src={setupData.qrCodeDataUrl}
                       alt="TOTP 2FA QR Code"
@@ -249,16 +251,16 @@ export const AdminSetup2FAPage: React.FC<AdminSetup2FAPageProps> = ({
                 ) : null}
 
                 <div className="space-y-2 flex-1 min-w-0">
-                  <div className="text-[11px] font-bold text-slate-400">Manual Entry Secret Key:</div>
-                  <div className="font-mono text-xs text-emerald-400 bg-slate-900 px-3 py-2 rounded-xl border border-slate-800 break-all select-all">
+                  <div className="text-[11px] font-bold text-neutral-600">Manual Entry Secret Key:</div>
+                  <div className="font-mono text-xs text-[#003527] bg-white px-3 py-2 rounded-xl border border-neutral-200 break-all select-all font-semibold">
                     {setupData.secret}
                   </div>
                   <button
                     type="button"
                     onClick={handleCopySecret}
-                    className="inline-flex items-center gap-1.5 text-xs text-slate-300 hover:text-white px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1.5 text-xs text-neutral-700 hover:text-neutral-900 px-3 py-1 rounded-lg bg-neutral-200/70 hover:bg-neutral-200 transition-colors cursor-pointer"
                   >
-                    {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                     <span>{copied ? 'Copied to clipboard' : 'Copy secret key'}</span>
                   </button>
                 </div>
@@ -266,9 +268,9 @@ export const AdminSetup2FAPage: React.FC<AdminSetup2FAPageProps> = ({
             </div>
 
             {/* Step 2: Verification Code */}
-            <form onSubmit={handleConfirm} className="space-y-4 pt-2 border-t border-slate-800">
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400">
-                <span className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-[11px]">
+            <form onSubmit={handleConfirm} className="space-y-4 pt-2 border-t border-neutral-200">
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-neutral-600">
+                <span className="w-5 h-5 rounded-full bg-emerald-100 text-[#003527] flex items-center justify-center text-[11px] font-bold">
                   2
                 </span>
                 <span>Verify 6-digit Code to Confirm</span>
@@ -283,7 +285,7 @@ export const AdminSetup2FAPage: React.FC<AdminSetup2FAPageProps> = ({
                   onChange={(e) => setTestCode(e.target.value.replace(/\D/g, ''))}
                   placeholder="Enter 6-digit token"
                   disabled={isSubmitting}
-                  className="w-full bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 text-center text-xl tracking-[0.3em] font-mono text-white rounded-xl py-2.5 outline-none font-bold"
+                  className="w-full bg-white border border-neutral-300 focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 text-center text-xl tracking-[0.3em] font-mono text-neutral-900 rounded-xl py-2.5 outline-none font-bold"
                   autoFocus
                 />
               </div>
@@ -291,7 +293,7 @@ export const AdminSetup2FAPage: React.FC<AdminSetup2FAPageProps> = ({
               <button
                 type="submit"
                 disabled={isSubmitting || testCode.length !== 6}
-                className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-xs shadow-lg shadow-emerald-950/40 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                className="w-full py-3 px-4 rounded-xl bg-[#003527] hover:bg-[#00271c] active:bg-[#001d14] text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                 <span>Activate 2FA &amp; Generate Recovery Codes</span>
@@ -301,11 +303,11 @@ export const AdminSetup2FAPage: React.FC<AdminSetup2FAPageProps> = ({
           </div>
         ) : (
           <div className="py-6 text-center space-y-3">
-            <p className="text-xs text-slate-400">Session context expired. Please sign in again.</p>
+            <p className="text-xs text-neutral-500">Session context expired. Please sign in again.</p>
             <button
               type="button"
               onClick={() => onNavigate('/admin/login')}
-              className="py-2 px-4 rounded-xl bg-slate-800 text-white text-xs font-bold hover:bg-slate-700"
+              className="py-2 px-4 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-xs font-bold"
             >
               Back to Login
             </button>

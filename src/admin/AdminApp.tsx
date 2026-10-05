@@ -93,21 +93,18 @@ function AdminRouter() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-400 gap-3">
-        <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
-        <span className="text-xs font-mono">Verifying Staff Authorization...</span>
+      <div className="min-h-screen bg-[#FDF6E3]/40 flex flex-col items-center justify-center text-neutral-600 gap-3 font-['Plus_Jakarta_Sans',sans-serif]">
+        <Loader2 className="w-8 h-8 text-[#003527] animate-spin" />
+        <span className="text-xs font-mono font-medium">Verifying Staff Authorization...</span>
       </div>
     );
   }
 
   // 7. Unauthenticated State: Force to Login
   if (!admin || !token) {
-    if (currentPath !== '/admin/login' && currentPath !== '/admin') {
-      return <AdminNotFoundPage onNavigate={navigate} />;
-    }
-
     return (
       <AdminLoginPage
+        intendedDestination={currentPath !== '/admin/login' ? currentPath : '/admin'}
         onNavigate={navigate}
         onRequires2faSetup={(tempTok) => {
           setTemp2faToken(tempTok);

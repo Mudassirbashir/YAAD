@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { ROLE_LABELS } from '../types';
+import { AdminSecurityModal } from './AdminSecurityModal';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -36,12 +37,14 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 }) => {
   const { admin, logout, inactivitySecondsRemaining } = useAdminAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [securityModalOpen, setSecurityModalOpen] = useState(false);
 
   const formatInactivityTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
+
 
   const isLowTime = inactivitySecondsRemaining < 5 * 60;
   const roleMeta = admin?.role ? ROLE_LABELS[admin.role] : null;
@@ -128,6 +131,17 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
               <button
                 type="button"
+                onClick={() => setSecurityModalOpen(true)}
+                className="p-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-200 transition-all cursor-pointer flex items-center gap-1.5 text-xs font-semibold"
+                title="Security & 2FA Settings"
+                aria-label="Security & 2FA Settings"
+              >
+                <Shield className="w-4 h-4 text-emerald-700" />
+                <span className="hidden sm:inline">Security</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={logout}
                 className="p-2 rounded-xl bg-neutral-100 hover:bg-rose-50 hover:text-rose-700 text-neutral-600 border border-neutral-200 hover:border-rose-200 transition-all cursor-pointer"
                 title="Sign out of Admin Panel"
@@ -205,12 +219,19 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           </div>
 
           {/* Sidebar Footer */}
-          <div className="p-4 border-t border-neutral-100 text-[11px] text-neutral-500 space-y-1.5 bg-neutral-50/70">
-            <div className="flex items-center gap-2 text-[#003527] font-semibold">
-              <Lock className="w-3.5 h-3.5" />
-              <span>TOTP 2FA Enforced</span>
-            </div>
-            <p className="text-[10px] text-neutral-400 leading-relaxed">
+          <div className="p-4 border-t border-neutral-100 text-[11px] text-neutral-500 space-y-2 bg-neutral-50/70">
+            <button
+              type="button"
+              onClick={() => setSecurityModalOpen(true)}
+              className="w-full flex items-center justify-between p-2 rounded-xl bg-white border border-neutral-200 text-neutral-700 hover:text-neutral-900 hover:border-emerald-300 transition-all cursor-pointer shadow-2xs group"
+            >
+              <div className="flex items-center gap-2 text-[#003527] font-semibold text-xs">
+                <Lock className="w-3.5 h-3.5 text-emerald-600" />
+                <span>2FA &amp; Security</span>
+              </div>
+              <span className="text-[10px] text-neutral-400 group-hover:text-emerald-700 font-bold">&rarr;</span>
+            </button>
+            <p className="text-[10px] text-neutral-400 leading-relaxed px-1">
               Internal staff only. Audit trail logs all actions.
             </p>
           </div>
@@ -240,6 +261,12 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           </div>
         </main>
       </div>
+
+      {/* Security & 2FA Modal */}
+      <AdminSecurityModal
+        isOpen={securityModalOpen}
+        onClose={() => setSecurityModalOpen(false)}
+      />
     </div>
   );
 };

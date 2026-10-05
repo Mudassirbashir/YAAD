@@ -32,6 +32,8 @@ interface AdminAuthContextType {
   logout: () => Promise<void>;
   requestPasswordReset: (email: string) => Promise<{ message?: string; devResetLink?: string; error?: string }>;
   completePasswordReset: (token: string, newPassword: string) => Promise<{ success: boolean; message?: string; error?: string }>;
+  changePassword: (newPassword: string) => Promise<{ success: boolean; message?: string; error?: string }>;
+  regenerateRecoveryCodes: () => Promise<{ success: boolean; recoveryCodes?: string[]; error?: string }>;
   refreshProfile: () => Promise<void>;
 }
 
@@ -274,6 +276,29 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return { success: true, message: res.data?.message };
   };
 
+  const changePassword = async (newPassword: string) => {
+    const res = await safeFetchJson<any>('/api/admin/auth/change-password', {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: JSON.stringify({ newPassword }),
+    });
+    if (!res.ok) {
+      return { success: false, error: res.error || 'Failed to update password.' };
+    }
+    return { success: true, message: res.data?.message };
+  };
+
+  const regenerateRecoveryCodes = async () => {
+    const res = await safeFetchJson<any>('/api/admin/auth/regenerate-recovery-codes', {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) {
+      return { success: false, error: res.error || 'Failed to regenerate recovery codes.' };
+    }
+    return { success: true, recoveryCodes: res.data?.recoveryCodes };
+  };
+
   return (
     <AdminAuthContext.Provider
       value={{
@@ -291,6 +316,8 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         logout,
         requestPasswordReset,
         completePasswordReset,
+        changePassword,
+        regenerateRecoveryCodes,
         refreshProfile,
       }}
     >
