@@ -25,6 +25,7 @@ import { useAdminToast } from '../components/AdminToasts';
 import { AdminConfirmModal } from '../components/AdminConfirmModal';
 import { AdminTableSkeleton } from '../components/AdminSkeleton';
 import { AdminUser, AdminInvite, AdminRole, ROLE_LABELS } from '../types';
+import { adminCache } from '../utils/adminCache';
 
 export const AdminTeamPage: React.FC = () => {
   const { admin, token, logout } = useAdminAuth();
@@ -36,16 +37,21 @@ export const AdminTeamPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'members' | 'invites' | 'allowlist'>('members');
 
   // Staff Members State
-  const [staff, setStaff] = useState<AdminUser[]>([]);
-  const [totalStaff, setTotalStaff] = useState(0);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [page, setPage] = useState(1);
-  const [isLoadingStaff, setIsLoadingStaff] = useState(true);
+
+  const staffCacheKey = `/api/admin/team?page=${page}&limit=10&search=${encodeURIComponent(search.trim())}&role=${roleFilter}&status=${statusFilter}`;
+  const initialStaff = adminCache.getStale<any>(staffCacheKey);
+
+  const [staff, setStaff] = useState<AdminUser[]>(initialStaff?.admins || []);
+  const [totalStaff, setTotalStaff] = useState(initialStaff?.total || 0);
+  const [isLoadingStaff, setIsLoadingStaff] = useState(!initialStaff);
 
   // Invites State
-  const [invites, setInvites] = useState<AdminInvite[]>([]);
+  const initialInvites = adminCache.getStale<any>('/api/admin/invites');
+  const [invites, setInvites] = useState<AdminInvite[]>(initialInvites?.invites || []);
   const [isLoadingInvites, setIsLoadingInvites] = useState(false);
 
   // Allowlist State
@@ -76,59 +82,99 @@ export const AdminTeamPage: React.FC = () => {
   const [isRevoking, setIsRevoking] = useState(false);
 
   // 1. Fetch Staff Members
-  const fetchStaff = useCallback(async () => {
+  const fetchStaff = useCallback(async (force = false) => {
     if (!token) return;
-    setIsLoadingStaff(true);
+    const queryKey = `/api/admin/team?page=${page}&limit=10&search=${encodeURIComponent(search.trim())}&role=${roleFilter}&status=${statusFilter}`;
+    if (!adminCache.get(queryKey) && !force) {
+      const stale = adminCache.getStale<any>(queryKey);
+      if (!stale) setIsLoadingStaff(true);
+    }
     try {
-      const query = new URLSearchParams({
-        page: String(page),
-        limit: '10',
-        search: search.trim(),
-        role: roleFilter,
-        status: statusFilter,
-      });
+      const data = await adminCache.fetchWithSwr(
+        queryKey,
+        async () => {
+          const query = new URLSearchParams({
+            page: String(page),
+            limit: '10',
+            search: search.trim(),
+            role: roleFilter,
+            status: statusFilter,
+          });
 
-      const res = await fetch(`/api/admin/team?${query.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+          const res = await fetch(`/api/admin/team?${query.toString()}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
 
-      if (!res.ok) {
-        if (res.status === 401) {
-          logout();
-          return;
+          if (!res.ok) {
+            if (res.status === 401) {
+              logout();
+              throw new Error('Unauthorized');
+            }
+            if (res.status === 403) {
+              return { admins: [], total: 0 };
+            }
+            toast.error('Failed to load team members');
+            throw new Error('Failed to load team members');
+          }
+
+          return res.json();
+        },
+        {
+          ttl: 120_000,
+          onRevalidate: (fresh) => {
+            if (fresh) {
+              setStaff(fresh.admins || []);
+              setTotalStaff(fresh.total || 0);
+            }
+          },
         }
-        if (res.status === 403) {
-          // Permission denied / forbidden: do not trigger infinite toast loops
-          return;
-        }
-        toast.error('Failed to load team members');
-        return;
+      );
+
+      if (data) {
+        setStaff(data.admins || []);
+        setTotalStaff(data.total || 0);
       }
-
-      const data = await res.json();
-      setStaff(data.admins || []);
-      setTotalStaff(data.total || 0);
     } catch (err: any) {
       console.error('Error fetching staff members:', err);
     } finally {
       setIsLoadingStaff(false);
     }
-  }, [token, page, search, roleFilter, statusFilter, logout]);
+  }, [token, page, search, roleFilter, statusFilter, logout, toast]);
 
   // 2. Fetch Invites
-  const fetchInvites = useCallback(async () => {
+  const fetchInvites = useCallback(async (force = false) => {
     if (!token || !isSuperAdmin) return;
-    setIsLoadingInvites(true);
+    const cacheKey = '/api/admin/invites';
+    if (!adminCache.get(cacheKey) && !force) {
+      const stale = adminCache.getStale<any>(cacheKey);
+      if (!stale) setIsLoadingInvites(true);
+    }
     try {
-      const res = await fetch('/api/admin/invites', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.status === 401) {
-        logout();
-        return;
-      }
-      if (res.ok) {
-        const data = await res.json();
+      const data = await adminCache.fetchWithSwr(
+        cacheKey,
+        async () => {
+          const res = await fetch('/api/admin/invites', {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.status === 401) {
+            logout();
+            throw new Error('Unauthorized');
+          }
+          if (res.ok) {
+            return res.json();
+          }
+          return { invites: [] };
+        },
+        {
+          ttl: 120_000,
+          onRevalidate: (fresh) => {
+            if (fresh) {
+              setInvites(fresh.invites || []);
+            }
+          },
+        }
+      );
+      if (data) {
         setInvites(data.invites || []);
       }
     } catch (err: any) {
@@ -204,7 +250,9 @@ export const AdminTeamPage: React.FC = () => {
         inviteUrl: data.inviteUrl,
         email: inviteEmail.trim(),
       });
-      fetchInvites();
+      adminCache.invalidatePrefix('/api/admin/invites');
+      adminCache.invalidatePrefix('/api/admin/metrics');
+      fetchInvites(true);
     } catch (err: any) {
       toast.error('Network Error', err.message);
     } finally {
@@ -250,7 +298,9 @@ export const AdminTeamPage: React.FC = () => {
         data.message
       );
       setActionModal({ targetAdmin: null, action: 'suspend', reason: '' });
-      fetchStaff();
+      adminCache.invalidatePrefix('/api/admin/team');
+      adminCache.invalidatePrefix('/api/admin/metrics');
+      fetchStaff(true);
     } catch (err: any) {
       toast.error('Network Error', err.message);
     } finally {
@@ -277,7 +327,9 @@ export const AdminTeamPage: React.FC = () => {
 
       toast.success('Invite Revoked', `Invitation for ${revokeInviteTarget.email} was invalidated.`);
       setRevokeInviteTarget(null);
-      fetchInvites();
+      adminCache.invalidatePrefix('/api/admin/invites');
+      adminCache.invalidatePrefix('/api/admin/metrics');
+      fetchInvites(true);
     } catch (err: any) {
       toast.error('Network Error', err.message);
     } finally {

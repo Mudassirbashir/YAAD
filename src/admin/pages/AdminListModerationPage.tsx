@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { useAdminRealtime } from '../hooks/useAdminRealtime';
+import { adminCache } from '../utils/adminCache';
 
 export interface AuthoritativeList {
   id: string;
@@ -38,48 +39,77 @@ export interface AuthoritativeList {
 export const AdminListModerationPage: React.FC = () => {
   const { token, logout } = useAdminAuth();
 
-  const [lists, setLists] = useState<AuthoritativeList[]>([]);
-  const [total, setTotal] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [completionFilter, setCompletionFilter] = useState<'all' | 'completed' | 'active'>('all');
   const [expandedListId, setExpandedListId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const fetchLists = useCallback(async () => {
+  // Cached initial state
+  const cacheKey = `/api/admin/lists?page=${page}&limit=25&search=${encodeURIComponent(searchQuery.trim())}&completion=${completionFilter}`;
+  const initialCached = adminCache.getStale<any>(cacheKey);
+
+  const [lists, setLists] = useState<AuthoritativeList[]>(initialCached?.lists || []);
+  const [total, setTotal] = useState(initialCached?.total || 0);
+  const [isLoading, setIsLoading] = useState(!initialCached);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const fetchLists = useCallback(async (force = false) => {
     if (!token) return;
-    setIsLoading(true);
+    const currentKey = `/api/admin/lists?page=${page}&limit=25&search=${encodeURIComponent(searchQuery.trim())}&completion=${completionFilter}`;
+
+    if (!adminCache.get(currentKey) && !force) {
+      const stale = adminCache.getStale<any>(currentKey);
+      if (!stale) setIsLoading(true);
+    }
     setErrorMessage(null);
 
     try {
-      const params = new URLSearchParams();
-      params.set('page', String(page));
-      params.set('limit', '25');
-      if (searchQuery.trim()) params.set('search', searchQuery.trim());
-      if (completionFilter === 'completed') params.set('isCompleted', 'true');
-      if (completionFilter === 'active') params.set('isCompleted', 'false');
+      const data = await adminCache.fetchWithSwr(
+        currentKey,
+        async () => {
+          const params = new URLSearchParams();
+          params.set('page', String(page));
+          params.set('limit', '25');
+          if (searchQuery.trim()) params.set('search', searchQuery.trim());
+          if (completionFilter === 'completed') params.set('isCompleted', 'true');
+          if (completionFilter === 'active') params.set('isCompleted', 'false');
 
-      const res = await fetch(`/api/admin/lists?${params.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+          const res = await fetch(`/api/admin/lists?${params.toString()}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
 
-      if (!res.ok) {
-        if (res.status === 401) {
-          logout();
-          return;
+          if (!res.ok) {
+            if (res.status === 401) {
+              logout();
+              throw new Error('Unauthorized');
+            }
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `HTTP ${res.status}: Failed to load shopping lists`);
+          }
+          return res.json();
+        },
+        {
+          ttl: 300_000,
+          onRevalidate: (freshData) => {
+            if (freshData) {
+              setLists(freshData.lists || []);
+              setTotal(freshData.total || 0);
+              setTotalPages(freshData.totalPages || 1);
+            }
+          },
         }
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || `HTTP ${res.status}: Failed to load shopping lists`);
-      }
+      );
 
-      const data = await res.json();
-      setLists(data.lists || []);
-      setTotal(data.total || 0);
-      setTotalPages(data.totalPages || 1);
+      if (data) {
+        setLists(data.lists || []);
+        setTotal(data.total || 0);
+        setTotalPages(data.totalPages || 1);
+      }
     } catch (err: any) {
-      setErrorMessage(err.message || 'Unable to load shopping lists from database.');
+      if (err.message !== 'Unauthorized') {
+        setErrorMessage(err.message || 'Unable to load shopping lists from database.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -93,7 +123,7 @@ export const AdminListModerationPage: React.FC = () => {
   useAdminRealtime({
     tables: ['shopping_lists', 'shopping_items'],
     onDatabaseChange: () => {
-      fetchLists();
+      fetchLists(true);
     },
     enabled: Boolean(token),
   });
@@ -112,10 +142,10 @@ export const AdminListModerationPage: React.FC = () => {
               <span className="text-xs font-mono font-bold text-[#003527] bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
                 Authoritative Supabase Source
               </span>
-              <span className="text-xs text-neutral-500">public.shopping_lists + public.shopping_items</span>
+              <span className="text-xs text-neutral-500">Live Grocery Lists &amp; Parchis</span>
             </div>
             <h2 className="text-2xl font-black text-[#003527] tracking-tight font-['Manrope']">
-              Shopping List Moderation
+              Shopping Lists (Parchis)
             </h2>
             <p className="text-xs sm:text-sm text-neutral-600 max-w-2xl">
               Real application lists and items created by shoppers. Direct relational join with owner profiles and item statuses.

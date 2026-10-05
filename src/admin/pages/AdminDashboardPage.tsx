@@ -22,6 +22,8 @@ import { useAdminAuth } from '../context/AdminAuthContext';
 import { ROLE_LABELS } from '../types';
 import { useAdminRealtime } from '../hooks/useAdminRealtime';
 
+import { adminCache } from '../utils/adminCache';
+
 interface AdminDashboardPageProps {
   onNavigate: (path: string) => void;
 }
@@ -44,90 +46,140 @@ export interface AuthoritativeDashboardStats {
 export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNavigate }) => {
   const { admin, token, logout } = useAdminAuth();
 
-  const [stats, setStats] = useState<AuthoritativeDashboardStats>({
-    totalUsers: 0,
-    activeUsers30d: 0,
-    activeUsers7d: 0,
-    totalLists: 0,
-    completedLists: 0,
-    totalItems: 0,
-    completedItems: 0,
-    totalAdmins: 1,
-    activeAdmins: 1,
-    pendingInvites: 0,
-    totalAuditLogs: 0,
-    openTickets: 0,
+  const [stats, setStats] = useState<AuthoritativeDashboardStats>(() => {
+    // 0ms instant initialization from cache if available
+    const cached = adminCache.getStale<AuthoritativeDashboardStats>('/api/admin/dashboard/stats');
+    return (
+      cached || {
+        totalUsers: 0,
+        activeUsers30d: 0,
+        activeUsers7d: 0,
+        totalLists: 0,
+        completedLists: 0,
+        totalItems: 0,
+        completedItems: 0,
+        totalAdmins: 1,
+        activeAdmins: 1,
+        pendingInvites: 0,
+        totalAuditLogs: 0,
+        openTickets: 0,
+      }
+    );
   });
 
-  const [recentLogs, setRecentLogs] = useState<any[]>([]);
-  const [securityAlerts, setSecurityAlerts] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [recentLogs, setRecentLogs] = useState<any[]>(() => {
+    const cached = adminCache.getStale<{ logs: any[] }>('/api/admin/audit-logs?limit=5');
+    return cached?.logs || [];
+  });
+
+  const [securityAlerts, setSecurityAlerts] = useState<any[]>(() => {
+    const cached = adminCache.getStale<{ alerts: any[] }>('/api/admin/security-alerts');
+    return cached?.alerts || [];
+  });
+
+  const [isLoading, setIsLoading] = useState(() => {
+    return !adminCache.get('/api/admin/dashboard/stats');
+  });
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const fetchDashboardData = useCallback(async () => {
-    if (!token) return;
-    setIsLoading(true);
-    setErrorMessage(null);
+  const fetchDashboardData = useCallback(
+    async (forceRefresh: boolean = false) => {
+      if (!token) return;
+      const headers = { Authorization: `Bearer ${token}` };
 
-    try {
-      const [statsRes, auditRes, alertsRes] = await Promise.all([
-        fetch('/api/admin/dashboard/stats', { headers: { Authorization: `Bearer ${token}` } }),
-        fetch('/api/admin/audit-logs?limit=5', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
-        fetch('/api/admin/security-alerts', { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
-      ]);
+      if (forceRefresh || !adminCache.get('/api/admin/dashboard/stats')) {
+        setIsLoading(true);
+      }
+      setErrorMessage(null);
 
-      if (!statsRes.ok) {
-        if (statsRes.status === 401) {
-          logout();
-          return;
+      try {
+        const { data: statsData } = await adminCache.fetchWithSwr<AuthoritativeDashboardStats>(
+          '/api/admin/dashboard/stats',
+          headers,
+          (fresh) => {
+            if (fresh) {
+              setStats({
+                totalUsers: fresh.totalUsers ?? 0,
+                activeUsers30d: fresh.activeUsers30d ?? 0,
+                activeUsers7d: fresh.activeUsers7d ?? 0,
+                totalLists: fresh.totalLists ?? 0,
+                completedLists: fresh.completedLists ?? 0,
+                totalItems: fresh.totalItems ?? 0,
+                completedItems: fresh.completedItems ?? 0,
+                totalAdmins: fresh.totalAdmins ?? 1,
+                activeAdmins: fresh.activeAdmins ?? 1,
+                pendingInvites: fresh.pendingInvites ?? 0,
+                totalAuditLogs: fresh.totalAuditLogs ?? 0,
+                openTickets: fresh.openTickets ?? 0,
+              });
+            }
+          },
+          forceRefresh
+        );
+
+        if (statsData) {
+          setStats({
+            totalUsers: statsData.totalUsers ?? 0,
+            activeUsers30d: statsData.activeUsers30d ?? 0,
+            activeUsers7d: statsData.activeUsers7d ?? 0,
+            totalLists: statsData.totalLists ?? 0,
+            completedLists: statsData.completedLists ?? 0,
+            totalItems: statsData.totalItems ?? 0,
+            completedItems: statsData.completedItems ?? 0,
+            totalAdmins: statsData.totalAdmins ?? 1,
+            activeAdmins: statsData.activeAdmins ?? 1,
+            pendingInvites: statsData.pendingInvites ?? 0,
+            totalAuditLogs: statsData.totalAuditLogs ?? 0,
+            openTickets: statsData.openTickets ?? 0,
+          });
         }
-        const err = await statsRes.json().catch(() => ({}));
-        throw new Error(err.error || `HTTP ${statsRes.status}: Failed to load authoritative metrics`);
-      }
 
-      const statsData = await statsRes.json();
-      setStats({
-        totalUsers: statsData.totalUsers ?? 0,
-        activeUsers30d: statsData.activeUsers30d ?? 0,
-        activeUsers7d: statsData.activeUsers7d ?? 0,
-        totalLists: statsData.totalLists ?? 0,
-        completedLists: statsData.completedLists ?? 0,
-        totalItems: statsData.totalItems ?? 0,
-        completedItems: statsData.completedItems ?? 0,
-        totalAdmins: statsData.totalAdmins ?? 1,
-        activeAdmins: statsData.activeAdmins ?? 1,
-        pendingInvites: statsData.pendingInvites ?? 0,
-        totalAuditLogs: statsData.totalAuditLogs ?? 0,
-        openTickets: statsData.openTickets ?? 0,
-      });
+        // Secondary async queries with SWR
+        adminCache
+          .fetchWithSwr<{ logs: any[] }>(
+            '/api/admin/audit-logs?limit=5',
+            headers,
+            (fresh) => {
+              if (fresh?.logs) setRecentLogs(fresh.logs);
+            },
+            forceRefresh
+          )
+          .then(({ data }) => {
+            if (data?.logs) setRecentLogs(data.logs);
+          });
 
-      if (auditRes && auditRes.ok) {
-        const auditData = await auditRes.json();
-        setRecentLogs(auditData.logs || []);
+        adminCache
+          .fetchWithSwr<{ alerts: any[] }>(
+            '/api/admin/security-alerts',
+            headers,
+            (fresh) => {
+              if (fresh?.alerts) setSecurityAlerts(fresh.alerts);
+            },
+            forceRefresh
+          )
+          .then(({ data }) => {
+            if (data?.alerts) setSecurityAlerts(data.alerts);
+          });
+      } catch (err: any) {
+        setErrorMessage(err.message || 'Error communicating with Supabase data layer.');
+      } finally {
+        setIsLoading(false);
       }
-
-      if (alertsRes && alertsRes.ok) {
-        const alertsData = await alertsRes.json();
-        setSecurityAlerts(alertsData.alerts || []);
-      }
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Error communicating with Supabase data layer.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [token, logout]);
+    },
+    [token]
+  );
 
   // Phase 6: Authoritative Supabase Realtime subscription
   useAdminRealtime({
     tables: ['shopping_lists', 'admin_audit_logs', 'support_tickets'],
     onDatabaseChange: () => {
-      fetchDashboardData();
+      fetchDashboardData(true);
     },
     enabled: Boolean(token),
   });
 
   useEffect(() => {
-    fetchDashboardData();
+    fetchDashboardData(false);
   }, [fetchDashboardData]);
 
   const handleDismissAlert = async (alertId: string) => {
@@ -257,10 +309,10 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNaviga
         <div className="flex items-center justify-between mb-3 px-1">
           <div className="flex items-center gap-2">
             <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-500 font-mono">
-              Live Application Metrics (Supabase Production)
+              Live App Shopper &amp; List Metrics
             </h3>
           </div>
-          <span className="text-[10px] text-neutral-400 font-mono">Zero Demo Values Enforced</span>
+          <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-mono font-medium">Real-Time Sync</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -271,7 +323,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNaviga
           >
             <div className="flex items-center justify-between text-neutral-500">
               <span className="text-xs font-bold uppercase tracking-wider group-hover:text-[#003527] transition-colors">
-                Registered Shoppers
+                Shopper Accounts
               </span>
               <Users className="w-4 h-4 text-[#003527]" />
             </div>
@@ -280,7 +332,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNaviga
             </div>
             <div className="text-[11px] text-neutral-500 flex items-center justify-between">
               <span>{stats.activeUsers30d} active in last 30d</span>
-              <span className="text-[10px] font-mono text-neutral-400">public.profiles</span>
+              <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50/60 px-1.5 py-0.5 rounded">App Accounts</span>
             </div>
           </div>
 
@@ -291,7 +343,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNaviga
           >
             <div className="flex items-center justify-between text-neutral-500">
               <span className="text-xs font-bold uppercase tracking-wider group-hover:text-emerald-700 transition-colors">
-                Shopping Lists
+                Shopping Lists (Parchis)
               </span>
               <ShoppingBag className="w-4 h-4 text-emerald-600" />
             </div>
@@ -299,8 +351,8 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNaviga
               {isLoading ? '...' : stats.totalLists}
             </div>
             <div className="text-[11px] text-neutral-500 flex items-center justify-between">
-              <span>{stats.completedLists} completed trips</span>
-              <span className="text-[10px] font-mono text-neutral-400">public.shopping_lists</span>
+              <span>{stats.completedLists} completed shopping lists</span>
+              <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50/60 px-1.5 py-0.5 rounded">Active Lists</span>
             </div>
           </div>
 
@@ -311,7 +363,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNaviga
           >
             <div className="flex items-center justify-between text-neutral-500">
               <span className="text-xs font-bold uppercase tracking-wider group-hover:text-sky-700 transition-colors">
-                Items Added
+                List Items Added
               </span>
               <CheckCheck className="w-4 h-4 text-sky-600" />
             </div>
@@ -319,15 +371,18 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNaviga
               {isLoading ? '...' : stats.totalItems}
             </div>
             <div className="text-[11px] text-neutral-500 flex items-center justify-between">
-              <span>{stats.completedItems} items purchased</span>
-              <span className="text-[10px] font-mono text-neutral-400">public.shopping_items</span>
+              <span>{stats.completedItems} items checked off (done)</span>
+              <span className="text-[10px] font-mono text-sky-700 bg-sky-50/60 px-1.5 py-0.5 rounded">Parchi Items</span>
             </div>
           </div>
 
-          {/* Card 4: Support & Tickets */}
-          <div className="bg-white border border-neutral-200/90 rounded-2xl p-5 space-y-2 shadow-xs">
+          {/* Card 4: Support & Inquiries */}
+          <div 
+            onClick={() => onNavigate('/admin/tickets')}
+            className="bg-white border border-neutral-200/90 rounded-2xl p-5 space-y-2 shadow-xs hover:border-amber-600/40 transition-colors cursor-pointer group"
+          >
             <div className="flex items-center justify-between text-neutral-500">
-              <span className="text-xs font-bold uppercase tracking-wider">Open Tickets</span>
+              <span className="text-xs font-bold uppercase tracking-wider group-hover:text-amber-700 transition-colors">Support Inquiries</span>
               <Headphones className="w-4 h-4 text-amber-600" />
             </div>
             <div className="text-2xl sm:text-3xl font-black text-amber-700 font-mono">
@@ -335,7 +390,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNaviga
             </div>
             <div className="text-[11px] text-neutral-500 flex items-center justify-between">
               <span>Awaiting staff response</span>
-              <span className="text-[10px] font-mono text-neutral-400">public.support_tickets</span>
+              <span className="text-[10px] font-mono text-amber-700 bg-amber-50/60 px-1.5 py-0.5 rounded">Support Desk</span>
             </div>
           </div>
         </div>
@@ -347,7 +402,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNaviga
           <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-500 font-mono">
             Staff &amp; Access Governance
           </h3>
-          <span className="text-[10px] text-neutral-400 font-mono">Mandatory TOTP 2FA</span>
+          <span className="text-[10px] text-neutral-400 font-mono">Secure Access</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -412,7 +467,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNaviga
             <div className="text-2xl sm:text-3xl font-black text-sky-800 font-mono">
               {isLoading ? '...' : stats.totalAuditLogs}
             </div>
-            <div className="text-[11px] text-neutral-500">public.admin_audit_logs</div>
+            <div className="text-[11px] text-neutral-500">Verified audit records</div>
           </div>
         </div>
       </div>
@@ -425,12 +480,12 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNaviga
         >
           <div className="flex items-center justify-between">
             <span className="font-bold text-neutral-900 text-sm group-hover:text-[#003527]">
-              Shopper Directory
+              Shopper Accounts &amp; Activity
             </span>
             <ArrowRight className="w-4 h-4 text-neutral-400 group-hover:text-[#003527] group-hover:translate-x-1 transition-all" />
           </div>
           <p className="text-xs text-neutral-500 leading-relaxed">
-            Inspect real application users, phone numbers, signup dates, and moderation statuses.
+            View registered shoppers, mobile numbers, signup dates, and moderation status.
           </p>
         </div>
 
@@ -440,12 +495,12 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNaviga
         >
           <div className="flex items-center justify-between">
             <span className="font-bold text-neutral-900 text-sm group-hover:text-[#003527]">
-              List Moderation
+              Shopping Lists (Parchis)
             </span>
             <ArrowRight className="w-4 h-4 text-neutral-400 group-hover:text-[#003527] group-hover:translate-x-1 transition-all" />
           </div>
           <p className="text-xs text-neutral-500 leading-relaxed">
-            Review live shopping lists and item checkoffs created by YAAD mobile and web shoppers.
+            Inspect live grocery lists, added items, and completed checkoffs created by users.
           </p>
         </div>
 
@@ -455,12 +510,12 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNaviga
         >
           <div className="flex items-center justify-between">
             <span className="font-bold text-neutral-900 text-sm group-hover:text-[#003527]">
-              Product Catalog
+              Grocery Item Catalog
             </span>
             <ArrowRight className="w-4 h-4 text-neutral-400 group-hover:text-[#003527] group-hover:translate-x-1 transition-all" />
           </div>
           <p className="text-xs text-neutral-500 leading-relaxed">
-            Manage Pakistani grocery vocabulary, bilingual terms, and auto-suggest items.
+            Manage Pakistani grocery vocabulary, Urdu/Roman Urdu terms, and category auto-suggestions.
           </p>
         </div>
       </div>
@@ -471,9 +526,9 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNaviga
           <div>
             <h3 className="text-base font-bold text-[#003527] tracking-tight flex items-center gap-2">
               <History className="w-5 h-5 text-emerald-600" />
-              <span>Recent Database Audit Events</span>
+              <span>Recent Security &amp; Activity Events</span>
             </h3>
-            <p className="text-xs text-neutral-500 mt-0.5">Authoritative audit log from public.admin_audit_logs</p>
+            <p className="text-xs text-neutral-500 mt-0.5">Authoritative audit log of staff actions and system events</p>
           </div>
           {admin?.role === 'super_admin' && (
             <button

@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { useAdminToast } from '../components/AdminToasts';
+import { adminCache } from '../utils/adminCache';
 
 export interface AuthoritativeUser {
   id: string;
@@ -36,51 +37,80 @@ export const AdminUserDirectoryPage: React.FC = () => {
   const { token, admin, logout } = useAdminAuth();
   const { showToast } = useAdminToast();
 
-  const [users, setUsers] = useState<AuthoritativeUser[]>([]);
-  const [total, setTotal] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'suspended'>('all');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+
+  // Cached initial state
+  const cacheKey = `/api/admin/users?page=${page}&limit=25&search=${encodeURIComponent(searchQuery.trim())}&status=${statusFilter}`;
+  const initialCached = adminCache.getStale<any>(cacheKey);
+
+  const [users, setUsers] = useState<AuthoritativeUser[]>(initialCached?.users || []);
+  const [total, setTotal] = useState(initialCached?.total || 0);
+  const [isLoading, setIsLoading] = useState(!initialCached);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Suspend modal state
   const [selectedUser, setSelectedUser] = useState<AuthoritativeUser | null>(null);
   const [suspendReason, setSuspendReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const fetchUsers = useCallback(async () => {
+  const fetchUsers = useCallback(async (force = false) => {
     if (!token) return;
-    setIsLoading(true);
+    const currentKey = `/api/admin/users?page=${page}&limit=25&search=${encodeURIComponent(searchQuery.trim())}&status=${statusFilter}`;
+
+    if (!adminCache.get(currentKey) && !force) {
+      const stale = adminCache.getStale<any>(currentKey);
+      if (!stale) setIsLoading(true);
+    }
     setErrorMessage(null);
 
     try {
-      const params = new URLSearchParams();
-      params.set('page', String(page));
-      params.set('limit', '25');
-      if (searchQuery.trim()) params.set('search', searchQuery.trim());
-      if (statusFilter !== 'all') params.set('status', statusFilter);
+      const data = await adminCache.fetchWithSwr(
+        currentKey,
+        async () => {
+          const params = new URLSearchParams();
+          params.set('page', String(page));
+          params.set('limit', '25');
+          if (searchQuery.trim()) params.set('search', searchQuery.trim());
+          if (statusFilter !== 'all') params.set('status', statusFilter);
 
-      const res = await fetch(`/api/admin/users?${params.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+          const res = await fetch(`/api/admin/users?${params.toString()}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
 
-      if (!res.ok) {
-        if (res.status === 401) {
-          logout();
-          return;
+          if (!res.ok) {
+            if (res.status === 401) {
+              logout();
+              throw new Error('Unauthorized');
+            }
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `HTTP ${res.status}: Failed to load users`);
+          }
+          return res.json();
+        },
+        {
+          ttl: 300_000,
+          onRevalidate: (freshData) => {
+            if (freshData) {
+              setUsers(freshData.users || []);
+              setTotal(freshData.total || 0);
+              setTotalPages(freshData.totalPages || 1);
+            }
+          },
         }
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || `HTTP ${res.status}: Failed to load users`);
-      }
+      );
 
-      const data = await res.json();
-      setUsers(data.users || []);
-      setTotal(data.total || 0);
-      setTotalPages(data.totalPages || 1);
+      if (data) {
+        setUsers(data.users || []);
+        setTotal(data.total || 0);
+        setTotalPages(data.totalPages || 1);
+      }
     } catch (err: any) {
-      setErrorMessage(err.message || 'Unable to load users from the database.');
+      if (err.message !== 'Unauthorized') {
+        setErrorMessage(err.message || 'Unable to load users from the database.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -140,13 +170,13 @@ export const AdminUserDirectoryPage: React.FC = () => {
               <span className="text-xs font-mono font-bold text-[#003527] bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
                 Authoritative Supabase Source
               </span>
-              <span className="text-xs text-neutral-500">public.profiles + public.shopping_lists</span>
+              <span className="text-xs text-neutral-500">Live Shopper Accounts</span>
             </div>
             <h2 className="text-2xl font-black text-[#003527] tracking-tight font-['Manrope']">
-              Shopper Directory
+              Shopper Accounts
             </h2>
             <p className="text-xs sm:text-sm text-neutral-600 max-w-2xl">
-              Live records directly from the production Supabase database. Real shopper accounts, active shopping lists, and moderation controls.
+              Live records directly from the YAAD shopping list app. View registered shoppers, active grocery lists, and account moderation.
             </p>
           </div>
 
@@ -246,7 +276,7 @@ export const AdminUserDirectoryPage: React.FC = () => {
                 <tr className="bg-neutral-50/80 border-b border-neutral-200/80 text-neutral-500 font-bold uppercase text-[10px] tracking-wider">
                   <th className="py-3.5 px-4">Shopper</th>
                   <th className="py-3.5 px-4">Contact &amp; Language</th>
-                  <th className="py-3.5 px-4">Shopping Activity</th>
+                  <th className="py-3.5 px-4">Shopping Lists (Parchis)</th>
                   <th className="py-3.5 px-4">Signup Date</th>
                   <th className="py-3.5 px-4">Status</th>
                   {isSuperAdmin && <th className="py-3.5 px-4 text-right">Moderation</th>}
@@ -294,10 +324,10 @@ export const AdminUserDirectoryPage: React.FC = () => {
                         <div className="space-y-0.5">
                           <div className="flex items-center gap-1.5 text-neutral-800 font-bold">
                             <ShoppingBag className="w-3.5 h-3.5 text-[#003527]" />
-                            <span>{u.listsCount} list(s)</span>
+                            <span>{u.listsCount} parchi(s)</span>
                           </div>
                           <div className="text-[10px] text-neutral-500">
-                            {u.completedTripsCount} completed trip(s)
+                            {u.completedTripsCount} completed list(s)
                           </div>
                         </div>
                       </td>

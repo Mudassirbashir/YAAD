@@ -16,51 +16,80 @@ import { useAdminAuth } from '../context/AdminAuthContext';
 import { useAdminToast } from '../components/AdminToasts';
 import { AdminTableSkeleton } from '../components/AdminSkeleton';
 import { AuditLogEntry } from '../types';
+import { adminCache } from '../utils/adminCache';
 
 export const AdminAuditLogPage: React.FC = () => {
   const { token, admin, logout } = useAdminAuth();
   const toast = useAdminToast();
 
-  const [logs, setLogs] = useState<AuditLogEntry[]>([]);
-  const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [limit] = useState(25);
   const [search, setSearch] = useState('');
   const [actionFilter, setActionFilter] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+
+  // Cached initial state
+  const cacheKey = `/api/admin/audit-logs?page=${page}&limit=${limit}&search=${encodeURIComponent(search.trim())}&action=${actionFilter}`;
+  const initialCached = adminCache.getStale<any>(cacheKey);
+
+  const [logs, setLogs] = useState<AuditLogEntry[]>(initialCached?.logs || []);
+  const [total, setTotal] = useState(initialCached?.total || 0);
+  const [isLoading, setIsLoading] = useState(!initialCached);
 
   // Inspector modal state
   const [inspectEntry, setInspectEntry] = useState<AuditLogEntry | null>(null);
 
-  const fetchLogs = useCallback(async () => {
+  const fetchLogs = useCallback(async (force = false) => {
     if (!token) return;
-    setIsLoading(true);
+    const currentKey = `/api/admin/audit-logs?page=${page}&limit=${limit}&search=${encodeURIComponent(search.trim())}&action=${actionFilter}`;
+
+    if (!adminCache.get(currentKey) && !force) {
+      const stale = adminCache.getStale<any>(currentKey);
+      if (!stale) setIsLoading(true);
+    }
+
     try {
-      const params = new URLSearchParams({
-        page: String(page),
-        limit: String(limit),
-      });
-      if (search.trim()) params.append('search', search.trim());
-      if (actionFilter) params.append('action', actionFilter);
+      const data = await adminCache.fetchWithSwr(
+        currentKey,
+        async () => {
+          const params = new URLSearchParams({
+            page: String(page),
+            limit: String(limit),
+          });
+          if (search.trim()) params.append('search', search.trim());
+          if (actionFilter) params.append('action', actionFilter);
 
-      const res = await fetch(`/api/admin/audit-logs?${params.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+          const res = await fetch(`/api/admin/audit-logs?${params.toString()}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
 
-      if (!res.ok) {
-        if (res.status === 401) {
-          logout();
-          return;
+          if (!res.ok) {
+            if (res.status === 401) {
+              logout();
+              throw new Error('Unauthorized');
+            }
+            if (res.status === 403) {
+              return { logs: [], total: 0 };
+            }
+            throw new Error(`HTTP ${res.status}`);
+          }
+
+          return res.json();
+        },
+        {
+          ttl: 60_000,
+          onRevalidate: (fresh) => {
+            if (fresh) {
+              setLogs(fresh.logs || []);
+              setTotal(fresh.total || 0);
+            }
+          },
         }
-        if (res.status === 403) {
-          return;
-        }
-        return;
+      );
+
+      if (data) {
+        setLogs(data.logs || []);
+        setTotal(data.total || 0);
       }
-
-      const data = await res.json();
-      setLogs(data.logs || []);
-      setTotal(data.total || 0);
     } catch (err: any) {
       console.error('Error fetching audit logs:', err);
     } finally {

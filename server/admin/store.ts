@@ -1705,7 +1705,13 @@ class AdminStore {
   public async getDashboardMetricsAsync(): Promise<any> {
     const authoritative = await getAuthoritativeAppMetrics();
     if (authoritative) {
-      return authoritative;
+      return {
+        ...authoritative,
+        totalAdmins: Math.max(authoritative.totalAdmins, this.getAllAdmins().length),
+        activeAdmins: Math.max(authoritative.activeAdmins, this.getAllAdmins().filter((a) => a.status === 'active').length),
+        pendingInvites: Math.max(authoritative.pendingInvites, this.getAllInvites().filter((i) => i.status === 'pending').length),
+        totalAuditLogs: Math.max(authoritative.totalAuditLogs, this.db.auditLogs.length),
+      };
     }
     return {
       totalUsers: (this.db.appUsers || []).length,

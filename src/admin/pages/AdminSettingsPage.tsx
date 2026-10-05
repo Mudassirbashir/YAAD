@@ -13,46 +13,82 @@ import {
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { useAdminToast } from '../components/AdminToasts';
+import { adminCache } from '../utils/adminCache';
 
 export const AdminSettingsPage: React.FC = () => {
   const { token, admin, logout } = useAdminAuth();
   const { showToast } = useAdminToast();
 
-  const [settings, setSettings] = useState<any>(null);
-  const [roleMatrix, setRoleMatrix] = useState<any>(null);
+  const cachedSettings = adminCache.getStale<any>('/api/admin/settings');
+  const cachedRoles = adminCache.getStale<any>('/api/admin/role-matrix');
+
+  const [settings, setSettings] = useState<any>(cachedSettings || null);
+  const [roleMatrix, setRoleMatrix] = useState<any>(cachedRoles || null);
   const [activeTab, setActiveTab] = useState<'flags' | 'roles'>('flags');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!cachedSettings || !cachedRoles);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const isSuperAdmin = admin?.role === 'super_admin';
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (force = false) => {
     if (!token) return;
-    setIsLoading(true);
+    const settingsKey = '/api/admin/settings';
+    const rolesKey = '/api/admin/role-matrix';
+
+    if ((!adminCache.get(settingsKey) || !adminCache.get(rolesKey)) && !force) {
+      if (!adminCache.getStale(settingsKey) || !adminCache.getStale(rolesKey)) {
+        setIsLoading(true);
+      }
+    }
     setErrorMessage(null);
 
     try {
-      const [settingsRes, rolesRes] = await Promise.all([
-        fetch('/api/admin/settings', { headers: { Authorization: `Bearer ${token}` } }),
-        fetch('/api/admin/role-matrix', { headers: { Authorization: `Bearer ${token}` } }),
+      const [sData, rData] = await Promise.all([
+        adminCache.fetchWithSwr(
+          settingsKey,
+          async () => {
+            const res = await fetch(settingsKey, { headers: { Authorization: `Bearer ${token}` } });
+            if (res.status === 401) {
+              logout();
+              throw new Error('Unauthorized');
+            }
+            if (!res.ok) throw new Error('Failed to load settings');
+            return res.json();
+          },
+          {
+            ttl: 300_000,
+            onRevalidate: (fresh) => {
+              if (fresh) setSettings(fresh);
+            },
+          }
+        ),
+        adminCache.fetchWithSwr(
+          rolesKey,
+          async () => {
+            const res = await fetch(rolesKey, { headers: { Authorization: `Bearer ${token}` } });
+            if (res.status === 401) {
+              logout();
+              throw new Error('Unauthorized');
+            }
+            if (!res.ok) throw new Error('Failed to load role matrix');
+            return res.json();
+          },
+          {
+            ttl: 300_000,
+            onRevalidate: (fresh) => {
+              if (fresh) setRoleMatrix(fresh);
+            },
+          }
+        ),
       ]);
 
-      if (settingsRes.status === 401 || rolesRes.status === 401) {
-        logout();
-        return;
-      }
-
-      if (!settingsRes.ok || !rolesRes.ok) {
-        throw new Error('Failed to load settings or role matrix.');
-      }
-
-      const sData = await settingsRes.json();
-      const rData = await rolesRes.json();
-      setSettings(sData);
-      setRoleMatrix(rData);
+      if (sData) setSettings(sData);
+      if (rData) setRoleMatrix(rData);
     } catch (err: any) {
-      setErrorMessage(err.message || 'Error communicating with settings API.');
+      if (err.message !== 'Unauthorized') {
+        setErrorMessage(err.message || 'Error communicating with settings API.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -85,6 +121,7 @@ export const AdminSettingsPage: React.FC = () => {
         title: 'Settings Saved',
         message: 'System settings persisted to Supabase database.',
       });
+      adminCache.invalidatePrefix('/api/admin/settings');
     } catch (err: any) {
       showToast({
         type: 'error',
@@ -119,6 +156,7 @@ export const AdminSettingsPage: React.FC = () => {
         title: 'Role Matrix Saved',
         message: 'RBAC permissions persisted to Supabase database.',
       });
+      adminCache.invalidatePrefix('/api/admin/role-matrix');
     } catch (err: any) {
       showToast({
         type: 'error',
@@ -140,7 +178,7 @@ export const AdminSettingsPage: React.FC = () => {
               <span className="text-xs font-mono font-bold text-[#003527] bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
                 Authoritative Supabase Source
               </span>
-              <span className="text-xs text-neutral-500">public.admin_settings</span>
+              <span className="text-xs text-neutral-500">Security &amp; Policy Matrix</span>
             </div>
             <h2 className="text-2xl font-black text-[#003527] tracking-tight font-['Manrope']">
               System Settings &amp; Governance

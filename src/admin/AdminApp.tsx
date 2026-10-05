@@ -14,6 +14,10 @@ import { AdminCatalogPage } from './pages/AdminCatalogPage';
 import { AdminSettingsPage } from './pages/AdminSettingsPage';
 import { AdminTeamPage } from './pages/AdminTeamPage';
 import { AdminAuditLogPage } from './pages/AdminAuditLogPage';
+import { AdminSupportPage } from './pages/AdminSupportPage';
+import { AdminCmsPage } from './pages/AdminCmsPage';
+import { AdminPushPage } from './pages/AdminPushPage';
+import { AdminAnalyticsPage } from './pages/AdminAnalyticsPage';
 import { AdminNotFoundPage } from './pages/AdminNotFoundPage';
 import { AdminLayout } from './components/AdminLayout';
 import { Loader2 } from 'lucide-react';
@@ -169,6 +173,38 @@ function AdminRouter() {
     return (
       <AdminLayout activePath="/admin/settings" onNavigate={navigate}>
         <AdminSettingsPage />
+      </AdminLayout>
+    );
+  }
+
+  if (currentPath === '/admin/tickets') {
+    return (
+      <AdminLayout activePath="/admin/tickets" onNavigate={navigate}>
+        <AdminSupportPage />
+      </AdminLayout>
+    );
+  }
+
+  if (currentPath === '/admin/cms') {
+    return (
+      <AdminLayout activePath="/admin/cms" onNavigate={navigate}>
+        <AdminCmsPage />
+      </AdminLayout>
+    );
+  }
+
+  if (currentPath === '/admin/push') {
+    return (
+      <AdminLayout activePath="/admin/push" onNavigate={navigate}>
+        <AdminPushPage />
+      </AdminLayout>
+    );
+  }
+
+  if (currentPath === '/admin/analytics') {
+    return (
+      <AdminLayout activePath="/admin/analytics" onNavigate={navigate}>
+        <AdminAnalyticsPage />
       </AdminLayout>
     );
   }

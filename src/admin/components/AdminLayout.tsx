@@ -49,21 +49,24 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   const isLowTime = inactivitySecondsRemaining < 5 * 60;
   const roleMeta = admin?.role ? ROLE_LABELS[admin.role] : null;
 
-  const navItems = [
+  const listNavItems = [
     { id: 'dashboard', label: 'Dashboard', path: '/admin', icon: LayoutDashboard },
-    { id: 'users', label: 'User Directory', path: '/admin/users', icon: Users },
-    { id: 'lists', label: 'List Moderation', path: '/admin/lists', icon: ShoppingBag },
-    { id: 'catalog', label: 'Product Catalog', path: '/admin/catalog', icon: FileText },
+    { id: 'users', label: 'Shopper Accounts', path: '/admin/users', icon: Users },
+    { id: 'lists', label: 'Shopping Lists (Parchi)', path: '/admin/lists', icon: ShoppingBag },
+    { id: 'catalog', label: 'Grocery Item Catalog', path: '/admin/catalog', icon: FileText },
+  ];
+
+  const commNavItems = [
+    { id: 'support', label: 'Support Desk', path: '/admin/tickets', icon: HelpCircle },
+    { id: 'cms', label: 'Grocery Guides (CMS)', path: '/admin/cms', icon: FileText },
+    { id: 'push', label: 'Push Notifications', path: '/admin/push', icon: Bell },
+    { id: 'analytics', label: 'Usage Analytics', path: '/admin/analytics', icon: BarChart3 },
+  ];
+
+  const govNavItems = [
     { id: 'team', label: 'Staff & Team', path: '/admin/team', icon: Shield },
     { id: 'audit', label: 'Audit Trail', path: '/admin/audit-log', icon: History },
     { id: 'settings', label: 'System Settings', path: '/admin/settings', icon: Settings },
-  ];
-
-  const futureModules = [
-    { label: 'Content CMS', icon: FileText, note: 'Supabase API' },
-    { label: 'Push Notifications', icon: Bell, note: 'Supabase API' },
-    { label: 'Reports & Analytics', icon: BarChart3, note: 'Supabase API' },
-    { label: 'Support Tickets', icon: HelpCircle, note: 'Supabase API' },
   ];
 
   return (
@@ -90,7 +93,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                   YAAD Admin
                 </span>
                 <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-[#003527] border border-emerald-200">
-                  Staff Portal
+                  Control Center
                 </span>
               </div>
             </div>
@@ -109,7 +112,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             title="Session automatically expires after 30 minutes of inactivity for staff security"
           >
             <Clock className="w-3.5 h-3.5 text-neutral-500" />
-            <span>Idle Timeout: {formatInactivityTime(inactivitySecondsRemaining)}</span>
+            <span>Idle: {formatInactivityTime(inactivitySecondsRemaining)}</span>
           </div>
 
           {/* Active Admin Profile */}
@@ -161,13 +164,13 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
         >
-          <div className="p-4 space-y-6 overflow-y-auto">
-            {/* Active Navigation */}
+          <div className="p-4 space-y-5 overflow-y-auto">
+            {/* 1. Shopping & Parchi Operations */}
             <div className="space-y-1">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 px-3 mb-2">
-                Core Operations
+              <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 px-3 mb-1.5">
+                Shopping &amp; Lists
               </div>
-              {navItems.map((item) => {
+              {listNavItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activePath === item.path;
                 return (
@@ -178,7 +181,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                       onNavigate(item.path);
                       setMobileMenuOpen(false);
                     }}
-                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
+                    className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
                       isActive
                         ? 'bg-[#003527] text-white shadow-md shadow-emerald-950/15'
                         : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 border border-transparent'
@@ -191,27 +194,60 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               })}
             </div>
 
-            {/* Modules Roadmap */}
+            {/* 2. Communications & Guides */}
             <div className="space-y-1 pt-3 border-t border-neutral-100">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 px-3 mb-2 flex items-center justify-between">
-                <span>Upcoming Modules</span>
-                <span className="text-[9px] px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-500 font-medium">Stepwise</span>
+              <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 px-3 mb-1.5">
+                Shopper Support &amp; Guides
               </div>
-              {futureModules.map((m, i) => {
-                const Icon = m.icon;
+              {commNavItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = activePath === item.path;
                 return (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between px-3.5 py-2 rounded-xl text-xs text-neutral-400 hover:bg-neutral-50 select-none"
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      onNavigate(item.path);
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
+                      isActive
+                        ? 'bg-[#003527] text-white shadow-md shadow-emerald-950/15'
+                        : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 border border-transparent'
+                    }`}
                   >
-                    <div className="flex items-center gap-2.5">
-                      <Icon className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-                      <span className="truncate">{m.label}</span>
-                    </div>
-                    <span className="text-[10px] font-mono text-neutral-400 bg-neutral-100 px-1.5 py-0.5 rounded">
-                      {m.note}
-                    </span>
-                  </div>
+                    <Icon className="w-4 h-4 shrink-0" />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* 3. Governance & Audit */}
+            <div className="space-y-1 pt-3 border-t border-neutral-100">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 px-3 mb-1.5">
+                Staff &amp; Governance
+              </div>
+              {govNavItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = activePath === item.path;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      onNavigate(item.path);
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
+                      isActive
+                        ? 'bg-[#003527] text-white shadow-md shadow-emerald-950/15'
+                        : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 border border-transparent'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4 shrink-0" />
+                    <span>{item.label}</span>
+                  </button>
                 );
               })}
             </div>

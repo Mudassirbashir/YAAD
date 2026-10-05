@@ -9,6 +9,7 @@ import {
   Check,
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
+import { adminCache } from '../utils/adminCache';
 
 export interface CatalogItem {
   id: string;
@@ -23,48 +24,78 @@ export interface CatalogItem {
 export const AdminCatalogPage: React.FC = () => {
   const { token, logout } = useAdminAuth();
 
-  const [items, setItems] = useState<CatalogItem[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [total, setTotal] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const fetchCatalog = useCallback(async () => {
+  // Cached initial state
+  const cacheKey = `/api/admin/catalog/products?page=${page}&limit=50&search=${encodeURIComponent(searchQuery.trim())}&category=${selectedCategory}`;
+  const initialCached = adminCache.getStale<any>(cacheKey);
+
+  const [items, setItems] = useState<CatalogItem[]>(initialCached?.items || []);
+  const [categories, setCategories] = useState<string[]>(initialCached?.categories || []);
+  const [total, setTotal] = useState(initialCached?.total || 0);
+  const [isLoading, setIsLoading] = useState(!initialCached);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const fetchCatalog = useCallback(async (force = false) => {
     if (!token) return;
-    setIsLoading(true);
+    const currentKey = `/api/admin/catalog/products?page=${page}&limit=50&search=${encodeURIComponent(searchQuery.trim())}&category=${selectedCategory}`;
+
+    if (!adminCache.get(currentKey) && !force) {
+      const stale = adminCache.getStale<any>(currentKey);
+      if (!stale) setIsLoading(true);
+    }
     setErrorMessage(null);
 
     try {
-      const params = new URLSearchParams();
-      params.set('page', String(page));
-      params.set('limit', '50');
-      if (searchQuery.trim()) params.set('search', searchQuery.trim());
-      if (selectedCategory !== 'all') params.set('category', selectedCategory);
+      const data = await adminCache.fetchWithSwr(
+        currentKey,
+        async () => {
+          const params = new URLSearchParams();
+          params.set('page', String(page));
+          params.set('limit', '50');
+          if (searchQuery.trim()) params.set('search', searchQuery.trim());
+          if (selectedCategory !== 'all') params.set('category', selectedCategory);
 
-      const res = await fetch(`/api/admin/catalog/products?${params.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+          const res = await fetch(`/api/admin/catalog/products?${params.toString()}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
 
-      if (!res.ok) {
-        if (res.status === 401) {
-          logout();
-          return;
+          if (!res.ok) {
+            if (res.status === 401) {
+              logout();
+              throw new Error('Unauthorized');
+            }
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `HTTP ${res.status}: Failed to load catalog`);
+          }
+          return res.json();
+        },
+        {
+          ttl: 300_000,
+          onRevalidate: (freshData) => {
+            if (freshData) {
+              setItems(freshData.items || []);
+              setCategories(freshData.categories || []);
+              setTotal(freshData.total || 0);
+              setTotalPages(freshData.totalPages || 1);
+            }
+          },
         }
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || `HTTP ${res.status}: Failed to load catalog`);
-      }
+      );
 
-      const data = await res.json();
-      setItems(data.items || []);
-      setCategories(data.categories || []);
-      setTotal(data.total || 0);
-      setTotalPages(data.totalPages || 1);
+      if (data) {
+        setItems(data.items || []);
+        setCategories(data.categories || []);
+        setTotal(data.total || 0);
+        setTotalPages(data.totalPages || 1);
+      }
     } catch (err: any) {
-      setErrorMessage(err.message || 'Unable to load catalog from database.');
+      if (err.message !== 'Unauthorized') {
+        setErrorMessage(err.message || 'Unable to load catalog from database.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -84,10 +115,10 @@ export const AdminCatalogPage: React.FC = () => {
               <span className="text-xs font-mono font-bold text-[#003527] bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
                 Authoritative Supabase Source
               </span>
-              <span className="text-xs text-neutral-500">public.items + public.categories</span>
+              <span className="text-xs text-neutral-500">Pakistani Grocery Vocabulary</span>
             </div>
             <h2 className="text-2xl font-black text-[#003527] tracking-tight font-['Manrope']">
-              Product &amp; Item Catalog
+              Grocery Item Catalog
             </h2>
             <p className="text-xs sm:text-sm text-neutral-600 max-w-2xl">
               Pakistani grocery vocabulary, standard categories, and bilingual auto-suggest recognition database.
