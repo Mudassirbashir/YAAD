@@ -10,7 +10,7 @@
       "status": "active",
       "failedAttempts": 0,
       "createdAt": 1791123839719,
-      "updatedAt": 1791230750578,
+      "updatedAt": 1791239111227,
       "deletedAt": null,
       "recoveryCodes": [
         {
@@ -559,9 +559,84 @@
       "expiresAt": 1791273950585,
       "ip": "127.0.0.1",
       "userAgent": "node"
+    },
+    {
+      "sessionId": "sess_6d25e756-8068-4078-9a3b-4edcaeb63b21",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "yaad_sess.eyJzaWQiOiJzZXNzXzZkMjVlNzU2LTgwNjgtNDA3OC05YTNiLTRlZGNhZWI2M2IyMSIsImFpZCI6ImFkbWluX2UzOTg4MzYxLWNmMTMtNDRmZi1iZWQxLWVlZDUzZmMxZTY2YSIsImNhdCI6MTc5MTIzNjY0MzgzMiwiZXhwIjoxNzkxMjc5ODQzODMyLCJub25jZSI6Ijk0NGMwOWZmZGUwMGFkYzEifQ.14541f2f72dfe08c4a2e0d45bd8187984c180aadf3b777024c461a03cdbf528a",
+      "createdAt": 1791236643832,
+      "lastActivityAt": 1791236643832,
+      "expiresAt": 1791279843832,
+      "ip": "127.0.0.1",
+      "userAgent": "node"
+    },
+    {
+      "sessionId": "sess_5e4e8ea4-f656-4c5c-a868-18dd6a92c244",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "yaad_sess.eyJzaWQiOiJzZXNzXzVlNGU4ZWE0LWY2NTYtNGM1Yy1hODY4LTE4ZGQ2YTkyYzI0NCIsImFpZCI6ImFkbWluX2UzOTg4MzYxLWNmMTMtNDRmZi1iZWQxLWVlZDUzZmMxZTY2YSIsImNhdCI6MTc5MTIzNjkwMTE4MCwiZXhwIjoxNzkxMjgwMTAxMTgwLCJub25jZSI6IjhlMWJhNzkzMmE3YzcxOWIifQ.2c1d93c08a0a417c88a1423d46b7be4fb2036ea51fcea175f359ea107815b306",
+      "createdAt": 1791236901180,
+      "lastActivityAt": 1791236901180,
+      "expiresAt": 1791280101180,
+      "ip": "127.0.0.1",
+      "userAgent": "node"
+    },
+    {
+      "sessionId": "sess_46a2435c-31e3-4d2d-92e9-e93414a5ff73",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "yaad_sess.eyJzaWQiOiJzZXNzXzQ2YTI0MzVjLTMxZTMtNGQyZC05MmU5LWU5MzQxNGE1ZmY3MyIsImFpZCI6ImFkbWluX2UzOTg4MzYxLWNmMTMtNDRmZi1iZWQxLWVlZDUzZmMxZTY2YSIsImNhdCI6MTc5MTIzOTExMTIzNCwiZXhwIjoxNzkxMjgyMzExMjM0LCJub25jZSI6IjU1NDMzMDVmNzc1YWIyNzEifQ.23a50fc3312f5c640710c32984f74191b6ebbf943b0cea18bac5ec1cd9a20fb9",
+      "createdAt": 1791239111234,
+      "lastActivityAt": 1791239111234,
+      "expiresAt": 1791282311234,
+      "ip": "127.0.0.1",
+      "userAgent": "node"
     }
   ],
   "auditLogs": [
+    {
+      "id": "audit_418b8bdb-470c-4f0b-a0c3-5d5da0fa9974",
+      "timestamp": 1791239111246,
+      "action": "admin_login_success",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "session",
+      "targetId": "sess_46a2435c-31e3-4d2d-92e9-e93414a5ff73",
+      "ip": "127.0.0.1",
+      "userAgent": "node",
+      "metadata": {
+        "role": "super_admin",
+        "authMethod": "totp_passwordless"
+      }
+    },
+    {
+      "id": "audit_3d9a7625-0278-4eda-a964-38005ad57139",
+      "timestamp": 1791236901186,
+      "action": "admin_login_success",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "session",
+      "targetId": "sess_5e4e8ea4-f656-4c5c-a868-18dd6a92c244",
+      "ip": "127.0.0.1",
+      "userAgent": "node",
+      "metadata": {
+        "role": "super_admin",
+        "authMethod": "totp_passwordless"
+      }
+    },
+    {
+      "id": "audit_77c8f8bf-b778-464a-912d-ff5ddfa74d7b",
+      "timestamp": 1791236643834,
+      "action": "admin_login_success",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "session",
+      "targetId": "sess_6d25e756-8068-4078-9a3b-4edcaeb63b21",
+      "ip": "127.0.0.1",
+      "userAgent": "node",
+      "metadata": {
+        "role": "super_admin",
+        "authMethod": "totp_passwordless"
+      }
+    },
     {
       "id": "audit_b14bc95a-a21a-4ae8-bbcc-9e62e6767774",
       "timestamp": 1791230750593,
@@ -1348,10 +1423,472 @@
   },
   "appUsers": [],
   "moderationLists": [],
-  "catalogProducts": [],
-  "catalogCategories": [],
-  "cmsArticles": [],
-  "pushCampaigns": [],
+  "catalogProducts": [
+    {
+      "id": "cat_potato",
+      "nameEn": "Potato (Aloo)",
+      "nameUr": "آلو",
+      "category": "Fresh Vegetables & Sabzi",
+      "subcategory": "Staples",
+      "unit": "kg",
+      "pricePkr": 80,
+      "isActive": true,
+      "createdAt": 1791236871602,
+      "updatedAt": 1791236871602
+    },
+    {
+      "id": "cat_onion",
+      "nameEn": "Onion (Pyaaz)",
+      "nameUr": "پیاز",
+      "category": "Fresh Vegetables & Sabzi",
+      "subcategory": "Staples",
+      "unit": "kg",
+      "pricePkr": 160,
+      "isActive": true,
+      "createdAt": 1791236871602,
+      "updatedAt": 1791236871602
+    },
+    {
+      "id": "cat_tomato",
+      "nameEn": "Tomato (Tamatar)",
+      "nameUr": "ٹماٹر",
+      "category": "Fresh Vegetables & Sabzi",
+      "subcategory": "Staples",
+      "unit": "kg",
+      "pricePkr": 120,
+      "isActive": true,
+      "createdAt": 1791236871602,
+      "updatedAt": 1791236871602
+    },
+    {
+      "id": "cat_garlic",
+      "nameEn": "Garlic (Lehsun)",
+      "nameUr": "لہسن",
+      "category": "Fresh Vegetables & Sabzi",
+      "subcategory": "Aromatics",
+      "unit": "g",
+      "pricePkr": 250,
+      "isActive": true,
+      "createdAt": 1791236871602,
+      "updatedAt": 1791236871602
+    },
+    {
+      "id": "cat_ginger",
+      "nameEn": "Ginger (Adrak)",
+      "nameUr": "ادرک",
+      "category": "Fresh Vegetables & Sabzi",
+      "subcategory": "Aromatics",
+      "unit": "g",
+      "pricePkr": 300,
+      "isActive": true,
+      "createdAt": 1791236871602,
+      "updatedAt": 1791236871602
+    },
+    {
+      "id": "cat_green_chilli",
+      "nameEn": "Green Chilli (Hari Mirch)",
+      "nameUr": "ہری مرچ",
+      "category": "Fresh Vegetables & Sabzi",
+      "subcategory": "Aromatics",
+      "unit": "g",
+      "pricePkr": 100,
+      "isActive": true,
+      "createdAt": 1791236871602,
+      "updatedAt": 1791236871602
+    },
+    {
+      "id": "cat_coriander",
+      "nameEn": "Fresh Coriander (Dhania)",
+      "nameUr": "ہرا دھنیا",
+      "category": "Fresh Vegetables & Sabzi",
+      "subcategory": "Herbs",
+      "unit": "bunch",
+      "pricePkr": 40,
+      "isActive": true,
+      "createdAt": 1791236871602,
+      "updatedAt": 1791236871602
+    },
+    {
+      "id": "cat_mint",
+      "nameEn": "Fresh Mint (Podina)",
+      "nameUr": "پودینہ",
+      "category": "Fresh Vegetables & Sabzi",
+      "subcategory": "Herbs",
+      "unit": "bunch",
+      "pricePkr": 30,
+      "isActive": true,
+      "createdAt": 1791236871602,
+      "updatedAt": 1791236871602
+    },
+    {
+      "id": "cat_atta",
+      "nameEn": "Chakki Whole Wheat Atta",
+      "nameUr": "چکی آٹا",
+      "category": "Atta, Rice & Grains",
+      "subcategory": "Flour",
+      "unit": "kg",
+      "pricePkr": 650,
+      "isActive": true,
+      "createdAt": 1791236871602,
+      "updatedAt": 1791236871602
+    },
+    {
+      "id": "cat_basmati_rice",
+      "nameEn": "Kainat Basmati Rice",
+      "nameUr": "باسمتی چاول",
+      "category": "Atta, Rice & Grains",
+      "subcategory": "Rice",
+      "unit": "kg",
+      "pricePkr": 380,
+      "isActive": true,
+      "createdAt": 1791236871602,
+      "updatedAt": 1791236871602
+    },
+    {
+      "id": "cat_daal_chana",
+      "nameEn": "Daal Chana (Yellow Gram)",
+      "nameUr": "دال چنا",
+      "category": "Pulses & Daal",
+      "subcategory": "Lentils",
+      "unit": "kg",
+      "pricePkr": 280,
+      "isActive": true,
+      "createdAt": 1791236871602,
+      "updatedAt": 1791236871602
+    },
+    {
+      "id": "cat_daal_masoor",
+      "nameEn": "Daal Masoor (Red Lentils)",
+      "nameUr": "دال مسور",
+      "category": "Pulses & Daal",
+      "subcategory": "Lentils",
+      "unit": "kg",
+      "pricePkr": 310,
+      "isActive": true,
+      "createdAt": 1791236871602,
+      "updatedAt": 1791236871602
+    },
+    {
+      "id": "cat_daal_moong",
+      "nameEn": "Daal Moong (Yellow Moong)",
+      "nameUr": "دال مونگ",
+      "category": "Pulses & Daal",
+      "subcategory": "Lentils",
+      "unit": "kg",
+      "pricePkr": 330,
+      "isActive": true,
+      "createdAt": 1791236871602,
+      "updatedAt": 1791236871602
+    },
+    {
+      "id": "cat_haldi",
+      "nameEn": "Turmeric Powder (Haldi)",
+      "nameUr": "ہلدی پاؤڈر",
+      "category": "Spices & Masalay",
+      "subcategory": "Ground Spices",
+      "unit": "g",
+      "pricePkr": 150,
+      "isActive": true,
+      "createdAt": 1791236871602,
+      "updatedAt": 1791236871602
+    },
+    {
+      "id": "cat_lal_mirch",
+      "nameEn": "Red Chilli Powder (Lal Mirch)",
+      "nameUr": "لال مرچ پاؤڈر",
+      "category": "Spices & Masalay",
+      "subcategory": "Ground Spices",
+      "unit": "g",
+      "pricePkr": 200,
+      "isActive": true,
+      "createdAt": 1791236871602,
+      "updatedAt": 1791236871602
+    },
+    {
+      "id": "cat_zeera",
+      "nameEn": "White Cumin Seeds (Zeera)",
+      "nameUr": "سفید زیرہ",
+      "category": "Spices & Masalay",
+      "subcategory": "Whole Spices",
+      "unit": "g",
+      "pricePkr": 220,
+      "isActive": true,
+      "createdAt": 1791236871602,
+      "updatedAt": 1791236871602
+    },
+    {
+      "id": "cat_shan_biryani",
+      "nameEn": "Shan Bombay Biryani Masala",
+      "nameUr": "شان بمبئی بریانی مصالحہ",
+      "category": "Spices & Masalay",
+      "subcategory": "Recipe Mixes",
+      "unit": "pack",
+      "pricePkr": 140,
+      "isActive": true,
+      "createdAt": 1791236871602,
+      "updatedAt": 1791236871602
+    },
+    {
+      "id": "cat_milk_pak",
+      "nameEn": "Nestle MilkPak Full Cream Milk",
+      "nameUr": "ملک پیک دودھ",
+      "category": "Dairy & Eggs",
+      "subcategory": "UHT Milk",
+      "unit": "litre",
+      "pricePkr": 290,
+      "isActive": true,
+      "createdAt": 1791236871602,
+      "updatedAt": 1791236871602
+    },
+    {
+      "id": "cat_eggs",
+      "nameEn": "Farm Fresh Eggs (Anda)",
+      "nameUr": "فارمی انڈے",
+      "category": "Dairy & Eggs",
+      "subcategory": "Eggs",
+      "unit": "dozen",
+      "pricePkr": 340,
+      "isActive": true,
+      "createdAt": 1791236871602,
+      "updatedAt": 1791236871602
+    },
+    {
+      "id": "cat_oil_dalda",
+      "nameEn": "Dalda Cooking Oil Pouch",
+      "nameUr": "ڈالڈا کوکنگ آئل",
+      "category": "Cooking Oils & Ghee",
+      "subcategory": "Oil",
+      "unit": "litre",
+      "pricePkr": 520,
+      "isActive": true,
+      "createdAt": 1791236871602,
+      "updatedAt": 1791236871602
+    },
+    {
+      "id": "cat_tapal_tea",
+      "nameEn": "Tapal Danedar Black Tea",
+      "nameUr": "ٹپال دانے دار چائے",
+      "category": "Tea & Beverages",
+      "subcategory": "Black Tea",
+      "unit": "pack",
+      "pricePkr": 460,
+      "isActive": true,
+      "createdAt": 1791236871602,
+      "updatedAt": 1791236871602
+    },
+    {
+      "id": "cat_surf_excel",
+      "nameEn": "Surf Excel Detergent Powder",
+      "nameUr": "سرف ایکسل",
+      "category": "Household & Cleaning",
+      "subcategory": "Laundry",
+      "unit": "kg",
+      "pricePkr": 480,
+      "isActive": true,
+      "createdAt": 1791236871602,
+      "updatedAt": 1791236871602
+    },
+    {
+      "id": "cat_vim_bar",
+      "nameEn": "Vim Dishwashing Bar",
+      "nameUr": "وِم برتن دھونے کا صابن",
+      "category": "Household & Cleaning",
+      "subcategory": "Dishwashing",
+      "unit": "piece",
+      "pricePkr": 60,
+      "isActive": true,
+      "createdAt": 1791236871602,
+      "updatedAt": 1791236871602
+    }
+  ],
+  "catalogCategories": [
+    {
+      "id": "vegetables",
+      "nameEn": "Fresh Vegetables & Sabzi",
+      "nameUr": "تازہ سبزیاں",
+      "icon": "carrot",
+      "itemCount": 8
+    },
+    {
+      "id": "grains",
+      "nameEn": "Atta, Rice & Grains",
+      "nameUr": "آٹا، چاول اور اناج",
+      "icon": "wheat",
+      "itemCount": 2
+    },
+    {
+      "id": "pulses",
+      "nameEn": "Pulses & Daal",
+      "nameUr": "دالیں",
+      "icon": "beans",
+      "itemCount": 3
+    },
+    {
+      "id": "spices",
+      "nameEn": "Spices & Masalay",
+      "nameUr": "مصالحہ جات",
+      "icon": "flame",
+      "itemCount": 4
+    },
+    {
+      "id": "dairy",
+      "nameEn": "Dairy & Eggs",
+      "nameUr": "دودھ اور انڈے",
+      "icon": "milk",
+      "itemCount": 2
+    },
+    {
+      "id": "oils",
+      "nameEn": "Cooking Oils & Ghee",
+      "nameUr": "کوکنگ آئل اور گھی",
+      "icon": "droplet",
+      "itemCount": 1
+    },
+    {
+      "id": "beverages",
+      "nameEn": "Tea & Beverages",
+      "nameUr": "چائے اور مشروبات",
+      "icon": "coffee",
+      "itemCount": 1
+    },
+    {
+      "id": "household",
+      "nameEn": "Household & Cleaning",
+      "nameUr": "گھریلو اشیاء",
+      "icon": "sparkles",
+      "itemCount": 2
+    }
+  ],
+  "cmsArticles": [
+    {
+      "id": "art_ramadan_rashan_2026",
+      "slug": "ramadan-rashan-guide-2026",
+      "title": "Ramadan Rashan Guide 2026: Complete Family Grocery Checklist & Budgeting",
+      "titleUr": "رمضان راشن گائیڈ 2026: مکمل گروسری لسٹ اور گھریلو بجٹ",
+      "titleRomanUrdu": "Ramadan Rashan Guide 2026: Mukammal Grocery List aur Household Budget",
+      "excerpt": "Plan your holy month groceries efficiently. From Basmati rice and besan to cooking oil and sherbet, here is how to budget and avoid last-minute rush.",
+      "body": "## Ramadan Grocery Planning in Pakistan\n\nPreparing for Ramadan requires thoughtful planning to manage monthly household expenses and avoid inflated bazaar prices during the peak season.\n\n### 1. Essential Iftar Staples\n- **Besan (Gram Flour):** Buy 5-10kg depending on family size for daily pakoras.\n- **Rooh Afza / Jam-e-Shirin:** Stock up 2-3 bottles early before supply constraints.\n- **Dates (Khajoor):** Aseel or Irani dates stored in airtight containers.\n- **Chaat Masala & Black Salt:** Kitchen essentials for fruit chaat and dahi baray.\n\n### 2. Daily Sehri Essentials\n- **Chakki Atta & Suji:** For parathas and quick halwa.\n- **Eggs & Yogurt:** High-protein Sehri staples to sustain energy throughout the day.\n- **Tea & Milk:** Stock Tapal Danedar and UHT milk pouches.\n\n### 3. Smart Shopping Tips with YAAD\nUse the YAAD app to check off items in real-time as you navigate your local store or mandi. Share the list with family members so no item is purchased twice!",
+      "headingSize": "h2",
+      "coverImageUrl": "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1200&q=80",
+      "authorName": "Mudassir Bashir",
+      "authorEmail": "mudassirbashir530@gmail.com",
+      "category": "Seasonal Rashan",
+      "tags": [
+        "Ramadan",
+        "Rashan",
+        "Budgeting",
+        "Pakistan"
+      ],
+      "socialLinks": {
+        "facebook": "https://facebook.com/yaadapppk",
+        "instagram": "https://instagram.com/yaadapppk",
+        "tiktok": "https://tiktok.com/@yaadapppk",
+        "linkedin": "https://linkedin.com/company/yaadapppk",
+        "youtube": "https://youtube.com/@yaadapppk",
+        "twitter": "https://x.com/yaadapppk"
+      },
+      "status": "published",
+      "publishedAt": 1790977671602,
+      "readTimeMinutes": 4,
+      "viewsCount": 1420,
+      "createdAt": 1790977671602,
+      "updatedAt": 1791150471602
+    },
+    {
+      "id": "art_fresh_sabzi_guide",
+      "slug": "picking-fresh-sabzi-in-pakistan",
+      "title": "How to Pick Fresh Vegetables in Pakistani Mandis: Aloo, Pyaaz & Tamatar Guide",
+      "titleUr": "پاکستانی منڈیوں میں تازہ سبزیوں کے انتخاب کا طریقہ",
+      "titleRomanUrdu": "Mandi se taza sabzi khareednay ka sahi tareeqa",
+      "excerpt": "Insider tips from local sabzi mandis: how to spot firm potatoes, clean onions that last, and sweet ripe tomatoes.",
+      "body": "## The Art of Grocery Shopping at Local Mandis\n\nBuying fresh vegetables in Pakistan requires an eye for seasonal quality and proper moisture balance.\n\n### 1. Potatoes (Aloo)\n- Look for firm, smooth skins without green discolorations (solanine).\n- For making crispy French fries or samosas, look for red-skinned potatoes (*Laal Aloo*).\n- For everyday salan and curries, white potatoes (*Sufaid Aloo*) cook tender and absorb spices.\n\n### 2. Onions (Pyaaz)\n- Always choose heavy, dry onions with papery, intact outer skins.\n- Avoid any onions with soft necks or dark mildew spots.\n- Store onions in open wicker baskets in a shaded, well-ventilated pantry—never inside sealed plastic bags.\n\n### 3. Tomatoes (Tamatar)\n- Pick bright red tomatoes that have a slight give when pressed gently.\n- Avoid bruised tomatoes or those with yellow patches near the stem.",
+      "headingSize": "h2",
+      "coverImageUrl": "https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=1200&q=80",
+      "authorName": "YAAD Editorial Team",
+      "authorEmail": "support@yaad.app",
+      "category": "Grocery Guide",
+      "tags": [
+        "Vegetables",
+        "Sabzi",
+        "Kitchen Tips"
+      ],
+      "socialLinks": {
+        "instagram": "https://instagram.com/yaadapppk",
+        "twitter": "https://x.com/yaadapppk"
+      },
+      "status": "published",
+      "publishedAt": 1790632071602,
+      "readTimeMinutes": 3,
+      "viewsCount": 890,
+      "createdAt": 1790632071602,
+      "updatedAt": 1790632071602
+    },
+    {
+      "id": "art_spices_shelf_life",
+      "slug": "pakistani-kitchen-spices-storage",
+      "title": "Pakistani Kitchen Spices & Masalay: Storage Tips & Shelf Life Guide",
+      "titleUr": "پاکستانی مصالحہ جات کی حفاظت اور زیادہ دیر تک محفوظ رکھنے کے طریقے",
+      "titleRomanUrdu": "Pakistani Kitchen Masalay: Storage aur Shelf Life Guide",
+      "excerpt": "Keep your Haldi, Lal Mirch, Zeera, and Biryani mixes aromatic and moisture-free during humid monsoon and summer seasons.",
+      "body": "## Preserving the Aroma of Pakistani Masalay\n\nSpices lose their volatile essential oils when exposed to direct sunlight, humidity, and steam from the stovetop.\n\n### Storage Rules\n1. **Never shake spice jars directly over a steaming pot:** Steam enters the jar, causing caking and fungus growth.\n2. **Use glass or ceramic jars with silicone gaskets:** Glass preserves aroma far better than plastic containers.\n3. **Dry roast whole spices before grinding:** Roasting Zeera, Dhania, and Kalonji enhances natural oils and prolongs freshness.",
+      "headingSize": "h2",
+      "coverImageUrl": "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=1200&q=80",
+      "authorName": "YAAD Culinary Desk",
+      "authorEmail": "kitchen@yaad.app",
+      "category": "Shopping Tips",
+      "tags": [
+        "Spices",
+        "Masalay",
+        "Kitchen Storage"
+      ],
+      "socialLinks": {
+        "facebook": "https://facebook.com/yaadapppk",
+        "instagram": "https://instagram.com/yaadapppk"
+      },
+      "status": "published",
+      "publishedAt": 1790027271602,
+      "readTimeMinutes": 3,
+      "viewsCount": 650,
+      "createdAt": 1790027271602,
+      "updatedAt": 1790027271602
+    }
+  ],
+  "pushCampaigns": [
+    {
+      "id": "push_weekend_sabzi",
+      "titleEn": "Weekend Sabzi Mandi Reminder 🛒",
+      "titleUr": "ویک اینڈ سبزی منڈی گروسری یاد دہانی",
+      "bodyEn": "Add fresh vegetables and dairy to your YAAD parchi before heading to the market this morning!",
+      "bodyUr": "منڈی جانے سے پہلے اپنی یاد ایپ میں سبزیاں اور دودھ شامل کر لیں۔",
+      "iconUrl": "/logo.png",
+      "targetAudience": "all_active",
+      "status": "sent",
+      "sentAt": 1791064071602,
+      "estimatedRecipients": 24,
+      "actualSentCount": 24,
+      "deliveredCount": 23,
+      "openedCount": 18,
+      "createdBy": "mudassirbashir530@gmail.com",
+      "createdAt": 1791064071602
+    },
+    {
+      "id": "push_ramadan_prep",
+      "titleEn": "Ramadan Rashan List Ready 🌙",
+      "titleUr": "رمضان راشن لسٹ تیار ہے",
+      "bodyEn": "Review the essential Ramadan 2026 checklist in your YAAD Grocery Guides section today.",
+      "bodyUr": "رمضان کے ضروری راشن کی لسٹ ایپ میں دیکھیں۔",
+      "iconUrl": "/logo.png",
+      "targetAudience": "all",
+      "status": "sent",
+      "sentAt": 1790804871602,
+      "estimatedRecipients": 28,
+      "actualSentCount": 28,
+      "deliveredCount": 27,
+      "openedCount": 21,
+      "createdBy": "mudassirbashir530@gmail.com",
+      "createdAt": 1790804871602
+    }
+  ],
   "pushTemplates": [],
   "supportTickets": [],
   "cannedReplies": []

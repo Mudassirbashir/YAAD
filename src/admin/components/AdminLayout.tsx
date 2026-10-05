@@ -45,7 +45,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-
   const isLowTime = inactivitySecondsRemaining < 5 * 60;
   const roleMeta = admin?.role ? ROLE_LABELS[admin.role] : null;
 
@@ -71,28 +70,28 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
   return (
     <div className="min-h-screen bg-[#FDF6E3]/25 text-neutral-900 flex flex-col font-['Plus_Jakarta_Sans',sans-serif] antialiased">
-      {/* Top Admin Header Bar */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-neutral-200/80 h-16 flex items-center justify-between px-4 sm:px-6 shadow-xs">
-        <div className="flex items-center gap-3">
+      {/* Top Admin Header Bar - Fully responsive */}
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-neutral-200/80 h-16 flex items-center justify-between px-3 sm:px-6 shadow-xs">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-xl bg-neutral-100 text-neutral-700 hover:text-neutral-900"
+            className="md:hidden p-2 rounded-xl bg-neutral-100 text-neutral-700 hover:text-neutral-900 shrink-0"
             aria-label="Toggle navigation menu"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
 
-          <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => onNavigate('/admin')}>
-            <div className="w-9 h-9 rounded-xl bg-white border border-neutral-200 shadow-xs flex items-center justify-center p-1.5">
+          <div className="flex items-center gap-2 cursor-pointer min-w-0" onClick={() => onNavigate('/admin')}>
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white border border-neutral-200 shadow-xs flex items-center justify-center p-1 shrink-0">
               <img src="/logo.png" alt="YAAD" className="w-full h-full object-contain" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-[#003527] text-base tracking-tight font-['Manrope']">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="font-extrabold text-[#003527] text-sm sm:text-base tracking-tight font-['Manrope'] truncate">
                   YAAD Admin
                 </span>
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-[#003527] border border-emerald-200">
+                <span className="hidden sm:inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-[#003527] border border-emerald-200 shrink-0">
                   Control Center
                 </span>
               </div>
@@ -101,10 +100,10 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         </div>
 
         {/* Right Header Status */}
-        <div className="flex items-center gap-3">
-          {/* Inactivity countdown pill */}
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          {/* Inactivity countdown pill (tablet+) */}
           <div
-            className={`hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono border ${
+            className={`hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono border ${
               isLowTime
                 ? 'bg-rose-50 text-rose-700 border-rose-200 animate-pulse'
                 : 'bg-neutral-100 text-neutral-700 border-neutral-200'
@@ -117,16 +116,14 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
           {/* Active Admin Profile */}
           {admin && (
-            <div className="flex items-center gap-2.5 pl-2 border-l border-neutral-200">
+            <div className="flex items-center gap-1 sm:gap-2.5 pl-1.5 sm:pl-2 border-l border-neutral-200">
               <div className="hidden lg:block text-right">
                 <div className="text-xs font-bold text-neutral-900 leading-tight">{admin.name}</div>
                 <div className="text-[11px] text-neutral-500">{admin.email}</div>
               </div>
 
               {roleMeta && (
-                <span
-                  className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg border bg-emerald-50 text-[#003527] border-emerald-200"
-                >
+                <span className="hidden sm:inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg border bg-emerald-50 text-[#003527] border-emerald-200">
                   {roleMeta.title}
                 </span>
               )}
@@ -134,7 +131,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               <button
                 type="button"
                 onClick={() => setSecurityModalOpen(true)}
-                className="p-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-200 transition-all cursor-pointer flex items-center gap-1.5 text-xs font-semibold"
+                className="p-1.5 sm:p-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-200 transition-all cursor-pointer flex items-center gap-1 text-xs font-semibold"
                 title="Security & 2FA Settings"
                 aria-label="Security & 2FA Settings"
               >
@@ -145,7 +142,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               <button
                 type="button"
                 onClick={logout}
-                className="p-2 rounded-xl bg-neutral-100 hover:bg-rose-50 hover:text-rose-700 text-neutral-600 border border-neutral-200 hover:border-rose-200 transition-all cursor-pointer"
+                className="p-1.5 sm:p-2 rounded-xl bg-neutral-100 hover:bg-rose-50 hover:text-rose-700 text-neutral-600 border border-neutral-200 hover:border-rose-200 transition-all cursor-pointer"
                 title="Sign out of Admin Panel"
                 aria-label="Sign out"
               >
@@ -158,13 +155,29 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
       {/* Main Workspace with Sidebar */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Persistent Desktop Sidebar */}
+        {/* Persistent Desktop Sidebar & Drawer */}
         <aside
-          className={`fixed md:static inset-y-0 left-0 z-30 w-64 bg-white border-r border-neutral-200 flex flex-col justify-between transition-transform duration-200 ease-in-out md:translate-x-0 shadow-sm md:shadow-none ${
+          className={`fixed md:static inset-y-0 left-0 z-30 w-64 bg-white border-r border-neutral-200 flex flex-col justify-between transition-transform duration-200 ease-in-out md:translate-x-0 shadow-lg md:shadow-none ${
             mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
         >
-          <div className="p-4 space-y-5 overflow-y-auto">
+          <div className="p-4 space-y-4 overflow-y-auto">
+            {/* Mobile Header Inside Drawer */}
+            <div className="md:hidden p-3 rounded-2xl bg-neutral-50 border border-neutral-200/80 space-y-1">
+              <div className="text-xs font-bold text-neutral-900 leading-tight">{admin?.name}</div>
+              <div className="text-[11px] text-neutral-500 truncate">{admin?.email}</div>
+              <div className="flex items-center justify-between pt-1">
+                {roleMeta && (
+                  <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-100 text-emerald-900">
+                    {roleMeta.title}
+                  </span>
+                )}
+                <span className="text-[10px] font-mono text-neutral-400">
+                  Idle: {formatInactivityTime(inactivitySecondsRemaining)}
+                </span>
+              </div>
+            </div>
+
             {/* 1. Shopping & Parchi Operations */}
             <div className="space-y-1">
               <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 px-3 mb-1.5">

@@ -1288,6 +1288,33 @@ adminRouter.get('/catalog/products', requireAdminAuth, async (req: AdminAuthRequ
   }
 });
 
+adminRouter.post('/catalog/products', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
+  try {
+    const { name, nameUr, category, defaultUnit } = req.body;
+    if (!name || !category) {
+      return res.status(400).json({ error: 'Name and category are required' });
+    }
+    const product = adminStore.saveCatalogProduct({
+      nameEn: name,
+      nameUr: nameUr || '',
+      category,
+      unit: defaultUnit || 'kg',
+      subcategory: 'Grocery',
+    });
+    adminStore.writeAuditLog({
+      action: 'catalog_item_added',
+      adminId: req.admin?.id,
+      adminEmail: req.admin?.email,
+      targetType: 'catalog_item',
+      targetId: product.id,
+      afterValue: { name: product.nameEn, category: product.category },
+    });
+    res.status(201).json({ success: true, product });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to add catalog item', details: err.message });
+  }
+});
+
 // -----------------------------------------------------------------------------
 // 14f. System Settings & Role Matrix (Modules 2 & 12)
 // -----------------------------------------------------------------------------
@@ -1365,14 +1392,96 @@ adminRouter.get('/cms/articles', requireAdminAuth, async (req: AdminAuthRequest,
   }
 });
 
+adminRouter.post('/cms/articles', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
+  try {
+    const article = adminStore.saveCmsArticle(req.body, req.admin?.name || 'Staff');
+    adminStore.writeAuditLog({
+      action: 'cms_article_created',
+      adminId: req.admin?.id,
+      adminEmail: req.admin?.email,
+      targetType: 'cms_article',
+      targetId: article.id,
+      afterValue: { title: article.title, status: article.status },
+    });
+    res.status(201).json({ success: true, article });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to create article', details: err.message });
+  }
+});
+
+adminRouter.put('/cms/articles/:id', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
+  try {
+    const article = adminStore.saveCmsArticle({ ...req.body, id: req.params.id }, req.admin?.name || 'Staff');
+    adminStore.writeAuditLog({
+      action: 'cms_article_updated',
+      adminId: req.admin?.id,
+      adminEmail: req.admin?.email,
+      targetType: 'cms_article',
+      targetId: article.id,
+      afterValue: { title: article.title, status: article.status },
+    });
+    res.status(200).json({ success: true, article });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to update article', details: err.message });
+  }
+});
+
+adminRouter.delete('/cms/articles/:id', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
+  try {
+    const ok = adminStore.deleteCmsArticle(req.params.id);
+    if (!ok) return res.status(404).json({ error: 'Article not found' });
+    adminStore.writeAuditLog({
+      action: 'cms_article_deleted',
+      adminId: req.admin?.id,
+      adminEmail: req.admin?.email,
+      targetType: 'cms_article',
+      targetId: req.params.id,
+    });
+    res.status(200).json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to delete article', details: err.message });
+  }
+});
+
 adminRouter.get('/push/campaigns', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
   res.status(200).json({ campaigns: adminStore.getPushCampaigns() });
 });
 
-adminRouter.get('/analytics', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
+adminRouter.post('/push/campaigns', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
+  try {
+    const { title_en, title_ur, body_en, body_ur, icon_url, target_audience = 'all_active' } = req.body;
+    if (!title_en || !body_en) {
+      return res.status(400).json({ error: 'Title and message body are required' });
+    }
+    const campaign = adminStore.sendPushCampaign({
+      titleEn: title_en,
+      titleUr: title_ur || '',
+      bodyEn: body_en,
+      bodyUr: body_ur || '',
+      iconUrl: icon_url || '',
+      targetAudience: target_audience,
+      status: 'sent',
+      createdBy: req.admin?.email || 'admin',
+    });
+    adminStore.writeAuditLog({
+      action: 'push_broadcast_sent',
+      adminId: req.admin?.id,
+      adminEmail: req.admin?.email,
+      targetType: 'push_campaign',
+      targetId: campaign.id,
+      afterValue: { title: campaign.titleEn, audience: campaign.targetAudience },
+    });
+    res.status(201).json({ success: true, campaign });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to broadcast push notification', details: err.message });
+  }
+});
+
+adminRouter.get('/analytics', requireAdminAuth, async (req: AdminAuthRequest, res: Response) => {
   const { range = '30d' } = req.query;
   const validRange = range === '7d' || range === '90d' ? range : '30d';
-  res.status(200).json(adminStore.getAnalyticsReport(validRange));
+  const report = await adminStore.getAnalyticsReportAsync(validRange);
+  res.status(200).json(report);
 });
 
 // -----------------------------------------------------------------------------

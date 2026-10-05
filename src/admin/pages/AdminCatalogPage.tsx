@@ -7,6 +7,11 @@ import {
   Tag,
   Package,
   Check,
+  Plus,
+  X,
+  CheckCircle2,
+  AlertCircle,
+  Coins,
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { adminCache } from '../utils/adminCache';
@@ -19,7 +24,23 @@ export interface CatalogItem {
   defaultUnit?: string;
   aliases?: string[];
   isEssential?: boolean;
+  pricePkr?: number;
 }
+
+const DEFAULT_CATEGORIES = [
+  'Fresh Vegetables & Sabzi',
+  'Atta, Rice & Grains',
+  'Pulses & Daal',
+  'Spices & Masalay',
+  'Dairy & Eggs',
+  'Cooking Oils & Ghee',
+  'Tea & Beverages',
+  'Household & Cleaning',
+  'Snacks & Biscuits',
+  'Meat & Poultry',
+];
+
+const COMMON_UNITS = ['kg', 'g', 'dozen', 'litre', 'ml', 'pack', 'bunch', 'piece', 'box'];
 
 export const AdminCatalogPage: React.FC = () => {
   const { token, logout } = useAdminAuth();
@@ -34,10 +55,24 @@ export const AdminCatalogPage: React.FC = () => {
   const initialCached = adminCache.getStale<any>(cacheKey);
 
   const [items, setItems] = useState<CatalogItem[]>(initialCached?.items || []);
-  const [categories, setCategories] = useState<string[]>(initialCached?.categories || []);
+  const [categories, setCategories] = useState<string[]>(initialCached?.categories || DEFAULT_CATEGORIES);
   const [total, setTotal] = useState(initialCached?.total || 0);
   const [isLoading, setIsLoading] = useState(!initialCached);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Add Item Modal
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [modalError, setModalError] = useState<string | null>(null);
+  const [modalSuccess, setModalSuccess] = useState<string | null>(null);
+
+  // Form Fields
+  const [nameEn, setNameEn] = useState('');
+  const [nameUr, setNameUr] = useState('');
+  const [itemCategory, setItemCategory] = useState(DEFAULT_CATEGORIES[0]);
+  const [defaultUnit, setDefaultUnit] = useState('kg');
+  const [pricePkr, setPricePkr] = useState<string>('');
+  const [isEssential, setIsEssential] = useState(false);
 
   const fetchCatalog = useCallback(async (force = false) => {
     if (!token) return;
@@ -78,7 +113,9 @@ export const AdminCatalogPage: React.FC = () => {
           onRevalidate: (freshData) => {
             if (freshData) {
               setItems(freshData.items || []);
-              setCategories(freshData.categories || []);
+              if (freshData.categories && freshData.categories.length > 0) {
+                setCategories(freshData.categories);
+              }
               setTotal(freshData.total || 0);
               setTotalPages(freshData.totalPages || 1);
             }
@@ -88,7 +125,9 @@ export const AdminCatalogPage: React.FC = () => {
 
       if (data) {
         setItems(data.items || []);
-        setCategories(data.categories || []);
+        if (data.categories && data.categories.length > 0) {
+          setCategories(data.categories);
+        }
         setTotal(data.total || 0);
         setTotalPages(data.totalPages || 1);
       }
@@ -105,6 +144,68 @@ export const AdminCatalogPage: React.FC = () => {
     fetchCatalog();
   }, [fetchCatalog]);
 
+  const handleOpenAddModal = () => {
+    setNameEn('');
+    setNameUr('');
+    setItemCategory(categories[0] || DEFAULT_CATEGORIES[0]);
+    setDefaultUnit('kg');
+    setPricePkr('');
+    setIsEssential(false);
+    setModalError(null);
+    setModalSuccess(null);
+    setIsAddModalOpen(true);
+  };
+
+  const handleAddItemSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nameEn.trim()) {
+      setModalError('English item name is required.');
+      return;
+    }
+
+    setIsSaving(true);
+    setModalError(null);
+
+    const payload = {
+      name: nameEn.trim(),
+      nameEn: nameEn.trim(),
+      nameUr: nameUr.trim() || undefined,
+      category: itemCategory,
+      unit: defaultUnit,
+      pricePkr: pricePkr ? Number(pricePkr) : undefined,
+      isEssential,
+    };
+
+    try {
+      const res = await fetch('/api/admin/catalog/products', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to add item to catalog.');
+      }
+
+      setModalSuccess(`"${nameEn}" added to grocery catalog successfully!`);
+      adminCache.invalidatePrefix('/api/admin/catalog');
+      await fetchCatalog(true);
+
+      setTimeout(() => {
+        setIsAddModalOpen(false);
+        setModalSuccess(null);
+      }, 1200);
+    } catch (err: any) {
+      setModalError(err.message || 'Failed to add item.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in">
       {/* Header */}
@@ -113,9 +214,11 @@ export const AdminCatalogPage: React.FC = () => {
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
               <span className="text-xs font-mono font-bold text-[#003527] bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                Authoritative Supabase Source
+                Authoritative Pakistani Grocery Catalog
               </span>
-              <span className="text-xs text-neutral-500">Pakistani Grocery Vocabulary</span>
+              <span className="text-xs text-neutral-500 font-bold">
+                {total} Items Active
+              </span>
             </div>
             <h2 className="text-2xl font-black text-[#003527] tracking-tight font-['Manrope']">
               Grocery Item Catalog
@@ -125,15 +228,25 @@ export const AdminCatalogPage: React.FC = () => {
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => fetchCatalog()}
-            disabled={isLoading}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold text-xs transition-colors shrink-0 cursor-pointer disabled:opacity-50"
-          >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-            <span>Re-fetch from Database</span>
-          </button>
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => fetchCatalog(true)}
+              disabled={isLoading}
+              className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-2xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold text-xs transition-colors shrink-0 cursor-pointer disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Refresh</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleOpenAddModal}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#003527] hover:bg-[#00281e] text-white font-bold text-xs shadow-sm transition-all shrink-0 cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Grocery Item</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -163,16 +276,13 @@ export const AdminCatalogPage: React.FC = () => {
             aria-label="Filter by category"
             className="px-3 py-2 text-xs rounded-xl border border-neutral-200 bg-white font-medium text-neutral-700 focus:outline-none focus:ring-2 focus:ring-[#003527]/20"
           >
-            <option value="all">All Categories</option>
+            <option value="all">All Categories ({total})</option>
             {categories.map((c) => (
               <option key={c} value={c}>
                 {c}
               </option>
             ))}
           </select>
-          <span className="text-xs text-neutral-500 font-mono ml-2">
-            Total: <strong>{total}</strong>
-          </span>
         </div>
       </div>
 
@@ -188,7 +298,7 @@ export const AdminCatalogPage: React.FC = () => {
           </div>
           <button
             type="button"
-            onClick={() => fetchCatalog()}
+            onClick={() => fetchCatalog(true)}
             className="px-3 py-1.5 rounded-xl bg-rose-600 text-white font-bold hover:bg-rose-700 text-xs shrink-0 cursor-pointer"
           >
             Try Again
@@ -201,7 +311,7 @@ export const AdminCatalogPage: React.FC = () => {
         {isLoading ? (
           <div className="py-20 text-center space-y-3">
             <RefreshCw className="w-8 h-8 text-[#003527] animate-spin mx-auto" />
-            <div className="text-xs font-mono text-neutral-500">Querying Supabase catalog...</div>
+            <div className="text-xs font-mono text-neutral-500">Querying catalog items...</div>
           </div>
         ) : items.length === 0 ? (
           <div className="py-20 text-center space-y-3 text-neutral-500">
@@ -212,6 +322,14 @@ export const AdminCatalogPage: React.FC = () => {
                 ? 'No items match your filter.'
                 : 'Zero items recorded in the database catalog.'}
             </p>
+            <button
+              type="button"
+              onClick={handleOpenAddModal}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#003527] text-white font-bold text-xs hover:bg-[#00281e] cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add First Grocery Item</span>
+            </button>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -222,6 +340,7 @@ export const AdminCatalogPage: React.FC = () => {
                   <th className="py-3.5 px-4">Urdu / Aliases</th>
                   <th className="py-3.5 px-4">Category</th>
                   <th className="py-3.5 px-4">Default Unit</th>
+                  <th className="py-3.5 px-4">Price (Est.)</th>
                   <th className="py-3.5 px-4">Essential</th>
                 </tr>
               </thead>
@@ -244,11 +363,14 @@ export const AdminCatalogPage: React.FC = () => {
                       </span>
                     </td>
                     <td className="py-3.5 px-4 text-neutral-500 font-mono">{item.defaultUnit || 'pcs'}</td>
+                    <td className="py-3.5 px-4 font-semibold text-neutral-700">
+                      {item.pricePkr ? `Rs. ${item.pricePkr}` : '-'}
+                    </td>
                     <td className="py-3.5 px-4">
                       {item.isEssential ? (
-                        <span className="inline-flex items-center gap-1 text-emerald-700 font-bold text-[11px]">
+                        <span className="inline-flex items-center gap-1 text-emerald-700 font-bold text-[11px] bg-emerald-50 px-2 py-0.5 rounded-md">
                           <Check className="w-3.5 h-3.5" />
-                          <span>Rashan</span>
+                          <span>Rashan Staple</span>
                         </span>
                       ) : (
                         <span className="text-neutral-400 text-[11px]">-</span>
@@ -288,6 +410,169 @@ export const AdminCatalogPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Add Item Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 my-auto">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-neutral-100 flex items-center justify-between bg-neutral-50/80">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
+                  <Package className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-neutral-900 text-sm sm:text-base">
+                    Add Pakistani Grocery Item
+                  </h3>
+                  <p className="text-[11px] text-neutral-500">
+                    Add standard household item to auto-suggest and catalog database.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddModalOpen(false)}
+                className="p-1.5 rounded-xl hover:bg-neutral-200/60 text-neutral-500 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Form */}
+            <form onSubmit={handleAddItemSubmit} className="p-6 overflow-y-auto space-y-4 text-xs flex-1">
+              {modalError && (
+                <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{modalError}</span>
+                </div>
+              )}
+              {modalSuccess && (
+                <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <span>{modalSuccess}</span>
+                </div>
+              )}
+
+              <div>
+                <label className="block font-bold text-neutral-700 mb-1">
+                  Item Name (English) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={nameEn}
+                  onChange={(e) => setNameEn(e.target.value)}
+                  placeholder="e.g. Potato (Aloo) or Basmati Rice"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 text-neutral-900 focus:outline-none focus:border-[#003527] font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-neutral-700 mb-1">
+                  Item Name (Urdu - Optional)
+                </label>
+                <input
+                  type="text"
+                  value={nameUr}
+                  onChange={(e) => setNameUr(e.target.value)}
+                  placeholder="آلو یا باسمتی چاول"
+                  dir="rtl"
+                  className="w-full px-3 py-2 rounded-xl border border-neutral-200 text-neutral-900 focus:outline-none focus:border-[#003527] font-urdu text-right"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-neutral-700 mb-1">Category</label>
+                  <select
+                    value={itemCategory}
+                    onChange={(e) => setItemCategory(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-neutral-200 text-neutral-700 focus:outline-none focus:border-[#003527] bg-white"
+                  >
+                    {DEFAULT_CATEGORIES.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-bold text-neutral-700 mb-1">Default Unit</label>
+                  <select
+                    value={defaultUnit}
+                    onChange={(e) => setDefaultUnit(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-neutral-200 text-neutral-700 focus:outline-none focus:border-[#003527] bg-white font-mono"
+                  >
+                    {COMMON_UNITS.map((u) => (
+                      <option key={u} value={u}>
+                        {u}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-neutral-700 mb-1 flex items-center gap-1">
+                    <Coins className="w-3.5 h-3.5 text-neutral-500" />
+                    <span>Estimated Price (PKR)</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={pricePkr}
+                    onChange={(e) => setPricePkr(e.target.value)}
+                    placeholder="e.g. 150"
+                    className="w-full px-3 py-2 rounded-xl border border-neutral-200 text-neutral-700 focus:outline-none focus:border-[#003527]"
+                  />
+                </div>
+                <div className="flex items-center pt-6">
+                  <label className="flex items-center gap-2 cursor-pointer font-bold text-neutral-700 select-none">
+                    <input
+                      type="checkbox"
+                      checked={isEssential}
+                      onChange={(e) => setIsEssential(e.target.checked)}
+                      className="w-4 h-4 rounded text-[#003527] focus:ring-[#003527] cursor-pointer"
+                    />
+                    <span>Mark as Essential Rashan Staple</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-100">
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl border border-neutral-200 text-neutral-700 font-bold hover:bg-neutral-50 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="px-5 py-2.5 rounded-xl bg-[#003527] text-white font-bold hover:bg-[#00281e] cursor-pointer shadow-md disabled:opacity-50 inline-flex items-center gap-2"
+                >
+                  {isSaving ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add to Catalog</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
