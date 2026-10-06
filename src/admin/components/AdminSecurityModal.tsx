@@ -11,9 +11,14 @@ import {
   RefreshCw,
   AlertTriangle,
   CheckCircle2,
+  Sparkles,
+  Wand2,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { useAdminToast } from './AdminToasts';
+import { generateStrongPassword } from '../../utils/passwordGenerator';
 
 interface AdminSecurityModalProps {
   isOpen: boolean;
@@ -29,6 +34,7 @@ export const AdminSecurityModal: React.FC<AdminSecurityModalProps> = ({ isOpen, 
   // Change Password state
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPwd, setShowPwd] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
@@ -37,6 +43,15 @@ export const AdminSecurityModal: React.FC<AdminSecurityModalProps> = ({ isOpen, 
   const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [copiedAll, setCopiedAll] = useState(false);
+
+  const handleSuggestStrongPassword = async () => {
+    const pwd = generateStrongPassword(16);
+    setNewPassword(pwd);
+    setConfirmPassword(pwd);
+    setShowPwd(true);
+    await navigator.clipboard.writeText(pwd);
+    toast.success('Strong Password Generated', 'Secure 16-character password copied to clipboard!');
+  };
 
   if (!isOpen) return null;
 
@@ -204,16 +219,41 @@ export const AdminSecurityModal: React.FC<AdminSecurityModalProps> = ({ isOpen, 
               </div>
             )}
 
+            {/* Strong Password Generator Button */}
+            <div className="flex items-center justify-between pb-1">
+              <span className="text-xs text-neutral-500 font-medium">Need a secure password?</span>
+              <button
+                type="button"
+                id="suggest_strong_pwd_btn"
+                onClick={handleSuggestStrongPassword}
+                className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-[#003527] border border-emerald-200 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
+                <span>Suggest Strong Password</span>
+              </button>
+            </div>
+
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-neutral-700 block">New Password (Min 12 characters)</label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-neutral-700 block">New Password (Min 12 characters)</label>
+                <button
+                  type="button"
+                  onClick={() => setShowPwd(!showPwd)}
+                  className="text-xs text-neutral-500 hover:text-neutral-900 flex items-center gap-1 cursor-pointer"
+                >
+                  {showPwd ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  <span>{showPwd ? 'Hide' : 'Show'}</span>
+                </button>
+              </div>
               <div className="relative">
                 <Lock className="w-4 h-4 text-neutral-400 absolute left-3.5 top-3 pointer-events-none" />
                 <input
-                  type="password"
+                  type={showPwd ? 'text' : 'password'}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="w-full bg-white border border-neutral-200 focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-all"
+                  autoComplete="new-password"
+                  className="w-full bg-white border border-neutral-200 focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-all font-mono"
                   autoFocus
                 />
               </div>
@@ -224,11 +264,12 @@ export const AdminSecurityModal: React.FC<AdminSecurityModalProps> = ({ isOpen, 
               <div className="relative">
                 <Lock className="w-4 h-4 text-neutral-400 absolute left-3.5 top-3 pointer-events-none" />
                 <input
-                  type="password"
+                  type={showPwd ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="w-full bg-white border border-neutral-200 focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-all"
+                  autoComplete="new-password"
+                  className="w-full bg-white border border-neutral-200 focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition-all font-mono"
                 />
               </div>
             </div>

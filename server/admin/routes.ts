@@ -1379,6 +1379,105 @@ adminRouter.get('/tickets', requireAdminAuth, async (req: AdminAuthRequest, res:
   }
 });
 
+adminRouter.post(['/tickets', '/support/tickets'], (req: Request, res: Response) => {
+  try {
+    const { userId, userName, userEmail, userPhone, subject, description, category, priority } = req.body;
+    if (!description || !userEmail) {
+      return res.status(400).json({ error: 'Email and issue description are required.' });
+    }
+    const ticket = adminStore.createSupportTicket({
+      userId,
+      userName,
+      userEmail,
+      userPhone,
+      subject,
+      description,
+      category,
+      priority,
+    });
+    return res.status(201).json({ success: true, ticket });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to create support ticket', details: err.message });
+  }
+});
+
+adminRouter.patch('/tickets/:id', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
+  const { status, assignedAdmin } = req.body;
+  try {
+    const ticket = adminStore.updateTicketStatus(
+      req.params.id,
+      status,
+      assignedAdmin || (req.admin ? { id: req.admin.id, name: req.admin.name, email: req.admin.email } : undefined)
+    );
+    if (!ticket) {
+      return res.status(404).json({ error: 'Ticket not found.' });
+    }
+    adminStore.writeAuditLog({
+      action: 'support_ticket_updated',
+      adminId: req.admin?.id,
+      adminEmail: req.admin?.email,
+      targetType: 'support_ticket',
+      targetId: ticket.id,
+      afterValue: { status: ticket.status, ticketNumber: ticket.ticketNumber },
+    });
+    return res.status(200).json({ success: true, ticket });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to update ticket status', details: err.message });
+  }
+});
+
+// Admin Access Requests (Apply for Admin Access)
+adminRouter.post('/access-requests', rateLimit(10, 60 * 1000), (req: Request, res: Response) => {
+  try {
+    const { name, email, phone, requestedRole = 'support_agent', department, reason } = req.body;
+    if (!name || !email || !reason) {
+      return res.status(400).json({ error: 'Full name, email address, and reason for access are required.' });
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      return res.status(400).json({ error: 'Please enter a valid email address.' });
+    }
+    const request = adminStore.createAccessRequest({
+      name,
+      email,
+      phone,
+      requestedRole,
+      department,
+      reason,
+    });
+    return res.status(201).json({ success: true, message: 'Admin access request received successfully.', request });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to submit access request', details: err.message });
+  }
+});
+
+adminRouter.get('/access-requests', requireAdminAuth, requireRoles('super_admin'), (req: AdminAuthRequest, res: Response) => {
+  return res.status(200).json({ requests: adminStore.getAccessRequests() });
+});
+
+adminRouter.patch('/access-requests/:id', requireAdminAuth, requireRoles('super_admin'), (req: AdminAuthRequest, res: Response) => {
+  const { status } = req.body;
+  if (!['approved', 'rejected'].includes(status)) {
+    return res.status(400).json({ error: 'Status must be approved or rejected.' });
+  }
+  const updated = adminStore.updateAccessRequestStatus(req.params.id, status, req.admin?.name || req.admin?.email);
+  if (!updated) {
+    return res.status(404).json({ error: 'Access request not found.' });
+  }
+  adminStore.writeAuditLog({
+    action: `access_request_${status}`,
+    adminId: req.admin?.id,
+    adminEmail: req.admin?.email,
+    targetType: 'access_request',
+    targetId: updated.id,
+    afterValue: { email: updated.email, status: updated.status },
+  });
+  return res.status(200).json({ success: true, request: updated });
+});
+
+adminRouter.get('/public/cms/articles', (req: Request, res: Response) => {
+  return res.status(200).json({ success: true, articles: adminStore.getPublicCmsArticles() });
+});
+
 adminRouter.get('/cms/articles', requireAdminAuth, async (req: AdminAuthRequest, res: Response) => {
   const { status, search } = req.query;
   try {

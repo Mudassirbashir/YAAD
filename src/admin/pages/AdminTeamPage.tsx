@@ -19,6 +19,9 @@ import {
   Globe,
   Plus,
   Lock,
+  User,
+  UserCheck,
+  Building2,
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { useAdminToast } from '../components/AdminToasts';
@@ -33,8 +36,25 @@ export const AdminTeamPage: React.FC = () => {
 
   const isSuperAdmin = admin?.role === 'super_admin';
 
-  // Active Tab: 'members' | 'invites' | 'allowlist'
-  const [activeTab, setActiveTab] = useState<'members' | 'invites' | 'allowlist'>('members');
+  // Active Tab: 'members' | 'invites' | 'allowlist' | 'requests'
+  const [activeTab, setActiveTab] = useState<'members' | 'invites' | 'allowlist' | 'requests'>('members');
+
+  // Access Requests State
+  interface AccessRequestItem {
+    id: string;
+    name: string;
+    email: string;
+    phone?: string;
+    requestedRole: string;
+    department?: string;
+    reason: string;
+    status: 'pending' | 'approved' | 'rejected';
+    createdAt: string;
+    reviewedBy?: string;
+    reviewedAt?: string;
+  }
+  const [requests, setRequests] = useState<AccessRequestItem[]>([]);
+  const [isLoadingRequests, setIsLoadingRequests] = useState(false);
 
   // Staff Members State
   const [search, setSearch] = useState('');
@@ -207,17 +227,91 @@ export const AdminTeamPage: React.FC = () => {
     }
   }, [token, isSuperAdmin, logout]);
 
+  // 4. Fetch Access Requests
+  const fetchAccessRequests = useCallback(async () => {
+    if (!token || !isSuperAdmin) return;
+    setIsLoadingRequests(true);
+    try {
+      const res = await fetch('/api/admin/access-requests', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.status === 401) {
+        logout();
+        return;
+      }
+      if (res.ok) {
+        const data = await res.json();
+        setRequests(data.requests || []);
+      }
+    } catch (err: any) {
+      console.error('Error fetching access requests:', err);
+    } finally {
+      setIsLoadingRequests(false);
+    }
+  }, [token, isSuperAdmin, logout]);
+
   useEffect(() => {
     fetchStaff();
-  }, [fetchStaff]);
+    if (isSuperAdmin) {
+      fetchAccessRequests();
+    }
+  }, [fetchStaff, fetchAccessRequests, isSuperAdmin]);
 
   useEffect(() => {
     if (activeTab === 'invites' && isSuperAdmin) {
       fetchInvites();
     } else if (activeTab === 'allowlist' && isSuperAdmin) {
       fetchAllowlist();
+    } else if (activeTab === 'requests' && isSuperAdmin) {
+      fetchAccessRequests();
     }
-  }, [activeTab, isSuperAdmin, fetchInvites, fetchAllowlist]);
+  }, [activeTab, isSuperAdmin, fetchInvites, fetchAllowlist, fetchAccessRequests]);
+
+  const handleApproveRequest = async (req: AccessRequestItem) => {
+    setInviteName(req.name);
+    setInviteEmail(req.email);
+    const validRoles: AdminRole[] = ['support_agent', 'content_editor', 'analyst', 'super_admin'];
+    const assignedRole = validRoles.includes(req.requestedRole as AdminRole)
+      ? (req.requestedRole as AdminRole)
+      : 'support_agent';
+    setInviteRole(assignedRole);
+    setCreatedInviteResult(null);
+    setInviteModalOpen(true);
+
+    try {
+      await fetch(`/api/admin/access-requests/${req.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: 'approved' }),
+      });
+      fetchAccessRequests();
+    } catch (e) {
+      console.error('Error updating access request status', e);
+    }
+  };
+
+  const handleRejectRequest = async (requestId: string) => {
+    if (!token) return;
+    try {
+      const res = await fetch(`/api/admin/access-requests/${requestId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: 'rejected' }),
+      });
+      if (res.ok) {
+        toast.info('Request Declined', 'Access application was declined.');
+        fetchAccessRequests();
+      }
+    } catch (err: any) {
+      toast.error('Action Failed', err.message);
+    }
+  };
 
   // Handle Invite Creation
   const handleCreateInvite = async (e: React.FormEvent) => {
@@ -454,6 +548,20 @@ export const AdminTeamPage: React.FC = () => {
             }`}
           >
             Email Allowlist ({allowlist.length})
+          </button>
+        )}
+
+        {isSuperAdmin && (
+          <button
+            type="button"
+            onClick={() => setActiveTab('requests')}
+            className={`pb-3 px-4 text-xs font-bold transition-colors cursor-pointer relative ${
+              activeTab === 'requests'
+                ? 'text-[#003527] border-b-2 border-[#003527]'
+                : 'text-neutral-500 hover:text-neutral-900'
+            }`}
+          >
+            Access Requests ({requests.filter((r) => r.status === 'pending').length})
           </button>
         )}
       </div>
@@ -815,6 +923,134 @@ export const AdminTeamPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* TAB 4: ACCESS REQUESTS */}
+      {activeTab === 'requests' && isSuperAdmin && (
+        <div className="space-y-4">
+          <div className="bg-white border border-neutral-200 rounded-2xl p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-bold text-neutral-900">Admin Access Applications</h3>
+              <p className="text-xs text-neutral-500 mt-0.5">
+                Review and approve staff members applying for portal access from the <code className="text-[#003527] bg-emerald-50 px-1 py-0.5 rounded font-mono">/admin</code> login page.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => fetchAccessRequests()}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-neutral-200 text-xs font-bold text-neutral-700 hover:bg-neutral-50 self-start sm:self-auto cursor-pointer"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoadingRequests ? 'animate-spin' : ''}`} />
+              <span>Refresh</span>
+            </button>
+          </div>
+
+          {isLoadingRequests ? (
+            <AdminTableSkeleton rows={3} columns={4} />
+          ) : requests.length === 0 ? (
+            <div className="bg-white border border-neutral-200 rounded-3xl p-12 text-center space-y-3 shadow-xs">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#003527] flex items-center justify-center mx-auto">
+                <UserCheck className="w-6 h-6" />
+              </div>
+              <h4 className="text-sm font-bold text-neutral-900">No Access Applications</h4>
+              <p className="text-xs text-neutral-500 max-w-md mx-auto">
+                When new staff or contractors request admin access via the portal login page, their applications will appear here for Super Admin approval.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {requests.map((req) => (
+                <div
+                  key={req.id}
+                  className="bg-white border border-neutral-200/90 rounded-2xl p-5 space-y-3.5 shadow-xs hover:border-[#003527] transition-all"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 text-[#003527] font-extrabold flex items-center justify-center font-mono text-sm">
+                        {req.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-neutral-900 text-sm">{req.name}</h4>
+                        <div className="flex items-center gap-2 text-xs text-neutral-500">
+                          <a
+                            href={`mailto:${req.email}`}
+                            className="hover:underline text-neutral-600 flex items-center gap-1"
+                          >
+                            <Mail className="w-3 h-3 text-neutral-400" />
+                            <span>{req.email}</span>
+                          </a>
+                          {req.phone && (
+                            <span className="flex items-center gap-1">
+                              &bull; {req.phone}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <span
+                      className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
+                        req.status === 'pending'
+                          ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                          : req.status === 'approved'
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : 'bg-neutral-100 text-neutral-600 border border-neutral-200'
+                      }`}
+                    >
+                      {req.status}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-[11px] text-neutral-600">
+                    <span className="px-2 py-0.5 rounded-md bg-neutral-100 font-semibold text-neutral-800 capitalize">
+                      Role: {req.requestedRole.replace('_', ' ')}
+                    </span>
+                    {req.department && (
+                      <span className="px-2 py-0.5 rounded-md bg-neutral-100 font-semibold text-neutral-800 flex items-center gap-1">
+                        <Building2 className="w-3 h-3 text-neutral-400" />
+                        <span>{req.department}</span>
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="bg-neutral-50/80 rounded-xl p-3 text-xs text-neutral-700 border border-neutral-100 space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block">
+                      Stated Purpose / Reason
+                    </span>
+                    <p className="whitespace-pre-wrap">{req.reason}</p>
+                  </div>
+
+                  <div className="pt-2 border-t border-neutral-100 flex items-center justify-between text-[11px] text-neutral-400">
+                    <span>Applied {new Date(req.createdAt).toLocaleDateString()}</span>
+                    {req.status === 'pending' ? (
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleRejectRequest(req.id)}
+                          className="px-3 py-1.5 rounded-xl border border-neutral-200 text-neutral-600 font-bold hover:bg-neutral-50 cursor-pointer transition-colors"
+                        >
+                          Decline
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleApproveRequest(req)}
+                          className="px-3.5 py-1.5 rounded-xl bg-[#003527] hover:bg-[#00271c] text-white font-bold shadow-2xs cursor-pointer transition-all flex items-center gap-1.5"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                          <span>Approve &amp; Invite</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-neutral-500 font-medium">
+                        Reviewed {req.reviewedBy ? `by ${req.reviewedBy}` : ''}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
 
       {/* Invite Admin Modal */}
       {inviteModalOpen && (

@@ -4,6 +4,7 @@ import {
   Trash2,
   RotateCcw,
   Eye,
+  Check,
 } from 'lucide-react';
 import { ShoppingList } from '../types';
 import { useLanguage } from '../context/LanguageContext';
@@ -21,6 +22,9 @@ export interface ShoppingListCardProps {
   onReuseList?: (list: ShoppingList) => void;
   isOnline?: boolean;
   variant?: 'history' | 'home';
+  selectable?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (listId: string) => void;
 }
 
 export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
@@ -28,6 +32,9 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
   onSelectList,
   onDeleteList,
   onReuseList,
+  selectable = false,
+  selected = false,
+  onToggleSelect,
 }) => {
   const { t } = useLanguage();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -94,14 +101,43 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
       <article
         id={`list_card_${list.id}`}
         onClick={() => {
+          if (selectable && onToggleSelect) {
+            triggerHaptic(6);
+            onToggleSelect(list.id);
+            return;
+          }
           triggerHaptic(8);
           onSelectList(list);
         }}
-        className="w-full min-h-[78px] sm:min-h-[84px] bg-white dark:bg-surface-container-lowest rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between border border-surface-dim/80 shadow-2xs hover:shadow-xs hover:border-primary/40 active:scale-[0.99] transition-all relative select-none cursor-pointer group"
+        className={`w-full min-h-[78px] sm:min-h-[84px] bg-white dark:bg-surface-container-lowest rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between border shadow-2xs hover:shadow-xs active:scale-[0.99] transition-all relative select-none cursor-pointer group ${
+          selectable && selected
+            ? 'border-primary ring-2 ring-primary/30 bg-primary/5 dark:bg-primary/10'
+            : 'border-surface-dim/80 hover:border-primary/40'
+        }`}
       >
         {/* TOP ROW: Icon + Title & Time + 3-Dots in Top Right Corner (Arrow removed) */}
         <div className="flex items-start justify-between gap-2.5 w-full">
           <div className="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0">
+            {/* Bulk Selection Checkbox */}
+            {selectable && (
+              <div
+                role="checkbox"
+                aria-checked={selected}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  triggerHaptic(6);
+                  onToggleSelect?.(list.id);
+                }}
+                className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 border transition-all cursor-pointer ${
+                  selected
+                    ? 'bg-primary border-primary text-white shadow-2xs scale-105'
+                    : 'bg-surface-container-low border-surface-dim text-transparent hover:border-primary/50'
+                }`}
+              >
+                <Check className={`w-3.5 h-3.5 stroke-[3] transition-transform ${selected ? 'scale-100 text-white' : 'scale-0'}`} />
+              </div>
+            )}
+
             {/* Standardized Icon Area */}
             <ListIcon
               title={list.title}
@@ -127,18 +163,19 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
             </div>
           </div>
 
-          {/* Three-Dot Menu Button in Top-Right Corner */}
-          <div className="relative shrink-0 -mt-1 -mr-1" ref={menuRef}>
-            <button
-              type="button"
-              id={`card_options_btn_${list.id}`}
-              aria-label="List options"
-              onClick={(e) => {
-                e.stopPropagation();
-                triggerHaptic(6);
-                setIsMenuOpen((prev) => !prev);
-              }}
-              className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-all active:scale-95 cursor-pointer"
+          {/* Three-Dot Menu Button in Top-Right Corner (Hidden in selection mode) */}
+          {!selectable && (
+            <div className="relative shrink-0 -mt-1 -mr-1" ref={menuRef}>
+              <button
+                type="button"
+                id={`card_options_btn_${list.id}`}
+                aria-label="List options"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  triggerHaptic(6);
+                  setIsMenuOpen((prev) => !prev);
+                }}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-all active:scale-95 cursor-pointer"
             >
               <MoreVertical className="w-4 h-4" />
             </button>
@@ -196,7 +233,8 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
               </div>
             )}
           </div>
-        </div>
+        )}
+      </div>
 
         {/* BOTTOM ROW: Shifted up automatically with compact card height */}
         <div className="flex items-center justify-between mt-auto pt-2 w-full">

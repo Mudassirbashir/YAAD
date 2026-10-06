@@ -44,6 +44,39 @@ app.all(['/admin/signup', '/admin/register', '/admin/join'], (req, res) => {
 // Dedicated Staff Admin API routes (Module 1-12)
 app.use('/api/admin', adminRouter);
 
+// Public & User Support Ticket Submission API (Routes directly to Admin Support Desk)
+app.post(['/api/support/tickets', '/api/tickets'], (req, res) => {
+  try {
+    const { userId, userName, userEmail, userPhone, subject, description, category, priority } = req.body;
+    if (!description || !userEmail) {
+      return res.status(400).json({ error: 'User email and problem description are required.' });
+    }
+    const ticket = adminStore.createSupportTicket({
+      userId,
+      userName,
+      userEmail,
+      userPhone,
+      subject,
+      description,
+      category,
+      priority,
+    });
+    return res.status(201).json({ success: true, ticket });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to create support ticket', details: err?.message });
+  }
+});
+
+// Public Blog Articles API (synced with Admin CMS)
+app.get(['/api/blog/articles', '/api/cms/articles'], (req, res) => {
+  try {
+    const articles = adminStore.getPublicCmsArticles();
+    return res.status(200).json({ success: true, articles });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to retrieve blog articles', details: err?.message });
+  }
+});
+
 // Canonical production domain migration middleware:
 // Redirect requests arriving on deployment-specific URLs or legacy domains to https://yaadapppk.vercel.app
 app.use((req, res, next) => {

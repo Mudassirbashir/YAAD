@@ -13,6 +13,10 @@ import {
   ArrowLeft,
   RotateCcw,
   ClipboardList,
+  CheckSquare,
+  Trash2,
+  X,
+  Check,
 } from 'lucide-react';
 import { ShoppingList } from '../types';
 import { TopHeader } from './TopHeader';
@@ -28,6 +32,8 @@ export interface ListHistoryViewProps {
   onContinueShopping?: (list: ShoppingList) => void;
   onMarkComplete?: (list: ShoppingList) => void;
   onDeleteList?: (listId: string) => void;
+  onDeleteMultipleLists?: (listIds: string[]) => Promise<void> | void;
+  onClearAllHistory?: () => Promise<void> | void;
   onReuseList?: (list: ShoppingList) => void;
   onOpenProfile: () => void;
   onOpenMenu: () => void;
@@ -47,6 +53,8 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
   onContinueShopping,
   onMarkComplete,
   onDeleteList,
+  onDeleteMultipleLists,
+  onClearAllHistory,
   onReuseList,
   onOpenProfile,
   onOpenMenu,
@@ -60,6 +68,13 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
   const [filterTab, setFilterTab] = useState<HistoryFilterTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [deletedListToast, setDeletedListToast] = useState<{ list: ShoppingList; timeoutId: any } | null>(null);
+
+  // Bulk selection mode state
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [showClearAllModal, setShowClearAllModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // 1. Sort latest first guaranteed
   const sortedLists = useMemo(() => {
@@ -128,6 +143,78 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
     }
   };
 
+  // Toggle selection for a single list
+  const handleToggleSelectOne = (listId: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(listId)) {
+        next.delete(listId);
+      } else {
+        next.add(listId);
+      }
+      return next;
+    });
+  };
+
+  // Toggle select all currently displayed lists
+  const handleToggleSelectAll = () => {
+    triggerHaptic(6);
+    if (selectedIds.size === displayedLists.length && displayedLists.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(displayedLists.map((l) => l.id)));
+    }
+  };
+
+  // Confirm and execute bulk deletion
+  const handleConfirmBulkDelete = async () => {
+    if (selectedIds.size === 0 || isDeleting) return;
+    setIsDeleting(true);
+    triggerHaptic(18);
+    const idsToDelete = Array.from(selectedIds);
+    try {
+      if (onDeleteMultipleLists) {
+        await onDeleteMultipleLists(idsToDelete);
+      } else if (onDeleteList) {
+        for (const id of idsToDelete) {
+          onDeleteList(id);
+        }
+      }
+      setSelectedIds(new Set());
+      setIsSelectionMode(false);
+      setShowBulkDeleteModal(false);
+    } catch (err) {
+      console.error('Error during bulk deletion:', err);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Confirm and execute clear all history
+  const handleConfirmClearAll = async () => {
+    if (isDeleting) return;
+    setIsDeleting(true);
+    triggerHaptic(20);
+    try {
+      if (onClearAllHistory) {
+        await onClearAllHistory();
+      } else if (onDeleteMultipleLists) {
+        await onDeleteMultipleLists(lists.map((l) => l.id));
+      } else if (onDeleteList) {
+        for (const l of lists) {
+          onDeleteList(l.id);
+        }
+      }
+      setSelectedIds(new Set());
+      setIsSelectionMode(false);
+      setShowClearAllModal(false);
+    } catch (err) {
+      console.error('Error clearing all history:', err);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const friendlyError = error ? getFriendlyErrorMessage(error) : null;
 
   return (
@@ -144,15 +231,100 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
 
       {/* Main Content Area */}
       <main className="flex-1 px-4 sm:px-6 lg:px-8 pt-4 flex flex-col gap-5">
-        {/* Header Title and Subtitle */}
+        {/* Header Title and Subtitle with Manage Toggle Button */}
         <div className="flex flex-col gap-1">
-          <h1 className="font-['Plus_Jakarta_Sans'] text-3xl sm:text-4xl font-black text-on-surface tracking-tight">
-            {t('history.title')}
-          </h1>
+          <div className="flex items-center justify-between gap-3">
+            <h1 className="font-['Plus_Jakarta_Sans'] text-3xl sm:text-4xl font-black text-on-surface tracking-tight">
+              {t('history.title')}
+            </h1>
+
+            {lists.length > 0 && (
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  id="history_manage_toggle_btn"
+                  onClick={() => {
+                    triggerHaptic(8);
+                    setIsSelectionMode((prev) => {
+                      if (prev) setSelectedIds(new Set());
+                      return !prev;
+                    });
+                  }}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-['Manrope'] font-bold border transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs ${
+                    isSelectionMode
+                      ? 'bg-neutral-900 text-white border-neutral-900 shadow-xs'
+                      : 'bg-white text-on-surface border-surface-dim hover:border-primary/50'
+                  }`}
+                >
+                  <CheckSquare className="w-3.5 h-3.5" />
+                  <span>{isSelectionMode ? 'Done' : 'Manage'}</span>
+                </button>
+              </div>
+            )}
+          </div>
           <p className="font-['Manrope'] text-xs sm:text-sm text-outline mt-0.5">
             Track your past shopping trips and easily reorder your favorite items.
           </p>
         </div>
+
+        {/* Bulk Selection Action Bar (when in selection mode) */}
+        {isSelectionMode && lists.length > 0 && (
+          <div className="p-3 bg-surface-container-high/90 rounded-2xl border border-surface-dim flex flex-wrap items-center justify-between gap-2.5 shadow-2xs animate-fadeIn">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <button
+                type="button"
+                id="history_select_all_btn"
+                onClick={handleToggleSelectAll}
+                className="px-3 py-1.5 bg-white border border-surface-dim rounded-xl text-xs font-bold text-on-surface hover:bg-surface-container transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
+              >
+                {selectedIds.size === displayedLists.length && displayedLists.length > 0 ? (
+                  <>
+                    <X className="w-3.5 h-3.5 text-outline" />
+                    <span>Deselect All</span>
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-primary" />
+                    <span>Select All ({displayedLists.length})</span>
+                  </>
+                )}
+              </button>
+              <span className="text-xs font-bold text-on-surface font-['Manrope']">
+                {selectedIds.size} of {lists.length} selected
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                id="history_delete_selected_btn"
+                disabled={selectedIds.size === 0 || isDeleting}
+                onClick={() => {
+                  triggerHaptic(10);
+                  setShowBulkDeleteModal(true);
+                }}
+                className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 disabled:opacity-40 disabled:hover:bg-rose-600 text-white rounded-xl text-xs font-bold shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete Selected ({selectedIds.size})</span>
+              </button>
+
+              <button
+                type="button"
+                id="history_clear_all_open_btn"
+                disabled={isDeleting}
+                onClick={() => {
+                  triggerHaptic(10);
+                  setShowClearAllModal(true);
+                }}
+                className="px-3.5 py-1.5 bg-white border border-rose-200 text-rose-700 hover:bg-rose-50 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                <span>Clear All</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Offline cached notice banner if offline */}
         {!isOnline && (
@@ -366,11 +538,108 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
                 onReuseList={onReuseList}
                 isOnline={isOnline}
                 variant="history"
+                selectable={isSelectionMode}
+                selected={selectedIds.has(list.id)}
+                onToggleSelect={handleToggleSelectOne}
               />
             ))}
           </div>
         )}
       </main>
+
+      {/* Bulk Delete Confirmation Modal */}
+      {showBulkDeleteModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-fadeIn"
+          onClick={() => !isDeleting && setShowBulkDeleteModal(false)}
+        >
+          <div
+            className="bg-white dark:bg-stone-900 rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-surface-dim space-y-4 animate-scale-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="font-['Plus_Jakarta_Sans'] text-lg font-extrabold text-neutral-900 dark:text-white">
+                Delete {selectedIds.size} shopping list{selectedIds.size > 1 ? 's' : ''}?
+              </h3>
+              <p className="font-['Manrope'] text-xs sm:text-sm text-neutral-500 mt-1 leading-relaxed">
+                These selected shopping lists and their items will be permanently removed. This action cannot be undone.
+              </p>
+            </div>
+            <div className="flex items-center gap-2.5 pt-2">
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => setShowBulkDeleteModal(false)}
+                className="flex-1 py-2.5 rounded-xl border border-neutral-200 text-xs font-bold text-neutral-700 hover:bg-neutral-50 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                id="confirm_bulk_delete_btn"
+                disabled={isDeleting}
+                onClick={handleConfirmBulkDelete}
+                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md shadow-rose-950/20 transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+              >
+                {isDeleting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                <span>Delete {selectedIds.size}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Clear All Confirmation Modal */}
+      {showClearAllModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-fadeIn"
+          onClick={() => !isDeleting && setShowClearAllModal(false)}
+        >
+          <div
+            className="bg-white dark:bg-stone-900 rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-surface-dim space-y-4 animate-scale-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="font-['Plus_Jakarta_Sans'] text-lg font-extrabold text-neutral-900 dark:text-white">
+                Clear all shopping history?
+              </h3>
+              <p className="font-['Manrope'] text-xs sm:text-sm text-neutral-500 mt-1 leading-relaxed">
+                All {lists.length} shopping lists will be permanently deleted from your account. This action cannot be undone.
+              </p>
+            </div>
+            <div className="flex items-center gap-2.5 pt-2">
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => setShowClearAllModal(false)}
+                className="flex-1 py-2.5 rounded-xl border border-neutral-200 text-xs font-bold text-neutral-700 hover:bg-neutral-50 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                id="confirm_clear_all_btn"
+                disabled={isDeleting}
+                onClick={handleConfirmClearAll}
+                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md shadow-rose-950/20 transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+              >
+                {isDeleting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                <span>Clear All ({lists.length})</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Floating Undo Toast on Deletion */}
       {deletedListToast && (

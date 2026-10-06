@@ -384,6 +384,20 @@ export interface AdminSettings {
   systemSecret?: string;
 }
 
+export interface AdminAccessRequest {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  requestedRole: string;
+  department?: string;
+  reason: string;
+  status: 'pending' | 'approved' | 'rejected';
+  reviewedBy?: string;
+  reviewedAt?: number;
+  createdAt: number;
+}
+
 export interface AdminDatabase {
   admins: AdminUser[];
   invites: AdminInvite[];
@@ -402,6 +416,7 @@ export interface AdminDatabase {
   pushTemplates?: PushTemplate[];
   supportTickets?: SupportTicket[];
   cannedReplies?: CannedReply[];
+  accessRequests?: AdminAccessRequest[];
 }
 
 const isServerless = Boolean(
@@ -846,6 +861,7 @@ class AdminStore {
     pushTemplates: getInitialPushTemplates(),
     supportTickets: getInitialSupportTickets(),
     cannedReplies: getInitialCannedReplies(),
+    accessRequests: [],
   };
 
   constructor() {
@@ -904,11 +920,12 @@ class AdminStore {
           moderationLists: Array.isArray(parsed.moderationLists) ? parsed.moderationLists : [],
           catalogProducts: Array.isArray(parsed.catalogProducts) && parsed.catalogProducts.length > 0 ? parsed.catalogProducts : getInitialCatalogProducts(),
           catalogCategories: Array.isArray(parsed.catalogCategories) && parsed.catalogCategories.length > 0 ? parsed.catalogCategories : getInitialCategories(),
-          cmsArticles: Array.isArray(parsed.cmsArticles) && parsed.cmsArticles.length > 0 ? parsed.cmsArticles : getInitialCmsArticles(),
+          cmsArticles: Array.isArray(parsed.cmsArticles) && parsed.cmsArticles.length > 0 && !parsed.cmsArticles.some((a: any) => a.id?.startsWith('art_')) ? parsed.cmsArticles : getInitialCmsArticles(),
           pushCampaigns: Array.isArray(parsed.pushCampaigns) && parsed.pushCampaigns.length > 0 ? parsed.pushCampaigns : getInitialPushCampaigns(),
           pushTemplates: Array.isArray(parsed.pushTemplates) ? parsed.pushTemplates : [],
           supportTickets: Array.isArray(parsed.supportTickets) ? parsed.supportTickets : [],
           cannedReplies: Array.isArray(parsed.cannedReplies) ? parsed.cannedReplies : [],
+          accessRequests: Array.isArray(parsed.accessRequests) ? parsed.accessRequests : [],
         };
         if (isServerless && sourcePath !== DATA_FILE) {
           this.save();
@@ -2482,6 +2499,94 @@ class AdminStore {
     this.db.settings = { ...this.db.settings, ...newSettings };
     this.save();
     return this.db.settings;
+  }
+
+  public createSupportTicket(data: {
+    userId?: string;
+    userName?: string;
+    userEmail: string;
+    userPhone?: string;
+    subject?: string;
+    description: string;
+    category?: any;
+    priority?: any;
+  }): SupportTicket {
+    if (!this.db.supportTickets) this.db.supportTickets = [];
+    const count = this.db.supportTickets.length + 1;
+    const ticketNumber = `TKT-${String(count).padStart(5, '0')}`;
+    const now = Date.now();
+    const newTicket: SupportTicket = {
+      id: 'tkt_' + crypto.randomUUID(),
+      ticketNumber,
+      userId: data.userId || 'guest',
+      userName: data.userName || data.userEmail.split('@')[0],
+      userEmail: data.userEmail,
+      userPhone: data.userPhone,
+      subject: data.subject || 'Support Request',
+      description: data.description,
+      category: data.category || 'other',
+      priority: data.priority || 'medium',
+      status: 'open',
+      messages: [
+        {
+          id: 'msg_' + crypto.randomUUID(),
+          sender: 'user',
+          senderName: data.userName || 'Shopper',
+          text: data.description,
+          timestamp: now,
+        },
+      ],
+      internalNotes: [],
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.db.supportTickets.unshift(newTicket);
+    this.save();
+    return newTicket;
+  }
+
+  public getPublicCmsArticles(): CmsArticle[] {
+    return (this.db.cmsArticles || []).filter((a) => a.status === 'published');
+  }
+
+  public createAccessRequest(data: {
+    name: string;
+    email: string;
+    phone?: string;
+    requestedRole: string;
+    department?: string;
+    reason: string;
+  }): AdminAccessRequest {
+    if (!this.db.accessRequests) this.db.accessRequests = [];
+    const req: AdminAccessRequest = {
+      id: 'req_' + crypto.randomUUID(),
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      requestedRole: data.requestedRole,
+      department: data.department,
+      reason: data.reason,
+      status: 'pending',
+      createdAt: Date.now(),
+    };
+    this.db.accessRequests.unshift(req);
+    this.save();
+    return req;
+  }
+
+  public getAccessRequests(): AdminAccessRequest[] {
+    return this.db.accessRequests || [];
+  }
+
+  public updateAccessRequestStatus(id: string, status: 'approved' | 'rejected', reviewer?: string): AdminAccessRequest | undefined {
+    if (!this.db.accessRequests) this.db.accessRequests = [];
+    const req = this.db.accessRequests.find((r) => r.id === id);
+    if (!req) return undefined;
+    req.status = status;
+    req.reviewedBy = reviewer;
+    req.reviewedAt = Date.now();
+    this.save();
+    return req;
   }
 }
 

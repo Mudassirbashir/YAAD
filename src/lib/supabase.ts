@@ -1239,6 +1239,83 @@ export async function deleteUserShoppingList(
 }
 
 /**
+ * Delete multiple shopping lists and their items from Supabase and IndexedDB.
+ */
+export async function deleteMultipleUserShoppingLists(
+  userId: string,
+  listIds: string[]
+): Promise<{ success: boolean; error: Error | null; isOffline?: boolean }> {
+  const verifiedUserId = (await getVerifiedUserId(userId)) || userId;
+  if (!verifiedUserId || listIds.length === 0) {
+    return { success: true, error: null };
+  }
+
+  // 1. Delete from IndexedDB immediately
+  for (const listId of listIds) {
+    await deleteOfflineList(verifiedUserId, listId);
+  }
+
+  const isCurrentlyOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+  if (!supabase || isCurrentlyOffline) {
+    for (const listId of listIds) {
+      await enqueueOfflineOperation({
+        type: 'DELETE_LIST',
+        userId: verifiedUserId,
+        listId,
+        payload: { listId },
+      });
+    }
+    return { success: true, error: null, isOffline: true };
+  }
+
+  try {
+    // Delete associated items
+    await supabase
+      .from('shopping_items')
+      .delete()
+      .in('list_id', listIds);
+
+    const { error: listsError } = await supabase
+      .from('shopping_lists')
+      .delete()
+      .in('id', listIds);
+
+    if (listsError) {
+      console.warn('Error deleting lists in bulk from Supabase:', listsError.message);
+      for (const listId of listIds) {
+        await enqueueOfflineOperation({
+          type: 'DELETE_LIST',
+          userId: verifiedUserId,
+          listId,
+          payload: { listId },
+        });
+      }
+      return { success: true, error: null, isOffline: true };
+    }
+
+    for (const listId of listIds) {
+      broadcastCrossDeviceSync(verifiedUserId, {
+        type: 'LIST_DELETE',
+        listId,
+      }).catch(() => {});
+    }
+
+    return { success: true, error: null };
+  } catch (err) {
+    console.warn('Exception deleting lists in bulk, queuing offline:', err);
+    for (const listId of listIds) {
+      await enqueueOfflineOperation({
+        type: 'DELETE_LIST',
+        userId: verifiedUserId,
+        listId,
+        payload: { listId },
+      });
+    }
+    return { success: true, error: null, isOffline: true };
+  }
+}
+
+/**
  * Clear all shopping lists and items for an authenticated user from Supabase and IndexedDB
  */
 export async function clearAllUserShoppingLists(

@@ -1362,8 +1362,7 @@
       "enabled": false,
       "message": "YAAD system is undergoing scheduled cloud maintenance.",
       "bannerType": "info"
-    },
-    "systemSecret": "yaad_sec_c940b5f14e7a83d7a8e8b2f901cb4d88e63a890937b2d28f74a01c385b"
+    }
   },
   "permissionMatrix": {
     "users.view": {
@@ -1788,11 +1787,11 @@
         "twitter": "https://x.com/yaadapppk"
       },
       "status": "published",
-      "publishedAt": 1790977671602,
+      "publishedAt": 1791028918471,
       "readTimeMinutes": 4,
       "viewsCount": 1420,
-      "createdAt": 1790977671602,
-      "updatedAt": 1791150471602
+      "createdAt": 1791028918471,
+      "updatedAt": 1791201718471
     },
     {
       "id": "art_fresh_sabzi_guide",
@@ -1817,11 +1816,11 @@
         "twitter": "https://x.com/yaadapppk"
       },
       "status": "published",
-      "publishedAt": 1790632071602,
+      "publishedAt": 1790683318471,
       "readTimeMinutes": 3,
       "viewsCount": 890,
-      "createdAt": 1790632071602,
-      "updatedAt": 1790632071602
+      "createdAt": 1790683318471,
+      "updatedAt": 1790683318471
     },
     {
       "id": "art_spices_shelf_life",
@@ -1846,11 +1845,11 @@
         "instagram": "https://instagram.com/yaadapppk"
       },
       "status": "published",
-      "publishedAt": 1790027271602,
+      "publishedAt": 1790078518471,
       "readTimeMinutes": 3,
       "viewsCount": 650,
-      "createdAt": 1790027271602,
-      "updatedAt": 1790027271602
+      "createdAt": 1790078518471,
+      "updatedAt": 1790078518471
     }
   ],
   "pushCampaigns": [
@@ -1890,6 +1889,78 @@
     }
   ],
   "pushTemplates": [],
-  "supportTickets": [],
-  "cannedReplies": []
+  "supportTickets": [
+    {
+      "id": "tkt_e08db237-53bb-43bf-9b80-23c209550aaf",
+      "ticketNumber": "TKT-00002",
+      "userId": "guest",
+      "userName": "Tariq Mehmood",
+      "userEmail": "shopper_qa@yaad.pk",
+      "userPhone": "+92 300 9876543",
+      "subject": "Grocery item category mismatch",
+      "description": "Basmati Rice was categorized under Dairy instead of Grains.",
+      "category": "bug",
+      "priority": "high",
+      "status": "open",
+      "messages": [
+        {
+          "id": "msg_ddb5e5a8-3c6e-48cc-abc8-1f4c523b162b",
+          "sender": "user",
+          "senderName": "Tariq Mehmood",
+          "text": "Basmati Rice was categorized under Dairy instead of Grains.",
+          "timestamp": 1791288389775
+        }
+      ],
+      "internalNotes": [],
+      "createdAt": 1791288389775,
+      "updatedAt": 1791288389775
+    },
+    {
+      "id": "tkt_6cc28aae-7e50-4f9f-848a-3db62e2c216b",
+      "ticketNumber": "TKT-00001",
+      "userId": "guest",
+      "userName": "Ayesha Khan",
+      "userEmail": "shopper@example.com",
+      "subject": "Weekly grocery list sync issue",
+      "description": "Items took 10 seconds to sync when switching wifi to mobile data.",
+      "category": "sync",
+      "priority": "medium",
+      "status": "open",
+      "messages": [
+        {
+          "id": "msg_36826eb2-76ec-4ebd-b9fe-3539696c53b5",
+          "sender": "user",
+          "senderName": "Ayesha Khan",
+          "text": "Items took 10 seconds to sync when switching wifi to mobile data.",
+          "timestamp": 1791288174804
+        }
+      ],
+      "internalNotes": [],
+      "createdAt": 1791288174804,
+      "updatedAt": 1791288174804
+    }
+  ],
+  "cannedReplies": [],
+  "accessRequests": [
+    {
+      "id": "req_4d74b920-e152-4b53-a224-b989bf933646",
+      "name": "Sarah Khan",
+      "email": "sarah.khan@yaadapp.pk",
+      "requestedRole": "editor",
+      "department": "Urdu Editorial & Catalog",
+      "reason": "Need access to manage Ramadan Rashan guide articles and grocery classifications.",
+      "status": "pending",
+      "createdAt": 1791288389787
+    },
+    {
+      "id": "req_0e9f7803-c2aa-4feb-a532-04b1082871ad",
+      "name": "Bilal Ahmed",
+      "email": "bilal@yaadapp.pk",
+      "requestedRole": "support_agent",
+      "department": "Customer Care",
+      "reason": "Joining customer care shift to handle overnight shopping tickets.",
+      "status": "pending",
+      "createdAt": 1791288174826
+    }
+  ]
 }

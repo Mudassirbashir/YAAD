@@ -10,6 +10,12 @@ import {
   Key,
   Shield,
   ArrowLeft,
+  UserPlus,
+  X,
+  CheckCircle2,
+  Building2,
+  Briefcase,
+  Send,
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { useAdminToast } from '../components/AdminToasts';
@@ -45,6 +51,18 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string; code?: string }>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Apply for Admin Access Modal State
+  const [showApplyModal, setShowApplyModal] = useState(false);
+  const [applyName, setApplyName] = useState('');
+  const [applyEmail, setApplyEmail] = useState('');
+  const [applyPhone, setApplyPhone] = useState('');
+  const [applyRole, setApplyRole] = useState('support_agent');
+  const [applyDepartment, setApplyDepartment] = useState('Customer Support');
+  const [applyReason, setApplyReason] = useState('');
+  const [applyLoading, setApplyLoading] = useState(false);
+  const [applySuccess, setApplySuccess] = useState(false);
+  const [applyError, setApplyError] = useState<string | null>(null);
 
   const validate = () => {
     const errors: { email?: string; password?: string; code?: string } = {};
@@ -405,11 +423,19 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
         </form>
 
         {/* Informative Footer */}
-        <div className="pt-4 border-t border-neutral-100 flex items-center justify-between text-[11px] text-neutral-500">
-          <span className="flex items-center gap-1.5 font-medium">
-            <ShieldCheck className="w-3.5 h-3.5 text-[#003527]" />
-            Strict Invite-Only
-          </span>
+        <div className="pt-4 border-t border-neutral-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-neutral-500">
+          <button
+            type="button"
+            onClick={() => {
+              setShowApplyModal(true);
+              setApplySuccess(false);
+              setApplyError(null);
+            }}
+            className="inline-flex items-center gap-1.5 font-bold text-[#003527] hover:text-[#004734] hover:underline cursor-pointer"
+          >
+            <UserPlus className="w-3.5 h-3.5" />
+            Apply for Admin Access
+          </button>
           <button
             type="button"
             onClick={() => onNavigate('/admin/forgot-password')}
@@ -424,6 +450,214 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
       <div className="mt-8 text-center text-xs text-neutral-400">
         &copy; 2026 YAAD (yaadapppk) &bull; Internal Operations Standard
       </div>
+
+      {/* Apply for Admin Access Modal */}
+      {showApplyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 space-y-5 shadow-2xl border border-neutral-100 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-[#003527] flex items-center justify-center">
+                  <UserPlus className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-neutral-900">Apply for Admin Access</h3>
+                  <p className="text-[11px] text-neutral-500">Submit a request to join the YAAD staff team</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowApplyModal(false)}
+                className="p-1 text-neutral-400 hover:text-neutral-700 rounded-lg hover:bg-neutral-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {applySuccess ? (
+              <div className="py-6 text-center space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
+                  <CheckCircle2 className="w-6 h-6" />
+                </div>
+                <h4 className="text-sm font-bold text-neutral-900">Request Submitted Successfully</h4>
+                <p className="text-xs text-neutral-500 max-w-sm mx-auto">
+                  Your application has been delivered to YAAD Super Administrators for verification. Once approved, an invitation link will be sent to <strong>{applyEmail}</strong>.
+                </p>
+                <div className="pt-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowApplyModal(false);
+                      setApplySuccess(false);
+                      setApplyName('');
+                      setApplyEmail('');
+                      setApplyPhone('');
+                      setApplyReason('');
+                    }}
+                    className="px-6 py-2.5 rounded-xl bg-[#003527] text-white text-xs font-bold shadow-md hover:bg-[#002b1f]"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  setApplyError(null);
+                  if (!applyName.trim() || !applyEmail.trim() || !applyReason.trim()) {
+                    setApplyError('Please fill in your name, email, and reason for access.');
+                    return;
+                  }
+                  setApplyLoading(true);
+                  try {
+                    const res = await fetch('/api/admin/access-requests', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        name: applyName.trim(),
+                        email: applyEmail.trim().toLowerCase(),
+                        phone: applyPhone.trim() || undefined,
+                        requestedRole: applyRole,
+                        department: applyDepartment.trim() || undefined,
+                        reason: applyReason.trim(),
+                      }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok) {
+                      setApplyError(data.error || 'Failed to submit application.');
+                    } else {
+                      setApplySuccess(true);
+                    }
+                  } catch (err: any) {
+                    setApplyError(err.message || 'Network error while submitting request.');
+                  } finally {
+                    setApplyLoading(false);
+                  }
+                }}
+                className="space-y-3.5 text-xs"
+              >
+                {applyError && (
+                  <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                    <span>{applyError}</span>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-600 mb-1">
+                    Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Mudassir Bashir"
+                    value={applyName}
+                    onChange={(e) => setApplyName(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-neutral-200 focus:outline-none focus:border-[#003527]"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-600 mb-1">
+                      Staff / Work Email *
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="name@yaadapp.pk"
+                      value={applyEmail}
+                      onChange={(e) => setApplyEmail(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-neutral-200 focus:outline-none focus:border-[#003527]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-600 mb-1">
+                      Phone Number (Optional)
+                    </label>
+                    <input
+                      type="tel"
+                      placeholder="+92 300 1234567"
+                      value={applyPhone}
+                      onChange={(e) => setApplyPhone(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-neutral-200 focus:outline-none focus:border-[#003527]"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-600 mb-1">
+                      Requested Role
+                    </label>
+                    <select
+                      value={applyRole}
+                      onChange={(e) => setApplyRole(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-neutral-200 bg-white font-medium focus:outline-none focus:border-[#003527]"
+                    >
+                      <option value="support_agent">Support Agent</option>
+                      <option value="editor">Content Editor</option>
+                      <option value="moderator">Moderator</option>
+                      <option value="analyst">Analyst</option>
+                      <option value="admin">Administrator</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-600 mb-1">
+                      Department
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Operations, Support, Editorial"
+                      value={applyDepartment}
+                      onChange={(e) => setApplyDepartment(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-neutral-200 focus:outline-none focus:border-[#003527]"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-600 mb-1">
+                    Reason for Access *
+                  </label>
+                  <textarea
+                    required
+                    rows={3}
+                    placeholder="Briefly explain your role, why you need access to the YAAD Admin workspace, and who authorized this..."
+                    value={applyReason}
+                    onChange={(e) => setApplyReason(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-neutral-200 focus:outline-none focus:border-[#003527]"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowApplyModal(false)}
+                    className="px-4 py-2 rounded-xl border border-neutral-200 text-neutral-600 font-bold hover:bg-neutral-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={applyLoading}
+                    className="px-5 py-2 rounded-xl bg-[#003527] hover:bg-[#002b1f] text-white font-bold shadow-md transition-all flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {applyLoading ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Send className="w-3.5 h-3.5" />
+                    )}
+                    <span>Submit Application</span>
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+

@@ -30,6 +30,7 @@ import {
   loadUserShoppingLists,
   saveUserShoppingList,
   deleteUserShoppingList,
+  deleteMultipleUserShoppingLists,
   clearAllUserShoppingLists,
   setupNetworkSyncListener,
   persistCompletedShoppingSession,
@@ -990,6 +991,27 @@ function AppContent() {
     }
   };
 
+  const handleDeleteMultipleLists = async (listIds: string[]) => {
+    if (!user || listIds.length === 0) return;
+    const idSet = new Set(listIds);
+    setLists((prev) => prev.filter((l) => !idSet.has(l.id)));
+    if (activeListId && idSet.has(activeListId)) {
+      setActiveListId(null);
+    }
+    if (isConfigured) {
+      await deleteMultipleUserShoppingLists(user.id, listIds);
+    }
+  };
+
+  const handleClearAllHistory = async () => {
+    if (!user) return;
+    setLists([]);
+    setActiveListId(null);
+    if (isConfigured) {
+      await clearAllUserShoppingLists(user.id);
+    }
+  };
+
   const handleSaveEditedList = async (savedList: ShoppingList) => {
     if (!user) {
       navigate('/auth');
@@ -1425,6 +1447,8 @@ function AppContent() {
           onContinueShopping={handleOpenListInShoppingMode}
           onMarkComplete={handleCompleteTrip}
           onDeleteList={handleDeleteList}
+          onDeleteMultipleLists={handleDeleteMultipleLists}
+          onClearAllHistory={handleClearAllHistory}
           onReuseList={handleReuseList}
           onOpenProfile={() => navigate('/settings/profile')}
           onOpenMenu={() => navigate('/settings')}

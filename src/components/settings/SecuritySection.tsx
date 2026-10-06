@@ -10,8 +10,10 @@ import {
   CheckCircle2,
   AlertCircle,
   ShieldCheck,
+  Sparkles,
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { generateStrongPassword } from '../../utils/passwordGenerator';
 
 interface SecuritySectionProps {
   // Password State
@@ -172,6 +174,7 @@ export const SecuritySection: React.FC<SecuritySectionProps> = ({
                       t('settings.currentPasswordPlaceholder') ||
                       (language === 'ur' ? 'اپنا موجودہ پاس ورڈ درج کریں' : 'Enter your current password')
                     }
+                    autoComplete="current-password"
                     disabled={isUpdatingPassword}
                     className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-surface border border-surface-dim focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 pe-10 font-mono transition-all disabled:opacity-60"
                     autoFocus
@@ -191,6 +194,30 @@ export const SecuritySection: React.FC<SecuritySectionProps> = ({
                     )}
                   </button>
                 </div>
+              </div>
+
+              {/* Suggest Strong Password Button */}
+              <div className="flex justify-end pt-1">
+                <button
+                  type="button"
+                  id="settings_suggest_strong_pwd_btn"
+                  onClick={async () => {
+                    const pwd = generateStrongPassword(14);
+                    setNewPassword(pwd);
+                    setConfirmPassword(pwd);
+                    setShowNewPassword(true);
+                    setShowConfirmPassword(true);
+                    await navigator.clipboard.writeText(pwd);
+                    setPasswordMessage({
+                      type: 'success',
+                      text: language === 'ur' ? 'مضبوط پاس ورڈ بن گیا اور کاپی ہو گیا!' : 'Strong password generated and copied to clipboard!',
+                    });
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-primary-fixed/30 hover:bg-primary-fixed/50 text-primary text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-primary" />
+                  <span>{language === 'ur' ? 'مضبوط پاس ورڈ تجویز کریں' : 'Suggest Strong Password'}</span>
+                </button>
               </div>
 
               {/* 2. New Password Field */}
@@ -216,6 +243,7 @@ export const SecuritySection: React.FC<SecuritySectionProps> = ({
                     type={showNewPassword ? 'text' : 'password'}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
+                    autoComplete="new-password"
                     placeholder={
                       t('settings.newPasswordPlaceholder') ||
                       (language === 'ur' ? 'نیا پاس ورڈ (کم از کم 6 ہندسے)' : 'Enter new password (min 6 chars)')
@@ -265,6 +293,7 @@ export const SecuritySection: React.FC<SecuritySectionProps> = ({
                     type={showConfirmPassword ? 'text' : 'password'}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
+                    autoComplete="new-password"
                     placeholder={
                       t('settings.confirmPasswordPlaceholder') ||
                       (language === 'ur' ? 'نیا پاس ورڈ دوبارہ درج کریں' : 'Re-enter new password')
