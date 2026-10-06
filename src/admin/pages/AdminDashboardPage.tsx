@@ -20,7 +20,9 @@ import {
   BarChart2,
   TrendingUp,
   PieChart,
-  Activity,
+  FileText,
+  BookOpen,
+  Sparkles,
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { ROLE_LABELS } from '../types';
@@ -139,39 +141,43 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNaviga
           });
         }
 
-        // Secondary async queries with SWR
-        adminCache
-          .fetchWithSwr<{ logs: any[] }>(
-            '/api/admin/audit-logs?limit=5',
-            headers,
-            (fresh) => {
-              if (fresh?.logs) setRecentLogs(fresh.logs);
-            },
-            forceRefresh
-          )
-          .then(({ data }) => {
-            if (data?.logs) setRecentLogs(data.logs);
-          });
+        // Secondary async queries with SWR (super_admin only)
+        if (admin?.role === 'super_admin') {
+          adminCache
+            .fetchWithSwr<{ logs: any[] }>(
+              '/api/admin/audit-logs?limit=5',
+              headers,
+              (fresh) => {
+                if (fresh?.logs) setRecentLogs(fresh.logs);
+              },
+              forceRefresh
+            )
+            .then(({ data }) => {
+              if (data?.logs) setRecentLogs(data.logs);
+            })
+            .catch(() => {});
 
-        adminCache
-          .fetchWithSwr<{ alerts: any[] }>(
-            '/api/admin/security-alerts',
-            headers,
-            (fresh) => {
-              if (fresh?.alerts) setSecurityAlerts(fresh.alerts);
-            },
-            forceRefresh
-          )
-          .then(({ data }) => {
-            if (data?.alerts) setSecurityAlerts(data.alerts);
-          });
+          adminCache
+            .fetchWithSwr<{ alerts: any[] }>(
+              '/api/admin/security-alerts',
+              headers,
+              (fresh) => {
+                if (fresh?.alerts) setSecurityAlerts(fresh.alerts);
+              },
+              forceRefresh
+            )
+            .then(({ data }) => {
+              if (data?.alerts) setSecurityAlerts(data.alerts);
+            })
+            .catch(() => {});
+        }
       } catch (err: any) {
         setErrorMessage(err.message || 'Error communicating with Supabase data layer.');
       } finally {
         setIsLoading(false);
       }
     },
-    [token]
+    [token, admin?.role]
   );
 
   // Authoritative Supabase Realtime subscription
@@ -209,17 +215,12 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNaviga
   // Circular Chart Calculations
   const listCompletionPct = stats.totalLists > 0
     ? Math.round((stats.completedLists / stats.totalLists) * 100)
-    : 68; // representative base if fresh
+    : 68;
 
   const shopperActivePct = stats.totalUsers > 0
     ? Math.round((stats.activeUsers30d / stats.totalUsers) * 100)
     : 84;
 
-  const itemCheckedPct = stats.totalItems > 0
-    ? Math.round((stats.completedItems / stats.totalItems) * 100)
-    : 72;
-
-  // SVG circular properties
   const radius = 42;
   const circumference = 2 * Math.PI * radius;
   const strokeOffsetCompletion = circumference - (listCompletionPct / 100) * circumference;
@@ -240,8 +241,8 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNaviga
 
   return (
     <div className="space-y-6 animate-in fade-in">
-      {/* Security Alerts Banner */}
-      {securityAlerts.length > 0 && (
+      {/* Security Alerts Banner (Super Admin Only) */}
+      {admin?.role === 'super_admin' && securityAlerts.length > 0 && (
         <div className="space-y-2">
           {securityAlerts.map((alert) => (
             <div
@@ -291,7 +292,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNaviga
         </div>
       )}
 
-      {/* Welcome Banner with Responsive Controls */}
+      {/* Welcome Banner */}
       <div className="bg-white border border-neutral-200/90 rounded-3xl p-5 sm:p-7 shadow-xs relative overflow-hidden">
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1.5 min-w-0">
@@ -310,8 +311,14 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNaviga
             </h2>
             <p className="text-xs sm:text-sm text-neutral-600 max-w-2xl leading-relaxed">
               Authenticated as{' '}
-              <strong className="text-neutral-900 font-bold">{roleMeta?.title || admin?.role}</strong> with mandatory 2FA.
-              Real-time shopping metrics and activity graphs below.
+              <strong className="text-neutral-900 font-bold">{roleMeta?.title || admin?.role}</strong>.
+              {admin?.role === 'content_editor'
+                ? ' Manage bilingual grocery item catalog, seasonal recipes, and shopping guides.'
+                : admin?.role === 'support_agent'
+                ? ' Dedicated workspace for shopper inquiries, parchi assistance, and ticket management.'
+                : admin?.role === 'analyst'
+                ? ' Shopping trends, list completion metrics, and cohort retention.'
+                : ' Full system control center and live activity metrics.'}
             </p>
           </div>
 
@@ -341,482 +348,919 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNaviga
         </div>
       </div>
 
-      {/* SECTION: Interactive Circular Graphics & Activity Visuals */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Circle Graphic 1: Shopping List Completion Rate */}
-        <div className="bg-white border border-neutral-200/90 rounded-3xl p-5 shadow-xs flex flex-col justify-between space-y-4 hover:border-[#003527]/30 transition-all">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-800 flex items-center justify-center">
-                <PieChart className="w-4 h-4" />
-              </div>
-              <div>
-                <h4 className="font-bold text-xs text-neutral-900">List Completion Rate</h4>
-                <p className="text-[10px] text-neutral-400">Parchis marked done</p>
-              </div>
-            </div>
-            <span className="text-[10px] font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full">
-              {listCompletionPct}%
-            </span>
-          </div>
-
-          {/* Interactive SVG Circular Graphic */}
-          <div className="flex items-center justify-center py-2 relative">
-            <svg className="w-32 h-32 -rotate-90 transform" viewBox="0 0 100 100">
-              <circle
-                cx="50"
-                cy="50"
-                r={radius}
-                stroke="#E5E7EB"
-                strokeWidth="10"
-                fill="transparent"
-              />
-              <circle
-                cx="50"
-                cy="50"
-                r={radius}
-                stroke="#003527"
-                strokeWidth="10"
-                strokeDasharray={circumference}
-                strokeDashoffset={strokeOffsetCompletion}
-                strokeLinecap="round"
-                fill="transparent"
-                className="transition-all duration-1000 ease-out"
-              />
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-2xl font-black text-[#003527] font-mono leading-none">
-                {listCompletionPct}%
-              </span>
-              <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400 mt-1">
-                Completed
-              </span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-neutral-100 text-center text-xs">
-            <div className="p-2 rounded-xl bg-neutral-50">
-              <span className="text-[10px] text-neutral-400 block">Completed</span>
-              <strong className="text-emerald-700 font-mono text-sm">{stats.completedLists}</strong>
-            </div>
-            <div className="p-2 rounded-xl bg-neutral-50">
-              <span className="text-[10px] text-neutral-400 block">Total Lists</span>
-              <strong className="text-neutral-800 font-mono text-sm">{stats.totalLists}</strong>
-            </div>
-          </div>
-        </div>
-
-        {/* Circle Graphic 2: Shopper Engagement Ratio */}
-        <div className="bg-white border border-neutral-200/90 rounded-3xl p-5 shadow-xs flex flex-col justify-between space-y-4 hover:border-[#003527]/30 transition-all">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-sky-50 text-sky-800 flex items-center justify-center">
-                <Users className="w-4 h-4" />
-              </div>
-              <div>
-                <h4 className="font-bold text-xs text-neutral-900">Shopper Retention</h4>
-                <p className="text-[10px] text-neutral-400">30-day active accounts</p>
-              </div>
-            </div>
-            <span className="text-[10px] font-mono font-bold text-sky-800 bg-sky-50 px-2 py-0.5 rounded-full">
-              {shopperActivePct}%
-            </span>
-          </div>
-
-          {/* Interactive SVG Circular Graphic */}
-          <div className="flex items-center justify-center py-2 relative">
-            <svg className="w-32 h-32 -rotate-90 transform" viewBox="0 0 100 100">
-              <circle
-                cx="50"
-                cy="50"
-                r={radius}
-                stroke="#E5E7EB"
-                strokeWidth="10"
-                fill="transparent"
-              />
-              <circle
-                cx="50"
-                cy="50"
-                r={radius}
-                stroke="#0284c7"
-                strokeWidth="10"
-                strokeDasharray={circumference}
-                strokeDashoffset={strokeOffsetShopper}
-                strokeLinecap="round"
-                fill="transparent"
-                className="transition-all duration-1000 ease-out"
-              />
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-2xl font-black text-sky-900 font-mono leading-none">
-                {shopperActivePct}%
-              </span>
-              <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400 mt-1">
-                Active 30d
-              </span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-neutral-100 text-center text-xs">
-            <div className="p-2 rounded-xl bg-neutral-50">
-              <span className="text-[10px] text-neutral-400 block">Active Users</span>
-              <strong className="text-sky-700 font-mono text-sm">{stats.activeUsers30d}</strong>
-            </div>
-            <div className="p-2 rounded-xl bg-neutral-50">
-              <span className="text-[10px] text-neutral-400 block">Total Shoppers</span>
-              <strong className="text-neutral-800 font-mono text-sm">{stats.totalUsers}</strong>
-            </div>
-          </div>
-        </div>
-
-        {/* Chart 3: Interactive Weekly Shopping Volume (SVG Bars) */}
-        <div className="bg-white border border-neutral-200/90 rounded-3xl p-5 shadow-xs flex flex-col justify-between space-y-3 hover:border-[#003527]/30 transition-all">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-800 flex items-center justify-center">
-                <BarChart2 className="w-4 h-4" />
-              </div>
-              <div>
-                <h4 className="font-bold text-xs text-neutral-900">Weekly Shopping Volume</h4>
-                <p className="text-[10px] text-neutral-400">Peak on Friday Mandi</p>
-              </div>
-            </div>
-            <span className="text-[10px] text-neutral-500 font-medium">Bilingual</span>
-          </div>
-
-          {/* Interactive Bar Chart Graphic */}
-          <div className="h-32 flex items-end justify-between gap-1.5 pt-4 pb-1 relative px-1">
-            {weeklyData.map((d) => {
-              const heightPct = Math.max(15, Math.round((d.count / maxWeeklyCount) * 100));
-              const isPeak = d.day === 'Fri';
-              return (
-                <div
-                  key={d.day}
-                  onMouseEnter={() => setHoveredDay({ day: d.day, count: d.count, x: 0, y: 0 })}
-                  onMouseLeave={() => setHoveredDay(null)}
-                  className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group cursor-pointer"
-                >
-                  <div className="w-full flex items-end justify-center h-24">
-                    <div
-                      style={{ height: `${heightPct}%` }}
-                      className={`w-full max-w-[28px] rounded-t-lg transition-all duration-300 group-hover:scale-y-105 ${
-                        isPeak
-                          ? 'bg-[#003527] shadow-sm'
-                          : 'bg-emerald-200/90 group-hover:bg-emerald-400'
-                      }`}
-                    />
-                  </div>
-                  <span
-                    className={`text-[10px] font-mono font-bold ${
-                      isPeak ? 'text-[#003527]' : 'text-neutral-400'
-                    }`}
-                  >
-                    {d.day}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Tooltip & Trend Summary */}
-          <div className="pt-2 border-t border-neutral-100 flex items-center justify-between text-[11px] text-neutral-500">
-            <div className="flex items-center gap-1.5">
-              <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
-              <span>
-                {hoveredDay
-                  ? `${hoveredDay.day}: ~${hoveredDay.count} active lists`
-                  : 'Highest traffic: Friday Juma Bazaar'}
-              </span>
-            </div>
-            <span className="text-[10px] font-mono text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded font-bold">
-              {stats.totalItems} Items
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* SECTION 1: Authoritative Application KPIs */}
-      <div>
-        <div className="flex items-center justify-between mb-3 px-1">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-500 font-mono">
-            Live App Shopper &amp; List Metrics
-          </h3>
-          <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-mono font-medium">
-            Real-Time Sync
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Card 1: App Shoppers */}
-          <div
-            onClick={() => onNavigate('/admin/users')}
-            className="bg-white border border-neutral-200/90 rounded-2xl p-5 space-y-2 shadow-xs hover:border-[#003527]/40 transition-colors cursor-pointer group"
-          >
-            <div className="flex items-center justify-between text-neutral-500">
-              <span className="text-xs font-bold uppercase tracking-wider group-hover:text-[#003527] transition-colors">
-                Shopper Accounts
-              </span>
-              <Users className="w-4 h-4 text-[#003527]" />
-            </div>
-            <div className="text-2xl sm:text-3xl font-black text-[#003527] font-mono">
-              {isLoading ? '...' : stats.totalUsers}
-            </div>
-            <div className="text-[11px] text-neutral-500 flex items-center justify-between">
-              <span>{stats.activeUsers30d} active in last 30d</span>
-              <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50/60 px-1.5 py-0.5 rounded">
-                App Accounts
-              </span>
-            </div>
-          </div>
-
-          {/* Card 2: Shopping Lists */}
-          <div
-            onClick={() => onNavigate('/admin/lists')}
-            className="bg-white border border-neutral-200/90 rounded-2xl p-5 space-y-2 shadow-xs hover:border-emerald-600/40 transition-colors cursor-pointer group"
-          >
-            <div className="flex items-center justify-between text-neutral-500">
-              <span className="text-xs font-bold uppercase tracking-wider group-hover:text-emerald-700 transition-colors">
-                Shopping Lists (Parchis)
-              </span>
-              <ShoppingBag className="w-4 h-4 text-emerald-600" />
-            </div>
-            <div className="text-2xl sm:text-3xl font-black text-emerald-800 font-mono">
-              {isLoading ? '...' : stats.totalLists}
-            </div>
-            <div className="text-[11px] text-neutral-500 flex items-center justify-between">
-              <span>{stats.completedLists} completed shopping lists</span>
-              <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50/60 px-1.5 py-0.5 rounded">
-                Active Lists
-              </span>
-            </div>
-          </div>
-
-          {/* Card 3: Items in Lists */}
-          <div
-            onClick={() => onNavigate('/admin/lists')}
-            className="bg-white border border-neutral-200/90 rounded-2xl p-5 space-y-2 shadow-xs hover:border-sky-600/40 transition-colors cursor-pointer group"
-          >
-            <div className="flex items-center justify-between text-neutral-500">
-              <span className="text-xs font-bold uppercase tracking-wider group-hover:text-sky-700 transition-colors">
-                List Items Added
-              </span>
-              <CheckCheck className="w-4 h-4 text-sky-600" />
-            </div>
-            <div className="text-2xl sm:text-3xl font-black text-sky-800 font-mono">
-              {isLoading ? '...' : stats.totalItems}
-            </div>
-            <div className="text-[11px] text-neutral-500 flex items-center justify-between">
-              <span>{stats.completedItems} items checked off (done)</span>
-              <span className="text-[10px] font-mono text-sky-700 bg-sky-50/60 px-1.5 py-0.5 rounded">
-                Parchi Items
-              </span>
-            </div>
-          </div>
-
-          {/* Card 4: Support & Inquiries */}
-          <div
-            onClick={() => onNavigate('/admin/tickets')}
-            className="bg-white border border-neutral-200/90 rounded-2xl p-5 space-y-2 shadow-xs hover:border-amber-600/40 transition-colors cursor-pointer group"
-          >
-            <div className="flex items-center justify-between text-neutral-500">
-              <span className="text-xs font-bold uppercase tracking-wider group-hover:text-amber-700 transition-colors">
-                Support Inquiries
-              </span>
-              <Headphones className="w-4 h-4 text-amber-600" />
-            </div>
-            <div className="text-2xl sm:text-3xl font-black text-amber-700 font-mono">
-              {isLoading ? '...' : stats.openTickets}
-            </div>
-            <div className="text-[11px] text-neutral-500 flex items-center justify-between">
-              <span>Awaiting staff response</span>
-              <span className="text-[10px] font-mono text-amber-700 bg-amber-50/60 px-1.5 py-0.5 rounded">
-                Support Desk
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* SECTION 2: Staff & Governance KPIs */}
-      <div>
-        <div className="flex items-center justify-between mb-3 px-1">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-500 font-mono">
-            Staff &amp; Access Governance
-          </h3>
-          <span className="text-[10px] text-neutral-400 font-mono">Secure Access</span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Card 1: Total Admins */}
-          <div
-            onClick={() => onNavigate('/admin/team')}
-            className="bg-white border border-neutral-200/90 rounded-2xl p-5 space-y-2 shadow-xs hover:border-[#003527]/40 transition-colors cursor-pointer group"
-          >
-            <div className="flex items-center justify-between text-neutral-500">
-              <span className="text-xs font-bold uppercase tracking-wider group-hover:text-[#003527] transition-colors">
-                Staff Members
-              </span>
-              <Users className="w-4 h-4 text-[#003527]" />
-            </div>
-            <div className="text-2xl sm:text-3xl font-black text-[#003527] font-mono">
-              {isLoading ? '...' : stats.totalAdmins}
-            </div>
-            <div className="text-[11px] text-neutral-500 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span>{stats.activeAdmins} active account(s)</span>
-            </div>
-          </div>
-
-          {/* Card 2: 2FA Enforcement */}
-          <div className="bg-white border border-neutral-200/90 rounded-2xl p-5 space-y-2 shadow-xs">
-            <div className="flex items-center justify-between text-neutral-500">
-              <span className="text-xs font-bold uppercase tracking-wider">2FA Compliance</span>
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            </div>
-            <div className="text-2xl sm:text-3xl font-black text-emerald-700 font-mono">100%</div>
-            <div className="text-[11px] text-neutral-500">Strictly enforced for all roles</div>
-          </div>
-
-          {/* Card 3: Pending Invites */}
-          <div
-            onClick={() => onNavigate('/admin/team')}
-            className="bg-white border border-neutral-200/90 rounded-2xl p-5 space-y-2 shadow-xs hover:border-amber-600/40 transition-colors cursor-pointer group"
-          >
-            <div className="flex items-center justify-between text-neutral-500">
-              <span className="text-xs font-bold uppercase tracking-wider group-hover:text-amber-700 transition-colors">
-                Pending Invites
-              </span>
-              <Clock className="w-4 h-4 text-amber-600" />
-            </div>
-            <div className="text-2xl sm:text-3xl font-black text-amber-700 font-mono">
-              {isLoading ? '...' : stats.pendingInvites}
-            </div>
-            <div className="text-[11px] text-neutral-500">24-hour expiring tokens</div>
-          </div>
-
-          {/* Card 4: Audit Entries */}
-          <div
-            onClick={() => onNavigate('/admin/audit-log')}
-            className="bg-white border border-neutral-200/90 rounded-2xl p-5 space-y-2 shadow-xs hover:border-sky-600/40 transition-colors cursor-pointer group"
-          >
-            <div className="flex items-center justify-between text-neutral-500">
-              <span className="text-xs font-bold uppercase tracking-wider group-hover:text-sky-700 transition-colors">
-                Audit Trail Events
-              </span>
-              <History className="w-4 h-4 text-sky-600" />
-            </div>
-            <div className="text-2xl sm:text-3xl font-black text-sky-800 font-mono">
-              {isLoading ? '...' : stats.totalAuditLogs}
-            </div>
-            <div className="text-[11px] text-neutral-500">Verified audit records</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Quick Navigation Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div
-          onClick={() => onNavigate('/admin/users')}
-          className="bg-white border border-neutral-200/90 rounded-2xl p-5 hover:border-[#003527] transition-all cursor-pointer space-y-2 group shadow-xs"
-        >
-          <div className="flex items-center justify-between">
-            <span className="font-bold text-neutral-900 text-sm group-hover:text-[#003527]">
-              Shopper Accounts &amp; Activity
-            </span>
-            <ArrowRight className="w-4 h-4 text-neutral-400 group-hover:text-[#003527] group-hover:translate-x-1 transition-all" />
-          </div>
-          <p className="text-xs text-neutral-500 leading-relaxed">
-            View registered shoppers, mobile numbers, signup dates, and moderation status.
-          </p>
-        </div>
-
-        <div
-          onClick={() => onNavigate('/admin/lists')}
-          className="bg-white border border-neutral-200/90 rounded-2xl p-5 hover:border-[#003527] transition-all cursor-pointer space-y-2 group shadow-xs"
-        >
-          <div className="flex items-center justify-between">
-            <span className="font-bold text-neutral-900 text-sm group-hover:text-[#003527]">
-              Shopping Lists (Parchis)
-            </span>
-            <ArrowRight className="w-4 h-4 text-neutral-400 group-hover:text-[#003527] group-hover:translate-x-1 transition-all" />
-          </div>
-          <p className="text-xs text-neutral-500 leading-relaxed">
-            Inspect live grocery lists, added items, and completed checkoffs created by users.
-          </p>
-        </div>
-
-        <div
-          onClick={() => onNavigate('/admin/catalog')}
-          className="bg-white border border-neutral-200/90 rounded-2xl p-5 hover:border-[#003527] transition-all cursor-pointer space-y-2 group shadow-xs"
-        >
-          <div className="flex items-center justify-between">
-            <span className="font-bold text-neutral-900 text-sm group-hover:text-[#003527]">
-              Grocery Item Catalog
-            </span>
-            <ArrowRight className="w-4 h-4 text-neutral-400 group-hover:text-[#003527] group-hover:translate-x-1 transition-all" />
-          </div>
-          <p className="text-xs text-neutral-500 leading-relaxed">
-            Manage Pakistani grocery vocabulary, Urdu/Roman Urdu terms, and category auto-suggestions.
-          </p>
-        </div>
-      </div>
-
-      {/* Recent Audit Trail Preview with Responsive Card Wrapping */}
-      <div className="bg-white border border-neutral-200/90 rounded-3xl p-5 sm:p-6 space-y-4 shadow-xs">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-base font-bold text-[#003527] tracking-tight flex items-center gap-2">
-              <History className="w-5 h-5 text-emerald-600" />
-              <span>Recent Security &amp; Activity Events</span>
-            </h3>
-            <p className="text-xs text-neutral-500 mt-0.5">
-              Authoritative audit log of staff actions and system events
-            </p>
-          </div>
-          {admin?.role === 'super_admin' && (
-            <button
-              type="button"
-              onClick={() => onNavigate('/admin/audit-log')}
-              className="text-xs text-[#003527] hover:underline font-bold flex items-center gap-1 cursor-pointer"
+      {/* ==================================================================== */}
+      {/* ROLE 1: CONTENT EDITOR DASHBOARD                                      */}
+      {/* Zero company active users, zero retention metrics                   */}
+      {/* ==================================================================== */}
+      {admin?.role === 'content_editor' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div
+              onClick={() => onNavigate('/admin/catalog')}
+              className="bg-white border border-neutral-200/90 rounded-2xl p-5 space-y-2 shadow-xs hover:border-[#003527]/40 transition-colors cursor-pointer group"
             >
-              <span>Full Trail</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
+              <div className="flex items-center justify-between text-neutral-500">
+                <span className="text-xs font-bold uppercase tracking-wider group-hover:text-[#003527] transition-colors">
+                  Catalog Products
+                </span>
+                <Package className="w-4 h-4 text-[#003527]" />
+              </div>
+              <div className="text-2xl sm:text-3xl font-black text-[#003527] font-mono">
+                {isLoading ? '...' : 50}
+              </div>
+              <div className="text-[11px] text-neutral-500 flex items-center justify-between">
+                <span>Vegetables, Grains &amp; Spices</span>
+                <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
+                  Bilingual
+                </span>
+              </div>
+            </div>
 
-        {recentLogs.length === 0 ? (
-          <div className="text-center py-8 text-xs text-neutral-400">
-            No audit events recorded yet in database.
+            <div
+              onClick={() => onNavigate('/admin/catalog')}
+              className="bg-white border border-neutral-200/90 rounded-2xl p-5 space-y-2 shadow-xs hover:border-emerald-600/40 transition-colors cursor-pointer group"
+            >
+              <div className="flex items-center justify-between text-neutral-500">
+                <span className="text-xs font-bold uppercase tracking-wider group-hover:text-emerald-700 transition-colors">
+                  Categories
+                </span>
+                <ShoppingBag className="w-4 h-4 text-emerald-600" />
+              </div>
+              <div className="text-2xl sm:text-3xl font-black text-emerald-800 font-mono">8</div>
+              <div className="text-[11px] text-neutral-500 flex items-center justify-between">
+                <span>Active grocery sections</span>
+                <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
+                  Live
+                </span>
+              </div>
+            </div>
+
+            <div
+              onClick={() => onNavigate('/admin/cms')}
+              className="bg-white border border-neutral-200/90 rounded-2xl p-5 space-y-2 shadow-xs hover:border-purple-600/40 transition-colors cursor-pointer group"
+            >
+              <div className="flex items-center justify-between text-neutral-500">
+                <span className="text-xs font-bold uppercase tracking-wider group-hover:text-purple-700 transition-colors">
+                  Grocery Guides
+                </span>
+                <BookOpen className="w-4 h-4 text-purple-600" />
+              </div>
+              <div className="text-2xl sm:text-3xl font-black text-purple-800 font-mono">4</div>
+              <div className="text-[11px] text-neutral-500 flex items-center justify-between">
+                <span>Published shopping guides</span>
+                <span className="text-[10px] font-mono text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded">
+                  CMS
+                </span>
+              </div>
+            </div>
+
+            <div className="bg-white border border-neutral-200/90 rounded-2xl p-5 space-y-2 shadow-xs">
+              <div className="flex items-center justify-between text-neutral-500">
+                <span className="text-xs font-bold uppercase tracking-wider">Language Support</span>
+                <Sparkles className="w-4 h-4 text-amber-600" />
+              </div>
+              <div className="text-2xl sm:text-3xl font-black text-amber-700 font-mono">100%</div>
+              <div className="text-[11px] text-neutral-500">Urdu, Roman Urdu &amp; English</div>
+            </div>
           </div>
-        ) : (
-          <div className="space-y-2">
-            {recentLogs.map((log) => (
-              <div
-                key={log.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl bg-neutral-50/80 border border-neutral-200/70 text-xs text-neutral-800 gap-2"
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <span className="font-mono text-[10px] text-[#003527] font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 shrink-0">
-                    {log.action}
-                  </span>
-                  <span className="text-neutral-700 font-medium truncate">{log.adminEmail || 'System'}</span>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div
+              onClick={() => onNavigate('/admin/catalog')}
+              className="bg-white border border-neutral-200/90 rounded-2xl p-5 hover:border-[#003527] transition-all cursor-pointer space-y-2 group shadow-xs"
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-neutral-900 text-sm group-hover:text-[#003527]">
+                  Grocery Item Catalog (اردو / English)
+                </span>
+                <ArrowRight className="w-4 h-4 text-neutral-400 group-hover:text-[#003527] group-hover:translate-x-1 transition-all" />
+              </div>
+              <p className="text-xs text-neutral-500 leading-relaxed">
+                Add, edit, or adjust grocery items, Pakistani terminology, standard units (kg, g, pao, darjan), and category classifications.
+              </p>
+            </div>
+
+            <div
+              onClick={() => onNavigate('/admin/cms')}
+              className="bg-white border border-neutral-200/90 rounded-2xl p-5 hover:border-[#003527] transition-all cursor-pointer space-y-2 group shadow-xs"
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-neutral-900 text-sm group-hover:text-[#003527]">
+                  Grocery Guides (CMS)
+                </span>
+                <ArrowRight className="w-4 h-4 text-neutral-400 group-hover:text-[#003527] group-hover:translate-x-1 transition-all" />
+              </div>
+              <p className="text-xs text-neutral-500 leading-relaxed">
+                Publish seasonal Mandi shopping guides, pantry planning articles, and budget grocery tips for app shoppers.
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-emerald-50/50 border border-emerald-200/80 rounded-2xl p-5 text-xs text-emerald-950 space-y-2">
+            <div className="font-bold text-sm text-[#003527] flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+              <span>Editorial Guidelines &amp; Quality Checklist</span>
+            </div>
+            <ul className="list-disc pl-5 space-y-1 text-neutral-700 leading-relaxed">
+              <li>Always provide accurate Urdu script and common Roman Urdu transliterations for search optimization.</li>
+              <li>Keep vegetable and staple item prices aligned with standard Pakistani retail averages (PKR).</li>
+              <li>Guides should highlight local buying wisdom: seasonal freshness, Mandi timings, and pantry storage tips.</li>
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================================== */}
+      {/* ROLE 2: SUPPORT AGENT DASHBOARD                                       */}
+      {/* Zero company active users, zero retention metrics                   */}
+      {/* ==================================================================== */}
+      {admin?.role === 'support_agent' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div
+              onClick={() => onNavigate('/admin/tickets')}
+              className="bg-white border border-neutral-200/90 rounded-2xl p-5 space-y-2 shadow-xs hover:border-amber-600/40 transition-colors cursor-pointer group"
+            >
+              <div className="flex items-center justify-between text-neutral-500">
+                <span className="text-xs font-bold uppercase tracking-wider group-hover:text-amber-700 transition-colors">
+                  Open Support Inquiries
+                </span>
+                <Headphones className="w-4 h-4 text-amber-600" />
+              </div>
+              <div className="text-2xl sm:text-3xl font-black text-amber-700 font-mono">
+                {isLoading ? '...' : stats.openTickets}
+              </div>
+              <div className="text-[11px] text-neutral-500 flex items-center justify-between">
+                <span>Awaiting agent response</span>
+                <span className="text-[10px] font-mono text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">
+                  Priority
+                </span>
+              </div>
+            </div>
+
+            <div
+              onClick={() => onNavigate('/admin/users')}
+              className="bg-white border border-neutral-200/90 rounded-2xl p-5 space-y-2 shadow-xs hover:border-[#003527]/40 transition-colors cursor-pointer group"
+            >
+              <div className="flex items-center justify-between text-neutral-500">
+                <span className="text-xs font-bold uppercase tracking-wider group-hover:text-[#003527] transition-colors">
+                  Shopper Accounts Directory
+                </span>
+                <Users className="w-4 h-4 text-[#003527]" />
+              </div>
+              <div className="text-2xl sm:text-3xl font-black text-[#003527] font-mono">
+                {isLoading ? '...' : stats.totalUsers}
+              </div>
+              <div className="text-[11px] text-neutral-500 flex items-center justify-between">
+                <span>Available for shopper lookup</span>
+                <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
+                  Searchable
+                </span>
+              </div>
+            </div>
+
+            <div className="bg-white border border-neutral-200/90 rounded-2xl p-5 space-y-2 shadow-xs">
+              <div className="flex items-center justify-between text-neutral-500">
+                <span className="text-xs font-bold uppercase tracking-wider">Target Resolution SLA</span>
+                <Clock className="w-4 h-4 text-sky-600" />
+              </div>
+              <div className="text-2xl sm:text-3xl font-black text-sky-800 font-mono">&lt; 2 Hours</div>
+              <div className="text-[11px] text-neutral-500">Fast customer support standard</div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div
+              onClick={() => onNavigate('/admin/tickets')}
+              className="bg-white border border-neutral-200/90 rounded-2xl p-5 hover:border-[#003527] transition-all cursor-pointer space-y-2 group shadow-xs"
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-neutral-900 text-sm group-hover:text-[#003527]">
+                  Support Desk (Tickets &amp; Inquiries)
+                </span>
+                <ArrowRight className="w-4 h-4 text-neutral-400 group-hover:text-[#003527] group-hover:translate-x-1 transition-all" />
+              </div>
+              <p className="text-xs text-neutral-500 leading-relaxed">
+                Respond to customer support messages, assist with app usage, and update ticket statuses.
+              </p>
+            </div>
+
+            <div
+              onClick={() => onNavigate('/admin/users')}
+              className="bg-white border border-neutral-200/90 rounded-2xl p-5 hover:border-[#003527] transition-all cursor-pointer space-y-2 group shadow-xs"
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-neutral-900 text-sm group-hover:text-[#003527]">
+                  Shopper Lookup &amp; Verification
+                </span>
+                <ArrowRight className="w-4 h-4 text-neutral-400 group-hover:text-[#003527] group-hover:translate-x-1 transition-all" />
+              </div>
+              <p className="text-xs text-neutral-500 leading-relaxed">
+                Look up customer profiles by mobile number or email to assist with parchi synchronization issues.
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-amber-50/50 border border-amber-200/80 rounded-2xl p-5 text-xs text-amber-950 space-y-2">
+            <div className="font-bold text-sm text-amber-900 flex items-center gap-2">
+              <Headphones className="w-4 h-4 text-amber-700" />
+              <span>Customer Care Protocols</span>
+            </div>
+            <ul className="list-disc pl-5 space-y-1 text-neutral-700 leading-relaxed">
+              <li>Always verify customer email or phone number before discussing account details.</li>
+              <li>If a shopper lost a list, check the list sync status in Shopper Accounts.</li>
+              <li>Escalate any technical bugs or database sync anomalies to Super Admin.</li>
+            </ul>
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================================== */}
+      {/* ROLE 3: ANALYST DASHBOARD                                            */}
+      {/* List completion, shopping volume, retention cohorts                   */}
+      {/* ==================================================================== */}
+      {admin?.role === 'analyst' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            {/* Circle Graphic 1: Shopping List Completion Rate */}
+            <div className="bg-white border border-neutral-200/90 rounded-3xl p-5 shadow-xs flex flex-col justify-between space-y-4 hover:border-[#003527]/30 transition-all">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-800 flex items-center justify-center">
+                    <PieChart className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-xs text-neutral-900">List Completion Rate</h4>
+                    <p className="text-[10px] text-neutral-400">Parchis marked done</p>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between sm:justify-end gap-2 text-[10px] text-neutral-400 font-mono shrink-0 pl-1 sm:pl-0">
-                  {log.metadata?.note && (
-                    <span className="truncate max-w-[200px] text-neutral-500 hidden md:inline">
-                      {log.metadata.note}
-                    </span>
-                  )}
-                  <span>
-                    {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                <span className="text-[10px] font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full">
+                  {listCompletionPct}%
+                </span>
+              </div>
+
+              <div className="flex items-center justify-center py-2 relative">
+                <svg className="w-32 h-32 -rotate-90 transform" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r={radius} stroke="#E5E7EB" strokeWidth="10" fill="transparent" />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r={radius}
+                    stroke="#003527"
+                    strokeWidth="10"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={strokeOffsetCompletion}
+                    strokeLinecap="round"
+                    fill="transparent"
+                    className="transition-all duration-1000 ease-out"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-2xl font-black text-[#003527] font-mono leading-none">
+                    {listCompletionPct}%
+                  </span>
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400 mt-1">
+                    Completed
                   </span>
                 </div>
               </div>
-            ))}
+
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-neutral-100 text-center text-xs">
+                <div className="p-2 rounded-xl bg-neutral-50">
+                  <span className="text-[10px] text-neutral-400 block">Completed</span>
+                  <strong className="text-emerald-700 font-mono text-sm">{stats.completedLists}</strong>
+                </div>
+                <div className="p-2 rounded-xl bg-neutral-50">
+                  <span className="text-[10px] text-neutral-400 block">Total Lists</span>
+                  <strong className="text-neutral-800 font-mono text-sm">{stats.totalLists}</strong>
+                </div>
+              </div>
+            </div>
+
+            {/* Circle Graphic 2: Shopper Retention */}
+            <div className="bg-white border border-neutral-200/90 rounded-3xl p-5 shadow-xs flex flex-col justify-between space-y-4 hover:border-[#003527]/30 transition-all">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-sky-50 text-sky-800 flex items-center justify-center">
+                    <Users className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-xs text-neutral-900">Shopper Retention</h4>
+                    <p className="text-[10px] text-neutral-400">30-day active accounts</p>
+                  </div>
+                </div>
+                <span className="text-[10px] font-mono font-bold text-sky-800 bg-sky-50 px-2 py-0.5 rounded-full">
+                  {shopperActivePct}%
+                </span>
+              </div>
+
+              <div className="flex items-center justify-center py-2 relative">
+                <svg className="w-32 h-32 -rotate-90 transform" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r={radius} stroke="#E5E7EB" strokeWidth="10" fill="transparent" />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r={radius}
+                    stroke="#0284c7"
+                    strokeWidth="10"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={strokeOffsetShopper}
+                    strokeLinecap="round"
+                    fill="transparent"
+                    className="transition-all duration-1000 ease-out"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-2xl font-black text-sky-900 font-mono leading-none">
+                    {shopperActivePct}%
+                  </span>
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400 mt-1">
+                    Active 30d
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-neutral-100 text-center text-xs">
+                <div className="p-2 rounded-xl bg-neutral-50">
+                  <span className="text-[10px] text-neutral-400 block">Active Users</span>
+                  <strong className="text-sky-700 font-mono text-sm">{stats.activeUsers30d}</strong>
+                </div>
+                <div className="p-2 rounded-xl bg-neutral-50">
+                  <span className="text-[10px] text-neutral-400 block">Total Shoppers</span>
+                  <strong className="text-neutral-800 font-mono text-sm">{stats.totalUsers}</strong>
+                </div>
+              </div>
+            </div>
+
+            {/* Chart 3: Weekly Shopping Volume */}
+            <div className="bg-white border border-neutral-200/90 rounded-3xl p-5 shadow-xs flex flex-col justify-between space-y-3 hover:border-[#003527]/30 transition-all">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-800 flex items-center justify-center">
+                    <BarChart2 className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-xs text-neutral-900">Weekly Shopping Volume</h4>
+                    <p className="text-[10px] text-neutral-400">Peak on Friday Mandi</p>
+                  </div>
+                </div>
+                <span className="text-[10px] text-neutral-500 font-medium">Bilingual</span>
+              </div>
+
+              <div className="h-32 flex items-end justify-between gap-1.5 pt-4 pb-1 relative px-1">
+                {weeklyData.map((d) => {
+                  const heightPct = Math.max(15, Math.round((d.count / maxWeeklyCount) * 100));
+                  const isPeak = d.day === 'Fri';
+                  return (
+                    <div
+                      key={d.day}
+                      onMouseEnter={() => setHoveredDay({ day: d.day, count: d.count, x: 0, y: 0 })}
+                      onMouseLeave={() => setHoveredDay(null)}
+                      className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group cursor-pointer"
+                    >
+                      <div className="w-full flex items-end justify-center h-24">
+                        <div
+                          style={{ height: `${heightPct}%` }}
+                          className={`w-full max-w-[28px] rounded-t-lg transition-all duration-300 group-hover:scale-y-105 ${
+                            isPeak
+                              ? 'bg-[#003527] shadow-sm'
+                              : 'bg-emerald-200/90 group-hover:bg-emerald-400'
+                          }`}
+                        />
+                      </div>
+                      <span
+                        className={`text-[10px] font-mono font-bold ${
+                          isPeak ? 'text-[#003527]' : 'text-neutral-400'
+                        }`}
+                      >
+                        {d.day}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="pt-2 border-t border-neutral-100 flex items-center justify-between text-[11px] text-neutral-500">
+                <div className="flex items-center gap-1.5">
+                  <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>
+                    {hoveredDay
+                      ? `${hoveredDay.day}: ~${hoveredDay.count} active lists`
+                      : 'Highest traffic: Friday Juma Bazaar'}
+                  </span>
+                </div>
+                <span className="text-[10px] font-mono text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded font-bold">
+                  {stats.totalItems} Items
+                </span>
+              </div>
+            </div>
           </div>
-        )}
-      </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div
+              onClick={() => onNavigate('/admin/analytics')}
+              className="bg-white border border-neutral-200/90 rounded-2xl p-5 hover:border-[#003527] transition-all cursor-pointer space-y-2 group shadow-xs"
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-neutral-900 text-sm group-hover:text-[#003527]">
+                  Usage Analytics &amp; Trends
+                </span>
+                <ArrowRight className="w-4 h-4 text-neutral-400 group-hover:text-[#003527] group-hover:translate-x-1 transition-all" />
+              </div>
+              <p className="text-xs text-neutral-500 leading-relaxed">
+                Detailed breakdowns of list creations, checkoff frequency, and cohort retention.
+              </p>
+            </div>
+
+            <div
+              onClick={() => onNavigate('/admin/lists')}
+              className="bg-white border border-neutral-200/90 rounded-2xl p-5 hover:border-[#003527] transition-all cursor-pointer space-y-2 group shadow-xs"
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-neutral-900 text-sm group-hover:text-[#003527]">
+                  Shopping Lists Reports
+                </span>
+                <ArrowRight className="w-4 h-4 text-neutral-400 group-hover:text-[#003527] group-hover:translate-x-1 transition-all" />
+              </div>
+              <p className="text-xs text-neutral-500 leading-relaxed">
+                Analyze shopping patterns, item completion rates, and active user parchis.
+              </p>
+            </div>
+
+            <div
+              onClick={() => onNavigate('/admin/users')}
+              className="bg-white border border-neutral-200/90 rounded-2xl p-5 hover:border-[#003527] transition-all cursor-pointer space-y-2 group shadow-xs"
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-neutral-900 text-sm group-hover:text-[#003527]">
+                  Shopper Accounts Directory
+                </span>
+                <ArrowRight className="w-4 h-4 text-neutral-400 group-hover:text-[#003527] group-hover:translate-x-1 transition-all" />
+              </div>
+              <p className="text-xs text-neutral-500 leading-relaxed">
+                Inspect user activity timelines, signup cohort growth, and engagement frequency.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================================== */}
+      {/* ROLE 4: SUPER ADMIN CONTROL CENTER                                    */}
+      {/* Full visibility: All charts, KPIs, staff governance, and audit logs  */}
+      {/* ==================================================================== */}
+      {admin?.role === 'super_admin' && (
+        <div className="space-y-6">
+          {/* Visual Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            {/* Circle Graphic 1: Shopping List Completion Rate */}
+            <div className="bg-white border border-neutral-200/90 rounded-3xl p-5 shadow-xs flex flex-col justify-between space-y-4 hover:border-[#003527]/30 transition-all">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-800 flex items-center justify-center">
+                    <PieChart className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-xs text-neutral-900">List Completion Rate</h4>
+                    <p className="text-[10px] text-neutral-400">Parchis marked done</p>
+                  </div>
+                </div>
+                <span className="text-[10px] font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full">
+                  {listCompletionPct}%
+                </span>
+              </div>
+
+              <div className="flex items-center justify-center py-2 relative">
+                <svg className="w-32 h-32 -rotate-90 transform" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r={radius} stroke="#E5E7EB" strokeWidth="10" fill="transparent" />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r={radius}
+                    stroke="#003527"
+                    strokeWidth="10"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={strokeOffsetCompletion}
+                    strokeLinecap="round"
+                    fill="transparent"
+                    className="transition-all duration-1000 ease-out"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-2xl font-black text-[#003527] font-mono leading-none">
+                    {listCompletionPct}%
+                  </span>
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400 mt-1">
+                    Completed
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-neutral-100 text-center text-xs">
+                <div className="p-2 rounded-xl bg-neutral-50">
+                  <span className="text-[10px] text-neutral-400 block">Completed</span>
+                  <strong className="text-emerald-700 font-mono text-sm">{stats.completedLists}</strong>
+                </div>
+                <div className="p-2 rounded-xl bg-neutral-50">
+                  <span className="text-[10px] text-neutral-400 block">Total Lists</span>
+                  <strong className="text-neutral-800 font-mono text-sm">{stats.totalLists}</strong>
+                </div>
+              </div>
+            </div>
+
+            {/* Circle Graphic 2: Shopper Retention */}
+            <div className="bg-white border border-neutral-200/90 rounded-3xl p-5 shadow-xs flex flex-col justify-between space-y-4 hover:border-[#003527]/30 transition-all">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-sky-50 text-sky-800 flex items-center justify-center">
+                    <Users className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-xs text-neutral-900">Shopper Retention</h4>
+                    <p className="text-[10px] text-neutral-400">30-day active accounts</p>
+                  </div>
+                </div>
+                <span className="text-[10px] font-mono font-bold text-sky-800 bg-sky-50 px-2 py-0.5 rounded-full">
+                  {shopperActivePct}%
+                </span>
+              </div>
+
+              <div className="flex items-center justify-center py-2 relative">
+                <svg className="w-32 h-32 -rotate-90 transform" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r={radius} stroke="#E5E7EB" strokeWidth="10" fill="transparent" />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r={radius}
+                    stroke="#0284c7"
+                    strokeWidth="10"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={strokeOffsetShopper}
+                    strokeLinecap="round"
+                    fill="transparent"
+                    className="transition-all duration-1000 ease-out"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-2xl font-black text-sky-900 font-mono leading-none">
+                    {shopperActivePct}%
+                  </span>
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400 mt-1">
+                    Active 30d
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-neutral-100 text-center text-xs">
+                <div className="p-2 rounded-xl bg-neutral-50">
+                  <span className="text-[10px] text-neutral-400 block">Active Users</span>
+                  <strong className="text-sky-700 font-mono text-sm">{stats.activeUsers30d}</strong>
+                </div>
+                <div className="p-2 rounded-xl bg-neutral-50">
+                  <span className="text-[10px] text-neutral-400 block">Total Shoppers</span>
+                  <strong className="text-neutral-800 font-mono text-sm">{stats.totalUsers}</strong>
+                </div>
+              </div>
+            </div>
+
+            {/* Chart 3: Weekly Shopping Volume */}
+            <div className="bg-white border border-neutral-200/90 rounded-3xl p-5 shadow-xs flex flex-col justify-between space-y-3 hover:border-[#003527]/30 transition-all">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-800 flex items-center justify-center">
+                    <BarChart2 className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-xs text-neutral-900">Weekly Shopping Volume</h4>
+                    <p className="text-[10px] text-neutral-400">Peak on Friday Mandi</p>
+                  </div>
+                </div>
+                <span className="text-[10px] text-neutral-500 font-medium">Bilingual</span>
+              </div>
+
+              <div className="h-32 flex items-end justify-between gap-1.5 pt-4 pb-1 relative px-1">
+                {weeklyData.map((d) => {
+                  const heightPct = Math.max(15, Math.round((d.count / maxWeeklyCount) * 100));
+                  const isPeak = d.day === 'Fri';
+                  return (
+                    <div
+                      key={d.day}
+                      onMouseEnter={() => setHoveredDay({ day: d.day, count: d.count, x: 0, y: 0 })}
+                      onMouseLeave={() => setHoveredDay(null)}
+                      className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group cursor-pointer"
+                    >
+                      <div className="w-full flex items-end justify-center h-24">
+                        <div
+                          style={{ height: `${heightPct}%` }}
+                          className={`w-full max-w-[28px] rounded-t-lg transition-all duration-300 group-hover:scale-y-105 ${
+                            isPeak
+                              ? 'bg-[#003527] shadow-sm'
+                              : 'bg-emerald-200/90 group-hover:bg-emerald-400'
+                          }`}
+                        />
+                      </div>
+                      <span
+                        className={`text-[10px] font-mono font-bold ${
+                          isPeak ? 'text-[#003527]' : 'text-neutral-400'
+                        }`}
+                      >
+                        {d.day}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="pt-2 border-t border-neutral-100 flex items-center justify-between text-[11px] text-neutral-500">
+                <div className="flex items-center gap-1.5">
+                  <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>
+                    {hoveredDay
+                      ? `${hoveredDay.day}: ~${hoveredDay.count} active lists`
+                      : 'Highest traffic: Friday Juma Bazaar'}
+                  </span>
+                </div>
+                <span className="text-[10px] font-mono text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded font-bold">
+                  {stats.totalItems} Items
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 1: Live App Shopper & List Metrics */}
+          <div>
+            <div className="flex items-center justify-between mb-3 px-1">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-500 font-mono">
+                Live App Shopper &amp; List Metrics
+              </h3>
+              <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-mono font-medium">
+                Real-Time Sync
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div
+                onClick={() => onNavigate('/admin/users')}
+                className="bg-white border border-neutral-200/90 rounded-2xl p-5 space-y-2 shadow-xs hover:border-[#003527]/40 transition-colors cursor-pointer group"
+              >
+                <div className="flex items-center justify-between text-neutral-500">
+                  <span className="text-xs font-bold uppercase tracking-wider group-hover:text-[#003527] transition-colors">
+                    Shopper Accounts
+                  </span>
+                  <Users className="w-4 h-4 text-[#003527]" />
+                </div>
+                <div className="text-2xl sm:text-3xl font-black text-[#003527] font-mono">
+                  {isLoading ? '...' : stats.totalUsers}
+                </div>
+                <div className="text-[11px] text-neutral-500 flex items-center justify-between">
+                  <span>{stats.activeUsers30d} active in last 30d</span>
+                  <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50/60 px-1.5 py-0.5 rounded">
+                    App Accounts
+                  </span>
+                </div>
+              </div>
+
+              <div
+                onClick={() => onNavigate('/admin/lists')}
+                className="bg-white border border-neutral-200/90 rounded-2xl p-5 space-y-2 shadow-xs hover:border-emerald-600/40 transition-colors cursor-pointer group"
+              >
+                <div className="flex items-center justify-between text-neutral-500">
+                  <span className="text-xs font-bold uppercase tracking-wider group-hover:text-emerald-700 transition-colors">
+                    Shopping Lists (Parchis)
+                  </span>
+                  <ShoppingBag className="w-4 h-4 text-emerald-600" />
+                </div>
+                <div className="text-2xl sm:text-3xl font-black text-emerald-800 font-mono">
+                  {isLoading ? '...' : stats.totalLists}
+                </div>
+                <div className="text-[11px] text-neutral-500 flex items-center justify-between">
+                  <span>{stats.completedLists} completed shopping lists</span>
+                  <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50/60 px-1.5 py-0.5 rounded">
+                    Active Lists
+                  </span>
+                </div>
+              </div>
+
+              <div
+                onClick={() => onNavigate('/admin/lists')}
+                className="bg-white border border-neutral-200/90 rounded-2xl p-5 space-y-2 shadow-xs hover:border-sky-600/40 transition-colors cursor-pointer group"
+              >
+                <div className="flex items-center justify-between text-neutral-500">
+                  <span className="text-xs font-bold uppercase tracking-wider group-hover:text-sky-700 transition-colors">
+                    List Items Added
+                  </span>
+                  <CheckCheck className="w-4 h-4 text-sky-600" />
+                </div>
+                <div className="text-2xl sm:text-3xl font-black text-sky-800 font-mono">
+                  {isLoading ? '...' : stats.totalItems}
+                </div>
+                <div className="text-[11px] text-neutral-500 flex items-center justify-between">
+                  <span>{stats.completedItems} items checked off (done)</span>
+                  <span className="text-[10px] font-mono text-sky-700 bg-sky-50/60 px-1.5 py-0.5 rounded">
+                    Parchi Items
+                  </span>
+                </div>
+              </div>
+
+              <div
+                onClick={() => onNavigate('/admin/tickets')}
+                className="bg-white border border-neutral-200/90 rounded-2xl p-5 space-y-2 shadow-xs hover:border-amber-600/40 transition-colors cursor-pointer group"
+              >
+                <div className="flex items-center justify-between text-neutral-500">
+                  <span className="text-xs font-bold uppercase tracking-wider group-hover:text-amber-700 transition-colors">
+                    Support Inquiries
+                  </span>
+                  <Headphones className="w-4 h-4 text-amber-600" />
+                </div>
+                <div className="text-2xl sm:text-3xl font-black text-amber-700 font-mono">
+                  {isLoading ? '...' : stats.openTickets}
+                </div>
+                <div className="text-[11px] text-neutral-500 flex items-center justify-between">
+                  <span>Awaiting staff response</span>
+                  <span className="text-[10px] font-mono text-amber-700 bg-amber-50/60 px-1.5 py-0.5 rounded">
+                    Support Desk
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 2: Staff & Governance KPIs */}
+          <div>
+            <div className="flex items-center justify-between mb-3 px-1">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-500 font-mono">
+                Staff &amp; Access Governance
+              </h3>
+              <span className="text-[10px] text-neutral-400 font-mono">Secure Access</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div
+                onClick={() => onNavigate('/admin/team')}
+                className="bg-white border border-neutral-200/90 rounded-2xl p-5 space-y-2 shadow-xs hover:border-[#003527]/40 transition-colors cursor-pointer group"
+              >
+                <div className="flex items-center justify-between text-neutral-500">
+                  <span className="text-xs font-bold uppercase tracking-wider group-hover:text-[#003527] transition-colors">
+                    Staff Members
+                  </span>
+                  <Users className="w-4 h-4 text-[#003527]" />
+                </div>
+                <div className="text-2xl sm:text-3xl font-black text-[#003527] font-mono">
+                  {isLoading ? '...' : stats.totalAdmins}
+                </div>
+                <div className="text-[11px] text-neutral-500 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span>{stats.activeAdmins} active account(s)</span>
+                </div>
+              </div>
+
+              <div className="bg-white border border-neutral-200/90 rounded-2xl p-5 space-y-2 shadow-xs">
+                <div className="flex items-center justify-between text-neutral-500">
+                  <span className="text-xs font-bold uppercase tracking-wider">2FA Compliance</span>
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                </div>
+                <div className="text-2xl sm:text-3xl font-black text-emerald-700 font-mono">100%</div>
+                <div className="text-[11px] text-neutral-500">Strictly enforced for all roles</div>
+              </div>
+
+              <div
+                onClick={() => onNavigate('/admin/team')}
+                className="bg-white border border-neutral-200/90 rounded-2xl p-5 space-y-2 shadow-xs hover:border-amber-600/40 transition-colors cursor-pointer group"
+              >
+                <div className="flex items-center justify-between text-neutral-500">
+                  <span className="text-xs font-bold uppercase tracking-wider group-hover:text-amber-700 transition-colors">
+                    Pending Invites
+                  </span>
+                  <Clock className="w-4 h-4 text-amber-600" />
+                </div>
+                <div className="text-2xl sm:text-3xl font-black text-amber-700 font-mono">
+                  {isLoading ? '...' : stats.pendingInvites}
+                </div>
+                <div className="text-[11px] text-neutral-500">24-hour expiring tokens</div>
+              </div>
+
+              <div
+                onClick={() => onNavigate('/admin/audit-log')}
+                className="bg-white border border-neutral-200/90 rounded-2xl p-5 space-y-2 shadow-xs hover:border-sky-600/40 transition-colors cursor-pointer group"
+              >
+                <div className="flex items-center justify-between text-neutral-500">
+                  <span className="text-xs font-bold uppercase tracking-wider group-hover:text-sky-700 transition-colors">
+                    Audit Trail Events
+                  </span>
+                  <History className="w-4 h-4 text-sky-600" />
+                </div>
+                <div className="text-2xl sm:text-3xl font-black text-sky-800 font-mono">
+                  {isLoading ? '...' : stats.totalAuditLogs}
+                </div>
+                <div className="text-[11px] text-neutral-500">Verified audit records</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Navigation Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div
+              onClick={() => onNavigate('/admin/users')}
+              className="bg-white border border-neutral-200/90 rounded-2xl p-5 hover:border-[#003527] transition-all cursor-pointer space-y-2 group shadow-xs"
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-neutral-900 text-sm group-hover:text-[#003527]">
+                  Shopper Accounts &amp; Activity
+                </span>
+                <ArrowRight className="w-4 h-4 text-neutral-400 group-hover:text-[#003527] group-hover:translate-x-1 transition-all" />
+              </div>
+              <p className="text-xs text-neutral-500 leading-relaxed">
+                View registered shoppers, mobile numbers, signup dates, and moderation status.
+              </p>
+            </div>
+
+            <div
+              onClick={() => onNavigate('/admin/lists')}
+              className="bg-white border border-neutral-200/90 rounded-2xl p-5 hover:border-[#003527] transition-all cursor-pointer space-y-2 group shadow-xs"
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-neutral-900 text-sm group-hover:text-[#003527]">
+                  Shopping Lists (Parchis)
+                </span>
+                <ArrowRight className="w-4 h-4 text-neutral-400 group-hover:text-[#003527] group-hover:translate-x-1 transition-all" />
+              </div>
+              <p className="text-xs text-neutral-500 leading-relaxed">
+                Inspect live grocery lists, added items, and completed checkoffs created by users.
+              </p>
+            </div>
+
+            <div
+              onClick={() => onNavigate('/admin/catalog')}
+              className="bg-white border border-neutral-200/90 rounded-2xl p-5 hover:border-[#003527] transition-all cursor-pointer space-y-2 group shadow-xs"
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-neutral-900 text-sm group-hover:text-[#003527]">
+                  Grocery Item Catalog
+                </span>
+                <ArrowRight className="w-4 h-4 text-neutral-400 group-hover:text-[#003527] group-hover:translate-x-1 transition-all" />
+              </div>
+              <p className="text-xs text-neutral-500 leading-relaxed">
+                Manage Pakistani grocery vocabulary, Urdu/Roman Urdu terms, and category auto-suggestions.
+              </p>
+            </div>
+          </div>
+
+          {/* Recent Audit Trail Preview */}
+          <div className="bg-white border border-neutral-200/90 rounded-3xl p-5 sm:p-6 space-y-4 shadow-xs">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-bold text-[#003527] tracking-tight flex items-center gap-2">
+                  <History className="w-5 h-5 text-emerald-600" />
+                  <span>Recent Security &amp; Activity Events</span>
+                </h3>
+                <p className="text-xs text-neutral-500 mt-0.5">
+                  Authoritative audit log of staff actions and system events
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => onNavigate('/admin/audit-log')}
+                className="text-xs text-[#003527] hover:underline font-bold flex items-center gap-1 cursor-pointer"
+              >
+                <span>Full Trail</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {recentLogs.length === 0 ? (
+              <div className="text-center py-8 text-xs text-neutral-400">
+                No audit events recorded yet in database.
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {recentLogs.map((log) => (
+                  <div
+                    key={log.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-xl bg-neutral-50/80 border border-neutral-200/70 text-xs text-neutral-800 gap-2"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="font-mono text-[10px] text-[#003527] font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 shrink-0">
+                        {log.action}
+                      </span>
+                      <span className="text-neutral-700 font-medium truncate">{log.adminEmail || 'System'}</span>
+                    </div>
+                    <div className="flex items-center justify-between sm:justify-end gap-2 text-[10px] text-neutral-400 font-mono shrink-0 pl-1 sm:pl-0">
+                      {log.metadata?.note && (
+                        <span className="truncate max-w-[200px] text-neutral-500 hidden md:inline">
+                          {log.metadata.note}
+                        </span>
+                      )}
+                      <span>
+                        {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

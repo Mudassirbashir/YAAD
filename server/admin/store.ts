@@ -429,10 +429,10 @@ const isServerless = Boolean(
 const DATA_DIR = isServerless ? '/tmp' : path.join(process.cwd(), 'data');
 const DATA_FILE = isServerless ? '/tmp/admin_data.json' : path.join(DATA_DIR, 'admin_data.json');
 
-// Inactivity timeout: 30 minutes
-export const SESSION_INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
-// Absolute session expiry: 12 hours
-export const SESSION_MAX_AGE_MS = 12 * 60 * 60 * 1000;
+// Inactivity timeout: 24 hours (prevents premature session logouts)
+export const SESSION_INACTIVITY_TIMEOUT_MS = 24 * 60 * 60 * 1000;
+// Absolute session expiry: 7 days
+export const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 // Max failed attempts before lockout
 export const MAX_FAILED_ATTEMPTS = 5;
 // Lockout duration: 15 minutes

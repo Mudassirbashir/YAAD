@@ -112,6 +112,7 @@ export const romanUrdu: typeof en = {
     goodMorning: 'Subah Bakhair',
     goodAfternoon: 'Dopehar Bakhair',
     goodEvening: 'Shaam Bakhair',
+    goodNight: 'Shab Bakhair',
     userGreeting: 'Khush Amdeed, {name}',
     subtitle: 'Aaj ka din organize karne ke liye tayyar?',
     quickStart: 'Jaldi Shuru Karein',

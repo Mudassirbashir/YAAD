@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   SlidersHorizontal,
   Languages,
@@ -8,6 +8,9 @@ import {
   Volume2,
   VolumeX,
   Check,
+  Bell,
+  BellRing,
+  Send,
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { Language } from '../../translations';
@@ -24,6 +27,70 @@ export const PreferencesSection: React.FC<PreferencesSectionProps> = ({
   onLanguageSelect,
 }) => {
   const { t, language, isRTL } = useLanguage();
+
+  const [pushEnabled, setPushEnabled] = useState<boolean>(() => {
+    return localStorage.getItem('yaad_push_enabled') !== 'false';
+  });
+
+  const [permissionState, setPermissionState] = useState<string>(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      return Notification.permission;
+    }
+    return 'unsupported';
+  });
+
+  const [testNotificationSent, setTestNotificationSent] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      setPermissionState(Notification.permission);
+    }
+  }, []);
+
+  const handleTogglePush = async () => {
+    if (!pushEnabled) {
+      if (typeof window !== 'undefined' && 'Notification' in window) {
+        try {
+          const res = await Notification.requestPermission();
+          setPermissionState(res);
+          if (res === 'granted') {
+            setPushEnabled(true);
+            localStorage.setItem('yaad_push_enabled', 'true');
+            new Notification('YAAD Notifications Active 🛒', {
+              body:
+                language === 'ur'
+                  ? 'آپ کو منڈی کے الرٹس اور خریداری کی یاد دہانیاں موصول ہوں گی'
+                  : 'You will receive weekly Mandi reminders and shopping list updates.',
+              icon: '/logo.png',
+            });
+            return;
+          }
+        } catch {
+          // Fallback if browser permission prompt fails
+        }
+      }
+      setPushEnabled(true);
+      localStorage.setItem('yaad_push_enabled', 'true');
+    } else {
+      setPushEnabled(false);
+      localStorage.setItem('yaad_push_enabled', 'false');
+    }
+  };
+
+  const handleSendTestNotification = () => {
+    setTestNotificationSent(true);
+    setTimeout(() => setTestNotificationSent(false), 3000);
+
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+      new Notification('YAAD Mandi Alert 🥕', {
+        body:
+          language === 'ur'
+            ? 'جمعہ بازار اور تازہ سبزیوں کے لیے اپنی پرچی تیار کریں!'
+            : 'Get ready for Friday Mandi! Check your shopping list items.',
+        icon: '/logo.png',
+      });
+    }
+  };
 
   return (
     <section id="settings_preferences_section" className="space-y-3 sm:space-y-3.5">
@@ -169,7 +236,7 @@ export const PreferencesSection: React.FC<PreferencesSectionProps> = ({
         </div>
 
         {/* 2. Sound Effects Toggle */}
-        <div className="pt-5 flex items-center justify-between gap-3">
+        <div className="py-5 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-10 h-10 rounded-2xl bg-primary-fixed/30 text-primary flex items-center justify-center shrink-0 shadow-2xs">
               {soundEnabled ? (
@@ -191,7 +258,7 @@ export const PreferencesSection: React.FC<PreferencesSectionProps> = ({
             </div>
           </div>
 
-          {/* Toggle switch */}
+          {/* Sound Toggle switch */}
           <button
             id="toggle_sound_btn"
             type="button"
@@ -213,6 +280,92 @@ export const PreferencesSection: React.FC<PreferencesSectionProps> = ({
               }`}
             />
           </button>
+        </div>
+
+        {/* 3. Push Notifications Toggle & Controls */}
+        <div className="pt-5 space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/15 text-amber-800 flex items-center justify-center shrink-0 shadow-2xs">
+                {pushEnabled ? (
+                  <BellRing className="w-5 h-5 text-amber-700 stroke-[2.2]" />
+                ) : (
+                  <Bell className="w-5 h-5 text-outline stroke-[2]" />
+                )}
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm sm:text-base font-bold text-on-surface font-['Manrope'] truncate">
+                    {language === 'ur' ? 'پش نوٹیفکیشنز (Push Notifications)' : 'Push Notifications'}
+                  </h3>
+                  {pushEnabled && permissionState === 'granted' && (
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-[#003527] border border-emerald-200 shrink-0">
+                      Active
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-outline line-clamp-2">
+                  {language === 'ur'
+                    ? 'منڈی کے اہم الرٹس، جمعہ بازار کی یاد دہانی اور خریداری کی تازہ خبریں حاصل کریں'
+                    : 'Receive Mandi alerts, Friday shopping reminders, and fresh grocery updates.'}
+                </p>
+              </div>
+            </div>
+
+            {/* Push Toggle switch */}
+            <button
+              id="toggle_push_btn"
+              type="button"
+              role="switch"
+              aria-checked={pushEnabled}
+              onClick={handleTogglePush}
+              aria-label="Toggle Push Notifications"
+              className={`w-13 h-7 rounded-full p-1 transition-colors duration-200 ease-in-out focus:outline-hidden focus:ring-2 focus:ring-primary/20 shrink-0 cursor-pointer ${
+                pushEnabled ? 'bg-primary' : 'bg-surface-container-high'
+              }`}
+            >
+              <div
+                className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform duration-200 ease-in-out ${
+                  pushEnabled
+                    ? isRTL
+                      ? '-translate-x-6'
+                      : 'translate-x-6'
+                    : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Test Alert Button (when enabled) */}
+          {pushEnabled && (
+            <div className="ps-13 flex items-center gap-3 pt-1">
+              <button
+                type="button"
+                onClick={handleSendTestNotification}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container-low hover:bg-surface-container text-primary font-bold text-xs border border-surface-dim transition-all cursor-pointer shadow-2xs"
+              >
+                <Send className="w-3.5 h-3.5" />
+                <span>
+                  {testNotificationSent
+                    ? language === 'ur'
+                      ? 'ٹیسٹ الرٹ بھیج دیا گیا!'
+                      : 'Test Alert Sent!'
+                    : language === 'ur'
+                    ? 'ٹیسٹ الرٹ چیک کریں'
+                    : 'Send Test Alert'}
+                </span>
+              </button>
+              <span className="text-[11px] text-outline">
+                {permissionState === 'granted'
+                  ? language === 'ur'
+                    ? 'براؤزر پرمیشن منظور ہے'
+                    : 'Browser permission granted'
+                  : language === 'ur'
+                  ? 'نوٹیفکیشن ایکٹو ہے'
+                  : 'In-app broadcasts active'}
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </section>

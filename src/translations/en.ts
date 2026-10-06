@@ -109,6 +109,7 @@ export const en = {
     goodMorning: 'Good Morning',
     goodAfternoon: 'Good Afternoon',
     goodEvening: 'Good Evening',
+    goodNight: 'Good Night',
     userGreeting: 'Hello, {name}',
     subtitle: "Let's make your day organized",
     quickStart: 'Quick Start',

@@ -1787,11 +1787,11 @@
         "twitter": "https://x.com/yaadapppk"
       },
       "status": "published",
-      "publishedAt": 1791028918471,
+      "publishedAt": 1791054729188,
       "readTimeMinutes": 4,
       "viewsCount": 1420,
-      "createdAt": 1791028918471,
-      "updatedAt": 1791201718471
+      "createdAt": 1791054729188,
+      "updatedAt": 1791227529188
     },
     {
       "id": "art_fresh_sabzi_guide",
@@ -1816,11 +1816,11 @@
         "twitter": "https://x.com/yaadapppk"
       },
       "status": "published",
-      "publishedAt": 1790683318471,
+      "publishedAt": 1790709129188,
       "readTimeMinutes": 3,
       "viewsCount": 890,
-      "createdAt": 1790683318471,
-      "updatedAt": 1790683318471
+      "createdAt": 1790709129188,
+      "updatedAt": 1790709129188
     },
     {
       "id": "art_spices_shelf_life",
@@ -1845,11 +1845,11 @@
         "instagram": "https://instagram.com/yaadapppk"
       },
       "status": "published",
-      "publishedAt": 1790078518471,
+      "publishedAt": 1790104329188,
       "readTimeMinutes": 3,
       "viewsCount": 650,
-      "createdAt": 1790078518471,
-      "updatedAt": 1790078518471
+      "createdAt": 1790104329188,
+      "updatedAt": 1790104329188
     }
   ],
   "pushCampaigns": [
@@ -1890,6 +1890,81 @@
   ],
   "pushTemplates": [],
   "supportTickets": [
+    {
+      "id": "tkt_7cc0298a-32a0-4d18-802a-a4ada8273c75",
+      "ticketNumber": "TKT-00005",
+      "userId": "guest",
+      "userName": "Tariq Mehmood",
+      "userEmail": "shopper_qa@yaad.pk",
+      "userPhone": "+92 300 9876543",
+      "subject": "Grocery item category mismatch",
+      "description": "Basmati Rice was categorized under Dairy instead of Grains.",
+      "category": "bug",
+      "priority": "high",
+      "status": "open",
+      "messages": [
+        {
+          "id": "msg_a0472da7-5ffd-403a-9cb9-6414362ac783",
+          "sender": "user",
+          "senderName": "Tariq Mehmood",
+          "text": "Basmati Rice was categorized under Dairy instead of Grains.",
+          "timestamp": 1791314456525
+        }
+      ],
+      "internalNotes": [],
+      "createdAt": 1791314456525,
+      "updatedAt": 1791314456525
+    },
+    {
+      "id": "tkt_45040d47-35bc-43b2-b476-399d2193771f",
+      "ticketNumber": "TKT-00004",
+      "userId": "guest",
+      "userName": "Ayesha Bibi",
+      "userEmail": "ayesha.shopper@gmail.com",
+      "userPhone": "+92 300 1234567",
+      "subject": "Vegetable prices update question",
+      "description": "Are Mandi rates updated every morning?",
+      "category": "general",
+      "priority": "normal",
+      "status": "open",
+      "messages": [
+        {
+          "id": "msg_ea2e7362-a0b9-43fc-adb9-e636aaab772d",
+          "sender": "user",
+          "senderName": "Ayesha Bibi",
+          "text": "Are Mandi rates updated every morning?",
+          "timestamp": 1791314303818
+        }
+      ],
+      "internalNotes": [],
+      "createdAt": 1791314303818,
+      "updatedAt": 1791314303818
+    },
+    {
+      "id": "tkt_9f4bad2a-2b2a-4c48-ba89-f37aaaed4282",
+      "ticketNumber": "TKT-00003",
+      "userId": "guest",
+      "userName": "Tariq Mehmood",
+      "userEmail": "shopper_qa@yaad.pk",
+      "userPhone": "+92 300 9876543",
+      "subject": "Grocery item category mismatch",
+      "description": "Basmati Rice was categorized under Dairy instead of Grains.",
+      "category": "bug",
+      "priority": "high",
+      "status": "open",
+      "messages": [
+        {
+          "id": "msg_2538aaa6-e4ab-4fa7-9c60-6d4004f5b7fb",
+          "sender": "user",
+          "senderName": "Tariq Mehmood",
+          "text": "Basmati Rice was categorized under Dairy instead of Grains.",
+          "timestamp": 1791313829171
+        }
+      ],
+      "internalNotes": [],
+      "createdAt": 1791313829171,
+      "updatedAt": 1791313829171
+    },
     {
       "id": "tkt_e08db237-53bb-43bf-9b80-23c209550aaf",
       "ticketNumber": "TKT-00002",
@@ -1942,6 +2017,26 @@
   ],
   "cannedReplies": [],
   "accessRequests": [
+    {
+      "id": "req_de23c0cc-90e8-4bd5-9433-b97cf64cc6c7",
+      "name": "Sarah Khan",
+      "email": "sarah.khan@yaadapp.pk",
+      "requestedRole": "editor",
+      "department": "Urdu Editorial & Catalog",
+      "reason": "Need access to manage Ramadan Rashan guide articles and grocery classifications.",
+      "status": "pending",
+      "createdAt": 1791314456533
+    },
+    {
+      "id": "req_5d915d92-2195-4667-92a0-fbf2a28b3bf4",
+      "name": "Sarah Khan",
+      "email": "sarah.khan@yaadapp.pk",
+      "requestedRole": "editor",
+      "department": "Urdu Editorial & Catalog",
+      "reason": "Need access to manage Ramadan Rashan guide articles and grocery classifications.",
+      "status": "pending",
+      "createdAt": 1791313829185
+    },
     {
       "id": "req_4d74b920-e152-4b53-a224-b989bf933646",
       "name": "Sarah Khan",

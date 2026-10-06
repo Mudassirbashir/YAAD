@@ -156,6 +156,17 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
     });
   };
 
+  // Tap & Hold / Long Press on card to instantly trigger selection mode
+  const handleLongPressCard = (listId: string) => {
+    triggerHaptic(25);
+    setIsSelectionMode(true);
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.add(listId);
+      return next;
+    });
+  };
+
   // Toggle select all currently displayed lists
   const handleToggleSelectAll = () => {
     triggerHaptic(6);
@@ -541,6 +552,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
                 selectable={isSelectionMode}
                 selected={selectedIds.has(list.id)}
                 onToggleSelect={handleToggleSelectOne}
+                onLongPress={handleLongPressCard}
               />
             ))}
           </div>

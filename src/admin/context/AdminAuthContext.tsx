@@ -40,7 +40,7 @@ interface AdminAuthContextType {
 const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefined);
 
 const TOKEN_STORAGE_KEY = 'yaad_admin_bearer_token';
-const INACTIVITY_TIMEOUT_SECONDS = 30 * 60; // 30 minutes
+const INACTIVITY_TIMEOUT_SECONDS = 24 * 60 * 60; // 24 hours (prevents premature staff logouts)
 
 export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [admin, setAdmin] = useState<AdminUser | null>(null);

@@ -4,7 +4,6 @@ import {
   Users,
   Shield,
   FileText,
-  Clock,
   LogOut,
   Menu,
   X,
@@ -15,9 +14,10 @@ import {
   BarChart3,
   HelpCircle,
   Settings,
+  ArrowLeft,
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
-import { ROLE_LABELS } from '../types';
+import { AdminRole, ROLE_LABELS } from '../types';
 import { AdminSecurityModal } from './AdminSecurityModal';
 
 interface AdminLayoutProps {
@@ -28,6 +28,38 @@ interface AdminLayoutProps {
   subtitle?: string;
 }
 
+export const ROLE_PERMITTED_ROUTES: Record<AdminRole, string[]> = {
+  super_admin: [
+    '/admin',
+    '/admin/users',
+    '/admin/lists',
+    '/admin/catalog',
+    '/admin/tickets',
+    '/admin/cms',
+    '/admin/push',
+    '/admin/analytics',
+    '/admin/team',
+    '/admin/audit-log',
+    '/admin/settings',
+  ],
+  content_editor: [
+    '/admin',
+    '/admin/catalog',
+    '/admin/cms',
+  ],
+  support_agent: [
+    '/admin',
+    '/admin/tickets',
+    '/admin/users',
+  ],
+  analyst: [
+    '/admin',
+    '/admin/analytics',
+    '/admin/lists',
+    '/admin/users',
+  ],
+};
+
 export const AdminLayout: React.FC<AdminLayoutProps> = ({
   children,
   activePath = '/admin',
@@ -35,18 +67,14 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   title,
   subtitle,
 }) => {
-  const { admin, logout, inactivitySecondsRemaining } = useAdminAuth();
+  const { admin, logout } = useAdminAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [securityModalOpen, setSecurityModalOpen] = useState(false);
 
-  const formatInactivityTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const isLowTime = inactivitySecondsRemaining < 5 * 60;
   const roleMeta = admin?.role ? ROLE_LABELS[admin.role] : null;
+  const userRole: AdminRole = admin?.role || 'super_admin';
+  const permittedRoutes = ROLE_PERMITTED_ROUTES[userRole] || ['/admin'];
+  const isCurrentPathAllowed = permittedRoutes.includes(activePath);
 
   const listNavItems = [
     { id: 'dashboard', label: 'Dashboard', path: '/admin', icon: LayoutDashboard },
@@ -68,15 +96,19 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     { id: 'settings', label: 'System Settings', path: '/admin/settings', icon: Settings },
   ];
 
+  const filteredListNav = listNavItems.filter((item) => permittedRoutes.includes(item.path));
+  const filteredCommNav = commNavItems.filter((item) => permittedRoutes.includes(item.path));
+  const filteredGovNav = govNavItems.filter((item) => permittedRoutes.includes(item.path));
+
   return (
     <div className="min-h-screen bg-[#FDF6E3]/25 text-neutral-900 flex flex-col font-['Plus_Jakarta_Sans',sans-serif] antialiased">
-      {/* Top Admin Header Bar - Fully responsive */}
+      {/* Top Admin Header Bar - Clean, simplified and professional */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-neutral-200/80 h-16 flex items-center justify-between px-3 sm:px-6 shadow-xs">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-xl bg-neutral-100 text-neutral-700 hover:text-neutral-900 shrink-0"
+            className="md:hidden p-2 rounded-xl bg-neutral-100 text-neutral-700 hover:text-neutral-900 shrink-0 cursor-pointer"
             aria-label="Toggle navigation menu"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -92,38 +124,33 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                   YAAD Admin
                 </span>
                 <span className="hidden sm:inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-[#003527] border border-emerald-200 shrink-0">
-                  Control Center
+                  {roleMeta?.title || 'Control Center'}
                 </span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Right Header Status */}
+        {/* Right Header Status: Staff Profile & Quick Actions */}
         <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-          {/* Inactivity countdown pill (tablet+) */}
-          <div
-            className={`hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono border ${
-              isLowTime
-                ? 'bg-rose-50 text-rose-700 border-rose-200 animate-pulse'
-                : 'bg-neutral-100 text-neutral-700 border-neutral-200'
-            }`}
-            title="Session automatically expires after 30 minutes of inactivity for staff security"
-          >
-            <Clock className="w-3.5 h-3.5 text-neutral-500" />
-            <span>Idle: {formatInactivityTime(inactivitySecondsRemaining)}</span>
-          </div>
-
-          {/* Active Admin Profile */}
           {admin && (
-            <div className="flex items-center gap-1 sm:gap-2.5 pl-1.5 sm:pl-2 border-l border-neutral-200">
-              <div className="hidden lg:block text-right">
-                <div className="text-xs font-bold text-neutral-900 leading-tight">{admin.name}</div>
-                <div className="text-[11px] text-neutral-500">{admin.email}</div>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-[#003527] text-white flex items-center justify-center font-bold text-xs font-mono shadow-xs shrink-0">
+                  {admin.name?.charAt(0)?.toUpperCase() || 'A'}
+                </div>
+                <div className="hidden lg:block text-left">
+                  <div className="text-xs font-bold text-neutral-900 leading-tight truncate max-w-[140px]">
+                    {admin.name}
+                  </div>
+                  <div className="text-[10px] text-neutral-500 truncate max-w-[140px]">
+                    {admin.email}
+                  </div>
+                </div>
               </div>
 
               {roleMeta && (
-                <span className="hidden sm:inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg border bg-emerald-50 text-[#003527] border-emerald-200">
+                <span className="hidden md:inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg border bg-emerald-50 text-[#003527] border-emerald-200">
                   {roleMeta.title}
                 </span>
               )}
@@ -131,7 +158,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               <button
                 type="button"
                 onClick={() => setSecurityModalOpen(true)}
-                className="p-1.5 sm:p-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-200 transition-all cursor-pointer flex items-center gap-1 text-xs font-semibold"
+                className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-200 transition-all cursor-pointer flex items-center gap-1.5 text-xs font-semibold"
                 title="Security & 2FA Settings"
                 aria-label="Security & 2FA Settings"
               >
@@ -142,11 +169,12 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               <button
                 type="button"
                 onClick={logout}
-                className="p-1.5 sm:p-2 rounded-xl bg-neutral-100 hover:bg-rose-50 hover:text-rose-700 text-neutral-600 border border-neutral-200 hover:border-rose-200 transition-all cursor-pointer"
+                className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-neutral-100 hover:bg-rose-50 hover:text-rose-700 text-neutral-600 border border-neutral-200 hover:border-rose-200 transition-all cursor-pointer flex items-center gap-1.5 text-xs font-semibold"
                 title="Sign out of Admin Panel"
                 aria-label="Sign out"
               >
                 <LogOut className="w-4 h-4" />
+                <span className="hidden sm:inline">Sign Out</span>
               </button>
             </div>
           )}
@@ -172,98 +200,101 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                     {roleMeta.title}
                   </span>
                 )}
-                <span className="text-[10px] font-mono text-neutral-400">
-                  Idle: {formatInactivityTime(inactivitySecondsRemaining)}
-                </span>
               </div>
             </div>
 
             {/* 1. Shopping & Parchi Operations */}
-            <div className="space-y-1">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 px-3 mb-1.5">
-                Shopping &amp; Lists
+            {filteredListNav.length > 0 && (
+              <div className="space-y-1">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 px-3 mb-1.5">
+                  Shopping &amp; Lists
+                </div>
+                {filteredListNav.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activePath === item.path;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        onNavigate(item.path);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
+                        isActive
+                          ? 'bg-[#003527] text-white shadow-md shadow-emerald-950/15'
+                          : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 border border-transparent'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 shrink-0" />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
               </div>
-              {listNavItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = activePath === item.path;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => {
-                      onNavigate(item.path);
-                      setMobileMenuOpen(false);
-                    }}
-                    className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
-                      isActive
-                        ? 'bg-[#003527] text-white shadow-md shadow-emerald-950/15'
-                        : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 border border-transparent'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4 shrink-0" />
-                    <span>{item.label}</span>
-                  </button>
-                );
-              })}
-            </div>
+            )}
 
             {/* 2. Communications & Guides */}
-            <div className="space-y-1 pt-3 border-t border-neutral-100">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 px-3 mb-1.5">
-                Shopper Support &amp; Guides
+            {filteredCommNav.length > 0 && (
+              <div className="space-y-1 pt-3 border-t border-neutral-100">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 px-3 mb-1.5">
+                  Shopper Support &amp; Guides
+                </div>
+                {filteredCommNav.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activePath === item.path;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        onNavigate(item.path);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
+                        isActive
+                          ? 'bg-[#003527] text-white shadow-md shadow-emerald-950/15'
+                          : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 border border-transparent'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 shrink-0" />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
               </div>
-              {commNavItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = activePath === item.path;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => {
-                      onNavigate(item.path);
-                      setMobileMenuOpen(false);
-                    }}
-                    className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
-                      isActive
-                        ? 'bg-[#003527] text-white shadow-md shadow-emerald-950/15'
-                        : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 border border-transparent'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4 shrink-0" />
-                    <span>{item.label}</span>
-                  </button>
-                );
-              })}
-            </div>
+            )}
 
             {/* 3. Governance & Audit */}
-            <div className="space-y-1 pt-3 border-t border-neutral-100">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 px-3 mb-1.5">
-                Staff &amp; Governance
+            {filteredGovNav.length > 0 && (
+              <div className="space-y-1 pt-3 border-t border-neutral-100">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 px-3 mb-1.5">
+                  Staff &amp; Governance
+                </div>
+                {filteredGovNav.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activePath === item.path;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        onNavigate(item.path);
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
+                        isActive
+                          ? 'bg-[#003527] text-white shadow-md shadow-emerald-950/15'
+                          : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 border border-transparent'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 shrink-0" />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
               </div>
-              {govNavItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = activePath === item.path;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => {
-                      onNavigate(item.path);
-                      setMobileMenuOpen(false);
-                    }}
-                    className={`w-full flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
-                      isActive
-                        ? 'bg-[#003527] text-white shadow-md shadow-emerald-950/15'
-                        : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 border border-transparent'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4 shrink-0" />
-                    <span>{item.label}</span>
-                  </button>
-                );
-              })}
-            </div>
+            )}
           </div>
 
           {/* Sidebar Footer */}
@@ -305,7 +336,32 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
               </div>
             )}
 
-            {children}
+            {isCurrentPathAllowed ? (
+              children
+            ) : (
+              <div className="bg-white border border-neutral-200/90 rounded-3xl p-8 sm:p-12 text-center shadow-xs max-w-lg mx-auto my-12 space-y-5 animate-in fade-in">
+                <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center mx-auto shadow-xs">
+                  <Lock className="w-8 h-8" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-xl font-black text-neutral-900 font-['Manrope']">Module Access Restricted</h3>
+                  <p className="text-xs sm:text-sm text-neutral-500 leading-relaxed">
+                    Your assigned role (<strong>{roleMeta?.title || userRole}</strong>) does not have permission to access this module.
+                    If you require access, please contact your Super Administrator.
+                  </p>
+                </div>
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => onNavigate('/admin')}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#003527] hover:bg-[#004734] text-white font-bold text-xs shadow-sm transition-all cursor-pointer"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span>Return to Dashboard</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </main>
       </div>

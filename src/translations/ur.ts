@@ -99,6 +99,15 @@ export const ur = {
     listItemsHeader: 'لسٹ کی اشیاء',
     startShoppingBtn: 'خریداری شروع کریں',
   },
+  home: {
+    ...en.home,
+    greeting: 'السلام علیکم',
+    goodMorning: 'صبح بخیر',
+    goodAfternoon: 'دوپہر بخیر',
+    goodEvening: 'شام بخیر',
+    goodNight: 'شب بخیر',
+    letsMakeAList: 'آئیے لسٹ بنائیں',
+  },
   errors: {
     ...en.errors,
     sessionUnavailable: 'شاپنگ سیشن دستیاب نہیں',

@@ -25,6 +25,7 @@ export interface ShoppingListCardProps {
   selectable?: boolean;
   selected?: boolean;
   onToggleSelect?: (listId: string) => void;
+  onLongPress?: (listId: string) => void;
 }
 
 export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
@@ -35,11 +36,34 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
   selectable = false,
   selected = false,
   onToggleSelect,
+  onLongPress,
 }) => {
   const { t } = useLanguage();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isLongPressTriggeredRef = useRef(false);
+
+  const startLongPress = () => {
+    isLongPressTriggeredRef.current = false;
+    if (longPressTimerRef.current) clearTimeout(longPressTimerRef.current);
+    longPressTimerRef.current = setTimeout(() => {
+      isLongPressTriggeredRef.current = true;
+      triggerHaptic(20);
+      if (onLongPress) {
+        onLongPress(list.id);
+      }
+    }, 450);
+  };
+
+  const cancelLongPress = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
 
   // Close menu on click outside or Escape
   useEffect(() => {
@@ -100,7 +124,17 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
     <>
       <article
         id={`list_card_${list.id}`}
+        onTouchStart={startLongPress}
+        onTouchEnd={cancelLongPress}
+        onTouchMove={cancelLongPress}
+        onMouseDown={startLongPress}
+        onMouseUp={cancelLongPress}
+        onMouseLeave={cancelLongPress}
         onClick={() => {
+          if (isLongPressTriggeredRef.current) {
+            isLongPressTriggeredRef.current = false;
+            return;
+          }
           if (selectable && onToggleSelect) {
             triggerHaptic(6);
             onToggleSelect(list.id);

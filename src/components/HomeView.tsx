@@ -96,12 +96,14 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const greetingData = useMemo(() => {
     const hour = new Date().getHours();
     let timeGreeting = t('home.greeting');
-    if (hour < 12) {
+    if (hour >= 5 && hour < 12) {
       timeGreeting = t('home.goodMorning');
-    } else if (hour < 17) {
+    } else if (hour >= 12 && hour < 17) {
       timeGreeting = t('home.goodAfternoon');
-    } else {
+    } else if (hour >= 17 && hour < 21) {
       timeGreeting = t('home.goodEvening');
+    } else {
+      timeGreeting = t('home.goodNight') || t('home.goodEvening');
     }
 
     const rawName =
@@ -222,8 +224,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
             <span className="font-['Manrope'] text-[13.5px] sm:text-[15px] font-semibold text-outline leading-tight">
               {greetingData.timeGreeting}
             </span>
-            {/* Middle: User's name with minimal vertical space */}
-            <h1 className="font-['Plus_Jakarta_Sans'] text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight leading-tight truncate -mt-0.5">
+            {/* Middle: User's name prominently enlarged */}
+            <h1 className="font-['Plus_Jakarta_Sans'] text-3xl sm:text-4xl lg:text-5xl font-black text-on-surface tracking-tight leading-tight truncate mt-0.5">
               {greetingData.userName}
             </h1>
             {/* Bottom: Let's make a list in solid proper black */}

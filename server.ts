@@ -77,6 +77,26 @@ app.get(['/api/blog/articles', '/api/cms/articles'], (req, res) => {
   }
 });
 
+// Public Notifications / Announcements API (synced with Admin Push Broadcasts)
+app.get(['/api/notifications', '/api/notifications/broadcasts'], (req, res) => {
+  try {
+    const campaigns = adminStore.getPushCampaigns();
+    const publicAnnouncements = campaigns.map((c: any) => ({
+      id: c.id,
+      titleEn: c.titleEn || c.title_en || 'YAAD Alert',
+      titleUr: c.titleUr || c.title_ur || 'یاد الرٹ',
+      bodyEn: c.bodyEn || c.body_en || '',
+      bodyUr: c.bodyUr || c.body_ur || '',
+      iconUrl: c.iconUrl || '/logo.png',
+      sentAt: c.sentAt || c.sent_at || c.createdAt || Date.now(),
+      status: c.status || 'sent',
+    }));
+    return res.status(200).json({ success: true, notifications: publicAnnouncements });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to retrieve notifications', details: err?.message });
+  }
+});
+
 // Canonical production domain migration middleware:
 // Redirect requests arriving on deployment-specific URLs or legacy domains to https://yaadapppk.vercel.app
 app.use((req, res, next) => {
