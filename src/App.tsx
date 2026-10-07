@@ -130,12 +130,8 @@ function AppContent() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
 
-  // Phone Number reminder state (auto-navigate to Settings with phone input open)
-  const [focusPhoneInSettings, setFocusPhoneInSettings] = useState<boolean>(false);
-
   const handleOpenPhoneInSettings = useCallback(() => {
-    setFocusPhoneInSettings(true);
-    navigate('/settings/profile');
+    navigate('/settings');
   }, [navigate]);
 
   const hasOnboardedFlag = typeof window !== 'undefined'
@@ -1179,7 +1175,6 @@ function AppContent() {
     } else if (tab === 'lists') {
       navigate('/history');
     } else if (tab === 'settings') {
-      setFocusPhoneInSettings(false);
       navigate('/settings');
     }
   };
@@ -1345,7 +1340,7 @@ function AppContent() {
           onContinueShopping={handleOpenListInShoppingMode}
           onMarkComplete={handleCompleteTrip}
           onReuseList={handleReuseList}
-          onOpenProfile={() => navigate('/settings/profile')}
+          onOpenProfile={() => navigate('/settings')}
           onOpenMenu={() => navigate('/settings')}
           onOpenPhoneSettings={handleOpenPhoneInSettings}
           onOpenHistory={() => navigate('/history')}
@@ -1412,7 +1407,7 @@ function AppContent() {
           onCompleteTrip={handleCompleteTrip}
           onEditList={handleEditList}
           onDeleteList={handleDeleteList}
-          onOpenProfile={() => navigate('/settings/profile')}
+          onOpenProfile={() => navigate('/settings')}
           isCompletingTrip={isCompletingTrip}
           completionError={completionError}
           onClearCompletionError={() => setCompletionError(null)}
@@ -1429,7 +1424,7 @@ function AppContent() {
           }}
           onViewHistory={handleFinishCompletion}
           onAddMoreItems={() => navigate(`/lists/${currentActiveList.id}`)}
-          onOpenProfile={() => navigate('/settings/profile')}
+          onOpenProfile={() => navigate('/settings')}
           onStartNewList={handleStartCreateList}
           onReviewTrip={() => navigate(`/lists/${currentActiveList.id}`)}
         />
@@ -1450,7 +1445,7 @@ function AppContent() {
           onDeleteMultipleLists={handleDeleteMultipleLists}
           onClearAllHistory={handleClearAllHistory}
           onReuseList={handleReuseList}
-          onOpenProfile={() => navigate('/settings/profile')}
+          onOpenProfile={() => navigate('/settings')}
           onOpenMenu={() => navigate('/settings')}
           onBack={() => navigate('/home')}
           isOnline={isOnline}
@@ -1467,7 +1462,7 @@ function AppContent() {
           onMarkComplete={handleCompleteTrip}
           onEditList={handleEditList}
           onDeleteList={handleDeleteList}
-          onOpenProfile={() => navigate('/settings/profile')}
+          onOpenProfile={() => navigate('/settings')}
         />
       )}
 
@@ -1478,20 +1473,16 @@ function AppContent() {
           onBack={() => navigate(`/lists/${currentActiveList.id}`)}
           onSave={handleSaveEditedList}
           onDeleteList={handleDeleteList}
-          onOpenProfile={() => navigate('/settings/profile')}
+          onOpenProfile={() => navigate('/settings')}
         />
       )}
 
       {/* 17. Settings View (with direct SubSection navigation) */}
       {hasSplashFinished && user && !isPasswordResetRequiredActive && currentScreen === 'settings' && (
         <SettingsView
-          initialEditPhone={focusPhoneInSettings || route.params?.subSection === 'profile'}
           subSection={route.params?.subSection as SettingsSubSection || null}
           onSubSectionChange={(section) => navigate(`/settings/${section}`)}
-          onBack={() => {
-            setFocusPhoneInSettings(false);
-            navigate('/home');
-          }}
+          onBack={() => navigate('/home')}
           onSignOut={handleSignOut}
           onDeleteAccount={handleDeleteAccount}
           onOpenAuth={handleOpenAuth}

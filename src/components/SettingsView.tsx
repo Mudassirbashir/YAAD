@@ -1,38 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import {
-  UserCheck,
-  Palette,
-  SlidersHorizontal,
-  Compass,
-  ShieldAlert,
-  Pencil,
+  User,
   Smartphone,
-  X,
-  AlertCircle,
-  CheckCircle2,
-  Mail,
-  PhoneCall,
+  Pencil,
+  Palette,
+  Volume2,
+  VolumeX,
+  Bell,
+  BellRing,
+  Globe2,
+  LockKeyhole,
+  LogOut,
+  Sparkles,
+  Headphones,
   ShieldCheck,
+  ScrollText,
+  Info,
   Check,
+  ChevronRight,
+  ChevronLeft,
+  Trash2,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useAppTheme, AppThemeId } from '../context/ThemeContext';
 import { Language } from '../translations';
+import { APP_VERSION } from '../version';
 import { TopHeader } from './TopHeader';
 import { Avatar } from './Avatar';
 import { VerifiedBadge } from './VerifiedBadge';
 import { AvatarPickerModal } from './AvatarPickerModal';
-import { AppearanceSection } from './settings/AppearanceSection';
-import { PreferencesSection } from './settings/PreferencesSection';
-import { SecuritySection } from './settings/SecuritySection';
-import { AboutSection } from './settings/AboutSection';
+import { EditProfileModal } from './settings/EditProfileModal';
+import { ChangePasswordModal } from './settings/ChangePasswordModal';
 import { SignOutConfirmModal } from './settings/SignOutConfirmModal';
 import { LegalDocModal } from './settings/LegalDocModal';
-import {
-  validatePhoneNumber,
-  cleanPhoneNumber,
-  formatPhoneNumber,
-} from '../utils/phone';
+import { formatPhoneNumber } from '../utils/phone';
+import { triggerHaptic } from '../lib/sound';
 
 interface SettingsViewProps {
   onBack: () => void;
@@ -44,6 +47,7 @@ interface SettingsViewProps {
     page: 'terms' | 'privacy' | 'about' | 'help' | 'legal',
   ) => void;
   initialEditPhone?: boolean;
+  onClearInitialEditPhone?: () => void;
   subSection?: string | null;
   onSubSectionChange?: (
     section: 'profile' | 'appearance' | 'preferences' | 'about' | 'security' | 'language',
@@ -53,239 +57,43 @@ interface SettingsViewProps {
 export const SettingsView: React.FC<SettingsViewProps> = ({
   onBack,
   onSignOut,
+  onDeleteAccount,
   onOpenAuth,
   onOpenLegalPage,
   initialEditPhone = false,
+  onClearInitialEditPhone,
   subSection = null,
   onSubSectionChange,
 }) => {
   const { t, language, setLanguage, isRTL } = useLanguage();
-  const {
-    user,
-    profile,
-    updateUserProfile,
-    changePassword,
-  } = useAuth();
+  const { user, profile, updateUserProfile, changePassword } = useAuth();
+  const { theme, setTheme, themes } = useAppTheme();
 
-  // Active section for jump pill highlights
-  const [activeSection, setActiveSection] = useState<string>(
-    subSection || 'profile',
-  );
+  const Chevron = isRTL ? ChevronLeft : ChevronRight;
 
-  // Deep Link & Subsection auto-scroll
+  // Modals state - ALWAYS default to false so regular settings opens cleanly
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [showEditProfileModal, setShowEditProfileModal] = useState(false);
+  const [focusPhoneInModal, setFocusPhoneInModal] = useState(false);
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const [showSignOutModal, setShowSignOutModal] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [activeLegalModal, setActiveLegalModal] = useState<
+    'privacy' | 'terms' | 'help' | 'about' | null
+  >(null);
+
+  // Deep Link & subSection scrolling
   useEffect(() => {
-    if (!subSection) return;
-    setActiveSection(subSection);
-
-    const targetId =
-      subSection === 'profile'
-        ? 'settings_section_profile'
-        : subSection === 'appearance'
-        ? 'settings_section_appearance'
-        : subSection === 'security'
-        ? 'settings_section_security'
-        : subSection === 'about'
-        ? 'settings_section_about'
-        : 'settings_section_preferences';
-
-    const timer = setTimeout(() => {
+    if (subSection) {
+      const targetId = `settings_${subSection}_section`;
       const el = document.getElementById(targetId);
       if (el) {
         el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
-    }, 150);
-
-    return () => clearTimeout(timer);
+    }
   }, [subSection]);
 
-  const handleJumpToSection = (
-    section: 'profile' | 'appearance' | 'preferences' | 'about' | 'security',
-  ) => {
-    setActiveSection(section);
-    onSubSectionChange?.(section);
-    const targetId =
-      section === 'profile'
-        ? 'settings_section_profile'
-        : section === 'appearance'
-        ? 'settings_section_appearance'
-        : section === 'preferences'
-        ? 'settings_section_preferences'
-        : section === 'about'
-        ? 'settings_section_about'
-        : 'settings_section_security';
-
-    const el = document.getElementById(targetId);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
-
-  // ============================================================================
-  // Profile & Name/Phone Edit State
-  // ============================================================================
-  const [isEditingName, setIsEditingName] = useState(false);
-  const [fullNameInput, setFullNameInput] = useState('');
-  const [isEditingPhone, setIsEditingPhone] = useState(initialEditPhone);
-  const [phoneInput, setPhoneInput] = useState('');
-  const [phoneError, setPhoneError] = useState<string | null>(null);
-  const [isSavingProfile, setIsSavingProfile] = useState(false);
-  const [profileMessage, setProfileMessage] = useState<{
-    type: 'success' | 'error';
-    text: string;
-  } | null>(null);
-
-  // Sync inputs with user / profile data
-  useEffect(() => {
-    if (profile?.full_name) {
-      setFullNameInput(profile.full_name);
-    } else if (user?.user_metadata?.full_name) {
-      setFullNameInput(user.user_metadata.full_name);
-    } else {
-      setFullNameInput('');
-    }
-  }, [profile, user]);
-
-  useEffect(() => {
-    if (profile?.phone_number) {
-      setPhoneInput(profile.phone_number);
-    } else if (user?.user_metadata?.phone_number) {
-      setPhoneInput(user.user_metadata.phone_number);
-    } else if (user?.user_metadata?.phone) {
-      setPhoneInput(user.user_metadata.phone);
-    } else if (user?.phone) {
-      setPhoneInput(user.phone);
-    } else {
-      setPhoneInput('');
-    }
-  }, [profile, user]);
-
-  // Auto-focus phone field if navigated with initialEditPhone
-  useEffect(() => {
-    if (initialEditPhone) {
-      setIsEditingPhone(true);
-      const timer = setTimeout(() => {
-        const inputEl = document.getElementById('settings_input_phone');
-        if (inputEl) {
-          inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          inputEl.focus();
-        } else {
-          const editBtn = document.getElementById('edit_phone_toggle_btn');
-          if (editBtn) {
-            editBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
-        }
-      }, 150);
-      return () => clearTimeout(timer);
-    }
-  }, [initialEditPhone]);
-
-  // Avatar Picker Modal
-  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
-
-  // Save Name Handler
-  const handleSaveName = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-    if (!fullNameInput.trim()) {
-      setProfileMessage({
-        type: 'error',
-        text: t('profileSetup.nameRequired') || 'Name is required',
-      });
-      return;
-    }
-
-    setIsSavingProfile(true);
-    setProfileMessage(null);
-
-    const { error } = await updateUserProfile({
-      full_name: fullNameInput.trim(),
-    });
-
-    setIsSavingProfile(false);
-
-    if (error) {
-      setProfileMessage({
-        type: 'error',
-        text: error.message || 'Unable to update profile',
-      });
-    } else {
-      setProfileMessage({
-        type: 'success',
-        text: t('settings.saved') || (language === 'ur' ? 'محفوظ کر لیا گیا' : 'Saved successfully'),
-      });
-      setIsEditingName(false);
-      setTimeout(() => setProfileMessage(null), 3000);
-    }
-  };
-
-  // Save Phone Handler
-  const handleSavePhone = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-    setPhoneError(null);
-
-    const trimmedPhone = phoneInput.trim();
-    if (trimmedPhone) {
-      const validation = validatePhoneNumber(trimmedPhone);
-      if (!validation.isValid) {
-        setPhoneError(
-          validation.error ||
-            'Please enter a valid phone number (e.g. +92 300 1234567).',
-        );
-        return;
-      }
-    }
-
-    setIsSavingProfile(true);
-    setProfileMessage(null);
-
-    const cleanVal = trimmedPhone ? cleanPhoneNumber(trimmedPhone) : null;
-    const { error } = await updateUserProfile({
-      phone_number: cleanVal,
-    });
-
-    setIsSavingProfile(false);
-
-    if (error) {
-      setProfileMessage({
-        type: 'error',
-        text: error.message || 'Unable to update phone number',
-      });
-    } else {
-      setProfileMessage({
-        type: 'success',
-        text: t('settings.saved') || (language === 'ur' ? 'فون نمبر محفوظ کر لیا گیا' : 'Saved successfully'),
-      });
-      setIsEditingPhone(false);
-      setTimeout(() => setProfileMessage(null), 3000);
-    }
-  };
-
-  // Save Avatar Handler
-  const handleSelectAvatar = async (avatarValue: string | null) => {
-    setIsSavingProfile(true);
-    const { error } = await updateUserProfile({
-      avatar_url: avatarValue,
-    });
-    setIsSavingProfile(false);
-
-    if (error) {
-      setProfileMessage({
-        type: 'error',
-        text: error.message || 'Unable to update avatar',
-      });
-    } else {
-      setProfileMessage({
-        type: 'success',
-        text: t('settings.avatarUpdated') || t('settings.saved') || (language === 'ur' ? 'اواتار تبدیل ہو گیا' : 'Avatar updated!'),
-      });
-      setTimeout(() => setProfileMessage(null), 3000);
-    }
-  };
-
-  // ============================================================================
-  // Preferences State & Handlers (Sound & Language)
-  // ============================================================================
+  // Sound preference state
   const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
     try {
       return localStorage.getItem('yaad_sound_enabled') !== 'false';
@@ -298,202 +106,120 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     try {
       const AudioCtx =
         window.AudioContext ||
-        (window as unknown as { webkitAudioContext: typeof AudioContext })
-          .webkitAudioContext;
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (!AudioCtx) return;
       const ctx = new AudioCtx();
-
       const now = ctx.currentTime;
-      const osc1 = ctx.createOscillator();
-      const osc2 = ctx.createOscillator();
+      const osc = ctx.createOscillator();
       const gain = ctx.createGain();
 
-      osc1.type = 'sine';
-      osc2.type = 'triangle';
-
-      osc1.frequency.setValueAtTime(523.25, now); // C5
-      osc1.frequency.exponentialRampToValueAtTime(659.25, now + 0.1); // E5
-      osc1.frequency.exponentialRampToValueAtTime(783.99, now + 0.2); // G5
-      osc1.frequency.exponentialRampToValueAtTime(1046.5, now + 0.3); // C6
-
-      osc2.frequency.setValueAtTime(261.63, now); // C4
-      osc2.frequency.exponentialRampToValueAtTime(329.63, now + 0.1); // E4
-      osc2.frequency.exponentialRampToValueAtTime(392.0, now + 0.2); // G4
-      osc2.frequency.exponentialRampToValueAtTime(523.25, now + 0.3); // C5
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, now); // D5
+      osc.frequency.exponentialRampToValueAtTime(880.0, now + 0.12); // A5
 
       gain.gain.setValueAtTime(0.001, now);
-      gain.gain.linearRampToValueAtTime(0.18, now + 0.05);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.6);
+      gain.gain.linearRampToValueAtTime(0.15, now + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
 
-      osc1.connect(gain);
-      osc2.connect(gain);
+      osc.connect(gain);
       gain.connect(ctx.destination);
 
-      osc1.start(now);
-      osc2.start(now);
-      osc1.stop(now + 0.6);
-      osc2.stop(now + 0.6);
-    } catch (e) {
-      console.warn('Audio chime notice:', e);
-    }
+      osc.start(now);
+      osc.stop(now + 0.35);
+    } catch {}
   };
 
   const handleToggleSound = () => {
+    triggerHaptic(8);
     const nextVal = !soundEnabled;
     setSoundEnabled(nextVal);
     try {
       localStorage.setItem('yaad_sound_enabled', String(nextVal));
-    } catch (e) {
-      console.warn('Could not save sound pref:', e);
-    }
+    } catch {}
     if (nextVal) {
       playPreviewChime();
     }
   };
 
-  const handleLanguageSelect = async (lang: Language) => {
-    setLanguage(lang);
-    if (user) {
-      await updateUserProfile({ language: lang });
+  // Push notifications state
+  const [pushEnabled, setPushEnabled] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('yaad_push_enabled') !== 'false';
+    } catch {
+      return true;
     }
-  };
+  });
 
-  // ============================================================================
-  // Password State & Handlers
-  // ============================================================================
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
-  const [passwordMessage, setPasswordMessage] = useState<{
-    type: 'success' | 'error';
-    text: string;
-  } | null>(null);
-
-  const handleUpdatePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      setPasswordMessage({
-        type: 'error',
-        text:
-          language === 'ur'
-            ? 'آپ آف لائن ہیں۔ پاس ورڈ تبدیل کرنے کے لیے انٹرنیٹ سے جڑیں۔'
-            : "You're offline. Please reconnect to change your password.",
-      });
-      return;
-    }
-
-    if (!currentPassword.trim()) {
-      setPasswordMessage({
-        type: 'error',
-        text:
-          t('settings.enterCurrentPassword') ||
-          (language === 'ur' ? 'براہ کرم اپنا موجودہ پاس ورڈ درج کریں۔' : 'Please enter your current password.'),
-      });
-      return;
-    }
-
-    if (!newPassword || newPassword.length < 6) {
-      setPasswordMessage({
-        type: 'error',
-        text:
-          t('settings.passwordTooShort') ||
-          (language === 'ur' ? 'پاس ورڈ کم از کم 6 ہندسوں پر مشتمل ہونا چاہیے۔' : 'Password must be at least 6 characters.'),
-      });
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      setPasswordMessage({
-        type: 'error',
-        text:
-          t('settings.passwordsDoNotMatch') ||
-          (language === 'ur' ? 'پاس ورڈ مماثل نہیں ہیں۔' : 'Passwords do not match.'),
-      });
-      return;
-    }
-
-    setIsUpdatingPassword(true);
-    setPasswordMessage(null);
-
-    const { error } = await changePassword(currentPassword, newPassword);
-
-    setIsUpdatingPassword(false);
-
-    if (error) {
-      setPasswordMessage({
-        type: 'error',
-        text: error.message || (language === 'ur' ? 'پاس ورڈ اپ ڈیٹ نہیں ہو سکا' : 'Unable to update password.'),
-      });
+  const handleTogglePush = async () => {
+    triggerHaptic(8);
+    if (!pushEnabled) {
+      if (typeof window !== 'undefined' && 'Notification' in window) {
+        try {
+          const res = await Notification.requestPermission();
+          if (res === 'granted') {
+            setPushEnabled(true);
+            localStorage.setItem('yaad_push_enabled', 'true');
+            return;
+          }
+        } catch {}
+      }
+      setPushEnabled(true);
+      localStorage.setItem('yaad_push_enabled', 'true');
     } else {
-      setPasswordMessage({
-        type: 'success',
-        text:
-          t('settings.passwordUpdated') ||
-          (language === 'ur' ? 'پاس ورڈ کامیابی سے تبدیل ہو گیا!' : 'Password updated successfully!'),
-      });
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-      setIsChangingPassword(false);
-      setTimeout(() => setPasswordMessage(null), 4000);
+      setPushEnabled(false);
+      localStorage.setItem('yaad_push_enabled', 'false');
     }
   };
 
-  // ============================================================================
-  // Sign Out State & Handlers
-  // ============================================================================
-  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
-  const [isSigningOut, setIsSigningOut] = useState(false);
+  // Language selection handler
+  const handleSelectLanguage = async (newLang: Language) => {
+    triggerHaptic(10);
+    setLanguage(newLang);
+    if (user) {
+      await updateUserProfile({ language: newLang });
+    }
+  };
 
+  // Profile save handler
+  const handleSaveProfile = async (fullName: string, phoneNumber: string | null) => {
+    const res = await updateUserProfile({
+      full_name: fullName,
+      phone_number: phoneNumber,
+    });
+    return res;
+  };
+
+  // Avatar select handler
+  const handleSelectAvatar = async (avatarValue: string | null) => {
+    await updateUserProfile({ avatar_url: avatarValue });
+  };
+
+  // Sign out confirmation handler
   const handleConfirmSignOut = async () => {
     setIsSigningOut(true);
     try {
       await onSignOut();
     } finally {
       setIsSigningOut(false);
-      setShowSignOutConfirm(false);
+      setShowSignOutModal(false);
     }
   };
 
-  // ============================================================================
-  // Legal Modals State
-  // ============================================================================
-  const [activeLegalModal, setActiveLegalModal] = useState<
-    'privacy' | 'terms' | 'help' | 'about' | null
-  >(null);
+  // Legal item click
+  const handleOpenLegal = (page: 'about' | 'help' | 'privacy' | 'terms') => {
+    if (onOpenLegalPage) {
+      onOpenLegalPage(page);
+    } else {
+      setActiveLegalModal(page);
+    }
+  };
 
-  // Close modals on Escape key
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        if (showAvatarPicker) setShowAvatarPicker(false);
-        if (showSignOutConfirm && !isSigningOut) setShowSignOutConfirm(false);
-        if (isEditingName) setIsEditingName(false);
-        if (isEditingPhone) setIsEditingPhone(false);
-        if (activeLegalModal) setActiveLegalModal(null);
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [
-    showAvatarPicker,
-    showSignOutConfirm,
-    isEditingName,
-    isEditingPhone,
-    isSigningOut,
-    activeLegalModal,
-  ]);
-
+  // Computed display names
   const displayName =
     profile?.full_name ||
     user?.user_metadata?.full_name ||
-    (user ? 'Account User' : t('settings.guestUser') || (language === 'ur' ? 'مہمان صارف' : 'Guest User'));
-  const displayEmail =
-    user?.email || (user ? 'Authenticated user' : t('settings.guestSubtitle') || (language === 'ur' ? 'غیر رجسٹرڈ' : 'Not signed in'));
+    (user ? 'User' : t('settings.guestUser') || (language === 'ur' ? 'مہمان صارف' : 'Guest User'));
+
   const displayPhone =
     profile?.phone_number ||
     user?.user_metadata?.phone_number ||
@@ -501,398 +227,628 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     user?.phone ||
     null;
 
-  const isUserVerified = Boolean(
-    profile?.is_verified || (user?.user_metadata as any)?.is_verified
-  );
+  const displayEmail = user?.email || null;
+  const isVerified = Boolean(profile?.is_verified || (user?.user_metadata as any)?.is_verified);
 
   return (
     <div
       id="settings_screen_container"
       dir={isRTL ? 'rtl' : 'ltr'}
-      className="min-h-screen bg-[#FBFBFA] text-on-surface font-['Plus_Jakarta_Sans'] pb-32 sm:pb-36"
+      className="min-h-screen bg-background text-on-surface flex flex-col font-sans pb-28 sm:pb-32"
     >
-      {/* 1. Universal Top Header (Adheres strictly to universal rules: Back Arrow on left, YAAD in center, Bell + Settings on right) */}
+      {/* 1. Standard Top Navigation Header */}
       <TopHeader
-        title="YAAD"
+        title={t('settings.title') || (language === 'ur' ? 'ترتیبات' : 'Settings')}
         showBack={true}
         onBack={onBack}
-        onSettingsClick={() => {}}
       />
 
-      {/* 2. Hero Section: Centered Profile with soft shaded gradient backdrop (Screenshots 4 & 5) */}
-      <div className="relative bg-gradient-to-b from-[#003527]/12 via-emerald-50/20 to-transparent pt-6 pb-6 sm:pt-8 sm:pb-8 px-4 sm:px-6 border-b border-neutral-200/50">
-        <div className="max-w-md mx-auto text-center flex flex-col items-center">
-          {/* Centered Avatar with Camera / Edit Pencil Badge */}
-          <div className="relative inline-block mx-auto">
-            <div className="p-1 rounded-full bg-white shadow-md ring-1 ring-neutral-200/60">
-              <Avatar
-                name={displayName}
-                email={user?.email}
-                avatarUrl={profile?.avatar_url}
-                size="xl"
-                className="w-24 h-24 sm:w-28 sm:h-28 ring-2 ring-emerald-500/20"
-              />
-            </div>
-            <button
-              id="change_avatar_btn"
-              type="button"
-              onClick={() => setShowAvatarPicker(true)}
-              aria-label={t('settings.chooseAvatar') || 'Choose Avatar'}
-              className="absolute bottom-1 right-1 sm:bottom-1.5 sm:right-1.5 w-8 h-8 rounded-full bg-[#003527] text-white flex items-center justify-center shadow-md hover:bg-[#002b1f] active:scale-95 transition-all ring-2 ring-white cursor-pointer"
-              title="Change Avatar"
-            >
-              <Pencil className="w-3.5 h-3.5" />
-            </button>
-          </div>
+      {/* 2. Main Page Container */}
+      <main className="max-w-2xl mx-auto w-full px-4 sm:px-6 py-4 sm:py-6 flex flex-col gap-5 sm:gap-6">
+        {/* Title & Subtitle */}
+        <div className="flex flex-col gap-1">
+          <h1 className="font-['Plus_Jakarta_Sans'] text-2xl sm:text-3xl font-black text-on-surface tracking-tight">
+            {t('settings.title') || (language === 'ur' ? 'ترتیبات' : 'Settings')}
+          </h1>
+          <p className="text-xs sm:text-sm text-outline font-['Manrope']">
+            {t('settings.subtitle') ||
+              (language === 'ur'
+                ? 'اکاؤنٹ، ترجیحات اور ایپ کی ترتیبات'
+                : 'Manage your profile, preferences, and app options')}
+          </p>
+        </div>
 
-          {/* User Name with Verified Blue Tick Rosette Badge */}
-          <div className="flex items-center justify-center gap-1.5 mt-3.5">
-            <h2 className="text-xl sm:text-2xl font-black text-neutral-900 tracking-tight leading-tight">
-              {displayName}
-            </h2>
-            {isUserVerified && (
-              <VerifiedBadge size="md" title="Official Verified Account" />
-            )}
-          </div>
+        {/* ------------------------------------------------------------------ */}
+        {/* SECTION 1: PROFILE & ACCOUNT                                       */}
+        {/* ------------------------------------------------------------------ */}
+        <section id="settings_profile_section" className="flex flex-col gap-2">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-['Plus_Jakarta_Sans']">
+            {t('settings.accountTitle') || (language === 'ur' ? 'اکاؤنٹ' : 'Account')}
+          </h2>
 
-          {/* Email or Phone Subtitle */}
-          <div className="text-xs sm:text-sm text-neutral-500 font-medium mt-1 flex items-center justify-center gap-2">
-            {displayPhone ? (
-              <span dir="ltr" className="font-mono text-neutral-600">
-                {formatPhoneNumber(displayPhone)}
-              </span>
+          <div className="bg-surface-container-lowest rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-surface-dim/75 shadow-2xs">
+            {user ? (
+              <div className="flex items-center justify-between gap-3 sm:gap-4">
+                {/* Avatar with Camera Trigger */}
+                <div className="relative shrink-0">
+                  <Avatar
+                    name={displayName}
+                    email={user.email}
+                    avatarUrl={profile?.avatar_url}
+                    size="lg"
+                    className="w-14 h-14 sm:w-16 sm:h-16 ring-2 ring-primary/20"
+                  />
+                  <button
+                    id="change_avatar_btn"
+                    type="button"
+                    onClick={() => setShowAvatarPicker(true)}
+                    aria-label={t('settings.chooseAvatar') || 'Choose Avatar'}
+                    className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center ring-2 ring-white hover:bg-primary/90 active:scale-95 transition-all cursor-pointer shadow-xs"
+                  >
+                    <Pencil className="w-3 h-3" />
+                  </button>
+                </div>
+
+                {/* Profile Information */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <h3 className="text-base sm:text-lg font-bold text-on-surface font-['Plus_Jakarta_Sans'] truncate">
+                      {displayName}
+                    </h3>
+                    {isVerified && <VerifiedBadge size="sm" />}
+                  </div>
+
+                  <p className="text-xs text-outline font-['Manrope'] truncate mt-0.5">
+                    {displayPhone ? (
+                      <span dir="ltr" className="font-mono text-on-surface-variant font-medium">
+                        {formatPhoneNumber(displayPhone)}
+                      </span>
+                    ) : (
+                      displayEmail || t('settings.noPhone') || 'No phone added'
+                    )}
+                  </p>
+
+                  {displayPhone && displayEmail && (
+                    <p className="text-[11px] text-outline/80 font-['Manrope'] truncate">
+                      {displayEmail}
+                    </p>
+                  )}
+                </div>
+
+                {/* Edit Profile Button */}
+                <button
+                  id="edit_profile_btn"
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic(8);
+                    setFocusPhoneInModal(false);
+                    setShowEditProfileModal(true);
+                  }}
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold font-['Plus_Jakarta_Sans'] text-primary bg-surface-container-low hover:bg-surface-container border border-surface-dim/75 transition-all shrink-0 flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                  <span>{t('settings.editName') || (language === 'ur' ? 'ترمیم' : 'Edit')}</span>
+                </button>
+              </div>
             ) : (
-              <span className="truncate max-w-[260px]">{displayEmail}</span>
+              /* Guest State Card */
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-11 h-11 rounded-2xl bg-surface-container text-primary flex items-center justify-center shrink-0">
+                    <User className="w-5 h-5 stroke-[2]" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-sm sm:text-base font-bold text-on-surface font-['Plus_Jakarta_Sans']">
+                      {t('settings.guestUser') || (language === 'ur' ? 'مہمان صارف' : 'Guest Account')}
+                    </h3>
+                    <p className="text-xs text-outline font-['Manrope'] truncate">
+                      {language === 'ur'
+                        ? 'پرچیاں کلاؤڈ پر محفوظ کرنے کے لیے لاگ ان کریں'
+                        : 'Sign in to sync your lists across devices'}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => onOpenAuth?.('signin')}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-primary hover:bg-primary/90 transition-all shrink-0 cursor-pointer shadow-xs active:scale-95"
+                >
+                  {t('auth.signIn') || (language === 'ur' ? 'سائن ان' : 'Sign In')}
+                </button>
+              </div>
             )}
           </div>
+        </section>
 
-          {/* Active Status Pill */}
-          <div className="mt-2.5">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200/60 shadow-2xs">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 stroke-[2.2]" />
-              <span>{t('settings.verified') || (language === 'ur' ? 'فعال اکاؤنٹ' : 'Active Account')}</span>
-            </span>
-          </div>
+        {/* ------------------------------------------------------------------ */}
+        {/* SECTION 2: PREFERENCES (Language, Sound, Reminders)                */}
+        {/* ------------------------------------------------------------------ */}
+        <section id="settings_preferences_section" className="flex flex-col gap-2">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-['Plus_Jakarta_Sans']">
+            {t('settings.preferencesTitle') || (language === 'ur' ? 'ترجیحات' : 'Preferences')}
+          </h2>
 
-          {/* Quick Edit Action Buttons */}
-          {user && (
-            <div className="flex flex-wrap items-center justify-center gap-2 mt-3.5">
-              {!isEditingName && (
+          <div className="bg-surface-container-lowest rounded-2xl sm:rounded-3xl border border-surface-dim/75 shadow-2xs divide-y divide-surface-dim/50 overflow-hidden">
+            {/* 1. Language Selector Row */}
+            <div className="p-4 sm:p-5 flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-surface-container text-primary flex items-center justify-center shrink-0">
+                  <Globe2 className="w-4 h-4 stroke-[2.2]" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-sm font-bold text-on-surface font-['Plus_Jakarta_Sans']">
+                    {t('settings.language') || (language === 'ur' ? 'زبان' : 'Language')}
+                  </h3>
+                  <p className="text-xs text-outline font-['Manrope']">
+                    {t('settings.languageSubtitle') ||
+                      (language === 'ur'
+                        ? 'اپنی پسندیدہ ڈسپلے زبان منتخب کریں'
+                        : 'Choose your display language')}
+                  </p>
+                </div>
+              </div>
+
+              {/* 3-way Segmented Control */}
+              <div className="grid grid-cols-3 gap-1.5 p-1 bg-surface-container-low rounded-xl">
+                {/* English */}
                 <button
-                  id="edit_name_toggle_btn"
+                  id="lang_select_en"
                   type="button"
-                  onClick={() => {
-                    setIsEditingName(true);
-                    setFullNameInput(profile?.full_name || user?.user_metadata?.full_name || '');
-                  }}
-                  className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-white border border-neutral-200/90 text-neutral-700 hover:bg-neutral-50 hover:border-neutral-300 transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer"
+                  onClick={() => handleSelectLanguage('en')}
+                  className={`py-2 px-2 rounded-lg text-xs font-bold font-['Plus_Jakarta_Sans'] transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    language === 'en'
+                      ? 'bg-surface-container-lowest text-primary shadow-2xs ring-1 ring-black/5'
+                      : 'text-outline hover:text-on-surface'
+                  }`}
                 >
-                  <Pencil className="w-3.5 h-3.5 text-[#003527]" />
-                  <span>{t('settings.editName') || (language === 'ur' ? 'نام تبدیل کریں' : 'Edit Name')}</span>
+                  <span>{t('settings.languageEn') || 'English'}</span>
+                  {language === 'en' && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
                 </button>
-              )}
 
-              {!isEditingPhone && (
+                {/* Roman Urdu */}
                 <button
-                  id="edit_phone_toggle_btn"
+                  id="lang_select_roman_urdu"
                   type="button"
-                  onClick={() => {
-                    setIsEditingPhone(true);
-                    setPhoneInput(displayPhone || '');
-                    setPhoneError(null);
-                  }}
-                  className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-white border border-neutral-200/90 text-neutral-700 hover:bg-neutral-50 hover:border-neutral-300 transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer"
+                  onClick={() => handleSelectLanguage('roman-urdu')}
+                  className={`py-2 px-2 rounded-lg text-xs font-bold font-['Plus_Jakarta_Sans'] transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    language === 'roman-urdu'
+                      ? 'bg-surface-container-lowest text-primary shadow-2xs ring-1 ring-black/5'
+                      : 'text-outline hover:text-on-surface'
+                  }`}
                 >
-                  <Smartphone className="w-3.5 h-3.5 text-[#003527]" />
-                  <span>
-                    {displayPhone
-                      ? (t('settings.editPhone') || (language === 'ur' ? 'فون تبدیل کریں' : 'Edit Phone'))
-                      : (t('settings.addPhone') || (language === 'ur' ? 'فون شامل کریں' : 'Add Phone'))}
-                  </span>
+                  <span>{t('settings.languageRomanUrdu') || 'Roman Urdu'}</span>
+                  {language === 'roman-urdu' && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
                 </button>
-              )}
+
+                {/* Urdu */}
+                <button
+                  id="lang_select_ur"
+                  type="button"
+                  onClick={() => handleSelectLanguage('ur')}
+                  className={`py-2 px-2 rounded-lg text-xs font-bold font-urdu transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    language === 'ur'
+                      ? 'bg-surface-container-lowest text-primary shadow-2xs ring-1 ring-black/5'
+                      : 'text-outline hover:text-on-surface'
+                  }`}
+                >
+                  <span>{t('settings.languageUrdu') || 'اردو'}</span>
+                  {language === 'ur' && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
+                </button>
+              </div>
             </div>
-          )}
 
-          {/* Inline Edit Name Form */}
-          {isEditingName && (
-            <form
-              onSubmit={handleSaveName}
-              className="w-full max-w-sm mt-4 p-4 bg-white rounded-2xl border border-emerald-500/30 shadow-sm space-y-3 animate-in fade-in duration-200 text-start"
-            >
-              <div className="flex items-center justify-between">
-                <label
-                  htmlFor="settings_input_full_name"
-                  className="text-xs font-bold text-neutral-700 flex items-center gap-1.5"
-                >
-                  <Pencil className="w-3.5 h-3.5 text-[#003527]" />
-                  <span>{t('settings.name') || (language === 'ur' ? 'مکمل نام' : 'Full Name')}</span>
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setIsEditingName(false)}
-                  className="text-xs text-neutral-400 hover:text-neutral-700 flex items-center gap-1 cursor-pointer"
-                >
-                  <X className="w-3.5 h-3.5" />
-                  <span>{t('settings.cancel') || 'Cancel'}</span>
-                </button>
+            {/* 2. Sound Effects Toggle */}
+            <div className="p-4 sm:p-5 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-surface-container text-primary flex items-center justify-center shrink-0">
+                  {soundEnabled ? (
+                    <Volume2 className="w-4 h-4 stroke-[2.2]" />
+                  ) : (
+                    <VolumeX className="w-4 h-4 stroke-[2]" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold text-on-surface font-['Plus_Jakarta_Sans']">
+                    {t('settings.soundEffects') || (language === 'ur' ? 'صوتی اثرات' : 'Sound Effects')}
+                  </h3>
+                  <p className="text-xs text-outline font-['Manrope'] truncate">
+                    {t('settings.soundEffectsDesc') ||
+                      (language === 'ur'
+                        ? 'خریداری کے دوران تسلی بخش آوازیں سنیں'
+                        : 'Audio feedback when checking items')}
+                  </p>
+                </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-2">
-                <input
-                  id="settings_input_full_name"
-                  type="text"
-                  dir="auto"
-                  value={fullNameInput}
-                  onChange={(e) => setFullNameInput(e.target.value)}
-                  placeholder={t('settings.namePlaceholder') || 'Enter your full name'}
-                  disabled={isSavingProfile}
-                  className="flex-1 px-3 py-2 text-xs rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-[#003527]/20 focus:border-[#003527]"
-                />
-                <button
-                  id="save_name_btn"
-                  type="submit"
-                  disabled={isSavingProfile}
-                  className="px-4 py-2 bg-[#003527] text-white text-xs font-bold rounded-xl hover:bg-[#002b1f] active:scale-95 transition-all disabled:opacity-50 cursor-pointer shadow-xs"
-                >
-                  {isSavingProfile ? 'Saving...' : t('settings.save') || 'Save'}
-                </button>
-              </div>
-            </form>
-          )}
-
-          {/* Inline Edit Phone Form */}
-          {isEditingPhone && (
-            <form
-              onSubmit={handleSavePhone}
-              className="w-full max-w-sm mt-4 p-4 bg-white rounded-2xl border border-emerald-500/30 shadow-sm space-y-3 animate-in fade-in duration-200 text-start"
-            >
-              <div className="flex items-center justify-between">
-                <label
-                  htmlFor="settings_input_phone"
-                  className="text-xs font-bold text-neutral-700 flex items-center gap-1.5"
-                >
-                  <Smartphone className="w-3.5 h-3.5 text-[#003527]" />
-                  <span>{t('settings.phone') || (language === 'ur' ? 'فون نمبر' : 'Phone Number')}</span>
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setIsEditingPhone(false)}
-                  className="text-xs text-neutral-400 hover:text-neutral-700 flex items-center gap-1 cursor-pointer"
-                >
-                  <X className="w-3.5 h-3.5" />
-                  <span>{t('settings.cancel') || 'Cancel'}</span>
-                </button>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-2">
-                <input
-                  id="settings_input_phone"
-                  type="tel"
-                  dir="ltr"
-                  value={phoneInput}
-                  onChange={(e) => {
-                    setPhoneInput(e.target.value);
-                    if (phoneError) setPhoneError(null);
-                  }}
-                  placeholder="+92 300 1234567"
-                  disabled={isSavingProfile}
-                  className="flex-1 px-3 py-2 text-xs rounded-xl border border-neutral-200 font-mono focus:outline-none focus:ring-2 focus:ring-[#003527]/20 focus:border-[#003527]"
-                />
-                <button
-                  id="save_phone_btn"
-                  type="submit"
-                  disabled={isSavingProfile}
-                  className="px-4 py-2 bg-[#003527] text-white text-xs font-bold rounded-xl hover:bg-[#002b1f] active:scale-95 transition-all disabled:opacity-50 cursor-pointer shadow-xs"
-                >
-                  {isSavingProfile ? 'Saving...' : t('settings.save') || 'Save'}
-                </button>
-              </div>
-              {phoneError && (
-                <p className="text-[11px] text-rose-600 font-medium">{phoneError}</p>
-              )}
-            </form>
-          )}
-
-          {/* Feedback Toast Message */}
-          {profileMessage && (
-            <div
-              className={`mt-3.5 p-3 rounded-2xl text-xs flex items-center gap-2 max-w-sm w-full ${
-                profileMessage.type === 'success'
-                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                  : 'bg-rose-50 text-rose-800 border border-rose-200'
-              }`}
-            >
-              {profileMessage.type === 'success' ? (
-                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
-              ) : (
-                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
-              )}
-              <span className="flex-1 font-medium">{profileMessage.text}</span>
-            </div>
-          )}
-
-          {/* Guest User CTA */}
-          {!user && (
-            <div className="mt-4 p-3.5 rounded-2xl bg-white border border-neutral-200 shadow-2xs max-w-sm w-full text-center">
-              <p className="text-xs text-neutral-600">
-                {language === 'ur'
-                  ? 'اپنی خریداری کی تاریخ اور پرچیاں کلاؤڈ پر محفوظ کرنے کے لیے لاگ ان کریں۔'
-                  : 'Sign in to sync your grocery lists and backup data.'}
-              </p>
+              {/* Sound Toggle Switch */}
               <button
+                id="toggle_sound_btn"
                 type="button"
-                onClick={() => onOpenAuth?.('signin')}
-                className="mt-2.5 px-5 py-1.5 rounded-xl bg-[#003527] text-white text-xs font-bold hover:bg-[#002b1f] transition-all shadow-xs cursor-pointer"
+                role="switch"
+                aria-checked={soundEnabled}
+                onClick={handleToggleSound}
+                aria-label="Toggle Sound Effects"
+                className={`w-12 h-6.5 rounded-full p-0.5 transition-colors duration-200 shrink-0 cursor-pointer ${
+                  soundEnabled ? 'bg-primary' : 'bg-surface-container-high'
+                }`}
               >
-                {t('auth.signIn') || (language === 'ur' ? 'سائن ان' : 'Sign In')}
+                <div
+                  className={`w-5.5 h-5.5 rounded-full bg-white shadow-sm transform transition-transform duration-200 ${
+                    soundEnabled ? (isRTL ? '-translate-x-5.5' : 'translate-x-5.5') : 'translate-x-0'
+                  }`}
+                />
               </button>
             </div>
-          )}
-        </div>
-      </div>
 
-      {/* 3. Section Jump Pills (Order: General -> Appearance -> Preferences -> About -> Security) */}
-      <div className="sticky top-14 z-20 bg-white/95 backdrop-blur-md border-b border-neutral-200/60 px-4 py-2.5">
-        <div className="max-w-2xl mx-auto flex items-center gap-2 overflow-x-auto no-scrollbar">
-          <button
-            onClick={() => handleJumpToSection('preferences')}
-            className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
-              activeSection === 'preferences' || activeSection === 'profile'
-                ? 'bg-[#003527] text-white shadow-xs'
-                : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-            }`}
-          >
-            <SlidersHorizontal className="w-3.5 h-3.5" />
-            <span>{t('settings.preferencesTitle') || (language === 'ur' ? 'عمومی و ترجیحات' : 'General')}</span>
-          </button>
+            {/* 3. Shopping Reminders Toggle */}
+            <div className="p-4 sm:p-5 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-surface-container text-primary flex items-center justify-center shrink-0">
+                  {pushEnabled ? (
+                    <BellRing className="w-4 h-4 stroke-[2.2]" />
+                  ) : (
+                    <Bell className="w-4 h-4 stroke-[2]" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold text-on-surface font-['Plus_Jakarta_Sans']">
+                    {language === 'ur' ? 'یاد دہانیاں اور منڈی الرٹس' : 'Shopping Reminders'}
+                  </h3>
+                  <p className="text-xs text-outline font-['Manrope'] truncate">
+                    {language === 'ur'
+                      ? 'جمعہ بازار اور ہفتہ وار منڈی کی یاد دہانی'
+                      : 'Weekly Mandi & grocery reminders'}
+                  </p>
+                </div>
+              </div>
 
-          <button
-            onClick={() => handleJumpToSection('appearance')}
-            className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
-              activeSection === 'appearance'
-                ? 'bg-[#003527] text-white shadow-xs'
-                : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-            }`}
-          >
-            <Palette className="w-3.5 h-3.5" />
-            <span>{language === 'ur' ? 'تھیم' : 'Appearance'}</span>
-          </button>
-
-          <button
-            onClick={() => handleJumpToSection('about')}
-            className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
-              activeSection === 'about'
-                ? 'bg-[#003527] text-white shadow-xs'
-                : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-            }`}
-          >
-            <Compass className="w-3.5 h-3.5" />
-            <span>{t('settings.aboutYaad') || (language === 'ur' ? 'معلومات و سپورٹ' : 'About & Support')}</span>
-          </button>
-
-          {user && (
-            <button
-              onClick={() => handleJumpToSection('security')}
-              className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
-                activeSection === 'security'
-                  ? 'bg-[#003527] text-white shadow-xs'
-                  : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-              }`}
-            >
-              <ShieldAlert className="w-3.5 h-3.5" />
-              <span>{t('settings.securityTitle') || (language === 'ur' ? 'سیکیورٹی' : 'Security')}</span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* 4. Grouped iOS-style Inset Cards (Matching Screenshots 4 & 5) */}
-      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
-        {/* GROUP 1: General & Preferences (Screenshot 4) */}
-        <div id="settings_section_preferences" className="space-y-2">
-          <h3 className="text-xs font-black uppercase tracking-wider text-neutral-400 px-3 font-['Plus_Jakarta_Sans']">
-            {language === 'ur' ? 'عمومی ترجیحات' : 'General'}
-          </h3>
-          <div className="bg-white rounded-3xl border border-neutral-200/80 shadow-xs divide-y divide-neutral-100 overflow-hidden">
-            <PreferencesSection
-              soundEnabled={soundEnabled}
-              onToggleSound={handleToggleSound}
-              onLanguageSelect={handleLanguageSelect}
-            />
-          </div>
-        </div>
-
-        {/* GROUP 2: Appearance & Theme */}
-        <div id="settings_section_appearance" className="space-y-2">
-          <h3 className="text-xs font-black uppercase tracking-wider text-neutral-400 px-3 font-['Plus_Jakarta_Sans']">
-            {language === 'ur' ? 'ظاہری شکل و تھیم' : 'Appearance & Theme'}
-          </h3>
-          <div className="bg-white rounded-3xl border border-neutral-200/80 shadow-xs overflow-hidden">
-            <AppearanceSection />
-          </div>
-        </div>
-
-        {/* GROUP 3: Security & Passwords */}
-        {user && (
-          <div id="settings_section_security" className="space-y-2">
-            <h3 className="text-xs font-black uppercase tracking-wider text-neutral-400 px-3 font-['Plus_Jakarta_Sans']">
-              {language === 'ur' ? 'سیکیورٹی و پاس ورڈ' : 'Security'}
-            </h3>
-            <div className="bg-white rounded-3xl border border-neutral-200/80 shadow-xs overflow-hidden">
-              <SecuritySection
-                isChangingPassword={isChangingPassword}
-                setIsChangingPassword={setIsChangingPassword}
-                currentPassword={currentPassword}
-                setCurrentPassword={setCurrentPassword}
-                newPassword={newPassword}
-                setNewPassword={setNewPassword}
-                confirmPassword={confirmPassword}
-                setConfirmPassword={setConfirmPassword}
-                showPassword={showPassword}
-                setShowPassword={setShowPassword}
-                isUpdatingPassword={isUpdatingPassword}
-                passwordMessage={passwordMessage}
-                setPasswordMessage={setPasswordMessage}
-                onUpdatePassword={handleUpdatePassword}
-                onRequestSignOut={() => setShowSignOutConfirm(true)}
-              />
+              {/* Push Toggle Switch */}
+              <button
+                id="toggle_push_btn"
+                type="button"
+                role="switch"
+                aria-checked={pushEnabled}
+                onClick={handleTogglePush}
+                aria-label="Toggle Shopping Reminders"
+                className={`w-12 h-6.5 rounded-full p-0.5 transition-colors duration-200 shrink-0 cursor-pointer ${
+                  pushEnabled ? 'bg-primary' : 'bg-surface-container-high'
+                }`}
+              >
+                <div
+                  className={`w-5.5 h-5.5 rounded-full bg-white shadow-sm transform transition-transform duration-200 ${
+                    pushEnabled ? (isRTL ? '-translate-x-5.5' : 'translate-x-5.5') : 'translate-x-0'
+                  }`}
+                />
+              </button>
             </div>
           </div>
+        </section>
+
+        {/* ------------------------------------------------------------------ */}
+        {/* SECTION 3: APPEARANCE & THEMES                                     */}
+        {/* ------------------------------------------------------------------ */}
+        <section id="settings_appearance_section" className="flex flex-col gap-2">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-['Plus_Jakarta_Sans']">
+            {t('settings.appearanceTitle') || (language === 'ur' ? 'تھیم' : 'Appearance')}
+          </h2>
+
+          <div className="bg-surface-container-lowest rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-surface-dim/75 shadow-2xs space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-surface-container text-primary flex items-center justify-center shrink-0">
+                <Palette className="w-4 h-4 stroke-[2.2]" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-on-surface font-['Plus_Jakarta_Sans']">
+                  {language === 'ur' ? 'ایپ تھیم' : 'App Theme'}
+                </h3>
+                <p className="text-xs text-outline font-['Manrope']">
+                  {language === 'ur'
+                    ? 'اپنی پسند کی تھیم منتخب کریں'
+                    : 'Select your preferred visual style'}
+                </p>
+              </div>
+            </div>
+
+            {/* Compact Themes Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1">
+              {themes.map((item) => {
+                const isActive = theme === item.id;
+                const localizedName =
+                  language === 'ur'
+                    ? item.nameUrdu
+                    : language === 'roman-urdu'
+                    ? item.nameRomanUrdu
+                    : item.name;
+
+                return (
+                  <button
+                    key={item.id}
+                    id={`theme_select_btn_${item.id}`}
+                    type="button"
+                    onClick={() => {
+                      triggerHaptic(8);
+                      setTheme(item.id);
+                    }}
+                    className={`h-12 rounded-xl border px-3 flex items-center justify-between gap-2 transition-all cursor-pointer text-start active:scale-[0.98] ${
+                      isActive
+                        ? 'border-primary bg-primary/8 ring-1 ring-primary/30 shadow-2xs'
+                        : 'border-surface-dim/70 bg-surface-container-lowest hover:bg-surface-container-low/60'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      {/* Swatch circle */}
+                      <div
+                        className="w-5.5 h-5.5 rounded-full shrink-0 flex items-center justify-center border border-black/10 shadow-2xs"
+                        style={{ backgroundColor: item.primary }}
+                      >
+                        <div
+                          className="w-2 h-2 rounded-full"
+                          style={{ backgroundColor: item.accent }}
+                        />
+                      </div>
+                      <span className="text-xs font-bold font-['Plus_Jakarta_Sans'] text-on-surface truncate">
+                        {localizedName}
+                      </span>
+                    </div>
+
+                    {isActive && (
+                      <div className="w-4 h-4 rounded-full bg-primary text-white flex items-center justify-center shrink-0">
+                        <Check className="w-2.5 h-2.5 stroke-[3]" />
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* ------------------------------------------------------------------ */}
+        {/* SECTION 4: SECURITY (Only when logged in)                          */}
+        {/* ------------------------------------------------------------------ */}
+        {user && (
+          <section id="settings_security_section" className="flex flex-col gap-2">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-['Plus_Jakarta_Sans']">
+              {t('settings.securityTitle') || (language === 'ur' ? 'سیکیورٹی' : 'Security')}
+            </h2>
+
+            <div className="bg-surface-container-lowest rounded-2xl sm:rounded-3xl border border-surface-dim/75 shadow-2xs overflow-hidden">
+              <button
+                type="button"
+                id="toggle_change_password_btn"
+                onClick={() => setShowChangePasswordModal(true)}
+                className="w-full p-4 sm:p-5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-low/50 transition-colors cursor-pointer active:bg-surface-container-low"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 rounded-xl bg-surface-container text-primary flex items-center justify-center shrink-0">
+                    <LockKeyhole className="w-4 h-4 stroke-[2.2]" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-bold text-on-surface font-['Plus_Jakarta_Sans']">
+                      {t('settings.changePassword') || (language === 'ur' ? 'پاس ورڈ تبدیل کریں' : 'Change Password')}
+                    </h3>
+                    <p className="text-xs text-outline font-['Manrope'] truncate">
+                      {language === 'ur'
+                        ? 'اپنے یاد اکاؤنٹ کا نیا پاس ورڈ سیٹ کریں'
+                        : 'Update your account login password'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 text-outline shrink-0">
+                  <span className="text-xs font-semibold font-['Manrope']">
+                    {language === 'ur' ? 'تبدیل کریں' : 'Change'}
+                  </span>
+                  <Chevron className="w-4 h-4" />
+                </div>
+              </button>
+            </div>
+          </section>
         )}
 
-        {/* GROUP 4: About & Legal */}
-        <div id="settings_section_about" className="space-y-2">
-          <h3 className="text-xs font-black uppercase tracking-wider text-neutral-400 px-3 font-['Plus_Jakarta_Sans']">
-            {language === 'ur' ? 'یاد کے بارے میں و سپورٹ' : 'About & Legal'}
-          </h3>
-          <div className="bg-white rounded-3xl border border-neutral-200/80 shadow-xs overflow-hidden">
-            <AboutSection
-              onOpenModal={(type) => setActiveLegalModal(type)}
-              onOpenLegalPage={onOpenLegalPage}
-            />
-          </div>
-        </div>
+        {/* ------------------------------------------------------------------ */}
+        {/* SECTION 5: ABOUT & LEGAL                                           */}
+        {/* ------------------------------------------------------------------ */}
+        <section id="settings_about_section" className="flex flex-col gap-2">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-['Plus_Jakarta_Sans']">
+            {t('settings.aboutTitle') || (language === 'ur' ? 'معلومات و سپورٹ' : 'About & Support')}
+          </h2>
 
-        {/* 5. Bottom Distinctive Outline "SIGN OUT" Pill Button (Screenshot 5) */}
-        {user && (
-          <div className="pt-6 pb-6 flex flex-col items-center justify-center gap-2">
+          <div className="bg-surface-container-lowest rounded-2xl sm:rounded-3xl border border-surface-dim/75 shadow-2xs divide-y divide-surface-dim/50 overflow-hidden">
+            {/* 1. About YAAD */}
             <button
-              id="settings_bottom_signout_btn"
+              id="settings_link_about"
               type="button"
-              onClick={() => setShowSignOutConfirm(true)}
-              className="w-48 py-2.5 rounded-full border border-neutral-300 bg-white hover:bg-neutral-50 hover:border-neutral-400 active:scale-95 text-neutral-800 font-bold text-xs uppercase tracking-wider transition-all shadow-2xs cursor-pointer text-center"
+              onClick={() => handleOpenLegal('about')}
+              className="w-full p-4 sm:p-4.5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-low/50 transition-colors cursor-pointer group active:bg-surface-container-low"
             >
-              {t('auth.signOut') || (language === 'ur' ? 'سائن آؤٹ' : 'SIGN OUT')}
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-surface-container text-primary flex items-center justify-center shrink-0">
+                  <Sparkles className="w-4 h-4 stroke-[2.2]" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold text-on-surface font-['Plus_Jakarta_Sans']">
+                    {t('settings.aboutYaad') || (language === 'ur' ? 'یاد کے بارے میں' : 'About YAAD')}
+                  </h3>
+                  <p className="text-xs text-outline font-['Manrope'] truncate">
+                    {t('settings.aboutYaadDesc') ||
+                      (language === 'ur'
+                        ? 'آسان اور تیز خریداری اسسٹنٹ'
+                        : 'Simple grocery shopping memory assistant')}
+                  </p>
+                </div>
+              </div>
+              <Chevron className="w-4 h-4 text-outline group-hover:text-primary transition-colors shrink-0" />
             </button>
-            <p className="text-[11px] text-neutral-400">
-              {language === 'ur' ? 'یاد ورژن 1.0.0 (پروڈکشن)' : 'YAAD Version 1.0.0 (Production)'}
+
+            {/* 2. Help & Feedback */}
+            <button
+              id="settings_link_help"
+              type="button"
+              onClick={() => handleOpenLegal('help')}
+              className="w-full p-4 sm:p-4.5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-low/50 transition-colors cursor-pointer group active:bg-surface-container-low"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-surface-container text-primary flex items-center justify-center shrink-0">
+                  <Headphones className="w-4 h-4 stroke-[2.2]" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold text-on-surface font-['Plus_Jakarta_Sans']">
+                    {t('settings.helpFeedback') || (language === 'ur' ? 'مدد اور فیڈ بیک' : 'Help & Feedback')}
+                  </h3>
+                  <p className="text-xs text-outline font-['Manrope'] truncate">
+                    {language === 'ur'
+                      ? 'سوالات یا تجاویز کے لیے رابطہ کریں'
+                      : 'Guides and customer support'}
+                  </p>
+                </div>
+              </div>
+              <Chevron className="w-4 h-4 text-outline group-hover:text-primary transition-colors shrink-0" />
+            </button>
+
+            {/* 3. Privacy Policy */}
+            <button
+              id="settings_link_privacy"
+              type="button"
+              onClick={() => handleOpenLegal('privacy')}
+              className="w-full p-4 sm:p-4.5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-low/50 transition-colors cursor-pointer group active:bg-surface-container-low"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-surface-container text-primary flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-4 h-4 stroke-[2.2]" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold text-on-surface font-['Plus_Jakarta_Sans']">
+                    {t('settings.privacyPolicy') || (language === 'ur' ? 'پرائیویسی پالیسی' : 'Privacy Policy')}
+                  </h3>
+                  <p className="text-xs text-outline font-['Manrope'] truncate">
+                    {language === 'ur'
+                      ? 'آپ کا ذاتی گروسری ڈیٹا مکمل محفوظ ہے'
+                      : 'Your data protection and privacy'}
+                  </p>
+                </div>
+              </div>
+              <Chevron className="w-4 h-4 text-outline group-hover:text-primary transition-colors shrink-0" />
+            </button>
+
+            {/* 4. Terms of Service */}
+            <button
+              id="settings_link_terms"
+              type="button"
+              onClick={() => handleOpenLegal('terms')}
+              className="w-full p-4 sm:p-4.5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-low/50 transition-colors cursor-pointer group active:bg-surface-container-low"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-surface-container text-primary flex items-center justify-center shrink-0">
+                  <ScrollText className="w-4 h-4 stroke-[2.2]" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold text-on-surface font-['Plus_Jakarta_Sans']">
+                    {t('settings.termsOfService') || (language === 'ur' ? 'استعمال کی شرائط' : 'Terms of Service')}
+                  </h3>
+                  <p className="text-xs text-outline font-['Manrope'] truncate">
+                    {language === 'ur'
+                      ? 'یاد ایپ کے استعمال کے آسان اصول'
+                      : 'Terms of service and usage'}
+                  </p>
+                </div>
+              </div>
+              <Chevron className="w-4 h-4 text-outline group-hover:text-primary transition-colors shrink-0" />
+            </button>
+
+            {/* 5. Version Row */}
+            <div
+              id="settings_item_version"
+              className="p-4 sm:p-4.5 flex items-center justify-between gap-3"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-surface-container text-primary flex items-center justify-center shrink-0">
+                  <Info className="w-4 h-4 stroke-[2]" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold text-on-surface font-['Plus_Jakarta_Sans']">
+                    {t('settings.versionTitle') || (language === 'ur' ? 'ایپ ورژن' : 'App Version')}
+                  </h3>
+                  <p className="text-xs text-outline font-['Manrope'] truncate">
+                    {language === 'ur' ? 'پروڈکشن ریلیز' : 'Official release'}
+                  </p>
+                </div>
+              </div>
+
+              <div
+                id="settings_version_badge"
+                className="px-2.5 py-1 rounded-lg bg-surface-container-low font-mono text-xs font-bold text-outline border border-surface-dim/60 shrink-0"
+              >
+                v{APP_VERSION}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ------------------------------------------------------------------ */}
+        {/* SECTION 6: SIGN OUT & DESTRUCTIVE ACTIONS                          */}
+        {/* ------------------------------------------------------------------ */}
+        {user && (
+          <div className="pt-2 flex flex-col items-center justify-center gap-3">
+            <button
+              id="settings_sign_out_trigger_btn"
+              type="button"
+              onClick={() => {
+                triggerHaptic(10);
+                setShowSignOutModal(true);
+              }}
+              className="w-full sm:w-auto sm:min-w-[220px] py-2.5 px-6 rounded-xl border border-rose-200/80 bg-rose-50/80 hover:bg-rose-100/90 text-rose-700 font-bold font-['Plus_Jakarta_Sans'] text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs active:scale-95"
+            >
+              <LogOut className="w-4 h-4 stroke-[2.2]" />
+              <span>{t('auth.signOut') || (language === 'ur' ? 'اکاؤنٹ سے لاگ آؤٹ' : 'Sign Out')}</span>
+            </button>
+
+            {onDeleteAccount && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (
+                    window.confirm(
+                      language === 'ur'
+                        ? 'کیا آپ واقعی اپنا اکاؤنٹ حذف کرنا چاہتے ہیں؟ یہ عمل واپس نہیں ہو سکتا۔'
+                        : 'Are you sure you want to permanently delete your account? This cannot be undone.'
+                    )
+                  ) {
+                    onDeleteAccount();
+                  }
+                }}
+                className="text-[11px] text-outline hover:text-rose-600 transition-colors cursor-pointer py-1"
+              >
+                {language === 'ur' ? 'اکاؤنٹ مستقل حذف کریں' : 'Delete Account'}
+              </button>
+            )}
+
+            <p className="text-[11px] text-outline/60 font-['Manrope'] text-center">
+              YAAD • {language === 'ur' ? 'یاد — شاپنگ میموری اسسٹنٹ' : 'Simple Shopping Memory'}
             </p>
           </div>
         )}
       </main>
 
-      {/* MODAL 1: Avatar Picker Modal */}
+      {/* MODAL 1: Edit Profile Modal */}
+      <EditProfileModal
+        isOpen={showEditProfileModal}
+        onClose={() => setShowEditProfileModal(false)}
+        initialName={profile?.full_name || user?.user_metadata?.full_name || ''}
+        initialPhone={displayPhone || ''}
+        focusPhoneOnOpen={focusPhoneInModal}
+        onSave={handleSaveProfile}
+      />
+
+      {/* MODAL 2: Change Password Modal */}
+      <ChangePasswordModal
+        isOpen={showChangePasswordModal}
+        onClose={() => setShowChangePasswordModal(false)}
+        onSubmit={changePassword}
+      />
+
+      {/* MODAL 3: Avatar Picker Modal */}
       <AvatarPickerModal
         isOpen={showAvatarPicker}
         onClose={() => setShowAvatarPicker(false)}
@@ -902,15 +858,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         userEmail={user?.email}
       />
 
-      {/* MODAL 2: Sign Out Confirmation Modal */}
+      {/* MODAL 4: Sign Out Confirmation Modal */}
       <SignOutConfirmModal
-        isOpen={showSignOutConfirm}
-        onClose={() => setShowSignOutConfirm(false)}
+        isOpen={showSignOutModal}
+        onClose={() => setShowSignOutModal(false)}
         onConfirm={handleConfirmSignOut}
         isSigningOut={isSigningOut}
       />
 
-      {/* MODAL 3: In-App Legal / Help Viewer Sheet */}
+      {/* MODAL 5: In-App Legal / Help Viewer Modal */}
       <LegalDocModal
         activeModal={activeLegalModal}
         onClose={() => setActiveLegalModal(null)}
