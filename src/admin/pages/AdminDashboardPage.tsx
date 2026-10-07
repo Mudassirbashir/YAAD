@@ -215,19 +215,19 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNaviga
   // Circular Chart Calculations
   const listCompletionPct = stats.totalLists > 0
     ? Math.round((stats.completedLists / stats.totalLists) * 100)
-    : 68;
+    : 0;
 
   const shopperActivePct = stats.totalUsers > 0
     ? Math.round((stats.activeUsers30d / stats.totalUsers) * 100)
-    : 84;
+    : 0;
 
   const radius = 42;
   const circumference = 2 * Math.PI * radius;
   const strokeOffsetCompletion = circumference - (listCompletionPct / 100) * circumference;
   const strokeOffsetShopper = circumference - (shopperActivePct / 100) * circumference;
 
-  // 7-Day Activity Simulation based on live list count
-  const baseWeeklyCount = Math.max(stats.totalLists, 14);
+  // 7-Day Activity based on live list count
+  const baseWeeklyCount = stats.totalLists;
   const weeklyData = [
     { day: 'Mon', count: Math.round(baseWeeklyCount * 0.11), label: 'Monday Mandi' },
     { day: 'Tue', count: Math.round(baseWeeklyCount * 0.09), label: 'Tuesday Midweek' },

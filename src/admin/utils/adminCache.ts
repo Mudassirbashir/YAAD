@@ -166,14 +166,20 @@ class AdminCache {
     try {
       const res = await fetch(url, { headers });
       if (!res.ok) {
-        if (res.status === 401) {
+        if (res.status === 401 || res.status === 403) {
           this.cache.clear();
         }
         return null;
       }
-      const data = await res.json();
-      this.set(cacheKey, data);
-      return data;
+      const text = await res.text();
+      if (!text || !text.trim()) return null;
+      try {
+        const data = JSON.parse(text);
+        this.set(cacheKey, data);
+        return data;
+      } catch {
+        return null;
+      }
     } catch (err: any) {
       if (err?.message?.includes('403') || err?.message?.includes('401')) {
         return null;

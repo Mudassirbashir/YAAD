@@ -111,8 +111,8 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       });
 
       if (!res.ok || !res.data) {
-        // Only clear session if explicitly unauthorized (401)
-        if (res.status === 401) {
+        // Clear session if unauthorized (401) or forbidden (403)
+        if (res.status === 401 || res.status === 403) {
           localStorage.removeItem(TOKEN_STORAGE_KEY);
           setToken(null);
           setAdmin(null);

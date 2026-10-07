@@ -148,7 +148,10 @@ export const AdminUserDirectoryPage: React.FC = () => {
 
       setSelectedUser(null);
       setSuspendReason('');
-      fetchUsers();
+      adminCache.invalidatePrefix('/api/admin/users');
+      adminCache.invalidatePrefix('/api/admin/dashboard/stats');
+      adminCache.invalidatePrefix('/api/admin/analytics');
+      fetchUsers(true);
     } catch (err: any) {
       showToast({
         type: 'error',
@@ -185,6 +188,7 @@ export const AdminUserDirectoryPage: React.FC = () => {
           ? 'Blue tick verified badge granted to user.'
           : 'User verification badge removed.',
       });
+      adminCache.invalidatePrefix('/api/admin/users');
       setUsers((prev) =>
         prev.map((u) => (u.id === userId ? { ...u, isVerified: targetVerified } : u))
       );

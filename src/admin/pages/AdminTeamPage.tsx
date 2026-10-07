@@ -391,6 +391,8 @@ Barah-e-karam 24 ghante ke andar is link ko open karke apna secure password aur 
         role: inviteRole,
       });
       adminCache.invalidatePrefix('/api/admin/invites');
+      adminCache.invalidatePrefix('/api/admin/dashboard/stats');
+      adminCache.invalidatePrefix('/api/admin/analytics');
       adminCache.invalidatePrefix('/api/admin/metrics');
       fetchInvites(true);
     } catch (err: any) {
@@ -439,6 +441,8 @@ Barah-e-karam 24 ghante ke andar is link ko open karke apna secure password aur 
       );
       setActionModal({ targetAdmin: null, action: 'suspend', reason: '' });
       adminCache.invalidatePrefix('/api/admin/team');
+      adminCache.invalidatePrefix('/api/admin/dashboard/stats');
+      adminCache.invalidatePrefix('/api/admin/analytics');
       adminCache.invalidatePrefix('/api/admin/metrics');
       fetchStaff(true);
     } catch (err: any) {
@@ -468,6 +472,8 @@ Barah-e-karam 24 ghante ke andar is link ko open karke apna secure password aur 
       toast.success('Invite Revoked', `Invitation for ${revokeInviteTarget.email} was invalidated.`);
       setRevokeInviteTarget(null);
       adminCache.invalidatePrefix('/api/admin/invites');
+      adminCache.invalidatePrefix('/api/admin/dashboard/stats');
+      adminCache.invalidatePrefix('/api/admin/analytics');
       adminCache.invalidatePrefix('/api/admin/metrics');
       fetchInvites(true);
     } catch (err: any) {

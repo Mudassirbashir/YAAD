@@ -5,38 +5,47 @@ async function runVerificationTests() {
 
   const testUserId = 'user_test_verified_123';
   
-  // Initially not verified
-  const initialVerified = adminStore.isUserVerified(testUserId);
-  console.log(`Initial verified status for ${testUserId}:`, initialVerified);
-  if (initialVerified !== false) {
-    throw new Error('Expected initial verified status to be false');
-  }
+  try {
+    // Initially not verified
+    const initialVerified = adminStore.isUserVerified(testUserId);
+    console.log(`Initial verified status for ${testUserId}:`, initialVerified);
+    if (initialVerified !== false) {
+      throw new Error('Expected initial verified status to be false');
+    }
 
-  // Grant verification
-  const updatedUser = adminStore.setAppUserVerified(testUserId, true);
-  console.log(`Updated user verification:`, updatedUser?.isVerified);
-  if (updatedUser?.isVerified !== true) {
-    throw new Error('Failed to set user verified to true');
-  }
+    // Grant verification
+    const updatedUser = adminStore.setAppUserVerified(testUserId, true);
+    console.log(`Updated user verification:`, updatedUser?.isVerified);
+    if (updatedUser?.isVerified !== true) {
+      throw new Error('Failed to set user verified to true');
+    }
 
-  const checkVerified = adminStore.isUserVerified(testUserId);
-  if (checkVerified !== true) {
-    throw new Error('isUserVerified returned false after granting verification');
-  }
+    const checkVerified = adminStore.isUserVerified(testUserId);
+    if (checkVerified !== true) {
+      throw new Error('isUserVerified returned false after granting verification');
+    }
 
-  // Revoke verification
-  const revokedUser = adminStore.setAppUserVerified(testUserId, false);
-  console.log(`Revoked user verification:`, revokedUser?.isVerified);
-  if (revokedUser?.isVerified !== false) {
-    throw new Error('Failed to revoke user verification');
-  }
+    // Revoke verification
+    const revokedUser = adminStore.setAppUserVerified(testUserId, false);
+    console.log(`Revoked user verification:`, revokedUser?.isVerified);
+    if (revokedUser?.isVerified !== false) {
+      throw new Error('Failed to revoke user verification');
+    }
 
-  const checkRevoked = adminStore.isUserVerified(testUserId);
-  if (checkRevoked !== false) {
-    throw new Error('isUserVerified returned true after revoking verification');
-  }
+    const checkRevoked = adminStore.isUserVerified(testUserId);
+    if (checkRevoked !== false) {
+      throw new Error('isUserVerified returned true after revoking verification');
+    }
 
-  console.log('✅ ALL ADMIN STORE VERIFICATION TESTS PASSED');
+    console.log('✅ ALL ADMIN STORE VERIFICATION TESTS PASSED');
+  } finally {
+    // Clean up test user to preserve database source of truth
+    const db = (adminStore as any).db;
+    if (db?.appUsers) {
+      db.appUsers = db.appUsers.filter((u: any) => u.id !== testUserId);
+      (adminStore as any).save();
+    }
+  }
 }
 
 runVerificationTests()

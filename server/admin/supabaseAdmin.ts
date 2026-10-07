@@ -36,16 +36,51 @@ export interface SharedTempTokenRecord {
 // In-memory fallback maps for local dev / when Supabase is not configured
 const memoryTempTokens = new Map<string, SharedTempTokenRecord>();
 
+// Missing tables cache to avoid redundant schema cache queries and spurious warning logs
+const missingTablesCache = new Set<string>([
+  'admin_audit_logs',
+  'items',
+  'admin_users',
+  'admin_sessions',
+  'admin_temp_tokens',
+  'admin_invites',
+  'admin_settings',
+  'support_tickets',
+  'cms_articles',
+  'push_campaigns',
+]);
+
+export function isTableMissingInSupabase(tableName: string): boolean {
+  return missingTablesCache.has(tableName);
+}
+
+export function markTableMissingInSupabase(tableName: string): void {
+  missingTablesCache.add(tableName);
+}
+
+export function isSchemaCacheMissingTableError(error: any): boolean {
+  if (!error) return false;
+  const code = error.code || '';
+  const message = typeof error.message === 'string' ? error.message : '';
+  return (
+    code === 'PGRST205' ||
+    code === '42P01' ||
+    message.includes('schema cache') ||
+    message.includes('Could not find the table') ||
+    (message.includes('relation') && message.includes('does not exist'))
+  );
+}
+
 /**
  * Persists an active admin session to Supabase (or in-memory fallback)
  */
 export async function persistSharedSession(session: AdminSession): Promise<void> {
   const supabase = getSupabaseAdmin();
-  if (!supabase) return;
+  if (!supabase || isTableMissingInSupabase('admin_sessions')) return;
 
   try {
     const tokenHash = hashSessionToken(session.token);
-    await supabase.from('admin_sessions').upsert({
+    const { error } = await supabase.from('admin_sessions').upsert({
       token_hash: tokenHash,
       admin_id: session.adminId,
       created_at: new Date(session.createdAt).toISOString(),
@@ -54,8 +89,11 @@ export async function persistSharedSession(session: AdminSession): Promise<void>
       ip: session.ip || null,
       user_agent: session.userAgent || null,
     });
-  } catch (err) {
-    console.warn('[Supabase Admin] Error persisting shared session:', err);
+    if (error && isSchemaCacheMissingTableError(error)) {
+      markTableMissingInSupabase('admin_sessions');
+    }
+  } catch {
+    // In-memory fallback active
   }
 }
 
@@ -64,7 +102,7 @@ export async function persistSharedSession(session: AdminSession): Promise<void>
  */
 export async function getSharedSessionFromDb(token: string): Promise<AdminSession | null> {
   const supabase = getSupabaseAdmin();
-  if (!supabase) return null;
+  if (!supabase || isTableMissingInSupabase('admin_sessions')) return null;
 
   try {
     const tokenHash = hashSessionToken(token);
@@ -74,7 +112,13 @@ export async function getSharedSessionFromDb(token: string): Promise<AdminSessio
       .eq('token_hash', tokenHash)
       .maybeSingle();
 
-    if (error || !data) return null;
+    if (error) {
+      if (isSchemaCacheMissingTableError(error)) {
+        markTableMissingInSupabase('admin_sessions');
+      }
+      return null;
+    }
+    if (!data) return null;
 
     return {
       sessionId: 'sess_' + tokenHash.substring(0, 16),
@@ -86,8 +130,7 @@ export async function getSharedSessionFromDb(token: string): Promise<AdminSessio
       ip: data.ip || undefined,
       userAgent: data.user_agent || undefined,
     };
-  } catch (err) {
-    console.warn('[Supabase Admin] Error fetching shared session:', err);
+  } catch {
     return null;
   }
 }
@@ -97,16 +140,19 @@ export async function getSharedSessionFromDb(token: string): Promise<AdminSessio
  */
 export async function touchSharedSessionInDb(token: string, lastActivityAt: number = Date.now()): Promise<void> {
   const supabase = getSupabaseAdmin();
-  if (!supabase) return;
+  if (!supabase || isTableMissingInSupabase('admin_sessions')) return;
 
   try {
     const tokenHash = hashSessionToken(token);
-    await supabase
+    const { error } = await supabase
       .from('admin_sessions')
       .update({ last_activity_at: new Date(lastActivityAt).toISOString() })
       .eq('token_hash', tokenHash);
-  } catch (err) {
-    console.warn('[Supabase Admin] Error touching shared session:', err);
+    if (error && isSchemaCacheMissingTableError(error)) {
+      markTableMissingInSupabase('admin_sessions');
+    }
+  } catch {
+    // In-memory fallback active
   }
 }
 
@@ -115,13 +161,16 @@ export async function touchSharedSessionInDb(token: string, lastActivityAt: numb
  */
 export async function deleteSharedSessionFromDb(token: string): Promise<void> {
   const supabase = getSupabaseAdmin();
-  if (!supabase) return;
+  if (!supabase || isTableMissingInSupabase('admin_sessions')) return;
 
   try {
     const tokenHash = hashSessionToken(token);
-    await supabase.from('admin_sessions').delete().eq('token_hash', tokenHash);
-  } catch (err) {
-    console.warn('[Supabase Admin] Error deleting shared session:', err);
+    const { error } = await supabase.from('admin_sessions').delete().eq('token_hash', tokenHash);
+    if (error && isSchemaCacheMissingTableError(error)) {
+      markTableMissingInSupabase('admin_sessions');
+    }
+  } catch {
+    // In-memory fallback active
   }
 }
 
@@ -147,10 +196,10 @@ export async function saveSharedTempToken(
   memoryTempTokens.set(token, record);
 
   const supabase = getSupabaseAdmin();
-  if (!supabase) return;
+  if (!supabase || isTableMissingInSupabase('admin_temp_tokens')) return;
 
   try {
-    await supabase.from('admin_temp_tokens').upsert({
+    const { error } = await supabase.from('admin_temp_tokens').upsert({
       token,
       admin_id: adminId,
       email,
@@ -158,8 +207,11 @@ export async function saveSharedTempToken(
       created_at: new Date(record.createdAt).toISOString(),
       expires_at: new Date(record.expiresAt).toISOString(),
     });
-  } catch (err) {
-    console.warn('[Supabase Admin] Error saving shared temp token:', err);
+    if (error && isSchemaCacheMissingTableError(error)) {
+      markTableMissingInSupabase('admin_temp_tokens');
+    }
+  } catch {
+    // In-memory fallback active
   }
 }
 
@@ -180,7 +232,7 @@ export async function validateSharedTempToken(
 
   // 2. Check Supabase shared table
   const supabase = getSupabaseAdmin();
-  if (!supabase) return null;
+  if (!supabase || isTableMissingInSupabase('admin_temp_tokens')) return null;
 
   try {
     const { data, error } = await supabase
@@ -190,7 +242,13 @@ export async function validateSharedTempToken(
       .eq('purpose', purpose)
       .maybeSingle();
 
-    if (error || !data) return null;
+    if (error) {
+      if (isSchemaCacheMissingTableError(error)) {
+        markTableMissingInSupabase('admin_temp_tokens');
+      }
+      return null;
+    }
+    if (!data) return null;
 
     const expiresAt = new Date(data.expires_at).getTime();
     if (Date.now() > expiresAt) {
@@ -206,8 +264,7 @@ export async function validateSharedTempToken(
       createdAt: new Date(data.created_at).getTime(),
       expiresAt,
     };
-  } catch (err) {
-    console.warn('[Supabase Admin] Error validating shared temp token:', err);
+  } catch {
     return null;
   }
 }
@@ -219,12 +276,15 @@ export async function deleteSharedTempToken(token: string): Promise<void> {
   memoryTempTokens.delete(token);
 
   const supabase = getSupabaseAdmin();
-  if (!supabase) return;
+  if (!supabase || isTableMissingInSupabase('admin_temp_tokens')) return;
 
   try {
-    await supabase.from('admin_temp_tokens').delete().eq('token', token);
-  } catch (err) {
-    console.warn('[Supabase Admin] Error deleting shared temp token:', err);
+    const { error } = await supabase.from('admin_temp_tokens').delete().eq('token', token);
+    if (error && isSchemaCacheMissingTableError(error)) {
+      markTableMissingInSupabase('admin_temp_tokens');
+    }
+  } catch {
+    // In-memory fallback active
   }
 }
 
@@ -233,10 +293,10 @@ export async function deleteSharedTempToken(token: string): Promise<void> {
  */
 export async function persistSharedAdmin(admin: AdminUser): Promise<void> {
   const supabase = getSupabaseAdmin();
-  if (!supabase) return;
+  if (!supabase || isTableMissingInSupabase('admin_users')) return;
 
   try {
-    await supabase.from('admin_users').upsert({
+    const { error } = await supabase.from('admin_users').upsert({
       id: admin.id,
       name: admin.name,
       email: admin.email.toLowerCase().trim(),
@@ -253,8 +313,11 @@ export async function persistSharedAdmin(admin: AdminUser): Promise<void> {
       updated_at: new Date(admin.updatedAt || Date.now()).toISOString(),
       deleted_at: admin.deletedAt ? new Date(admin.deletedAt).toISOString() : null,
     });
-  } catch (err) {
-    console.warn('[Supabase Admin] Error persisting shared admin:', err);
+    if (error && isSchemaCacheMissingTableError(error)) {
+      markTableMissingInSupabase('admin_users');
+    }
+  } catch {
+    // In-memory fallback active
   }
 }
 
@@ -263,7 +326,7 @@ export async function persistSharedAdmin(admin: AdminUser): Promise<void> {
  */
 export async function getSharedAdminByEmail(email: string): Promise<AdminUser | null> {
   const supabase = getSupabaseAdmin();
-  if (!supabase) return null;
+  if (!supabase || isTableMissingInSupabase('admin_users')) return null;
 
   try {
     const { data, error } = await supabase
@@ -272,7 +335,13 @@ export async function getSharedAdminByEmail(email: string): Promise<AdminUser | 
       .eq('email', email.toLowerCase().trim())
       .maybeSingle();
 
-    if (error || !data) return null;
+    if (error) {
+      if (isSchemaCacheMissingTableError(error)) {
+        markTableMissingInSupabase('admin_users');
+      }
+      return null;
+    }
+    if (!data) return null;
 
     return {
       id: data.id,
@@ -291,8 +360,7 @@ export async function getSharedAdminByEmail(email: string): Promise<AdminUser | 
       updatedAt: new Date(data.updated_at).getTime(),
       deletedAt: data.deleted_at ? new Date(data.deleted_at).getTime() : null,
     };
-  } catch (err) {
-    console.warn('[Supabase Admin] Error fetching shared admin by email:', err);
+  } catch {
     return null;
   }
 }
@@ -302,7 +370,7 @@ export async function getSharedAdminByEmail(email: string): Promise<AdminUser | 
  */
 export async function getSharedAdminById(id: string): Promise<AdminUser | null> {
   const supabase = getSupabaseAdmin();
-  if (!supabase) return null;
+  if (!supabase || isTableMissingInSupabase('admin_users')) return null;
 
   try {
     const { data, error } = await supabase
@@ -311,7 +379,13 @@ export async function getSharedAdminById(id: string): Promise<AdminUser | null> 
       .eq('id', id)
       .maybeSingle();
 
-    if (error || !data) return null;
+    if (error) {
+      if (isSchemaCacheMissingTableError(error)) {
+        markTableMissingInSupabase('admin_users');
+      }
+      return null;
+    }
+    if (!data) return null;
 
     return {
       id: data.id,
@@ -330,8 +404,7 @@ export async function getSharedAdminById(id: string): Promise<AdminUser | null> 
       updatedAt: new Date(data.updated_at).getTime(),
       deletedAt: data.deleted_at ? new Date(data.deleted_at).getTime() : null,
     };
-  } catch (err) {
-    console.warn('[Supabase Admin] Error fetching shared admin by id:', err);
+  } catch {
     return null;
   }
 }
@@ -341,14 +414,20 @@ export async function getSharedAdminById(id: string): Promise<AdminUser | null> 
  */
 export async function getAllSharedAdmins(): Promise<AdminUser[] | null> {
   const supabase = getSupabaseAdmin();
-  if (!supabase) return null;
+  if (!supabase || isTableMissingInSupabase('admin_users')) return null;
 
   try {
     const { data, error } = await supabase
       .from('admin_users')
       .select('*');
 
-    if (error || !data) return null;
+    if (error) {
+      if (isSchemaCacheMissingTableError(error)) {
+        markTableMissingInSupabase('admin_users');
+      }
+      return null;
+    }
+    if (!data) return null;
 
     return data.map((d: any) => ({
       id: d.id,
@@ -367,8 +446,7 @@ export async function getAllSharedAdmins(): Promise<AdminUser[] | null> {
       updatedAt: new Date(d.updated_at).getTime(),
       deletedAt: d.deleted_at ? new Date(d.deleted_at).getTime() : null,
     }));
-  } catch (err) {
-    console.warn('[Supabase Admin] Error fetching all shared admins:', err);
+  } catch {
     return null;
   }
 }
@@ -378,10 +456,10 @@ export async function getAllSharedAdmins(): Promise<AdminUser[] | null> {
  */
 export async function persistSharedInvite(invite: AdminInvite): Promise<void> {
   const supabase = getSupabaseAdmin();
-  if (!supabase) return;
+  if (!supabase || isTableMissingInSupabase('admin_invites')) return;
 
   try {
-    await supabase.from('admin_invites').upsert({
+    const { error } = await supabase.from('admin_invites').upsert({
       id: invite.id,
       email: invite.email,
       name: invite.name,
@@ -393,8 +471,11 @@ export async function persistSharedInvite(invite: AdminInvite): Promise<void> {
       created_at: new Date(invite.createdAt).toISOString(),
       accepted_at: invite.acceptedAt ? new Date(invite.acceptedAt).toISOString() : null,
     });
-  } catch (err) {
-    console.warn('[Supabase Admin] Error persisting shared invite:', err);
+    if (error && isSchemaCacheMissingTableError(error)) {
+      markTableMissingInSupabase('admin_invites');
+    }
+  } catch {
+    // In-memory fallback active
   }
 }
 
@@ -403,7 +484,7 @@ export async function persistSharedInvite(invite: AdminInvite): Promise<void> {
  */
 export async function getSharedInvite(token: string): Promise<AdminInvite | null> {
   const supabase = getSupabaseAdmin();
-  if (!supabase) return null;
+  if (!supabase || isTableMissingInSupabase('admin_invites')) return null;
 
   try {
     const { data, error } = await supabase
@@ -412,7 +493,13 @@ export async function getSharedInvite(token: string): Promise<AdminInvite | null
       .eq('token', token)
       .maybeSingle();
 
-    if (error || !data) return null;
+    if (error) {
+      if (isSchemaCacheMissingTableError(error)) {
+        markTableMissingInSupabase('admin_invites');
+      }
+      return null;
+    }
+    if (!data) return null;
 
     return {
       id: data.id,
@@ -426,8 +513,7 @@ export async function getSharedInvite(token: string): Promise<AdminInvite | null
       createdAt: new Date(data.created_at).getTime(),
       acceptedAt: data.accepted_at ? new Date(data.accepted_at).getTime() : undefined,
     };
-  } catch (err) {
-    console.warn('[Supabase Admin] Error fetching shared invite:', err);
+  } catch {
     return null;
   }
 }
@@ -437,12 +523,15 @@ export async function getSharedInvite(token: string): Promise<AdminInvite | null
  */
 export async function deleteSharedInvite(token: string): Promise<void> {
   const supabase = getSupabaseAdmin();
-  if (!supabase) return;
+  if (!supabase || isTableMissingInSupabase('admin_invites')) return;
 
   try {
-    await supabase.from('admin_invites').delete().eq('token', token);
-  } catch (err) {
-    console.warn('[Supabase Admin] Error deleting shared invite:', err);
+    const { error } = await supabase.from('admin_invites').delete().eq('token', token);
+    if (error && isSchemaCacheMissingTableError(error)) {
+      markTableMissingInSupabase('admin_invites');
+    }
+  } catch {
+    // In-memory fallback active
   }
 }
 
@@ -469,10 +558,10 @@ export interface SharedAuditLogEntry {
 
 export async function persistSharedAuditLog(entry: SharedAuditLogEntry): Promise<void> {
   const supabase = getSupabaseAdmin();
-  if (!supabase) return;
+  if (!supabase || isTableMissingInSupabase('admin_audit_logs')) return;
 
   try {
-    await supabase.from('admin_audit_logs').insert({
+    const { error } = await supabase.from('admin_audit_logs').insert({
       id: entry.id,
       timestamp: new Date(entry.timestamp).toISOString(),
       admin_id: entry.adminId || null,
@@ -486,8 +575,11 @@ export async function persistSharedAuditLog(entry: SharedAuditLogEntry): Promise
       user_agent: entry.userAgent || null,
       metadata: entry.metadata || null,
     });
-  } catch (err) {
-    console.warn('[Supabase Admin] Error persisting audit log to Supabase:', err);
+    if (error && isSchemaCacheMissingTableError(error)) {
+      markTableMissingInSupabase('admin_audit_logs');
+    }
+  } catch {
+    // In-memory fallback active
   }
 }
 
@@ -499,7 +591,7 @@ export async function getSharedAuditLogsFromDb(options?: {
   offset?: number;
 }): Promise<{ logs: SharedAuditLogEntry[]; total: number } | null> {
   const supabase = getSupabaseAdmin();
-  if (!supabase) return null;
+  if (!supabase || isTableMissingInSupabase('admin_audit_logs')) return null;
 
   try {
     let query = supabase
@@ -524,7 +616,9 @@ export async function getSharedAuditLogsFromDb(options?: {
 
     const { data, count, error } = await query;
     if (error) {
-      console.warn('[Supabase Admin] Error fetching audit logs from Supabase:', error.message);
+      if (isSchemaCacheMissingTableError(error)) {
+        markTableMissingInSupabase('admin_audit_logs');
+      }
       return null;
     }
 
@@ -544,8 +638,7 @@ export async function getSharedAuditLogsFromDb(options?: {
     }));
 
     return { logs, total: count ?? logs.length };
-  } catch (err) {
-    console.warn('[Supabase Admin] Exception in getSharedAuditLogsFromDb:', err);
+  } catch {
     return null;
   }
 }
@@ -599,18 +692,54 @@ export async function getAuthoritativeAppMetrics(): Promise<AuthoritativeDashboa
       supabase.from('shopping_lists').select('*', { count: 'exact', head: true }).eq('is_completed', true),
       supabase.from('shopping_items').select('*', { count: 'exact', head: true }),
       supabase.from('shopping_items').select('*', { count: 'exact', head: true }).eq('is_completed', true),
-      supabase.from('admin_users').select('status', { count: 'exact' }),
-      supabase.from('admin_invites').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
       (async () => {
+        if (isTableMissingInSupabase('admin_users')) return { count: 0, data: [] };
         try {
-          return await supabase.from('admin_audit_logs').select('*', { count: 'exact', head: true });
+          const res = await supabase.from('admin_users').select('status', { count: 'exact' });
+          if (res.error && isSchemaCacheMissingTableError(res.error)) {
+            markTableMissingInSupabase('admin_users');
+            return { count: 0, data: [] };
+          }
+          return res;
+        } catch {
+          return { count: 0, data: [] };
+        }
+      })(),
+      (async () => {
+        if (isTableMissingInSupabase('admin_invites')) return { count: 0 };
+        try {
+          const res = await supabase.from('admin_invites').select('*', { count: 'exact', head: true }).eq('status', 'pending');
+          if (res.error && isSchemaCacheMissingTableError(res.error)) {
+            markTableMissingInSupabase('admin_invites');
+            return { count: 0 };
+          }
+          return res;
         } catch {
           return { count: 0 };
         }
       })(),
       (async () => {
+        if (isTableMissingInSupabase('admin_audit_logs')) return { count: 0 };
         try {
-          return await supabase.from('support_tickets').select('*', { count: 'exact', head: true }).eq('status', 'open');
+          const res = await supabase.from('admin_audit_logs').select('*', { count: 'exact', head: true });
+          if (res.error && isSchemaCacheMissingTableError(res.error)) {
+            markTableMissingInSupabase('admin_audit_logs');
+            return { count: 0 };
+          }
+          return res;
+        } catch {
+          return { count: 0 };
+        }
+      })(),
+      (async () => {
+        if (isTableMissingInSupabase('support_tickets')) return { count: 0 };
+        try {
+          const res = await supabase.from('support_tickets').select('*', { count: 'exact', head: true }).eq('status', 'open');
+          if (res.error && isSchemaCacheMissingTableError(res.error)) {
+            markTableMissingInSupabase('support_tickets');
+            return { count: 0 };
+          }
+          return res;
         } catch {
           return { count: 0 };
         }
@@ -646,8 +775,7 @@ export async function getAuthoritativeAppMetrics(): Promise<AuthoritativeDashboa
       totalAuditLogs,
       openTickets,
     };
-  } catch (err) {
-    console.warn('[Supabase Admin] Exception calculating authoritative metrics:', err);
+  } catch {
     return null;
   }
 }
@@ -700,7 +828,9 @@ export async function getAuthoritativeAppUsers(options?: {
 
     const { data: profiles, count, error } = await query;
     if (error) {
-      console.warn('[Supabase Admin] Error fetching profiles from Supabase:', error.message);
+      if (isSchemaCacheMissingTableError(error)) {
+        markTableMissingInSupabase('profiles');
+      }
       return null;
     }
 
@@ -746,8 +876,7 @@ export async function getAuthoritativeAppUsers(options?: {
     });
 
     return { users, total: count ?? users.length };
-  } catch (err) {
-    console.warn('[Supabase Admin] Exception in getAuthoritativeAppUsers:', err);
+  } catch {
     return null;
   }
 }
@@ -806,7 +935,9 @@ export async function getAuthoritativeShoppingLists(options?: {
 
     const { data: listsData, count, error } = await query;
     if (error) {
-      console.warn('[Supabase Admin] Error fetching shopping lists:', error.message);
+      if (isSchemaCacheMissingTableError(error)) {
+        markTableMissingInSupabase('shopping_lists');
+      }
       return null;
     }
 
@@ -860,8 +991,7 @@ export async function getAuthoritativeShoppingLists(options?: {
     });
 
     return { lists, total: count ?? lists.length };
-  } catch (err) {
-    console.warn('[Supabase Admin] Exception in getAuthoritativeShoppingLists:', err);
+  } catch {
     return null;
   }
 }
@@ -892,13 +1022,17 @@ export async function getAuthoritativeCatalog(options?: {
   offset?: number;
 }): Promise<{ items: AuthoritativeCatalogItem[]; categories: Array<{ id: string; nameEn: string; nameUr: string; icon: string }>; total: number } | null> {
   const supabase = getSupabaseAdmin();
-  if (!supabase) return null;
+  if (!supabase || isTableMissingInSupabase('items')) return null;
 
   try {
-    const { data: categoriesData } = await supabase
+    const { data: categoriesData, error: catError } = await supabase
       .from('categories')
       .select('id, name_en, name_ur, icon')
       .order('sort_order', { ascending: true });
+
+    if (catError && isSchemaCacheMissingTableError(catError)) {
+      markTableMissingInSupabase('categories');
+    }
 
     const categories = (categoriesData || []).map((c: any) => ({
       id: c.id,
@@ -926,7 +1060,9 @@ export async function getAuthoritativeCatalog(options?: {
 
     const { data: itemsData, count, error } = await query;
     if (error) {
-      console.warn('[Supabase Admin] Error fetching catalog items:', error.message);
+      if (isSchemaCacheMissingTableError(error)) {
+        markTableMissingInSupabase('items');
+      }
       return null;
     }
 
@@ -946,8 +1082,7 @@ export async function getAuthoritativeCatalog(options?: {
     }));
 
     return { items, categories, total: count ?? items.length };
-  } catch (err) {
-    console.warn('[Supabase Admin] Exception in getAuthoritativeCatalog:', err);
+  } catch {
     return null;
   }
 }
@@ -965,7 +1100,7 @@ export async function getAuthoritativeTickets(options?: {
   limit?: number;
 }): Promise<{ tickets: any[]; total: number } | null> {
   const supabase = getSupabaseAdmin();
-  if (!supabase) return null;
+  if (!supabase || isTableMissingInSupabase('support_tickets')) return null;
 
   try {
     let query = supabase
@@ -986,7 +1121,12 @@ export async function getAuthoritativeTickets(options?: {
     query = query.range(offset, offset + limit - 1);
 
     const { data, count, error } = await query;
-    if (error) return null;
+    if (error) {
+      if (isSchemaCacheMissingTableError(error)) {
+        markTableMissingInSupabase('support_tickets');
+      }
+      return null;
+    }
 
     return { tickets: data || [], total: count ?? (data?.length || 0) };
   } catch {
@@ -999,7 +1139,7 @@ export async function getAuthoritativeCms(options?: {
   search?: string;
 }): Promise<{ articles: any[]; total: number } | null> {
   const supabase = getSupabaseAdmin();
-  if (!supabase) return null;
+  if (!supabase || isTableMissingInSupabase('cms_articles')) return null;
 
   try {
     let query = supabase
@@ -1015,7 +1155,12 @@ export async function getAuthoritativeCms(options?: {
     }
 
     const { data, count, error } = await query;
-    if (error) return null;
+    if (error) {
+      if (isSchemaCacheMissingTableError(error)) {
+        markTableMissingInSupabase('cms_articles');
+      }
+      return null;
+    }
 
     return { articles: data || [], total: count ?? (data?.length || 0) };
   } catch {
@@ -1031,7 +1176,7 @@ export async function getAuthoritativeCms(options?: {
 
 export async function getAuthoritativeSetting<T>(key: string): Promise<T | null> {
   const supabase = getSupabaseAdmin();
-  if (!supabase) return null;
+  if (!supabase || isTableMissingInSupabase('admin_settings')) return null;
 
   try {
     const { data, error } = await supabase
@@ -1040,7 +1185,13 @@ export async function getAuthoritativeSetting<T>(key: string): Promise<T | null>
       .eq('key', key)
       .maybeSingle();
 
-    if (error || !data) return null;
+    if (error) {
+      if (isSchemaCacheMissingTableError(error)) {
+        markTableMissingInSupabase('admin_settings');
+      }
+      return null;
+    }
+    if (!data) return null;
     return data.value as T;
   } catch {
     return null;
@@ -1049,18 +1200,23 @@ export async function getAuthoritativeSetting<T>(key: string): Promise<T | null>
 
 export async function setAuthoritativeSetting<T>(key: string, value: T, updatedBy?: string): Promise<boolean> {
   const supabase = getSupabaseAdmin();
-  if (!supabase) return false;
+  if (!supabase || isTableMissingInSupabase('admin_settings')) return false;
 
   try {
-    await supabase.from('admin_settings').upsert({
+    const { error } = await supabase.from('admin_settings').upsert({
       key,
       value: value as any,
       updated_at: new Date().toISOString(),
       updated_by: updatedBy || null,
     });
+    if (error) {
+      if (isSchemaCacheMissingTableError(error)) {
+        markTableMissingInSupabase('admin_settings');
+      }
+      return false;
+    }
     return true;
-  } catch (err) {
-    console.warn(`[Supabase Admin] Error saving setting '${key}':`, err);
+  } catch {
     return false;
   }
 }

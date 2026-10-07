@@ -783,43 +783,7 @@ Spices lose their volatile essential oils when exposed to direct sunlight, humid
 }
 
 function getInitialPushCampaigns(): PushCampaign[] {
-  const now = Date.now();
-  return [
-    {
-      id: 'push_weekend_sabzi',
-      titleEn: 'Weekend Sabzi Mandi Reminder 🛒',
-      titleUr: 'ویک اینڈ سبزی منڈی گروسری یاد دہانی',
-      bodyEn: 'Add fresh vegetables and dairy to your YAAD parchi before heading to the market this morning!',
-      bodyUr: 'منڈی جانے سے پہلے اپنی یاد ایپ میں سبزیاں اور دودھ شامل کر لیں۔',
-      iconUrl: '/logo.png',
-      targetAudience: 'all_active',
-      status: 'sent',
-      sentAt: now - 2 * 24 * 60 * 60 * 1000,
-      estimatedRecipients: 24,
-      actualSentCount: 24,
-      deliveredCount: 23,
-      openedCount: 18,
-      createdBy: 'mudassirbashir530@gmail.com',
-      createdAt: now - 2 * 24 * 60 * 60 * 1000,
-    },
-    {
-      id: 'push_ramadan_prep',
-      titleEn: 'Ramadan Rashan List Ready 🌙',
-      titleUr: 'رمضان راشن لسٹ تیار ہے',
-      bodyEn: 'Review the essential Ramadan 2026 checklist in your YAAD Grocery Guides section today.',
-      bodyUr: 'رمضان کے ضروری راشن کی لسٹ ایپ میں دیکھیں۔',
-      iconUrl: '/logo.png',
-      targetAudience: 'all',
-      status: 'sent',
-      sentAt: now - 5 * 24 * 60 * 60 * 1000,
-      estimatedRecipients: 28,
-      actualSentCount: 28,
-      deliveredCount: 27,
-      openedCount: 21,
-      createdBy: 'mudassirbashir530@gmail.com',
-      createdAt: now - 5 * 24 * 60 * 60 * 1000,
-    },
-  ];
+  return [];
 }
 
 function getInitialPushTemplates(): PushTemplate[] {
@@ -863,12 +827,12 @@ class AdminStore {
     permissionMatrix: getDefaultPermissionMatrix(),
     appUsers: getInitialAppUsers(),
     moderationLists: getInitialModerationLists(),
-    catalogProducts: getInitialCatalogProducts(),
+    catalogProducts: [],
     catalogCategories: getInitialCategories(),
     cmsArticles: getInitialCmsArticles(),
     pushCampaigns: getInitialPushCampaigns(),
     pushTemplates: getInitialPushTemplates(),
-    supportTickets: getInitialSupportTickets(),
+    supportTickets: [],
     cannedReplies: getInitialCannedReplies(),
     accessRequests: [],
   };
@@ -927,10 +891,10 @@ class AdminStore {
           permissionMatrix: parsed.permissionMatrix || getDefaultPermissionMatrix(),
           appUsers: Array.isArray(parsed.appUsers) ? parsed.appUsers : [],
           moderationLists: Array.isArray(parsed.moderationLists) ? parsed.moderationLists : [],
-          catalogProducts: Array.isArray(parsed.catalogProducts) && parsed.catalogProducts.length > 0 ? parsed.catalogProducts : getInitialCatalogProducts(),
+          catalogProducts: Array.isArray(parsed.catalogProducts) ? parsed.catalogProducts : [],
           catalogCategories: Array.isArray(parsed.catalogCategories) && parsed.catalogCategories.length > 0 ? parsed.catalogCategories : getInitialCategories(),
           cmsArticles: Array.isArray(parsed.cmsArticles) && parsed.cmsArticles.length > 0 && !parsed.cmsArticles.some((a: any) => a.id?.startsWith('art_')) ? parsed.cmsArticles : getInitialCmsArticles(),
-          pushCampaigns: Array.isArray(parsed.pushCampaigns) && parsed.pushCampaigns.length > 0 ? parsed.pushCampaigns : getInitialPushCampaigns(),
+          pushCampaigns: Array.isArray(parsed.pushCampaigns) ? parsed.pushCampaigns : getInitialPushCampaigns(),
           pushTemplates: Array.isArray(parsed.pushTemplates) ? parsed.pushTemplates : [],
           supportTickets: Array.isArray(parsed.supportTickets) ? parsed.supportTickets : [],
           cannedReplies: Array.isArray(parsed.cannedReplies) ? parsed.cannedReplies : [],
@@ -2342,11 +2306,11 @@ class AdminStore {
     const oneDay = 24 * 60 * 60 * 1000;
     const days = dateRange === '7d' ? 7 : dateRange === '90d' ? 90 : 30;
 
-    const totalUsers = Math.max(users.length, 23);
-    const activeUsers30d = Math.max(users.filter((u) => u.status !== 'suspended' && now - u.lastActiveAt <= 30 * oneDay).length, 20);
-    const activeUsers7d = Math.max(users.filter((u) => u.status !== 'suspended' && now - u.lastActiveAt <= 7 * oneDay).length, 14);
-    const totalListsCreated = Math.max(lists.length || users.reduce((acc, u) => acc + (u.listsCount || 0), 0), 58);
-    const totalCompletedTrips = Math.max(lists.filter((l: any) => l.isCompleted || l.status === 'resolved').length || users.reduce((acc, u) => acc + (u.completedTripsCount || 0), 0), 33);
+    const totalUsers = users.length;
+    const activeUsers30d = users.filter((u) => u.status !== 'suspended' && now - u.lastActiveAt <= 30 * oneDay).length;
+    const activeUsers7d = users.filter((u) => u.status !== 'suspended' && now - u.lastActiveAt <= 7 * oneDay).length;
+    const totalListsCreated = lists.length || users.reduce((acc, u) => acc + (u.listsCount || 0), 0);
+    const totalCompletedTrips = lists.filter((l: any) => l.isCompleted || l.status === 'resolved').length || users.reduce((acc, u) => acc + (u.completedTripsCount || 0), 0);
     const tripCompletionRate = totalListsCreated > 0 ? Math.round((totalCompletedTrips / totalListsCreated) * 100) : 0;
 
     // Time series calculated from actual records
@@ -2390,14 +2354,14 @@ class AdminStore {
         activeUsers: activeUsersTimeSeries,
         lists: listsTimeSeries,
       },
-      topCategories: [
-        { category: 'Fresh Vegetables & Sabzi', count: Math.max(lists.length * 4, 182) },
-        { category: 'Atta, Rice & Grains', count: Math.max(lists.length * 3, 114) },
-        { category: 'Spices & Masalay', count: Math.max(lists.length * 2, 76) },
-        { category: 'Dairy & Eggs', count: Math.max(lists.length * 2, 62) },
-        { category: 'Cooking Oils & Ghee', count: Math.max(lists.length, 38) },
-        { category: 'Household & Cleaning', count: Math.max(lists.length, 29) },
-      ],
+      topCategories: lists.length > 0 ? [
+        { category: 'Fresh Vegetables & Sabzi', count: lists.length * 4 },
+        { category: 'Atta, Rice & Grains', count: lists.length * 3 },
+        { category: 'Spices & Masalay', count: lists.length * 2 },
+        { category: 'Dairy & Eggs', count: lists.length * 2 },
+        { category: 'Cooking Oils & Ghee', count: lists.length },
+        { category: 'Household & Cleaning', count: lists.length },
+      ] : [],
       retentionCohorts: [],
       summary: totalUsers > 0
         ? `Database reflects ${totalUsers} registered shopper(s), ${activeUsers30d} active in the last 30 days, and ${totalListsCreated} total shopping list(s).`
@@ -2409,13 +2373,10 @@ class AdminStore {
     const base = this.getAnalyticsReport(dateRange);
     const authMetrics = await getAuthoritativeAppMetrics();
     if (authMetrics) {
-      const totalUsers = Math.max(authMetrics.totalUsers, base.metrics.totalShoppers);
-      const activeShoppers = Math.max(
-        dateRange === '7d' ? authMetrics.activeUsers7d : authMetrics.activeUsers30d,
-        base.metrics.activeShoppers
-      );
-      const totalLists = Math.max(authMetrics.totalLists, base.metrics.totalShoppingLists);
-      const completedLists = Math.max(authMetrics.completedLists, base.metrics.completedShoppingLists);
+      const totalUsers = authMetrics.totalUsers;
+      const activeShoppers = dateRange === '7d' ? authMetrics.activeUsers7d : authMetrics.activeUsers30d;
+      const totalLists = authMetrics.totalLists;
+      const completedLists = authMetrics.completedLists;
       const completionRate = totalLists > 0 ? Math.round((completedLists / totalLists) * 100) : 0;
 
       base.metrics = {

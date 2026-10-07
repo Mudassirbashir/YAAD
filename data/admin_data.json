@@ -10,7 +10,7 @@
       "status": "active",
       "failedAttempts": 0,
       "createdAt": 1791123839719,
-      "updatedAt": 1791239111227,
+      "updatedAt": 1791393465591,
       "deletedAt": null,
       "recoveryCodes": [
         {
@@ -44,242 +44,9 @@
           "codeHash": "a019e6181b12e4c03b3e2431c1b24aeb0e1c2d45e140802d36f0448790e53daf"
         }
       ]
-    },
-    {
-      "id": "admin_cd880078-b49d-4e86-8b61-9f873ea4182e",
-      "name": "Support Agent 3",
-      "email": "support_agent_3@yaad.pk",
-      "passwordHash": "475fedff8d7c706fcde729e44e6ee21f79f1cd0c617c2aee0294e81ac4dd2e7bd58da4b669826a1194a95f01a709a0700aee123af899396fc8c025511228882f",
-      "salt": "f3090972348e6630611cf7dba6a25d1f",
-      "role": "support_agent",
-      "totpSecret": "ATLIBRO2DP3P4NJ2AJN2G4OKOPW26EPW",
-      "isTotpEnabled": true,
-      "status": "active",
-      "failedAttempts": 0,
-      "createdAt": 1791191531135,
-      "updatedAt": 1791191531170,
-      "deletedAt": null,
-      "recoveryCodes": [
-        {
-          "codeHash": "5e443afe37c64155dff25b73440c523d8ac5c98e4c91dbb7dbd1cf404feed3a7"
-        },
-        {
-          "codeHash": "9ff85a1d973b013c94a7eb4aeaeb323b574919ce48f53881f00aa986a0e4c381"
-        },
-        {
-          "codeHash": "ca7b3be3be1681e0c04be0dba9086c3510f2cf58c699ad69655ecb2f19866223"
-        },
-        {
-          "codeHash": "92d93f0f4bfdac6763c085aa738384ac2942a86f8e1c7d4b874227ff11ec25df"
-        },
-        {
-          "codeHash": "e9a3633de32f887bc3e83f06b6ec13178f180c47fe302804445f658323d593aa"
-        },
-        {
-          "codeHash": "18e3f101dc7db54f941d3ec2f0e59f263cd7c367c76ef3a64c07ea04f3c43931"
-        },
-        {
-          "codeHash": "3cdde0154299848671ad24e8d8c72a81efead0774ae221618f7702313fc6412c"
-        },
-        {
-          "codeHash": "59c6e969150dc3539ee1477847f07a3c9f18863eae82213bc54998c7807c2b49"
-        },
-        {
-          "codeHash": "33a4fe4738a5213f4da6e65214dbb4da86d7723cacd60f1b630c06877ddfeea1"
-        },
-        {
-          "codeHash": "d1b6374218a1754ab34e4e0adf4d1dad7ac2ca80399f2630b0359653fffd4e71"
-        }
-      ]
-    },
-    {
-      "id": "admin_e3cd7c33-5c27-416a-8d05-6e7c5e42c6ac",
-      "name": "Support Agent",
-      "email": "staff_1791191543724@yaad.app",
-      "passwordHash": "d2291d46bd76c3637f565f58659be3bf8b8d9464ad75298ab94ac4aca4860c644c27c62857fa09a08864fb0b2399fe6d6b6df477a19518dd7aae604188379db5",
-      "salt": "8d960a70f5921564c3e06ff998442f3e",
-      "role": "support_agent",
-      "totpSecret": "ZRBPFXM5ZPNIRNNYDM3S3IZDJLTR32RR",
-      "isTotpEnabled": true,
-      "status": "active",
-      "failedAttempts": 0,
-      "createdAt": 1791191543803,
-      "updatedAt": 1791191543803,
-      "deletedAt": null
-    },
-    {
-      "id": "admin_49e70fd1-2f59-4d19-9deb-c65e9423c210",
-      "name": "Support Agent",
-      "email": "staff_1791193436050@yaad.app",
-      "passwordHash": "d491b2c4cace24af3fd0db242221e7a5f39d4730000d420b627fb059b0046db7601d40d577d6ebc05e2252d12daec26a650b08889f2f7ebc370d1b04f96f3968",
-      "salt": "74cbfc86a31e4a184db723d3b31672f5",
-      "role": "support_agent",
-      "totpSecret": "E57NQ6POBU4PF7EKCWG3GBFC6O6LKTCE",
-      "isTotpEnabled": true,
-      "status": "active",
-      "failedAttempts": 0,
-      "createdAt": 1791193436143,
-      "updatedAt": 1791193436143,
-      "deletedAt": null
-    },
-    {
-      "id": "admin_0fdde33e-9022-45d4-968b-c3824feef9f8",
-      "name": "Support Agent",
-      "email": "staff_1791193946823@yaad.app",
-      "passwordHash": "6ec7d4349c512a24f23ca29f71e0546ab566758c7beae28a2e79f240bc2a3b8c3ee7eb3f132af0d98a4cc320806908ea9db6fc38780fd2314d8e5fe97fe83748",
-      "salt": "248bddddf88d78c8a4c1642d757367d0",
-      "role": "support_agent",
-      "totpSecret": "6GU6YIMAUNBFMV3ZOEVU3SKVFGIB2GE4",
-      "isTotpEnabled": true,
-      "status": "active",
-      "failedAttempts": 0,
-      "createdAt": 1791193946899,
-      "updatedAt": 1791193946899,
-      "deletedAt": null
-    },
-    {
-      "id": "admin_39c1882d-ccc3-4557-9676-bf1e26768d54",
-      "name": "Support Agent",
-      "email": "staff_1791195794005@yaad.app",
-      "passwordHash": "9d4a78930e4dc68f09ff659ffdffa803d0e93d9cb19e05e38a01809ebedb0b96a96d0e3e21ab152241059347e113fe01f044351ac56b48d3439331fefff4314c",
-      "salt": "476612b47cb0611cece0089111f67536",
-      "role": "support_agent",
-      "totpSecret": "SF2VHFFOVJP5BZ25375PJ6CMY2LDXV7T",
-      "isTotpEnabled": true,
-      "status": "active",
-      "failedAttempts": 0,
-      "createdAt": 1791195794110,
-      "updatedAt": 1791195794110,
-      "deletedAt": null
     }
   ],
-  "invites": [
-    {
-      "id": "inv_93926e5b-4d11-48c9-8e56-a90ea364112f",
-      "email": "testnewadmin@yaad.pk",
-      "name": "Test New Admin",
-      "role": "support_agent",
-      "token": "6a383488e5c42e0963800d95b6a5c690da05dfb69309b6a60f0cff9c5186cee9",
-      "invitedBy": {
-        "id": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
-        "email": "mudassirbashir530@gmail.com",
-        "name": "Mudassir Bashir"
-      },
-      "expiresAt": 1791277864338,
-      "status": "pending",
-      "createdAt": 1791191464338
-    },
-    {
-      "id": "inv_d514858d-8e12-4e8a-b7f0-c6013298405f",
-      "email": "staff_agent@yaad.pk",
-      "name": "Staff Agent",
-      "role": "support_agent",
-      "token": "a24867982454b73f55bcce088507d3e1eea0d57bc94a5a8e574ad37dc6a0265c",
-      "invitedBy": {
-        "id": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
-        "email": "mudassirbashir530@gmail.com",
-        "name": "Mudassir Bashir"
-      },
-      "expiresAt": 1791277873462,
-      "status": "pending",
-      "createdAt": 1791191473462
-    },
-    {
-      "id": "inv_ba6a4f91-b08f-4781-b7b0-5f0c64fef896",
-      "email": "support_agent_2@yaad.pk",
-      "name": "Support Agent 2",
-      "role": "support_agent",
-      "token": "ab00511d6c8389701cd6abe35681914288d79bd299c3e8274eb990883cbcc630",
-      "invitedBy": {
-        "id": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
-        "email": "mudassirbashir530@gmail.com",
-        "name": "Mudassir Bashir"
-      },
-      "expiresAt": 1791277918857,
-      "status": "pending",
-      "createdAt": 1791191518857
-    },
-    {
-      "id": "inv_b5705cc1-351a-4570-85b0-cf44141383cb",
-      "email": "support_agent_3@yaad.pk",
-      "name": "Support Agent 3",
-      "role": "support_agent",
-      "token": "5bb5f984970f3e482ed55ca629aea813362ce75458dbf35190350c444c5c716c",
-      "invitedBy": {
-        "id": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
-        "email": "mudassirbashir530@gmail.com",
-        "name": "Mudassir Bashir"
-      },
-      "expiresAt": 1791277930635,
-      "status": "accepted",
-      "createdAt": 1791191530635,
-      "acceptedAt": 1791191531135
-    },
-    {
-      "id": "inv_96c7e79a-3154-4785-96e2-d5a2cfb441d8",
-      "email": "staff_1791191543724@yaad.app",
-      "name": "Support Agent",
-      "role": "support_agent",
-      "token": "3f9d285e979a7d089fc2d885baac440a43d11173e00b680f775518dab5957c83",
-      "invitedBy": {
-        "id": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
-        "email": "mudassirbashir530@gmail.com",
-        "name": "Mudassir Bashir"
-      },
-      "expiresAt": 1791277943724,
-      "status": "accepted",
-      "createdAt": 1791191543724,
-      "acceptedAt": 1791191543803
-    },
-    {
-      "id": "inv_1aa5e8cd-3eb9-45d4-a03d-0b6698b7e187",
-      "email": "staff_1791193436050@yaad.app",
-      "name": "Support Agent",
-      "role": "support_agent",
-      "token": "9e4554aa6cc00900917df506254c92f2cf4c3c2b59467cbc161c88471cb99e87",
-      "invitedBy": {
-        "id": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
-        "email": "mudassirbashir530@gmail.com",
-        "name": "Mudassir Bashir"
-      },
-      "expiresAt": 1791279836050,
-      "status": "accepted",
-      "createdAt": 1791193436050,
-      "acceptedAt": 1791193436143
-    },
-    {
-      "id": "inv_0d4368c2-1376-4e89-aee0-7987cc5b8106",
-      "email": "staff_1791193946823@yaad.app",
-      "name": "Support Agent",
-      "role": "support_agent",
-      "token": "34eb1c2da0033dd85c5a8278e085f3900ab7c1484ac9f2cee9beb5f5e88dc3ee",
-      "invitedBy": {
-        "id": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
-        "email": "mudassirbashir530@gmail.com",
-        "name": "Mudassir Bashir"
-      },
-      "expiresAt": 1791280346824,
-      "status": "accepted",
-      "createdAt": 1791193946824,
-      "acceptedAt": 1791193946899
-    },
-    {
-      "id": "inv_dba2120b-9717-466d-9962-eca159248a11",
-      "email": "staff_1791195794005@yaad.app",
-      "name": "Support Agent",
-      "role": "support_agent",
-      "token": "54088d9f1d34b3fa85e63eafddf94bd64a1e13c43d489752de27716c8d55732b",
-      "invitedBy": {
-        "id": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
-        "email": "mudassirbashir530@gmail.com",
-        "name": "Mudassir Bashir"
-      },
-      "expiresAt": 1791282194006,
-      "status": "accepted",
-      "createdAt": 1791195794006,
-      "acceptedAt": 1791195794110
-    }
-  ],
+  "invites": [],
   "resets": [],
   "sessions": [
     {
@@ -363,26 +130,6 @@
       "userAgent": "Python-urllib/3.10"
     },
     {
-      "sessionId": "sess_91e95ea6-0e60-4e9a-818e-495c565bcb17",
-      "adminId": "admin_cd880078-b49d-4e86-8b61-9f873ea4182e",
-      "token": "9116bb4a22646b718c55ac1adebbcf6d040400b1649f1d75f71b2eebefcae320",
-      "createdAt": 1791191531140,
-      "lastActivityAt": 1791191531140,
-      "expiresAt": 1791234731140,
-      "ip": "127.0.0.1",
-      "userAgent": "Python-urllib/3.10"
-    },
-    {
-      "sessionId": "sess_5022de51-4ba8-4bd7-b014-9f5bab40dc99",
-      "adminId": "admin_cd880078-b49d-4e86-8b61-9f873ea4182e",
-      "token": "d70a5a528f187f164a0f71ed1147137759251d74ae05d3b89be14f104b80ecc3",
-      "createdAt": 1791191531171,
-      "lastActivityAt": 1791191531171,
-      "expiresAt": 1791234731171,
-      "ip": "127.0.0.1",
-      "userAgent": "Python-urllib/3.10"
-    },
-    {
       "sessionId": "sess_a80d4ce0-1ed1-4098-b803-68b4d2486dce",
       "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
       "token": "7bb243a8353c0d3ca8e23dc3e254a14b412d6f4c29dfb208b6234d14e1856c6d",
@@ -391,16 +138,6 @@
       "expiresAt": 1791234743196,
       "ip": "127.0.0.1",
       "userAgent": "Node-Test-Runner"
-    },
-    {
-      "sessionId": "sess_3fc66c47-5e81-4e74-8399-53caaa7aaf52",
-      "adminId": "admin_e3cd7c33-5c27-416a-8d05-6e7c5e42c6ac",
-      "token": "df91dd83e916865ab9797c17eea8104a5cae99df5cb510ce37fae6acf6943725",
-      "createdAt": 1791191543804,
-      "lastActivityAt": 1791191543805,
-      "expiresAt": 1791234743804,
-      "ip": "127.0.0.1",
-      "userAgent": "Staff-Client"
     },
     {
       "sessionId": "sess_ab0bff32-dafc-4075-9171-0ec2c1515787",
@@ -413,16 +150,6 @@
       "userAgent": "Node-Test-Runner"
     },
     {
-      "sessionId": "sess_060fff49-f05b-4bf8-a3bc-d87879d2d49a",
-      "adminId": "admin_49e70fd1-2f59-4d19-9deb-c65e9423c210",
-      "token": "d8e7d9ceeac6eec3f281ba1b68710ee48116dc2192d8bf7c66d9f2e5e365fdda",
-      "createdAt": 1791193436144,
-      "lastActivityAt": 1791193436145,
-      "expiresAt": 1791236636144,
-      "ip": "127.0.0.1",
-      "userAgent": "Staff-Client"
-    },
-    {
       "sessionId": "sess_f13e6410-2f6b-4d0d-8442-3678da18ab62",
       "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
       "token": "afe99dddfbba339df188722edcea1a9b70afc455027a210b914458b39032ea34",
@@ -431,16 +158,6 @@
       "expiresAt": 1791237145284,
       "ip": "127.0.0.1",
       "userAgent": "Node-Test-Runner"
-    },
-    {
-      "sessionId": "sess_8650302e-54af-4d97-8680-6ac48245a258",
-      "adminId": "admin_0fdde33e-9022-45d4-968b-c3824feef9f8",
-      "token": "356896d8bef800d7bc5b4a6640409ef20efed423a62e0587664dfb265ed938e5",
-      "createdAt": 1791193946900,
-      "lastActivityAt": 1791193946900,
-      "expiresAt": 1791237146900,
-      "ip": "127.0.0.1",
-      "userAgent": "Staff-Client"
     },
     {
       "sessionId": "sess_3913485e-106b-4e93-b189-a1f31953d650",
@@ -471,16 +188,6 @@
       "expiresAt": 1791238992913,
       "ip": "127.0.0.1",
       "userAgent": "Node-Test-Runner"
-    },
-    {
-      "sessionId": "sess_793ecfd1-45ef-48d8-9c0a-723a59b48955",
-      "adminId": "admin_39c1882d-ccc3-4557-9676-bf1e26768d54",
-      "token": "aecfb463f3311017168e9467832f7b41b3419527b8020068bb3ecd74771ba934",
-      "createdAt": 1791195794111,
-      "lastActivityAt": 1791195794112,
-      "expiresAt": 1791238994111,
-      "ip": "127.0.0.1",
-      "userAgent": "Staff-Client"
     },
     {
       "sessionId": "sess_79e80c14-17d6-41b1-8f8f-8fc313d0d63d",
@@ -589,9 +296,70 @@
       "expiresAt": 1791282311234,
       "ip": "127.0.0.1",
       "userAgent": "node"
+    },
+    {
+      "sessionId": "sess_36994157-f55c-4e25-b65e-12c242793fbb",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "yaad_sess.eyJzaWQiOiJzZXNzXzM2OTk0MTU3LWY1NWMtNGUyNS1iNjVlLTEyYzI0Mjc5M2ZiYiIsImFpZCI6ImFkbWluX2UzOTg4MzYxLWNmMTMtNDRmZi1iZWQxLWVlZDUzZmMxZTY2YSIsImNhdCI6MTc5MTM5MzQ2NTYwOSwiZXhwIjoxNzkxOTk4MjY1NjA5LCJub25jZSI6IjljZWI2MmYzZGRiZDY0YmYifQ.374c194603545be3e9d1caa0a2abd0f7a9a694b0e8f643a5b07a5eedd0f02618",
+      "createdAt": 1791393465609,
+      "lastActivityAt": 1791393465609,
+      "expiresAt": 1791998265609,
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36"
     }
   ],
   "auditLogs": [
+    {
+      "id": "audit_2524fd0c-9de8-4619-b2dc-535f92b77c3b",
+      "timestamp": 1791394999067,
+      "action": "source_of_truth_verification",
+      "targetType": "system_security",
+      "metadata": {
+        "testSuite": "admin-supabase-truth-qa"
+      }
+    },
+    {
+      "id": "audit_8e1e5ae9-d4a3-4d8a-9752-a08fc5fedebb",
+      "timestamp": 1791393910945,
+      "action": "source_of_truth_verification",
+      "targetType": "system_security",
+      "metadata": {
+        "testSuite": "admin-supabase-truth-qa"
+      }
+    },
+    {
+      "id": "audit_53f5c52a-4bb0-4a3e-9b42-f39dc60e35e7",
+      "timestamp": 1791393465613,
+      "action": "admin_login_success",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "session",
+      "targetId": "sess_36994157-f55c-4e25-b65e-12c242793fbb",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36",
+      "metadata": {
+        "role": "super_admin",
+        "authMethod": "totp_passwordless"
+      }
+    },
+    {
+      "id": "audit_26eb7226-232e-45e4-85fb-5fb1a145e4c7",
+      "timestamp": 1791377643854,
+      "action": "source_of_truth_verification",
+      "targetType": "system_security",
+      "metadata": {
+        "testSuite": "admin-supabase-truth-qa"
+      }
+    },
+    {
+      "id": "audit_d03de973-455b-420a-9231-de309f274294",
+      "timestamp": 1791375523417,
+      "action": "source_of_truth_verification",
+      "targetType": "system_security",
+      "metadata": {
+        "testSuite": "admin-supabase-truth-qa"
+      }
+    },
     {
       "id": "audit_418b8bdb-470c-4f0b-a0c3-5d5da0fa9974",
       "timestamp": 1791239111246,
@@ -820,52 +588,6 @@
       }
     },
     {
-      "id": "audit_8cacc605-522a-43d2-8888-212693459b36",
-      "timestamp": 1791191531171,
-      "action": "admin_login_success",
-      "adminId": "admin_cd880078-b49d-4e86-8b61-9f873ea4182e",
-      "adminEmail": "support_agent_3@yaad.pk",
-      "targetType": "session",
-      "targetId": "sess_5022de51-4ba8-4bd7-b014-9f5bab40dc99",
-      "ip": "127.0.0.1",
-      "userAgent": "Python-urllib/3.10",
-      "metadata": {
-        "role": "support_agent",
-        "authMethod": "totp_passwordless"
-      }
-    },
-    {
-      "id": "audit_758f5ec5-72ae-4b6c-a677-cfc88d9966e7",
-      "timestamp": 1791191531141,
-      "action": "admin_invite_accepted",
-      "adminId": "admin_cd880078-b49d-4e86-8b61-9f873ea4182e",
-      "adminEmail": "support_agent_3@yaad.pk",
-      "targetType": "admin_user",
-      "targetId": "admin_cd880078-b49d-4e86-8b61-9f873ea4182e",
-      "afterValue": {
-        "role": "support_agent"
-      },
-      "ip": "127.0.0.1",
-      "metadata": {
-        "note": "Staff invitation accepted with mandatory 2FA enrollment"
-      }
-    },
-    {
-      "id": "audit_96610af3-fd16-4c5a-9a97-fa75bee6a595",
-      "timestamp": 1791191530636,
-      "action": "admin_invited",
-      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
-      "adminEmail": "mudassirbashir530@gmail.com",
-      "targetType": "admin_invite",
-      "targetId": "inv_b5705cc1-351a-4570-85b0-cf44141383cb",
-      "afterValue": {
-        "email": "support_agent_3@yaad.pk",
-        "role": "support_agent",
-        "name": "Support Agent 3"
-      },
-      "ip": "127.0.0.1"
-    },
-    {
       "id": "audit_6159ff9b-3ada-413a-adc6-2da14705ea56",
       "timestamp": 1791191530608,
       "action": "admin_login_success",
@@ -879,21 +601,6 @@
         "role": "super_admin",
         "authMethod": "totp_passwordless"
       }
-    },
-    {
-      "id": "audit_a389dc5b-fd9a-4c7d-a9ad-625a1359134c",
-      "timestamp": 1791191518858,
-      "action": "admin_invited",
-      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
-      "adminEmail": "mudassirbashir530@gmail.com",
-      "targetType": "admin_invite",
-      "targetId": "inv_ba6a4f91-b08f-4781-b7b0-5f0c64fef896",
-      "afterValue": {
-        "email": "support_agent_2@yaad.pk",
-        "role": "support_agent",
-        "name": "Support Agent 2"
-      },
-      "ip": "127.0.0.1"
     },
     {
       "id": "audit_1ef2860a-91df-449c-961a-5c14e846ee49",
@@ -911,21 +618,6 @@
       }
     },
     {
-      "id": "audit_c7377233-9421-4105-aac1-ed472fb619fc",
-      "timestamp": 1791191473464,
-      "action": "admin_invited",
-      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
-      "adminEmail": "mudassirbashir530@gmail.com",
-      "targetType": "admin_invite",
-      "targetId": "inv_d514858d-8e12-4e8a-b7f0-c6013298405f",
-      "afterValue": {
-        "email": "staff_agent@yaad.pk",
-        "role": "support_agent",
-        "name": "Staff Agent"
-      },
-      "ip": "127.0.0.1"
-    },
-    {
       "id": "audit_ad532076-37a0-4806-af3d-8d1e284b04f1",
       "timestamp": 1791191473457,
       "action": "admin_login_success",
@@ -939,21 +631,6 @@
         "role": "super_admin",
         "authMethod": "totp_passwordless"
       }
-    },
-    {
-      "id": "audit_3c8f16c7-5aea-4512-a7dd-2eaab6155a5d",
-      "timestamp": 1791191464340,
-      "action": "admin_invited",
-      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
-      "adminEmail": "mudassirbashir530@gmail.com",
-      "targetType": "admin_invite",
-      "targetId": "inv_93926e5b-4d11-48c9-8e56-a90ea364112f",
-      "afterValue": {
-        "email": "testnewadmin@yaad.pk",
-        "role": "support_agent",
-        "name": "Test New Admin"
-      },
-      "ip": "127.0.0.1"
     },
     {
       "id": "audit_d2e3cfc9-c8c0-4580-9683-590478d770b2",
@@ -1422,284 +1099,7 @@
   },
   "appUsers": [],
   "moderationLists": [],
-  "catalogProducts": [
-    {
-      "id": "cat_potato",
-      "nameEn": "Potato (Aloo)",
-      "nameUr": "آلو",
-      "category": "Fresh Vegetables & Sabzi",
-      "subcategory": "Staples",
-      "unit": "kg",
-      "pricePkr": 80,
-      "isActive": true,
-      "createdAt": 1791236871602,
-      "updatedAt": 1791236871602
-    },
-    {
-      "id": "cat_onion",
-      "nameEn": "Onion (Pyaaz)",
-      "nameUr": "پیاز",
-      "category": "Fresh Vegetables & Sabzi",
-      "subcategory": "Staples",
-      "unit": "kg",
-      "pricePkr": 160,
-      "isActive": true,
-      "createdAt": 1791236871602,
-      "updatedAt": 1791236871602
-    },
-    {
-      "id": "cat_tomato",
-      "nameEn": "Tomato (Tamatar)",
-      "nameUr": "ٹماٹر",
-      "category": "Fresh Vegetables & Sabzi",
-      "subcategory": "Staples",
-      "unit": "kg",
-      "pricePkr": 120,
-      "isActive": true,
-      "createdAt": 1791236871602,
-      "updatedAt": 1791236871602
-    },
-    {
-      "id": "cat_garlic",
-      "nameEn": "Garlic (Lehsun)",
-      "nameUr": "لہسن",
-      "category": "Fresh Vegetables & Sabzi",
-      "subcategory": "Aromatics",
-      "unit": "g",
-      "pricePkr": 250,
-      "isActive": true,
-      "createdAt": 1791236871602,
-      "updatedAt": 1791236871602
-    },
-    {
-      "id": "cat_ginger",
-      "nameEn": "Ginger (Adrak)",
-      "nameUr": "ادرک",
-      "category": "Fresh Vegetables & Sabzi",
-      "subcategory": "Aromatics",
-      "unit": "g",
-      "pricePkr": 300,
-      "isActive": true,
-      "createdAt": 1791236871602,
-      "updatedAt": 1791236871602
-    },
-    {
-      "id": "cat_green_chilli",
-      "nameEn": "Green Chilli (Hari Mirch)",
-      "nameUr": "ہری مرچ",
-      "category": "Fresh Vegetables & Sabzi",
-      "subcategory": "Aromatics",
-      "unit": "g",
-      "pricePkr": 100,
-      "isActive": true,
-      "createdAt": 1791236871602,
-      "updatedAt": 1791236871602
-    },
-    {
-      "id": "cat_coriander",
-      "nameEn": "Fresh Coriander (Dhania)",
-      "nameUr": "ہرا دھنیا",
-      "category": "Fresh Vegetables & Sabzi",
-      "subcategory": "Herbs",
-      "unit": "bunch",
-      "pricePkr": 40,
-      "isActive": true,
-      "createdAt": 1791236871602,
-      "updatedAt": 1791236871602
-    },
-    {
-      "id": "cat_mint",
-      "nameEn": "Fresh Mint (Podina)",
-      "nameUr": "پودینہ",
-      "category": "Fresh Vegetables & Sabzi",
-      "subcategory": "Herbs",
-      "unit": "bunch",
-      "pricePkr": 30,
-      "isActive": true,
-      "createdAt": 1791236871602,
-      "updatedAt": 1791236871602
-    },
-    {
-      "id": "cat_atta",
-      "nameEn": "Chakki Whole Wheat Atta",
-      "nameUr": "چکی آٹا",
-      "category": "Atta, Rice & Grains",
-      "subcategory": "Flour",
-      "unit": "kg",
-      "pricePkr": 650,
-      "isActive": true,
-      "createdAt": 1791236871602,
-      "updatedAt": 1791236871602
-    },
-    {
-      "id": "cat_basmati_rice",
-      "nameEn": "Kainat Basmati Rice",
-      "nameUr": "باسمتی چاول",
-      "category": "Atta, Rice & Grains",
-      "subcategory": "Rice",
-      "unit": "kg",
-      "pricePkr": 380,
-      "isActive": true,
-      "createdAt": 1791236871602,
-      "updatedAt": 1791236871602
-    },
-    {
-      "id": "cat_daal_chana",
-      "nameEn": "Daal Chana (Yellow Gram)",
-      "nameUr": "دال چنا",
-      "category": "Pulses & Daal",
-      "subcategory": "Lentils",
-      "unit": "kg",
-      "pricePkr": 280,
-      "isActive": true,
-      "createdAt": 1791236871602,
-      "updatedAt": 1791236871602
-    },
-    {
-      "id": "cat_daal_masoor",
-      "nameEn": "Daal Masoor (Red Lentils)",
-      "nameUr": "دال مسور",
-      "category": "Pulses & Daal",
-      "subcategory": "Lentils",
-      "unit": "kg",
-      "pricePkr": 310,
-      "isActive": true,
-      "createdAt": 1791236871602,
-      "updatedAt": 1791236871602
-    },
-    {
-      "id": "cat_daal_moong",
-      "nameEn": "Daal Moong (Yellow Moong)",
-      "nameUr": "دال مونگ",
-      "category": "Pulses & Daal",
-      "subcategory": "Lentils",
-      "unit": "kg",
-      "pricePkr": 330,
-      "isActive": true,
-      "createdAt": 1791236871602,
-      "updatedAt": 1791236871602
-    },
-    {
-      "id": "cat_haldi",
-      "nameEn": "Turmeric Powder (Haldi)",
-      "nameUr": "ہلدی پاؤڈر",
-      "category": "Spices & Masalay",
-      "subcategory": "Ground Spices",
-      "unit": "g",
-      "pricePkr": 150,
-      "isActive": true,
-      "createdAt": 1791236871602,
-      "updatedAt": 1791236871602
-    },
-    {
-      "id": "cat_lal_mirch",
-      "nameEn": "Red Chilli Powder (Lal Mirch)",
-      "nameUr": "لال مرچ پاؤڈر",
-      "category": "Spices & Masalay",
-      "subcategory": "Ground Spices",
-      "unit": "g",
-      "pricePkr": 200,
-      "isActive": true,
-      "createdAt": 1791236871602,
-      "updatedAt": 1791236871602
-    },
-    {
-      "id": "cat_zeera",
-      "nameEn": "White Cumin Seeds (Zeera)",
-      "nameUr": "سفید زیرہ",
-      "category": "Spices & Masalay",
-      "subcategory": "Whole Spices",
-      "unit": "g",
-      "pricePkr": 220,
-      "isActive": true,
-      "createdAt": 1791236871602,
-      "updatedAt": 1791236871602
-    },
-    {
-      "id": "cat_shan_biryani",
-      "nameEn": "Shan Bombay Biryani Masala",
-      "nameUr": "شان بمبئی بریانی مصالحہ",
-      "category": "Spices & Masalay",
-      "subcategory": "Recipe Mixes",
-      "unit": "pack",
-      "pricePkr": 140,
-      "isActive": true,
-      "createdAt": 1791236871602,
-      "updatedAt": 1791236871602
-    },
-    {
-      "id": "cat_milk_pak",
-      "nameEn": "Nestle MilkPak Full Cream Milk",
-      "nameUr": "ملک پیک دودھ",
-      "category": "Dairy & Eggs",
-      "subcategory": "UHT Milk",
-      "unit": "litre",
-      "pricePkr": 290,
-      "isActive": true,
-      "createdAt": 1791236871602,
-      "updatedAt": 1791236871602
-    },
-    {
-      "id": "cat_eggs",
-      "nameEn": "Farm Fresh Eggs (Anda)",
-      "nameUr": "فارمی انڈے",
-      "category": "Dairy & Eggs",
-      "subcategory": "Eggs",
-      "unit": "dozen",
-      "pricePkr": 340,
-      "isActive": true,
-      "createdAt": 1791236871602,
-      "updatedAt": 1791236871602
-    },
-    {
-      "id": "cat_oil_dalda",
-      "nameEn": "Dalda Cooking Oil Pouch",
-      "nameUr": "ڈالڈا کوکنگ آئل",
-      "category": "Cooking Oils & Ghee",
-      "subcategory": "Oil",
-      "unit": "litre",
-      "pricePkr": 520,
-      "isActive": true,
-      "createdAt": 1791236871602,
-      "updatedAt": 1791236871602
-    },
-    {
-      "id": "cat_tapal_tea",
-      "nameEn": "Tapal Danedar Black Tea",
-      "nameUr": "ٹپال دانے دار چائے",
-      "category": "Tea & Beverages",
-      "subcategory": "Black Tea",
-      "unit": "pack",
-      "pricePkr": 460,
-      "isActive": true,
-      "createdAt": 1791236871602,
-      "updatedAt": 1791236871602
-    },
-    {
-      "id": "cat_surf_excel",
-      "nameEn": "Surf Excel Detergent Powder",
-      "nameUr": "سرف ایکسل",
-      "category": "Household & Cleaning",
-      "subcategory": "Laundry",
-      "unit": "kg",
-      "pricePkr": 480,
-      "isActive": true,
-      "createdAt": 1791236871602,
-      "updatedAt": 1791236871602
-    },
-    {
-      "id": "cat_vim_bar",
-      "nameEn": "Vim Dishwashing Bar",
-      "nameUr": "وِم برتن دھونے کا صابن",
-      "category": "Household & Cleaning",
-      "subcategory": "Dishwashing",
-      "unit": "piece",
-      "pricePkr": 60,
-      "isActive": true,
-      "createdAt": 1791236871602,
-      "updatedAt": 1791236871602
-    }
-  ],
+  "catalogProducts": [],
   "catalogCategories": [
     {
       "id": "vegetables",
@@ -1787,11 +1187,11 @@
         "twitter": "https://x.com/yaadapppk"
       },
       "status": "published",
-      "publishedAt": 1791054729188,
+      "publishedAt": 1791135796958,
       "readTimeMinutes": 4,
       "viewsCount": 1420,
-      "createdAt": 1791054729188,
-      "updatedAt": 1791227529188
+      "createdAt": 1791135796958,
+      "updatedAt": 1791308596958
     },
     {
       "id": "art_fresh_sabzi_guide",
@@ -1816,11 +1216,11 @@
         "twitter": "https://x.com/yaadapppk"
       },
       "status": "published",
-      "publishedAt": 1790709129188,
+      "publishedAt": 1790790196958,
       "readTimeMinutes": 3,
       "viewsCount": 890,
-      "createdAt": 1790709129188,
-      "updatedAt": 1790709129188
+      "createdAt": 1790790196958,
+      "updatedAt": 1790790196958
     },
     {
       "id": "art_spices_shelf_life",
@@ -1845,217 +1245,16 @@
         "instagram": "https://instagram.com/yaadapppk"
       },
       "status": "published",
-      "publishedAt": 1790104329188,
+      "publishedAt": 1790185396958,
       "readTimeMinutes": 3,
       "viewsCount": 650,
-      "createdAt": 1790104329188,
-      "updatedAt": 1790104329188
+      "createdAt": 1790185396958,
+      "updatedAt": 1790185396958
     }
   ],
-  "pushCampaigns": [
-    {
-      "id": "push_weekend_sabzi",
-      "titleEn": "Weekend Sabzi Mandi Reminder 🛒",
-      "titleUr": "ویک اینڈ سبزی منڈی گروسری یاد دہانی",
-      "bodyEn": "Add fresh vegetables and dairy to your YAAD parchi before heading to the market this morning!",
-      "bodyUr": "منڈی جانے سے پہلے اپنی یاد ایپ میں سبزیاں اور دودھ شامل کر لیں۔",
-      "iconUrl": "/logo.png",
-      "targetAudience": "all_active",
-      "status": "sent",
-      "sentAt": 1791064071602,
-      "estimatedRecipients": 24,
-      "actualSentCount": 24,
-      "deliveredCount": 23,
-      "openedCount": 18,
-      "createdBy": "mudassirbashir530@gmail.com",
-      "createdAt": 1791064071602
-    },
-    {
-      "id": "push_ramadan_prep",
-      "titleEn": "Ramadan Rashan List Ready 🌙",
-      "titleUr": "رمضان راشن لسٹ تیار ہے",
-      "bodyEn": "Review the essential Ramadan 2026 checklist in your YAAD Grocery Guides section today.",
-      "bodyUr": "رمضان کے ضروری راشن کی لسٹ ایپ میں دیکھیں۔",
-      "iconUrl": "/logo.png",
-      "targetAudience": "all",
-      "status": "sent",
-      "sentAt": 1790804871602,
-      "estimatedRecipients": 28,
-      "actualSentCount": 28,
-      "deliveredCount": 27,
-      "openedCount": 21,
-      "createdBy": "mudassirbashir530@gmail.com",
-      "createdAt": 1790804871602
-    }
-  ],
+  "pushCampaigns": [],
   "pushTemplates": [],
-  "supportTickets": [
-    {
-      "id": "tkt_7cc0298a-32a0-4d18-802a-a4ada8273c75",
-      "ticketNumber": "TKT-00005",
-      "userId": "guest",
-      "userName": "Tariq Mehmood",
-      "userEmail": "shopper_qa@yaad.pk",
-      "userPhone": "+92 300 9876543",
-      "subject": "Grocery item category mismatch",
-      "description": "Basmati Rice was categorized under Dairy instead of Grains.",
-      "category": "bug",
-      "priority": "high",
-      "status": "open",
-      "messages": [
-        {
-          "id": "msg_a0472da7-5ffd-403a-9cb9-6414362ac783",
-          "sender": "user",
-          "senderName": "Tariq Mehmood",
-          "text": "Basmati Rice was categorized under Dairy instead of Grains.",
-          "timestamp": 1791314456525
-        }
-      ],
-      "internalNotes": [],
-      "createdAt": 1791314456525,
-      "updatedAt": 1791314456525
-    },
-    {
-      "id": "tkt_45040d47-35bc-43b2-b476-399d2193771f",
-      "ticketNumber": "TKT-00004",
-      "userId": "guest",
-      "userName": "Ayesha Bibi",
-      "userEmail": "ayesha.shopper@gmail.com",
-      "userPhone": "+92 300 1234567",
-      "subject": "Vegetable prices update question",
-      "description": "Are Mandi rates updated every morning?",
-      "category": "general",
-      "priority": "normal",
-      "status": "open",
-      "messages": [
-        {
-          "id": "msg_ea2e7362-a0b9-43fc-adb9-e636aaab772d",
-          "sender": "user",
-          "senderName": "Ayesha Bibi",
-          "text": "Are Mandi rates updated every morning?",
-          "timestamp": 1791314303818
-        }
-      ],
-      "internalNotes": [],
-      "createdAt": 1791314303818,
-      "updatedAt": 1791314303818
-    },
-    {
-      "id": "tkt_9f4bad2a-2b2a-4c48-ba89-f37aaaed4282",
-      "ticketNumber": "TKT-00003",
-      "userId": "guest",
-      "userName": "Tariq Mehmood",
-      "userEmail": "shopper_qa@yaad.pk",
-      "userPhone": "+92 300 9876543",
-      "subject": "Grocery item category mismatch",
-      "description": "Basmati Rice was categorized under Dairy instead of Grains.",
-      "category": "bug",
-      "priority": "high",
-      "status": "open",
-      "messages": [
-        {
-          "id": "msg_2538aaa6-e4ab-4fa7-9c60-6d4004f5b7fb",
-          "sender": "user",
-          "senderName": "Tariq Mehmood",
-          "text": "Basmati Rice was categorized under Dairy instead of Grains.",
-          "timestamp": 1791313829171
-        }
-      ],
-      "internalNotes": [],
-      "createdAt": 1791313829171,
-      "updatedAt": 1791313829171
-    },
-    {
-      "id": "tkt_e08db237-53bb-43bf-9b80-23c209550aaf",
-      "ticketNumber": "TKT-00002",
-      "userId": "guest",
-      "userName": "Tariq Mehmood",
-      "userEmail": "shopper_qa@yaad.pk",
-      "userPhone": "+92 300 9876543",
-      "subject": "Grocery item category mismatch",
-      "description": "Basmati Rice was categorized under Dairy instead of Grains.",
-      "category": "bug",
-      "priority": "high",
-      "status": "open",
-      "messages": [
-        {
-          "id": "msg_ddb5e5a8-3c6e-48cc-abc8-1f4c523b162b",
-          "sender": "user",
-          "senderName": "Tariq Mehmood",
-          "text": "Basmati Rice was categorized under Dairy instead of Grains.",
-          "timestamp": 1791288389775
-        }
-      ],
-      "internalNotes": [],
-      "createdAt": 1791288389775,
-      "updatedAt": 1791288389775
-    },
-    {
-      "id": "tkt_6cc28aae-7e50-4f9f-848a-3db62e2c216b",
-      "ticketNumber": "TKT-00001",
-      "userId": "guest",
-      "userName": "Ayesha Khan",
-      "userEmail": "shopper@example.com",
-      "subject": "Weekly grocery list sync issue",
-      "description": "Items took 10 seconds to sync when switching wifi to mobile data.",
-      "category": "sync",
-      "priority": "medium",
-      "status": "open",
-      "messages": [
-        {
-          "id": "msg_36826eb2-76ec-4ebd-b9fe-3539696c53b5",
-          "sender": "user",
-          "senderName": "Ayesha Khan",
-          "text": "Items took 10 seconds to sync when switching wifi to mobile data.",
-          "timestamp": 1791288174804
-        }
-      ],
-      "internalNotes": [],
-      "createdAt": 1791288174804,
-      "updatedAt": 1791288174804
-    }
-  ],
+  "supportTickets": [],
   "cannedReplies": [],
-  "accessRequests": [
-    {
-      "id": "req_de23c0cc-90e8-4bd5-9433-b97cf64cc6c7",
-      "name": "Sarah Khan",
-      "email": "sarah.khan@yaadapp.pk",
-      "requestedRole": "editor",
-      "department": "Urdu Editorial & Catalog",
-      "reason": "Need access to manage Ramadan Rashan guide articles and grocery classifications.",
-      "status": "pending",
-      "createdAt": 1791314456533
-    },
-    {
-      "id": "req_5d915d92-2195-4667-92a0-fbf2a28b3bf4",
-      "name": "Sarah Khan",
-      "email": "sarah.khan@yaadapp.pk",
-      "requestedRole": "editor",
-      "department": "Urdu Editorial & Catalog",
-      "reason": "Need access to manage Ramadan Rashan guide articles and grocery classifications.",
-      "status": "pending",
-      "createdAt": 1791313829185
-    },
-    {
-      "id": "req_4d74b920-e152-4b53-a224-b989bf933646",
-      "name": "Sarah Khan",
-      "email": "sarah.khan@yaadapp.pk",
-      "requestedRole": "editor",
-      "department": "Urdu Editorial & Catalog",
-      "reason": "Need access to manage Ramadan Rashan guide articles and grocery classifications.",
-      "status": "pending",
-      "createdAt": 1791288389787
-    },
-    {
-      "id": "req_0e9f7803-c2aa-4feb-a532-04b1082871ad",
-      "name": "Bilal Ahmed",
-      "email": "bilal@yaadapp.pk",
-      "requestedRole": "support_agent",
-      "department": "Customer Care",
-      "reason": "Joining customer care shift to handle overnight shopping tickets.",
-      "status": "pending",
-      "createdAt": 1791288174826
-    }
-  ]
+  "accessRequests": []
 }

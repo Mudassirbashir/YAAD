@@ -92,14 +92,7 @@ export const AdminAnalyticsPage: React.FC = () => {
   const listsTimeSeries = report?.timeSeries?.lists || [];
   const maxListCount = Math.max(...listsTimeSeries.map((p) => p.value), 5);
 
-  const topCategories = report?.topCategories && report.topCategories.length > 0 ? report.topCategories : [
-    { category: 'Fresh Vegetables & Sabzi', count: 182 },
-    { category: 'Atta, Rice & Grains', count: 114 },
-    { category: 'Spices & Masalay', count: 76 },
-    { category: 'Dairy & Eggs', count: 62 },
-    { category: 'Cooking Oils & Ghee', count: 38 },
-    { category: 'Household & Cleaning', count: 29 },
-  ];
+  const topCategories = report?.topCategories || [];
   const maxCategoryCount = Math.max(...topCategories.map((c) => c.count), 1);
 
   return (
@@ -267,23 +260,29 @@ export const AdminAnalyticsPage: React.FC = () => {
           </div>
 
           <div className="space-y-3">
-            {topCategories.map((cat, idx) => {
-              const widthPct = Math.max(12, Math.round((cat.count / maxCategoryCount) * 100));
-              return (
-                <div key={idx} className="space-y-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-neutral-800">{cat.category}</span>
-                    <span className="font-mono text-neutral-500 text-[11px]">{cat.count} items</span>
+            {topCategories.length === 0 ? (
+              <div className="py-8 text-center text-xs text-neutral-400">
+                No category data recorded yet in database.
+              </div>
+            ) : (
+              topCategories.map((cat, idx) => {
+                const widthPct = Math.max(12, Math.round((cat.count / maxCategoryCount) * 100));
+                return (
+                  <div key={idx} className="space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold text-neutral-800">{cat.category}</span>
+                      <span className="font-mono text-neutral-500 text-[11px]">{cat.count} items</span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-neutral-100 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-emerald-600 transition-all duration-500"
+                        style={{ width: `${widthPct}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="w-full h-2 rounded-full bg-neutral-100 overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-emerald-600 transition-all duration-500"
-                      style={{ width: `${widthPct}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
       </div>
