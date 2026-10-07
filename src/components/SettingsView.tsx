@@ -1,19 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import {
-  ArrowLeft,
-  ArrowRight,
   UserCheck,
   Palette,
   SlidersHorizontal,
   Compass,
   ShieldAlert,
+  Pencil,
+  Smartphone,
+  X,
+  AlertCircle,
+  CheckCircle2,
+  Mail,
+  PhoneCall,
+  ShieldCheck,
   Check,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { Language } from '../translations';
+import { TopHeader } from './TopHeader';
+import { Avatar } from './Avatar';
+import { VerifiedBadge } from './VerifiedBadge';
 import { AvatarPickerModal } from './AvatarPickerModal';
-import { ProfileSection } from './settings/ProfileSection';
 import { AppearanceSection } from './settings/AppearanceSection';
 import { PreferencesSection } from './settings/PreferencesSection';
 import { SecuritySection } from './settings/SecuritySection';
@@ -23,6 +31,7 @@ import { LegalDocModal } from './settings/LegalDocModal';
 import {
   validatePhoneNumber,
   cleanPhoneNumber,
+  formatPhoneNumber,
 } from '../utils/phone';
 
 interface SettingsViewProps {
@@ -307,11 +316,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       osc1.frequency.exponentialRampToValueAtTime(783.99, now + 0.2); // G5
       osc1.frequency.exponentialRampToValueAtTime(1046.5, now + 0.3); // C6
 
-      osc2.frequency.setValueAtTime(261.63, now);
-      osc2.frequency.exponentialRampToValueAtTime(523.25, now + 0.3);
+      osc2.frequency.setValueAtTime(261.63, now); // C4
+      osc2.frequency.exponentialRampToValueAtTime(329.63, now + 0.1); // E4
+      osc2.frequency.exponentialRampToValueAtTime(392.0, now + 0.2); // G4
+      osc2.frequency.exponentialRampToValueAtTime(523.25, now + 0.3); // C5
 
-      gain.gain.setValueAtTime(0.3, now);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.18, now + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.6);
 
       osc1.connect(gain);
       osc2.connect(gain);
@@ -366,9 +378,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       setPasswordMessage({
         type: 'error',
-        text: language === 'ur'
-          ? 'آپ آف لائن ہیں۔ پاس ورڈ تبدیل کرنے کے لیے انٹرنیٹ سے جڑیں۔'
-          : "You're offline. Please reconnect to change your password.",
+        text:
+          language === 'ur'
+            ? 'آپ آف لائن ہیں۔ پاس ورڈ تبدیل کرنے کے لیے انٹرنیٹ سے جڑیں۔'
+            : "You're offline. Please reconnect to change your password.",
       });
       return;
     }
@@ -376,7 +389,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     if (!currentPassword.trim()) {
       setPasswordMessage({
         type: 'error',
-        text: t('settings.enterCurrentPassword') ||
+        text:
+          t('settings.enterCurrentPassword') ||
           (language === 'ur' ? 'براہ کرم اپنا موجودہ پاس ورڈ درج کریں۔' : 'Please enter your current password.'),
       });
       return;
@@ -392,21 +406,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       return;
     }
 
-    if (currentPassword === newPassword) {
-      setPasswordMessage({
-        type: 'error',
-        text:
-          t('settings.samePasswordError') ||
-          (language === 'ur' ? 'نیا پاس ورڈ پرانے سے مختلف ہونا چاہیے۔' : 'New password cannot be the same as your current password.'),
-      });
-      return;
-    }
-
     if (newPassword !== confirmPassword) {
       setPasswordMessage({
         type: 'error',
-        text: t('settings.passwordMismatch') ||
-          (language === 'ur' ? 'پاس ورڈ کی تصدیق مماثل نہیں ہے۔' : 'Passwords do not match.'),
+        text:
+          t('settings.passwordsDoNotMatch') ||
+          (language === 'ur' ? 'پاس ورڈ مماثل نہیں ہیں۔' : 'Passwords do not match.'),
       });
       return;
     }
@@ -415,6 +420,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     setPasswordMessage(null);
 
     const { error } = await changePassword(currentPassword, newPassword);
+
     setIsUpdatingPassword(false);
 
     if (error) {
@@ -495,222 +501,398 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     user?.phone ||
     null;
 
+  const isUserVerified = Boolean(
+    profile?.is_verified || (user?.user_metadata as any)?.is_verified
+  );
+
   return (
     <div
       id="settings_screen_container"
       dir={isRTL ? 'rtl' : 'ltr'}
-      className="min-h-screen bg-surface-container-lowest text-on-surface font-['Plus_Jakarta_Sans'] pb-32 sm:pb-36"
+      className="min-h-screen bg-[#FBFBFA] text-on-surface font-['Plus_Jakarta_Sans'] pb-32 sm:pb-36"
     >
-      {/* Top Navigation Bar */}
-      <header
-        id="settings_header"
-        className="sticky top-0 z-30 bg-surface-container-lowest/90 backdrop-blur-md border-b border-surface-dim px-4 sm:px-6 lg:px-8 py-3.5 transition-colors"
-      >
-        <div className="max-w-3xl lg:max-w-4xl mx-auto flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <button
-              id="settings_back_btn"
-              onClick={onBack}
-              aria-label="Go Back"
-              className="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors active:scale-95 cursor-pointer"
-            >
-              {isRTL ? (
-                <ArrowRight className="w-5 h-5" />
-              ) : (
-                <ArrowLeft className="w-5 h-5" />
-              )}
-            </button>
-            <div>
-              <h1 className={`text-xl font-bold text-on-surface tracking-tight leading-tight ${language === 'ur' ? 'font-urdu' : "font-['Manrope']"}`}>
-                {t('settings.title') || (language === 'ur' ? 'ترتیبات' : 'Settings')}
-              </h1>
-              <p className="text-xs text-outline font-medium">
-                {t('settings.subtitle') ||
-                  (language === 'ur' ? 'پروفائل، اپیرنس، ترجیحات و سیکیورٹی' : 'Profile, Appearance & Security')}
-              </p>
+      {/* 1. Universal Top Header (Adheres strictly to universal rules: Back Arrow on left, YAAD in center, Bell + Settings on right) */}
+      <TopHeader
+        title="YAAD"
+        showBack={true}
+        onBack={onBack}
+        onSettingsClick={() => {}}
+      />
+
+      {/* 2. Hero Section: Centered Profile with soft shaded gradient backdrop (Screenshots 4 & 5) */}
+      <div className="relative bg-gradient-to-b from-[#003527]/12 via-emerald-50/20 to-transparent pt-6 pb-6 sm:pt-8 sm:pb-8 px-4 sm:px-6 border-b border-neutral-200/50">
+        <div className="max-w-md mx-auto text-center flex flex-col items-center">
+          {/* Centered Avatar with Camera / Edit Pencil Badge */}
+          <div className="relative inline-block mx-auto">
+            <div className="p-1 rounded-full bg-white shadow-md ring-1 ring-neutral-200/60">
+              <Avatar
+                name={displayName}
+                email={user?.email}
+                avatarUrl={profile?.avatar_url}
+                size="xl"
+                className="w-24 h-24 sm:w-28 sm:h-28 ring-2 ring-emerald-500/20"
+              />
             </div>
+            <button
+              id="change_avatar_btn"
+              type="button"
+              onClick={() => setShowAvatarPicker(true)}
+              aria-label={t('settings.chooseAvatar') || 'Choose Avatar'}
+              className="absolute bottom-1 right-1 sm:bottom-1.5 sm:right-1.5 w-8 h-8 rounded-full bg-[#003527] text-white flex items-center justify-center shadow-md hover:bg-[#002b1f] active:scale-95 transition-all ring-2 ring-white cursor-pointer"
+              title="Change Avatar"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+            </button>
           </div>
 
-          <button
-            id="settings_done_btn"
-            onClick={onBack}
-            className="px-4 py-1.5 text-xs sm:text-sm font-bold text-primary bg-primary-fixed/40 hover:bg-primary-fixed/60 rounded-full transition-colors active:scale-95 cursor-pointer flex items-center gap-1.5"
-          >
-            <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span>{t('settings.done') || (language === 'ur' ? 'مکمل' : 'Done')}</span>
-          </button>
-        </div>
+          {/* User Name with Verified Blue Tick Rosette Badge */}
+          <div className="flex items-center justify-center gap-1.5 mt-3.5">
+            <h2 className="text-xl sm:text-2xl font-black text-neutral-900 tracking-tight leading-tight">
+              {displayName}
+            </h2>
+            {isUserVerified && (
+              <VerifiedBadge size="md" title="Official Verified Account" />
+            )}
+          </div>
 
-        {/* Section Jump Pills (Order: Profile -> Appearance -> Preferences -> About -> Security at the end) */}
-        <div className="max-w-3xl lg:max-w-4xl mx-auto flex items-center gap-2 pt-2.5 overflow-x-auto no-scrollbar pb-0.5">
-          {/* 1. Profile Pill */}
-          <button
-            id="settings_jump_profile"
-            onClick={() => handleJumpToSection('profile')}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
-              activeSection === 'profile'
-                ? 'bg-primary text-on-primary shadow-xs'
-                : 'bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
-            }`}
-          >
-            <UserCheck className="w-3.5 h-3.5" />
-            <span>{t('settings.profile') || (language === 'ur' ? 'پروفائل' : 'Profile')}</span>
-          </button>
+          {/* Email or Phone Subtitle */}
+          <div className="text-xs sm:text-sm text-neutral-500 font-medium mt-1 flex items-center justify-center gap-2">
+            {displayPhone ? (
+              <span dir="ltr" className="font-mono text-neutral-600">
+                {formatPhoneNumber(displayPhone)}
+              </span>
+            ) : (
+              <span className="truncate max-w-[260px]">{displayEmail}</span>
+            )}
+          </div>
 
-          {/* 2. Appearance Pill */}
-          <button
-            id="settings_jump_appearance"
-            onClick={() => handleJumpToSection('appearance')}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
-              activeSection === 'appearance'
-                ? 'bg-primary text-on-primary shadow-xs'
-                : 'bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
-            }`}
-          >
-            <Palette className="w-3.5 h-3.5" />
-            <span>
-              {language === 'ur'
-                ? 'اپیرنس اور تھیم'
-                : language === 'roman-urdu'
-                ? 'Appearance & Theme'
-                : 'Appearance'}
+          {/* Active Status Pill */}
+          <div className="mt-2.5">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200/60 shadow-2xs">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 stroke-[2.2]" />
+              <span>{t('settings.verified') || (language === 'ur' ? 'فعال اکاؤنٹ' : 'Active Account')}</span>
             </span>
-          </button>
+          </div>
 
-          {/* 3. Preferences Pill */}
+          {/* Quick Edit Action Buttons */}
+          {user && (
+            <div className="flex flex-wrap items-center justify-center gap-2 mt-3.5">
+              {!isEditingName && (
+                <button
+                  id="edit_name_toggle_btn"
+                  type="button"
+                  onClick={() => {
+                    setIsEditingName(true);
+                    setFullNameInput(profile?.full_name || user?.user_metadata?.full_name || '');
+                  }}
+                  className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-white border border-neutral-200/90 text-neutral-700 hover:bg-neutral-50 hover:border-neutral-300 transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Pencil className="w-3.5 h-3.5 text-[#003527]" />
+                  <span>{t('settings.editName') || (language === 'ur' ? 'نام تبدیل کریں' : 'Edit Name')}</span>
+                </button>
+              )}
+
+              {!isEditingPhone && (
+                <button
+                  id="edit_phone_toggle_btn"
+                  type="button"
+                  onClick={() => {
+                    setIsEditingPhone(true);
+                    setPhoneInput(displayPhone || '');
+                    setPhoneError(null);
+                  }}
+                  className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-white border border-neutral-200/90 text-neutral-700 hover:bg-neutral-50 hover:border-neutral-300 transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Smartphone className="w-3.5 h-3.5 text-[#003527]" />
+                  <span>
+                    {displayPhone
+                      ? (t('settings.editPhone') || (language === 'ur' ? 'فون تبدیل کریں' : 'Edit Phone'))
+                      : (t('settings.addPhone') || (language === 'ur' ? 'فون شامل کریں' : 'Add Phone'))}
+                  </span>
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Inline Edit Name Form */}
+          {isEditingName && (
+            <form
+              onSubmit={handleSaveName}
+              className="w-full max-w-sm mt-4 p-4 bg-white rounded-2xl border border-emerald-500/30 shadow-sm space-y-3 animate-in fade-in duration-200 text-start"
+            >
+              <div className="flex items-center justify-between">
+                <label
+                  htmlFor="settings_input_full_name"
+                  className="text-xs font-bold text-neutral-700 flex items-center gap-1.5"
+                >
+                  <Pencil className="w-3.5 h-3.5 text-[#003527]" />
+                  <span>{t('settings.name') || (language === 'ur' ? 'مکمل نام' : 'Full Name')}</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setIsEditingName(false)}
+                  className="text-xs text-neutral-400 hover:text-neutral-700 flex items-center gap-1 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>{t('settings.cancel') || 'Cancel'}</span>
+                </button>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  id="settings_input_full_name"
+                  type="text"
+                  dir="auto"
+                  value={fullNameInput}
+                  onChange={(e) => setFullNameInput(e.target.value)}
+                  placeholder={t('settings.namePlaceholder') || 'Enter your full name'}
+                  disabled={isSavingProfile}
+                  className="flex-1 px-3 py-2 text-xs rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-[#003527]/20 focus:border-[#003527]"
+                />
+                <button
+                  id="save_name_btn"
+                  type="submit"
+                  disabled={isSavingProfile}
+                  className="px-4 py-2 bg-[#003527] text-white text-xs font-bold rounded-xl hover:bg-[#002b1f] active:scale-95 transition-all disabled:opacity-50 cursor-pointer shadow-xs"
+                >
+                  {isSavingProfile ? 'Saving...' : t('settings.save') || 'Save'}
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Inline Edit Phone Form */}
+          {isEditingPhone && (
+            <form
+              onSubmit={handleSavePhone}
+              className="w-full max-w-sm mt-4 p-4 bg-white rounded-2xl border border-emerald-500/30 shadow-sm space-y-3 animate-in fade-in duration-200 text-start"
+            >
+              <div className="flex items-center justify-between">
+                <label
+                  htmlFor="settings_input_phone"
+                  className="text-xs font-bold text-neutral-700 flex items-center gap-1.5"
+                >
+                  <Smartphone className="w-3.5 h-3.5 text-[#003527]" />
+                  <span>{t('settings.phone') || (language === 'ur' ? 'فون نمبر' : 'Phone Number')}</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setIsEditingPhone(false)}
+                  className="text-xs text-neutral-400 hover:text-neutral-700 flex items-center gap-1 cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>{t('settings.cancel') || 'Cancel'}</span>
+                </button>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  id="settings_input_phone"
+                  type="tel"
+                  dir="ltr"
+                  value={phoneInput}
+                  onChange={(e) => {
+                    setPhoneInput(e.target.value);
+                    if (phoneError) setPhoneError(null);
+                  }}
+                  placeholder="+92 300 1234567"
+                  disabled={isSavingProfile}
+                  className="flex-1 px-3 py-2 text-xs rounded-xl border border-neutral-200 font-mono focus:outline-none focus:ring-2 focus:ring-[#003527]/20 focus:border-[#003527]"
+                />
+                <button
+                  id="save_phone_btn"
+                  type="submit"
+                  disabled={isSavingProfile}
+                  className="px-4 py-2 bg-[#003527] text-white text-xs font-bold rounded-xl hover:bg-[#002b1f] active:scale-95 transition-all disabled:opacity-50 cursor-pointer shadow-xs"
+                >
+                  {isSavingProfile ? 'Saving...' : t('settings.save') || 'Save'}
+                </button>
+              </div>
+              {phoneError && (
+                <p className="text-[11px] text-rose-600 font-medium">{phoneError}</p>
+              )}
+            </form>
+          )}
+
+          {/* Feedback Toast Message */}
+          {profileMessage && (
+            <div
+              className={`mt-3.5 p-3 rounded-2xl text-xs flex items-center gap-2 max-w-sm w-full ${
+                profileMessage.type === 'success'
+                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                  : 'bg-rose-50 text-rose-800 border border-rose-200'
+              }`}
+            >
+              {profileMessage.type === 'success' ? (
+                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+              ) : (
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+              )}
+              <span className="flex-1 font-medium">{profileMessage.text}</span>
+            </div>
+          )}
+
+          {/* Guest User CTA */}
+          {!user && (
+            <div className="mt-4 p-3.5 rounded-2xl bg-white border border-neutral-200 shadow-2xs max-w-sm w-full text-center">
+              <p className="text-xs text-neutral-600">
+                {language === 'ur'
+                  ? 'اپنی خریداری کی تاریخ اور پرچیاں کلاؤڈ پر محفوظ کرنے کے لیے لاگ ان کریں۔'
+                  : 'Sign in to sync your grocery lists and backup data.'}
+              </p>
+              <button
+                type="button"
+                onClick={() => onOpenAuth?.('signin')}
+                className="mt-2.5 px-5 py-1.5 rounded-xl bg-[#003527] text-white text-xs font-bold hover:bg-[#002b1f] transition-all shadow-xs cursor-pointer"
+              >
+                {t('auth.signIn') || (language === 'ur' ? 'سائن ان' : 'Sign In')}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 3. Section Jump Pills (Order: General -> Appearance -> Preferences -> About -> Security) */}
+      <div className="sticky top-14 z-20 bg-white/95 backdrop-blur-md border-b border-neutral-200/60 px-4 py-2.5">
+        <div className="max-w-2xl mx-auto flex items-center gap-2 overflow-x-auto no-scrollbar">
           <button
-            id="settings_jump_preferences"
             onClick={() => handleJumpToSection('preferences')}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
-              activeSection === 'preferences' || activeSection === 'language'
-                ? 'bg-primary text-on-primary shadow-xs'
-                : 'bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
+            className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeSection === 'preferences' || activeSection === 'profile'
+                ? 'bg-[#003527] text-white shadow-xs'
+                : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
             }`}
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
-            <span>{t('settings.preferencesTitle') || (language === 'ur' ? 'ترجیحات' : 'Preferences')}</span>
+            <span>{t('settings.preferencesTitle') || (language === 'ur' ? 'عمومی و ترجیحات' : 'General')}</span>
           </button>
 
-          {/* 4. About Pill */}
           <button
-            id="settings_jump_about"
+            onClick={() => handleJumpToSection('appearance')}
+            className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeSection === 'appearance'
+                ? 'bg-[#003527] text-white shadow-xs'
+                : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+            }`}
+          >
+            <Palette className="w-3.5 h-3.5" />
+            <span>{language === 'ur' ? 'تھیم' : 'Appearance'}</span>
+          </button>
+
+          <button
             onClick={() => handleJumpToSection('about')}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
               activeSection === 'about'
-                ? 'bg-primary text-on-primary shadow-xs'
-                : 'bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
+                ? 'bg-[#003527] text-white shadow-xs'
+                : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
             }`}
           >
             <Compass className="w-3.5 h-3.5" />
-            <span>{t('settings.aboutYaad') || (language === 'ur' ? 'یاد کے بارے میں' : 'About')}</span>
+            <span>{t('settings.aboutYaad') || (language === 'ur' ? 'معلومات و سپورٹ' : 'About & Support')}</span>
           </button>
 
-          {/* 5. Security Pill (At the very end!) */}
           {user && (
             <button
-              id="settings_jump_security"
               onClick={() => handleJumpToSection('security')}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
                 activeSection === 'security'
-                  ? 'bg-primary text-on-primary shadow-xs'
-                  : 'bg-surface-container text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
+                  ? 'bg-[#003527] text-white shadow-xs'
+                  : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
               }`}
             >
               <ShieldAlert className="w-3.5 h-3.5" />
-              <span>{t('settings.securityTitle') || (language === 'ur' ? 'سیکیورٹی و سائن آؤٹ' : 'Security')}</span>
+              <span>{t('settings.securityTitle') || (language === 'ur' ? 'سیکیورٹی' : 'Security')}</span>
             </button>
           )}
         </div>
-      </header>
+      </div>
 
-      {/* Main Content Sections Container */}
-      <main className="max-w-3xl lg:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8">
-        {/* 1. Profile & Account Section */}
-        <div id="settings_section_profile">
-          <ProfileSection
-            user={user}
-            profile={profile}
-            displayName={displayName}
-            displayEmail={displayEmail}
-            displayPhone={displayPhone}
-            isEditingName={isEditingName}
-            fullNameInput={fullNameInput}
-            setFullNameInput={setFullNameInput}
-            isEditingPhone={isEditingPhone}
-            phoneInput={phoneInput}
-            setPhoneInput={setPhoneInput}
-            phoneError={phoneError}
-            isSavingProfile={isSavingProfile}
-            profileMessage={profileMessage}
-            onSaveName={handleSaveName}
-            onSavePhone={handleSavePhone}
-            onStartEditName={() => {
-              setIsEditingName(true);
-              setFullNameInput(
-                profile?.full_name || user?.user_metadata?.full_name || '',
-              );
-            }}
-            onCancelEditName={() => setIsEditingName(false)}
-            onStartEditPhone={() => {
-              setIsEditingPhone(true);
-              setPhoneInput(displayPhone || '');
-              setPhoneError(null);
-            }}
-            onCancelEditPhone={() => setIsEditingPhone(false)}
-            onOpenAvatarPicker={() => setShowAvatarPicker(true)}
-            onOpenAuth={onOpenAuth}
-          />
-        </div>
-
-        {/* 2. Appearance & Pre-installed Themes Section (NEW) */}
-        <div id="settings_section_appearance">
-          <AppearanceSection />
-        </div>
-
-        {/* 3. Preferences Section (Language & Sound) */}
-        <div id="settings_section_preferences">
-          <PreferencesSection
-            soundEnabled={soundEnabled}
-            onToggleSound={handleToggleSound}
-            onLanguageSelect={handleLanguageSelect}
-          />
-        </div>
-
-        {/* 4. About & Legal Section */}
-        <div id="settings_section_about">
-          <AboutSection
-            onOpenModal={(type) => setActiveLegalModal(type)}
-            onOpenLegalPage={onOpenLegalPage}
-          />
-        </div>
-
-        {/* 5. Security & Sign Out Section (PLACED AT THE VERY END AS REQUESTED) */}
-        {user && (
-          <div id="settings_section_security">
-            <SecuritySection
-              isChangingPassword={isChangingPassword}
-              setIsChangingPassword={setIsChangingPassword}
-              currentPassword={currentPassword}
-              setCurrentPassword={setCurrentPassword}
-              newPassword={newPassword}
-              setNewPassword={setNewPassword}
-              confirmPassword={confirmPassword}
-              setConfirmPassword={setConfirmPassword}
-              showPassword={showPassword}
-              setShowPassword={setShowPassword}
-              isUpdatingPassword={isUpdatingPassword}
-              passwordMessage={passwordMessage}
-              setPasswordMessage={setPasswordMessage}
-              onUpdatePassword={handleUpdatePassword}
-              onRequestSignOut={() => setShowSignOutConfirm(true)}
+      {/* 4. Grouped iOS-style Inset Cards (Matching Screenshots 4 & 5) */}
+      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+        {/* GROUP 1: General & Preferences (Screenshot 4) */}
+        <div id="settings_section_preferences" className="space-y-2">
+          <h3 className="text-xs font-black uppercase tracking-wider text-neutral-400 px-3 font-['Plus_Jakarta_Sans']">
+            {language === 'ur' ? 'عمومی ترجیحات' : 'General'}
+          </h3>
+          <div className="bg-white rounded-3xl border border-neutral-200/80 shadow-xs divide-y divide-neutral-100 overflow-hidden">
+            <PreferencesSection
+              soundEnabled={soundEnabled}
+              onToggleSound={handleToggleSound}
+              onLanguageSelect={handleLanguageSelect}
             />
+          </div>
+        </div>
+
+        {/* GROUP 2: Appearance & Theme */}
+        <div id="settings_section_appearance" className="space-y-2">
+          <h3 className="text-xs font-black uppercase tracking-wider text-neutral-400 px-3 font-['Plus_Jakarta_Sans']">
+            {language === 'ur' ? 'ظاہری شکل و تھیم' : 'Appearance & Theme'}
+          </h3>
+          <div className="bg-white rounded-3xl border border-neutral-200/80 shadow-xs overflow-hidden">
+            <AppearanceSection />
+          </div>
+        </div>
+
+        {/* GROUP 3: Security & Passwords */}
+        {user && (
+          <div id="settings_section_security" className="space-y-2">
+            <h3 className="text-xs font-black uppercase tracking-wider text-neutral-400 px-3 font-['Plus_Jakarta_Sans']">
+              {language === 'ur' ? 'سیکیورٹی و پاس ورڈ' : 'Security'}
+            </h3>
+            <div className="bg-white rounded-3xl border border-neutral-200/80 shadow-xs overflow-hidden">
+              <SecuritySection
+                isChangingPassword={isChangingPassword}
+                setIsChangingPassword={setIsChangingPassword}
+                currentPassword={currentPassword}
+                setCurrentPassword={setCurrentPassword}
+                newPassword={newPassword}
+                setNewPassword={setNewPassword}
+                confirmPassword={confirmPassword}
+                setConfirmPassword={setConfirmPassword}
+                showPassword={showPassword}
+                setShowPassword={setShowPassword}
+                isUpdatingPassword={isUpdatingPassword}
+                passwordMessage={passwordMessage}
+                setPasswordMessage={setPasswordMessage}
+                onUpdatePassword={handleUpdatePassword}
+                onRequestSignOut={() => setShowSignOutConfirm(true)}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* GROUP 4: About & Legal */}
+        <div id="settings_section_about" className="space-y-2">
+          <h3 className="text-xs font-black uppercase tracking-wider text-neutral-400 px-3 font-['Plus_Jakarta_Sans']">
+            {language === 'ur' ? 'یاد کے بارے میں و سپورٹ' : 'About & Legal'}
+          </h3>
+          <div className="bg-white rounded-3xl border border-neutral-200/80 shadow-xs overflow-hidden">
+            <AboutSection
+              onOpenModal={(type) => setActiveLegalModal(type)}
+              onOpenLegalPage={onOpenLegalPage}
+            />
+          </div>
+        </div>
+
+        {/* 5. Bottom Distinctive Outline "SIGN OUT" Pill Button (Screenshot 5) */}
+        {user && (
+          <div className="pt-6 pb-6 flex flex-col items-center justify-center gap-2">
+            <button
+              id="settings_bottom_signout_btn"
+              type="button"
+              onClick={() => setShowSignOutConfirm(true)}
+              className="w-48 py-2.5 rounded-full border border-neutral-300 bg-white hover:bg-neutral-50 hover:border-neutral-400 active:scale-95 text-neutral-800 font-bold text-xs uppercase tracking-wider transition-all shadow-2xs cursor-pointer text-center"
+            >
+              {t('auth.signOut') || (language === 'ur' ? 'سائن آؤٹ' : 'SIGN OUT')}
+            </button>
+            <p className="text-[11px] text-neutral-400">
+              {language === 'ur' ? 'یاد ورژن 1.0.0 (پروڈکشن)' : 'YAAD Version 1.0.0 (Production)'}
+            </p>
           </div>
         )}
       </main>
 
-      {/* ==================================================================== */}
       {/* MODAL 1: Avatar Picker Modal */}
-      {/* ==================================================================== */}
       <AvatarPickerModal
         isOpen={showAvatarPicker}
         onClose={() => setShowAvatarPicker(false)}
@@ -720,9 +902,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         userEmail={user?.email}
       />
 
-      {/* ==================================================================== */}
       {/* MODAL 2: Sign Out Confirmation Modal */}
-      {/* ==================================================================== */}
       <SignOutConfirmModal
         isOpen={showSignOutConfirm}
         onClose={() => setShowSignOutConfirm(false)}
@@ -730,9 +910,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         isSigningOut={isSigningOut}
       />
 
-      {/* ==================================================================== */}
       {/* MODAL 3: In-App Legal / Help Viewer Sheet */}
-      {/* ==================================================================== */}
       <LegalDocModal
         activeModal={activeLegalModal}
         onClose={() => setActiveLegalModal(null)}

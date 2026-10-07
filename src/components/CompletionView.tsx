@@ -118,9 +118,11 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
 
   return (
     <div className="w-full max-w-2xl mx-auto min-h-screen flex flex-col antialiased bg-background pb-12 selection:bg-primary-container selection:text-on-primary-container">
-      {/* Top Header */}
+      {/* Top Header with Back Button */}
       <TopHeader
-        title={t('appName')}
+        title="YAAD"
+        showBack={true}
+        onBack={onReturnHome}
         onSettingsClick={onOpenProfile}
         onAvatarClick={onOpenProfile}
       />

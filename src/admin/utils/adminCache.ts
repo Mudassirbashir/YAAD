@@ -153,7 +153,10 @@ class AdminCache {
       const data = await fetcher();
       this.set(key, data);
       return data;
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.message?.includes('403') || err?.message?.includes('401') || err?.message?.includes('Unauthorized')) {
+        return null;
+      }
       console.warn(`[AdminCache] Background fetch failed for ${key}:`, err);
       return null;
     }
@@ -171,7 +174,10 @@ class AdminCache {
       const data = await res.json();
       this.set(cacheKey, data);
       return data;
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.message?.includes('403') || err?.message?.includes('401')) {
+        return null;
+      }
       console.warn(`[AdminCache] Background fetch failed for ${url}:`, err);
       return null;
     }

@@ -1230,6 +1230,33 @@ adminRouter.post('/users/:id/status', requireAdminAuth, requireRoles('super_admi
   }
 });
 
+adminRouter.post('/users/:id/verify', requireAdminAuth, requireRoles('super_admin'), async (req: AdminAuthRequest, res: Response) => {
+  const { id } = req.params;
+  const { isVerified } = req.body;
+  const clientIp = getClientIp(req);
+
+  try {
+    const user = adminStore.setAppUserVerified(id, Boolean(isVerified));
+    adminStore.writeAuditLog({
+      action: isVerified ? 'user_verified' : 'user_unverified',
+      adminId: req.admin!.id,
+      adminEmail: req.admin!.email,
+      targetType: 'app_user',
+      targetId: id,
+      afterValue: { isVerified: Boolean(isVerified) },
+      ip: clientIp,
+    });
+    res.status(200).json({
+      success: true,
+      message: `User verification updated to ${Boolean(isVerified)}.`,
+      user,
+      isVerified: Boolean(isVerified),
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to update user verification.', details: err.message });
+  }
+});
+
 // -----------------------------------------------------------------------------
 // 14d. Authoritative Shopping List Moderation (Phase 10: Lists + Items)
 // -----------------------------------------------------------------------------

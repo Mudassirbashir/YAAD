@@ -523,7 +523,16 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
                         reason: applyReason.trim(),
                       }),
                     });
-                    const data = await res.json();
+                    const rawText = await res.text();
+                    let data: any = {};
+                    try {
+                      data = JSON.parse(rawText);
+                    } catch {
+                      if (!res.ok) {
+                        throw new Error(`Server returned HTTP ${res.status}. Please check your connection and retry.`);
+                      }
+                      data = { success: true };
+                    }
                     if (!res.ok) {
                       setApplyError(data.error || 'Failed to submit application.');
                     } else {

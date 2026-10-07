@@ -17,6 +17,7 @@ import {
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { useAdminToast } from '../components/AdminToasts';
 import { adminCache } from '../utils/adminCache';
+import { VerifiedBadge } from '../../components/VerifiedBadge';
 
 export interface AuthoritativeUser {
   id: string;
@@ -31,6 +32,7 @@ export interface AuthoritativeUser {
   suspendReason?: string;
   listsCount: number;
   completedTripsCount: number;
+  isVerified?: boolean;
 }
 
 export const AdminUserDirectoryPage: React.FC = () => {
@@ -155,6 +157,45 @@ export const AdminUserDirectoryPage: React.FC = () => {
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const [verifyLoadingId, setVerifyLoadingId] = useState<string | null>(null);
+
+  const toggleVerifyUser = async (userId: string, targetVerified: boolean) => {
+    if (!token || admin?.role !== 'super_admin') return;
+    setVerifyLoadingId(userId);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/verify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ isVerified: targetVerified }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to update user verification badge');
+      }
+      showToast({
+        type: 'success',
+        title: targetVerified ? 'Blue Tick Granted' : 'Verification Revoked',
+        message: targetVerified
+          ? 'Blue tick verified badge granted to user.'
+          : 'User verification badge removed.',
+      });
+      setUsers((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, isVerified: targetVerified } : u))
+      );
+    } catch (err: any) {
+      showToast({
+        type: 'error',
+        title: 'Action Failed',
+        message: err.message,
+      });
+    } finally {
+      setVerifyLoadingId(null);
     }
   };
 
@@ -293,7 +334,10 @@ export const AdminUserDirectoryPage: React.FC = () => {
                             {initial}
                           </div>
                           <div>
-                            <div className="font-bold text-neutral-900">{u.name}</div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-neutral-900">{u.name}</span>
+                              {u.isVerified && <VerifiedBadge size="xs" />}
+                            </div>
                             <div className="font-mono text-[10px] text-neutral-400">{u.id}</div>
                           </div>
                         </div>
@@ -359,30 +403,47 @@ export const AdminUserDirectoryPage: React.FC = () => {
 
                       {isSuperAdmin && (
                         <td className="py-3.5 px-4 text-right">
-                          {u.status === 'active' ? (
+                          <div className="flex items-center justify-end gap-1.5">
                             <button
                               type="button"
-                              onClick={() => {
-                                setSelectedUser(u);
-                                setSuspendReason('');
-                              }}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-neutral-100 hover:bg-rose-50 hover:text-rose-700 text-neutral-600 font-bold text-[11px] transition-colors cursor-pointer"
-                              title="Suspend User Account"
+                              disabled={verifyLoadingId === u.id}
+                              onClick={() => toggleVerifyUser(u.id, !u.isVerified)}
+                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl font-bold text-[11px] transition-all cursor-pointer border ${
+                                u.isVerified
+                                  ? 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100'
+                                  : 'border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-100'
+                              }`}
+                              title={u.isVerified ? 'Revoke blue verification badge' : 'Grant blue verification badge'}
                             >
-                              <Ban className="w-3 h-3 text-rose-500" />
-                              <span>Suspend</span>
+                              <VerifiedBadge size="xs" />
+                              <span>{u.isVerified ? 'Verified' : 'Verify'}</span>
                             </button>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => handleStatusChange(u.id, 'active')}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-[11px] transition-colors cursor-pointer"
-                              title="Reactivate User Account"
-                            >
-                              <RotateCcw className="w-3 h-3 text-emerald-600" />
-                              <span>Reactivate</span>
-                            </button>
-                          )}
+
+                            {u.status === 'active' ? (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedUser(u);
+                                  setSuspendReason('');
+                                }}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-neutral-100 hover:bg-rose-50 hover:text-rose-700 text-neutral-600 font-bold text-[11px] transition-colors cursor-pointer"
+                                title="Suspend User Account"
+                              >
+                                <Ban className="w-3 h-3 text-rose-500" />
+                                <span>Suspend</span>
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleStatusChange(u.id, 'active')}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-[11px] transition-colors cursor-pointer"
+                                title="Reactivate User Account"
+                              >
+                                <RotateCcw className="w-3 h-3 text-emerald-600" />
+                                <span>Reactivate</span>
+                              </button>
+                            )}
+                          </div>
                         </td>
                       )}
                     </tr>

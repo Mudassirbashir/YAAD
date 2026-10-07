@@ -145,7 +145,15 @@ export const SYSTEM_PERMISSIONS: PermissionDefinition[] = [
 export interface AppUserTimelineEvent {
   id: string;
   timestamp: number;
-  type: 'signup' | 'login' | 'create_list' | 'complete_trip' | 'account_suspended' | 'account_reactivated';
+  type:
+    | 'signup'
+    | 'login'
+    | 'create_list'
+    | 'complete_trip'
+    | 'account_suspended'
+    | 'account_reactivated'
+    | 'badge_granted'
+    | 'badge_revoked';
   title: string;
   description: string;
 }
@@ -172,6 +180,7 @@ export interface AppUser {
   listsCount: number;
   completedTripsCount: number;
   isTestAccount?: boolean;
+  isVerified?: boolean;
   notes?: string;
   lists?: AppUserListSummary[];
   timeline?: AppUserTimelineEvent[];
@@ -1963,6 +1972,43 @@ class AdminStore {
       type: status === 'suspended' ? 'account_suspended' : 'account_reactivated',
       title: status === 'suspended' ? 'User Suspended' : 'User Reactivated',
       description: reason || `Status changed to ${status}`,
+    });
+    this.save();
+    return user;
+  }
+
+  public isUserVerified(userId: string): boolean {
+    const user = this.getAppUserById(userId);
+    return Boolean(user?.isVerified);
+  }
+
+  public setAppUserVerified(userId: string, isVerified: boolean): AppUser | undefined {
+    let user = this.getAppUserById(userId);
+    if (!user) {
+      user = {
+        id: userId,
+        name: 'User ' + userId.slice(0, 6),
+        signupDate: Date.now(),
+        lastActiveAt: Date.now(),
+        status: 'active',
+        listsCount: 0,
+        completedTripsCount: 0,
+        isVerified,
+      };
+      if (!this.db.appUsers) this.db.appUsers = [];
+      this.db.appUsers.push(user);
+    } else {
+      user.isVerified = isVerified;
+    }
+    if (!user.timeline) user.timeline = [];
+    user.timeline.unshift({
+      id: 'tl_' + crypto.randomUUID(),
+      timestamp: Date.now(),
+      type: isVerified ? 'badge_granted' : 'badge_revoked',
+      title: isVerified ? 'Verified Badge Granted' : 'Verified Badge Revoked',
+      description: isVerified
+        ? 'Super Admin granted official blue tick verification badge'
+        : 'Super Admin revoked blue tick verification badge',
     });
     this.save();
     return user;

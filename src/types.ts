@@ -403,6 +403,7 @@ export interface UserProfile {
   phone_number?: string | null;
   phone?: string | null;
   avatar_url?: string;
+  is_verified?: boolean;
   language?: Language;
   usage_purpose?: string;
   referral_source?: string;

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { Avatar } from '../Avatar';
+import { VerifiedBadge } from '../VerifiedBadge';
 import { formatPhoneNumber } from '../../utils/phone';
 
 interface ProfileSectionProps {
@@ -140,9 +141,14 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
               {/* Profile Details */}
               <div className="flex-1 text-center sm:text-start space-y-1.5 w-full min-w-0">
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                  <h3 className="text-lg sm:text-xl font-bold text-on-surface font-['Manrope'] truncate max-w-full">
-                    {displayName}
-                  </h3>
+                  <div className="flex items-center gap-1.5 truncate max-w-full">
+                    <h3 className="text-lg sm:text-xl font-bold text-on-surface font-['Manrope'] truncate">
+                      {displayName}
+                    </h3>
+                    {(profile?.is_verified || (user?.user_metadata as any)?.is_verified) && (
+                      <VerifiedBadge size="sm" />
+                    )}
+                  </div>
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary-fixed/40 text-primary shrink-0 border border-primary/10">
                     <ShieldCheck className="w-3.5 h-3.5 stroke-[2.2]" />
                     <span>{t('settings.verified') || (language === 'ur' ? 'فعال اکاؤنٹ' : 'Active Account')}</span>

@@ -671,6 +671,7 @@ export interface AuthoritativeAppUser {
   suspendReason?: string;
   listsCount: number;
   completedTripsCount: number;
+  isVerified?: boolean;
 }
 
 export async function getAuthoritativeAppUsers(options?: {
@@ -740,6 +741,7 @@ export async function getAuthoritativeAppUsers(options?: {
         suspendReason: p.suspend_reason || undefined,
         listsCount: counts.total,
         completedTripsCount: counts.completed,
+        isVerified: Boolean(p.is_verified || p.raw_user_meta_data?.is_verified),
       };
     });
 

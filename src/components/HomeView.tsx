@@ -3,6 +3,7 @@ import { Plus, ChevronRight, Check, ArrowRight, X } from 'lucide-react';
 import { ShoppingList, CategoryId } from '../types';
 import { TopHeader } from './TopHeader';
 import { Avatar } from './Avatar';
+import { VerifiedBadge } from './VerifiedBadge';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { RecommendationCandidate } from '../lib/recommendations';
@@ -224,9 +225,12 @@ export const HomeView: React.FC<HomeViewProps> = ({
             <span className="font-['Manrope'] text-[13.5px] sm:text-[15px] font-semibold text-outline leading-tight">
               {greetingData.timeGreeting}
             </span>
-            {/* Middle: User's name prominently enlarged */}
-            <h1 className="font-['Plus_Jakarta_Sans'] text-3xl sm:text-4xl lg:text-5xl font-black text-on-surface tracking-tight leading-tight truncate mt-0.5">
-              {greetingData.userName}
+            {/* Middle: User's name prominently enlarged with Verified Badge if granted */}
+            <h1 className="font-['Plus_Jakarta_Sans'] text-3xl sm:text-4xl lg:text-5xl font-black text-on-surface tracking-tight leading-tight truncate mt-0.5 flex items-center gap-2">
+              <span className="truncate">{greetingData.userName}</span>
+              {(profile?.is_verified || (user?.user_metadata as any)?.is_verified) && (
+                <VerifiedBadge size="sm" />
+              )}
             </h1>
             {/* Bottom: Let's make a list in solid proper black */}
             <p className="font-['Manrope'] text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100 mt-0.5">

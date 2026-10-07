@@ -232,8 +232,8 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
     <div className="w-full max-w-7xl mx-auto min-h-screen flex flex-col antialiased bg-background pb-28 selection:bg-emerald-100 selection:text-emerald-900">
       {/* Top Header */}
       <TopHeader
-        title={t('appName')}
-        showBack={Boolean(onBack)}
+        title="YAAD"
+        showBack={true}
         onBack={onBack}
         onSettingsClick={onOpenMenu || onOpenProfile}
         onAvatarClick={onOpenProfile}
