@@ -14,14 +14,32 @@ const PORT = 3000;
 
 app.use(express.json());
 
+// Global CORS & Preflight handling for all /api endpoints
+app.use('/api', (req, res, next) => {
+  const origin = req.headers.origin || '*';
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Requested-With, Origin');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Max-Age', '86400');
+
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(204);
+  }
+  next();
+});
+
 // Standard security headers and strict noindex for all Staff Admin endpoints
 app.use((req, res, next) => {
   if (req.path.startsWith('/admin') || req.path.startsWith('/api/admin')) {
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'DENY');
-    res.setHeader('Content-Security-Policy', "frame-ancestors 'none';");
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
     res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet');
+  }
+  // Only apply frame restrictions to HTML pages, not JSON API routes
+  if (req.path.startsWith('/admin') && !req.path.startsWith('/api/admin')) {
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('Content-Security-Policy', "frame-ancestors 'self';");
   }
   next();
 });

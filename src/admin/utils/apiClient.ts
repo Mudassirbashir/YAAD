@@ -43,13 +43,20 @@ export async function safeFetchJson<T = any>(
       // Received HTML, XML, or plain text instead of JSON
       const rawText = await res.text();
       const isHtml = rawText.includes('<!DOCTYPE') || rawText.includes('<html');
+      const is403 = res.status === 403;
+      let errorMsg = rawText || `Unexpected response format from server (HTTP ${res.status}).`;
+      if (isHtml) {
+        if (is403) {
+          errorMsg = 'Access Denied (HTTP 403 Forbidden). Edge firewall or deployment protection blocked the request. Please disable browser extensions or verify Vercel permissions.';
+        } else {
+          errorMsg = `Backend API route not reachable (${res.status}). Server returned HTML page instead of JSON.`;
+        }
+      }
       return {
         ok: false,
         status: res.status,
-        error: isHtml
-          ? `Backend API route not reachable (${res.status}). Server returned HTML page instead of JSON.`
-          : rawText || `Unexpected response format from server (HTTP ${res.status}).`,
-        code: 'INVALID_CONTENT_TYPE',
+        error: errorMsg,
+        code: is403 ? 'ACCESS_FORBIDDEN' : 'INVALID_CONTENT_TYPE',
       };
     }
 
