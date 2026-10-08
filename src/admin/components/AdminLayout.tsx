@@ -19,6 +19,7 @@ import {
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { AdminRole, ROLE_LABELS } from '../types';
 import { AdminSecurityModal } from './AdminSecurityModal';
+import { AdminNotificationsDrawer } from './AdminNotificationsDrawer';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -70,6 +71,25 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   const { admin, logout } = useAdminAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [securityModalOpen, setSecurityModalOpen] = useState(false);
+  const [notificationsDrawerOpen, setNotificationsDrawerOpen] = useState(false);
+  const [unreadNotifCount, setUnreadNotifCount] = useState(0);
+
+  // Initial fetch for notifications count
+  React.useEffect(() => {
+    if (!admin) return;
+    const activeToken = localStorage.getItem('yaad_admin_bearer_token');
+    if (!activeToken) return;
+    fetch('/api/admin/notifications', {
+      headers: { Authorization: `Bearer ${activeToken}` },
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        if (typeof d?.unreadCount === 'number') {
+          setUnreadNotifCount(d.unreadCount);
+        }
+      })
+      .catch(() => {});
+  }, [admin]);
 
   const roleMeta = admin?.role ? ROLE_LABELS[admin.role] : null;
   const userRole: AdminRole = admin?.role || 'super_admin';
@@ -154,6 +174,23 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                   {roleMeta.title}
                 </span>
               )}
+
+              {/* Admin Notification Center Bell */}
+              <button
+                type="button"
+                onClick={() => setNotificationsDrawerOpen(true)}
+                className="relative p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-200 transition-all cursor-pointer flex items-center gap-1.5 text-xs font-semibold"
+                title="Admin Notifications & Alerts"
+                aria-label="Admin Notifications & Alerts"
+              >
+                <Bell className="w-4 h-4 text-[#003527]" />
+                <span className="hidden sm:inline">Alerts</span>
+                {unreadNotifCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white font-mono font-bold text-[10px] flex items-center justify-center shadow-xs">
+                    {unreadNotifCount}
+                  </span>
+                )}
+              </button>
 
               <button
                 type="button"
@@ -370,6 +407,14 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       <AdminSecurityModal
         isOpen={securityModalOpen}
         onClose={() => setSecurityModalOpen(false)}
+      />
+
+      {/* Admin Notifications Center Drawer */}
+      <AdminNotificationsDrawer
+        isOpen={notificationsDrawerOpen}
+        onClose={() => setNotificationsDrawerOpen(false)}
+        onNavigate={onNavigate}
+        onUnreadCountChange={setUnreadNotifCount}
       />
     </div>
   );

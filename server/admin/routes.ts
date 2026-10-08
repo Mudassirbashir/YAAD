@@ -20,6 +20,7 @@ import {
   AdminAuthRequest,
   requireAdminAuth,
   requireRoles,
+  requirePermission,
   rateLimit,
   getClientIp,
 } from './middleware';
@@ -1095,6 +1096,29 @@ adminRouter.post(
 );
 
 // -----------------------------------------------------------------------------
+// 11b. Unified Admin Notifications Center (All Staff with RBAC filtering)
+// -----------------------------------------------------------------------------
+adminRouter.get('/notifications', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
+  const result = adminStore.getAdminNotifications(req.admin);
+  res.status(200).json(result);
+});
+
+adminRouter.post('/notifications/:id/dismiss', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
+  const { id } = req.params;
+  if (!id) {
+    res.status(400).json({ error: 'Notification ID is required.' });
+    return;
+  }
+  adminStore.dismissNotification(id);
+  res.status(200).json({ success: true, message: 'Notification dismissed.' });
+});
+
+adminRouter.post('/notifications/dismiss-all', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
+  adminStore.dismissAllNotifications();
+  res.status(200).json({ success: true, message: 'All notifications dismissed.' });
+});
+
+// -----------------------------------------------------------------------------
 // 12. Email Allowlist Settings (Super Admin Only)
 // -----------------------------------------------------------------------------
 adminRouter.get(
@@ -1304,6 +1328,73 @@ adminRouter.get('/lists', requireAdminAuth, async (req: AdminAuthRequest, res: R
   }
 });
 
+adminRouter.post(
+  '/lists/:id/status',
+  requireAdminAuth,
+  requirePermission('moderation.manage'),
+  (req: AdminAuthRequest, res: Response) => {
+    const { id } = req.params;
+    const { status } = req.body;
+    if (!['clean', 'flagged', 'under_review', 'resolved'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid moderation status. Must be clean, flagged, under_review, or resolved.' });
+    }
+    const ok = adminStore.updateModerationListStatus(id, status);
+    if (!ok) return res.status(404).json({ error: 'Shopping list not found.' });
+    adminStore.writeAuditLog({
+      action: 'list_moderation_status_changed',
+      adminId: req.admin?.id,
+      adminEmail: req.admin?.email,
+      targetType: 'shopping_list',
+      targetId: id,
+      afterValue: { status },
+    });
+    res.status(200).json({ success: true, status });
+  }
+);
+
+adminRouter.post(
+  '/lists/:id/items/:itemId/moderate',
+  requireAdminAuth,
+  requirePermission('moderation.manage'),
+  (req: AdminAuthRequest, res: Response) => {
+    const { id, itemId } = req.params;
+    const { action, reason } = req.body;
+    if (!['approved', 'removed'].includes(action)) {
+      return res.status(400).json({ error: 'Invalid moderation action. Must be approved or removed.' });
+    }
+    const ok = adminStore.moderateListItem(id, itemId, action, reason);
+    if (!ok) return res.status(404).json({ error: 'Shopping list or item not found.' });
+    adminStore.writeAuditLog({
+      action: `list_item_${action}`,
+      adminId: req.admin?.id,
+      adminEmail: req.admin?.email,
+      targetType: 'shopping_item',
+      targetId: itemId,
+      afterValue: { listId: id, action, reason },
+    });
+    res.status(200).json({ success: true });
+  }
+);
+
+adminRouter.delete(
+  '/lists/:id',
+  requireAdminAuth,
+  requirePermission('moderation.manage'),
+  (req: AdminAuthRequest, res: Response) => {
+    const { id } = req.params;
+    const ok = adminStore.deleteModerationList(id);
+    if (!ok) return res.status(404).json({ error: 'Shopping list not found.' });
+    adminStore.writeAuditLog({
+      action: 'list_moderation_deleted',
+      adminId: req.admin?.id,
+      adminEmail: req.admin?.email,
+      targetType: 'shopping_list',
+      targetId: id,
+    });
+    res.status(200).json({ success: true });
+  }
+);
+
 // -----------------------------------------------------------------------------
 // 14e. Authoritative Product Catalog (Phase 2 & Module 6)
 // -----------------------------------------------------------------------------
@@ -1334,7 +1425,7 @@ adminRouter.get('/catalog/products', requireAdminAuth, async (req: AdminAuthRequ
   }
 });
 
-adminRouter.post('/catalog/products', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
+adminRouter.post('/catalog/products', requireAdminAuth, requirePermission('catalog.edit'), (req: AdminAuthRequest, res: Response) => {
   try {
     const { name, nameUr, category, defaultUnit } = req.body;
     if (!name || !category) {
@@ -1447,7 +1538,7 @@ adminRouter.post(['/tickets', '/support/tickets'], (req: Request, res: Response)
   }
 });
 
-adminRouter.patch('/tickets/:id', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
+adminRouter.patch('/tickets/:id', requireAdminAuth, requirePermission('tickets.manage'), (req: AdminAuthRequest, res: Response) => {
   const { status, assignedAdmin } = req.body;
   try {
     const ticket = adminStore.updateTicketStatus(
@@ -1537,7 +1628,7 @@ adminRouter.get('/cms/articles', requireAdminAuth, async (req: AdminAuthRequest,
   }
 });
 
-adminRouter.post('/cms/articles', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
+adminRouter.post('/cms/articles', requireAdminAuth, requirePermission('content.publish'), (req: AdminAuthRequest, res: Response) => {
   try {
     const article = adminStore.saveCmsArticle(req.body, req.admin?.name || 'Staff');
     adminStore.writeAuditLog({
@@ -1554,7 +1645,7 @@ adminRouter.post('/cms/articles', requireAdminAuth, (req: AdminAuthRequest, res:
   }
 });
 
-adminRouter.put('/cms/articles/:id', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
+adminRouter.put('/cms/articles/:id', requireAdminAuth, requirePermission('content.publish'), (req: AdminAuthRequest, res: Response) => {
   try {
     const article = adminStore.saveCmsArticle({ ...req.body, id: req.params.id }, req.admin?.name || 'Staff');
     adminStore.writeAuditLog({
@@ -1571,7 +1662,7 @@ adminRouter.put('/cms/articles/:id', requireAdminAuth, (req: AdminAuthRequest, r
   }
 });
 
-adminRouter.delete('/cms/articles/:id', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
+adminRouter.delete('/cms/articles/:id', requireAdminAuth, requirePermission('content.publish'), (req: AdminAuthRequest, res: Response) => {
   try {
     const ok = adminStore.deleteCmsArticle(req.params.id);
     if (!ok) return res.status(404).json({ error: 'Article not found' });
@@ -1592,7 +1683,7 @@ adminRouter.get('/push/campaigns', requireAdminAuth, (req: AdminAuthRequest, res
   res.status(200).json({ campaigns: adminStore.getPushCampaigns() });
 });
 
-adminRouter.post('/push/campaigns', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
+adminRouter.post('/push/campaigns', requireAdminAuth, requirePermission('notifications.send'), (req: AdminAuthRequest, res: Response) => {
   try {
     const { title_en, title_ur, body_en, body_ur, icon_url, target_audience = 'all_active' } = req.body;
     if (!title_en || !body_en) {

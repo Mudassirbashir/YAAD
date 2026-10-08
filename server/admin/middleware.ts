@@ -79,6 +79,27 @@ export function requireRoles(...allowedRoles: AdminRole[]) {
 }
 
 /**
+ * Middleware factory: Enforces specific permission based on the active RBAC matrix
+ */
+export function requirePermission(permissionKey: string) {
+  return (req: AdminAuthRequest, res: Response, next: NextFunction): void => {
+    if (!req.admin) {
+      res.status(401).json({ error: 'Authentication required.', code: 'UNAUTHORIZED' });
+      return;
+    }
+
+    if (req.admin.role === 'super_admin' || adminStore.hasPermission(req.admin.role, permissionKey)) {
+      return next();
+    }
+
+    res.status(403).json({
+      error: `Access Denied: Your role (${req.admin.role}) lacks the required '${permissionKey}' permission.`,
+      code: 'FORBIDDEN',
+    });
+  };
+}
+
+/**
  * In-memory IP rate limiter for login and sensitive auth endpoints
  */
 interface RateLimitRecord {

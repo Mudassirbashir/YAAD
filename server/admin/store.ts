@@ -121,6 +121,18 @@ export interface SecurityAlert {
   dismissed?: boolean;
 }
 
+export interface AdminNotification {
+  id: string;
+  type: 'security' | 'ticket' | 'request' | 'moderation' | 'system';
+  severity: 'urgent' | 'warning' | 'info';
+  title: string;
+  message: string;
+  timestamp: number;
+  read: boolean;
+  link: string;
+  targetId?: string;
+}
+
 // Module 2: Role Matrix Permissions
 export interface PermissionDefinition {
   key: string;
@@ -426,6 +438,7 @@ export interface AdminDatabase {
   supportTickets?: SupportTicket[];
   cannedReplies?: CannedReply[];
   accessRequests?: AdminAccessRequest[];
+  dismissedNotificationIds?: string[];
 }
 
 const isServerless = Boolean(
@@ -835,6 +848,7 @@ class AdminStore {
     supportTickets: [],
     cannedReplies: getInitialCannedReplies(),
     accessRequests: [],
+    dismissedNotificationIds: [],
   };
 
   constructor() {
@@ -899,6 +913,7 @@ class AdminStore {
           supportTickets: Array.isArray(parsed.supportTickets) ? parsed.supportTickets : [],
           cannedReplies: Array.isArray(parsed.cannedReplies) ? parsed.cannedReplies : [],
           accessRequests: Array.isArray(parsed.accessRequests) ? parsed.accessRequests : [],
+          dismissedNotificationIds: Array.isArray(parsed.dismissedNotificationIds) ? parsed.dismissedNotificationIds : [],
         };
         if (isServerless && sourcePath !== DATA_FILE) {
           this.save();
@@ -1362,6 +1377,138 @@ class AdminStore {
     }
   }
 
+  // --- Unified Admin Notifications Center ---
+  public getAdminNotifications(admin?: AdminUser): { notifications: AdminNotification[]; unreadCount: number } {
+    const list: AdminNotification[] = [];
+    const dismissed = new Set(this.db.dismissedNotificationIds || []);
+
+    // 1. Security Alerts (Accessible to super_admin)
+    if (!admin || admin.role === 'super_admin') {
+      const activeAlerts = (this.db.securityAlerts || []).filter((a) => !a.dismissed);
+      for (const alert of activeAlerts) {
+        const notifId = 'notif_sec_' + alert.id;
+        if (!dismissed.has(notifId)) {
+          list.push({
+            id: notifId,
+            type: 'security',
+            severity: 'urgent',
+            title: alert.title || 'Security Alert',
+            message: alert.message,
+            timestamp: alert.timestamp,
+            read: false,
+            link: '/admin',
+            targetId: alert.id,
+          });
+        }
+      }
+    }
+
+    // 2. Open & Urgent Support Tickets (Accessible to super_admin and support_agent)
+    if (!admin || admin.role === 'super_admin' || admin.role === 'support_agent') {
+      const tickets = (this.db.supportTickets || []).filter((t) => t.status === 'open' || t.priority === 'urgent');
+      for (const ticket of tickets) {
+        const notifId = 'notif_tkt_' + ticket.id;
+        if (!dismissed.has(notifId)) {
+          list.push({
+            id: notifId,
+            type: 'ticket',
+            severity: ticket.priority === 'urgent' ? 'urgent' : 'warning',
+            title: `Support Ticket: ${ticket.subject || ticket.ticketNumber}`,
+            message: `${ticket.userName || 'Shopper'} (${ticket.category || 'general'}): ${ticket.description?.slice(0, 80) || 'New ticket requiring review.'}`,
+            timestamp: ticket.createdAt,
+            read: false,
+            link: '/admin/tickets',
+            targetId: ticket.id,
+          });
+        }
+      }
+    }
+
+    // 3. Pending Staff Access Requests (Accessible to super_admin)
+    if (!admin || admin.role === 'super_admin') {
+      const pendingReqs = (this.db.accessRequests || []).filter((r) => r.status === 'pending');
+      for (const req of pendingReqs) {
+        const notifId = 'notif_req_' + req.id;
+        if (!dismissed.has(notifId)) {
+          list.push({
+            id: notifId,
+            type: 'request',
+            severity: 'info',
+            title: `Staff Access Request: ${req.name}`,
+            message: `${req.name} requested ${req.requestedRole} access for ${req.department || 'Operations'}.`,
+            timestamp: req.createdAt,
+            read: false,
+            link: '/admin/team',
+            targetId: req.id,
+          });
+        }
+      }
+    }
+
+    // 4. Moderation Alerts (Flagged Shopping Lists)
+    if (!admin || admin.role === 'super_admin' || admin.role === 'analyst') {
+      const flaggedLists = (this.db.moderationLists || []).filter((l) => l.status === 'flagged' || (l.flaggedItemsCount && l.flaggedItemsCount > 0));
+      for (const fl of flaggedLists) {
+        const notifId = 'notif_mod_' + fl.id;
+        if (!dismissed.has(notifId)) {
+          list.push({
+            id: notifId,
+            type: 'moderation',
+            severity: 'warning',
+            title: `Flagged List: ${fl.title || 'Shopping List'}`,
+            message: `User ${fl.userName} has ${fl.flaggedItemsCount || 1} flagged item(s) awaiting review.`,
+            timestamp: fl.updatedAt || fl.createdAt,
+            read: false,
+            link: '/admin/lists',
+            targetId: fl.id,
+          });
+        }
+      }
+    }
+
+    // Sort by timestamp newest first
+    list.sort((a, b) => b.timestamp - a.timestamp);
+
+    return {
+      notifications: list,
+      unreadCount: list.length,
+    };
+  }
+
+  public dismissNotification(notificationId: string): boolean {
+    if (!this.db.dismissedNotificationIds) {
+      this.db.dismissedNotificationIds = [];
+    }
+    if (!this.db.dismissedNotificationIds.includes(notificationId)) {
+      this.db.dismissedNotificationIds.push(notificationId);
+    }
+
+    // If it's a security alert, mark that alert dismissed too
+    if (notificationId.startsWith('notif_sec_')) {
+      const alertId = notificationId.replace('notif_sec_', '');
+      this.dismissSecurityAlert(alertId);
+    }
+
+    this.save();
+    return true;
+  }
+
+  public dismissAllNotifications(): void {
+    const { notifications } = this.getAdminNotifications();
+    if (!this.db.dismissedNotificationIds) {
+      this.db.dismissedNotificationIds = [];
+    }
+    for (const n of notifications) {
+      if (!this.db.dismissedNotificationIds.includes(n.id)) {
+        this.db.dismissedNotificationIds.push(n.id);
+      }
+      if (n.type === 'security' && n.targetId) {
+        this.dismissSecurityAlert(n.targetId);
+      }
+    }
+    this.save();
+  }
+
   // --- Invite Operations ---
   public createInvite(params: {
     email: string;
@@ -1631,7 +1778,7 @@ class AdminStore {
     }
     if (now - session.lastActivityAt > SESSION_INACTIVITY_TIMEOUT_MS) {
       this.deleteSession(token);
-      return { error: 'Session timed out due to 30 minutes of inactivity.' };
+      return { error: 'Session timed out due to inactivity.' };
     }
     const admin = this.findAdminById(session.adminId);
     if (!admin || admin.deletedAt) {
@@ -1709,7 +1856,7 @@ class AdminStore {
     }
     if (now - session.lastActivityAt > SESSION_INACTIVITY_TIMEOUT_MS) {
       this.deleteSession(token);
-      return { error: 'Session timed out due to 30 minutes of inactivity.' };
+      return { error: 'Session timed out due to inactivity.' };
     }
     const admin = await this.findAdminByIdAsync(session.adminId);
     if (!admin || admin.deletedAt) {
@@ -2007,7 +2154,11 @@ class AdminStore {
   }
 
   public moderateListItem(listId: string, itemId: string, action: 'approved' | 'removed', reason?: string): boolean {
-    const list = (this.db.moderationLists || []).find((l) => l.id === listId);
+    let list = (this.db.moderationLists || []).find((l) => l.id === listId);
+    if (!list) {
+      this.load();
+      list = (this.db.moderationLists || []).find((l) => l.id === listId);
+    }
     if (!list) return false;
     const item = list.items.find((i) => i.id === itemId);
     if (!item) return false;
@@ -2025,6 +2176,35 @@ class AdminStore {
     list.updatedAt = Date.now();
     this.save();
     return true;
+  }
+
+  public updateModerationListStatus(listId: string, status: 'clean' | 'flagged' | 'under_review' | 'resolved'): boolean {
+    let list = (this.db.moderationLists || []).find((l) => l.id === listId);
+    if (!list) {
+      this.load();
+      list = (this.db.moderationLists || []).find((l) => l.id === listId);
+    }
+    if (!list) return false;
+    list.status = status;
+    list.updatedAt = Date.now();
+    this.save();
+    return true;
+  }
+
+  public deleteModerationList(listId: string): boolean {
+    if (!this.db.moderationLists) this.load();
+    let exists = (this.db.moderationLists || []).some((l) => l.id === listId);
+    if (!exists) {
+      this.load();
+    }
+    if (!this.db.moderationLists) return false;
+    const initialLen = this.db.moderationLists.length;
+    this.db.moderationLists = this.db.moderationLists.filter((l) => l.id !== listId);
+    if (this.db.moderationLists.length !== initialLen) {
+      this.save();
+      return true;
+    }
+    return false;
   }
 
   // =========================================================================
@@ -2594,6 +2774,39 @@ class AdminStore {
     req.reviewedAt = Date.now();
     this.save();
     return req;
+  }
+
+  public deleteSupportTicket(id: string): boolean {
+    if (!this.db.supportTickets) return false;
+    const initialLen = this.db.supportTickets.length;
+    this.db.supportTickets = this.db.supportTickets.filter((t) => t.id !== id);
+    if (this.db.supportTickets.length !== initialLen) {
+      this.save();
+      return true;
+    }
+    return false;
+  }
+
+  public deleteAccessRequest(id: string): boolean {
+    if (!this.db.accessRequests) return false;
+    const initialLen = this.db.accessRequests.length;
+    this.db.accessRequests = this.db.accessRequests.filter((r) => r.id !== id);
+    if (this.db.accessRequests.length !== initialLen) {
+      this.save();
+      return true;
+    }
+    return false;
+  }
+
+  public deletePushCampaign(id: string): boolean {
+    if (!this.db.pushCampaigns) return false;
+    const initialLen = this.db.pushCampaigns.length;
+    this.db.pushCampaigns = this.db.pushCampaigns.filter((c) => c.id !== id);
+    if (this.db.pushCampaigns.length !== initialLen) {
+      this.save();
+      return true;
+    }
+    return false;
   }
 }
 

@@ -51,6 +51,18 @@ export interface AdminSessionInfo {
   expiresAt: number;
 }
 
+export interface AdminNotification {
+  id: string;
+  type: 'security' | 'ticket' | 'request' | 'moderation' | 'system';
+  severity: 'urgent' | 'warning' | 'info';
+  title: string;
+  message: string;
+  timestamp: number;
+  read: boolean;
+  link: string;
+  targetId?: string;
+}
+
 export const ROLE_LABELS: Record<AdminRole, { title: string; badgeClass: string; description: string }> = {
   super_admin: {
     title: 'Super Admin',

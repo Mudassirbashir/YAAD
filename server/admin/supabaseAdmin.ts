@@ -36,19 +36,8 @@ export interface SharedTempTokenRecord {
 // In-memory fallback maps for local dev / when Supabase is not configured
 const memoryTempTokens = new Map<string, SharedTempTokenRecord>();
 
-// Missing tables cache to avoid redundant schema cache queries and spurious warning logs
-const missingTablesCache = new Set<string>([
-  'admin_audit_logs',
-  'items',
-  'admin_users',
-  'admin_sessions',
-  'admin_temp_tokens',
-  'admin_invites',
-  'admin_settings',
-  'support_tickets',
-  'cms_articles',
-  'push_campaigns',
-]);
+// Missing tables cache to avoid redundant schema cache queries and spurious warning logs when tables do not exist
+const missingTablesCache = new Set<string>();
 
 export function isTableMissingInSupabase(tableName: string): boolean {
   return missingTablesCache.has(tableName);

@@ -11,8 +11,14 @@ import {
   Tag,
   Calendar,
   User,
+  ShieldAlert,
+  ShieldCheck,
+  Trash2,
+  Ban,
+  Undo2,
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
+import { useAdminToast } from '../components/AdminToasts';
 import { useAdminRealtime } from '../hooks/useAdminRealtime';
 import { adminCache } from '../utils/adminCache';
 
@@ -22,8 +28,10 @@ export interface AuthoritativeList {
   userName: string;
   userEmail?: string;
   title: string;
+  status?: 'clean' | 'flagged' | 'under_review' | 'resolved';
   isCompleted: boolean;
   itemsCount: number;
+  flaggedItemsCount?: number;
   createdAt: number;
   updatedAt: number;
   items: Array<{
@@ -33,11 +41,15 @@ export interface AuthoritativeList {
     quantity?: string;
     unit?: string;
     completed: boolean;
+    isFlagged?: boolean;
+    flagReason?: string;
+    moderationStatus?: 'pending' | 'approved' | 'removed';
   }>;
 }
 
 export const AdminListModerationPage: React.FC = () => {
   const { token, logout } = useAdminAuth();
+  const toast = useAdminToast();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [completionFilter, setCompletionFilter] = useState<'all' | 'completed' | 'active'>('all');
@@ -127,6 +139,120 @@ export const AdminListModerationPage: React.FC = () => {
     },
     enabled: Boolean(token),
   });
+
+  const [actionInProgress, setActionInProgress] = useState<string | null>(null);
+
+  const handleUpdateListStatus = async (
+    listId: string,
+    newStatus: 'clean' | 'flagged' | 'under_review' | 'resolved'
+  ) => {
+    if (!token) return;
+    setActionInProgress(`status_${listId}`);
+    try {
+      const res = await fetch(`/api/admin/lists/${listId}/status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to update list status');
+      }
+      toast.success('Status Updated', `List is now marked as ${newStatus.replace('_', ' ')}.`);
+      setLists((prev) =>
+        prev.map((l) => (l.id === listId ? { ...l, status: newStatus } : l))
+      );
+      adminCache.invalidatePrefix('/api/admin/lists');
+    } catch (err: any) {
+      toast.error('Moderation Failed', err.message);
+    } finally {
+      setActionInProgress(null);
+    }
+  };
+
+  const handleModerateItem = async (
+    listId: string,
+    itemId: string,
+    action: 'approved' | 'removed'
+  ) => {
+    if (!token) return;
+    setActionInProgress(`item_${itemId}`);
+    try {
+      const res = await fetch(`/api/admin/lists/${listId}/items/${itemId}/moderate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          action,
+          reason: action === 'removed' ? 'Inappropriate entry removed by moderator' : undefined,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to moderate list item');
+      }
+      toast.success('Item Moderated', `Item has been ${action === 'removed' ? 'removed' : 'approved'}.`);
+      setLists((prev) =>
+        prev.map((l) => {
+          if (l.id !== listId) return l;
+          return {
+            ...l,
+            items: l.items.map((it) =>
+              it.id === itemId
+                ? {
+                    ...it,
+                    moderationStatus: action,
+                    isFlagged: action === 'removed' ? false : it.isFlagged,
+                  }
+                : it
+            ),
+          };
+        })
+      );
+      adminCache.invalidatePrefix('/api/admin/lists');
+    } catch (err: any) {
+      toast.error('Item Moderation Failed', err.message);
+    } finally {
+      setActionInProgress(null);
+    }
+  };
+
+  const handleDeleteList = async (listId: string, listTitle: string) => {
+    if (!token) return;
+    if (
+      !window.confirm(
+        `Are you sure you want to permanently delete the list "${listTitle || 'Untitled'}"? This action cannot be undone.`
+      )
+    ) {
+      return;
+    }
+    setActionInProgress(`delete_${listId}`);
+    try {
+      const res = await fetch(`/api/admin/lists/${listId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to delete shopping list');
+      }
+      toast.success('List Deleted', 'Shopping list removed from system.');
+      setLists((prev) => prev.filter((l) => l.id !== listId));
+      setTotal((t) => Math.max(0, t - 1));
+      adminCache.invalidatePrefix('/api/admin/lists');
+    } catch (err: any) {
+      toast.error('Delete Failed', err.message);
+    } finally {
+      setActionInProgress(null);
+    }
+  };
 
   const toggleExpand = (listId: string) => {
     setExpandedListId((prev) => (prev === listId ? null : listId));
@@ -254,7 +380,7 @@ export const AdminListModerationPage: React.FC = () => {
                     className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer"
                   >
                     <div className="space-y-1.5">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <span className="font-bold text-neutral-900 text-sm">{l.title || 'Untitled Shopping List'}</span>
                         <span
                           className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
@@ -275,6 +401,31 @@ export const AdminListModerationPage: React.FC = () => {
                             </>
                           )}
                         </span>
+
+                        {/* Moderation Status Pill */}
+                        {l.status === 'flagged' && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                            <ShieldAlert className="w-3 h-3 text-rose-600" />
+                            <span>Flagged</span>
+                          </span>
+                        )}
+                        {l.status === 'under_review' && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                            <Clock className="w-3 h-3 text-amber-600" />
+                            <span>Under Review</span>
+                          </span>
+                        )}
+                        {l.status === 'resolved' && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                            <ShieldCheck className="w-3 h-3 text-blue-600" />
+                            <span>Resolved</span>
+                          </span>
+                        )}
+                        {(l.status === 'clean' || !l.status) && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-neutral-100 text-neutral-600 border border-neutral-200">
+                            <span>Clean</span>
+                          </span>
+                        )}
                       </div>
 
                       <div className="flex flex-wrap items-center gap-3 text-xs text-neutral-500">
@@ -299,6 +450,32 @@ export const AdminListModerationPage: React.FC = () => {
                           {completedItemsCount} purchased
                         </div>
                       </div>
+
+                      {/* Quick Moderation Actions */}
+                      <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                        <select
+                          value={l.status || 'clean'}
+                          disabled={actionInProgress === `status_${l.id}`}
+                          onChange={(e) => handleUpdateListStatus(l.id, e.target.value as any)}
+                          className="text-[11px] font-bold py-1 px-2 rounded-lg border border-neutral-200 bg-white text-neutral-700 focus:outline-none focus:ring-1 focus:ring-[#003527] cursor-pointer"
+                        >
+                          <option value="clean">Clean</option>
+                          <option value="flagged">Flagged</option>
+                          <option value="under_review">Under Review</option>
+                          <option value="resolved">Resolved</option>
+                        </select>
+
+                        <button
+                          type="button"
+                          title="Delete List"
+                          disabled={actionInProgress === `delete_${l.id}`}
+                          onClick={() => handleDeleteList(l.id, l.title)}
+                          className="p-1.5 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
                       <div className="p-1 rounded-lg bg-neutral-100 text-neutral-600">
                         {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                       </div>
@@ -315,28 +492,72 @@ export const AdminListModerationPage: React.FC = () => {
                         <div className="text-xs text-neutral-400 italic">This list contains 0 items.</div>
                       ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                          {l.items.map((item) => (
-                            <div
-                              key={item.id}
-                              className={`p-2.5 rounded-xl border text-xs flex items-center justify-between ${
-                                item.completed
-                                  ? 'bg-emerald-50/50 border-emerald-200 text-emerald-900 line-through'
-                                  : 'bg-white border-neutral-200 text-neutral-800'
-                              }`}
-                            >
-                              <div className="truncate">
-                                <span className="font-medium">{item.name}</span>
-                                {item.quantity && (
-                                  <span className="text-[10px] text-neutral-500 ml-1.5 font-mono">
-                                    ({item.quantity} {item.unit || ''})
+                          {l.items.map((item) => {
+                            const isRemoved = item.moderationStatus === 'removed';
+                            const isFlagged = item.isFlagged;
+
+                            return (
+                              <div
+                                key={item.id}
+                                className={`p-2.5 rounded-xl border text-xs flex items-center justify-between gap-2 ${
+                                  isRemoved
+                                    ? 'bg-rose-50/50 border-rose-200 text-rose-900 line-through opacity-75'
+                                    : item.completed
+                                    ? 'bg-emerald-50/50 border-emerald-200 text-emerald-900 line-through'
+                                    : isFlagged
+                                    ? 'bg-amber-50/50 border-amber-300 text-amber-900'
+                                    : 'bg-white border-neutral-200 text-neutral-800'
+                                }`}
+                              >
+                                <div className="truncate flex-1">
+                                  <span className="font-medium">{item.name}</span>
+                                  {item.quantity && (
+                                    <span className="text-[10px] text-neutral-500 ml-1.5 font-mono">
+                                      ({item.quantity} {item.unit || ''})
+                                    </span>
+                                  )}
+                                  {isRemoved && (
+                                    <span className="ml-2 text-[9px] font-bold text-rose-700 bg-rose-100 px-1.5 py-0.5 rounded">
+                                      Removed
+                                    </span>
+                                  )}
+                                  {isFlagged && !isRemoved && (
+                                    <span className="ml-2 text-[9px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">
+                                      Flagged
+                                    </span>
+                                  )}
+                                </div>
+
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-600">
+                                    {item.category || 'General'}
                                   </span>
-                                )}
+
+                                  {isRemoved ? (
+                                    <button
+                                      type="button"
+                                      title="Approve / Restore item"
+                                      disabled={actionInProgress === `item_${item.id}`}
+                                      onClick={() => handleModerateItem(l.id, item.id, 'approved')}
+                                      className="p-1 rounded text-emerald-700 hover:bg-emerald-100 transition-colors cursor-pointer"
+                                    >
+                                      <Undo2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      title="Remove inappropriate item"
+                                      disabled={actionInProgress === `item_${item.id}`}
+                                      onClick={() => handleModerateItem(l.id, item.id, 'removed')}
+                                      className="p-1 rounded text-neutral-400 hover:text-rose-600 hover:bg-rose-100 transition-colors cursor-pointer"
+                                    >
+                                      <Ban className="w-3.5 h-3.5" />
+                                    </button>
+                                  )}
+                                </div>
                               </div>
-                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-600 shrink-0 ml-2">
-                                {item.category || 'General'}
-                              </span>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       )}
                     </div>
