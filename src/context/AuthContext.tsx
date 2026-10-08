@@ -55,7 +55,7 @@ export interface AuthContextType {
   signOut: () => Promise<void>;
   deleteAccount: () => Promise<{ error: Error | null }>;
   updatePassword: (newPassword: string) => Promise<{ error: Error | null }>;
-  changePassword: (currentPassword: string, newPassword: string) => Promise<{ error: Error | null }>;
+  changePassword: (newPassword: string) => Promise<{ error: Error | null }>;
   updateUserProfile: (updates: {
     full_name?: string;
     phone_number?: string | null;
@@ -1091,7 +1091,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const changePassword = async (
-    currentPassword: string,
     newPassword: string
   ): Promise<{ error: Error | null }> => {
     if (!supabase) {
@@ -1104,51 +1103,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return { error: new Error('You must be signed in to change your password.') };
     }
 
-    const trimmedCurrent = currentPassword.trim();
     const trimmedNew = newPassword.trim();
-
-    // Check if the user has an existing email/password account
-    const hasEmailProvider =
-      user.app_metadata?.provider === 'email' ||
-      (Array.isArray(user.app_metadata?.providers) &&
-        user.app_metadata.providers.includes('email'));
-
-    // If account has an existing password, re-authenticate to verify current password
-    if (hasEmailProvider) {
-      if (!trimmedCurrent) {
-        return { error: new Error('Please enter your current password.') };
-      }
-      try {
-        const { error: verifyError } = await supabase.auth.signInWithPassword({
-          email: user.email,
-          password: trimmedCurrent,
-        });
-        if (verifyError) {
-          const lower = (verifyError.message || '').toLowerCase();
-          if (
-            lower.includes('invalid login credentials') ||
-            lower.includes('invalid_grant') ||
-            lower.includes('invalid_credentials')
-          ) {
-            return { error: new Error('Incorrect current password. Please verify and try again.') };
-          }
-          return { error: new Error(formatAuthErrorMessage(verifyError)) };
-        }
-      } catch (verifyErr: unknown) {
-        if (isNetworkOrOfflineError(verifyErr)) {
-          return { error: new Error("You're offline. Please reconnect to change your password.") };
-        }
-        return { error: new Error('Unable to verify your current password. Please try again.') };
-      }
-    }
-
-    // Validate new password meets existing authentication policy (min 6 characters)
     if (!trimmedNew || trimmedNew.length < 6) {
       return { error: new Error('New password must be at least 6 characters.') };
-    }
-
-    if (trimmedCurrent && trimmedCurrent === trimmedNew) {
-      return { error: new Error('New password cannot be the same as your current password.') };
     }
 
     try {

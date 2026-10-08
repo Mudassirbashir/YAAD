@@ -901,56 +901,60 @@ adminRouter.get('/invites', requireAdminAuth, requireRoles('super_admin'), async
 });
 
 adminRouter.post('/invites', requireAdminAuth, requireRoles('super_admin'), (req: AdminAuthRequest, res: Response) => {
-  const { email, name, role } = req.body;
-  const clientIp = getClientIp(req);
+  try {
+    const { email, name, role } = req.body;
+    const clientIp = getClientIp(req);
 
-  if (!email || !name || !role) {
-    res.status(400).json({ error: 'Name, email, and role are required for inviting an admin.' });
-    return;
+    if (!email || !name || !role) {
+      res.status(400).json({ error: 'Name, email, and role are required for inviting an admin.' });
+      return;
+    }
+
+    const validRoles: AdminRole[] = ['super_admin', 'support_agent', 'content_editor', 'analyst'];
+    if (!validRoles.includes(role)) {
+      res.status(400).json({ error: `Invalid role. Allowed roles: ${validRoles.join(', ')}` });
+      return;
+    }
+
+    const existing = adminStore.findAdminByEmail(String(email).trim());
+    if (existing) {
+      res.status(400).json({ error: `An admin account with email ${email} already exists.` });
+      return;
+    }
+
+    const invite = adminStore.createInvite({
+      email: String(email).trim(),
+      name: String(name).trim(),
+      role,
+      invitedBy: {
+        id: req.admin!.id,
+        email: req.admin!.email,
+        name: req.admin!.name,
+      },
+    });
+
+    const inviteUrl = `/admin/accept-invite?token=${invite.token}`;
+
+    adminStore.writeAuditLog({
+      action: 'admin_invited',
+      adminId: req.admin!.id,
+      adminEmail: req.admin!.email,
+      targetType: 'admin_invite',
+      targetId: invite.id,
+      afterValue: { email: invite.email, role: invite.role, name: invite.name },
+      ip: clientIp,
+    });
+
+    console.log(`[YAAD Admin] Admin invite generated for ${invite.email}: ${inviteUrl}`);
+
+    res.status(201).json({
+      message: `Invite generated successfully for ${invite.email}.`,
+      invite,
+      inviteUrl,
+    });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message || 'Failed to generate invitation.' });
   }
-
-  const validRoles: AdminRole[] = ['super_admin', 'support_agent', 'content_editor', 'analyst'];
-  if (!validRoles.includes(role)) {
-    res.status(400).json({ error: `Invalid role. Allowed roles: ${validRoles.join(', ')}` });
-    return;
-  }
-
-  const existing = adminStore.findAdminByEmail(String(email).trim());
-  if (existing) {
-    res.status(400).json({ error: `An admin account with email ${email} already exists.` });
-    return;
-  }
-
-  const invite = adminStore.createInvite({
-    email: String(email).trim(),
-    name: String(name).trim(),
-    role,
-    invitedBy: {
-      id: req.admin!.id,
-      email: req.admin!.email,
-      name: req.admin!.name,
-    },
-  });
-
-  const inviteUrl = `/admin/accept-invite?token=${invite.token}`;
-
-  adminStore.writeAuditLog({
-    action: 'admin_invited',
-    adminId: req.admin!.id,
-    adminEmail: req.admin!.email,
-    targetType: 'admin_invite',
-    targetId: invite.id,
-    afterValue: { email: invite.email, role: invite.role, name: invite.name },
-    ip: clientIp,
-  });
-
-  console.log(`[YAAD Admin] Admin invite generated for ${invite.email}: ${inviteUrl}`);
-
-  res.status(201).json({
-    message: `Invite generated successfully for ${invite.email}.`,
-    invite,
-    inviteUrl,
-  });
 });
 
 adminRouter.delete(
@@ -1518,7 +1522,15 @@ adminRouter.get('/tickets', requireAdminAuth, async (req: AdminAuthRequest, res:
 
 adminRouter.post(['/tickets', '/support/tickets'], (req: Request, res: Response) => {
   try {
-    const { userId, userName, userEmail, userPhone, subject, description, category, priority } = req.body;
+    const userEmail = req.body.userEmail || req.body.email;
+    const description = req.body.description || req.body.message;
+    const userName = req.body.userName || req.body.name || 'Shopper';
+    const userPhone = req.body.userPhone || req.body.phone;
+    const subject = req.body.subject || 'Support Request';
+    const userId = req.body.userId;
+    const category = req.body.category || 'general';
+    const priority = req.body.priority || 'medium';
+
     if (!description || !userEmail) {
       return res.status(400).json({ error: 'Email and issue description are required.' });
     }
@@ -1539,7 +1551,7 @@ adminRouter.post(['/tickets', '/support/tickets'], (req: Request, res: Response)
 });
 
 adminRouter.patch('/tickets/:id', requireAdminAuth, requirePermission('tickets.manage'), (req: AdminAuthRequest, res: Response) => {
-  const { status, assignedAdmin } = req.body;
+  const { status, assignedAdmin, resolutionNotes, replyMessage } = req.body;
   try {
     const ticket = adminStore.updateTicketStatus(
       req.params.id,
@@ -1549,13 +1561,35 @@ adminRouter.patch('/tickets/:id', requireAdminAuth, requirePermission('tickets.m
     if (!ticket) {
       return res.status(404).json({ error: 'Ticket not found.' });
     }
+
+    const reply = (replyMessage || resolutionNotes || '').trim();
+    if (reply) {
+      adminStore.addTicketMessage(ticket.id, {
+        sender: 'staff',
+        senderName: req.admin?.name || 'YAAD Support',
+        text: reply,
+      });
+
+      // Broadcast in-app notification so shopper receives response directly in their app
+      adminStore.sendPushCampaign({
+        titleEn: `Support Update: Ticket ${ticket.ticketNumber || `#${ticket.id.slice(0, 8)}`}`,
+        titleUr: `سپورٹ اپڈیٹ: ٹکٹ ${ticket.ticketNumber || `#${ticket.id.slice(0, 8)}`}`,
+        bodyEn: `YAAD Support: ${reply}`,
+        bodyUr: `یاڈ سپورٹ: ${reply}`,
+        iconUrl: '/logo.png',
+        targetAudience: 'all',
+        status: 'sent',
+        createdBy: req.admin?.email || 'admin',
+      });
+    }
+
     adminStore.writeAuditLog({
       action: 'support_ticket_updated',
       adminId: req.admin?.id,
       adminEmail: req.admin?.email,
       targetType: 'support_ticket',
       targetId: ticket.id,
-      afterValue: { status: ticket.status, ticketNumber: ticket.ticketNumber },
+      afterValue: { status: ticket.status, ticketNumber: ticket.ticketNumber, hasReply: Boolean(reply) },
     });
     return res.status(200).json({ success: true, ticket });
   } catch (err: any) {
@@ -1564,7 +1598,7 @@ adminRouter.patch('/tickets/:id', requireAdminAuth, requirePermission('tickets.m
 });
 
 // Admin Access Requests (Apply for Admin Access)
-adminRouter.post('/access-requests', rateLimit(10, 60 * 1000), (req: Request, res: Response) => {
+adminRouter.post('/access-requests', rateLimit(10, 60 * 1000), async (req: Request, res: Response) => {
   try {
     const { name, email, phone, requestedRole = 'support_agent', department, reason } = req.body;
     if (!name || !email || !reason) {
@@ -1573,7 +1607,7 @@ adminRouter.post('/access-requests', rateLimit(10, 60 * 1000), (req: Request, re
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       return res.status(400).json({ error: 'Please enter a valid email address.' });
     }
-    const request = adminStore.createAccessRequest({
+    const request = await adminStore.createAccessRequestAsync({
       name,
       email,
       phone,
@@ -1587,16 +1621,17 @@ adminRouter.post('/access-requests', rateLimit(10, 60 * 1000), (req: Request, re
   }
 });
 
-adminRouter.get('/access-requests', requireAdminAuth, requireRoles('super_admin'), (req: AdminAuthRequest, res: Response) => {
-  return res.status(200).json({ requests: adminStore.getAccessRequests() });
+adminRouter.get('/access-requests', requireAdminAuth, requireRoles('super_admin'), async (req: AdminAuthRequest, res: Response) => {
+  const requests = await adminStore.getAccessRequestsAsync();
+  return res.status(200).json({ requests });
 });
 
-adminRouter.patch('/access-requests/:id', requireAdminAuth, requireRoles('super_admin'), (req: AdminAuthRequest, res: Response) => {
+adminRouter.patch('/access-requests/:id', requireAdminAuth, requireRoles('super_admin'), async (req: AdminAuthRequest, res: Response) => {
   const { status } = req.body;
   if (!['approved', 'rejected'].includes(status)) {
     return res.status(400).json({ error: 'Status must be approved or rejected.' });
   }
-  const updated = adminStore.updateAccessRequestStatus(req.params.id, status, req.admin?.name || req.admin?.email);
+  const updated = await adminStore.updateAccessRequestStatusAsync(req.params.id, status, req.admin?.name || req.admin?.email);
   if (!updated) {
     return res.status(404).json({ error: 'Access request not found.' });
   }
@@ -1609,6 +1644,33 @@ adminRouter.patch('/access-requests/:id', requireAdminAuth, requireRoles('super_
     afterValue: { email: updated.email, status: updated.status },
   });
   return res.status(200).json({ success: true, request: updated });
+});
+
+// Email Allowlist Settings (Staff Governance Module 12)
+adminRouter.get('/settings/allowlist', requireAdminAuth, requireRoles('super_admin'), async (req: AdminAuthRequest, res: Response) => {
+  const allowlist = await adminStore.getEmailAllowlistAsync();
+  res.status(200).json({ allowlist });
+});
+
+adminRouter.post('/settings/allowlist', requireAdminAuth, requireRoles('super_admin'), async (req: AdminAuthRequest, res: Response) => {
+  const { allowlist } = req.body || {};
+  if (!Array.isArray(allowlist)) {
+    return res.status(400).json({ error: 'Allowlist must be an array of domain/email strings.' });
+  }
+  const cleanList = allowlist
+    .map((s: any) => String(s).trim().toLowerCase())
+    .filter((s: string) => Boolean(s));
+  await adminStore.setEmailAllowlistAsync(cleanList);
+  adminStore.writeAuditLog({
+    action: 'allowlist_updated',
+    adminId: req.admin?.id,
+    adminEmail: req.admin?.email,
+    targetType: 'system_settings',
+    targetId: 'email_allowlist',
+    afterValue: { allowlist: cleanList },
+    metadata: { count: cleanList.length },
+  });
+  res.status(200).json({ success: true, allowlist: cleanList });
 });
 
 adminRouter.get('/public/cms/articles', (req: Request, res: Response) => {
@@ -1681,6 +1743,42 @@ adminRouter.delete('/cms/articles/:id', requireAdminAuth, requirePermission('con
 
 adminRouter.get('/push/campaigns', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
   res.status(200).json({ campaigns: adminStore.getPushCampaigns() });
+});
+
+adminRouter.get('/push/templates', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
+  res.status(200).json({ templates: adminStore.getPushTemplates() });
+});
+
+adminRouter.post('/push/templates', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
+  try {
+    const { name, title_en, title_ur, body_en, body_ur, category = 'general' } = req.body;
+    if (!name || !title_en || !body_en) {
+      return res.status(400).json({ error: 'Template name, English title, and body are required' });
+    }
+    const template = adminStore.createPushTemplate({
+      name,
+      titleEn: title_en,
+      titleUr: title_ur || '',
+      bodyEn: body_en,
+      bodyUr: body_ur || '',
+      category,
+    });
+    res.status(201).json({ success: true, template });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to create template', details: err.message });
+  }
+});
+
+adminRouter.delete('/push/templates/:id', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
+  try {
+    const deleted = adminStore.deletePushTemplate(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ error: 'Template not found' });
+    }
+    res.status(200).json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to delete template', details: err.message });
+  }
 });
 
 adminRouter.post('/push/campaigns', requireAdminAuth, requirePermission('notifications.send'), (req: AdminAuthRequest, res: Response) => {

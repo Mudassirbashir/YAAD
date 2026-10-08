@@ -10,7 +10,7 @@
       "status": "active",
       "failedAttempts": 0,
       "createdAt": 1791123839719,
-      "updatedAt": 1791393465591,
+      "updatedAt": 1791459007561,
       "deletedAt": null,
       "recoveryCodes": [
         {
@@ -46,7 +46,53 @@
       ]
     }
   ],
-  "invites": [],
+  "invites": [
+    {
+      "id": "inv_7fc352ce-6a77-4676-8964-34e865a7f83e",
+      "email": "test_writer_1791458560186@example.com",
+      "name": "Content Writer Test",
+      "role": "content_editor",
+      "token": "yaad_inv.eyJpaWQiOiJpbnZfN2ZjMzUyY2UtNmE3Ny00Njc2LTg5NjQtMzRlODY1YTdmODNlIiwiZW1haWwiOiJ0ZXN0X3dyaXRlcl8xNzkxNDU4NTYwMTg2QGV4YW1wbGUuY29tIiwibmFtZSI6IkNvbnRlbnQgV3JpdGVyIFRlc3QiLCJyb2xlIjoiY29udGVudF9lZGl0b3IiLCJieSI6eyJpZCI6ImFkbWluX2UzOTg4MzYxLWNmMTMtNDRmZi1iZWQxLWVlZDUzZmMxZTY2YSIsImVtYWlsIjoibXVkYXNzaXJiYXNoaXI1MzBAZ21haWwuY29tIiwibmFtZSI6Ik11ZGFzc2lyIEJhc2hpciJ9LCJjYXQiOjE3OTE0NTg1NjAxOTAsImV4cCI6MTc5MTU0NDk2MDE5MCwibm9uY2UiOiJlNzRlZTQzZDU2OTRkZTEwIn0.5cf44631f32f365320b9fac559c887f687730a67dbd1d7e3b3d9464ed7f31107",
+      "invitedBy": {
+        "id": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+        "email": "mudassirbashir530@gmail.com",
+        "name": "Mudassir Bashir"
+      },
+      "expiresAt": 1791544960190,
+      "status": "pending",
+      "createdAt": 1791458560190
+    },
+    {
+      "id": "inv_9590cba1-cc98-4f18-aa07-7026aa2dacb6",
+      "email": "test_writer_1791458643799@example.com",
+      "name": "Content Writer Test",
+      "role": "content_editor",
+      "token": "yaad_inv.eyJpaWQiOiJpbnZfOTU5MGNiYTEtY2M5OC00ZjE4LWFhMDctNzAyNmFhMmRhY2I2IiwiZW1haWwiOiJ0ZXN0X3dyaXRlcl8xNzkxNDU4NjQzNzk5QGV4YW1wbGUuY29tIiwibmFtZSI6IkNvbnRlbnQgV3JpdGVyIFRlc3QiLCJyb2xlIjoiY29udGVudF9lZGl0b3IiLCJieSI6eyJpZCI6ImFkbWluX2UzOTg4MzYxLWNmMTMtNDRmZi1iZWQxLWVlZDUzZmMxZTY2YSIsImVtYWlsIjoibXVkYXNzaXJiYXNoaXI1MzBAZ21haWwuY29tIiwibmFtZSI6Ik11ZGFzc2lyIEJhc2hpciJ9LCJjYXQiOjE3OTE0NTg2NDM4MDYsImV4cCI6MTc5MTU0NTA0MzgwNiwibm9uY2UiOiI3NjVlNGY0MDAxMDViMWIzIn0.0ca3b368fb097a1cd90dc49b7cf25d6e9ed189389afc03c9f0dfb6f1aa2d3a1b",
+      "invitedBy": {
+        "id": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+        "email": "mudassirbashir530@gmail.com",
+        "name": "Mudassir Bashir"
+      },
+      "expiresAt": 1791545043806,
+      "status": "pending",
+      "createdAt": 1791458643806
+    },
+    {
+      "id": "inv_4b5b6734-0125-4a63-a802-b586adb97a67",
+      "email": "test_writer_1791458958728@example.com",
+      "name": "Content Writer Test",
+      "role": "content_editor",
+      "token": "yaad_inv.eyJpaWQiOiJpbnZfNGI1YjY3MzQtMDEyNS00YTYzLWE4MDItYjU4NmFkYjk3YTY3IiwiZW1haWwiOiJ0ZXN0X3dyaXRlcl8xNzkxNDU4OTU4NzI4QGV4YW1wbGUuY29tIiwibmFtZSI6IkNvbnRlbnQgV3JpdGVyIFRlc3QiLCJyb2xlIjoiY29udGVudF9lZGl0b3IiLCJieSI6eyJpZCI6ImFkbWluX2UzOTg4MzYxLWNmMTMtNDRmZi1iZWQxLWVlZDUzZmMxZTY2YSIsImVtYWlsIjoibXVkYXNzaXJiYXNoaXI1MzBAZ21haWwuY29tIiwibmFtZSI6Ik11ZGFzc2lyIEJhc2hpciJ9LCJjYXQiOjE3OTE0NTg5NTg3MzYsImV4cCI6MTc5MTU0NTM1ODczNiwibm9uY2UiOiIwMDIxYzI2NzM5ZDA5MDQ1In0.a60fefb6d7b2630018fcc683bdaafac912ec95c4cf2508fe683641c8ad821b44",
+      "invitedBy": {
+        "id": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+        "email": "mudassirbashir530@gmail.com",
+        "name": "Mudassir Bashir"
+      },
+      "expiresAt": 1791545358736,
+      "status": "pending",
+      "createdAt": 1791458958736
+    }
+  ],
   "resets": [],
   "sessions": [
     {
@@ -210,16 +256,6 @@
       "userAgent": "node"
     },
     {
-      "sessionId": "sess_f9ef31a0-1e64-4640-becf-98895281ba83",
-      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
-      "token": "e16569f4600ff0674fc0f05022b727101851412fdea3df8763672c4c8d902c46",
-      "createdAt": 1791204349427,
-      "lastActivityAt": 1791204360862,
-      "expiresAt": 1791247549427,
-      "ip": "127.0.0.1",
-      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36"
-    },
-    {
       "sessionId": "sess_f1f25b0c-314e-4d5b-b396-f9e8d8da1a3c",
       "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
       "token": "b38779ad97f72549d87a5a4078ab10e6516dd76869ad5c7924328b58371456c2",
@@ -306,9 +342,564 @@
       "expiresAt": 1791998265609,
       "ip": "127.0.0.1",
       "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36"
+    },
+    {
+      "sessionId": "sess_cfc69f4c-c38f-4856-b589-5f7db4752a46",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "yaad_sess.eyJzaWQiOiJzZXNzX2NmYzY5ZjRjLWMzOGYtNDg1Ni1iNTg5LTVmN2RiNDc1MmE0NiIsImFpZCI6ImFkbWluX2UzOTg4MzYxLWNmMTMtNDRmZi1iZWQxLWVlZDUzZmMxZTY2YSIsImNhdCI6MTc5MTQ1MDk3OTEwOCwiZXhwIjoxNzkyMDU1Nzc5MTA4LCJub25jZSI6ImMzMTNkZTYwNTMwNGI4MTAifQ.c0fb24317b55156cca0cf3b5030e06fe44544123b9cea0e80fd332d6c8c9a762",
+      "createdAt": 1791450979108,
+      "lastActivityAt": 1791450979108,
+      "expiresAt": 1792055779108,
+      "ip": "127.0.0.1",
+      "userAgent": "HeadlessBrowser"
+    },
+    {
+      "sessionId": "sess_5422b114-f75b-4b3f-8c99-ed7cd3281e22",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "yaad_sess.eyJzaWQiOiJzZXNzXzU0MjJiMTE0LWY3NWItNGIzZi04Yzk5LWVkN2NkMzI4MWUyMiIsImFpZCI6ImFkbWluX2UzOTg4MzYxLWNmMTMtNDRmZi1iZWQxLWVlZDUzZmMxZTY2YSIsImNhdCI6MTc5MTQ1MTE3NTAyMywiZXhwIjoxNzkyMDU1OTc1MDIzLCJub25jZSI6ImNjNWM2ZTAxNjA2MDczNGQifQ.0f9e8ae635611c27b6a8752f66adb3c9a97a6fa84fba8fe40a7f5fa20e3a09ce",
+      "createdAt": 1791451175023,
+      "lastActivityAt": 1791451176616,
+      "expiresAt": 1792055975023
+    },
+    {
+      "sessionId": "sess_9426700f-5f43-465e-8e1e-3f3658b339f4",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "yaad_sess.eyJzaWQiOiJzZXNzXzk0MjY3MDBmLTVmNDMtNDY1ZS04ZTFlLTNmMzY1OGIzMzlmNCIsImFpZCI6ImFkbWluX2UzOTg4MzYxLWNmMTMtNDRmZi1iZWQxLWVlZDUzZmMxZTY2YSIsImNhdCI6MTc5MTQ1MTMxNjU2MSwiZXhwIjoxNzkyMDU2MTE2NTYxLCJub25jZSI6Ijc0MjQ2ODFjNjZjMTEyNWUifQ.5b0675bcb74aa6320ae0612fff3bd496b9cc095cfa5b74b0db4e1dbee8663a61",
+      "createdAt": 1791451316561,
+      "lastActivityAt": 1791451316561,
+      "expiresAt": 1792056116561,
+      "ip": "127.0.0.1",
+      "userAgent": "IntegrationTester"
+    },
+    {
+      "sessionId": "sess_273c8832-e326-43be-a0c8-105c750b2347",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "yaad_sess.eyJzaWQiOiJzZXNzXzI3M2M4ODMyLWUzMjYtNDNiZS1hMGM4LTEwNWM3NTBiMjM0NyIsImFpZCI6ImFkbWluX2UzOTg4MzYxLWNmMTMtNDRmZi1iZWQxLWVlZDUzZmMxZTY2YSIsImNhdCI6MTc5MTQ1MTMxNzQ1MywiZXhwIjoxNzkyMDU2MTE3NDUzLCJub25jZSI6IjFiM2FiYTRkY2NiMWI0ODgifQ.53b4315f803205d5d1c34801d6c3e713e8912419f207515c1b97160f3fed1e46",
+      "createdAt": 1791451317453,
+      "lastActivityAt": 1791451317453,
+      "expiresAt": 1792056117453,
+      "ip": "127.0.0.1",
+      "userAgent": "IntegrationTester"
+    },
+    {
+      "sessionId": "sess_a5b24f77-f2b4-4cd4-8d02-b833f2b9f964",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "yaad_sess.eyJzaWQiOiJzZXNzX2E1YjI0Zjc3LWYyYjQtNGNkNC04ZDAyLWI4MzNmMmI5Zjk2NCIsImFpZCI6ImFkbWluX2UzOTg4MzYxLWNmMTMtNDRmZi1iZWQxLWVlZDUzZmMxZTY2YSIsImNhdCI6MTc5MTQ1MTUyNDk3MywiZXhwIjoxNzkyMDU2MzI0OTczLCJub25jZSI6ImNlYWU1NDVmODgxMDI5N2EifQ.27605d56f88b346d62bd6026e9e7a4fdf72aceea037b73fa2fc135d33ab10b97",
+      "createdAt": 1791451524973,
+      "lastActivityAt": 1791451525752,
+      "expiresAt": 1792056324973,
+      "ip": "127.0.0.1",
+      "userAgent": "IntegrationTester"
+    },
+    {
+      "sessionId": "sess_c19e59d5-65bf-4246-b031-dbaa75fba4bc",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "yaad_sess.eyJzaWQiOiJzZXNzX2MxOWU1OWQ1LTY1YmYtNDI0Ni1iMDMxLWRiYWE3NWZiYTRiYyIsImFpZCI6ImFkbWluX2UzOTg4MzYxLWNmMTMtNDRmZi1iZWQxLWVlZDUzZmMxZTY2YSIsImNhdCI6MTc5MTQ1MTc5NTM4NywiZXhwIjoxNzkyMDU2NTk1Mzg3LCJub25jZSI6IjYxNzAwN2IyZTIwNzhhYTgifQ.256bed5bda8222c9aaacac3bc4ab9145d12028ec079e9331aa1c3f647b36e1d5",
+      "createdAt": 1791451795387,
+      "lastActivityAt": 1791451795387,
+      "expiresAt": 1792056595387,
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36"
+    },
+    {
+      "sessionId": "sess_864028d3-159d-45d7-b7cb-87e0d741dec3",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "yaad_sess.eyJzaWQiOiJzZXNzXzg2NDAyOGQzLTE1OWQtNDVkNy1iN2NiLTg3ZTBkNzQxZGVjMyIsImFpZCI6ImFkbWluX2UzOTg4MzYxLWNmMTMtNDRmZi1iZWQxLWVlZDUzZmMxZTY2YSIsImNhdCI6MTc5MTQ1ODU2MDE3NCwiZXhwIjoxNzkyMDYzMzYwMTc0LCJub25jZSI6IjRiMTEyNGVhMDAzZjE0ZDIifQ.da3f01910b002cd9b8bf217572eefd2bdfcf17d84461a598b3253022749a155d",
+      "createdAt": 1791458560174,
+      "lastActivityAt": 1791458560190,
+      "expiresAt": 1792063360174,
+      "ip": "127.0.0.1",
+      "userAgent": "node"
+    },
+    {
+      "sessionId": "sess_0f56e7f3-0cc8-4953-b576-4300ec1373f7",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "yaad_sess.eyJzaWQiOiJzZXNzXzBmNTZlN2YzLTBjYzgtNDk1My1iNTc2LTQzMDBlYzEzNzNmNyIsImFpZCI6ImFkbWluX2UzOTg4MzYxLWNmMTMtNDRmZi1iZWQxLWVlZDUzZmMxZTY2YSIsImNhdCI6MTc5MTQ1ODY0Mzc5MCwiZXhwIjoxNzkyMDYzNDQzNzkwLCJub25jZSI6IjkyZTY2NDI3ZDQ3ZmE0ODYifQ.d30b3fb8b637e17a875ddf62e810d6b5f9a5efdf64b29123a7ba4a2929e4e1f9",
+      "createdAt": 1791458643790,
+      "lastActivityAt": 1791458643838,
+      "expiresAt": 1792063443790,
+      "ip": "127.0.0.1",
+      "userAgent": "node"
+    },
+    {
+      "sessionId": "sess_542f2cb1-866d-4980-8fe0-c68497ed52c0",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "yaad_sess.eyJzaWQiOiJzZXNzXzU0MmYyY2IxLTg2NmQtNDk4MC04ZmUwLWM2ODQ5N2VkNTJjMCIsImFpZCI6ImFkbWluX2UzOTg4MzYxLWNmMTMtNDRmZi1iZWQxLWVlZDUzZmMxZTY2YSIsImNhdCI6MTc5MTQ1ODc0NzI2OCwiZXhwIjoxNzkyMDYzNTQ3MjY4LCJub25jZSI6IjQ3MDhmYzViYzYxNGU4YWIifQ.572a39401fffec48da44fc1b438641f29295a2430d1fe914980d78603173a636",
+      "createdAt": 1791458747268,
+      "lastActivityAt": 1791458747281,
+      "expiresAt": 1792063547268,
+      "ip": "127.0.0.1",
+      "userAgent": "node"
+    },
+    {
+      "sessionId": "sess_fc0fb08c-3a02-40d6-aef5-81d9981185cc",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "yaad_sess.eyJzaWQiOiJzZXNzX2ZjMGZiMDhjLTNhMDItNDBkNi1hZWY1LTgxZDk5ODExODVjYyIsImFpZCI6ImFkbWluX2UzOTg4MzYxLWNmMTMtNDRmZi1iZWQxLWVlZDUzZmMxZTY2YSIsImNhdCI6MTc5MTQ1ODg2NTUxNywiZXhwIjoxNzkyMDYzNjY1NTE3LCJub25jZSI6IjhhMDZjM2I1NGU0Zjc0YzIifQ.8096da67cf95bd9e830f9b7e93278e78b40fab2f97268363ce412359130ecffc",
+      "createdAt": 1791458865517,
+      "lastActivityAt": 1791458865530,
+      "expiresAt": 1792063665517,
+      "ip": "127.0.0.1",
+      "userAgent": "node"
+    },
+    {
+      "sessionId": "sess_7a64e64c-b9ce-4ab6-9ed5-e4367fe7fa1e",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "yaad_sess.eyJzaWQiOiJzZXNzXzdhNjRlNjRjLWI5Y2UtNGFiNi05ZWQ1LWU0MzY3ZmU3ZmExZSIsImFpZCI6ImFkbWluX2UzOTg4MzYxLWNmMTMtNDRmZi1iZWQxLWVlZDUzZmMxZTY2YSIsImNhdCI6MTc5MTQ1ODg5NzY0MCwiZXhwIjoxNzkyMDYzNjk3NjQwLCJub25jZSI6ImRmYTJiNTQ4MjZiZGU0YjgifQ.02f5ee2bc89da1fbaf8bfcec26451875738308f6f2983108b65d892ac62b4bc0",
+      "createdAt": 1791458897640,
+      "lastActivityAt": 1791458897640,
+      "expiresAt": 1792063697640,
+      "ip": "127.0.0.1",
+      "userAgent": "node"
+    },
+    {
+      "sessionId": "sess_36c099b7-e794-4a94-8d42-1e01cb498c9b",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "yaad_sess.eyJzaWQiOiJzZXNzXzM2YzA5OWI3LWU3OTQtNGE5NC04ZDQyLTFlMDFjYjQ5OGM5YiIsImFpZCI6ImFkbWluX2UzOTg4MzYxLWNmMTMtNDRmZi1iZWQxLWVlZDUzZmMxZTY2YSIsImNhdCI6MTc5MTQ1ODk1ODcwOSwiZXhwIjoxNzkyMDYzNzU4NzA5LCJub25jZSI6ImU5MjZiOWIyM2M1N2YxMTUifQ.5c545fe48c90e1b230a370beddf04f3937fc0d957f91295e22db18b999d169d8",
+      "createdAt": 1791458958709,
+      "lastActivityAt": 1791458958807,
+      "expiresAt": 1792063758709,
+      "ip": "127.0.0.1",
+      "userAgent": "node"
+    },
+    {
+      "sessionId": "sess_cf0373fd-0e4d-4ad9-b541-7edf74ff6ee1",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "token": "yaad_sess.eyJzaWQiOiJzZXNzX2NmMDM3M2ZkLTBlNGQtNGFkOS1iNTQxLTdlZGY3NGZmNmVlMSIsImFpZCI6ImFkbWluX2UzOTg4MzYxLWNmMTMtNDRmZi1iZWQxLWVlZDUzZmMxZTY2YSIsImNhdCI6MTc5MTQ1ODk3NjQ1NiwiZXhwIjoxNzkyMDYzNzc2NDU2LCJub25jZSI6ImE4MzA4M2JkZmVkYjNkNjUifQ.669f89b09086449627c4321a0e688e267ee190b78cfd088e03f0abd4699dd76e",
+      "createdAt": 1791458976456,
+      "lastActivityAt": 1791458976456,
+      "expiresAt": 1792063776456,
+      "ip": "127.0.0.1",
+      "userAgent": "node"
     }
   ],
   "auditLogs": [
+    {
+      "id": "audit_6c2918a6-08d4-4528-8c8f-7e9a78906f11",
+      "timestamp": 1791459007559,
+      "action": "admin_account_locked",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "admin_security",
+      "targetId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "ip": "192.168.1.100",
+      "metadata": {
+        "consecutiveFailures": 5,
+        "lockoutDurationMs": 900000,
+        "lockoutExpiresAt": 1791459907557,
+        "superAdminsNotified": true
+      }
+    },
+    {
+      "id": "audit_ac7bb953-8812-462b-a420-6f88e9365f47",
+      "timestamp": 1791458976458,
+      "action": "admin_login_success",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "session",
+      "targetId": "sess_cf0373fd-0e4d-4ad9-b541-7edf74ff6ee1",
+      "ip": "127.0.0.1",
+      "userAgent": "node",
+      "metadata": {
+        "role": "super_admin",
+        "authMethod": "totp_passwordless"
+      }
+    },
+    {
+      "id": "audit_51dc7846-24b8-464f-9e8e-5c6249dbd62f",
+      "timestamp": 1791458958800,
+      "action": "push_broadcast_sent",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "push_campaign",
+      "targetId": "push_b46dd950-cd71-441f-b289-afa60b862950",
+      "afterValue": {
+        "title": "Sabzi Mandi Fresh Rate Alert 🛒",
+        "audience": "all_active"
+      }
+    },
+    {
+      "id": "audit_2609567f-ed41-46b4-bd07-be555de874b3",
+      "timestamp": 1791458958788,
+      "action": "support_ticket_updated",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "support_ticket",
+      "targetId": "tkt_c0c7f94d-da1a-4c37-8819-47cc35a44e71",
+      "afterValue": {
+        "status": "resolved",
+        "ticketNumber": "TKT-00001",
+        "hasReply": true
+      }
+    },
+    {
+      "id": "audit_4210bef3-bf05-47cc-9d74-23d452018c11",
+      "timestamp": 1791458958772,
+      "action": "email_allowlist_updated",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "system_security",
+      "beforeValue": [
+        "applicant_1791458643815@example.com",
+        "test_writer_1791458958728@example.com"
+      ],
+      "afterValue": [
+        "applicant_1791458643815@example.com",
+        "test_writer_1791458958728@example.com",
+        "applicant_1791458958748@example.com"
+      ],
+      "ip": "127.0.0.1",
+      "metadata": {
+        "count": 3
+      }
+    },
+    {
+      "id": "audit_ecec35a8-359c-4c5a-b0c0-08e3c1ebd3f6",
+      "timestamp": 1791458958762,
+      "action": "access_request_approved",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "access_request",
+      "targetId": "req_9ee9ae53-2899-49c9-9874-1e61e2d25292",
+      "afterValue": {
+        "email": "applicant_1791458958748@example.com",
+        "status": "approved"
+      }
+    },
+    {
+      "id": "audit_ed000dc7-17da-4205-a9dc-aa029662df06",
+      "timestamp": 1791458958738,
+      "action": "admin_invited",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "admin_invite",
+      "targetId": "inv_4b5b6734-0125-4a63-a802-b586adb97a67",
+      "afterValue": {
+        "email": "test_writer_1791458958728@example.com",
+        "role": "content_editor",
+        "name": "Content Writer Test"
+      },
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit_7855acf6-84c2-4444-8d13-f59ee3a3e830",
+      "timestamp": 1791458958712,
+      "action": "admin_login_success",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "session",
+      "targetId": "sess_36c099b7-e794-4a94-8d42-1e01cb498c9b",
+      "ip": "127.0.0.1",
+      "userAgent": "node",
+      "metadata": {
+        "role": "super_admin",
+        "authMethod": "totp_passwordless"
+      }
+    },
+    {
+      "id": "audit_85ac5f02-67ec-4e47-ac3c-5b1086397969",
+      "timestamp": 1791458897641,
+      "action": "admin_login_success",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "session",
+      "targetId": "sess_7a64e64c-b9ce-4ab6-9ed5-e4367fe7fa1e",
+      "ip": "127.0.0.1",
+      "userAgent": "node",
+      "metadata": {
+        "role": "super_admin",
+        "authMethod": "totp_passwordless"
+      }
+    },
+    {
+      "id": "audit_a21922c2-69a6-4098-80ec-060d17e4539a",
+      "timestamp": 1791458865519,
+      "action": "admin_login_success",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "session",
+      "targetId": "sess_fc0fb08c-3a02-40d6-aef5-81d9981185cc",
+      "ip": "127.0.0.1",
+      "userAgent": "node",
+      "metadata": {
+        "role": "super_admin",
+        "authMethod": "totp_passwordless"
+      }
+    },
+    {
+      "id": "audit_65056e10-39f0-4886-b4ce-f7818fa899e9",
+      "timestamp": 1791458747269,
+      "action": "admin_login_success",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "session",
+      "targetId": "sess_542f2cb1-866d-4980-8fe0-c68497ed52c0",
+      "ip": "127.0.0.1",
+      "userAgent": "node",
+      "metadata": {
+        "role": "super_admin",
+        "authMethod": "totp_passwordless"
+      }
+    },
+    {
+      "id": "audit_283c5408-efe3-4545-8a77-0da38320018f",
+      "timestamp": 1791458643839,
+      "action": "email_allowlist_updated",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "system_security",
+      "beforeValue": [],
+      "afterValue": [
+        "applicant_1791458643815@example.com"
+      ],
+      "ip": "127.0.0.1",
+      "metadata": {
+        "count": 1
+      }
+    },
+    {
+      "id": "audit_5328d560-9f75-4887-9cbb-dc63f79f3c45",
+      "timestamp": 1791458643830,
+      "action": "access_request_approved",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "access_request",
+      "targetId": "req_b87f1dee-a856-49ed-ab28-d4de4680b30f",
+      "afterValue": {
+        "email": "applicant_1791458643815@example.com",
+        "status": "approved"
+      }
+    },
+    {
+      "id": "audit_7fdf8585-8268-41e4-87a0-40e045ea25f2",
+      "timestamp": 1791458643808,
+      "action": "admin_invited",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "admin_invite",
+      "targetId": "inv_9590cba1-cc98-4f18-aa07-7026aa2dacb6",
+      "afterValue": {
+        "email": "test_writer_1791458643799@example.com",
+        "role": "content_editor",
+        "name": "Content Writer Test"
+      },
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit_776148bb-d5c0-4100-97a4-1e9da8865d00",
+      "timestamp": 1791458643791,
+      "action": "admin_login_success",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "session",
+      "targetId": "sess_0f56e7f3-0cc8-4953-b576-4300ec1373f7",
+      "ip": "127.0.0.1",
+      "userAgent": "node",
+      "metadata": {
+        "role": "super_admin",
+        "authMethod": "totp_passwordless"
+      }
+    },
+    {
+      "id": "audit_97247001-c0e0-42c9-aa45-e2f8048b6d91",
+      "timestamp": 1791458560192,
+      "action": "admin_invited",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "admin_invite",
+      "targetId": "inv_7fc352ce-6a77-4676-8964-34e865a7f83e",
+      "afterValue": {
+        "email": "test_writer_1791458560186@example.com",
+        "role": "content_editor",
+        "name": "Content Writer Test"
+      },
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit_7a6efe5f-3558-47e3-ab7e-1f9d9602ffd2",
+      "timestamp": 1791458560177,
+      "action": "admin_login_success",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "session",
+      "targetId": "sess_864028d3-159d-45d7-b7cb-87e0d741dec3",
+      "ip": "127.0.0.1",
+      "userAgent": "node",
+      "metadata": {
+        "role": "super_admin",
+        "authMethod": "totp_passwordless"
+      }
+    },
+    {
+      "id": "audit_6bab7be7-7297-41aa-8129-ff216cb68115",
+      "timestamp": 1791458524734,
+      "action": "admin_login_failed",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "auth",
+      "afterValue": {
+        "reason": "invalid_password",
+        "remainingAttempts": 4,
+        "isLocked": false
+      },
+      "ip": "127.0.0.1"
+    },
+    {
+      "id": "audit_b0550e7e-05d6-4d99-9979-b222c501f70c",
+      "timestamp": 1791451795395,
+      "action": "admin_login_success",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "session",
+      "targetId": "sess_c19e59d5-65bf-4246-b031-dbaa75fba4bc",
+      "ip": "127.0.0.1",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36",
+      "metadata": {
+        "role": "super_admin",
+        "authMethod": "totp_passwordless"
+      }
+    },
+    {
+      "id": "audit_70d80dd1-e197-426f-8062-0d3151f7c81a",
+      "timestamp": 1791451525734,
+      "action": "list_moderation_deleted",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "shopping_list",
+      "targetId": "live_test_list_1791451525675"
+    },
+    {
+      "id": "audit_20a07184-d9b0-4687-a585-b033643db201",
+      "timestamp": 1791451525714,
+      "action": "list_item_removed",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "shopping_item",
+      "targetId": "item_live_1",
+      "afterValue": {
+        "listId": "live_test_list_1791451525675",
+        "action": "removed",
+        "reason": "Abusive term"
+      }
+    },
+    {
+      "id": "audit_28b1e3b7-a60d-4301-a092-81744659146a",
+      "timestamp": 1791451525694,
+      "action": "list_moderation_status_changed",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "shopping_list",
+      "targetId": "live_test_list_1791451525675",
+      "afterValue": {
+        "status": "flagged"
+      }
+    },
+    {
+      "id": "audit_c0503826-9f08-4fcd-8b8c-860d64d32656",
+      "timestamp": 1791451452886,
+      "action": "admin_account_locked",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "admin_security",
+      "targetId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "ip": "192.168.1.100",
+      "metadata": {
+        "consecutiveFailures": 5,
+        "lockoutDurationMs": 900000,
+        "lockoutExpiresAt": 1791452352881,
+        "superAdminsNotified": true
+      }
+    },
+    {
+      "id": "audit_c87c7fc5-c3d2-4165-8c7f-35f0c614bf4c",
+      "timestamp": 1791451304035,
+      "action": "admin_account_locked",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "admin_security",
+      "targetId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "ip": "192.168.1.100",
+      "metadata": {
+        "consecutiveFailures": 5,
+        "lockoutDurationMs": 900000,
+        "lockoutExpiresAt": 1791452204031,
+        "superAdminsNotified": true
+      }
+    },
+    {
+      "id": "audit_cf0ef5ad-194d-4e71-a7ad-44181f021fd6",
+      "timestamp": 1791450653871,
+      "action": "source_of_truth_verification",
+      "targetType": "system_security",
+      "metadata": {
+        "testSuite": "admin-supabase-truth-qa"
+      }
+    },
+    {
+      "id": "audit_c2d46fc7-ddfe-40fa-99d5-13eb4f8fa263",
+      "timestamp": 1791450645728,
+      "action": "admin_account_locked",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "admin_security",
+      "targetId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "ip": "192.168.1.100",
+      "metadata": {
+        "consecutiveFailures": 5,
+        "lockoutDurationMs": 900000,
+        "lockoutExpiresAt": 1791451545722,
+        "superAdminsNotified": true
+      }
+    },
+    {
+      "id": "audit_7ff42e75-39ac-4a9c-86a6-1d1cc597d759",
+      "timestamp": 1791450445630,
+      "action": "admin_account_locked",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "admin_security",
+      "targetId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "ip": "192.168.1.100",
+      "metadata": {
+        "consecutiveFailures": 5,
+        "lockoutDurationMs": 900000,
+        "lockoutExpiresAt": 1791451345626,
+        "superAdminsNotified": true
+      }
+    },
+    {
+      "id": "audit_f0674720-5311-42c1-9ac2-f4377f8ffff8",
+      "timestamp": 1791450359168,
+      "action": "admin_account_locked",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "admin_security",
+      "targetId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "ip": "192.168.1.100",
+      "metadata": {
+        "consecutiveFailures": 5,
+        "lockoutDurationMs": 900000,
+        "lockoutExpiresAt": 1791451259165,
+        "superAdminsNotified": true
+      }
+    },
+    {
+      "id": "audit_c755f59c-1237-4d0b-9b36-d205785ef59f",
+      "timestamp": 1791449644087,
+      "action": "source_of_truth_verification",
+      "targetType": "system_security",
+      "metadata": {
+        "testSuite": "admin-supabase-truth-qa"
+      }
+    },
+    {
+      "id": "audit_35bf455c-9d85-442c-ad48-e921b7be8ed9",
+      "timestamp": 1791449287206,
+      "action": "source_of_truth_verification",
+      "targetType": "system_security",
+      "metadata": {
+        "testSuite": "admin-supabase-truth-qa"
+      }
+    },
     {
       "id": "audit_2524fd0c-9de8-4619-b2dc-535f92b77c3b",
       "timestamp": 1791394999067,
@@ -1021,9 +1612,101 @@
       }
     }
   ],
-  "securityAlerts": [],
+  "securityAlerts": [
+    {
+      "id": "alert_99c8d4fe-dfc0-4e7b-976c-23223b0428b3",
+      "timestamp": 1791459007565,
+      "type": "unauthorized_attempt",
+      "title": "Staff Access Request",
+      "message": "Staff Access Request: Bilal Ahmed (bilal@yaad.app) requested portal access for role support agent.",
+      "targetEmail": "bilal@yaad.app",
+      "dismissed": true
+    },
+    {
+      "id": "alert_816e8a26-3aa7-4d9e-88d5-3498d9468341",
+      "timestamp": 1791459007559,
+      "type": "account_lockout",
+      "title": "Security Alert: Account Temporarily Locked",
+      "message": "Admin account \"mudassirbashir530@gmail.com\" has been locked for 15 minutes due to 5 consecutive failed password attempts.",
+      "targetEmail": "mudassirbashir530@gmail.com",
+      "ip": "192.168.1.100",
+      "dismissed": true
+    },
+    {
+      "id": "alert_d1ad5e4b-f046-4a92-84a6-2ecac8cb2248",
+      "timestamp": 1791458958751,
+      "type": "unauthorized_attempt",
+      "title": "Staff Access Request",
+      "message": "Staff Access Request: Usman Marketing (applicant_1791458958748@example.com) requested portal access for role content editor.",
+      "targetEmail": "applicant_1791458958748@example.com",
+      "dismissed": true
+    },
+    {
+      "id": "alert_268e7bc3-594b-43cf-9c73-7159c848706d",
+      "timestamp": 1791458643818,
+      "type": "unauthorized_attempt",
+      "title": "Staff Access Request",
+      "message": "Staff Access Request: Usman Marketing (applicant_1791458643815@example.com) requested portal access for role content editor.",
+      "targetEmail": "applicant_1791458643815@example.com",
+      "dismissed": true
+    },
+    {
+      "id": "alert_319c5bca-c2f1-4f9f-8e41-6fa7727e10f4",
+      "timestamp": 1791451452886,
+      "type": "account_lockout",
+      "title": "Security Alert: Account Temporarily Locked",
+      "message": "Admin account \"mudassirbashir530@gmail.com\" has been locked for 15 minutes due to 5 consecutive failed password attempts.",
+      "targetEmail": "mudassirbashir530@gmail.com",
+      "ip": "192.168.1.100",
+      "dismissed": true
+    },
+    {
+      "id": "alert_4fbd266a-f6f2-4456-a7f4-596420989677",
+      "timestamp": 1791451304034,
+      "type": "account_lockout",
+      "title": "Security Alert: Account Temporarily Locked",
+      "message": "Admin account \"mudassirbashir530@gmail.com\" has been locked for 15 minutes due to 5 consecutive failed password attempts.",
+      "targetEmail": "mudassirbashir530@gmail.com",
+      "ip": "192.168.1.100",
+      "dismissed": true
+    },
+    {
+      "id": "alert_a60ad3b9-0578-4163-8fa1-8b5c8d77130c",
+      "timestamp": 1791450645727,
+      "type": "account_lockout",
+      "title": "Security Alert: Account Temporarily Locked",
+      "message": "Admin account \"mudassirbashir530@gmail.com\" has been locked for 15 minutes due to 5 consecutive failed password attempts.",
+      "targetEmail": "mudassirbashir530@gmail.com",
+      "ip": "192.168.1.100",
+      "dismissed": true
+    },
+    {
+      "id": "alert_a03f3eaa-ac66-41a4-8633-446c0e633880",
+      "timestamp": 1791450445630,
+      "type": "account_lockout",
+      "title": "Security Alert: Account Temporarily Locked",
+      "message": "Admin account \"mudassirbashir530@gmail.com\" has been locked for 15 minutes due to 5 consecutive failed password attempts.",
+      "targetEmail": "mudassirbashir530@gmail.com",
+      "ip": "192.168.1.100",
+      "dismissed": true
+    },
+    {
+      "id": "alert_c7df7b9e-ea28-4829-8e5c-ba596343f402",
+      "timestamp": 1791450359168,
+      "type": "account_lockout",
+      "title": "Security Alert: Account Temporarily Locked",
+      "message": "Admin account \"mudassirbashir530@gmail.com\" has been locked for 15 minutes due to 5 consecutive failed password attempts.",
+      "targetEmail": "mudassirbashir530@gmail.com",
+      "ip": "192.168.1.100",
+      "dismissed": true
+    }
+  ],
   "settings": {
-    "emailAllowlist": [],
+    "emailAllowlist": [
+      "applicant_1791458643815@example.com",
+      "test_writer_1791458958728@example.com",
+      "applicant_1791458958748@example.com"
+    ],
     "setupCompletedAt": 1791123839719,
     "sessionTimeoutMinutes": 30,
     "featureFlags": {
@@ -1187,11 +1870,11 @@
         "twitter": "https://x.com/yaadapppk"
       },
       "status": "published",
-      "publishedAt": 1791135796958,
+      "publishedAt": 1791199807552,
       "readTimeMinutes": 4,
       "viewsCount": 1420,
-      "createdAt": 1791135796958,
-      "updatedAt": 1791308596958
+      "createdAt": 1791199807552,
+      "updatedAt": 1791372607552
     },
     {
       "id": "art_fresh_sabzi_guide",
@@ -1216,11 +1899,11 @@
         "twitter": "https://x.com/yaadapppk"
       },
       "status": "published",
-      "publishedAt": 1790790196958,
+      "publishedAt": 1790854207552,
       "readTimeMinutes": 3,
       "viewsCount": 890,
-      "createdAt": 1790790196958,
-      "updatedAt": 1790790196958
+      "createdAt": 1790854207552,
+      "updatedAt": 1790854207552
     },
     {
       "id": "art_spices_shelf_life",
@@ -1245,16 +1928,164 @@
         "instagram": "https://instagram.com/yaadapppk"
       },
       "status": "published",
-      "publishedAt": 1790185396958,
+      "publishedAt": 1790249407552,
       "readTimeMinutes": 3,
       "viewsCount": 650,
-      "createdAt": 1790185396958,
-      "updatedAt": 1790185396958
+      "createdAt": 1790249407552,
+      "updatedAt": 1790249407552
     }
   ],
-  "pushCampaigns": [],
-  "pushTemplates": [],
-  "supportTickets": [],
+  "pushCampaigns": [
+    {
+      "titleEn": "Sabzi Mandi Fresh Rate Alert 🛒",
+      "titleUr": "سبزی منڈی تازہ ترین ریٹ اپڈیٹ",
+      "bodyEn": "Today's fresh arrivals: Onions, Tomatoes, and Ginger at wholesale Mandi rates. Update your YAAD parchi before heading out!",
+      "bodyUr": "آج کی تازہ سبزیاں: پیاز، ٹماٹر اور ادرک ہول سیل منڈی ریٹ پر۔ خریداری سے پہلے اپنی یاد پرچی تیار کر لیں۔",
+      "iconUrl": "",
+      "targetAudience": "all_active",
+      "status": "sent",
+      "createdBy": "mudassirbashir530@gmail.com",
+      "id": "push_b46dd950-cd71-441f-b289-afa60b862950",
+      "estimatedRecipients": 1,
+      "actualSentCount": 1,
+      "deliveredCount": 1,
+      "openedCount": 1,
+      "sentAt": 1791458958799,
+      "createdAt": 1791458958799
+    },
+    {
+      "titleEn": "Support Update: Ticket TKT-00001",
+      "titleUr": "سپورٹ اپڈیٹ: ٹکٹ TKT-00001",
+      "bodyEn": "YAAD Support: Yes! Rates are synced directly from the wholesale market every morning at 7:00 AM.",
+      "bodyUr": "یاڈ سپورٹ: Yes! Rates are synced directly from the wholesale market every morning at 7:00 AM.",
+      "iconUrl": "/logo.png",
+      "targetAudience": "all",
+      "status": "sent",
+      "createdBy": "mudassirbashir530@gmail.com",
+      "id": "push_142eeae7-8424-4dac-979e-1008f8a564c1",
+      "estimatedRecipients": 1,
+      "actualSentCount": 1,
+      "deliveredCount": 1,
+      "openedCount": 0,
+      "sentAt": 1791458958786,
+      "createdAt": 1791458958786
+    }
+  ],
+  "pushTemplates": [
+    {
+      "id": "tpl_mandi_rates",
+      "name": "Sabzi Mandi Rates",
+      "titleEn": "Sabzi Mandi Fresh Rate Alert 🛒",
+      "titleUr": "سبزی منڈی تازہ ترین ریٹ اپڈیٹ",
+      "bodyEn": "Today's fresh arrivals: Onions, Tomatoes, and Ginger at wholesale Mandi rates. Update your YAAD parchi before heading out!",
+      "bodyUr": "آج کی تازہ سبزیاں: پیاز، ٹماٹر اور ادرک ہول سیل منڈی ریٹ پر۔ خریداری سے پہلے اپنی یاد پرچی تیار کر لیں۔",
+      "category": "mandi"
+    },
+    {
+      "id": "tpl_rashan_guide",
+      "name": "Rashan Package Guide",
+      "titleEn": "Ramadan Rashan Package Guide 🌙",
+      "titleUr": "ماہانہ راشن پیکیج اور ضروری سامان کی لسٹ",
+      "bodyEn": "Plan your monthly ration budget. Check today's official rates for Baisan, Chakki Atta, Daal Chana, and Cooking Oil.",
+      "bodyUr": "ماہانہ راشن کا بجٹ بنائیں: بیسن، چکی کا آٹا، دال چنا اور گھی کے سرکاری نرخ چیک کریں۔",
+      "category": "rashan"
+    },
+    {
+      "id": "tpl_jumma_bazaar",
+      "name": "Friday Jumma Bazaar",
+      "titleEn": "Friday Jumma Bazaar Specials 🏷️",
+      "titleUr": "جمعہ بازار اسپیشل بچت ڈیلز",
+      "bodyEn": "Compare supermarket prices vs local weekly bazaars directly in YAAD. Save up to 25% on poultry and dry rations today.",
+      "bodyUr": "یوٹیلیٹی اسٹور اور ہفتہ وار بازار کے ریٹس کا موازنہ کریں اور 25 فیصد تک بچت کریں۔",
+      "category": "savings"
+    },
+    {
+      "id": "tpl_parchi_reminder",
+      "name": "Parchi Reminder",
+      "titleEn": "Don't Forget Your YAAD Grocery List! 📝",
+      "titleUr": "اپنی گروسری پرچی چیک کرنا نہ بھولیں",
+      "bodyEn": "You have uncrossed items on your active parchi. Open YAAD to check prices and tick off your pantry essentials.",
+      "bodyUr": "آپ کی پرچی میں کچھ اشیاء باقی ہیں۔ ایپ کھولیں اور چیک کر لیں۔",
+      "category": "reminder"
+    },
+    {
+      "id": "tpl_price_drop",
+      "name": "Mandi Price Drop",
+      "titleEn": "Mandi Price Drop Alert 💡",
+      "titleUr": "سبزیوں اور دالوں کے دام کم ہو گئے",
+      "bodyEn": "Mandi rates for potatoes and lentils have decreased by 15%. Stock up your home kitchen smartly with YAAD!",
+      "bodyUr": "منڈی میں آلو اور دالوں کے نرخ 15 فیصد گر گئے۔ ابھی خریداری کی لسٹ بنائیں۔",
+      "category": "deals"
+    }
+  ],
+  "supportTickets": [
+    {
+      "id": "tkt_c0c7f94d-da1a-4c37-8819-47cc35a44e71",
+      "ticketNumber": "TKT-00001",
+      "userId": "guest",
+      "userName": "Ahmed Shopper",
+      "userEmail": "ahmed.shopper@example.com",
+      "userPhone": "03129876543",
+      "subject": "Question about Mandi Rate Accuracy",
+      "description": "Are tomato prices updated daily at 7 AM?",
+      "category": "general",
+      "priority": "normal",
+      "status": "resolved",
+      "messages": [
+        {
+          "id": "msg_9ef9f70f-563c-4228-bbd3-023ad3636650",
+          "sender": "user",
+          "senderName": "Ahmed Shopper",
+          "text": "Are tomato prices updated daily at 7 AM?",
+          "timestamp": 1791458958777
+        },
+        {
+          "id": "msg_633b2ca6-7d00-4578-bc3a-3a22e27cdf49",
+          "sender": "staff",
+          "senderName": "Mudassir Bashir",
+          "text": "Yes! Rates are synced directly from the wholesale market every morning at 7:00 AM.",
+          "timestamp": 1791458958784
+        }
+      ],
+      "internalNotes": [],
+      "createdAt": 1791458958777,
+      "updatedAt": 1791458958784,
+      "resolvedAt": 1791458958783,
+      "assignedTo": {
+        "id": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+        "name": "Mudassir Bashir",
+        "email": "mudassirbashir530@gmail.com"
+      }
+    }
+  ],
   "cannedReplies": [],
-  "accessRequests": []
+  "accessRequests": [
+    {
+      "id": "req_9ee9ae53-2899-49c9-9874-1e61e2d25292",
+      "name": "Usman Marketing",
+      "email": "applicant_1791458958748@example.com",
+      "phone": "03001234567",
+      "requestedRole": "content_editor",
+      "department": "Marketing & Content",
+      "reason": "Need access to publish weekly sabzi mandi guides",
+      "status": "approved",
+      "createdAt": 1791458958751,
+      "reviewedBy": "Mudassir Bashir",
+      "reviewedAt": 1791458958761
+    },
+    {
+      "id": "req_b87f1dee-a856-49ed-ab28-d4de4680b30f",
+      "name": "Usman Marketing",
+      "email": "applicant_1791458643815@example.com",
+      "phone": "03001234567",
+      "requestedRole": "content_editor",
+      "department": "Marketing & Content",
+      "reason": "Need access to publish weekly sabzi mandi guides",
+      "status": "approved",
+      "createdAt": 1791458643818,
+      "reviewedBy": "Mudassir Bashir",
+      "reviewedAt": 1791458643828
+    }
+  ],
+  "dismissedNotificationIds": []
 }

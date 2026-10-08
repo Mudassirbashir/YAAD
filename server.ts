@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import { GoogleGenAI, Type } from '@google/genai';
 import { adminRouter } from './server/admin/routes';
 import { adminStore } from './server/admin/store';
+import { getSupabaseAdmin } from './server/admin/supabaseAdmin';
 
 dotenv.config();
 
@@ -64,7 +65,15 @@ app.use('/api/admin', adminRouter);
 // Public & User Support Ticket Submission API (Routes directly to Admin Support Desk)
 app.post(['/api/support/tickets', '/api/tickets'], (req, res) => {
   try {
-    const { userId, userName, userEmail, userPhone, subject, description, category, priority } = req.body;
+    const userEmail = req.body.userEmail || req.body.email;
+    const description = req.body.description || req.body.message;
+    const userName = req.body.userName || req.body.name || 'Shopper';
+    const userPhone = req.body.userPhone || req.body.phone;
+    const subject = req.body.subject || 'Support Request';
+    const userId = req.body.userId;
+    const category = req.body.category || 'general';
+    const priority = req.body.priority || 'medium';
+
     if (!description || !userEmail) {
       return res.status(400).json({ error: 'User email and problem description are required.' });
     }
@@ -111,6 +120,58 @@ app.get(['/api/notifications', '/api/notifications/broadcasts'], (req, res) => {
     return res.status(200).json({ success: true, notifications: publicAnnouncements });
   } catch (err: any) {
     return res.status(500).json({ error: 'Failed to retrieve notifications', details: err?.message });
+  }
+});
+
+// Record notification opened count for accurate open rate metrics
+app.post(['/api/notifications/open', '/api/notifications/:id/open'], (req, res) => {
+  try {
+    const notificationId = req.params.id || req.body?.notificationId || req.body?.id;
+    adminStore.recordPushOpen(notificationId);
+    return res.status(200).json({ success: true });
+  } catch {
+    return res.status(200).json({ success: true });
+  }
+});
+
+// User Account Permanent Deletion (Purges all data + Supabase Auth user)
+app.post('/api/account/delete', async (req, res) => {
+  try {
+    const { userId } = req.body;
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    const supabase = getSupabaseAdmin();
+    if (supabase) {
+      try {
+        await supabase.from('shopping_items').delete().eq('user_id', userId);
+      } catch {}
+      try {
+        await supabase.from('shopping_lists').delete().eq('user_id', userId);
+      } catch {}
+      try {
+        await supabase.from('profiles').delete().eq('id', userId);
+      } catch {}
+
+      // Delete user permanently from Supabase Auth (auth.users)
+      try {
+        const { error: authErr } = await supabase.auth.admin.deleteUser(userId);
+        if (authErr) {
+          console.warn('[Account Delete] Notice from Supabase auth.admin.deleteUser:', authErr.message);
+        }
+      } catch (authErr: any) {
+        console.warn('[Account Delete] Supabase Auth admin delete notice:', authErr?.message);
+      }
+    }
+
+    // Purge from local adminStore if tracked
+    adminStore.deleteAppUser(userId);
+
+    return res.status(200).json({ success: true, message: 'Account and associated data deleted permanently.' });
+  } catch (err: any) {
+    console.error('[Account Delete] Error:', err);
+    return res.status(500).json({ error: 'Failed to delete account', details: err?.message });
   }
 });
 

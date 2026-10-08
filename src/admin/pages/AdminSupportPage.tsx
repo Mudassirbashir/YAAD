@@ -50,9 +50,10 @@ export const AdminSupportPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
 
-  // Status update state inside modal
+  // Status update & reply state inside modal
   const [newStatus, setNewStatus] = useState<'open' | 'in_progress' | 'resolved' | 'closed'>('open');
   const [resolutionNotes, setResolutionNotes] = useState('');
+  const [replyMessage, setReplyMessage] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateSuccess, setUpdateSuccess] = useState(false);
 
@@ -102,6 +103,7 @@ export const AdminSupportPage: React.FC = () => {
     setSelectedTicket(ticket);
     setNewStatus(ticket.status);
     setResolutionNotes('');
+    setReplyMessage('');
     setUpdateSuccess(false);
   };
 
@@ -120,6 +122,7 @@ export const AdminSupportPage: React.FC = () => {
         body: JSON.stringify({
           status: newStatus,
           resolutionNotes: resolutionNotes.trim() || undefined,
+          replyMessage: replyMessage.trim() || undefined,
         }),
       });
 
@@ -378,13 +381,29 @@ export const AdminSupportPage: React.FC = () => {
               </div>
 
               <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-[#003527] mb-1 flex items-center justify-between">
+                  <span>Send In-App Reply to Shopper</span>
+                  <span className="text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                    Dispatched to Shopper Bell
+                  </span>
+                </label>
+                <textarea
+                  value={replyMessage}
+                  onChange={(e) => setReplyMessage(e.target.value)}
+                  placeholder="Type message or solution to send to the shopper. They will receive an immediate in-app notification alert with this response..."
+                  rows={3}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 text-xs focus:outline-none focus:border-[#003527] bg-emerald-50/20 text-neutral-800 leading-relaxed"
+                />
+              </div>
+
+              <div>
                 <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-500 mb-1">
                   Internal Resolution Notes (Optional)
                 </label>
                 <textarea
                   value={resolutionNotes}
                   onChange={(e) => setResolutionNotes(e.target.value)}
-                  placeholder="Record any actions taken or notes for the team..."
+                  placeholder="Record internal actions taken or notes for the staff team..."
                   rows={2}
                   className="w-full px-3 py-2 rounded-xl border border-neutral-200 text-xs focus:outline-none focus:border-[#003527]"
                 />

@@ -34,6 +34,7 @@ import { EditProfileModal } from './settings/EditProfileModal';
 import { ChangePasswordModal } from './settings/ChangePasswordModal';
 import { SignOutConfirmModal } from './settings/SignOutConfirmModal';
 import { LegalDocModal } from './settings/LegalDocModal';
+import { SupportDeskModal } from './settings/SupportDeskModal';
 import { formatPhoneNumber } from '../utils/phone';
 import { triggerHaptic } from '../lib/sound';
 
@@ -50,7 +51,7 @@ interface SettingsViewProps {
   onClearInitialEditPhone?: () => void;
   subSection?: string | null;
   onSubSectionChange?: (
-    section: 'profile' | 'appearance' | 'preferences' | 'about' | 'security' | 'language',
+    section: 'profile' | 'appearance' | 'preferences' | 'about' | 'security' | 'language' | 'notifications' | 'support',
   ) => void;
 }
 
@@ -76,20 +77,30 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [focusPhoneInModal, setFocusPhoneInModal] = useState(false);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const [showSupportModal, setShowSupportModal] = useState(false);
   const [showSignOutModal, setShowSignOutModal] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [activeLegalModal, setActiveLegalModal] = useState<
     'privacy' | 'terms' | 'help' | 'about' | null
   >(null);
+  const [highlightedSection, setHighlightedSection] = useState<string | null>(null);
 
   // Deep Link & subSection scrolling
   useEffect(() => {
     if (subSection) {
+      setHighlightedSection(subSection);
+      if (subSection === 'support') {
+        setShowSupportModal(true);
+      }
       const targetId = `settings_${subSection}_section`;
       const el = document.getElementById(targetId);
       if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
+      const timer = setTimeout(() => {
+        setHighlightedSection(null);
+      }, 3000);
+      return () => clearTimeout(timer);
     }
   }, [subSection]);
 
@@ -482,7 +493,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* 3. Shopping Reminders Toggle */}
-            <div className="p-4 sm:p-5 flex items-center justify-between gap-3">
+            <div
+              id="settings_notifications_section"
+              className={`p-4 sm:p-5 flex items-center justify-between gap-3 transition-all duration-700 ${
+                highlightedSection === 'notifications'
+                  ? 'bg-primary/10 ring-2 ring-primary ring-inset rounded-xl'
+                  : ''
+              }`}
+            >
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-8 h-8 rounded-xl bg-surface-container text-primary flex items-center justify-center shrink-0">
                   {pushEnabled ? (
@@ -682,25 +700,33 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <Chevron className="w-4 h-4 text-outline group-hover:text-primary transition-colors shrink-0" />
             </button>
 
-            {/* 2. Help & Feedback */}
+            {/* 2. Customer Support Desk */}
             <button
-              id="settings_link_help"
+              id="settings_support_section"
               type="button"
-              onClick={() => handleOpenLegal('help')}
-              className="w-full p-4 sm:p-4.5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-low/50 transition-colors cursor-pointer group active:bg-surface-container-low"
+              onClick={() => {
+                triggerHaptic(8);
+                setShowSupportModal(true);
+              }}
+              className={`w-full p-4 sm:p-4.5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-low/50 transition-colors cursor-pointer group active:bg-surface-container-low ${
+                highlightedSection === 'support' ? 'bg-primary/10 ring-2 ring-primary ring-inset rounded-xl' : ''
+              }`}
             >
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-8 h-8 rounded-xl bg-surface-container text-primary flex items-center justify-center shrink-0">
                   <Headphones className="w-4 h-4 stroke-[2.2]" />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-sm font-bold text-on-surface font-['Plus_Jakarta_Sans']">
-                    {t('settings.helpFeedback') || (language === 'ur' ? 'مدد اور فیڈ بیک' : 'Help & Feedback')}
+                  <h3 className="text-sm font-bold text-on-surface font-['Plus_Jakarta_Sans'] flex items-center gap-2">
+                    <span>{language === 'ur' ? 'کسٹمر سپورٹ ڈیسک اور شکایت' : 'Customer Support Desk'}</span>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                      {language === 'ur' ? 'براہ راست رابطہ' : 'Direct Help'}
+                    </span>
                   </h3>
                   <p className="text-xs text-outline font-['Manrope'] truncate">
                     {language === 'ur'
-                      ? 'سوالات یا تجاویز کے لیے رابطہ کریں'
-                      : 'Guides and customer support'}
+                      ? 'ایڈمن سپورٹ ٹیم سے مدد یا شکایت درج کریں'
+                      : 'Report an issue, ask a question, or contact staff'}
                   </p>
                 </div>
               </div>
@@ -870,6 +896,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       <LegalDocModal
         activeModal={activeLegalModal}
         onClose={() => setActiveLegalModal(null)}
+      />
+
+      {/* MODAL 6: Customer Support Desk Modal */}
+      <SupportDeskModal
+        isOpen={showSupportModal}
+        onClose={() => setShowSupportModal(false)}
+        userId={user?.id}
+        userName={displayName}
+        userEmail={user?.email || profile?.email}
+        userPhone={displayPhone}
       />
     </div>
   );

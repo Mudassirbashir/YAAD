@@ -13,7 +13,7 @@ import { useLanguage } from '../../context/LanguageContext';
 interface ChangePasswordModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (currentPassword: string, newPassword: string) => Promise<{ error?: any }>;
+  onSubmit: (newPassword: string) => Promise<{ error?: any }>;
 }
 
 export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
@@ -23,10 +23,8 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
 }) => {
   const { t, language, isRTL } = useLanguage();
 
-  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -45,16 +43,6 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
           language === 'ur'
             ? 'آپ آف لائن ہیں۔ انٹرنیٹ سے جڑنے کے بعد کوشش کریں۔'
             : "You're offline. Reconnect to change password.",
-      });
-      return;
-    }
-
-    if (!currentPassword.trim()) {
-      setMessage({
-        type: 'error',
-        text:
-          t('settings.enterCurrentPassword') ||
-          (language === 'ur' ? 'موجودہ پاس ورڈ درج کریں' : 'Please enter your current password'),
       });
       return;
     }
@@ -81,19 +69,8 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
       return;
     }
 
-    if (newPassword === currentPassword) {
-      setMessage({
-        type: 'error',
-        text:
-          language === 'ur'
-            ? 'نیا پاس ورڈ پرانے سے مختلف ہونا چاہیے'
-            : 'New password must be different from current password',
-      });
-      return;
-    }
-
     setIsUpdating(true);
-    const { error } = await onSubmit(currentPassword, newPassword);
+    const { error } = await onSubmit(newPassword);
     setIsUpdating(false);
 
     if (error) {
@@ -112,7 +89,6 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
             : 'Password updated successfully!',
       });
       setTimeout(() => {
-        setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
         setMessage(null);
@@ -170,36 +146,6 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
         )}
 
         <form onSubmit={handleSubmit} className="space-y-3.5">
-          {/* Current Password */}
-          <div className="space-y-1">
-            <label
-              htmlFor="modal_current_pwd_input"
-              className="text-xs font-bold text-on-surface font-['Plus_Jakarta_Sans'] flex items-center gap-1.5"
-            >
-              <LockKeyhole className="w-3.5 h-3.5 text-primary" />
-              <span>{t('settings.currentPassword') || 'Current Password'}</span>
-            </label>
-            <div className="relative">
-              <input
-                id="modal_current_pwd_input"
-                type={showCurrent ? 'text' : 'password'}
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="••••••••"
-                disabled={isUpdating}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-surface border border-surface-dim/75 text-on-surface font-mono pe-10 focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowCurrent(!showCurrent)}
-                className="absolute inset-y-0 end-3 flex items-center text-outline hover:text-on-surface cursor-pointer"
-              >
-                {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-          </div>
-
           {/* New Password */}
           <div className="space-y-1">
             <label
@@ -207,7 +153,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
               className="text-xs font-bold text-on-surface font-['Plus_Jakarta_Sans'] flex items-center gap-1.5"
             >
               <LockKeyhole className="w-3.5 h-3.5 text-primary" />
-              <span>{t('settings.newPassword') || 'New Password'}</span>
+              <span>{t('settings.newPassword') || (language === 'ur' ? 'نیا پاس ورڈ' : 'New Password')}</span>
             </label>
             <div className="relative">
               <input
@@ -237,7 +183,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
               className="text-xs font-bold text-on-surface font-['Plus_Jakarta_Sans'] flex items-center gap-1.5"
             >
               <LockKeyhole className="w-3.5 h-3.5 text-primary" />
-              <span>{t('settings.confirmPassword') || 'Confirm Password'}</span>
+              <span>{t('settings.confirmPassword') || (language === 'ur' ? 'پاس ورڈ کی تصدیق کریں' : 'Confirm Password')}</span>
             </label>
             <div className="relative">
               <input
@@ -272,7 +218,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
             </button>
             <button
               type="submit"
-              disabled={isUpdating || !currentPassword || newPassword.length < 6 || newPassword !== confirmPassword}
+              disabled={isUpdating || newPassword.length < 6 || newPassword !== confirmPassword}
               className="px-5 py-2 text-xs font-bold text-white bg-primary hover:bg-primary/90 rounded-xl transition-all disabled:opacity-50 active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-xs"
             >
               {isUpdating ? (
@@ -281,7 +227,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                   <span>{t('settings.saving') || 'Saving...'}</span>
                 </>
               ) : (
-                <span>{t('settings.save') || 'Update'}</span>
+                <span>{t('settings.save') || (language === 'ur' ? 'محفوظ کریں' : 'Save Password')}</span>
               )}
             </button>
           </div>

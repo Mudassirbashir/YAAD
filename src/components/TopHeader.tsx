@@ -166,6 +166,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
     setIsNotifOpen(true);
     setHasUnread(false);
     localStorage.setItem('yaad_last_notif_read', String(Date.now()));
+    fetch('/api/notifications/open', { method: 'POST' }).catch(() => {});
   };
 
   const handleSettingsClick = (e: React.MouseEvent) => {
@@ -368,11 +369,8 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                 type="button"
                 onClick={() => {
                   setIsNotifOpen(false);
-                  const handler = onSettingsClick || onMenuClick || onAvatarClick;
-                  if (handler) {
-                    handler();
-                  } else if (typeof window !== 'undefined') {
-                    window.history.pushState({}, '', '/settings');
+                  if (typeof window !== 'undefined') {
+                    window.history.pushState({}, '', '/settings/notifications');
                     window.dispatchEvent(new PopStateEvent('popstate'));
                   }
                 }}

@@ -240,7 +240,7 @@ export function parseRoute(rawPathname: string): ParsedRoute {
   const settingsSubMatch = norm.match(/^\/settings\/([^/]+)$/);
   if (settingsSubMatch) {
     const sub = settingsSubMatch[1];
-    if (['profile', 'security', 'language', 'preferences', 'about'].includes(sub)) {
+    if (['profile', 'security', 'language', 'preferences', 'about', 'notifications', 'support'].includes(sub)) {
       return {
         routeId: 'settings_subsection',
         pathname: norm,

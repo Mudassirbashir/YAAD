@@ -74,21 +74,31 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   const [notificationsDrawerOpen, setNotificationsDrawerOpen] = useState(false);
   const [unreadNotifCount, setUnreadNotifCount] = useState(0);
 
-  // Initial fetch for notifications count
+  // Real-time polling for notifications count (instant alert for super admin)
   React.useEffect(() => {
     if (!admin) return;
-    const activeToken = localStorage.getItem('yaad_admin_bearer_token');
-    if (!activeToken) return;
-    fetch('/api/admin/notifications', {
-      headers: { Authorization: `Bearer ${activeToken}` },
-    })
-      .then((r) => r.json())
-      .then((d) => {
-        if (typeof d?.unreadCount === 'number') {
-          setUnreadNotifCount(d.unreadCount);
-        }
+    const fetchCount = () => {
+      const activeToken = localStorage.getItem('yaad_admin_bearer_token');
+      if (!activeToken) return;
+      fetch('/api/admin/notifications', {
+        headers: { Authorization: `Bearer ${activeToken}` },
       })
-      .catch(() => {});
+        .then((r) => r.json())
+        .then((d) => {
+          if (typeof d?.unreadCount === 'number') {
+            setUnreadNotifCount(d.unreadCount);
+          }
+        })
+        .catch(() => {});
+    };
+
+    fetchCount();
+    const interval = setInterval(fetchCount, 15000);
+    window.addEventListener('focus', fetchCount);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', fetchCount);
+    };
   }, [admin]);
 
   const roleMeta = admin?.role ? ROLE_LABELS[admin.role] : null;

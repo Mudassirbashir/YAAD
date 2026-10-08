@@ -48,9 +48,68 @@ interface PushCampaign {
   createdBy?: string;
 }
 
+interface PushTemplate {
+  id: string;
+  name: string;
+  titleEn: string;
+  titleUr: string;
+  bodyEn: string;
+  bodyUr: string;
+  category: string;
+}
+
+const DEFAULT_TEMPLATES: PushTemplate[] = [
+  {
+    id: 'tpl_mandi_rates',
+    name: 'Sabzi Mandi Rates 🛒',
+    titleEn: 'Sabzi Mandi Fresh Rate Alert 🛒',
+    titleUr: 'سبزی منڈی تازہ ترین ریٹ اپڈیٹ',
+    bodyEn: "Today's fresh arrivals: Onions, Tomatoes, and Ginger at wholesale Mandi rates. Update your YAAD parchi before heading out!",
+    bodyUr: 'آج کی تازہ سبزیاں: پیاز، ٹماٹر اور ادرک ہول سیل منڈی ریٹ پر۔ خریداری سے پہلے اپنی یاد پرچی تیار کر لیں۔',
+    category: 'mandi',
+  },
+  {
+    id: 'tpl_rashan_guide',
+    name: 'Ramadan Rashan Guide 🌙',
+    titleEn: 'Ramadan Rashan Package Guide 🌙',
+    titleUr: 'ماہانہ راشن پیکیج اور ضروری سامان کی لسٹ',
+    bodyEn: "Plan your monthly ration budget. Check today's official rates for Baisan, Chakki Atta, Daal Chana, and Cooking Oil.",
+    bodyUr: 'ماہانہ راشن کا بجٹ بنائیں: بیسن، چکی کا آٹا، دال چنا اور گھی کے سرکاری نرخ چیک کریں۔',
+    category: 'rashan',
+  },
+  {
+    id: 'tpl_jumma_bazaar',
+    name: 'Friday Jumma Bazaar 🏷️',
+    titleEn: 'Friday Jumma Bazaar Specials 🏷️',
+    titleUr: 'جمعہ بازار اسپیشل بچت ڈیلز',
+    bodyEn: 'Compare supermarket prices vs local weekly bazaars directly in YAAD. Save up to 25% on poultry and dry rations today.',
+    bodyUr: 'یوٹیلیٹی اسٹور اور ہفتہ وار بازار کے ریٹس کا موازنہ کریں اور 25 فیصد تک بچت کریں۔',
+    category: 'savings',
+  },
+  {
+    id: 'tpl_parchi_reminder',
+    name: 'Parchi Reminder 📝',
+    titleEn: "Don't Forget Your YAAD Grocery List! 📝",
+    titleUr: 'اپنی گروسری پرچی چیک کرنا نہ بھولیں',
+    bodyEn: 'You have uncrossed items on your active parchi. Open YAAD to check prices and tick off your pantry essentials.',
+    bodyUr: 'آپ کی پرچی میں کچھ اشیاء باقی ہیں۔ ایپ کھولیں اور چیک کر لیں۔',
+    category: 'reminder',
+  },
+  {
+    id: 'tpl_price_drop',
+    name: 'Mandi Price Drop 💡',
+    titleEn: 'Mandi Price Drop Alert 💡',
+    titleUr: 'سبزیوں اور دالوں کے دام کم ہو گئے',
+    bodyEn: 'Mandi rates for potatoes and lentils have decreased by 15%. Stock up your home kitchen smartly with YAAD!',
+    bodyUr: 'منڈی میں آلو اور دالوں کے نرخ 15 فیصد گر گئے۔ ابھی خریداری کی لسٹ بنائیں۔',
+    category: 'deals',
+  },
+];
+
 export const AdminPushPage: React.FC = () => {
   const { token, admin } = useAdminAuth();
   const [campaigns, setCampaigns] = useState<PushCampaign[]>([]);
+  const [templates, setTemplates] = useState<PushTemplate[]>(DEFAULT_TEMPLATES);
   const [isLoading, setIsLoading] = useState(true);
 
   // Modal State
@@ -73,6 +132,9 @@ export const AdminPushPage: React.FC = () => {
   const fetchCampaigns = useCallback(
     async (forceRefresh: boolean = false) => {
       if (!token) return;
+      if (forceRefresh) {
+        adminCache.invalidatePrefix('/api/admin/push');
+      }
       const url = '/api/admin/push/campaigns';
       const headers = { Authorization: `Bearer ${token}` };
 
@@ -93,9 +155,38 @@ export const AdminPushPage: React.FC = () => {
     [token]
   );
 
+  const fetchTemplates = useCallback(
+    async (forceRefresh: boolean = false) => {
+      if (!token) return;
+      try {
+        const res = await fetch('/api/admin/push/templates', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.templates && Array.isArray(data.templates) && data.templates.length > 0) {
+            setTemplates(data.templates);
+          }
+        }
+      } catch {}
+    },
+    [token]
+  );
+
   useEffect(() => {
     fetchCampaigns();
-  }, [fetchCampaigns]);
+    fetchTemplates();
+  }, [fetchCampaigns, fetchTemplates]);
+
+  const handleApplyTemplate = (tpl: PushTemplate) => {
+    setTitleEn(tpl.titleEn);
+    setTitleUr(tpl.titleUr || '');
+    setBodyEn(tpl.bodyEn);
+    setBodyUr(tpl.bodyUr || '');
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    setIsModalOpen(true);
+  };
 
   const handleTestDeviceNotification = async () => {
     if (!('Notification' in window)) {
@@ -238,6 +329,43 @@ export const AdminPushPage: React.FC = () => {
         </div>
       )}
 
+      {/* Quick Pre-written Templates Section */}
+      <div className="bg-white border border-neutral-200/90 rounded-2xl p-5 shadow-xs space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-emerald-700" />
+            <h3 className="text-sm font-bold text-[#003527]">Pre-written Grocery &amp; Mandi Templates</h3>
+          </div>
+          <span className="text-[11px] text-neutral-400">Click to use, edit, or customize</span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {templates.map((tpl) => (
+            <div
+              key={tpl.id}
+              className="p-3.5 rounded-xl border border-neutral-200/80 bg-neutral-50/60 hover:bg-emerald-50/40 hover:border-emerald-300 transition-all flex flex-col justify-between gap-2.5"
+            >
+              <div className="space-y-1">
+                <span className="text-xs font-bold text-neutral-900 block">{tpl.titleEn}</span>
+                {tpl.titleUr && (
+                  <span className="text-[11px] font-semibold text-neutral-500 font-urdu block dir-rtl" dir="rtl">
+                    {tpl.titleUr}
+                  </span>
+                )}
+                <p className="text-[11px] text-neutral-600 line-clamp-2 mt-1">{tpl.bodyEn}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleApplyTemplate(tpl)}
+                className="w-full py-1.5 px-3 rounded-lg bg-[#003527] text-white font-bold text-[11px] hover:bg-[#00281e] cursor-pointer transition-all flex items-center justify-center gap-1.5 shadow-2xs"
+              >
+                <Send className="w-3 h-3" />
+                <span>Use Template</span>
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Campaigns List */}
       {campaigns.length === 0 ? (
         <div className="bg-white border border-neutral-200/90 rounded-2xl p-12 text-center space-y-4 shadow-xs">
@@ -303,7 +431,7 @@ export const AdminPushPage: React.FC = () => {
                 </div>
 
                 {/* Delivery Metrics */}
-                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-neutral-100 text-center">
+                <div className="grid grid-cols-4 gap-2 pt-2 border-t border-neutral-100 text-center">
                   <div className="p-2 rounded-xl bg-neutral-50">
                     <span className="block text-[10px] text-neutral-400 font-medium">Audience</span>
                     <span className="text-xs font-bold text-neutral-800 capitalize">
@@ -313,6 +441,10 @@ export const AdminPushPage: React.FC = () => {
                   <div className="p-2 rounded-xl bg-neutral-50">
                     <span className="block text-[10px] text-neutral-400 font-medium">Delivered</span>
                     <span className="text-xs font-bold text-emerald-700">{delivered}</span>
+                  </div>
+                  <div className="p-2 rounded-xl bg-neutral-50">
+                    <span className="block text-[10px] text-neutral-400 font-medium">Opened</span>
+                    <span className="text-xs font-bold text-emerald-800">{opened}</span>
                   </div>
                   <div className="p-2 rounded-xl bg-neutral-50">
                     <span className="block text-[10px] text-neutral-400 font-medium">Open Rate</span>
@@ -375,6 +507,34 @@ export const AdminPushPage: React.FC = () => {
                   <span>{successMsg}</span>
                 </div>
               )}
+
+              {/* Pre-written Template Selector */}
+              <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-100">
+                <label className="block font-bold text-emerald-950 mb-1 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
+                  <span>Load From Pre-written Template</span>
+                </label>
+                <select
+                  defaultValue=""
+                  onChange={(e) => {
+                    const chosen = templates.find((t) => t.id === e.target.value);
+                    if (chosen) {
+                      setTitleEn(chosen.titleEn);
+                      setTitleUr(chosen.titleUr || '');
+                      setBodyEn(chosen.bodyEn);
+                      setBodyUr(chosen.bodyUr || '');
+                    }
+                  }}
+                  className="w-full px-3 py-2 rounded-lg border border-emerald-200 bg-white text-neutral-800 focus:outline-none focus:border-[#003527] text-xs font-medium cursor-pointer"
+                >
+                  <option value="" disabled>-- Select a pre-written template to auto-fill --</option>
+                  {templates.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name || t.titleEn}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
               {/* English Title & Urdu Title */}
               <div>
