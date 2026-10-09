@@ -40,7 +40,43 @@ export const AdminTeamPage: React.FC = () => {
   const isSuperAdmin = admin?.role === 'super_admin';
 
   // Active Tab: 'members' | 'invites' | 'allowlist' | 'requests'
-  const [activeTab, setActiveTab] = useState<'members' | 'invites' | 'allowlist' | 'requests'>('members');
+  const getInitialTab = (): 'members' | 'invites' | 'allowlist' | 'requests' => {
+    try {
+      const param = new URLSearchParams(window.location.search).get('tab');
+      if (param === 'requests' || param === 'invites' || param === 'allowlist') {
+        return param;
+      }
+    } catch {}
+    return 'members';
+  };
+
+  const [activeTab, setActiveTab] = useState<'members' | 'invites' | 'allowlist' | 'requests'>(getInitialTab);
+
+  const handleTabChange = (newTab: 'members' | 'invites' | 'allowlist' | 'requests') => {
+    setActiveTab(newTab);
+    try {
+      const url = new URL(window.location.href);
+      if (newTab === 'members') {
+        url.searchParams.delete('tab');
+      } else {
+        url.searchParams.set('tab', newTab);
+      }
+      window.history.pushState({}, '', url.pathname + url.search);
+    } catch {}
+  };
+
+  // Sync tab with external navigation or popstate
+  useEffect(() => {
+    const handleLocationChange = () => {
+      const param = new URLSearchParams(window.location.search).get('tab');
+      if (param === 'requests') setActiveTab('requests');
+      else if (param === 'invites') setActiveTab('invites');
+      else if (param === 'allowlist') setActiveTab('allowlist');
+      else if (param === 'members' || !param) setActiveTab('members');
+    };
+    window.addEventListener('popstate', handleLocationChange);
+    return () => window.removeEventListener('popstate', handleLocationChange);
+  }, []);
 
   // Access Requests State
   interface AccessRequestItem {
@@ -170,11 +206,7 @@ Barah-e-karam 24 ghante ke andar is link ko open karke apna secure password aur 
           });
 
           if (!res.ok) {
-            if (res.status === 401) {
-              logout();
-              throw new Error('Unauthorized');
-            }
-            if (res.status === 403) {
+            if (res.status === 401 || res.status === 403) {
               return { admins: [], total: 0 };
             }
             toast.error('Failed to load team members');
@@ -203,7 +235,7 @@ Barah-e-karam 24 ghante ke andar is link ko open karke apna secure password aur 
     } finally {
       setIsLoadingStaff(false);
     }
-  }, [token, page, search, roleFilter, statusFilter, logout, toast]);
+  }, [token, page, search, roleFilter, statusFilter, toast]);
 
   // 2. Fetch Invites
   const fetchInvites = useCallback(async (force = false) => {
@@ -220,9 +252,8 @@ Barah-e-karam 24 ghante ke andar is link ko open karke apna secure password aur 
           const res = await fetch('/api/admin/invites', {
             headers: { Authorization: `Bearer ${token}` },
           });
-          if (res.status === 401) {
-            logout();
-            throw new Error('Unauthorized');
+          if (res.status === 401 || res.status === 403) {
+            return { invites: [] };
           }
           if (res.ok) {
             return res.json();
@@ -246,7 +277,7 @@ Barah-e-karam 24 ghante ke andar is link ko open karke apna secure password aur 
     } finally {
       setIsLoadingInvites(false);
     }
-  }, [token, isSuperAdmin, logout]);
+  }, [token, isSuperAdmin]);
 
   // 3. Fetch Allowlist
   const fetchAllowlist = useCallback(async () => {
@@ -256,8 +287,7 @@ Barah-e-karam 24 ghante ke andar is link ko open karke apna secure password aur 
       const res = await fetch('/api/admin/settings/allowlist', {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.status === 401) {
-        logout();
+      if (res.status === 401 || res.status === 403) {
         return;
       }
       if (res.ok) {
@@ -269,7 +299,7 @@ Barah-e-karam 24 ghante ke andar is link ko open karke apna secure password aur 
     } finally {
       setIsLoadingAllowlist(false);
     }
-  }, [token, isSuperAdmin, logout]);
+  }, [token, isSuperAdmin]);
 
   // 4. Fetch Access Requests
   const fetchAccessRequests = useCallback(async () => {
@@ -279,8 +309,7 @@ Barah-e-karam 24 ghante ke andar is link ko open karke apna secure password aur 
       const res = await fetch('/api/admin/access-requests', {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.status === 401) {
-        logout();
+      if (res.status === 401 || res.status === 403) {
         return;
       }
       if (res.ok) {
@@ -292,7 +321,7 @@ Barah-e-karam 24 ghante ke andar is link ko open karke apna secure password aur 
     } finally {
       setIsLoadingRequests(false);
     }
-  }, [token, isSuperAdmin, logout]);
+  }, [token, isSuperAdmin]);
 
   useEffect(() => {
     fetchStaff();
@@ -403,12 +432,28 @@ Barah-e-karam 24 ghante ke andar is link ko open karke apna secure password aur 
   };
 
   // Copy Invite Link
-  const copyInviteLink = (url: string) => {
+  const copyInviteLink = async (url: string) => {
     const fullUrl = `${window.location.origin}${url}`;
-    navigator.clipboard.writeText(fullUrl);
-    setCopiedLink(true);
-    toast.info('Link Copied', 'Invitation onboarding URL copied to clipboard.');
-    setTimeout(() => setCopiedLink(false), 2000);
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(fullUrl);
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = fullUrl;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+      setCopiedLink(true);
+      toast.success('Link Copied', 'Invitation onboarding URL copied to clipboard.');
+      setTimeout(() => setCopiedLink(false), 2000);
+    } catch {
+      toast.info('Copy Link', 'Please copy the link directly from the input box.');
+    }
   };
 
   // Handle Status Change (Suspend / Reactivate)
@@ -563,7 +608,7 @@ Barah-e-karam 24 ghante ke andar is link ko open karke apna secure password aur 
       <div className="flex items-center gap-2 border-b border-neutral-200">
         <button
           type="button"
-          onClick={() => setActiveTab('members')}
+          onClick={() => handleTabChange('members')}
           className={`pb-3 px-4 text-xs font-bold transition-colors cursor-pointer relative ${
             activeTab === 'members'
               ? 'text-[#003527] border-b-2 border-[#003527]'
@@ -576,7 +621,7 @@ Barah-e-karam 24 ghante ke andar is link ko open karke apna secure password aur 
         {isSuperAdmin && (
           <button
             type="button"
-            onClick={() => setActiveTab('invites')}
+            onClick={() => handleTabChange('invites')}
             className={`pb-3 px-4 text-xs font-bold transition-colors cursor-pointer relative ${
               activeTab === 'invites'
                 ? 'text-[#003527] border-b-2 border-[#003527]'
@@ -592,7 +637,7 @@ Barah-e-karam 24 ghante ke andar is link ko open karke apna secure password aur 
         {isSuperAdmin && (
           <button
             type="button"
-            onClick={() => setActiveTab('allowlist')}
+            onClick={() => handleTabChange('allowlist')}
             className={`pb-3 px-4 text-xs font-bold transition-colors cursor-pointer relative ${
               activeTab === 'allowlist'
                 ? 'text-[#003527] border-b-2 border-[#003527]'
@@ -606,14 +651,18 @@ Barah-e-karam 24 ghante ke andar is link ko open karke apna secure password aur 
         {isSuperAdmin && (
           <button
             type="button"
-            onClick={() => setActiveTab('requests')}
+            onClick={() => handleTabChange('requests')}
             className={`pb-3 px-4 text-xs font-bold transition-colors cursor-pointer relative ${
               activeTab === 'requests'
                 ? 'text-[#003527] border-b-2 border-[#003527]'
                 : 'text-neutral-500 hover:text-neutral-900'
             }`}
           >
-            Access Requests ({requests.filter((r) => r.status === 'pending').length})
+            Access Requests (
+            <span className={requests.filter((r) => r.status === 'pending').length > 0 ? 'text-amber-600 font-black' : ''}>
+              {requests.filter((r) => r.status === 'pending').length}
+            </span>
+            )
           </button>
         )}
       </div>
@@ -621,6 +670,29 @@ Barah-e-karam 24 ghante ke andar is link ko open karke apna secure password aur 
       {/* TAB 1: MEMBERS DIRECTORY */}
       {activeTab === 'members' && (
         <div className="space-y-4">
+          {/* Pending Access Requests Alert Banner */}
+          {isSuperAdmin && requests.filter((r) => r.status === 'pending').length > 0 && (
+            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-xs animate-in fade-in">
+              <div className="flex items-center gap-2.5 text-amber-900 font-bold">
+                <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+                <div>
+                  <div>
+                    {requests.filter((r) => r.status === 'pending').length} نئی ایڈمن ایکسس درخواستیں منتظر ہیں (New Access Requests Waiting)
+                  </div>
+                  <div className="text-[11px] text-amber-700 font-normal mt-0.5">
+                    Recent applicant: {requests.filter((r) => r.status === 'pending')[0]?.name} ({requests.filter((r) => r.status === 'pending')[0]?.email})
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleTabChange('requests')}
+                className="px-4 py-2 rounded-xl bg-[#003527] hover:bg-[#00271c] text-white font-bold text-xs shrink-0 cursor-pointer transition-colors shadow-xs"
+              >
+                درخواستیں کھولیں (Open Requests Tab)
+              </button>
+            </div>
+          )}
           {/* Search & Filters */}
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
@@ -1157,12 +1229,14 @@ Barah-e-karam 24 ghante ke andar is link ko open karke apna secure password aur 
                       type="text"
                       readOnly
                       value={`${window.location.origin}${createdInviteResult.inviteUrl}`}
-                      className="bg-transparent text-xs text-[#003527] font-mono flex-1 outline-none truncate"
+                      onClick={(e) => (e.target as HTMLInputElement).select()}
+                      onFocus={(e) => (e.target as HTMLInputElement).select()}
+                      className="bg-transparent text-xs text-[#003527] font-mono flex-1 outline-none select-all cursor-pointer font-semibold"
                     />
                     <button
                       type="button"
                       onClick={() => copyInviteLink(createdInviteResult.inviteUrl)}
-                      className="px-3 py-1.5 rounded-lg bg-[#003527] hover:bg-[#00271c] text-white font-bold text-xs shrink-0 flex items-center gap-1.5 transition-all cursor-pointer"
+                      className="px-3 py-1.5 rounded-lg bg-[#003527] hover:bg-[#00271c] text-white font-bold text-xs shrink-0 flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95"
                     >
                       {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                       <span>{copiedLink ? 'Copied' : 'Copy'}</span>

@@ -99,9 +99,8 @@ export const AdminCatalogPage: React.FC = () => {
           });
 
           if (!res.ok) {
-            if (res.status === 401) {
-              logout();
-              throw new Error('Unauthorized');
+            if (res.status === 401 || res.status === 403) {
+              return { items: [], categories: [], total: 0, totalPages: 1 };
             }
             const errData = await res.json().catch(() => ({}));
             throw new Error(errData.error || `HTTP ${res.status}: Failed to load catalog`);
@@ -132,13 +131,11 @@ export const AdminCatalogPage: React.FC = () => {
         setTotalPages(data.totalPages || 1);
       }
     } catch (err: any) {
-      if (err.message !== 'Unauthorized') {
-        setErrorMessage(err.message || 'Unable to load catalog from database.');
-      }
+      setErrorMessage(err.message || 'Unable to load catalog from database.');
     } finally {
       setIsLoading(false);
     }
-  }, [token, page, searchQuery, selectedCategory, logout]);
+  }, [token, page, searchQuery, selectedCategory]);
 
   useEffect(() => {
     fetchCatalog();

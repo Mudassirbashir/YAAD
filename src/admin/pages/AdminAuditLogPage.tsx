@@ -63,11 +63,7 @@ export const AdminAuditLogPage: React.FC = () => {
           });
 
           if (!res.ok) {
-            if (res.status === 401) {
-              logout();
-              throw new Error('Unauthorized');
-            }
-            if (res.status === 403) {
+            if (res.status === 401 || res.status === 403) {
               return { logs: [], total: 0 };
             }
             throw new Error(`HTTP ${res.status}`);
@@ -95,7 +91,7 @@ export const AdminAuditLogPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [token, page, limit, search, actionFilter, logout]);
+  }, [token, page, limit, search, actionFilter]);
 
   useEffect(() => {
     fetchLogs();

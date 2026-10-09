@@ -986,7 +986,7 @@ adminRouter.delete(
 
 // Verify an invite token before rendering form
 adminRouter.get('/invites/verify', async (req: Request, res: Response) => {
-  const token = String(req.query.token || '').trim();
+  const token = String(req.query.token || '').trim().replace(/[\s\r\n/]+$/, '');
   const invite = await adminStore.findInviteByTokenAsync(token);
 
   if (!invite || invite.status !== 'pending' || Date.now() > invite.expiresAt) {
@@ -1010,8 +1010,9 @@ adminRouter.post('/invites/accept', async (req: Request, res: Response) => {
   const { token, password, totpSecret, totpCode } = req.body;
   const clientIp = getClientIp(req);
   const userAgent = (req.headers['user-agent'] as string) || '';
+  const cleanToken = String(token || '').trim().replace(/[\s\r\n/]+$/, '');
 
-  if (!token || !totpSecret || !totpCode) {
+  if (!cleanToken || !totpSecret || !totpCode) {
     res.status(400).json({
       error: 'Token, 2FA secret, and verification code are required.',
     });
@@ -1026,7 +1027,7 @@ adminRouter.post('/invites/accept', async (req: Request, res: Response) => {
     return;
   }
 
-  const invite = await adminStore.findInviteByTokenAsync(token);
+  const invite = await adminStore.findInviteByTokenAsync(cleanToken);
   if (!invite || invite.status !== 'pending' || Date.now() > invite.expiresAt) {
     res.status(400).json({ error: 'Invitation could not be accepted. It may be expired or already used.' });
     return;
@@ -1819,11 +1820,24 @@ adminRouter.get('/analytics', requireAdminAuth, async (req: AdminAuthRequest, re
 });
 
 // -----------------------------------------------------------------------------
-// 15. Method Not Allowed Guards for POST-Only Endpoints
+// 15. Graceful Auth Login GET Handler & POST-Only Endpoints Guard
 // -----------------------------------------------------------------------------
+adminRouter.get('/auth/login', (req: Request, res: Response) => {
+  const acceptsHtml = req.headers.accept?.includes('text/html');
+  if (acceptsHtml) {
+    return res.redirect('/admin/login');
+  }
+  return res.status(200).json({
+    status: 'active',
+    endpoint: '/api/admin/auth/login',
+    method: 'POST',
+    message: 'YAAD Staff Authentication Portal. Submit email and credentials via POST to authenticate.',
+    loginUrl: '/admin/login',
+  });
+});
+
 adminRouter.get(
   [
-    '/auth/login',
     '/auth/verify-2fa',
     '/auth/confirm-2fa',
     '/auth/forgot-password',

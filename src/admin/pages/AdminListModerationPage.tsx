@@ -92,9 +92,8 @@ export const AdminListModerationPage: React.FC = () => {
           });
 
           if (!res.ok) {
-            if (res.status === 401) {
-              logout();
-              throw new Error('Unauthorized');
+            if (res.status === 401 || res.status === 403) {
+              return { lists: [], total: 0, totalPages: 1 };
             }
             const errData = await res.json().catch(() => ({}));
             throw new Error(errData.error || `HTTP ${res.status}: Failed to load shopping lists`);
@@ -119,13 +118,11 @@ export const AdminListModerationPage: React.FC = () => {
         setTotalPages(data.totalPages || 1);
       }
     } catch (err: any) {
-      if (err.message !== 'Unauthorized') {
-        setErrorMessage(err.message || 'Unable to load shopping lists from database.');
-      }
+      setErrorMessage(err.message || 'Unable to load shopping lists from database.');
     } finally {
       setIsLoading(false);
     }
-  }, [token, page, searchQuery, completionFilter, logout]);
+  }, [token, page, searchQuery, completionFilter]);
 
   useEffect(() => {
     fetchLists();

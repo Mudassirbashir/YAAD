@@ -62,6 +62,20 @@ app.all(['/admin/signup', '/admin/register', '/admin/join'], (req, res) => {
 // Dedicated Staff Admin API routes (Module 1-12)
 app.use('/api/admin', adminRouter);
 
+// App User Verification Check API (Synchronized with Admin Verified Blue Tick)
+app.get(['/api/users/:id/verification', '/api/user/verification'], async (req, res) => {
+  try {
+    const userId = req.params.id || (req.query.userId as string);
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+    const isVerified = await adminStore.isUserVerifiedAsync(String(userId));
+    return res.status(200).json({ userId, isVerified: Boolean(isVerified) });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to check verification status', details: err?.message });
+  }
+});
+
 // Public & User Support Ticket Submission API (Routes directly to Admin Support Desk)
 app.post(['/api/support/tickets', '/api/tickets'], (req, res) => {
   try {

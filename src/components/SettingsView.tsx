@@ -68,7 +68,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 }) => {
   const { t, language, setLanguage, isRTL } = useLanguage();
   const { user, profile, updateUserProfile, changePassword } = useAuth();
-  const { theme, setTheme, themes } = useAppTheme();
+  const { theme, setTheme, themes, customPalettes, selectedCustomPalette, setSelectedCustomPalette } = useAppTheme();
 
   const Chevron = isRTL ? ChevronLeft : ChevronRight;
 
@@ -241,6 +241,25 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const displayEmail = user?.email || null;
   const isVerified = Boolean(profile?.is_verified || (user?.user_metadata as any)?.is_verified);
 
+  // Authoritative real-time sync of user's blue tick verification badge
+  useEffect(() => {
+    if (!user?.id) return;
+    let isMounted = true;
+    fetch(`/api/users/${user.id}/verification`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (isMounted && data && typeof data.isVerified === 'boolean') {
+          if (profile && profile.is_verified !== data.isVerified) {
+            updateUserProfile({ is_verified: data.isVerified }).catch(() => {});
+          }
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id, profile?.is_verified, updateUserProfile]);
+
   return (
     <div
       id="settings_screen_container"
@@ -256,51 +275,34 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
       {/* 2. Main Page Container */}
       <main className="max-w-2xl mx-auto w-full px-4 sm:px-6 py-4 sm:py-6 flex flex-col gap-5 sm:gap-6">
-        {/* Title & Subtitle */}
-        <div className="flex flex-col gap-1">
-          <h1 className="font-['Plus_Jakarta_Sans'] text-2xl sm:text-3xl font-black text-on-surface tracking-tight">
-            {t('settings.title') || (language === 'ur' ? 'ترتیبات' : 'Settings')}
-          </h1>
-          <p className="text-xs sm:text-sm text-outline font-['Manrope']">
-            {t('settings.subtitle') ||
-              (language === 'ur'
-                ? 'اکاؤنٹ، ترجیحات اور ایپ کی ترتیبات'
-                : 'Manage your profile, preferences, and app options')}
-          </p>
-        </div>
-
         {/* ------------------------------------------------------------------ */}
-        {/* SECTION 1: PROFILE & ACCOUNT                                       */}
+        {/* SECTION 1: PROFILE & ACCOUNT (Directly at top of settings)         */}
         {/* ------------------------------------------------------------------ */}
         <section id="settings_profile_section" className="flex flex-col gap-2">
           <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-['Plus_Jakarta_Sans']">
             {t('settings.accountTitle') || (language === 'ur' ? 'اکاؤنٹ' : 'Account')}
           </h2>
 
-          <div className="bg-surface-container-lowest rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-surface-dim/75 shadow-2xs">
+          <div className="bg-surface-container-lowest rounded-3xl p-4 sm:p-5 border border-surface-dim/75 shadow-2xs">
             {user ? (
               <div className="flex items-center justify-between gap-3 sm:gap-4">
-                {/* Avatar with Camera Trigger */}
-                <div className="relative shrink-0">
+                {/* Left side: Avatar without overlay pencil */}
+                <div className="relative shrink-0 flex flex-col items-center">
                   <Avatar
                     name={displayName}
                     email={user.email}
                     avatarUrl={profile?.avatar_url}
                     size="lg"
-                    className="w-14 h-14 sm:w-16 sm:h-16 ring-2 ring-primary/20"
+                    className="w-14 h-14 sm:w-16 sm:h-16 ring-2 ring-primary/20 rounded-full"
                   />
-                  <button
-                    id="change_avatar_btn"
-                    type="button"
-                    onClick={() => setShowAvatarPicker(true)}
-                    aria-label={t('settings.chooseAvatar') || 'Choose Avatar'}
-                    className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center ring-2 ring-white hover:bg-primary/90 active:scale-95 transition-all cursor-pointer shadow-xs"
-                  >
-                    <Pencil className="w-3 h-3" />
-                  </button>
+                  {isVerified && (
+                    <div className="mt-1 flex items-center gap-1 sm:hidden">
+                      <VerifiedBadge size="sm" />
+                    </div>
+                  )}
                 </div>
 
-                {/* Profile Information */}
+                {/* Profile Information: Name on top, phone below, email below phone */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
                     <h3 className="text-base sm:text-lg font-bold text-on-surface font-['Plus_Jakarta_Sans'] truncate">
@@ -315,7 +317,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         {formatPhoneNumber(displayPhone)}
                       </span>
                     ) : (
-                      displayEmail || t('settings.noPhone') || 'No phone added'
+                      displayEmail || (language === 'ur' ? 'کوئی فون نمبر درج نہیں' : 'No phone added')
                     )}
                   </p>
 
@@ -326,7 +328,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   )}
                 </div>
 
-                {/* Edit Profile Button */}
+                {/* Right side: Circular button with pencil icon (Edit Info / ایڈٹ انفو) */}
                 <button
                   id="edit_profile_btn"
                   type="button"
@@ -335,17 +337,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     setFocusPhoneInModal(false);
                     setShowEditProfileModal(true);
                   }}
-                  className="px-3 py-1.5 rounded-xl text-xs font-bold font-['Plus_Jakarta_Sans'] text-primary bg-surface-container-low hover:bg-surface-container border border-surface-dim/75 transition-all shrink-0 flex items-center gap-1.5 cursor-pointer shadow-2xs active:scale-95"
+                  title={language === 'ur' ? 'ایڈٹ انفو' : 'Edit Info'}
+                  aria-label={language === 'ur' ? 'ایڈٹ انفو' : 'Edit Info'}
+                  className="w-11 h-11 rounded-full bg-surface-container hover:bg-surface-container-high border border-surface-dim/75 text-primary flex items-center justify-center shrink-0 cursor-pointer shadow-2xs active:scale-95 transition-all group"
                 >
-                  <Pencil className="w-3.5 h-3.5" />
-                  <span>{t('settings.editName') || (language === 'ur' ? 'ترمیم' : 'Edit')}</span>
+                  <Pencil className="w-4 h-4 group-hover:scale-110 transition-transform" />
                 </button>
               </div>
             ) : (
               /* Guest State Card */
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-11 h-11 rounded-2xl bg-surface-container text-primary flex items-center justify-center shrink-0">
+                  <div className="w-11 h-11 rounded-full bg-surface-container text-primary flex items-center justify-center shrink-0">
                     <User className="w-5 h-5 stroke-[2]" />
                   </div>
                   <div className="min-w-0">
@@ -373,188 +376,93 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </section>
 
         {/* ------------------------------------------------------------------ */}
-        {/* SECTION 2: PREFERENCES (Language, Sound, Reminders)                */}
+        {/* SECTION 2: PERFORMANCE (Language only, smooth & rounded)          */}
         {/* ------------------------------------------------------------------ */}
         <section id="settings_preferences_section" className="flex flex-col gap-2">
           <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-['Plus_Jakarta_Sans']">
-            {t('settings.preferencesTitle') || (language === 'ur' ? 'ترجیحات' : 'Preferences')}
+            {language === 'ur' ? 'کارکردگی و زبان' : 'Performance & Language'}
           </h2>
 
-          <div className="bg-surface-container-lowest rounded-2xl sm:rounded-3xl border border-surface-dim/75 shadow-2xs divide-y divide-surface-dim/50 overflow-hidden">
-            {/* 1. Language Selector Row */}
-            <div className="p-4 sm:p-5 flex flex-col gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-surface-container text-primary flex items-center justify-center shrink-0">
-                  <Globe2 className="w-4 h-4 stroke-[2.2]" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-sm font-bold text-on-surface font-['Plus_Jakarta_Sans']">
-                    {t('settings.language') || (language === 'ur' ? 'زبان' : 'Language')}
-                  </h3>
-                  <p className="text-xs text-outline font-['Manrope']">
-                    {t('settings.languageSubtitle') ||
-                      (language === 'ur'
-                        ? 'اپنی پسندیدہ ڈسپلے زبان منتخب کریں'
-                        : 'Choose your display language')}
-                  </p>
-                </div>
+          <div className="bg-surface-container-lowest rounded-3xl border border-surface-dim/75 shadow-2xs p-4 sm:p-5 flex flex-col gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-surface-container text-primary flex items-center justify-center shrink-0">
+                <Globe2 className="w-4.5 h-4.5 stroke-[2.2]" />
               </div>
-
-              {/* 3-way Segmented Control */}
-              <div className="grid grid-cols-3 gap-1.5 p-1 bg-surface-container-low rounded-xl">
-                {/* English */}
-                <button
-                  id="lang_select_en"
-                  type="button"
-                  onClick={() => handleSelectLanguage('en')}
-                  className={`py-2 px-2 rounded-lg text-xs font-bold font-['Plus_Jakarta_Sans'] transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                    language === 'en'
-                      ? 'bg-surface-container-lowest text-primary shadow-2xs ring-1 ring-black/5'
-                      : 'text-outline hover:text-on-surface'
-                  }`}
-                >
-                  <span>{t('settings.languageEn') || 'English'}</span>
-                  {language === 'en' && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
-                </button>
-
-                {/* Roman Urdu */}
-                <button
-                  id="lang_select_roman_urdu"
-                  type="button"
-                  onClick={() => handleSelectLanguage('roman-urdu')}
-                  className={`py-2 px-2 rounded-lg text-xs font-bold font-['Plus_Jakarta_Sans'] transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                    language === 'roman-urdu'
-                      ? 'bg-surface-container-lowest text-primary shadow-2xs ring-1 ring-black/5'
-                      : 'text-outline hover:text-on-surface'
-                  }`}
-                >
-                  <span>{t('settings.languageRomanUrdu') || 'Roman Urdu'}</span>
-                  {language === 'roman-urdu' && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
-                </button>
-
-                {/* Urdu */}
-                <button
-                  id="lang_select_ur"
-                  type="button"
-                  onClick={() => handleSelectLanguage('ur')}
-                  className={`py-2 px-2 rounded-lg text-xs font-bold font-urdu transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                    language === 'ur'
-                      ? 'bg-surface-container-lowest text-primary shadow-2xs ring-1 ring-black/5'
-                      : 'text-outline hover:text-on-surface'
-                  }`}
-                >
-                  <span>{t('settings.languageUrdu') || 'اردو'}</span>
-                  {language === 'ur' && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
-                </button>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-sm font-bold text-on-surface font-['Plus_Jakarta_Sans']">
+                  {t('settings.language') || (language === 'ur' ? 'زبان منتخب کریں' : 'Display Language')}
+                </h3>
+                <p className="text-xs text-outline font-['Manrope']">
+                  {t('settings.languageSubtitle') ||
+                    (language === 'ur'
+                      ? 'اردو، رومن اردو یا انگریزی میں استعمال کریں'
+                      : 'Choose English, Roman Urdu, or Urdu')}
+                </p>
               </div>
             </div>
 
-            {/* 2. Sound Effects Toggle */}
-            <div className="p-4 sm:p-5 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-surface-container text-primary flex items-center justify-center shrink-0">
-                  {soundEnabled ? (
-                    <Volume2 className="w-4 h-4 stroke-[2.2]" />
-                  ) : (
-                    <VolumeX className="w-4 h-4 stroke-[2]" />
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <h3 className="text-sm font-bold text-on-surface font-['Plus_Jakarta_Sans']">
-                    {t('settings.soundEffects') || (language === 'ur' ? 'صوتی اثرات' : 'Sound Effects')}
-                  </h3>
-                  <p className="text-xs text-outline font-['Manrope'] truncate">
-                    {t('settings.soundEffectsDesc') ||
-                      (language === 'ur'
-                        ? 'خریداری کے دوران تسلی بخش آوازیں سنیں'
-                        : 'Audio feedback when checking items')}
-                  </p>
-                </div>
-              </div>
-
-              {/* Sound Toggle Switch */}
+            {/* 3-way Segmented Control */}
+            <div className="grid grid-cols-3 gap-1.5 p-1.5 bg-surface-container-low rounded-2xl">
+              {/* English */}
               <button
-                id="toggle_sound_btn"
+                id="lang_select_en"
                 type="button"
-                role="switch"
-                aria-checked={soundEnabled}
-                onClick={handleToggleSound}
-                aria-label="Toggle Sound Effects"
-                className={`w-12 h-6.5 rounded-full p-0.5 transition-colors duration-200 shrink-0 cursor-pointer ${
-                  soundEnabled ? 'bg-primary' : 'bg-surface-container-high'
+                onClick={() => handleSelectLanguage('en')}
+                className={`py-2.5 px-2 rounded-xl text-xs font-bold font-['Plus_Jakarta_Sans'] transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  language === 'en'
+                    ? 'bg-surface-container-lowest text-primary shadow-xs ring-1 ring-black/5'
+                    : 'text-outline hover:text-on-surface'
                 }`}
               >
-                <div
-                  className={`w-5.5 h-5.5 rounded-full bg-white shadow-sm transform transition-transform duration-200 ${
-                    soundEnabled ? (isRTL ? '-translate-x-5.5' : 'translate-x-5.5') : 'translate-x-0'
-                  }`}
-                />
+                <span>English</span>
+                {language === 'en' && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
               </button>
-            </div>
 
-            {/* 3. Shopping Reminders Toggle */}
-            <div
-              id="settings_notifications_section"
-              className={`p-4 sm:p-5 flex items-center justify-between gap-3 transition-all duration-700 ${
-                highlightedSection === 'notifications'
-                  ? 'bg-primary/10 ring-2 ring-primary ring-inset rounded-xl'
-                  : ''
-              }`}
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-surface-container text-primary flex items-center justify-center shrink-0">
-                  {pushEnabled ? (
-                    <BellRing className="w-4 h-4 stroke-[2.2]" />
-                  ) : (
-                    <Bell className="w-4 h-4 stroke-[2]" />
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <h3 className="text-sm font-bold text-on-surface font-['Plus_Jakarta_Sans']">
-                    {language === 'ur' ? 'یاد دہانیاں اور منڈی الرٹس' : 'Shopping Reminders'}
-                  </h3>
-                  <p className="text-xs text-outline font-['Manrope'] truncate">
-                    {language === 'ur'
-                      ? 'جمعہ بازار اور ہفتہ وار منڈی کی یاد دہانی'
-                      : 'Weekly Mandi & grocery reminders'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Push Toggle Switch */}
+              {/* Roman Urdu */}
               <button
-                id="toggle_push_btn"
+                id="lang_select_roman_urdu"
                 type="button"
-                role="switch"
-                aria-checked={pushEnabled}
-                onClick={handleTogglePush}
-                aria-label="Toggle Shopping Reminders"
-                className={`w-12 h-6.5 rounded-full p-0.5 transition-colors duration-200 shrink-0 cursor-pointer ${
-                  pushEnabled ? 'bg-primary' : 'bg-surface-container-high'
+                onClick={() => handleSelectLanguage('roman-urdu')}
+                className={`py-2.5 px-2 rounded-xl text-xs font-bold font-['Plus_Jakarta_Sans'] transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  language === 'roman-urdu'
+                    ? 'bg-surface-container-lowest text-primary shadow-xs ring-1 ring-black/5'
+                    : 'text-outline hover:text-on-surface'
                 }`}
               >
-                <div
-                  className={`w-5.5 h-5.5 rounded-full bg-white shadow-sm transform transition-transform duration-200 ${
-                    pushEnabled ? (isRTL ? '-translate-x-5.5' : 'translate-x-5.5') : 'translate-x-0'
-                  }`}
-                />
+                <span>Roman Urdu</span>
+                {language === 'roman-urdu' && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
+              </button>
+
+              {/* Urdu */}
+              <button
+                id="lang_select_ur"
+                type="button"
+                onClick={() => handleSelectLanguage('ur')}
+                className={`py-2.5 px-2 rounded-xl text-xs font-bold font-urdu transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  language === 'ur'
+                    ? 'bg-surface-container-lowest text-primary shadow-xs ring-1 ring-black/5'
+                    : 'text-outline hover:text-on-surface'
+                }`}
+              >
+                <span>اردو</span>
+                {language === 'ur' && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
               </button>
             </div>
           </div>
         </section>
 
         {/* ------------------------------------------------------------------ */}
-        {/* SECTION 3: APPEARANCE & THEMES                                     */}
+        {/* SECTION 3: APPEARANCE & THEMES (Simplified Names + Custom Palettes) */}
         {/* ------------------------------------------------------------------ */}
         <section id="settings_appearance_section" className="flex flex-col gap-2">
           <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-['Plus_Jakarta_Sans']">
-            {t('settings.appearanceTitle') || (language === 'ur' ? 'تھیم' : 'Appearance')}
+            {t('settings.appearanceTitle') || (language === 'ur' ? 'تھیم اور رنگ' : 'Appearance & Theme')}
           </h2>
 
-          <div className="bg-surface-container-lowest rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-surface-dim/75 shadow-2xs space-y-3">
+          <div className="bg-surface-container-lowest rounded-3xl p-4 sm:p-5 border border-surface-dim/75 shadow-2xs space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-surface-container text-primary flex items-center justify-center shrink-0">
-                <Palette className="w-4 h-4 stroke-[2.2]" />
+              <div className="w-9 h-9 rounded-full bg-surface-container text-primary flex items-center justify-center shrink-0">
+                <Palette className="w-4.5 h-4.5 stroke-[2.2]" />
               </div>
               <div>
                 <h3 className="text-sm font-bold text-on-surface font-['Plus_Jakarta_Sans']">
@@ -562,14 +470,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </h3>
                 <p className="text-xs text-outline font-['Manrope']">
                   {language === 'ur'
-                    ? 'اپنی پسند کی تھیم منتخب کریں'
-                    : 'Select your preferred visual style'}
+                    ? 'اپنی پسند کی آسان تھیم یا کسٹم رنگ منتخب کریں'
+                    : 'Select a clean pre-set theme or customize your own'}
                 </p>
               </div>
             </div>
 
-            {/* Compact Themes Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1">
+            {/* Standard Pre-set Themes Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {themes.map((item) => {
                 const isActive = theme === item.id;
                 const localizedName =
@@ -588,9 +496,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       triggerHaptic(8);
                       setTheme(item.id);
                     }}
-                    className={`h-12 rounded-xl border px-3 flex items-center justify-between gap-2 transition-all cursor-pointer text-start active:scale-[0.98] ${
+                    className={`h-12 rounded-2xl border px-3 flex items-center justify-between gap-2 transition-all cursor-pointer text-start active:scale-[0.98] ${
                       isActive
-                        ? 'border-primary bg-primary/8 ring-1 ring-primary/30 shadow-2xs'
+                        ? 'border-primary bg-primary/10 ring-1 ring-primary/30 shadow-2xs'
                         : 'border-surface-dim/70 bg-surface-container-lowest hover:bg-surface-container-low/60'
                     }`}
                   >
@@ -619,11 +527,67 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 );
               })}
             </div>
+
+            {/* Custom Theme Card with 4 Distinct Palettes */}
+            <div className="pt-2 border-t border-surface-dim/60 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-on-surface font-['Plus_Jakarta_Sans']">
+                  {language === 'ur' ? 'کسٹم تھیم (Custom Theme)' : 'Custom Theme Palettes'}
+                </span>
+                {theme === 'custom' && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                    {language === 'ur' ? 'فعال ہے' : 'Active'}
+                  </span>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {customPalettes.map((cp) => {
+                  const isCpActive = theme === 'custom' && selectedCustomPalette.id === cp.id;
+                  const cpName =
+                    language === 'ur'
+                      ? cp.nameUrdu
+                      : language === 'roman-urdu'
+                      ? cp.nameRomanUrdu
+                      : cp.name;
+
+                  return (
+                    <button
+                      key={cp.id}
+                      type="button"
+                      onClick={() => {
+                        triggerHaptic(8);
+                        setSelectedCustomPalette(cp.id);
+                        setTheme('custom');
+                      }}
+                      className={`h-11 rounded-2xl border px-2.5 flex items-center justify-between gap-1.5 transition-all cursor-pointer text-start active:scale-95 ${
+                        isCpActive
+                          ? 'border-primary ring-2 ring-primary/40 bg-primary/10 shadow-xs'
+                          : 'border-surface-dim/70 bg-surface-container-low hover:bg-surface-container'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div
+                          className="w-5 h-5 rounded-full shrink-0 border border-black/15 shadow-2xs"
+                          style={{ backgroundColor: cp.primary }}
+                        />
+                        <span className="text-[11px] font-bold text-on-surface truncate">
+                          {cpName}
+                        </span>
+                      </div>
+                      {isCpActive && (
+                        <Check className="w-3.5 h-3.5 text-primary shrink-0 stroke-[3]" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </section>
 
         {/* ------------------------------------------------------------------ */}
-        {/* SECTION 4: SECURITY (Only when logged in)                          */}
+        {/* SECTION 4: SECURITY (Change Password Card)                         */}
         {/* ------------------------------------------------------------------ */}
         {user && (
           <section id="settings_security_section" className="flex flex-col gap-2">
@@ -631,59 +595,90 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               {t('settings.securityTitle') || (language === 'ur' ? 'سیکیورٹی' : 'Security')}
             </h2>
 
-            <div className="bg-surface-container-lowest rounded-2xl sm:rounded-3xl border border-surface-dim/75 shadow-2xs overflow-hidden">
+            <div className="bg-surface-container-lowest rounded-3xl border border-surface-dim/75 shadow-2xs p-4 sm:p-5 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-full bg-surface-container text-primary flex items-center justify-center shrink-0">
+                  <LockKeyhole className="w-4.5 h-4.5 stroke-[2.2]" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold text-on-surface font-['Plus_Jakarta_Sans']">
+                    {t('settings.changePassword') || (language === 'ur' ? 'پاس ورڈ تبدیل کریں' : 'Change Password')}
+                  </h3>
+                  <p className="text-xs text-outline font-['Manrope'] truncate">
+                    {language === 'ur'
+                      ? 'اپنے یاد اکاؤنٹ کا نیا پاس ورڈ سیٹ کریں'
+                      : 'Update your account login password'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Circular pencil action button */}
               <button
                 type="button"
                 id="toggle_change_password_btn"
                 onClick={() => setShowChangePasswordModal(true)}
-                className="w-full p-4 sm:p-5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-low/50 transition-colors cursor-pointer active:bg-surface-container-low"
+                title={language === 'ur' ? 'پاس ورڈ تبدیل کریں' : 'Change Password'}
+                aria-label="Change Password"
+                className="w-10 h-10 rounded-full bg-surface-container hover:bg-surface-container-high border border-surface-dim/75 text-primary flex items-center justify-center shrink-0 cursor-pointer shadow-2xs active:scale-95 transition-all group"
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-8 h-8 rounded-xl bg-surface-container text-primary flex items-center justify-center shrink-0">
-                    <LockKeyhole className="w-4 h-4 stroke-[2.2]" />
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="text-sm font-bold text-on-surface font-['Plus_Jakarta_Sans']">
-                      {t('settings.changePassword') || (language === 'ur' ? 'پاس ورڈ تبدیل کریں' : 'Change Password')}
-                    </h3>
-                    <p className="text-xs text-outline font-['Manrope'] truncate">
-                      {language === 'ur'
-                        ? 'اپنے یاد اکاؤنٹ کا نیا پاس ورڈ سیٹ کریں'
-                        : 'Update your account login password'}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 text-outline shrink-0">
-                  <span className="text-xs font-semibold font-['Manrope']">
-                    {language === 'ur' ? 'تبدیل کریں' : 'Change'}
-                  </span>
-                  <Chevron className="w-4 h-4" />
-                </div>
+                <Pencil className="w-4 h-4 group-hover:scale-110 transition-transform" />
               </button>
             </div>
           </section>
         )}
 
         {/* ------------------------------------------------------------------ */}
-        {/* SECTION 5: ABOUT & LEGAL                                           */}
+        {/* SECTION 5: ABOUT & SUPPORT (Only About YAAD & Customer Support Desk) */}
         {/* ------------------------------------------------------------------ */}
         <section id="settings_about_section" className="flex flex-col gap-2">
           <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-['Plus_Jakarta_Sans']">
             {t('settings.aboutTitle') || (language === 'ur' ? 'معلومات و سپورٹ' : 'About & Support')}
           </h2>
 
-          <div className="bg-surface-container-lowest rounded-2xl sm:rounded-3xl border border-surface-dim/75 shadow-2xs divide-y divide-surface-dim/50 overflow-hidden">
-            {/* 1. About YAAD */}
+          <div className="bg-surface-container-lowest rounded-3xl border border-surface-dim/75 shadow-2xs divide-y divide-surface-dim/50 overflow-hidden">
+            {/* 1. Customer Support Desk */}
+            <button
+              id="settings_support_section"
+              type="button"
+              onClick={() => {
+                triggerHaptic(8);
+                setShowSupportModal(true);
+              }}
+              className={`w-full p-4 sm:p-5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-low/50 transition-colors cursor-pointer group active:bg-surface-container-low ${
+                highlightedSection === 'support' ? 'bg-primary/10 ring-2 ring-primary ring-inset rounded-2xl' : ''
+              }`}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-full bg-surface-container text-primary flex items-center justify-center shrink-0">
+                  <Headphones className="w-4.5 h-4.5 stroke-[2.2]" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold text-on-surface font-['Plus_Jakarta_Sans'] flex items-center gap-2">
+                    <span>{language === 'ur' ? 'کسٹمر سپورٹ ڈیسک' : 'Customer Support Desk'}</span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                      {language === 'ur' ? 'براہ راست رابطہ' : 'Direct Help'}
+                    </span>
+                  </h3>
+                  <p className="text-xs text-outline font-['Manrope'] truncate">
+                    {language === 'ur'
+                      ? 'ایڈمن سپورٹ ٹیم سے فوری مدد یا شکایت درج کریں'
+                      : 'Contact staff or report an issue directly'}
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="w-4.5 h-4.5 text-outline group-hover:text-primary transition-colors shrink-0" />
+            </button>
+
+            {/* 2. About YAAD */}
             <button
               id="settings_link_about"
               type="button"
               onClick={() => handleOpenLegal('about')}
-              className="w-full p-4 sm:p-4.5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-low/50 transition-colors cursor-pointer group active:bg-surface-container-low"
+              className="w-full p-4 sm:p-5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-low/50 transition-colors cursor-pointer group active:bg-surface-container-low"
             >
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-surface-container text-primary flex items-center justify-center shrink-0">
-                  <Sparkles className="w-4 h-4 stroke-[2.2]" />
+                <div className="w-9 h-9 rounded-full bg-surface-container text-primary flex items-center justify-center shrink-0">
+                  <Sparkles className="w-4.5 h-4.5 stroke-[2.2]" />
                 </div>
                 <div className="min-w-0">
                   <h3 className="text-sm font-bold text-on-surface font-['Plus_Jakarta_Sans']">
@@ -697,118 +692,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   </p>
                 </div>
               </div>
-              <Chevron className="w-4 h-4 text-outline group-hover:text-primary transition-colors shrink-0" />
+              <ChevronRight className="w-4.5 h-4.5 text-outline group-hover:text-primary transition-colors shrink-0" />
             </button>
-
-            {/* 2. Customer Support Desk */}
-            <button
-              id="settings_support_section"
-              type="button"
-              onClick={() => {
-                triggerHaptic(8);
-                setShowSupportModal(true);
-              }}
-              className={`w-full p-4 sm:p-4.5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-low/50 transition-colors cursor-pointer group active:bg-surface-container-low ${
-                highlightedSection === 'support' ? 'bg-primary/10 ring-2 ring-primary ring-inset rounded-xl' : ''
-              }`}
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-surface-container text-primary flex items-center justify-center shrink-0">
-                  <Headphones className="w-4 h-4 stroke-[2.2]" />
-                </div>
-                <div className="min-w-0">
-                  <h3 className="text-sm font-bold text-on-surface font-['Plus_Jakarta_Sans'] flex items-center gap-2">
-                    <span>{language === 'ur' ? 'کسٹمر سپورٹ ڈیسک اور شکایت' : 'Customer Support Desk'}</span>
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                      {language === 'ur' ? 'براہ راست رابطہ' : 'Direct Help'}
-                    </span>
-                  </h3>
-                  <p className="text-xs text-outline font-['Manrope'] truncate">
-                    {language === 'ur'
-                      ? 'ایڈمن سپورٹ ٹیم سے مدد یا شکایت درج کریں'
-                      : 'Report an issue, ask a question, or contact staff'}
-                  </p>
-                </div>
-              </div>
-              <Chevron className="w-4 h-4 text-outline group-hover:text-primary transition-colors shrink-0" />
-            </button>
-
-            {/* 3. Privacy Policy */}
-            <button
-              id="settings_link_privacy"
-              type="button"
-              onClick={() => handleOpenLegal('privacy')}
-              className="w-full p-4 sm:p-4.5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-low/50 transition-colors cursor-pointer group active:bg-surface-container-low"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-surface-container text-primary flex items-center justify-center shrink-0">
-                  <ShieldCheck className="w-4 h-4 stroke-[2.2]" />
-                </div>
-                <div className="min-w-0">
-                  <h3 className="text-sm font-bold text-on-surface font-['Plus_Jakarta_Sans']">
-                    {t('settings.privacyPolicy') || (language === 'ur' ? 'پرائیویسی پالیسی' : 'Privacy Policy')}
-                  </h3>
-                  <p className="text-xs text-outline font-['Manrope'] truncate">
-                    {language === 'ur'
-                      ? 'آپ کا ذاتی گروسری ڈیٹا مکمل محفوظ ہے'
-                      : 'Your data protection and privacy'}
-                  </p>
-                </div>
-              </div>
-              <Chevron className="w-4 h-4 text-outline group-hover:text-primary transition-colors shrink-0" />
-            </button>
-
-            {/* 4. Terms of Service */}
-            <button
-              id="settings_link_terms"
-              type="button"
-              onClick={() => handleOpenLegal('terms')}
-              className="w-full p-4 sm:p-4.5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-low/50 transition-colors cursor-pointer group active:bg-surface-container-low"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-surface-container text-primary flex items-center justify-center shrink-0">
-                  <ScrollText className="w-4 h-4 stroke-[2.2]" />
-                </div>
-                <div className="min-w-0">
-                  <h3 className="text-sm font-bold text-on-surface font-['Plus_Jakarta_Sans']">
-                    {t('settings.termsOfService') || (language === 'ur' ? 'استعمال کی شرائط' : 'Terms of Service')}
-                  </h3>
-                  <p className="text-xs text-outline font-['Manrope'] truncate">
-                    {language === 'ur'
-                      ? 'یاد ایپ کے استعمال کے آسان اصول'
-                      : 'Terms of service and usage'}
-                  </p>
-                </div>
-              </div>
-              <Chevron className="w-4 h-4 text-outline group-hover:text-primary transition-colors shrink-0" />
-            </button>
-
-            {/* 5. Version Row */}
-            <div
-              id="settings_item_version"
-              className="p-4 sm:p-4.5 flex items-center justify-between gap-3"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-surface-container text-primary flex items-center justify-center shrink-0">
-                  <Info className="w-4 h-4 stroke-[2]" />
-                </div>
-                <div className="min-w-0">
-                  <h3 className="text-sm font-bold text-on-surface font-['Plus_Jakarta_Sans']">
-                    {t('settings.versionTitle') || (language === 'ur' ? 'ایپ ورژن' : 'App Version')}
-                  </h3>
-                  <p className="text-xs text-outline font-['Manrope'] truncate">
-                    {language === 'ur' ? 'پروڈکشن ریلیز' : 'Official release'}
-                  </p>
-                </div>
-              </div>
-
-              <div
-                id="settings_version_badge"
-                className="px-2.5 py-1 rounded-lg bg-surface-container-low font-mono text-xs font-bold text-outline border border-surface-dim/60 shrink-0"
-              >
-                v{APP_VERSION}
-              </div>
-            </div>
           </div>
         </section>
 
@@ -855,6 +740,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </p>
           </div>
         )}
+
+        {/* Unhighlighted Plain App Version at the very bottom */}
+        <div className="pt-4 pb-2 text-center select-none">
+          <span className="text-[11px] text-outline/50 font-mono tracking-wide">
+            YAAD v{APP_VERSION}
+          </span>
+        </div>
       </main>
 
       {/* MODAL 1: Edit Profile Modal */}

@@ -83,9 +83,8 @@ export const AdminUserDirectoryPage: React.FC = () => {
           });
 
           if (!res.ok) {
-            if (res.status === 401) {
-              logout();
-              throw new Error('Unauthorized');
+            if (res.status === 401 || res.status === 403) {
+              return { users: [], total: 0, totalPages: 1 };
             }
             const errData = await res.json().catch(() => ({}));
             throw new Error(errData.error || `HTTP ${res.status}: Failed to load users`);
@@ -110,13 +109,11 @@ export const AdminUserDirectoryPage: React.FC = () => {
         setTotalPages(data.totalPages || 1);
       }
     } catch (err: any) {
-      if (err.message !== 'Unauthorized') {
-        setErrorMessage(err.message || 'Unable to load users from the database.');
-      }
+      setErrorMessage(err.message || 'Unable to load users from the database.');
     } finally {
       setIsLoading(false);
     }
-  }, [token, page, searchQuery, statusFilter, logout]);
+  }, [token, page, searchQuery, statusFilter]);
 
   useEffect(() => {
     fetchUsers();

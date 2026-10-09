@@ -49,9 +49,8 @@ export const AdminSettingsPage: React.FC = () => {
           settingsKey,
           async () => {
             const res = await fetch(settingsKey, { headers: { Authorization: `Bearer ${token}` } });
-            if (res.status === 401) {
-              logout();
-              throw new Error('Unauthorized');
+            if (res.status === 401 || res.status === 403) {
+              return null;
             }
             if (!res.ok) throw new Error('Failed to load settings');
             return res.json();
@@ -67,9 +66,8 @@ export const AdminSettingsPage: React.FC = () => {
           rolesKey,
           async () => {
             const res = await fetch(rolesKey, { headers: { Authorization: `Bearer ${token}` } });
-            if (res.status === 401) {
-              logout();
-              throw new Error('Unauthorized');
+            if (res.status === 401 || res.status === 403) {
+              return null;
             }
             if (!res.ok) throw new Error('Failed to load role matrix');
             return res.json();
@@ -86,13 +84,11 @@ export const AdminSettingsPage: React.FC = () => {
       if (sData) setSettings(sData);
       if (rData) setRoleMatrix(rData);
     } catch (err: any) {
-      if (err.message !== 'Unauthorized') {
-        setErrorMessage(err.message || 'Error communicating with settings API.');
-      }
+      setErrorMessage(err.message || 'Error communicating with settings API.');
     } finally {
       setIsLoading(false);
     }
-  }, [token, logout]);
+  }, [token]);
 
   useEffect(() => {
     fetchData();

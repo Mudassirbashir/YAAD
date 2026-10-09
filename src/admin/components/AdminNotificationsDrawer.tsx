@@ -86,13 +86,26 @@ export const AdminNotificationsDrawer: React.FC<AdminNotificationsDrawerProps> =
     [token, onUnreadCountChange]
   );
 
-  // Poll for notifications periodically
+  // Poll for notifications periodically & on window focus for immediate alerts
   useEffect(() => {
     fetchNotifications();
     const interval = setInterval(() => {
       fetchNotifications(true);
-    }, 25000);
-    return () => clearInterval(interval);
+    }, 5000);
+
+    const handleFocus = () => {
+      if (document.visibilityState === 'visible') {
+        fetchNotifications(true);
+      }
+    };
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleFocus);
+    };
   }, [fetchNotifications]);
 
   const handleDismissOne = async (id: string, e?: React.MouseEvent) => {
@@ -157,6 +170,8 @@ export const AdminNotificationsDrawer: React.FC<AdminNotificationsDrawerProps> =
     onClose();
     if (n.link) {
       onNavigate(n.link);
+    } else if (n.type === 'request') {
+      onNavigate('/admin/team?tab=requests');
     }
   };
 
@@ -367,7 +382,7 @@ export const AdminNotificationsDrawer: React.FC<AdminNotificationsDrawerProps> =
                   {/* Card Action Footer */}
                   <div className="flex items-center justify-between pt-1 border-t border-neutral-100 text-[10px]">
                     <span className="text-[#003527] font-bold flex items-center gap-1 group-hover:underline">
-                      <span>Take Action</span>
+                      <span>{n.type === 'request' ? 'درخواست کھولیں (Open Request)' : 'Take Action'}</span>
                       <ExternalLink className="w-3 h-3" />
                     </span>
 

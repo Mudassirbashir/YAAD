@@ -60,6 +60,7 @@ export interface AuthContextType {
     full_name?: string;
     phone_number?: string | null;
     avatar_url?: string | null;
+    is_verified?: boolean;
     language?: AppLanguage;
     usage_purpose?: string;
     referral_source?: string;
@@ -1142,6 +1143,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     full_name?: string;
     phone_number?: string | null;
     avatar_url?: string | null;
+    is_verified?: boolean;
     language?: AppLanguage;
     usage_purpose?: string;
     referral_source?: string;
@@ -1161,6 +1163,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         email: user.email || profile?.email || null,
         phone_number: updates.phone_number !== undefined ? (updates.phone_number || null) : (profile?.phone_number ?? null),
         avatar_url: updates.avatar_url !== undefined ? (updates.avatar_url || null) : (profile?.avatar_url ?? null),
+        is_verified: updates.is_verified !== undefined ? updates.is_verified : (profile?.is_verified ?? false),
         language: updates.language !== undefined ? updates.language : (profile?.language ?? 'en'),
         usage_purpose: updates.usage_purpose !== undefined ? updates.usage_purpose : profile?.usage_purpose,
         referral_source: updates.referral_source !== undefined ? updates.referral_source : profile?.referral_source,

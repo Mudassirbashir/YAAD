@@ -63,39 +63,41 @@ function AdminRouter() {
     setSearchParams(new URLSearchParams(searchPart || ''));
   };
 
+  const normalizedPath = (currentPath || '/admin').replace(/\/+$/, '') || '/admin';
+
   // 1. One-time First Super Admin Bootstrap Flow (/admin/setup)
-  if (currentPath === '/admin/setup') {
+  if (normalizedPath === '/admin/setup') {
     return <AdminSetupBootstrapPage onNavigate={navigate} />;
   }
 
   // 2. Public Registration is strictly disabled -> Return 404
   if (
-    currentPath === '/admin/signup' ||
-    currentPath === '/admin/register' ||
-    currentPath === '/admin/join'
+    normalizedPath === '/admin/signup' ||
+    normalizedPath === '/admin/register' ||
+    normalizedPath === '/admin/join'
   ) {
     return <AdminNotFoundPage onNavigate={navigate} />;
   }
 
   // 3. Password Reset Flow (with token)
-  if (currentPath === '/admin/reset-password') {
+  if (normalizedPath === '/admin/reset-password') {
     const resetToken = searchParams.get('token') || '';
     return <AdminResetPasswordPage token={resetToken} onNavigate={navigate} />;
   }
 
   // 4. Forgot Password Flow
-  if (currentPath === '/admin/forgot-password') {
+  if (normalizedPath === '/admin/forgot-password') {
     return <AdminForgotPasswordPage onNavigate={navigate} />;
   }
 
   // 5. Accept Staff Invitation Flow
-  if (currentPath === '/admin/accept-invite') {
+  if (normalizedPath === '/admin/accept-invite') {
     const inviteToken = searchParams.get('token') || '';
     return <AdminAcceptInvitePage token={inviteToken} onNavigate={navigate} />;
   }
 
   // 6. Setup 2FA Flow (Enforced for new admin)
-  if (currentPath === '/admin/setup-2fa') {
+  if (normalizedPath === '/admin/setup-2fa') {
     return <AdminSetup2FAPage tempToken={temp2faToken || undefined} onNavigate={navigate} />;
   }
 

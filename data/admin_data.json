@@ -91,6 +91,21 @@
       "expiresAt": 1791545358736,
       "status": "pending",
       "createdAt": 1791458958736
+    },
+    {
+      "id": "inv_c0c401f7-275a-4298-b837-505f0f556e2f",
+      "email": "new.member@example.com",
+      "name": "Farhan Ali",
+      "role": "support_agent",
+      "token": "yaad_inv.eyJpaWQiOiJpbnZfYzBjNDAxZjctMjc1YS00Mjk4LWI4MzctNTA1ZjBmNTU2ZTJmIiwiZW1haWwiOiJuZXcubWVtYmVyQGV4YW1wbGUuY29tIiwibmFtZSI6IkZhcmhhbiBBbGkiLCJyb2xlIjoic3VwcG9ydF9hZ2VudCIsImJ5Ijp7ImlkIjoiYWRtaW5fMSIsImVtYWlsIjoic3VwZXJAeWFhZC5hcHAiLCJuYW1lIjoiU3VwZXIgQWRtaW4ifSwiY2F0IjoxNzkxNTU3NTMyODU4LCJleHAiOjE3OTE2NDM5MzI4NTgsIm5vbmNlIjoiMjlmZTFjMTA1YTQ4OTIxNSJ9.3b3fe54b8f9fb94c1041e824c149bd942600f688ce5f9828be72c795416c4604",
+      "invitedBy": {
+        "id": "admin_1",
+        "email": "super@yaad.app",
+        "name": "Super Admin"
+      },
+      "expiresAt": 1791643932858,
+      "status": "pending",
+      "createdAt": 1791557532858
     }
   ],
   "resets": [],
@@ -1705,7 +1720,8 @@
     "emailAllowlist": [
       "applicant_1791458643815@example.com",
       "test_writer_1791458958728@example.com",
-      "applicant_1791458958748@example.com"
+      "applicant_1791458958748@example.com",
+      "new.member@example.com"
     ],
     "setupCompletedAt": 1791123839719,
     "sessionTimeoutMinutes": 30,
@@ -1722,7 +1738,8 @@
       "enabled": false,
       "message": "YAAD system is undergoing scheduled cloud maintenance.",
       "bannerType": "info"
-    }
+    },
+    "systemSecret": "yaad_sec_c940b5f14e7a83d7a8e8b2f901cb4d88e63a890937b2d28f74a01c385b"
   },
   "permissionMatrix": {
     "users.view": {
@@ -1870,11 +1887,11 @@
         "twitter": "https://x.com/yaadapppk"
       },
       "status": "published",
-      "publishedAt": 1791199807552,
+      "publishedAt": 1791298332851,
       "readTimeMinutes": 4,
       "viewsCount": 1420,
-      "createdAt": 1791199807552,
-      "updatedAt": 1791372607552
+      "createdAt": 1791298332851,
+      "updatedAt": 1791471132851
     },
     {
       "id": "art_fresh_sabzi_guide",
@@ -1899,11 +1916,11 @@
         "twitter": "https://x.com/yaadapppk"
       },
       "status": "published",
-      "publishedAt": 1790854207552,
+      "publishedAt": 1790952732851,
       "readTimeMinutes": 3,
       "viewsCount": 890,
-      "createdAt": 1790854207552,
-      "updatedAt": 1790854207552
+      "createdAt": 1790952732851,
+      "updatedAt": 1790952732851
     },
     {
       "id": "art_spices_shelf_life",
@@ -1928,11 +1945,11 @@
         "instagram": "https://instagram.com/yaadapppk"
       },
       "status": "published",
-      "publishedAt": 1790249407552,
+      "publishedAt": 1790347932851,
       "readTimeMinutes": 3,
       "viewsCount": 650,
-      "createdAt": 1790249407552,
-      "updatedAt": 1790249407552
+      "createdAt": 1790347932851,
+      "updatedAt": 1790347932851
     }
   ],
   "pushCampaigns": [
@@ -2060,6 +2077,16 @@
   ],
   "cannedReplies": [],
   "accessRequests": [
+    {
+      "id": "req_dd98dd2d-6c31-4870-b9c3-0bc378ff5341",
+      "name": "Zainab Fatima",
+      "email": "applicant.test@example.com",
+      "phone": "03001234567",
+      "requestedRole": "content_editor",
+      "reason": "Need content publishing access",
+      "status": "pending",
+      "createdAt": 1791557486896
+    },
     {
       "id": "req_9ee9ae53-2899-49c9-9874-1e61e2d25292",
       "name": "Usman Marketing",

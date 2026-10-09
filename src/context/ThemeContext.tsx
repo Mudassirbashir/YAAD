@@ -12,7 +12,8 @@ export type AppThemeId =
   | 'sapphire'
   | 'terracotta'
   | 'amethyst'
-  | 'rose';
+  | 'rose'
+  | 'custom';
 
 export interface AppThemeOption {
   id: AppThemeId;
@@ -30,15 +31,64 @@ export interface AppThemeOption {
   isDark?: boolean;
 }
 
+export interface CustomColorPalette {
+  id: string;
+  name: string;
+  nameUrdu: string;
+  nameRomanUrdu: string;
+  primary: string;
+  accent: string;
+  surface: string;
+}
+
+export const CUSTOM_PALETTES: CustomColorPalette[] = [
+  {
+    id: 'teal',
+    name: 'Mint Teal',
+    nameUrdu: 'تازہ فیروزی',
+    nameRomanUrdu: 'Mint Teal',
+    primary: '#0d9488',
+    accent: '#ccfbf1',
+    surface: '#f0fdfa',
+  },
+  {
+    id: 'indigo',
+    name: 'Indigo Blue',
+    nameUrdu: 'گہرا انڈیگو',
+    nameRomanUrdu: 'Indigo Blue',
+    primary: '#4338ca',
+    accent: '#e0e7ff',
+    surface: '#eef2ff',
+  },
+  {
+    id: 'crimson',
+    name: 'Ruby Crimson',
+    nameUrdu: 'روبی سرخ',
+    nameRomanUrdu: 'Ruby Crimson',
+    primary: '#be123c',
+    accent: '#ffe4e6',
+    surface: '#fff1f2',
+  },
+  {
+    id: 'amber',
+    name: 'Golden Amber',
+    nameUrdu: 'سنہری عنبر',
+    nameRomanUrdu: 'Golden Amber',
+    primary: '#b45309',
+    accent: '#fef3c7',
+    surface: '#fffbeb',
+  },
+];
+
 export const PREINSTALLED_THEMES: AppThemeOption[] = [
   {
     id: 'default',
-    name: 'Classic Emerald (Default)',
-    nameUrdu: 'کلاسک زمرد (اصل یاد)',
-    nameRomanUrdu: 'Classic Emerald (Asal YAAD)',
-    desc: 'Original YAAD evergreen palette with organic mint accents',
-    descUrdu: 'یاد ایپ کا اصل کلاسک سبز اور پرسکون نیچرل انداز',
-    descRomanUrdu: 'Asal YAAD classic sabz aur organic mint look',
+    name: 'Classic Green (Default)',
+    nameUrdu: 'کلاسک ہرا (اصل یاد)',
+    nameRomanUrdu: 'Classic Green (Default)',
+    desc: 'Original YAAD evergreen palette',
+    descUrdu: 'یاد کا اصل کلاسک ہرا رنگ',
+    descRomanUrdu: 'YAAD ka asal classic sabz rang',
     primary: '#0F3D2E',
     accent: '#bcedd8',
     surface: '#f7faf5',
@@ -48,12 +98,12 @@ export const PREINSTALLED_THEMES: AppThemeOption[] = [
   },
   {
     id: 'midnight',
-    name: 'Midnight Slate (Night Mode)',
-    nameUrdu: 'نائٹ موڈ (گہرا سلیٹ)',
-    nameRomanUrdu: 'Midnight Slate (Night Mode)',
-    desc: 'Deep obsidian night theme with luminous emerald glow',
-    descUrdu: 'رات کے وقت آنکھوں کے لیے پرسکون گہرا اور دیدہ زیب موڈ',
-    descRomanUrdu: 'Raat k liye behtareen dark slate aur glowing mint',
+    name: 'Dark Mode (Night)',
+    nameUrdu: 'ڈارک موڈ (نائٹ)',
+    nameRomanUrdu: 'Dark Mode (Night)',
+    desc: 'High contrast night theme for easy reading',
+    descUrdu: 'رات کے وقت آنکھوں کے لیے پرسکون ڈارک موڈ',
+    descRomanUrdu: 'Raat k liye aasan dark mode',
     primary: '#10b981',
     accent: '#065f46',
     surface: '#0f172a',
@@ -63,12 +113,12 @@ export const PREINSTALLED_THEMES: AppThemeOption[] = [
   },
   {
     id: 'sapphire',
-    name: 'Royal Sapphire',
-    nameUrdu: 'شاہی نیلا (انڈیگو)',
-    nameRomanUrdu: 'Royal Sapphire (Indigo)',
-    desc: 'Prestigious deep navy blue with sky azure highlights',
-    descUrdu: 'خوبصورت شاہی نیلا رنگ اور جدید سمندری چمک',
-    descRomanUrdu: 'Khoobsurat royal navy aur fresh sky blue',
+    name: 'Ocean Blue',
+    nameUrdu: 'نیلا (Ocean)',
+    nameRomanUrdu: 'Ocean Blue',
+    desc: 'Vibrant clean navy and sky blue',
+    descUrdu: 'خوبصورت سمندری نیلا رنگ',
+    descRomanUrdu: 'Khoobsurat samandari neela rang',
     primary: '#1d4ed8',
     accent: '#dbeafe',
     surface: '#f4f7fc',
@@ -78,12 +128,12 @@ export const PREINSTALLED_THEMES: AppThemeOption[] = [
   },
   {
     id: 'terracotta',
-    name: 'Warm Terracotta',
-    nameUrdu: 'گرم مٹی و عنبر (زعفرانی)',
-    nameRomanUrdu: 'Warm Terracotta (Zafrani)',
-    desc: 'Artisanal clay and desert spice with warm amber accents',
-    descUrdu: 'دیسی مٹی، زعفران اور گرم مصالحہ جات کا روایتی خوبصورت رنگ',
-    descRomanUrdu: 'Desi clay, amber aur garam zafrani touch',
+    name: 'Amber Orange',
+    nameUrdu: 'نارنجی (Amber)',
+    nameRomanUrdu: 'Amber Orange',
+    desc: 'Warm terracotta and golden spice',
+    descUrdu: 'گرم نارنجی اور عنبر رنگ',
+    descRomanUrdu: 'Garam narangi aur amber rang',
     primary: '#9a3412',
     accent: '#ffedd5',
     surface: '#fdfaf6',
@@ -93,12 +143,12 @@ export const PREINSTALLED_THEMES: AppThemeOption[] = [
   },
   {
     id: 'amethyst',
-    name: 'Amethyst Violet',
-    nameUrdu: 'شاہی ارغوانی (جامنی)',
-    nameRomanUrdu: 'Royal Amethyst (Jamni)',
-    desc: 'Regal velvet violet paired with delicate lavender notes',
-    descUrdu: 'شاندار شاہی جامنی اور نزاکت بھرا لیونڈر انداز',
-    descRomanUrdu: 'Shaandar royal violet aur soft lavender',
+    name: 'Royal Purple',
+    nameUrdu: 'شاہی جامنی',
+    nameRomanUrdu: 'Royal Purple',
+    desc: 'Regal velvet violet and soft lavender',
+    descUrdu: 'شاندار شاہی جامنی رنگ',
+    descRomanUrdu: 'Shaandar royal jamni rang',
     primary: '#6b21a8',
     accent: '#f3e8ff',
     surface: '#faf7fd',
@@ -108,12 +158,12 @@ export const PREINSTALLED_THEMES: AppThemeOption[] = [
   },
   {
     id: 'rose',
-    name: 'Rose Coral',
-    nameUrdu: 'گلابی عقیق (مرجان)',
-    nameRomanUrdu: 'Rose Coral (Gulabi)',
-    desc: 'Vibrant blossom petals and soothing rose quartz tones',
-    descUrdu: 'تازہ گلاب کی پتیوں جیسا خوبصورت اور نکھرا ہوا انداز',
-    descRomanUrdu: 'Taza gulab aur warm coral ka pyaara look',
+    name: 'Rose Pink',
+    nameUrdu: 'گلابی (Rose)',
+    nameRomanUrdu: 'Rose Pink',
+    desc: 'Soft blossom petals and soothing rose',
+    descUrdu: 'تازہ گلاب کا پیارا رنگ',
+    descRomanUrdu: 'Taza gulab ka pyara rang',
     primary: '#9f1239',
     accent: '#ffe4e6',
     surface: '#fff7f8',
@@ -128,11 +178,15 @@ interface ThemeContextType {
   currentThemeConfig: AppThemeOption;
   setTheme: (themeId: AppThemeId) => void;
   themes: AppThemeOption[];
+  customPalettes: CustomColorPalette[];
+  selectedCustomPalette: CustomColorPalette;
+  setSelectedCustomPalette: (paletteId: string) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 const THEME_STORAGE_KEY = 'yaad_app_theme';
+const CUSTOM_PALETTE_STORAGE_KEY = 'yaad_custom_palette';
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -146,7 +200,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
         stored === 'sapphire' ||
         stored === 'terracotta' ||
         stored === 'amethyst' ||
-        stored === 'rose'
+        stored === 'rose' ||
+        stored === 'custom'
       ) {
         return stored;
       }
@@ -156,10 +211,41 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
     return 'default';
   });
 
-  const currentThemeConfig =
-    PREINSTALLED_THEMES.find((t) => t.id === theme) || PREINSTALLED_THEMES[0];
+  const [customPaletteId, setCustomPaletteIdState] = useState<string>(() => {
+    try {
+      const stored = localStorage.getItem(CUSTOM_PALETTE_STORAGE_KEY);
+      if (CUSTOM_PALETTES.some((p) => p.id === stored)) {
+        return stored!;
+      }
+    } catch {
+      // ignore
+    }
+    return 'teal';
+  });
 
-  // Apply theme attribute and meta theme-color to document
+  const selectedCustomPalette =
+    CUSTOM_PALETTES.find((p) => p.id === customPaletteId) || CUSTOM_PALETTES[0];
+
+  const currentThemeConfig: AppThemeOption =
+    theme === 'custom'
+      ? {
+          id: 'custom',
+          name: `Custom (${selectedCustomPalette.name})`,
+          nameUrdu: `کسٹم (${selectedCustomPalette.nameUrdu})`,
+          nameRomanUrdu: `Custom (${selectedCustomPalette.nameRomanUrdu})`,
+          desc: 'Personalized color palette',
+          descUrdu: 'آپ کی پسندیدہ کسٹم تھیم',
+          descRomanUrdu: 'Aapki pasandida custom theme',
+          primary: selectedCustomPalette.primary,
+          accent: selectedCustomPalette.accent,
+          surface: selectedCustomPalette.surface,
+          badgeBg: selectedCustomPalette.accent,
+          badgeText: '#0f172a',
+          isDark: false,
+        }
+      : PREINSTALLED_THEMES.find((t) => t.id === theme) || PREINSTALLED_THEMES[0];
+
+  // Apply theme attribute, CSS vars, and meta theme-color to document
   useEffect(() => {
     try {
       document.documentElement.setAttribute('data-app-theme', theme);
@@ -167,6 +253,22 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
         document.documentElement.classList.add('dark');
       } else {
         document.documentElement.classList.remove('dark');
+      }
+
+      if (theme === 'custom') {
+        document.documentElement.style.setProperty('--color-primary', selectedCustomPalette.primary);
+        document.documentElement.style.setProperty('--color-primary-container', selectedCustomPalette.primary);
+        document.documentElement.style.setProperty('--color-primary-fixed', selectedCustomPalette.accent);
+        document.documentElement.style.setProperty('--color-surface-tint', selectedCustomPalette.primary);
+        document.documentElement.style.setProperty('--color-background', selectedCustomPalette.surface);
+        document.documentElement.style.setProperty('--color-surface', selectedCustomPalette.surface);
+      } else {
+        document.documentElement.style.removeProperty('--color-primary');
+        document.documentElement.style.removeProperty('--color-primary-container');
+        document.documentElement.style.removeProperty('--color-primary-fixed');
+        document.documentElement.style.removeProperty('--color-surface-tint');
+        document.documentElement.style.removeProperty('--color-background');
+        document.documentElement.style.removeProperty('--color-surface');
       }
 
       // Update mobile browser status bar color
@@ -180,7 +282,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (e) {
       console.warn('Could not apply theme to document:', e);
     }
-  }, [theme, currentThemeConfig]);
+  }, [theme, currentThemeConfig, selectedCustomPalette]);
 
   const setTheme = useCallback((themeId: AppThemeId) => {
     setThemeState(themeId);
@@ -191,6 +293,15 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, []);
 
+  const setSelectedCustomPalette = useCallback((paletteId: string) => {
+    setCustomPaletteIdState(paletteId);
+    try {
+      localStorage.setItem(CUSTOM_PALETTE_STORAGE_KEY, paletteId);
+    } catch (e) {
+      console.warn('Could not persist custom palette:', e);
+    }
+  }, []);
+
   return (
     <ThemeContext.Provider
       value={{
@@ -198,6 +309,9 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
         currentThemeConfig,
         setTheme,
         themes: PREINSTALLED_THEMES,
+        customPalettes: CUSTOM_PALETTES,
+        selectedCustomPalette,
+        setSelectedCustomPalette,
       }}
     >
       {children}

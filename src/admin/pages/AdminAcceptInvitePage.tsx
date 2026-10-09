@@ -43,12 +43,14 @@ export const AdminAcceptInvitePage: React.FC<AdminAcceptInvitePageProps> = ({
 
   // 1. Verify invite token on load
   useEffect(() => {
+    const cleanToken = (token || '').trim().replace(/[\s\r\n/]+$/, '');
+
     const verifyToken = async () => {
       setIsVerifying(true);
       setError(null);
       try {
         const res = await safeFetchJson<{ email: string; name: string; role: AdminRole; expiresAt: number }>(
-          `/api/admin/invites/verify?token=${encodeURIComponent(token)}`
+          `/api/admin/invites/verify?token=${encodeURIComponent(cleanToken)}`
         );
         if (!res.ok || !res.data) {
           setError(res.error || 'Invalid or expired invitation token.');
@@ -62,7 +64,7 @@ export const AdminAcceptInvitePage: React.FC<AdminAcceptInvitePageProps> = ({
           '/api/admin/auth/setup-2fa',
           {
             method: 'POST',
-            body: JSON.stringify({ tempToken: token }),
+            body: JSON.stringify({ tempToken: cleanToken }),
           }
         );
         if (qrRes.ok && qrRes.data) {
@@ -75,7 +77,7 @@ export const AdminAcceptInvitePage: React.FC<AdminAcceptInvitePageProps> = ({
       }
     };
 
-    if (token) {
+    if (cleanToken) {
       verifyToken();
     } else {
       setIsVerifying(false);
@@ -440,7 +442,7 @@ export const AdminAcceptInvitePage: React.FC<AdminAcceptInvitePageProps> = ({
         ) : (
           <div className="text-center py-6 space-y-4">
             <p className="text-xs text-neutral-500">
-              The invitation token is invalid or has expired (invitations expire after 24 hours). Please contact a Super Admin to re-issue your invite.
+              {error || 'The invitation token is invalid or has expired (invitations expire after 24 hours). Please contact a Super Admin to re-issue your invite.'}
             </p>
             <button
               type="button"

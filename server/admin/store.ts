@@ -26,6 +26,7 @@ import {
   getAuthoritativeCms,
   getAuthoritativeSetting,
   setAuthoritativeSetting,
+  setAuthoritativeAppUserVerified,
   getSupabaseAdmin,
 } from './supabaseAdmin';
 
@@ -1592,11 +1593,11 @@ class AdminStore {
             id: notifId,
             type: 'request',
             severity: 'info',
-            title: `Staff Access Request: ${req.name}`,
-            message: `${req.name} requested ${req.requestedRole} access for ${req.department || 'Operations'}.`,
+            title: `نئی ایڈمن درخواست: ${req.name} (${req.email})`,
+            message: `${req.name} (${req.email}) نے ${req.requestedRole.replace('_', ' ')} رول کے لیے درخواست دی ہے: "${req.reason}"`,
             timestamp: req.createdAt,
             read: false,
-            link: '/admin/team',
+            link: '/admin/team?tab=requests',
             targetId: req.id,
           });
         }
@@ -1725,14 +1726,24 @@ class AdminStore {
   }
 
   public findInviteByToken(token: string): AdminInvite | undefined {
-    return this.db.invites.find((i) => i.token === token && i.status === 'pending');
+    const clean = String(token || '').trim().replace(/[\s\r\n/]+$/, '');
+    if (!clean) return undefined;
+    return this.db.invites.find(
+      (i) =>
+        (i.token === clean ||
+          i.id === clean ||
+          (i.token && decodeURIComponent(i.token) === decodeURIComponent(clean))) &&
+        i.status === 'pending'
+    );
   }
 
   public async findInviteByTokenAsync(token: string): Promise<AdminInvite | undefined> {
-    const local = this.findInviteByToken(token);
+    const clean = String(token || '').trim().replace(/[\s\r\n/]+$/, '');
+    if (!clean) return undefined;
+    const local = this.findInviteByToken(clean);
     if (local) return local;
 
-    const shared = await getSharedInvite(token);
+    const shared = await getSharedInvite(clean);
     if (shared && shared.status === 'pending' && shared.expiresAt > Date.now()) {
       const idx = this.db.invites.findIndex((i) => i.id === shared.id);
       if (idx >= 0) {
@@ -1744,8 +1755,8 @@ class AdminStore {
     }
 
     // Stateless verification for signed tokens
-    if (token && token.startsWith('yaad_inv.')) {
-      const verified = verifySignedInviteToken(token);
+    if (clean && clean.startsWith('yaad_inv.')) {
+      const verified = verifySignedInviteToken(clean);
       if (verified && verified.exp > Date.now()) {
         // Check if an active admin already exists for this email
         const existingAdmin = await this.findAdminByEmailAsync(verified.email);
@@ -2334,6 +2345,18 @@ class AdminStore {
     return Boolean(user?.isVerified);
   }
 
+  public async isUserVerifiedAsync(userId: string): Promise<boolean> {
+    const local = this.isUserVerified(userId);
+    if (local) return true;
+    try {
+      const verifiedMap = (await getAuthoritativeSetting<Record<string, boolean>>('yaad_verified_users')) || {};
+      if (verifiedMap[userId] !== undefined) {
+        return Boolean(verifiedMap[userId]);
+      }
+    } catch {}
+    return false;
+  }
+
   public setAppUserVerified(userId: string, isVerified: boolean): AppUser | undefined {
     let user = this.getAppUserById(userId);
     if (!user) {
@@ -2363,6 +2386,7 @@ class AdminStore {
         : 'Super Admin revoked blue tick verification badge',
     });
     this.save();
+    setAuthoritativeAppUserVerified(userId, isVerified).catch(() => null);
     return user;
   }
 
@@ -3044,17 +3068,6 @@ class AdminStore {
       createdAt: Date.now(),
     };
     this.db.accessRequests.unshift(req);
-    // Instant real-time alert for super admins
-    if (!this.db.securityAlerts) this.db.securityAlerts = [];
-    this.db.securityAlerts.unshift({
-      id: 'alert_' + crypto.randomUUID(),
-      timestamp: Date.now(),
-      type: 'unauthorized_attempt',
-      title: 'Staff Access Request',
-      message: `Staff Access Request: ${data.name} (${data.email}) requested portal access for role ${data.requestedRole.replace('_', ' ')}.`,
-      targetEmail: data.email,
-      dismissed: false,
-    });
     this.save();
     return req;
   }
