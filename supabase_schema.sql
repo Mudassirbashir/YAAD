@@ -503,5 +503,43 @@ DROP POLICY IF EXISTS "Deny all public access to admin_invites" ON public.admin_
 CREATE POLICY "Deny all public access to admin_invites" ON public.admin_invites
   FOR ALL TO public USING (false);
 
+-- 8. ADMIN_SETTINGS TABLE (Authoritative Key-Value Configuration Store)
+CREATE TABLE IF NOT EXISTS public.admin_settings (
+  key TEXT PRIMARY KEY,
+  value JSONB NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_by TEXT
+);
+
+-- 9. ADMIN_AUDIT_LOGS TABLE (Authoritative Immutable Audit Trail)
+CREATE TABLE IF NOT EXISTS public.admin_audit_logs (
+  id TEXT PRIMARY KEY,
+  timestamp TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  admin_id TEXT,
+  admin_email TEXT,
+  action TEXT NOT NULL,
+  target_type TEXT NOT NULL,
+  target_id TEXT,
+  before_value JSONB,
+  after_value JSONB,
+  ip TEXT,
+  user_agent TEXT,
+  metadata JSONB
+);
+
+CREATE INDEX IF NOT EXISTS idx_admin_audit_logs_timestamp ON public.admin_audit_logs(timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_admin_audit_logs_action ON public.admin_audit_logs(action);
+
+ALTER TABLE public.admin_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.admin_audit_logs ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Deny all public access to admin_settings" ON public.admin_settings;
+CREATE POLICY "Deny all public access to admin_settings" ON public.admin_settings
+  FOR ALL TO public USING (false);
+
+DROP POLICY IF EXISTS "Deny all public access to admin_audit_logs" ON public.admin_audit_logs;
+CREATE POLICY "Deny all public access to admin_audit_logs" ON public.admin_audit_logs
+  FOR ALL TO public USING (false);
+
 
 
