@@ -541,5 +541,37 @@ DROP POLICY IF EXISTS "Deny all public access to admin_audit_logs" ON public.adm
 CREATE POLICY "Deny all public access to admin_audit_logs" ON public.admin_audit_logs
   FOR ALL TO public USING (false);
 
+-- Ensure password_hash, salt, and phone exist on admin_users table
+ALTER TABLE public.admin_users ADD COLUMN IF NOT EXISTS password_hash TEXT;
+ALTER TABLE public.admin_users ADD COLUMN IF NOT EXISTS salt TEXT;
+ALTER TABLE public.admin_users ADD COLUMN IF NOT EXISTS phone TEXT;
+
+-- 10. ADMIN_ACCESS_REQUESTS TABLE (Applications to join admin staff)
+CREATE TABLE IF NOT EXISTS public.admin_access_requests (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  phone TEXT,
+  requested_role TEXT NOT NULL DEFAULT 'support_agent',
+  department TEXT,
+  reason TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  reviewed_by TEXT,
+  reviewed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_admin_access_requests_email ON public.admin_access_requests(email);
+CREATE INDEX IF NOT EXISTS idx_admin_access_requests_status ON public.admin_access_requests(status);
+CREATE INDEX IF NOT EXISTS idx_admin_access_requests_created_at ON public.admin_access_requests(created_at DESC);
+
+ALTER TABLE public.admin_access_requests ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Deny all public access to admin_access_requests" ON public.admin_access_requests;
+CREATE POLICY "Deny all public access to admin_access_requests" ON public.admin_access_requests
+  FOR ALL TO public USING (false);
+
+
 
 

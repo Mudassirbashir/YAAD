@@ -16,6 +16,9 @@ import {
   persistSharedInvite,
   getSharedInvite,
   deleteSharedInvite,
+  persistSharedAccessRequest,
+  getSharedAccessRequestsFromDb,
+  updateSharedAccessRequestStatusInDb,
   persistSharedAuditLog,
   getSharedAuditLogsFromDb,
   getAuthoritativeAppMetrics,
@@ -43,6 +46,7 @@ export interface AdminUser {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   passwordHash?: string;
   salt?: string;
   role: AdminRole;
@@ -1848,10 +1852,15 @@ class AdminStore {
     const salt = crypto.randomBytes(16).toString('hex');
     const passwordHash = hashPassword(passwordPlain, salt);
 
+    const matchedRequest = (this.db.accessRequests || []).find(
+      (r) => r.email.toLowerCase() === invite.email.toLowerCase()
+    );
+
     const newAdmin: AdminUser = {
       id: 'admin_' + crypto.randomUUID(),
       name: invite.name,
       email: invite.email,
+      phone: matchedRequest?.phone,
       passwordHash,
       salt,
       role: invite.role,
@@ -3081,6 +3090,7 @@ class AdminStore {
     reason: string;
   }): Promise<AdminAccessRequest> {
     const req = this.createAccessRequest(data);
+    await persistSharedAccessRequest(req).catch(() => null);
     await setAuthoritativeSetting('yaad_access_requests', this.db.accessRequests, 'system');
     return req;
   }
@@ -3090,6 +3100,11 @@ class AdminStore {
   }
 
   public async getAccessRequestsAsync(): Promise<AdminAccessRequest[]> {
+    const dbRows = await getSharedAccessRequestsFromDb();
+    if (Array.isArray(dbRows) && dbRows.length > 0) {
+      this.db.accessRequests = dbRows;
+      return dbRows;
+    }
     const dbRequests = await getAuthoritativeSetting<AdminAccessRequest[]>('yaad_access_requests');
     if (Array.isArray(dbRequests)) {
       this.db.accessRequests = dbRequests;
@@ -3112,6 +3127,7 @@ class AdminStore {
   public async updateAccessRequestStatusAsync(id: string, status: 'approved' | 'rejected', reviewer?: string): Promise<AdminAccessRequest | undefined> {
     const req = this.updateAccessRequestStatus(id, status, reviewer);
     if (req) {
+      await updateSharedAccessRequestStatusInDb(id, status, reviewer).catch(() => null);
       await setAuthoritativeSetting('yaad_access_requests', this.db.accessRequests, reviewer);
     }
     return req;

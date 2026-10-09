@@ -285,7 +285,7 @@ export async function persistSharedAdmin(admin: AdminUser): Promise<void> {
   if (!supabase || isTableMissingInSupabase('admin_users')) return;
 
   try {
-    const { error } = await supabase.from('admin_users').upsert({
+    const payload: any = {
       id: admin.id,
       name: admin.name,
       email: admin.email.toLowerCase().trim(),
@@ -301,7 +301,12 @@ export async function persistSharedAdmin(admin: AdminUser): Promise<void> {
       created_at: new Date(admin.createdAt).toISOString(),
       updated_at: new Date(admin.updatedAt || Date.now()).toISOString(),
       deleted_at: admin.deletedAt ? new Date(admin.deletedAt).toISOString() : null,
-    });
+    };
+    if (admin.passwordHash) payload.password_hash = admin.passwordHash;
+    if (admin.salt) payload.salt = admin.salt;
+    if ((admin as any).phone) payload.phone = (admin as any).phone;
+
+    const { error } = await supabase.from('admin_users').upsert(payload);
     if (error && isSchemaCacheMissingTableError(error)) {
       markTableMissingInSupabase('admin_users');
     }
@@ -336,6 +341,9 @@ export async function getSharedAdminByEmail(email: string): Promise<AdminUser | 
       id: data.id,
       name: data.name,
       email: data.email,
+      phone: data.phone || undefined,
+      passwordHash: data.password_hash || undefined,
+      salt: data.salt || undefined,
       role: data.role,
       status: data.status,
       suspendReason: data.suspend_reason || undefined,
@@ -380,6 +388,9 @@ export async function getSharedAdminById(id: string): Promise<AdminUser | null> 
       id: data.id,
       name: data.name,
       email: data.email,
+      phone: data.phone || undefined,
+      passwordHash: data.password_hash || undefined,
+      salt: data.salt || undefined,
       role: data.role,
       status: data.status,
       suspendReason: data.suspend_reason || undefined,
@@ -422,6 +433,9 @@ export async function getAllSharedAdmins(): Promise<AdminUser[] | null> {
       id: d.id,
       name: d.name,
       email: d.email,
+      phone: d.phone || undefined,
+      passwordHash: d.password_hash || undefined,
+      salt: d.salt || undefined,
       role: d.role,
       status: d.status,
       suspendReason: d.suspend_reason || undefined,
@@ -518,6 +532,116 @@ export async function deleteSharedInvite(token: string): Promise<void> {
     const { error } = await supabase.from('admin_invites').delete().eq('token', token);
     if (error && isSchemaCacheMissingTableError(error)) {
       markTableMissingInSupabase('admin_invites');
+    }
+  } catch {
+    // In-memory fallback active
+  }
+}
+
+/**
+ * -----------------------------------------------------------------------------
+ * ADMIN ACCESS REQUESTS (Applicant flow)
+ * -----------------------------------------------------------------------------
+ */
+
+export interface SharedAccessRequestRecord {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  requestedRole: string;
+  department?: string;
+  reason: string;
+  status: 'pending' | 'approved' | 'rejected';
+  reviewedBy?: string;
+  reviewedAt?: number;
+  createdAt: number;
+}
+
+export async function persistSharedAccessRequest(req: SharedAccessRequestRecord): Promise<void> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase || isTableMissingInSupabase('admin_access_requests')) return;
+
+  try {
+    const { error } = await supabase.from('admin_access_requests').upsert({
+      id: req.id,
+      name: req.name,
+      email: req.email.toLowerCase().trim(),
+      phone: req.phone || null,
+      requested_role: req.requestedRole,
+      department: req.department || null,
+      reason: req.reason,
+      status: req.status,
+      reviewed_by: req.reviewedBy || null,
+      reviewed_at: req.reviewedAt ? new Date(req.reviewedAt).toISOString() : null,
+      created_at: new Date(req.createdAt).toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+    if (error && isSchemaCacheMissingTableError(error)) {
+      markTableMissingInSupabase('admin_access_requests');
+    }
+  } catch {
+    // In-memory fallback active
+  }
+}
+
+export async function getSharedAccessRequestsFromDb(): Promise<SharedAccessRequestRecord[] | null> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase || isTableMissingInSupabase('admin_access_requests')) return null;
+
+  try {
+    const { data, error } = await supabase
+      .from('admin_access_requests')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      if (isSchemaCacheMissingTableError(error)) {
+        markTableMissingInSupabase('admin_access_requests');
+      }
+      return null;
+    }
+    if (!data) return null;
+
+    return data.map((d: any) => ({
+      id: d.id,
+      name: d.name,
+      email: d.email,
+      phone: d.phone || undefined,
+      requestedRole: d.requested_role,
+      department: d.department || undefined,
+      reason: d.reason,
+      status: d.status,
+      reviewedBy: d.reviewed_by || undefined,
+      reviewedAt: d.reviewed_at ? new Date(d.reviewed_at).getTime() : undefined,
+      createdAt: new Date(d.created_at).getTime(),
+    }));
+  } catch {
+    return null;
+  }
+}
+
+export async function updateSharedAccessRequestStatusInDb(
+  id: string,
+  status: 'approved' | 'rejected',
+  reviewer?: string
+): Promise<void> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase || isTableMissingInSupabase('admin_access_requests')) return;
+
+  try {
+    const { error } = await supabase
+      .from('admin_access_requests')
+      .update({
+        status,
+        reviewed_by: reviewer || null,
+        reviewed_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id);
+
+    if (error && isSchemaCacheMissingTableError(error)) {
+      markTableMissingInSupabase('admin_access_requests');
     }
   } catch {
     // In-memory fallback active
