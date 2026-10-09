@@ -117,6 +117,56 @@ export function formatArticleRelativeTime(timestamp: number | undefined): string
   return `${Math.floor(diffDay / 365)}y ago`;
 }
 
+export function compressDataUrl(dataUrl: string, maxWidth = 1200, quality = 0.78): Promise<string> {
+  return new Promise((resolve) => {
+    if (!dataUrl || !dataUrl.startsWith('data:image/')) {
+      resolve(dataUrl);
+      return;
+    }
+    const img = new Image();
+    img.onload = () => {
+      let width = img.width;
+      let height = img.height;
+      if (width > maxWidth) {
+        height = Math.round((height * maxWidth) / width);
+        width = maxWidth;
+      }
+      if (height > maxWidth) {
+        width = Math.round((width * maxWidth) / height);
+        height = maxWidth;
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve(dataUrl);
+        return;
+      }
+      ctx.drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
+
+export function compressImageFile(file: File, maxWidth = 1200, quality = 0.78): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const raw = e.target?.result as string;
+      if (!raw) {
+        resolve('');
+        return;
+      }
+      compressDataUrl(raw, maxWidth, quality).then(resolve);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 export const AdminCmsPage: React.FC = () => {
   const { token, admin } = useAdminAuth();
   const [articles, setArticles] = useState<CmsArticle[]>([]);
@@ -344,15 +394,18 @@ export const AdminCmsPage: React.FC = () => {
       }
     }
 
-    // Direct Base64 Fallback
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64 = event.target?.result as string;
-      if (base64) {
-        setCoverImageUrl(base64);
-      }
-    };
-    reader.readAsDataURL(file);
+    // Direct Compressed Fallback (Brings multi-MB photos down to ~70KB to prevent 413)
+    try {
+      const compressed = await compressImageFile(file, 1200, 0.78);
+      setCoverImageUrl(compressed);
+    } catch {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64 = event.target?.result as string;
+        if (base64) setCoverImageUrl(base64);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -364,6 +417,16 @@ export const AdminCmsPage: React.FC = () => {
 
     setIsSaving(true);
     setErrorMsg(null);
+
+    // Auto-compress large Base64 cover images if present to ensure payload never exceeds server limits
+    let finalCoverImageUrl = coverImageUrl.trim();
+    if (finalCoverImageUrl.startsWith('data:image/') && finalCoverImageUrl.length > 250000) {
+      try {
+        finalCoverImageUrl = await compressDataUrl(finalCoverImageUrl, 1200, 0.75);
+      } catch (err) {
+        console.warn('Image auto-compression notice:', err);
+      }
+    }
 
     const socialLinksPayload = includeOfficialSocial
       ? {
@@ -383,7 +446,7 @@ export const AdminCmsPage: React.FC = () => {
       category,
       excerpt: excerpt.trim(),
       body: body.trim(),
-      coverImageUrl: coverImageUrl.trim(),
+      coverImageUrl: finalCoverImageUrl,
       authorName: authorName.trim(),
       authorEmail: authorEmail.trim(),
       tags: tagsInput.split(',').map((t) => t.trim()).filter(Boolean),
@@ -406,9 +469,24 @@ export const AdminCmsPage: React.FC = () => {
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      let data: any = null;
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        try {
+          data = await res.json();
+        } catch {
+          data = null;
+        }
+      } else {
+        const text = await res.text();
+        if (res.status === 413) {
+          throw new Error('Image or article content exceeds server size limit (HTTP 413 Payload Too Large). Please upload a smaller image or connect Cloudinary.');
+        }
+        throw new Error(text.slice(0, 150) || `Server error (${res.status})`);
+      }
+
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to save article.');
+        throw new Error(data?.error || data?.message || `Failed to save article (${res.status}).`);
       }
 
       setSuccessMsg(editingArticle ? 'Article updated successfully!' : 'New article published successfully and is live in the app!');
