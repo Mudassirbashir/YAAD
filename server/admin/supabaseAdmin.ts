@@ -967,30 +967,70 @@ export async function getAuthoritativeAppUsers(options?: {
     });
 
     const verifiedMap = (await getAuthoritativeSetting<Record<string, boolean>>('yaad_verified_users')) || {};
+    const suspendedMap = (await getAuthoritativeSetting<Record<string, { suspended: boolean; reason?: string }>>('yaad_suspended_users')) || {};
+
+    // Retrieve auth users from Supabase Auth admin if available to guarantee email & Google OAuth accounts appear
+    const authUsersMap = new Map<string, any>();
+    try {
+      if ((supabase as any).auth?.admin?.listUsers) {
+        const { data: authData } = await (supabase as any).auth.admin.listUsers();
+        if (authData?.users && Array.isArray(authData.users)) {
+          authData.users.forEach((au: any) => {
+            authUsersMap.set(au.id, au);
+          });
+        }
+      }
+    } catch {}
 
     const users: AuthoritativeAppUser[] = profiles.map((p: any) => {
       const counts = listCountsByUser.get(p.id) || { total: 0, completed: 0 };
       const createdAt = p.created_at ? new Date(p.created_at).getTime() : Date.now();
       const updatedAt = p.updated_at ? new Date(p.updated_at).getTime() : createdAt;
+      const au = authUsersMap.get(p.id);
+
+      const isSuspended = Boolean(p.is_suspended || suspendedMap[p.id]?.suspended);
+      const suspendReason = p.suspend_reason || suspendedMap[p.id]?.reason;
 
       return {
         id: p.id,
-        name: p.full_name || 'Anonymous User',
-        email: p.email || undefined,
-        phone: p.phone_number || p.phone || undefined,
-        language: p.language || 'en',
-        avatarUrl: p.avatar_url || undefined,
+        name: p.full_name || au?.user_metadata?.full_name || au?.user_metadata?.name || 'Shopper',
+        email: p.email || au?.email || undefined,
+        phone: p.phone_number || p.phone || au?.phone || au?.user_metadata?.phone_number || undefined,
+        language: p.language || au?.user_metadata?.language || 'en',
+        avatarUrl: p.avatar_url || au?.user_metadata?.avatar_url || undefined,
         signupDate: createdAt,
-        lastActiveAt: updatedAt,
-        status: p.is_suspended ? 'suspended' : 'active',
-        suspendReason: p.suspend_reason || undefined,
+        lastActiveAt: au?.last_sign_in_at ? new Date(au.last_sign_in_at).getTime() : updatedAt,
+        status: isSuspended ? 'suspended' : 'active',
+        suspendReason: suspendReason || undefined,
         listsCount: counts.total,
         completedTripsCount: counts.completed,
-        isVerified: Boolean(p.is_verified || p.raw_user_meta_data?.is_verified || (verifiedMap && verifiedMap[p.id])),
+        isVerified: Boolean(p.is_verified || au?.user_metadata?.is_verified || (verifiedMap && verifiedMap[p.id])),
       };
     });
 
-    return { users, total: count ?? users.length };
+    // Append any auth users who haven't created a profiles record yet
+    authUsersMap.forEach((au, id) => {
+      if (!profiles.some((p: any) => p.id === id)) {
+        const isSusp = Boolean(suspendedMap[id]?.suspended);
+        users.push({
+          id,
+          name: au.user_metadata?.full_name || au.user_metadata?.name || 'Shopper',
+          email: au.email || undefined,
+          phone: au.phone || au.user_metadata?.phone_number || undefined,
+          language: au.user_metadata?.language || 'en',
+          avatarUrl: au.user_metadata?.avatar_url || undefined,
+          signupDate: au.created_at ? new Date(au.created_at).getTime() : Date.now(),
+          lastActiveAt: au.last_sign_in_at ? new Date(au.last_sign_in_at).getTime() : Date.now(),
+          status: isSusp ? 'suspended' : 'active',
+          suspendReason: suspendedMap[id]?.reason || undefined,
+          listsCount: listCountsByUser.get(id)?.total || 0,
+          completedTripsCount: listCountsByUser.get(id)?.completed || 0,
+          isVerified: Boolean(au.user_metadata?.is_verified || verifiedMap[id]),
+        });
+      }
+    });
+
+    return { users, total: Math.max(count ?? 0, users.length) };
   } catch {
     return null;
   }
@@ -1377,6 +1417,42 @@ export async function setAuthoritativeAppUserVerified(userId: string, isVerified
     return success || true;
   } catch (err) {
     console.warn('[SupabaseAdmin] Error updating verified status:', err);
+    return false;
+  }
+}
+
+export async function setAuthoritativeAppUserStatus(
+  userId: string,
+  status: 'active' | 'suspended',
+  reason?: string
+): Promise<boolean> {
+  const supabase = getSupabaseAdmin();
+  const isSuspended = status === 'suspended';
+
+  try {
+    if (supabase && !isTableMissingInSupabase('profiles')) {
+      await supabase
+        .from('profiles')
+        .update({
+          is_suspended: isSuspended,
+          suspend_reason: isSuspended ? (reason || null) : null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', userId);
+    }
+
+    // Persist suspended users map in admin_settings key-value store for 100% durability
+    const suspendedMap = (await getAuthoritativeSetting<Record<string, { suspended: boolean; reason?: string }>>('yaad_suspended_users')) || {};
+    if (isSuspended) {
+      suspendedMap[userId] = { suspended: true, reason: reason || 'Suspended by administration' };
+    } else {
+      delete suspendedMap[userId];
+    }
+    await setAuthoritativeSetting('yaad_suspended_users', suspendedMap, 'super_admin');
+
+    return true;
+  } catch (err) {
+    console.warn('[SupabaseAdmin] Error updating user suspension:', err);
     return false;
   }
 }

@@ -52,6 +52,7 @@ import { RashanListPage } from './components/rashan/RashanListPage';
 import { LandingPageView } from './components/LandingPageView';
 import { HeadManager } from './seo/HeadManager';
 import { AdminApp } from './admin/AdminApp';
+import { SuspendedAccountModal } from './components/SuspendedAccountModal';
 
 const STORAGE_ONBOARDED_KEY = 'yaad_has_onboarded_v2';
 const STORAGE_PROFILE_SETUP_KEY = 'yaad_profile_setup_done';
@@ -1544,6 +1545,13 @@ function AppContent() {
         syncStatus={syncStatus}
         pendingCount={pendingCount}
         onSyncClick={triggerSync}
+      />
+
+      {/* Account Suspended Blocking Screen */}
+      <SuspendedAccountModal
+        isOpen={Boolean(user && profile?.is_suspended)}
+        reason={profile?.suspend_reason}
+        onSignOut={handleSignOut}
       />
 
       {/* PWA Update Notification */}

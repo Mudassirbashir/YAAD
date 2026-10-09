@@ -108,12 +108,52 @@ app.post(['/api/support/tickets', '/api/tickets'], (req, res) => {
 });
 
 // Public Blog Articles API (synced with Admin CMS)
-app.get(['/api/blog/articles', '/api/cms/articles'], (req, res) => {
+app.get(['/api/blog/articles', '/api/cms/articles', '/api/articles', '/api/public/cms/articles'], (req, res) => {
   try {
     const articles = adminStore.getPublicCmsArticles();
     return res.status(200).json({ success: true, articles });
   } catch (err: any) {
     return res.status(500).json({ error: 'Failed to retrieve blog articles', details: err?.message });
+  }
+});
+
+// Single Public Article by ID or Slug
+app.get(['/api/blog/articles/:id', '/api/articles/:id'], (req, res) => {
+  try {
+    const id = req.params.id;
+    const article = adminStore.getCmsArticleBySlug(id) || (adminStore.getPublicCmsArticles().find(a => a.id === id));
+    if (!article) return res.status(404).json({ error: 'Article not found' });
+    return res.status(200).json({ success: true, article });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to retrieve article', details: err?.message });
+  }
+});
+
+// Public Article Comments: Get Comments
+app.get(['/api/blog/articles/:id/comments', '/api/articles/:id/comments'], (req, res) => {
+  try {
+    const comments = adminStore.getArticleComments(req.params.id);
+    return res.status(200).json({ success: true, comments });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to retrieve comments', details: err?.message });
+  }
+});
+
+// Public Article Comments: Post Comment (No login required)
+app.post(['/api/blog/articles/:id/comments', '/api/articles/:id/comments'], (req, res) => {
+  try {
+    const { name, content, email } = req.body;
+    if (!content || !content.trim()) {
+      return res.status(400).json({ error: 'Comment content cannot be empty' });
+    }
+    const comment = adminStore.addArticleComment(req.params.id, {
+      name: name || 'Reader',
+      content,
+      email,
+    });
+    return res.status(201).json({ success: true, comment });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to add comment', details: err?.message });
   }
 });
 

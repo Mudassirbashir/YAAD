@@ -228,8 +228,10 @@ export const HomeView: React.FC<HomeViewProps> = ({
             {/* Middle: User's name prominently enlarged with Verified Badge if granted */}
             <h1 className="font-['Plus_Jakarta_Sans'] text-3xl sm:text-4xl lg:text-5xl font-black text-on-surface tracking-tight leading-tight truncate mt-0.5 flex items-center gap-2">
               <span className="truncate">{greetingData.userName}</span>
-              {(profile?.is_verified || (user?.user_metadata as any)?.is_verified) && (
-                <VerifiedBadge size="sm" />
+              {(profile?.is_verified || (user?.user_metadata as any)?.is_verified || (user?.id && typeof window !== 'undefined' && localStorage.getItem('yaad_verified_' + user.id) === 'true')) && (
+                <span className="inline-flex shrink-0 items-center self-center align-middle">
+                  <VerifiedBadge size="sm" />
+                </span>
               )}
             </h1>
             {/* Bottom: Let's make a list in solid proper black */}

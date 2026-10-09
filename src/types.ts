@@ -404,6 +404,8 @@ export interface UserProfile {
   phone?: string | null;
   avatar_url?: string;
   is_verified?: boolean;
+  is_suspended?: boolean;
+  suspend_reason?: string;
   language?: Language;
   usage_purpose?: string;
   referral_source?: string;

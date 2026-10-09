@@ -83,9 +83,9 @@ export const CUSTOM_PALETTES: CustomColorPalette[] = [
 export const PREINSTALLED_THEMES: AppThemeOption[] = [
   {
     id: 'default',
-    name: 'Classic Green (Default)',
-    nameUrdu: 'کلاسک ہرا (اصل یاد)',
-    nameRomanUrdu: 'Classic Green (Default)',
+    name: 'Classic Green',
+    nameUrdu: 'کلاسک ہرا',
+    nameRomanUrdu: 'Classic Green',
     desc: 'Original YAAD evergreen palette',
     descUrdu: 'یاد کا اصل کلاسک ہرا رنگ',
     descRomanUrdu: 'YAAD ka asal classic sabz rang',
@@ -98,9 +98,9 @@ export const PREINSTALLED_THEMES: AppThemeOption[] = [
   },
   {
     id: 'midnight',
-    name: 'Dark Mode (Night)',
-    nameUrdu: 'ڈارک موڈ (نائٹ)',
-    nameRomanUrdu: 'Dark Mode (Night)',
+    name: 'Dark Mode',
+    nameUrdu: 'ڈارک موڈ',
+    nameRomanUrdu: 'Dark Mode',
     desc: 'High contrast night theme for easy reading',
     descUrdu: 'رات کے وقت آنکھوں کے لیے پرسکون ڈارک موڈ',
     descRomanUrdu: 'Raat k liye aasan dark mode',
@@ -114,7 +114,7 @@ export const PREINSTALLED_THEMES: AppThemeOption[] = [
   {
     id: 'sapphire',
     name: 'Ocean Blue',
-    nameUrdu: 'نیلا (Ocean)',
+    nameUrdu: 'سمندری نیلا',
     nameRomanUrdu: 'Ocean Blue',
     desc: 'Vibrant clean navy and sky blue',
     descUrdu: 'خوبصورت سمندری نیلا رنگ',
@@ -129,7 +129,7 @@ export const PREINSTALLED_THEMES: AppThemeOption[] = [
   {
     id: 'terracotta',
     name: 'Amber Orange',
-    nameUrdu: 'نارنجی (Amber)',
+    nameUrdu: 'عنبر نارنجی',
     nameRomanUrdu: 'Amber Orange',
     desc: 'Warm terracotta and golden spice',
     descUrdu: 'گرم نارنجی اور عنبر رنگ',
@@ -144,7 +144,7 @@ export const PREINSTALLED_THEMES: AppThemeOption[] = [
   {
     id: 'amethyst',
     name: 'Royal Purple',
-    nameUrdu: 'شاہی جامنی',
+    nameUrdu: 'جامنی',
     nameRomanUrdu: 'Royal Purple',
     desc: 'Regal velvet violet and soft lavender',
     descUrdu: 'شاندار شاہی جامنی رنگ',
@@ -159,7 +159,7 @@ export const PREINSTALLED_THEMES: AppThemeOption[] = [
   {
     id: 'rose',
     name: 'Rose Pink',
-    nameUrdu: 'گلابی (Rose)',
+    nameUrdu: 'گلابی',
     nameRomanUrdu: 'Rose Pink',
     desc: 'Soft blossom petals and soothing rose',
     descUrdu: 'تازہ گلاب کا پیارا رنگ',

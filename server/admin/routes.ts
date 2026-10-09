@@ -1742,6 +1742,39 @@ adminRouter.delete('/cms/articles/:id', requireAdminAuth, requirePermission('con
   }
 });
 
+adminRouter.get('/cms/articles/:id/comments', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
+  try {
+    const comments = adminStore.getArticleComments(req.params.id);
+    res.status(200).json({ success: true, comments });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to retrieve comments', details: err.message });
+  }
+});
+
+adminRouter.post('/cms/articles/:id/comments/:commentId/reply', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
+  try {
+    const { reply } = req.body;
+    if (!reply || !reply.trim()) {
+      return res.status(400).json({ error: 'Reply text cannot be empty' });
+    }
+    const ok = adminStore.replyToArticleComment(req.params.id, req.params.commentId, reply, req.admin?.name || 'YAAD Support');
+    if (!ok) return res.status(404).json({ error: 'Comment not found' });
+    res.status(200).json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to reply to comment', details: err.message });
+  }
+});
+
+adminRouter.delete('/cms/articles/:id/comments/:commentId', requireAdminAuth, requirePermission('content.publish'), (req: AdminAuthRequest, res: Response) => {
+  try {
+    const ok = adminStore.deleteArticleComment(req.params.id, req.params.commentId);
+    if (!ok) return res.status(404).json({ error: 'Comment not found' });
+    res.status(200).json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to delete comment', details: err.message });
+  }
+});
+
 adminRouter.get('/push/campaigns', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
   res.status(200).json({ campaigns: adminStore.getPushCampaigns() });
 });

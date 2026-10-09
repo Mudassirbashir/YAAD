@@ -30,6 +30,7 @@ import {
   getAuthoritativeSetting,
   setAuthoritativeSetting,
   setAuthoritativeAppUserVerified,
+  setAuthoritativeAppUserStatus,
   getSupabaseAdmin,
 } from './supabaseAdmin';
 
@@ -264,6 +265,19 @@ export interface CmsArticleVersion {
   body: string;
 }
 
+export interface CmsComment {
+  id: string;
+  articleId: string;
+  name: string;
+  email?: string;
+  content: string;
+  status: 'approved' | 'pending' | 'rejected';
+  reply?: string;
+  repliedAt?: number;
+  repliedBy?: string;
+  createdAt: number;
+}
+
 export interface CmsArticle {
   id: string;
   slug: string;
@@ -288,6 +302,8 @@ export interface CmsArticle {
     youtube?: string;
     twitter?: string;
   };
+  comments?: CmsComment[];
+  commentsCount?: number;
   status: 'draft' | 'published';
   publishedAt?: number;
   scheduledFor?: number;
@@ -2333,10 +2349,26 @@ class AdminStore {
   }
 
   public setAppUserStatus(userId: string, status: 'active' | 'inactive' | 'suspended', reason?: string): AppUser | undefined {
-    const user = this.getAppUserById(userId);
-    if (!user) return undefined;
-    user.status = status;
-    user.suspendReason = reason;
+    let user = this.getAppUserById(userId);
+    const validStatus = status === 'suspended' ? 'suspended' : 'active';
+    if (!user) {
+      if (!this.db.appUsers) this.db.appUsers = [];
+      user = {
+        id: userId,
+        name: 'Shopper',
+        status: validStatus,
+        suspendReason: reason,
+        signupDate: Date.now(),
+        lastActiveAt: Date.now(),
+        listsCount: 0,
+        completedTripsCount: 0,
+      };
+      this.db.appUsers.push(user);
+    } else {
+      user.status = validStatus;
+      user.suspendReason = reason;
+    }
+
     if (!user.timeline) user.timeline = [];
     user.timeline.unshift({
       id: 'tl_' + crypto.randomUUID(),
@@ -2346,7 +2378,17 @@ class AdminStore {
       description: reason || `Status changed to ${status}`,
     });
     this.save();
+    setAuthoritativeAppUserStatus(userId, validStatus, reason).catch(() => null);
     return user;
+  }
+
+  public async isUserSuspendedAsync(userId: string): Promise<{ suspended: boolean; reason?: string }> {
+    const suspendedMap = (await getAuthoritativeSetting<Record<string, { suspended: boolean; reason?: string }>>('yaad_suspended_users')) || {};
+    if (suspendedMap[userId]?.suspended) {
+      return { suspended: true, reason: suspendedMap[userId].reason };
+    }
+    const user = this.getAppUserById(userId);
+    return { suspended: user?.status === 'suspended', reason: user?.suspendReason };
   }
 
   public isUserVerified(userId: string): boolean {
@@ -2631,6 +2673,11 @@ class AdminStore {
           ...existing,
           ...articleData,
           slug: cleanSlug,
+          headingSize: articleData.headingSize || existing.headingSize || 'h2',
+          authorEmail: articleData.authorEmail || existing.authorEmail,
+          socialLinks: articleData.socialLinks || existing.socialLinks,
+          comments: existing.comments || [],
+          commentsCount: existing.commentsCount || (existing.comments?.length || 0),
           publishedAt: articleData.status === 'published' && !existing.publishedAt ? now : existing.publishedAt,
           updatedAt: now,
           versions: [
@@ -2660,10 +2707,15 @@ class AdminStore {
       excerptUr: articleData.excerptUr,
       excerptRomanUrdu: articleData.excerptRomanUrdu,
       body: articleData.body || '',
+      headingSize: articleData.headingSize || 'h2',
       coverImageUrl: articleData.coverImageUrl || '',
       authorName: articleData.authorName || author,
+      authorEmail: articleData.authorEmail,
+      socialLinks: articleData.socialLinks,
       category: articleData.category || 'General',
       tags: articleData.tags || [],
+      comments: [],
+      commentsCount: 0,
       status: articleData.status || 'draft',
       publishedAt: articleData.status === 'published' ? now : undefined,
       scheduledFor: articleData.scheduledFor,
@@ -2692,6 +2744,56 @@ class AdminStore {
       return true;
     }
     return false;
+  }
+
+  public addArticleComment(articleId: string, commentData: { name: string; content: string; email?: string }): CmsComment {
+    if (!this.db.cmsArticles) this.db.cmsArticles = [];
+    const art = this.db.cmsArticles.find((a) => a.id === articleId || a.slug === articleId);
+    if (!art) throw new Error('Article not found');
+    if (!art.comments) art.comments = [];
+    const comment: CmsComment = {
+      id: 'cmt_' + crypto.randomUUID(),
+      articleId: art.id,
+      name: (commentData.name || '').trim() || 'Reader',
+      email: commentData.email?.trim(),
+      content: (commentData.content || '').trim(),
+      status: 'approved',
+      createdAt: Date.now(),
+    };
+    art.comments.unshift(comment);
+    art.commentsCount = art.comments.length;
+    this.save();
+    return comment;
+  }
+
+  public getArticleComments(articleId: string): CmsComment[] {
+    if (!this.db.cmsArticles) return [];
+    const art = this.db.cmsArticles.find((a) => a.id === articleId || a.slug === articleId);
+    return art?.comments || [];
+  }
+
+  public replyToArticleComment(articleId: string, commentId: string, replyText: string, replier: string): boolean {
+    if (!this.db.cmsArticles) return false;
+    const art = this.db.cmsArticles.find((a) => a.id === articleId || a.slug === articleId);
+    if (!art || !art.comments) return false;
+    const cmt = art.comments.find((c) => c.id === commentId);
+    if (!cmt) return false;
+    cmt.reply = replyText.trim();
+    cmt.repliedAt = Date.now();
+    cmt.repliedBy = replier;
+    this.save();
+    return true;
+  }
+
+  public deleteArticleComment(articleId: string, commentId: string): boolean {
+    if (!this.db.cmsArticles) return false;
+    const art = this.db.cmsArticles.find((a) => a.id === articleId || a.slug === articleId);
+    if (!art || !art.comments) return false;
+    const before = art.comments.length;
+    art.comments = art.comments.filter((c) => c.id !== commentId);
+    art.commentsCount = art.comments.length;
+    this.save();
+    return art.comments.length < before;
   }
 
   // =========================================================================

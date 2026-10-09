@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   BookOpen,
   Search,
@@ -20,6 +20,15 @@ import {
   User,
   Sparkles,
   AlertCircle,
+  MessageSquare,
+  Copy,
+  Check,
+  Upload,
+  Send,
+  HelpCircle,
+  Link as LinkIcon,
+  ToggleLeft,
+  ToggleRight,
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { adminCache } from '../utils/adminCache';
@@ -31,6 +40,19 @@ interface SocialLinks {
   linkedin?: string;
   youtube?: string;
   twitter?: string;
+}
+
+export interface CmsComment {
+  id: string;
+  articleId: string;
+  name: string;
+  email?: string;
+  content: string;
+  status: 'approved' | 'pending' | 'rejected';
+  reply?: string;
+  repliedAt?: number;
+  repliedBy?: string;
+  createdAt: number;
 }
 
 interface CmsArticle {
@@ -50,6 +72,8 @@ interface CmsArticle {
   category: string;
   tags: string[];
   socialLinks?: SocialLinks;
+  commentsCount?: number;
+  comments?: CmsComment[];
   status: 'draft' | 'published';
   publishedAt?: number;
   readTimeMinutes: number;
@@ -68,6 +92,31 @@ const CATEGORIES = [
   'General',
 ];
 
+export const OFFICIAL_SOCIAL_DEFAULTS = {
+  facebook: 'https://www.facebook.com/yaadapppk/',
+  instagram: 'https://www.instagram.com/yaadapppk/',
+  youtube: 'https://www.youtube.com/@yaadapppk',
+  linkedin: 'https://www.linkedin.com/in/yaadapppk/',
+  tiktok: 'https://www.tiktok.com/@yaadapppk',
+  twitter: 'https://x.com/yaadapppk',
+};
+
+export function formatArticleRelativeTime(timestamp: number | undefined): string {
+  if (!timestamp) return 'Just now';
+  const now = Date.now();
+  const diffSec = Math.max(0, Math.floor((now - timestamp) / 1000));
+  if (diffSec < 60) return 'Just now';
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return `${diffHour}h ago`;
+  const diffDay = Math.floor(diffHour / 24);
+  if (diffDay < 30) return `${diffDay}d ago`;
+  const diffMonth = Math.floor(diffDay / 30);
+  if (diffMonth < 12) return `${diffMonth}mo ago`;
+  return `${Math.floor(diffDay / 365)}y ago`;
+}
+
 export const AdminCmsPage: React.FC = () => {
   const { token, admin } = useAdminAuth();
   const [articles, setArticles] = useState<CmsArticle[]>([]);
@@ -82,6 +131,7 @@ export const AdminCmsPage: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
 
   // Form Fields
   const [title, setTitle] = useState('');
@@ -95,14 +145,34 @@ export const AdminCmsPage: React.FC = () => {
   const [authorEmail, setAuthorEmail] = useState(admin?.email || 'admin@yaad.app');
   const [tagsInput, setTagsInput] = useState('');
   const [status, setStatus] = useState<'draft' | 'published'>('published');
-  
-  // Social Links
-  const [fbUrl, setFbUrl] = useState('');
-  const [igUrl, setIgUrl] = useState('');
-  const [tiktokUrl, setTiktokUrl] = useState('');
-  const [liUrl, setLiUrl] = useState('');
-  const [ytUrl, setYtUrl] = useState('');
-  const [xUrl, setXUrl] = useState('');
+
+  // Official Social Links States
+  const [includeOfficialSocial, setIncludeOfficialSocial] = useState(true);
+  const [socialToggles, setSocialToggles] = useState({
+    facebook: true,
+    instagram: true,
+    tiktok: true,
+    linkedin: true,
+    youtube: true,
+    twitter: true,
+  });
+  const [fbUrl, setFbUrl] = useState(OFFICIAL_SOCIAL_DEFAULTS.facebook);
+  const [igUrl, setIgUrl] = useState(OFFICIAL_SOCIAL_DEFAULTS.instagram);
+  const [tiktokUrl, setTiktokUrl] = useState(OFFICIAL_SOCIAL_DEFAULTS.tiktok);
+  const [liUrl, setLiUrl] = useState(OFFICIAL_SOCIAL_DEFAULTS.linkedin);
+  const [ytUrl, setYtUrl] = useState(OFFICIAL_SOCIAL_DEFAULTS.youtube);
+  const [xUrl, setXUrl] = useState(OFFICIAL_SOCIAL_DEFAULTS.twitter);
+
+  // Cloudinary Guide State
+  const [showCloudinaryGuide, setShowCloudinaryGuide] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Comments Moderation Modal State
+  const [commentsModalArticle, setCommentsModalArticle] = useState<CmsArticle | null>(null);
+  const [articleComments, setArticleComments] = useState<CmsComment[]>([]);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
+  const [replyInputs, setReplyInputs] = useState<Record<string, string>>({});
+  const [submittingReplyId, setSubmittingReplyId] = useState<string | null>(null);
 
   const fetchArticles = useCallback(
     async (forceRefresh: boolean = false) => {
@@ -139,6 +209,14 @@ export const AdminCmsPage: React.FC = () => {
     fetchArticles();
   }, [fetchArticles]);
 
+  const copyShortLink = (artSlug: string) => {
+    const fullLink = `${window.location.origin}/blog#${artSlug}`;
+    navigator.clipboard.writeText(fullLink).then(() => {
+      setCopiedSlug(artSlug);
+      setTimeout(() => setCopiedSlug(null), 2000);
+    });
+  };
+
   const openCreateModal = () => {
     setEditingArticle(null);
     setTitle('');
@@ -152,12 +230,21 @@ export const AdminCmsPage: React.FC = () => {
     setAuthorEmail(admin?.email || 'admin@yaad.app');
     setTagsInput('');
     setStatus('published');
-    setFbUrl('');
-    setIgUrl('');
-    setTiktokUrl('');
-    setLiUrl('');
-    setYtUrl('');
-    setXUrl('');
+    setIncludeOfficialSocial(true);
+    setSocialToggles({
+      facebook: true,
+      instagram: true,
+      tiktok: true,
+      linkedin: true,
+      youtube: true,
+      twitter: true,
+    });
+    setFbUrl(OFFICIAL_SOCIAL_DEFAULTS.facebook);
+    setIgUrl(OFFICIAL_SOCIAL_DEFAULTS.instagram);
+    setTiktokUrl(OFFICIAL_SOCIAL_DEFAULTS.tiktok);
+    setLiUrl(OFFICIAL_SOCIAL_DEFAULTS.linkedin);
+    setYtUrl(OFFICIAL_SOCIAL_DEFAULTS.youtube);
+    setXUrl(OFFICIAL_SOCIAL_DEFAULTS.twitter);
     setErrorMsg(null);
     setSuccessMsg(null);
     setIsModalOpen(true);
@@ -176,12 +263,25 @@ export const AdminCmsPage: React.FC = () => {
     setAuthorEmail(art.authorEmail || admin?.email || 'admin@yaad.app');
     setTagsInput((art.tags || []).join(', '));
     setStatus(art.status);
-    setFbUrl(art.socialLinks?.facebook || '');
-    setIgUrl(art.socialLinks?.instagram || '');
-    setTiktokUrl(art.socialLinks?.tiktok || '');
-    setLiUrl(art.socialLinks?.linkedin || '');
-    setYtUrl(art.socialLinks?.youtube || '');
-    setXUrl(art.socialLinks?.twitter || '');
+
+    const links = art.socialLinks || {};
+    const hasAnySocial = Object.values(links).some(Boolean);
+    setIncludeOfficialSocial(hasAnySocial);
+    setSocialToggles({
+      facebook: Boolean(links.facebook),
+      instagram: Boolean(links.instagram),
+      tiktok: Boolean(links.tiktok),
+      linkedin: Boolean(links.linkedin),
+      youtube: Boolean(links.youtube),
+      twitter: Boolean(links.twitter),
+    });
+    setFbUrl(links.facebook || OFFICIAL_SOCIAL_DEFAULTS.facebook);
+    setIgUrl(links.instagram || OFFICIAL_SOCIAL_DEFAULTS.instagram);
+    setTiktokUrl(links.tiktok || OFFICIAL_SOCIAL_DEFAULTS.tiktok);
+    setLiUrl(links.linkedin || OFFICIAL_SOCIAL_DEFAULTS.linkedin);
+    setYtUrl(links.youtube || OFFICIAL_SOCIAL_DEFAULTS.youtube);
+    setXUrl(links.twitter || OFFICIAL_SOCIAL_DEFAULTS.twitter);
+
     setErrorMsg(null);
     setSuccessMsg(null);
     setIsModalOpen(true);
@@ -198,6 +298,25 @@ export const AdminCmsPage: React.FC = () => {
     }
   };
 
+  const handleImageFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size exceeds 5MB limit. Please choose a smaller photo.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string;
+      if (base64) {
+        setCoverImageUrl(base64);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !body.trim()) {
@@ -207,6 +326,17 @@ export const AdminCmsPage: React.FC = () => {
 
     setIsSaving(true);
     setErrorMsg(null);
+
+    const socialLinksPayload = includeOfficialSocial
+      ? {
+          facebook: socialToggles.facebook ? fbUrl.trim() || undefined : undefined,
+          instagram: socialToggles.instagram ? igUrl.trim() || undefined : undefined,
+          tiktok: socialToggles.tiktok ? tiktokUrl.trim() || undefined : undefined,
+          linkedin: socialToggles.linkedin ? liUrl.trim() || undefined : undefined,
+          youtube: socialToggles.youtube ? ytUrl.trim() || undefined : undefined,
+          twitter: socialToggles.twitter ? xUrl.trim() || undefined : undefined,
+        }
+      : undefined;
 
     const payload = {
       title: title.trim(),
@@ -220,14 +350,7 @@ export const AdminCmsPage: React.FC = () => {
       authorEmail: authorEmail.trim(),
       tags: tagsInput.split(',').map((t) => t.trim()).filter(Boolean),
       status,
-      socialLinks: {
-        facebook: fbUrl.trim() || undefined,
-        instagram: igUrl.trim() || undefined,
-        tiktok: tiktokUrl.trim() || undefined,
-        linkedin: liUrl.trim() || undefined,
-        youtube: ytUrl.trim() || undefined,
-        twitter: xUrl.trim() || undefined,
-      },
+      socialLinks: socialLinksPayload,
     };
 
     try {
@@ -250,7 +373,7 @@ export const AdminCmsPage: React.FC = () => {
         throw new Error(data.error || 'Failed to save article.');
       }
 
-      setSuccessMsg(editingArticle ? 'Article updated successfully!' : 'New article published successfully!');
+      setSuccessMsg(editingArticle ? 'Article updated successfully!' : 'New article published successfully and is live in the app!');
       adminCache.invalidatePrefix('/api/admin/cms');
       await fetchArticles(true);
       setTimeout(() => {
@@ -285,6 +408,91 @@ export const AdminCmsPage: React.FC = () => {
     }
   };
 
+  // Open Comments Modal
+  const openCommentsModal = async (art: CmsArticle) => {
+    setCommentsModalArticle(art);
+    setIsLoadingComments(true);
+    setArticleComments(art.comments || []);
+    try {
+      const res = await fetch(`/api/admin/cms/articles/${art.id}/comments`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setArticleComments(data.comments || []);
+      }
+    } catch (e) {
+      console.error('Failed to load comments:', e);
+    } finally {
+      setIsLoadingComments(false);
+    }
+  };
+
+  const handleReplySubmit = async (commentId: string) => {
+    if (!commentsModalArticle) return;
+    const reply = replyInputs[commentId]?.trim();
+    if (!reply) return;
+
+    setSubmittingReplyId(commentId);
+    try {
+      const res = await fetch(`/api/admin/cms/articles/${commentsModalArticle.id}/comments/${commentId}/reply`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ reply }),
+      });
+      if (res.ok) {
+        setArticleComments((prev) =>
+          prev.map((c) =>
+            c.id === commentId
+              ? {
+                  ...c,
+                  reply,
+                  repliedAt: Date.now(),
+                  repliedBy: admin?.name || 'YAAD Team',
+                }
+              : c
+          )
+        );
+        setReplyInputs((prev) => ({ ...prev, [commentId]: '' }));
+      } else {
+        const err = await res.json();
+        alert(`Failed to reply: ${err.error || 'Unknown error'}`);
+      }
+    } catch (err: any) {
+      alert(`Error replying: ${err.message}`);
+    } finally {
+      setSubmittingReplyId(null);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!commentsModalArticle) return;
+    if (!window.confirm('Delete this comment permanently?')) return;
+
+    try {
+      const res = await fetch(`/api/admin/cms/articles/${commentsModalArticle.id}/comments/${commentId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        setArticleComments((prev) => prev.filter((c) => c.id !== commentId));
+        // Also update local articles list commentsCount
+        setArticles((prev) =>
+          prev.map((a) =>
+            a.id === commentsModalArticle.id
+              ? { ...a, commentsCount: Math.max(0, (a.commentsCount || 1) - 1) }
+              : a
+          )
+        );
+      }
+    } catch (err: any) {
+      alert(`Failed to delete comment: ${err.message}`);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -297,7 +505,7 @@ export const AdminCmsPage: React.FC = () => {
             </span>
           </h2>
           <p className="text-xs sm:text-sm text-neutral-500 mt-1">
-            Publish seasonal grocery guides, Pakistani recipe lists, and household budgeting tips with author credits &amp; social links.
+            Publish seasonal grocery guides and Pakistani recipe lists. All published articles are instantly live in the app with direct short links.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -342,7 +550,7 @@ export const AdminCmsPage: React.FC = () => {
             className="px-3 py-2 rounded-xl border border-neutral-200 text-xs bg-white text-neutral-700 focus:outline-none focus:border-[#003527]"
           >
             <option value="all">All Statuses ({total})</option>
-            <option value="published">Published</option>
+            <option value="published">Published (Live in App)</option>
             <option value="draft">Drafts</option>
           </select>
         </div>
@@ -376,6 +584,44 @@ export const AdminCmsPage: React.FC = () => {
               key={art.id}
               className="bg-white border border-neutral-200/90 rounded-2xl overflow-hidden hover:border-[#003527]/40 hover:shadow-md transition-all flex flex-col justify-between group"
             >
+              {/* Short Link Bar at top of Card */}
+              <div className="px-3.5 py-2 bg-neutral-50/90 border-b border-neutral-100 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 text-neutral-600 truncate font-mono text-[10.5px]">
+                  <LinkIcon className="w-3 h-3 text-neutral-400 shrink-0" />
+                  <span className="truncate">/blog#{art.slug}</span>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => copyShortLink(art.slug)}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white border border-neutral-200 hover:bg-neutral-100 text-[10px] font-bold text-neutral-600 cursor-pointer shadow-2xs"
+                    title="Copy short link"
+                  >
+                    {copiedSlug === art.slug ? (
+                      <>
+                        <Check className="w-2.5 h-2.5 text-emerald-600" />
+                        <span className="text-emerald-700">Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-2.5 h-2.5" />
+                        <span>Copy</span>
+                      </>
+                    )}
+                  </button>
+                  <a
+                    href={`/blog#${art.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 text-[10px] font-bold text-[#003527] cursor-pointer shadow-2xs"
+                    title="Open live article in app"
+                  >
+                    <span>View</span>
+                    <ExternalLink className="w-2.5 h-2.5" />
+                  </a>
+                </div>
+              </div>
+
               {/* Cover Image */}
               {art.coverImageUrl ? (
                 <div className="h-40 w-full overflow-hidden bg-neutral-100 relative">
@@ -395,7 +641,7 @@ export const AdminCmsPage: React.FC = () => {
                           : 'bg-amber-500 text-white'
                       }`}
                     >
-                      {art.status}
+                      {art.status === 'published' ? 'Live in App' : 'Draft'}
                     </span>
                   </div>
                   <div className="absolute bottom-2.5 left-2.5">
@@ -414,7 +660,7 @@ export const AdminCmsPage: React.FC = () => {
                       art.status === 'published' ? 'bg-emerald-500 text-white' : 'bg-amber-400 text-neutral-900'
                     }`}
                   >
-                    {art.status}
+                    {art.status === 'published' ? 'Live in App' : 'Draft'}
                   </span>
                 </div>
               )}
@@ -430,15 +676,15 @@ export const AdminCmsPage: React.FC = () => {
                   )}
                 </div>
 
-                <div className="space-y-2.5 pt-2 border-t border-neutral-100 text-[11px] text-neutral-500">
+                <div className="space-y-2 pt-2 border-t border-neutral-100 text-[11px] text-neutral-500">
                   <div className="flex items-center justify-between">
                     <span className="inline-flex items-center gap-1 font-medium text-neutral-700">
                       <User className="w-3 h-3 text-neutral-400" />
                       {art.authorName || 'YAAD Staff'}
                     </span>
-                    <span className="inline-flex items-center gap-1">
+                    <span className="inline-flex items-center gap-1 text-[10.5px] text-neutral-400">
                       <Clock className="w-3 h-3 text-neutral-400" />
-                      {art.readTimeMinutes || 3} min read
+                      {formatArticleRelativeTime(art.publishedAt || art.createdAt)}
                     </span>
                   </div>
 
@@ -451,8 +697,8 @@ export const AdminCmsPage: React.FC = () => {
 
                   {/* Social Handles Badges */}
                   {art.socialLinks && Object.values(art.socialLinks).some(Boolean) && (
-                    <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                      <span className="text-[9px] font-bold text-neutral-400 uppercase">Channels:</span>
+                    <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                      <span className="text-[9px] font-bold text-neutral-400 uppercase">Official:</span>
                       {art.socialLinks.facebook && (
                         <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 font-semibold">FB</span>
                       )}
@@ -475,12 +721,19 @@ export const AdminCmsPage: React.FC = () => {
                   )}
                 </div>
 
-                {/* Card Actions */}
+                {/* Card Actions & Comments Count */}
                 <div className="flex items-center justify-between pt-2 border-t border-neutral-100">
-                  <div className="flex items-center gap-1 text-[11px] text-neutral-400">
-                    <Eye className="w-3 h-3" />
-                    <span>{art.viewsCount || 0} views</span>
-                  </div>
+                  {/* Comments Modal Trigger */}
+                  <button
+                    type="button"
+                    onClick={() => openCommentsModal(art)}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-bold cursor-pointer transition-colors"
+                    title="View and reply to reader comments"
+                  >
+                    <MessageSquare className="w-3 h-3 text-emerald-700" />
+                    <span>{art.commentsCount ?? art.comments?.length ?? 0} Comments</span>
+                  </button>
+
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"
@@ -506,7 +759,148 @@ export const AdminCmsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Create / Edit Article Modal */}
+      {/* ============================================================== */}
+      {/* Comments Moderation & Reply Modal                              */}
+      {/* ============================================================== */}
+      {commentsModalArticle && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 my-auto">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-neutral-100 flex items-center justify-between bg-neutral-50/90">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
+                  <MessageSquare className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-neutral-900 text-sm sm:text-base">
+                    Comments on Guide
+                  </h3>
+                  <p className="text-[11px] text-neutral-500 truncate max-w-xs sm:max-w-md">
+                    {commentsModalArticle.title}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCommentsModalArticle(null)}
+                className="p-1.5 rounded-xl hover:bg-neutral-200/60 text-neutral-500 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Comments List */}
+            <div className="p-6 overflow-y-auto space-y-4 text-xs flex-1">
+              {isLoadingComments ? (
+                <div className="py-12 text-center text-neutral-400 flex flex-col items-center gap-2">
+                  <RefreshCw className="w-5 h-5 animate-spin" />
+                  <span>Loading reader comments...</span>
+                </div>
+              ) : articleComments.length === 0 ? (
+                <div className="py-12 text-center space-y-2">
+                  <div className="w-10 h-10 rounded-full bg-neutral-100 text-neutral-400 flex items-center justify-center mx-auto">
+                    <MessageSquare className="w-5 h-5" />
+                  </div>
+                  <p className="font-bold text-neutral-700">No comments yet</p>
+                  <p className="text-neutral-400 text-[11px] max-w-xs mx-auto">
+                    When readers post advice, tips, or questions from the app article page, they will appear here.
+                  </p>
+                </div>
+              ) : (
+                articleComments.map((comment) => (
+                  <div
+                    key={comment.id}
+                    className="p-3.5 rounded-2xl bg-neutral-50 border border-neutral-200/80 space-y-2.5"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-neutral-900">{comment.name}</span>
+                        {comment.email && (
+                          <span className="text-[10px] text-neutral-400">({comment.email})</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-neutral-400">
+                          {formatArticleRelativeTime(comment.createdAt)}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteComment(comment.id)}
+                          className="p-1 text-red-500 hover:bg-red-50 rounded cursor-pointer"
+                          title="Delete comment"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <p className="text-neutral-700 text-xs leading-relaxed bg-white p-2.5 rounded-xl border border-neutral-100">
+                      {comment.content}
+                    </p>
+
+                    {/* Existing Admin Reply */}
+                    {comment.reply && (
+                      <div className="pl-3 border-l-2 border-[#003527] bg-emerald-50/60 p-2.5 rounded-r-xl space-y-1">
+                        <div className="flex items-center justify-between text-[10px]">
+                          <span className="font-bold text-[#003527]">
+                            Reply from {comment.repliedBy || 'YAAD Team'}
+                          </span>
+                          {comment.repliedAt && (
+                            <span className="text-neutral-400">
+                              {formatArticleRelativeTime(comment.repliedAt)}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-neutral-800 text-xs">{comment.reply}</p>
+                      </div>
+                    )}
+
+                    {/* Inline Reply Input */}
+                    <div className="flex items-center gap-2 pt-1">
+                      <input
+                        type="text"
+                        value={replyInputs[comment.id] || ''}
+                        onChange={(e) =>
+                          setReplyInputs((prev) => ({ ...prev, [comment.id]: e.target.value }))
+                        }
+                        placeholder={comment.reply ? 'Update reply...' : 'Write an official reply...'}
+                        className="flex-1 px-3 py-1.5 rounded-xl border border-neutral-200 bg-white text-xs focus:outline-none focus:border-[#003527]"
+                      />
+                      <button
+                        type="button"
+                        disabled={submittingReplyId === comment.id || !replyInputs[comment.id]?.trim()}
+                        onClick={() => handleReplySubmit(comment.id)}
+                        className="px-3 py-1.5 rounded-xl bg-[#003527] text-white font-bold text-xs hover:bg-[#00281e] disabled:opacity-40 cursor-pointer inline-flex items-center gap-1"
+                      >
+                        {submittingReplyId === comment.id ? (
+                          <RefreshCw className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Send className="w-3 h-3" />
+                        )}
+                        <span>Reply</span>
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="px-6 py-3 border-t border-neutral-100 flex justify-end bg-neutral-50/50">
+              <button
+                type="button"
+                onClick={() => setCommentsModalArticle(null)}
+                className="px-4 py-2 rounded-xl bg-neutral-200 text-neutral-800 font-bold text-xs hover:bg-neutral-300 cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* Create / Edit Article Modal                                    */}
+      {/* ============================================================== */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150 my-auto">
@@ -521,7 +915,7 @@ export const AdminCmsPage: React.FC = () => {
                     {editingArticle ? 'Edit Grocery Guide / Article' : 'Create New Grocery Guide'}
                   </h3>
                   <p className="text-[11px] text-neutral-500">
-                    Share household tips, seasonal mandi guides, and Pakistani recipes.
+                    Publish guides with direct editable short links, author credits, and official social channels.
                   </p>
                 </div>
               </div>
@@ -549,7 +943,7 @@ export const AdminCmsPage: React.FC = () => {
                 </div>
               )}
 
-              {/* Title & Slug */}
+              {/* Title & Editable Short Link Slug */}
               <div className="space-y-3">
                 <div>
                   <label className="block font-bold text-neutral-700 mb-1">
@@ -567,13 +961,16 @@ export const AdminCmsPage: React.FC = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block font-bold text-neutral-700 mb-1">URL Slug</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="font-bold text-neutral-700">Editable Short Link Slug</label>
+                      <span className="text-[10px] text-emerald-700 font-mono">yaad.app/blog#{slug || 'slug'}</span>
+                    </div>
                     <input
                       type="text"
                       value={slug}
                       onChange={(e) => setSlug(e.target.value)}
                       placeholder="ramadan-rashan-guide-2026"
-                      className="w-full px-3 py-2 rounded-xl border border-neutral-200 text-neutral-700 focus:outline-none focus:border-[#003527]"
+                      className="w-full px-3 py-2 rounded-xl border border-neutral-200 text-neutral-700 font-mono text-[11px] focus:outline-none focus:border-[#003527]"
                     />
                   </div>
                   <div>
@@ -614,33 +1011,100 @@ export const AdminCmsPage: React.FC = () => {
                     onChange={(e) => setStatus(e.target.value as any)}
                     className="w-full px-3 py-2 rounded-xl border border-neutral-200 text-neutral-700 focus:outline-none focus:border-[#003527] bg-white"
                   >
-                    <option value="published">Published (Visible in App)</option>
-                    <option value="draft">Draft (Private)</option>
+                    <option value="published">Published (Instantly Live in App)</option>
+                    <option value="draft">Draft (Private in Admin)</option>
                   </select>
                 </div>
               </div>
 
-              {/* Cover Image URL */}
+              {/* Cover Image URL & Upload from Computer */}
               <div>
-                <label className="block font-bold text-neutral-700 mb-1 flex items-center gap-1.5">
-                  <ImageIcon className="w-3.5 h-3.5 text-neutral-500" />
-                  <span>Cover Image / Screenshot URL</span>
-                </label>
-                <input
-                  type="url"
-                  value={coverImageUrl}
-                  onChange={(e) => setCoverImageUrl(e.target.value)}
-                  placeholder="https://images.unsplash.com/photo-..."
-                  className="w-full px-3 py-2 rounded-xl border border-neutral-200 text-neutral-700 focus:outline-none focus:border-[#003527]"
-                />
+                <div className="flex items-center justify-between mb-1">
+                  <label className="font-bold text-neutral-700 flex items-center gap-1.5">
+                    <ImageIcon className="w-3.5 h-3.5 text-neutral-500" />
+                    <span>Cover Image (URL or Upload)</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowCloudinaryGuide(!showCloudinaryGuide)}
+                    className="text-[11px] text-emerald-800 font-semibold hover:underline inline-flex items-center gap-1 cursor-pointer"
+                  >
+                    <HelpCircle className="w-3 h-3" />
+                    <span>Cloudinary مفت 25GB رہنمائی</span>
+                  </button>
+                </div>
+
+                {/* Cloudinary Step-by-Step Helper Banner */}
+                {showCloudinaryGuide && (
+                  <div className="mb-3 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-950 space-y-2 text-[11.5px] leading-relaxed">
+                    <p className="font-bold text-emerald-900 flex items-center gap-1">
+                      <span>Cloudinary پر فری اکاؤنٹ سیٹ اپ کرنے کا آسان طریقہ:</span>
+                    </p>
+                    <ol className="list-decimal list-inside space-y-1 text-emerald-900">
+                      <li>
+                        <strong>cloudinary.com</strong> کھولیں اور فری سائن اپ کریں۔
+                      </li>
+                      <li>
+                        ڈیش بورڈ پر جا کر اپنا <strong>Cloud Name</strong> دیکھیں (جیسے yaad-cloud)۔
+                      </li>
+                      <li>
+                        اوپر دائیں طرف سیٹنگز (Settings ⚙️) پر کلک کریں ➔ <strong>Upload</strong> پر جائیں۔
+                      </li>
+                      <li>
+                        نیچے سکرول کر کے <strong>Add upload preset</strong> پر کلک کریں۔
+                      </li>
+                      <li>
+                        Signing Mode کو <strong>Unsigned</strong> سلیکٹ کریں اور Save کر دیں۔
+                      </li>
+                      <li>
+                        اب آپ کسی بھی تصویر کو ایک کلک میں اپلوڈ کر کے اس کا لنک یہاں لگا سکتے ہیں۔
+                      </li>
+                    </ol>
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={coverImageUrl}
+                    onChange={(e) => setCoverImageUrl(e.target.value)}
+                    placeholder="Paste image URL (Unsplash, Cloudinary, etc.)"
+                    className="flex-1 px-3 py-2 rounded-xl border border-neutral-200 text-neutral-700 focus:outline-none focus:border-[#003527]"
+                  />
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleImageFileSelect}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-3 py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-bold text-xs cursor-pointer inline-flex items-center gap-1.5 shrink-0"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Upload Image</span>
+                  </button>
+                </div>
+
                 {coverImageUrl && (
-                  <div className="mt-2 h-24 rounded-xl overflow-hidden border border-neutral-200 w-44 bg-neutral-50">
-                    <img
-                      src={coverImageUrl}
-                      alt="Preview"
-                      className="w-full h-full object-cover"
-                      onError={(e) => ((e.target as HTMLElement).style.display = 'none')}
-                    />
+                  <div className="mt-2.5 flex items-center gap-3">
+                    <div className="h-20 w-36 rounded-xl overflow-hidden border border-neutral-200 bg-neutral-50 shadow-2xs">
+                      <img
+                        src={coverImageUrl}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                        onError={(e) => ((e.target as HTMLElement).style.display = 'none')}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setCoverImageUrl('')}
+                      className="text-xs text-red-600 hover:underline cursor-pointer"
+                    >
+                      Remove Image
+                    </button>
                   </div>
                 )}
               </div>
@@ -660,7 +1124,7 @@ export const AdminCmsPage: React.FC = () => {
               {/* Body Content */}
               <div>
                 <label className="block font-bold text-neutral-700 mb-1">
-                  Article Body (Markdown supported) <span className="text-red-500">*</span>
+                  Article Body (Markdown, Headings &amp; Bullet Points supported) <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   rows={6}
@@ -702,74 +1166,183 @@ export const AdminCmsPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Social Media Links */}
-              <div className="p-3.5 rounded-2xl bg-neutral-50 border border-neutral-200/80 space-y-3">
-                <span className="font-bold text-neutral-800 flex items-center gap-1.5">
-                  <Share2 className="w-3.5 h-3.5 text-emerald-700" />
-                  <span>Official Social Media &amp; Sharing Links</span>
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <div>
-                    <label className="block font-medium text-neutral-500 mb-0.5">Facebook Page</label>
+              {/* Official Social Media Channels with Master and Individual Toggles */}
+              <div className="p-4 rounded-2xl bg-neutral-50 border border-neutral-200/80 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-neutral-800 flex items-center gap-1.5">
+                    <Share2 className="w-3.5 h-3.5 text-emerald-700" />
+                    <span>Official Social Media &amp; Sharing Channels</span>
+                  </span>
+                  {/* Master Toggle */}
+                  <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+                    <span className="text-[11px] font-semibold text-neutral-600">
+                      {includeOfficialSocial ? 'All Channels Active' : 'Channels Disabled'}
+                    </span>
                     <input
-                      type="url"
-                      value={fbUrl}
-                      onChange={(e) => setFbUrl(e.target.value)}
-                      placeholder="https://facebook.com/..."
-                      className="w-full px-2.5 py-1.5 rounded-lg border border-neutral-200 bg-white text-[11px]"
+                      type="checkbox"
+                      checked={includeOfficialSocial}
+                      onChange={(e) => setIncludeOfficialSocial(e.target.checked)}
+                      className="sr-only"
                     />
-                  </div>
-                  <div>
-                    <label className="block font-medium text-neutral-500 mb-0.5">Instagram Profile</label>
-                    <input
-                      type="url"
-                      value={igUrl}
-                      onChange={(e) => setIgUrl(e.target.value)}
-                      placeholder="https://instagram.com/..."
-                      className="w-full px-2.5 py-1.5 rounded-lg border border-neutral-200 bg-white text-[11px]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block font-medium text-neutral-500 mb-0.5">TikTok Account</label>
-                    <input
-                      type="url"
-                      value={tiktokUrl}
-                      onChange={(e) => setTiktokUrl(e.target.value)}
-                      placeholder="https://tiktok.com/@..."
-                      className="w-full px-2.5 py-1.5 rounded-lg border border-neutral-200 bg-white text-[11px]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block font-medium text-neutral-500 mb-0.5">LinkedIn Profile</label>
-                    <input
-                      type="url"
-                      value={liUrl}
-                      onChange={(e) => setLiUrl(e.target.value)}
-                      placeholder="https://linkedin.com/..."
-                      className="w-full px-2.5 py-1.5 rounded-lg border border-neutral-200 bg-white text-[11px]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block font-medium text-neutral-500 mb-0.5">YouTube Video / Channel</label>
-                    <input
-                      type="url"
-                      value={ytUrl}
-                      onChange={(e) => setYtUrl(e.target.value)}
-                      placeholder="https://youtube.com/@..."
-                      className="w-full px-2.5 py-1.5 rounded-lg border border-neutral-200 bg-white text-[11px]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block font-medium text-neutral-500 mb-0.5">X / Twitter</label>
-                    <input
-                      type="url"
-                      value={xUrl}
-                      onChange={(e) => setXUrl(e.target.value)}
-                      placeholder="https://x.com/..."
-                      className="w-full px-2.5 py-1.5 rounded-lg border border-neutral-200 bg-white text-[11px]"
-                    />
-                  </div>
+                    <div
+                      className={`w-8 h-4.5 rounded-full transition-colors relative ${
+                        includeOfficialSocial ? 'bg-[#003527]' : 'bg-neutral-300'
+                      }`}
+                    >
+                      <div
+                        className={`w-3.5 h-3.5 rounded-full bg-white absolute top-0.5 transition-transform ${
+                          includeOfficialSocial ? 'left-4' : 'left-0.5'
+                        }`}
+                      />
+                    </div>
+                  </label>
                 </div>
+
+                <p className="text-[11px] text-neutral-500">
+                  Pre-filled with verified YAAD official links. Content writers do not need to copy-paste URLs manually. Turn individual channels on/off below:
+                </p>
+
+                {includeOfficialSocial && (
+                  <div className="space-y-2.5 pt-1">
+                    {/* Facebook */}
+                    <div className="flex items-center gap-2">
+                      <label className="inline-flex items-center gap-1.5 w-28 shrink-0 cursor-pointer text-[11px] font-medium text-neutral-700">
+                        <input
+                          type="checkbox"
+                          checked={socialToggles.facebook}
+                          onChange={(e) =>
+                            setSocialToggles((prev) => ({ ...prev, facebook: e.target.checked }))
+                          }
+                          className="rounded border-neutral-300 text-[#003527] focus:ring-[#003527]"
+                        />
+                        <span>Facebook</span>
+                      </label>
+                      <input
+                        type="url"
+                        disabled={!socialToggles.facebook}
+                        value={fbUrl}
+                        onChange={(e) => setFbUrl(e.target.value)}
+                        placeholder={OFFICIAL_SOCIAL_DEFAULTS.facebook}
+                        className="flex-1 px-2.5 py-1.5 rounded-lg border border-neutral-200 bg-white text-[11px] disabled:bg-neutral-100 disabled:text-neutral-400"
+                      />
+                    </div>
+
+                    {/* Instagram */}
+                    <div className="flex items-center gap-2">
+                      <label className="inline-flex items-center gap-1.5 w-28 shrink-0 cursor-pointer text-[11px] font-medium text-neutral-700">
+                        <input
+                          type="checkbox"
+                          checked={socialToggles.instagram}
+                          onChange={(e) =>
+                            setSocialToggles((prev) => ({ ...prev, instagram: e.target.checked }))
+                          }
+                          className="rounded border-neutral-300 text-[#003527] focus:ring-[#003527]"
+                        />
+                        <span>Instagram</span>
+                      </label>
+                      <input
+                        type="url"
+                        disabled={!socialToggles.instagram}
+                        value={igUrl}
+                        onChange={(e) => setIgUrl(e.target.value)}
+                        placeholder={OFFICIAL_SOCIAL_DEFAULTS.instagram}
+                        className="flex-1 px-2.5 py-1.5 rounded-lg border border-neutral-200 bg-white text-[11px] disabled:bg-neutral-100 disabled:text-neutral-400"
+                      />
+                    </div>
+
+                    {/* YouTube */}
+                    <div className="flex items-center gap-2">
+                      <label className="inline-flex items-center gap-1.5 w-28 shrink-0 cursor-pointer text-[11px] font-medium text-neutral-700">
+                        <input
+                          type="checkbox"
+                          checked={socialToggles.youtube}
+                          onChange={(e) =>
+                            setSocialToggles((prev) => ({ ...prev, youtube: e.target.checked }))
+                          }
+                          className="rounded border-neutral-300 text-[#003527] focus:ring-[#003527]"
+                        />
+                        <span>YouTube</span>
+                      </label>
+                      <input
+                        type="url"
+                        disabled={!socialToggles.youtube}
+                        value={ytUrl}
+                        onChange={(e) => setYtUrl(e.target.value)}
+                        placeholder={OFFICIAL_SOCIAL_DEFAULTS.youtube}
+                        className="flex-1 px-2.5 py-1.5 rounded-lg border border-neutral-200 bg-white text-[11px] disabled:bg-neutral-100 disabled:text-neutral-400"
+                      />
+                    </div>
+
+                    {/* LinkedIn */}
+                    <div className="flex items-center gap-2">
+                      <label className="inline-flex items-center gap-1.5 w-28 shrink-0 cursor-pointer text-[11px] font-medium text-neutral-700">
+                        <input
+                          type="checkbox"
+                          checked={socialToggles.linkedin}
+                          onChange={(e) =>
+                            setSocialToggles((prev) => ({ ...prev, linkedin: e.target.checked }))
+                          }
+                          className="rounded border-neutral-300 text-[#003527] focus:ring-[#003527]"
+                        />
+                        <span>LinkedIn</span>
+                      </label>
+                      <input
+                        type="url"
+                        disabled={!socialToggles.linkedin}
+                        value={liUrl}
+                        onChange={(e) => setLiUrl(e.target.value)}
+                        placeholder={OFFICIAL_SOCIAL_DEFAULTS.linkedin}
+                        className="flex-1 px-2.5 py-1.5 rounded-lg border border-neutral-200 bg-white text-[11px] disabled:bg-neutral-100 disabled:text-neutral-400"
+                      />
+                    </div>
+
+                    {/* TikTok */}
+                    <div className="flex items-center gap-2">
+                      <label className="inline-flex items-center gap-1.5 w-28 shrink-0 cursor-pointer text-[11px] font-medium text-neutral-700">
+                        <input
+                          type="checkbox"
+                          checked={socialToggles.tiktok}
+                          onChange={(e) =>
+                            setSocialToggles((prev) => ({ ...prev, tiktok: e.target.checked }))
+                          }
+                          className="rounded border-neutral-300 text-[#003527] focus:ring-[#003527]"
+                        />
+                        <span>TikTok</span>
+                      </label>
+                      <input
+                        type="url"
+                        disabled={!socialToggles.tiktok}
+                        value={tiktokUrl}
+                        onChange={(e) => setTiktokUrl(e.target.value)}
+                        placeholder={OFFICIAL_SOCIAL_DEFAULTS.tiktok}
+                        className="flex-1 px-2.5 py-1.5 rounded-lg border border-neutral-200 bg-white text-[11px] disabled:bg-neutral-100 disabled:text-neutral-400"
+                      />
+                    </div>
+
+                    {/* X / Twitter */}
+                    <div className="flex items-center gap-2">
+                      <label className="inline-flex items-center gap-1.5 w-28 shrink-0 cursor-pointer text-[11px] font-medium text-neutral-700">
+                        <input
+                          type="checkbox"
+                          checked={socialToggles.twitter}
+                          onChange={(e) =>
+                            setSocialToggles((prev) => ({ ...prev, twitter: e.target.checked }))
+                          }
+                          className="rounded border-neutral-300 text-[#003527] focus:ring-[#003527]"
+                        />
+                        <span>X (Twitter)</span>
+                      </label>
+                      <input
+                        type="url"
+                        disabled={!socialToggles.twitter}
+                        value={xUrl}
+                        onChange={(e) => setXUrl(e.target.value)}
+                        placeholder={OFFICIAL_SOCIAL_DEFAULTS.twitter}
+                        className="flex-1 px-2.5 py-1.5 rounded-lg border border-neutral-200 bg-white text-[11px] disabled:bg-neutral-100 disabled:text-neutral-400"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Tags */}

@@ -1738,8 +1738,7 @@
       "enabled": false,
       "message": "YAAD system is undergoing scheduled cloud maintenance.",
       "bannerType": "info"
-    },
-    "systemSecret": "yaad_sec_c940b5f14e7a83d7a8e8b2f901cb4d88e63a890937b2d28f74a01c385b"
+    }
   },
   "permissionMatrix": {
     "users.view": {
@@ -1887,11 +1886,22 @@
         "twitter": "https://x.com/yaadapppk"
       },
       "status": "published",
-      "publishedAt": 1791298332851,
+      "publishedAt": 1791313845892,
       "readTimeMinutes": 4,
       "viewsCount": 1420,
-      "createdAt": 1791298332851,
-      "updatedAt": 1791471132851
+      "createdAt": 1791313845892,
+      "updatedAt": 1791486645892,
+      "comments": [
+        {
+          "id": "cmt_e69146ea-4b5a-479d-af58-8a236ae40dcf",
+          "articleId": "art_ramadan_rashan_2026",
+          "name": "Bilal Khan",
+          "content": "Bohot achi rashan guide hai, jazakallah!",
+          "status": "approved",
+          "createdAt": 1791573082298
+        }
+      ],
+      "commentsCount": 1
     },
     {
       "id": "art_fresh_sabzi_guide",
@@ -1916,11 +1926,11 @@
         "twitter": "https://x.com/yaadapppk"
       },
       "status": "published",
-      "publishedAt": 1790952732851,
+      "publishedAt": 1790968245892,
       "readTimeMinutes": 3,
       "viewsCount": 890,
-      "createdAt": 1790952732851,
-      "updatedAt": 1790952732851
+      "createdAt": 1790968245892,
+      "updatedAt": 1790968245892
     },
     {
       "id": "art_spices_shelf_life",
@@ -1945,11 +1955,11 @@
         "instagram": "https://instagram.com/yaadapppk"
       },
       "status": "published",
-      "publishedAt": 1790347932851,
+      "publishedAt": 1790363445892,
       "readTimeMinutes": 3,
       "viewsCount": 650,
-      "createdAt": 1790347932851,
-      "updatedAt": 1790347932851
+      "createdAt": 1790363445892,
+      "updatedAt": 1790363445892
     }
   ],
   "pushCampaigns": [

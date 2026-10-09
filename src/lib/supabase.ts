@@ -337,6 +337,8 @@ export async function getProfile(userId: string): Promise<UserProfile | null> {
       phone_number: data?.phone_number ?? data?.phone ?? userMeta.phone_number ?? userMeta.phone ?? authUserPhone ?? cached?.phone_number ?? null,
       avatar_url: data?.avatar_url ?? userMeta.avatar_url ?? cached?.avatar_url ?? null,
       is_verified: Boolean(data?.is_verified ?? userMeta.is_verified ?? cached?.is_verified),
+      is_suspended: Boolean(data?.is_suspended ?? userMeta.is_suspended ?? cached?.is_suspended),
+      suspend_reason: data?.suspend_reason ?? userMeta.suspend_reason ?? cached?.suspend_reason ?? undefined,
       language: data?.language ?? userMeta.language ?? cached?.language ?? 'en',
       usage_purpose: data?.usage_purpose ?? userMeta.usage_purpose ?? cached?.usage_purpose ?? null,
       referral_source: data?.referral_source ?? userMeta.referral_source ?? cached?.referral_source ?? null,
@@ -418,6 +420,9 @@ export async function updateProfile(
     if (mergedProfile.phone_number !== undefined && mergedProfile.phone_number !== null) {
       profileUpsertPayload.phone_number = mergedProfile.phone_number;
     }
+    if (mergedProfile.is_verified !== undefined) {
+      profileUpsertPayload.is_verified = Boolean(mergedProfile.is_verified);
+    }
 
     let upsertResult = await resilientUpsert('profiles', profileUpsertPayload, { onConflict: 'id' });
     let upsertData: any = upsertResult.data;
@@ -431,6 +436,7 @@ export async function updateProfile(
       if (mergedProfile.email !== undefined) directUpdatePayload.email = mergedProfile.email;
       if (mergedProfile.avatar_url !== undefined) directUpdatePayload.avatar_url = mergedProfile.avatar_url;
       if (mergedProfile.language !== undefined) directUpdatePayload.language = mergedProfile.language;
+      if (mergedProfile.is_verified !== undefined) directUpdatePayload.is_verified = Boolean(mergedProfile.is_verified);
       if (mergedProfile.phone_number !== undefined && mergedProfile.phone_number !== null) {
         directUpdatePayload.phone_number = mergedProfile.phone_number;
       }

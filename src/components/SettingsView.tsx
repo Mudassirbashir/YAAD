@@ -239,7 +239,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     null;
 
   const displayEmail = user?.email || null;
-  const isVerified = Boolean(profile?.is_verified || (user?.user_metadata as any)?.is_verified);
+  const [cachedVerified, setCachedVerified] = useState<boolean>(() => {
+    try {
+      if (user?.id) {
+        const c = localStorage.getItem('yaad_verified_' + user.id);
+        if (c !== null) return c === 'true';
+      }
+    } catch {}
+    return Boolean(profile?.is_verified || (user?.user_metadata as any)?.is_verified);
+  });
+
+  const isVerified = Boolean(profile?.is_verified || (user?.user_metadata as any)?.is_verified || cachedVerified);
 
   // Authoritative real-time sync of user's blue tick verification badge
   useEffect(() => {
@@ -249,6 +259,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       .then((res) => res.json())
       .then((data) => {
         if (isMounted && data && typeof data.isVerified === 'boolean') {
+          try {
+            localStorage.setItem('yaad_verified_' + user.id, String(data.isVerified));
+          } catch {}
+          setCachedVerified(data.isVerified);
           if (profile && profile.is_verified !== data.isVerified) {
             updateUserProfile({ is_verified: data.isVerified }).catch(() => {});
           }
@@ -286,7 +300,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <div className="bg-surface-container-lowest rounded-3xl p-4 sm:p-5 border border-surface-dim/75 shadow-2xs">
             {user ? (
               <div className="flex items-center justify-between gap-3 sm:gap-4">
-                {/* Left side: Avatar without overlay pencil */}
+                {/* Left side: Avatar without duplicate badge underneath */}
                 <div className="relative shrink-0 flex flex-col items-center">
                   <Avatar
                     name={displayName}
@@ -295,20 +309,19 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     size="lg"
                     className="w-14 h-14 sm:w-16 sm:h-16 ring-2 ring-primary/20 rounded-full"
                   />
-                  {isVerified && (
-                    <div className="mt-1 flex items-center gap-1 sm:hidden">
-                      <VerifiedBadge size="sm" />
-                    </div>
-                  )}
                 </div>
 
-                {/* Profile Information: Name on top, phone below, email below phone */}
+                {/* Profile Information: Name on top with verified badge, phone below, email below phone */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 min-w-0">
                     <h3 className="text-base sm:text-lg font-bold text-on-surface font-['Plus_Jakarta_Sans'] truncate">
                       {displayName}
                     </h3>
-                    {isVerified && <VerifiedBadge size="sm" />}
+                    {isVerified && (
+                      <span className="inline-flex shrink-0 items-center self-center">
+                        <VerifiedBadge size="sm" />
+                      </span>
+                    )}
                   </div>
 
                   <p className="text-xs text-outline font-['Manrope'] truncate mt-0.5">
@@ -401,36 +414,36 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
             </div>
 
-            {/* 3-way Segmented Control */}
-            <div className="grid grid-cols-3 gap-1.5 p-1.5 bg-surface-container-low rounded-2xl">
+            {/* 3-way Segmented Control with no-wrap and uniform heights */}
+            <div className="grid grid-cols-3 gap-1.5 p-1.5 bg-surface-container-low rounded-2xl items-center">
               {/* English */}
               <button
                 id="lang_select_en"
                 type="button"
                 onClick={() => handleSelectLanguage('en')}
-                className={`py-2.5 px-2 rounded-xl text-xs font-bold font-['Plus_Jakarta_Sans'] transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                className={`min-h-[42px] py-2 px-1 sm:px-2 rounded-xl text-[11.5px] sm:text-xs font-bold font-['Plus_Jakarta_Sans'] transition-all flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
                   language === 'en'
                     ? 'bg-surface-container-lowest text-primary shadow-xs ring-1 ring-black/5'
                     : 'text-outline hover:text-on-surface'
                 }`}
               >
                 <span>English</span>
-                {language === 'en' && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
+                {language === 'en' && <Check className="w-3.5 h-3.5 stroke-[2.5] shrink-0" />}
               </button>
 
-              {/* Roman Urdu */}
+              {/* Roman Urdu - strictly whitespace-nowrap so it never breaks to 2 lines */}
               <button
                 id="lang_select_roman_urdu"
                 type="button"
                 onClick={() => handleSelectLanguage('roman-urdu')}
-                className={`py-2.5 px-2 rounded-xl text-xs font-bold font-['Plus_Jakarta_Sans'] transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                className={`min-h-[42px] py-2 px-1 sm:px-2 rounded-xl text-[11.5px] sm:text-xs font-bold font-['Plus_Jakarta_Sans'] transition-all flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
                   language === 'roman-urdu'
                     ? 'bg-surface-container-lowest text-primary shadow-xs ring-1 ring-black/5'
                     : 'text-outline hover:text-on-surface'
                 }`}
               >
                 <span>Roman Urdu</span>
-                {language === 'roman-urdu' && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
+                {language === 'roman-urdu' && <Check className="w-3.5 h-3.5 stroke-[2.5] shrink-0" />}
               </button>
 
               {/* Urdu */}
@@ -438,14 +451,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 id="lang_select_ur"
                 type="button"
                 onClick={() => handleSelectLanguage('ur')}
-                className={`py-2.5 px-2 rounded-xl text-xs font-bold font-urdu transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                className={`min-h-[42px] py-2 px-1 sm:px-2 rounded-xl text-[11.5px] sm:text-xs font-bold font-urdu transition-all flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
                   language === 'ur'
                     ? 'bg-surface-container-lowest text-primary shadow-xs ring-1 ring-black/5'
                     : 'text-outline hover:text-on-surface'
                 }`}
               >
                 <span>اردو</span>
-                {language === 'ur' && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
+                {language === 'ur' && <Check className="w-3.5 h-3.5 stroke-[2.5] shrink-0" />}
               </button>
             </div>
           </div>

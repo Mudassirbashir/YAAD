@@ -33,6 +33,11 @@ import {
   CheckSquare,
   Terminal,
   ChevronRight,
+  MessageSquare,
+  Send,
+  Clock,
+  User,
+  ExternalLink,
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
@@ -75,6 +80,70 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
   const [selectedFaqCategory, setSelectedFaqCategory] = useState<string>('all');
   const [openFaqIds, setOpenFaqIds] = useState<Set<string>>(new Set(['what-is-yaad', 'offline-how', 'language-switch']));
   const [expandedBlogPostId, setExpandedBlogPostId] = useState<string | null>(null);
+
+  // Dynamic CMS articles state & comments state
+  const [cmsArticles, setCmsArticles] = useState<any[]>([]);
+  const [commentInputs, setCommentInputs] = useState<Record<string, { name: string; email: string; content: string }>>({});
+  const [isSubmittingComment, setIsSubmittingComment] = useState<Record<string, boolean>>({});
+  const [commentSuccessMsg, setCommentSuccessMsg] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    let isMounted = true;
+    fetch('/api/blog/articles')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (isMounted && data?.articles) {
+          setCmsArticles(data.articles);
+        }
+      })
+      .catch((err) => console.error('Failed to fetch CMS articles:', err));
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handlePostComment = async (articleId: string) => {
+    const input = commentInputs[articleId] || { name: '', email: '', content: '' };
+    if (!input.content?.trim()) return;
+
+    setIsSubmittingComment((prev) => ({ ...prev, [articleId]: true }));
+    try {
+      const res = await fetch(`/api/blog/articles/${articleId}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: input.name.trim() || 'Reader',
+          email: input.email.trim() || undefined,
+          content: input.content.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.comment) {
+        setCmsArticles((prev) =>
+          prev.map((art) => {
+            if (art.id === articleId || art.slug === articleId) {
+              const existing = art.comments || [];
+              return {
+                ...art,
+                comments: [data.comment, ...existing],
+                commentsCount: (art.commentsCount || existing.length) + 1,
+              };
+            }
+            return art;
+          })
+        );
+        setCommentInputs((prev) => ({ ...prev, [articleId]: { name: '', email: '', content: '' } }));
+        setCommentSuccessMsg((prev) => ({ ...prev, [articleId]: 'Comment posted successfully!' }));
+        setTimeout(() => {
+          setCommentSuccessMsg((prev) => ({ ...prev, [articleId]: '' }));
+        }, 3000);
+      }
+    } catch (e) {
+      console.error('Failed to post comment', e);
+    } finally {
+      setIsSubmittingComment((prev) => ({ ...prev, [articleId]: false }));
+    }
+  };
 
   // Authentic First-Party Example Shopping List State (derived from real catalog & rashan data)
   const [exampleListItems, setExampleListItems] = useState([
@@ -119,19 +188,23 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [initialPage]);
 
-  // Auto-expand blog article if URL has matching hash
+  // Auto-expand blog article if URL has matching hash (static or dynamic CMS)
   useEffect(() => {
     if (currentPage === 'blog' && typeof window !== 'undefined') {
       const hash = window.location.hash.replace('#', '');
-      if (hash && BLOG_POSTS.some((p) => p.id === hash)) {
-        setExpandedBlogPostId(hash);
-        setTimeout(() => {
-          const el = document.getElementById(hash);
-          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 150);
+      if (hash) {
+        const isStatic = BLOG_POSTS.some((p) => p.id === hash);
+        const isCms = cmsArticles.some((a) => a.slug === hash || a.id === hash);
+        if (isStatic || isCms) {
+          setExpandedBlogPostId(hash);
+          setTimeout(() => {
+            const el = document.getElementById(hash);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 150);
+        }
       }
     }
-  }, [currentPage]);
+  }, [currentPage, cmsArticles]);
 
   // Update browser document title according to current page
   useEffect(() => {
@@ -1347,6 +1420,336 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
 
             {/* Articles Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Dynamic Published CMS Articles */}
+              {cmsArticles.map((art) => {
+                const isExpanded = expandedBlogPostId === art.id || expandedBlogPostId === art.slug;
+                return (
+                  <article
+                    key={art.id}
+                    id={art.slug || art.id}
+                    className={`p-6 sm:p-7 rounded-3xl bg-white border transition-all flex flex-col justify-between space-y-4 shadow-2xs ${
+                      isExpanded
+                        ? 'border-[#005039] ring-2 ring-[#005039]/10 md:col-span-2'
+                        : 'border-[#e5e1d8] hover:border-[#005039]/30'
+                    }`}
+                  >
+                    {/* Cover Image */}
+                    {art.coverImageUrl && (
+                      <div className="w-full h-44 sm:h-56 rounded-2xl overflow-hidden bg-neutral-100">
+                        <img
+                          src={art.coverImageUrl}
+                          alt={art.title}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLElement).style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    )}
+
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between gap-2 text-xs">
+                        <span className="px-2.5 py-1 rounded-full bg-[#005039]/10 text-[#005039] font-bold">
+                          {art.category || 'Grocery Guide'}
+                        </span>
+                        <span className="text-[#788880] font-medium">
+                          {art.readTimeMinutes || 3} min read
+                        </span>
+                      </div>
+
+                      {art.headingSize === 'h1' ? (
+                        <h2 className="text-lg sm:text-xl font-black text-[#1c2826] leading-snug">
+                          {art.title}
+                        </h2>
+                      ) : art.headingSize === 'h3' ? (
+                        <h4 className="text-sm sm:text-base font-bold text-[#1c2826] leading-snug">
+                          {art.title}
+                        </h4>
+                      ) : (
+                        <h3 className="text-base sm:text-lg font-bold text-[#1c2826] leading-snug">
+                          {art.title}
+                        </h3>
+                      )}
+
+                      {art.excerpt && (
+                        <p className="text-xs sm:text-sm text-[#556960] leading-relaxed">
+                          {art.excerpt}
+                        </p>
+                      )}
+
+                      {isExpanded ? (
+                        <div className="pt-4 border-t border-[#f2efe9] space-y-6 text-xs sm:text-sm text-[#1c2826] leading-relaxed">
+                          {/* Formatted Body */}
+                          <div className="space-y-3">
+                            {art.body.split('\n\n').map((para: string, pIdx: number) => {
+                              const trimmed = para.trim();
+                              if (trimmed.startsWith('### ')) {
+                                return (
+                                  <h5 key={pIdx} className="text-sm font-bold text-[#1c2826] border-b border-[#f2efe9] pb-1 pt-2">
+                                    {trimmed.replace('### ', '')}
+                                  </h5>
+                                );
+                              }
+                              if (trimmed.startsWith('## ')) {
+                                return (
+                                  <h4 key={pIdx} className="text-base font-bold text-[#1c2826] border-b border-[#f2efe9] pb-1.5 pt-3">
+                                    {trimmed.replace('## ', '')}
+                                  </h4>
+                                );
+                              }
+                              if (trimmed.startsWith('# ')) {
+                                return (
+                                  <h3 key={pIdx} className="text-lg font-black text-[#1c2826] border-b border-[#f2efe9] pb-2 pt-4">
+                                    {trimmed.replace('# ', '')}
+                                  </h3>
+                                );
+                              }
+                              if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+                                const items = trimmed.split('\n');
+                                return (
+                                  <ul key={pIdx} className="space-y-1.5 pl-2">
+                                    {items.map((it: string, itIdx: number) => (
+                                      <li key={itIdx} className="flex items-start gap-2 text-xs sm:text-sm text-[#556960]">
+                                        <span className="text-[#005039] font-bold mt-0.5">•</span>
+                                        <span>{it.replace(/^[-*]\s+/, '')}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                );
+                              }
+                              return (
+                                <p key={pIdx} className="text-[#556960] leading-relaxed">
+                                  {trimmed}
+                                </p>
+                              );
+                            })}
+                          </div>
+
+                          {/* Author Credit */}
+                          <div className="p-3.5 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] flex items-center justify-between text-xs">
+                            <div className="flex items-center gap-2 text-neutral-700 font-medium">
+                              <User className="w-4 h-4 text-[#005039]" />
+                              <span>Author: <strong>{art.authorName || 'YAAD Editorial'}</strong></span>
+                              {art.authorEmail && <span className="text-neutral-400">({art.authorEmail})</span>}
+                            </div>
+                            <span className="text-neutral-400">
+                              {art.publishedAt ? new Date(art.publishedAt).toLocaleDateString() : 'Live'}
+                            </span>
+                          </div>
+
+                          {/* Official Social Media Channels */}
+                          {art.socialLinks && Object.values(art.socialLinks).some(Boolean) && (
+                            <div className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] space-y-2.5">
+                              <span className="text-xs font-bold text-[#005039] uppercase tracking-wider block">
+                                Official YAAD Social Channels &amp; Community
+                              </span>
+                              <div className="flex flex-wrap gap-2">
+                                {art.socialLinks.facebook && (
+                                  <a
+                                    href={art.socialLinks.facebook}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1877F2]/10 text-[#1877F2] hover:bg-[#1877F2] hover:text-white transition-all text-xs font-bold shadow-2xs"
+                                  >
+                                    <span>Facebook</span>
+                                    <ExternalLink className="w-3 h-3" />
+                                  </a>
+                                )}
+                                {art.socialLinks.instagram && (
+                                  <a
+                                    href={art.socialLinks.instagram}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#E4405F]/10 text-[#E4405F] hover:bg-[#E4405F] hover:text-white transition-all text-xs font-bold shadow-2xs"
+                                  >
+                                    <span>Instagram</span>
+                                    <ExternalLink className="w-3 h-3" />
+                                  </a>
+                                )}
+                                {art.socialLinks.youtube && (
+                                  <a
+                                    href={art.socialLinks.youtube}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FF0000]/10 text-[#FF0000] hover:bg-[#FF0000] hover:text-white transition-all text-xs font-bold shadow-2xs"
+                                  >
+                                    <span>YouTube</span>
+                                    <ExternalLink className="w-3 h-3" />
+                                  </a>
+                                )}
+                                {art.socialLinks.linkedin && (
+                                  <a
+                                    href={art.socialLinks.linkedin}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0A66C2]/10 text-[#0A66C2] hover:bg-[#0A66C2] hover:text-white transition-all text-xs font-bold shadow-2xs"
+                                  >
+                                    <span>LinkedIn</span>
+                                    <ExternalLink className="w-3 h-3" />
+                                  </a>
+                                )}
+                                {art.socialLinks.tiktok && (
+                                  <a
+                                    href={art.socialLinks.tiktok}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-neutral-800/10 text-neutral-800 hover:bg-neutral-800 hover:text-white transition-all text-xs font-bold shadow-2xs"
+                                  >
+                                    <span>TikTok</span>
+                                    <ExternalLink className="w-3 h-3" />
+                                  </a>
+                                )}
+                                {art.socialLinks.twitter && (
+                                  <a
+                                    href={art.socialLinks.twitter}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-neutral-900/10 text-neutral-900 hover:bg-neutral-900 hover:text-white transition-all text-xs font-bold shadow-2xs"
+                                  >
+                                    <span>X / Twitter</span>
+                                    <ExternalLink className="w-3 h-3" />
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Public Comments Section */}
+                          <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#e5e1d8] space-y-4 shadow-2xs">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <MessageSquare className="w-4 h-4 text-[#005039]" />
+                                <h4 className="text-sm font-bold text-[#1c2826]">
+                                  Reader Advice &amp; Comments ({art.commentsCount ?? art.comments?.length ?? 0})
+                                </h4>
+                              </div>
+                              <span className="text-[11px] text-[#788880]">Public discussion • No login required</span>
+                            </div>
+
+                            {/* Existing Comments */}
+                            {art.comments && art.comments.length > 0 ? (
+                              <div className="space-y-3 divide-y divide-[#f2efe9]">
+                                {art.comments.map((cmt: any) => (
+                                  <div key={cmt.id} className="pt-3 first:pt-0 space-y-2">
+                                    <div className="flex items-center justify-between text-xs">
+                                      <span className="font-bold text-[#1c2826]">{cmt.name}</span>
+                                      <span className="text-[#788880] text-[10.5px]">
+                                        {new Date(cmt.createdAt).toLocaleDateString()}
+                                      </span>
+                                    </div>
+                                    <p className="text-xs text-[#556960] leading-relaxed bg-[#faf8f5] p-2.5 rounded-xl border border-[#f2efe9]">
+                                      {cmt.content}
+                                    </p>
+                                    {cmt.reply && (
+                                      <div className="ml-3 p-2.5 rounded-xl bg-emerald-50/70 border-l-2 border-[#005039] space-y-1">
+                                        <span className="text-[10px] font-bold text-[#005039] block">
+                                          Official Response from {cmt.repliedBy || 'YAAD Support'}
+                                        </span>
+                                        <p className="text-xs text-[#1c2826]">{cmt.reply}</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-xs text-[#788880] italic">
+                                No comments posted yet. Be the first to share your shopping tip or question!
+                              </p>
+                            )}
+
+                            {/* Comment Input Form */}
+                            <div className="pt-3 border-t border-[#f2efe9] space-y-2.5">
+                              <span className="text-xs font-bold text-[#1c2826] block">
+                                Leave a Tip or Comment
+                              </span>
+                              {commentSuccessMsg[art.id] && (
+                                <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold">
+                                  {commentSuccessMsg[art.id]}
+                                </div>
+                              )}
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <input
+                                  type="text"
+                                  value={commentInputs[art.id]?.name || ''}
+                                  onChange={(e) =>
+                                    setCommentInputs((prev) => ({
+                                      ...prev,
+                                      [art.id]: { ...(prev[art.id] || { email: '', content: '' }), name: e.target.value },
+                                    }))
+                                  }
+                                  placeholder="Your Name (e.g. Ayesha, Bilal)"
+                                  className="px-3 py-1.5 rounded-xl border border-[#e5e1d8] text-xs bg-white text-[#1c2826] focus:outline-none focus:border-[#005039]"
+                                />
+                                <input
+                                  type="email"
+                                  value={commentInputs[art.id]?.email || ''}
+                                  onChange={(e) =>
+                                    setCommentInputs((prev) => ({
+                                      ...prev,
+                                      [art.id]: { ...(prev[art.id] || { name: '', content: '' }), email: e.target.value },
+                                    }))
+                                  }
+                                  placeholder="Email (optional, kept private)"
+                                  className="px-3 py-1.5 rounded-xl border border-[#e5e1d8] text-xs bg-white text-[#1c2826] focus:outline-none focus:border-[#005039]"
+                                />
+                              </div>
+                              <textarea
+                                rows={2}
+                                value={commentInputs[art.id]?.content || ''}
+                                onChange={(e) =>
+                                  setCommentInputs((prev) => ({
+                                    ...prev,
+                                    [art.id]: { ...(prev[art.id] || { name: '', email: '' }), content: e.target.value },
+                                  }))
+                                }
+                                placeholder="Share your shopping experience, recipe tip, or question here..."
+                                className="w-full px-3 py-2 rounded-xl border border-[#e5e1d8] text-xs bg-white text-[#1c2826] focus:outline-none focus:border-[#005039]"
+                              />
+                              <div className="flex justify-end">
+                                <button
+                                  type="button"
+                                  disabled={isSubmittingComment[art.id] || !commentInputs[art.id]?.content?.trim()}
+                                  onClick={() => handlePostComment(art.id)}
+                                  className="px-4 py-1.5 rounded-xl bg-[#005039] text-white font-bold text-xs hover:bg-[#003d2b] disabled:opacity-40 cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
+                                >
+                                  <Send className="w-3 h-3" />
+                                  <span>{isSubmittingComment[art.id] ? 'Posting...' : 'Post Comment'}</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="pt-3 border-t border-[#f2efe9] flex items-center justify-between">
+                            <button
+                              type="button"
+                              onClick={() => setExpandedBlogPostId(null)}
+                              className="text-xs font-bold text-[#005039] hover:underline cursor-pointer"
+                            >
+                              ↑ Collapse Guide
+                            </button>
+                            <span className="text-xs text-[#788880] font-medium">Published by {art.authorName || 'YAAD Editorial'}</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="pt-2 border-t border-[#f2efe9] flex items-center justify-between">
+                          <button
+                            type="button"
+                            onClick={() => setExpandedBlogPostId(art.slug || art.id)}
+                            className="text-xs font-bold text-[#005039] hover:text-[#003d2b] flex items-center gap-1 cursor-pointer"
+                          >
+                            <span>Read Complete Guide</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                          <span className="text-xs text-[#788880]">
+                            {art.publishedAt ? new Date(art.publishedAt).toLocaleDateString() : 'Live'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
+
               {BLOG_POSTS.map((post) => {
                 const title = getLocalizedText(post.title);
                 const summary = getLocalizedText(post.summary);
