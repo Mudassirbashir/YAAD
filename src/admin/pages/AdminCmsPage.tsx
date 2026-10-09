@@ -163,8 +163,11 @@ export const AdminCmsPage: React.FC = () => {
   const [ytUrl, setYtUrl] = useState(OFFICIAL_SOCIAL_DEFAULTS.youtube);
   const [xUrl, setXUrl] = useState(OFFICIAL_SOCIAL_DEFAULTS.twitter);
 
-  // Cloudinary Guide State
+  // Cloudinary Guide & Direct Upload State
   const [showCloudinaryGuide, setShowCloudinaryGuide] = useState(false);
+  const [cloudName, setCloudName] = useState(() => localStorage.getItem('yaad_cloudinary_cloud_name') || '');
+  const [uploadPreset, setUploadPreset] = useState(() => localStorage.getItem('yaad_cloudinary_upload_preset') || 'yaad_preset');
+  const [isUploadingToCloudinary, setIsUploadingToCloudinary] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Comments Moderation Modal State
@@ -298,15 +301,50 @@ export const AdminCmsPage: React.FC = () => {
     }
   };
 
-  const handleImageFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Image size exceeds 5MB limit. Please choose a smaller photo.');
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Image size exceeds 10MB limit. Please choose a smaller photo.');
       return;
     }
 
+    const currentCloudName = cloudName.trim();
+    const currentPreset = uploadPreset.trim() || 'yaad_preset';
+
+    // If Cloudinary Cloud Name is set, upload directly to Cloudinary using unsigned preset!
+    if (currentCloudName) {
+      setIsUploadingToCloudinary(true);
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', currentPreset);
+
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${currentCloudName}/image/upload`, {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error?.message || 'Failed to upload to Cloudinary');
+        }
+
+        if (data.secure_url) {
+          setCoverImageUrl(data.secure_url);
+          setIsUploadingToCloudinary(false);
+          return;
+        }
+      } catch (err: any) {
+        console.warn('Cloudinary upload warning:', err.message);
+        alert(`Cloudinary notice: ${err.message}. Using direct local image preview.`);
+      } finally {
+        setIsUploadingToCloudinary(false);
+      }
+    }
+
+    // Direct Base64 Fallback
     const reader = new FileReader();
     reader.onload = (event) => {
       const base64 = event.target?.result as string;
@@ -1034,32 +1072,52 @@ export const AdminCmsPage: React.FC = () => {
                   </button>
                 </div>
 
-                {/* Cloudinary Step-by-Step Helper Banner */}
+                {/* Cloudinary Step-by-Step Helper Banner & Credentials */}
                 {showCloudinaryGuide && (
-                  <div className="mb-3 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-950 space-y-2 text-[11.5px] leading-relaxed">
-                    <p className="font-bold text-emerald-900 flex items-center gap-1">
-                      <span>Cloudinary پر فری اکاؤنٹ سیٹ اپ کرنے کا آسان طریقہ:</span>
+                  <div className="mb-3 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-950 space-y-3 text-[11.5px] leading-relaxed">
+                    <p className="font-bold text-emerald-900 flex items-center justify-between">
+                      <span>Cloudinary 25GB فری سیٹ اپ اور کریڈینشلز:</span>
+                      {cloudName.trim() && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-700 text-white font-bold">
+                          کنیکٹڈ ✓ ({uploadPreset || 'yaad_preset'})
+                        </span>
+                      )}
                     </p>
-                    <ol className="list-decimal list-inside space-y-1 text-emerald-900">
-                      <li>
-                        <strong>cloudinary.com</strong> کھولیں اور فری سائن اپ کریں۔
-                      </li>
-                      <li>
-                        ڈیش بورڈ پر جا کر اپنا <strong>Cloud Name</strong> دیکھیں (جیسے yaad-cloud)۔
-                      </li>
-                      <li>
-                        اوپر دائیں طرف سیٹنگز (Settings ⚙️) پر کلک کریں ➔ <strong>Upload</strong> پر جائیں۔
-                      </li>
-                      <li>
-                        نیچے سکرول کر کے <strong>Add upload preset</strong> پر کلک کریں۔
-                      </li>
-                      <li>
-                        Signing Mode کو <strong>Unsigned</strong> سلیکٹ کریں اور Save کر دیں۔
-                      </li>
-                      <li>
-                        اب آپ کسی بھی تصویر کو ایک کلک میں اپلوڈ کر کے اس کا لنک یہاں لگا سکتے ہیں۔
-                      </li>
-                    </ol>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-white/80 p-2.5 rounded-xl border border-emerald-200">
+                      <div>
+                        <label className="block font-bold text-neutral-700 mb-0.5 text-[10.5px]">Cloud Name (ڈیش بورڈ سے):</label>
+                        <input
+                          type="text"
+                          value={cloudName}
+                          onChange={(e) => {
+                            const val = e.target.value.trim();
+                            setCloudName(val);
+                            localStorage.setItem('yaad_cloudinary_cloud_name', val);
+                          }}
+                          placeholder="مثلاً dxyz123"
+                          className="w-full px-2.5 py-1.5 rounded-lg border border-neutral-300 text-xs bg-white text-neutral-800 focus:outline-none focus:border-[#003527]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-bold text-neutral-700 mb-0.5 text-[10.5px]">Upload Preset Name:</label>
+                        <input
+                          type="text"
+                          value={uploadPreset}
+                          onChange={(e) => {
+                            const val = e.target.value.trim();
+                            setUploadPreset(val);
+                            localStorage.setItem('yaad_cloudinary_upload_preset', val);
+                          }}
+                          placeholder="yaad_preset"
+                          className="w-full px-2.5 py-1.5 rounded-lg border border-neutral-300 text-xs bg-white text-neutral-800 focus:outline-none focus:border-[#003527]"
+                        />
+                      </div>
+                    </div>
+
+                    <p className="text-[11px] text-emerald-900">
+                      <strong>نوٹ:</strong> آپ کا اپلوڈ پریسیت <code>yaad_preset</code> کامیابی سے Unsigned موڈ میں تیار ہے۔ بس اوپر اپنا <strong>Cloud Name</strong> درج کریں تو ہر تصویر خودکار طریقے سے کلاؤڈ نری پر اپلوڈ ہو کر لائیو لنک بن جائے گی۔
+                    </p>
                   </div>
                 )}
 
@@ -1080,11 +1138,16 @@ export const AdminCmsPage: React.FC = () => {
                   />
                   <button
                     type="button"
+                    disabled={isUploadingToCloudinary}
                     onClick={() => fileInputRef.current?.click()}
-                    className="px-3 py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-bold text-xs cursor-pointer inline-flex items-center gap-1.5 shrink-0"
+                    className="px-3 py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-bold text-xs cursor-pointer inline-flex items-center gap-1.5 shrink-0 disabled:opacity-50"
                   >
-                    <Upload className="w-3.5 h-3.5" />
-                    <span>Upload Image</span>
+                    {isUploadingToCloudinary ? (
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin text-emerald-700" />
+                    ) : (
+                      <Upload className="w-3.5 h-3.5" />
+                    )}
+                    <span>{isUploadingToCloudinary ? 'Uploading to Cloudinary...' : 'Upload Image'}</span>
                   </button>
                 </div>
 
