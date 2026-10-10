@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User } from 'lucide-react';
 import { parseAvatarValue, getAvatarColorOption } from '../data/avatarData';
 
@@ -22,6 +22,10 @@ export const Avatar: React.FC<AvatarProps> = ({
   alt = 'User avatar',
 }) => {
   const [imageError, setImageError] = useState(false);
+
+  useEffect(() => {
+    setImageError(false);
+  }, [avatarUrl]);
 
   const sizeClasses = {
     sm: 'w-7 h-7 text-xs',

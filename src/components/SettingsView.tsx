@@ -192,10 +192,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   // Profile save handler
-  const handleSaveProfile = async (fullName: string, phoneNumber: string | null) => {
+  const handleSaveProfile = async (
+    fullName: string,
+    phoneNumber: string | null,
+    avatarUrl?: string | null
+  ) => {
     const res = await updateUserProfile({
       full_name: fullName,
       phone_number: phoneNumber,
+      ...(avatarUrl !== undefined ? { avatar_url: avatarUrl } : {}),
     });
     return res;
   };
@@ -300,15 +305,26 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <div className="bg-surface-container-lowest rounded-3xl p-4 sm:p-5 border border-surface-dim/75 shadow-2xs">
             {user ? (
               <div className="flex items-center justify-between gap-3 sm:gap-4">
-                {/* Left side: Avatar without duplicate badge underneath */}
-                <div className="relative shrink-0 flex flex-col items-center">
+                {/* Left side: Avatar with click to edit */}
+                <div
+                  className="relative shrink-0 flex flex-col items-center cursor-pointer group"
+                  onClick={() => {
+                    triggerHaptic(8);
+                    setFocusPhoneInModal(false);
+                    setShowEditProfileModal(true);
+                  }}
+                  title={language === 'ur' ? 'پروفائل پکچر تبدیل کریں' : 'Change Profile Picture'}
+                >
                   <Avatar
                     name={displayName}
                     email={user.email}
                     avatarUrl={profile?.avatar_url}
                     size="lg"
-                    className="w-14 h-14 sm:w-16 sm:h-16 ring-2 ring-primary/20 rounded-full"
+                    className="w-14 h-14 sm:w-16 sm:h-16 ring-2 ring-primary/20 group-hover:ring-primary/50 transition-all rounded-full"
                   />
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center shadow-xs ring-1 ring-white">
+                    <Pencil className="w-2.5 h-2.5" />
+                  </div>
                 </div>
 
                 {/* Profile Information: Name on top with verified badge, phone below, email below phone */}
@@ -768,6 +784,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         onClose={() => setShowEditProfileModal(false)}
         initialName={profile?.full_name || user?.user_metadata?.full_name || ''}
         initialPhone={displayPhone || ''}
+        initialAvatarUrl={profile?.avatar_url || null}
         focusPhoneOnOpen={focusPhoneInModal}
         onSave={handleSaveProfile}
       />
