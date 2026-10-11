@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CategoryId } from '../types';
 import { EssentialItemVisual } from './EssentialItemVisual';
+import { sanitizeImageUrl } from '../lib/barcode/providers/openFoodFacts';
 
 export interface ItemVisualIconProps {
   name?: string;
@@ -17,8 +18,9 @@ export interface ItemVisualIconProps {
 
 /**
  * Unified canonical visual representation for any grocery item in YAAD.
- * Displays real product image when available, with automatic fallback
- * to high-definition, offline-first vector visuals.
+ * When a verified product image is provided, renders the sanitized image.
+ * Safely falls back to the high-definition offline-first vector visual if the
+ * image fails to load or is not provided.
  */
 export const ItemVisualIcon: React.FC<ItemVisualIconProps> = ({
   name = '',
@@ -29,18 +31,24 @@ export const ItemVisualIcon: React.FC<ItemVisualIconProps> = ({
   className = 'w-9 h-9 rounded-xl shrink-0',
   imageUrl,
 }) => {
-  const [imgError, setImgError] = useState(false);
+  const sanitizedUrl = sanitizeImageUrl(imageUrl);
+  const [hasImgError, setHasImgError] = useState(false);
 
-  if (imageUrl && !imgError) {
+  useEffect(() => {
+    setHasImgError(false);
+  }, [sanitizedUrl]);
+
+  if (sanitizedUrl && !hasImgError) {
     return (
       <div
-        className={`${className} overflow-hidden bg-white border border-surface-container-high/60 flex items-center justify-center p-0.5 shadow-2xs`}
+        className={`relative overflow-hidden flex items-center justify-center bg-white dark:bg-stone-900 border border-surface-container-high/40 shadow-xs ${className}`}
+        style={{ width: size, height: size }}
       >
         <img
-          src={imageUrl}
-          alt={displayName || name}
-          onError={() => setImgError(true)}
-          className="w-full h-full object-contain"
+          src={sanitizedUrl}
+          alt={displayName || name || 'Product'}
+          onError={() => setHasImgError(true)}
+          className="w-full h-full object-contain p-0.5"
           loading="lazy"
         />
       </div>
@@ -58,3 +66,4 @@ export const ItemVisualIcon: React.FC<ItemVisualIconProps> = ({
     />
   );
 };
+

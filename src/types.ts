@@ -321,13 +321,11 @@ export interface ShoppingItem {
   purchasedQuantity?: string | number;
   purchasedUnit?: string;
 
-  // Barcode & Scanned Product metadata
+  // Barcode & Product Metadata
   barcode?: string;
-  barcode_format?: string;
   brand?: string;
+  packageSize?: string;
   imageUrl?: string;
-  image_url?: string;
-  package_size?: string;
 }
 
 export interface ShoppingList {

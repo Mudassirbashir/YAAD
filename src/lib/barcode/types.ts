@@ -1,55 +1,54 @@
 import { CategoryId } from '../../types';
 
 export type BarcodeFormat =
-  | 'EAN-13'
-  | 'EAN-8'
-  | 'UPC-A'
-  | 'UPC-E'
-  | 'CODE-128'
-  | 'CODE-39'
+  | 'EAN_13'
+  | 'EAN_8'
+  | 'UPC_A'
+  | 'UPC_E'
+  | 'CODE_128'
+  | 'CODE_39'
   | 'ITF'
-  | 'QR_CODE'
   | 'UNKNOWN';
 
-export interface NormalizedProduct {
-  barcode: string;
-  barcodeFormat?: BarcodeFormat;
-  productName: string;
-  brand?: string;
-  imageUrl?: string;
-  packageQuantity?: string;
-  packageWeight?: string;
-  packageVolume?: string;
-  unit?: string;
-  categoryId: CategoryId;
-  ingredients?: string;
-  nutritionSummary?: string;
-  dataSource: string;
-  dataSourceUrl?: string;
-  lastUpdated?: string;
-  rawCategories?: string[];
-  isIncomplete?: boolean;
-}
-
-export type BarcodeErrorCode =
+export type BarcodeLookupStatus =
+  | 'FOUND'
   | 'NOT_FOUND'
   | 'RATE_LIMITED'
   | 'NETWORK_ERROR'
-  | 'INVALID_BARCODE'
-  | 'MALFORMED_RESPONSE'
   | 'SERVER_ERROR'
-  | 'ABORTED';
+  | 'INVALID_BARCODE'
+  | 'UNSUPPORTED';
 
-export interface BarcodeLookupResult {
-  success: boolean;
-  product?: NormalizedProduct;
-  barcode: string;
-  errorCode?: BarcodeErrorCode;
-  errorMessage?: string;
-  cached?: boolean;
+export interface NormalizedBarcode {
+  raw: string;
+  normalized: string;
+  format: BarcodeFormat;
+  isValid: boolean;
+  error?: string;
+  upcAEquivalent?: string;
+  ean13Equivalent?: string;
 }
 
-export interface IBarcodeProductProvider {
-  readonly providerName: string;
-  lookup(barcode: string, signal?: AbortSignal): Promise<BarcodeLookupResult>;
+export interface ScannedProduct {
+  barcode: string;
+  name: string;
+  brand?: string;
+  packageSize?: string;
+  imageUrl?: string;
+  categoryId: CategoryId;
+  source: 'open_food_facts' | 'open_products_facts' | 'manual';
+  rawData?: unknown;
+}
+
+export interface BarcodeLookupResult {
+  status: BarcodeLookupStatus;
+  product?: ScannedProduct;
+  message?: string;
+  source?: 'open_food_facts' | 'open_products_facts';
+  fromCache?: boolean;
+}
+
+export interface BarcodeProvider {
+  name: string;
+  lookup(barcode: NormalizedBarcode, signal?: AbortSignal): Promise<BarcodeLookupResult>;
 }

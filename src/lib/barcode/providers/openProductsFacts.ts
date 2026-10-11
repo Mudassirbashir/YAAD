@@ -1,163 +1,131 @@
-import { IBarcodeProductProvider, BarcodeLookupResult, NormalizedProduct } from '../types';
-import { normalizeBarcode, detectBarcodeFormat } from '../normalizer';
-import { mapToYaadCategory } from '../categoryMapper';
+import { BarcodeLookupResult, BarcodeProvider, NormalizedBarcode, ScannedProduct } from '../types';
+import { mapProviderCategoryToYAAD } from '../categoryMapper';
 import { sanitizeImageUrl } from './openFoodFacts';
 
-const USER_AGENT = 'YAAD-GroceryApp/1.0 (https://yaadapppk.vercel.app; support@yaad.app)';
-const REQUEST_TIMEOUT_MS = 6000;
+const TIMEOUT_MS = 6000;
+const USER_AGENT = 'YAAD-ShoppingList/1.0 (https://yaadapppk.vercel.app)';
 
-export class OpenProductsFactsProvider implements IBarcodeProductProvider {
-  public readonly providerName = 'Open Products Facts';
+export class OpenProductsFactsProvider implements BarcodeProvider {
+  name = 'open_products_facts';
 
-  public async lookup(barcode: string, externalSignal?: AbortSignal): Promise<BarcodeLookupResult> {
-    const cleanBarcode = normalizeBarcode(barcode);
-    if (!cleanBarcode) {
-      return {
-        success: false,
-        barcode: '',
-        errorCode: 'INVALID_BARCODE',
-        errorMessage: 'Invalid barcode provided',
-      };
+  async lookup(barcode: NormalizedBarcode, signal?: AbortSignal): Promise<BarcodeLookupResult> {
+    if (!barcode.isValid || !barcode.normalized) {
+      return { status: 'INVALID_BARCODE', message: barcode.error || 'Invalid barcode format' };
     }
 
+    const codesToTry = [barcode.normalized];
+    if (barcode.ean13Equivalent && barcode.ean13Equivalent !== barcode.normalized) {
+      codesToTry.push(barcode.ean13Equivalent);
+    }
+    if (barcode.upcAEquivalent && barcode.upcAEquivalent !== barcode.normalized) {
+      codesToTry.push(barcode.upcAEquivalent);
+    }
+
+    let lastErrorResult: BarcodeLookupResult = { status: 'NOT_FOUND' };
+
+    for (const code of codesToTry) {
+      const res = await this.queryBarcode(code, signal);
+      if (res.status === 'FOUND') {
+        return res;
+      }
+      if (res.status === 'RATE_LIMITED' || res.status === 'SERVER_ERROR' || res.status === 'NETWORK_ERROR') {
+        lastErrorResult = res;
+      }
+    }
+
+    return lastErrorResult;
+  }
+
+  private async queryBarcode(code: string, parentSignal?: AbortSignal, retryCount = 0): Promise<BarcodeLookupResult> {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
-    if (externalSignal) {
-      externalSignal.addEventListener('abort', () => controller.abort(), { once: true });
+    if (parentSignal) {
+      parentSignal.addEventListener('abort', () => controller.abort(), { once: true });
     }
 
-    const fields = [
-      'code',
-      'product_name',
-      'product_name_en',
-      'brands',
-      'image_url',
-      'image_front_url',
-      'quantity',
-      'categories',
-      'categories_tags',
-    ].join(',');
-
-    const url = `https://world.openproductsfacts.org/api/v2/product/${encodeURIComponent(
-      cleanBarcode
-    )}.json?fields=${fields}`;
+    const url = `https://world.openproductsfacts.org/api/v0/product/${encodeURIComponent(code)}.json?fields=product_name,product_name_en,generic_name,brands,quantity,image_url,image_front_url,image_small_url,categories_tags,categories`;
 
     try {
       const response = await fetch(url, {
         method: 'GET',
         headers: {
+          'Accept': 'application/json',
           'User-Agent': USER_AGENT,
-          Accept: 'application/json',
         },
         signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
 
-      if (response.status === 429) {
-        return {
-          success: false,
-          barcode: cleanBarcode,
-          errorCode: 'RATE_LIMITED',
-          errorMessage: 'Product lookup is temporarily busy.',
-        };
+      if (response.status === 404) {
+        return { status: 'NOT_FOUND', message: 'Product not found in Open Products Facts' };
       }
 
-      if (response.status === 404) {
-        return {
-          success: false,
-          barcode: cleanBarcode,
-          errorCode: 'NOT_FOUND',
-          errorMessage: 'No matching product record in Open Products Facts.',
-        };
+      if (response.status === 429) {
+        return { status: 'RATE_LIMITED', message: 'Open Products Facts rate limit exceeded' };
       }
 
       if (response.status >= 500) {
-        return {
-          success: false,
-          barcode: cleanBarcode,
-          errorCode: 'SERVER_ERROR',
-          errorMessage: 'External product database error.',
-        };
+        if (retryCount === 0) {
+          await new Promise((r) => setTimeout(r, 600));
+          return this.queryBarcode(code, parentSignal, 1);
+        }
+        return { status: 'SERVER_ERROR', message: `Open Products Facts server error (${response.status})` };
       }
 
-      let data: any;
-      try {
-        data = await response.json();
-      } catch {
-        return {
-          success: false,
-          barcode: cleanBarcode,
-          errorCode: 'MALFORMED_RESPONSE',
-          errorMessage: 'Malformed JSON received from Open Products Facts.',
-        };
+      if (!response.ok) {
+        return { status: 'SERVER_ERROR', message: `Unexpected response status (${response.status})` };
       }
 
-      if (!data || data.status === 0 || !data.product) {
-        return {
-          success: false,
-          barcode: cleanBarcode,
-          errorCode: 'NOT_FOUND',
-          errorMessage: 'No matching product record in Open Products Facts.',
-        };
+      const data = await response.json();
+
+      if (!data || data.status !== 1 || !data.product) {
+        return { status: 'NOT_FOUND', message: 'Product not found' };
       }
 
       const p = data.product;
-      const rawName = p.product_name || p.product_name_en;
-      if (!rawName || typeof rawName !== 'string' || !rawName.trim()) {
-        return {
-          success: false,
-          barcode: cleanBarcode,
-          errorCode: 'NOT_FOUND',
-          errorMessage: 'Product record contains no name.',
-        };
+      const rawName = p.product_name || p.product_name_en || p.generic_name || '';
+      const name = typeof rawName === 'string' ? rawName.trim() : '';
+
+      if (!name) {
+        return { status: 'NOT_FOUND', message: 'Product record contains no usable title' };
       }
 
-      const productName = rawName.trim();
       const brand = typeof p.brands === 'string' && p.brands.trim() ? p.brands.trim() : undefined;
-      const rawImage = p.image_front_url || p.image_url;
-      const imageUrl = sanitizeImageUrl(rawImage);
-      const packageQuantity = p.quantity || undefined;
-      const categoriesTags = Array.isArray(p.categories_tags) ? p.categories_tags : [];
-      const categoriesString = typeof p.categories === 'string' ? p.categories : '';
+      const packageSize = typeof p.quantity === 'string' && p.quantity.trim() ? p.quantity.trim() : undefined;
 
-      const categoryId = mapToYaadCategory(categoriesTags, categoriesString, productName);
+      const rawImg = p.image_url || p.image_front_url || p.image_small_url;
+      const imageUrl = sanitizeImageUrl(rawImg);
 
-      const normalized: NormalizedProduct = {
-        barcode: cleanBarcode,
-        barcodeFormat: detectBarcodeFormat(cleanBarcode),
-        productName,
+      const categoryId = mapProviderCategoryToYAAD(p.categories_tags, p.categories);
+
+      const product: ScannedProduct = {
+        barcode: code,
+        name,
         brand,
+        packageSize,
         imageUrl,
-        packageQuantity,
         categoryId,
-        dataSource: 'Open Products Facts',
-        dataSourceUrl: `https://world.openproductsfacts.org/product/${cleanBarcode}`,
-        rawCategories: categoriesTags.length > 0 ? categoriesTags : categoriesString ? [categoriesString] : [],
-        isIncomplete: !imageUrl || !packageQuantity || !brand,
+        source: 'open_products_facts',
+        rawData: data,
       };
 
       return {
-        success: true,
-        product: normalized,
-        barcode: cleanBarcode,
+        status: 'FOUND',
+        product,
+        source: 'open_products_facts',
       };
     } catch (err: unknown) {
       clearTimeout(timeoutId);
-      if (externalSignal?.aborted) {
-        return {
-          success: false,
-          barcode: cleanBarcode,
-          errorCode: 'ABORTED',
-          errorMessage: 'Lookup cancelled',
-        };
+
+      if (err instanceof Error && err.name === 'AbortError') {
+        return { status: 'NETWORK_ERROR', message: 'Open Products Facts request timed out' };
       }
+
       return {
-        success: false,
-        barcode: cleanBarcode,
-        errorCode: 'NETWORK_ERROR',
-        errorMessage: 'Connection failed reaching Open Products Facts.',
+        status: 'NETWORK_ERROR',
+        message: err instanceof Error ? err.message : 'Network error connecting to Open Products Facts',
       };
     }
   }

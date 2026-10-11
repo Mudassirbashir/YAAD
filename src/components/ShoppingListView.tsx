@@ -2,10 +2,10 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Plus, Check, Edit3, CheckCheck, Sparkles, ShoppingBag, Loader2, AlertCircle, Trash2, ArrowRight, ArrowLeft, ScanBarcode } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ShoppingList, ShoppingItem, CategoryId, CATEGORIES_LIST, normalizeCategoryId } from '../types';
-import { BarcodeScannerModal } from './barcode/BarcodeScannerModal';
 import { TopHeader } from './TopHeader';
 import { CategoryIcon } from './CategoryIcon';
 import { ItemVisualIcon } from './ItemVisualIcon';
+import { BarcodeScannerModal } from './barcode/BarcodeScannerModal';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { useAppTheme } from '../context/ThemeContext';
@@ -56,6 +56,49 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
   const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState<boolean>(false);
+
+  const handleAddScannedItem = (scannedItem: ShoppingItem) => {
+    const existingIndex = list.items.findIndex(
+      (it) =>
+        (scannedItem.barcode && it.barcode === scannedItem.barcode) ||
+        it.name.toLowerCase().trim() === scannedItem.name.toLowerCase().trim()
+    );
+
+    let updatedItems: ShoppingItem[];
+    if (existingIndex >= 0) {
+      const existing = list.items[existingIndex];
+      const merged = mergeQuantities(
+        existing.quantity,
+        existing.unit,
+        scannedItem.quantity,
+        scannedItem.unit
+      );
+      updatedItems = [...list.items];
+      updatedItems[existingIndex] = {
+        ...existing,
+        quantity: merged.quantity,
+        unit: merged.unit,
+        barcode: existing.barcode || scannedItem.barcode,
+        brand: existing.brand || scannedItem.brand,
+        packageSize: existing.packageSize || scannedItem.packageSize,
+        imageUrl: existing.imageUrl || scannedItem.imageUrl,
+        completed: false,
+      };
+      showFeedbackToast(
+        `Updated "${scannedItem.name}" (${merged.quantity || '1'}${merged.unit ? ' ' + merged.unit : ''})`,
+        'merge'
+      );
+    } else {
+      updatedItems = [scannedItem, ...list.items];
+      showFeedbackToast(`Added "${scannedItem.name}"`, 'add');
+    }
+
+    onUpdateList({
+      ...list,
+      items: updatedItems,
+      isCompleted: false,
+    });
+  };
 
   // Transient feedback banner for added/updated items
   const [feedbackToast, setFeedbackToast] = useState<{ message: string; type: 'add' | 'merge' } | null>(null);
@@ -541,67 +584,6 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
     playItemCheckSound();
   };
 
-  // Add item scanned via barcode
-  const handleBarcodeAddProduct = (scannedItem: ShoppingItem) => {
-    const existing =
-      list.items.find((it) => it.name.trim().toLowerCase() === scannedItem.name.trim().toLowerCase()) ||
-      (scannedItem.barcode ? list.items.find((it) => it.barcode === scannedItem.barcode) : undefined);
-
-    let updatedItems = [...list.items];
-
-    if (existing) {
-      const merged = mergeQuantities(
-        existing.quantity,
-        existing.unit,
-        scannedItem.quantity,
-        scannedItem.unit
-      );
-      updatedItems = updatedItems.map((it) =>
-        it.id === existing.id
-          ? {
-              ...it,
-              quantity: merged.quantity,
-              unit: merged.unit || it.unit,
-              planned_quantity: merged.quantity,
-              planned_unit: merged.unit || it.planned_unit,
-              barcode: scannedItem.barcode || it.barcode,
-              barcode_format: scannedItem.barcode_format || it.barcode_format,
-              imageUrl: scannedItem.imageUrl || it.imageUrl || it.image_url,
-              image_url: scannedItem.image_url || it.image_url || it.imageUrl,
-              brand: scannedItem.brand || it.brand,
-              package_size: scannedItem.package_size || it.package_size,
-              note: scannedItem.note || it.note,
-              completed: false,
-            }
-          : it
-      );
-      showFeedbackToast(
-        language === 'ur'
-          ? `"${scannedItem.name}" کی مقدار اپڈیٹ ہو گئی`
-          : `Updated quantity for "${scannedItem.name}"`,
-        'merge'
-      );
-    } else {
-      updatedItems = [scannedItem, ...updatedItems];
-      showFeedbackToast(
-        language === 'ur'
-          ? `"${scannedItem.name}" بارکوڈ سے لسٹ میں شامل ہو گیا`
-          : `Added "${scannedItem.name}" to list`,
-        'add'
-      );
-    }
-
-    const updatedList: ShoppingList = {
-      ...list,
-      items: updatedItems,
-      isCompleted: false,
-    };
-
-    onUpdateList(updatedList);
-    triggerHaptic(15);
-    playItemCheckSound();
-  };
-
   // Add new inline item using natural language parser and smart categorizer
   const handleAddInlineItem = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -813,52 +795,52 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
           </div>
         )}
 
-        {/* Add Item Input Bar */}
+        {/* Add Item Input Bar with Barcode Scanner */}
         <div className="space-y-2">
-          <form
-            onSubmit={handleAddInlineItem}
-            className="relative w-full shadow-[0px_4px_20px_rgba(0,30,21,0.05)] rounded-full bg-surface-container-lowest border border-surface-container-high/60"
-          >
-            <input
-              dir="auto"
-              value={newItemText}
-              onChange={(e) => setNewItemText(e.target.value)}
-              onPaste={(e) => {
-                const pasteText = e.clipboardData?.getData('text');
-                if (pasteText && (pasteText.includes('\n') || pasteText.includes(',') || pasteText.includes('،') || pasteText.includes(';'))) {
-                  e.preventDefault();
-                  processAddItems(pasteText);
-                }
-              }}
-              className="w-full h-[54px] ps-5 pe-28 rounded-full border-none bg-transparent focus:ring-2 focus:ring-primary/20 text-base text-on-surface placeholder:text-outline font-['Manrope'] outline-none"
-              placeholder={t('shoppingList.inputPlaceholder')}
-              type="text"
-            />
-            <div className="absolute end-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
-              {/* Barcode Scanner Button - small raised square button immediately to the LEFT of the plus button */}
-              <button
-                type="button"
-                onClick={() => setIsBarcodeScannerOpen(true)}
-                aria-label="Scan barcode (Beta)"
-                title="Scan product barcode (Beta)"
-                className="relative w-10 h-10 rounded-xl bg-surface-container-lowest text-primary hover:bg-surface-container-low border border-surface-container-high/90 flex items-center justify-center shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20 shrink-0"
-              >
-                <ScanBarcode className="w-5 h-5 stroke-[2]" />
-                <span className="absolute -top-1.5 -end-1.5 bg-rose-600 text-white text-[9px] font-black px-1 py-0.5 rounded uppercase tracking-wider leading-none shadow-xs select-none pointer-events-none">
-                  BETA
-                </span>
-              </button>
-
+          <div className="flex items-center gap-2 w-full">
+            <form
+              onSubmit={handleAddInlineItem}
+              className="relative flex-1 shadow-[0px_4px_20px_rgba(0,30,21,0.05)] rounded-full bg-surface-container-lowest border border-surface-container-high/60"
+            >
+              <input
+                dir="auto"
+                value={newItemText}
+                onChange={(e) => setNewItemText(e.target.value)}
+                onPaste={(e) => {
+                  const pasteText = e.clipboardData?.getData('text');
+                  if (pasteText && (pasteText.includes('\n') || pasteText.includes(',') || pasteText.includes('،') || pasteText.includes(';'))) {
+                    e.preventDefault();
+                    processAddItems(pasteText);
+                  }
+                }}
+                className="w-full h-[54px] ps-5 pe-14 rounded-full border-none bg-transparent focus:ring-2 focus:ring-primary/20 text-base text-on-surface placeholder:text-outline font-['Manrope'] outline-none"
+                placeholder={t('shoppingList.inputPlaceholder')}
+                type="text"
+              />
               <button
                 type="submit"
                 aria-label="Add item"
                 style={{ backgroundColor: plusBg }}
-                className="w-10 h-10 text-white rounded-full flex items-center justify-center hover:opacity-90 active:scale-95 transition-all shadow-xs cursor-pointer shrink-0"
+                className="absolute end-1.5 top-1/2 -translate-y-1/2 w-10 h-10 text-white rounded-full flex items-center justify-center hover:opacity-90 active:scale-95 transition-all shadow-xs cursor-pointer"
               >
                 <Plus className="w-5 h-5 stroke-[2.4]" />
               </button>
-            </div>
-          </form>
+            </form>
+
+            {/* Raised square scanner button with red BETA label */}
+            <button
+              type="button"
+              onClick={() => setIsBarcodeScannerOpen(true)}
+              className="relative shrink-0 w-[54px] h-[54px] rounded-2xl bg-surface-bright hover:bg-surface-container-low active:scale-95 border border-surface-dim/80 shadow-xs flex flex-col items-center justify-center text-primary transition-all cursor-pointer group"
+              aria-label={(t as any)?.barcode?.scanItem || 'Scan Barcode'}
+              title={(t as any)?.barcode?.scanItem || 'Scan Barcode'}
+            >
+              <ScanBarcode className="w-5 h-5 group-hover:scale-110 transition-transform text-primary" />
+              <span className="absolute -top-1.5 -end-1 bg-red-600 text-white text-[8px] font-black tracking-wider px-1 py-0.2 rounded-full shadow-2xs uppercase leading-tight">
+                {(t as any)?.barcode?.beta || 'BETA'}
+              </span>
+            </button>
+          </div>
 
           {/* Real-time Catalog Search Suggestions */}
           {searchSuggestions.length > 0 && newItemText.trim().length > 0 && (
@@ -1268,12 +1250,11 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
         onDeleteItem={handleDeleteItem}
       />
 
-      {/* Barcode Scanner Modal (Beta) */}
+      {/* Barcode Scanner Modal */}
       <BarcodeScannerModal
         isOpen={isBarcodeScannerOpen}
         onClose={() => setIsBarcodeScannerOpen(false)}
-        onAddProduct={handleBarcodeAddProduct}
-        existingItems={list.items}
+        onAddItem={handleAddScannedItem}
       />
 
       {/* Delete List Confirmation Modal */}

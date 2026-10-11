@@ -677,33 +677,17 @@ export async function loadUserShoppingLists(
           const fItem = fallbackItems.find((f) => f.id === rItem.id);
           if (!fItem) return rItem;
           return {
-            ...fItem,
-            id: rItem.id,
-            name: rItem.name || fItem.name,
-            categoryId: rItem.categoryId || fItem.categoryId,
-            category: rItem.category || fItem.category,
-            quantity: rItem.quantity !== undefined && rItem.quantity !== null ? rItem.quantity : fItem.quantity,
-            unit: rItem.unit || fItem.unit,
-            completed: rItem.completed ?? fItem.completed,
-            isCompleted: rItem.completed ?? fItem.completed,
-            barcode: fItem.barcode || rItem.barcode,
-            barcode_format: fItem.barcode_format || rItem.barcode_format,
-            brand: fItem.brand || rItem.brand,
-            imageUrl: fItem.imageUrl || fItem.image_url || rItem.imageUrl,
-            image_url: fItem.image_url || fItem.imageUrl || rItem.image_url,
-            package_size: fItem.package_size || rItem.package_size,
-            note: fItem.note || rItem.note,
+            ...rItem,
             canonicalName: rItem.canonicalName || fItem.canonicalName,
             nameUrdu: rItem.nameUrdu || fItem.nameUrdu,
             nameRomanUrdu: rItem.nameRomanUrdu || fItem.nameRomanUrdu,
             emoji: rItem.emoji || fItem.emoji,
             isRecognized: rItem.isRecognized ?? fItem.isRecognized,
+            barcode: rItem.barcode || fItem.barcode,
+            brand: rItem.brand || fItem.brand,
+            packageSize: rItem.packageSize || fItem.packageSize,
+            imageUrl: rItem.imageUrl || fItem.imageUrl,
             createdAt: rItem.createdAt || (fItem.createdAt ?? (fItem.created_at ? new Date(fItem.created_at).getTime() : undefined)),
-            confidence: fItem.confidence ?? rItem.confidence,
-            planned_quantity: fItem.planned_quantity ?? rItem.planned_quantity,
-            planned_unit: fItem.planned_unit ?? rItem.planned_unit,
-            purchased_quantity: fItem.purchased_quantity ?? rItem.purchased_quantity,
-            purchased_unit: fItem.purchased_unit ?? rItem.purchased_unit,
           };
         });
       } else if (relationalItems.length === 0) {
@@ -1043,13 +1027,12 @@ export async function updateShoppingItemCompletionStatus(
       console.warn('Notice updating individual shopping_item, attempting fallback update:', itemUpdateErr.message);
     }
 
-    // 2. Update the parent shopping_list row (completion flag, JSON items array, and updated_at)
+    // 2. Update the parent shopping_list row (completion flag and updated_at)
     await supabase
       .from('shopping_lists')
       .update({
         is_completed: Boolean(updatedList.isCompleted),
         completed_at: updatedList.isCompleted ? (updatedList.completedAt || nowIso) : null,
-        items: updatedList.items,
         updated_at: nowIso,
       })
       .eq('id', safeListId);
@@ -2466,37 +2449,28 @@ export async function fetchSingleShoppingList(
       .select('*')
       .eq('list_id', listId);
 
-    const fallbackItems: ShoppingItem[] = Array.isArray(row.items) ? row.items : [];
     const items: ShoppingItem[] = (itemsData && itemsData.length > 0)
       ? itemsData.map((r: any) => {
           const recognized = defaultItemCatalog.findItemByName(r.item_name);
-          const fItem = fallbackItems.find((f) => f.id === r.id);
           return {
-            ...(fItem || {}),
             id: r.id,
-            name: r.item_name || r.name || (fItem?.name ?? ''),
-            canonicalName: r.canonical_name || recognized?.canonicalName || fItem?.canonicalName || r.item_name,
-            nameUrdu: r.name_urdu || recognized?.nameUrdu || fItem?.nameUrdu || undefined,
-            nameRomanUrdu: r.name_roman_urdu || recognized?.nameRomanUrdu || fItem?.nameRomanUrdu || undefined,
-            emoji: r.emoji || recognized?.emoji || fItem?.emoji || undefined,
-            categoryId: (r.category || recognized?.categoryId || fItem?.categoryId || 'other') as CategoryId,
-            category: r.category || recognized?.category || fItem?.category || 'other',
-            quantity: r.quantity !== null && r.quantity !== undefined ? String(r.quantity) : (fItem?.quantity ?? undefined),
-            unit: r.unit || recognized?.defaultUnit || fItem?.unit || undefined,
-            completed: Boolean(r.is_completed ?? r.is_checked ?? fItem?.completed),
-            rawInput: r.raw_input || fItem?.rawInput || r.item_name,
-            note: r.note || fItem?.note || undefined,
-            isRecognized: Boolean(r.is_recognized || recognized || fItem?.isRecognized),
-            createdAt: r.created_at ? new Date(r.created_at).getTime() : fItem?.createdAt,
-            barcode: fItem?.barcode,
-            barcode_format: fItem?.barcode_format,
-            brand: fItem?.brand,
-            imageUrl: fItem?.imageUrl || fItem?.image_url,
-            image_url: fItem?.image_url || fItem?.imageUrl,
-            package_size: fItem?.package_size,
+            name: r.item_name || r.name || '',
+            canonicalName: r.canonical_name || recognized?.canonicalName || r.item_name,
+            nameUrdu: r.name_urdu || recognized?.nameUrdu || undefined,
+            nameRomanUrdu: r.name_roman_urdu || recognized?.nameRomanUrdu || undefined,
+            emoji: r.emoji || recognized?.emoji || undefined,
+            categoryId: (r.category || recognized?.categoryId || 'other') as CategoryId,
+            category: r.category || recognized?.category || 'other',
+            quantity: r.quantity !== null && r.quantity !== undefined ? String(r.quantity) : undefined,
+            unit: r.unit || recognized?.defaultUnit || undefined,
+            completed: Boolean(r.is_completed ?? r.is_checked),
+            rawInput: r.raw_input || r.item_name,
+            note: r.note || undefined,
+            isRecognized: Boolean(r.is_recognized || recognized),
+            createdAt: r.created_at ? new Date(r.created_at).getTime() : undefined,
           };
         })
-      : fallbackItems;
+      : (Array.isArray(row.items) ? row.items : []);
 
     const isCompleted = items.length > 0
       ? items.every((i: ShoppingItem) => i.completed)

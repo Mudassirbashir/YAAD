@@ -1,25 +1,22 @@
-import {
-  BarcodeLookupResult,
-  IBarcodeProductProvider,
-  NormalizedProduct,
-} from './types';
-import { normalizeBarcode, isValidRetailBarcode } from './normalizer';
+import { BarcodeLookupResult, BarcodeProvider, NormalizedBarcode } from './types';
+import { normalizeBarcode } from './normalizer';
 import { OpenFoodFactsProvider } from './providers/openFoodFacts';
 import { OpenProductsFactsProvider } from './providers/openProductsFacts';
 
-/**
- * BarcodeLookupService coordinates multiple product providers, maintains an
- * in-memory session cache to avoid redundant network queries, and enforces
- * scan debouncing.
- */
-export class BarcodeLookupService {
-  private providers: IBarcodeProductProvider[];
-  private cache: Map<string, NormalizedProduct | null> = new Map();
-  private lastScanTimestamp: number = 0;
-  private lastScannedBarcode: string = '';
-  private readonly cooldownMs: number = 1200;
+interface CacheEntry {
+  result: BarcodeLookupResult;
+  timestamp: number;
+}
 
-  constructor(providers?: IBarcodeProductProvider[]) {
+const POSITIVE_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes for FOUND
+const NOT_FOUND_CACHE_TTL_MS = 5 * 60 * 1000;  // 5 minutes for confirmed NOT_FOUND
+
+export class BarcodeLookupService {
+  private providers: BarcodeProvider[];
+  private cache = new Map<string, CacheEntry>();
+  private inFlightRequests = new Map<string, Promise<BarcodeLookupResult>>();
+
+  constructor(providers?: BarcodeProvider[]) {
     this.providers = providers || [
       new OpenFoodFactsProvider(),
       new OpenProductsFactsProvider(),
@@ -27,120 +24,112 @@ export class BarcodeLookupService {
   }
 
   /**
-   * Checks if scanning this barcode should be ignored due to rapid duplicate debounce
+   * Clears lookup cache
    */
-  public shouldIgnoreDuplicateScan(barcode: string): boolean {
-    const clean = normalizeBarcode(barcode);
-    const now = Date.now();
-    if (
-      clean === this.lastScannedBarcode &&
-      now - this.lastScanTimestamp < this.cooldownMs
-    ) {
-      return true;
-    }
-    this.lastScannedBarcode = clean;
-    this.lastScanTimestamp = now;
-    return false;
+  clearCache(): void {
+    this.cache.clear();
   }
 
   /**
-   * Look up a barcode across configured providers.
+   * Performs end-to-end lookup:
+   * 1. Normalizes and validates barcode format and checksum.
+   * 2. Checks cache (ignoring transient failures).
+   * 3. Deduplicates in-flight requests.
+   * 4. Queries Open Food Facts, falling back to Open Products Facts.
    */
-  public async lookup(
-    barcode: string,
-    signal?: AbortSignal
+  async lookupBarcode(
+    rawCode: string,
+    options?: { signal?: AbortSignal; forceRefresh?: boolean }
   ): Promise<BarcodeLookupResult> {
-    const check = isValidRetailBarcode(barcode);
-    if (!check.valid) {
+    const normalized = normalizeBarcode(rawCode);
+
+    if (!normalized.isValid) {
       return {
-        success: false,
-        barcode: normalizeBarcode(barcode),
-        errorCode: 'INVALID_BARCODE',
-        errorMessage: check.reason || 'Invalid barcode format',
+        status: 'INVALID_BARCODE',
+        message: normalized.error || 'Invalid barcode format',
       };
     }
 
-    const clean = check.cleanBarcode;
+    const cacheKey = normalized.normalized;
 
-    // Check memory cache first
-    if (this.cache.has(clean)) {
-      const cached = this.cache.get(clean);
+    // Check cache if not forcing refresh
+    if (!options?.forceRefresh) {
+      const cached = this.cache.get(cacheKey);
       if (cached) {
-        return {
-          success: true,
-          product: cached,
-          barcode: clean,
-          cached: true,
-        };
-      } else {
-        return {
-          success: false,
-          barcode: clean,
-          errorCode: 'NOT_FOUND',
-          errorMessage: 'No matching product record in known databases.',
-          cached: true,
-        };
+        const ttl = cached.result.status === 'FOUND' ? POSITIVE_CACHE_TTL_MS : NOT_FOUND_CACHE_TTL_MS;
+        if (Date.now() - cached.timestamp < ttl) {
+          return {
+            ...cached.result,
+            fromCache: true,
+          };
+        } else {
+          this.cache.delete(cacheKey);
+        }
       }
     }
 
-    // Try providers in sequential order (Open Food Facts -> Open Products Facts)
-    let lastError: BarcodeLookupResult | null = null;
+    // Deduplicate simultaneous in-flight queries for the same barcode
+    const inFlight = this.inFlightRequests.get(cacheKey);
+    if (inFlight) {
+      return inFlight;
+    }
+
+    const queryPromise = this.executeLookup(normalized, options?.signal)
+      .finally(() => {
+        this.inFlightRequests.delete(cacheKey);
+      });
+
+    this.inFlightRequests.set(cacheKey, queryPromise);
+    const result = await queryPromise;
+
+    // Cache ONLY if FOUND or confirmed NOT_FOUND (never cache transient errors)
+    if (result.status === 'FOUND' || result.status === 'NOT_FOUND') {
+      this.cache.set(cacheKey, {
+        result,
+        timestamp: Date.now(),
+      });
+    }
+
+    return result;
+  }
+
+  private async executeLookup(
+    barcode: NormalizedBarcode,
+    signal?: AbortSignal
+  ): Promise<BarcodeLookupResult> {
+    let lastError: BarcodeLookupResult = { status: 'NOT_FOUND' };
 
     for (const provider of this.providers) {
       if (signal?.aborted) {
-        return {
-          success: false,
-          barcode: clean,
-          errorCode: 'ABORTED',
-          errorMessage: 'Lookup cancelled',
+        return { status: 'NETWORK_ERROR', message: 'Request aborted' };
+      }
+
+      try {
+        const res = await provider.lookup(barcode, signal);
+
+        if (res.status === 'FOUND') {
+          return res;
+        }
+
+        // If NOT_FOUND, continue to next provider (e.g., Open Food Facts -> Open Products Facts)
+        if (res.status === 'NOT_FOUND') {
+          lastError = res;
+          continue;
+        }
+
+        // For rate limit, server error, or network error, remember and try next provider
+        lastError = res;
+      } catch (err: unknown) {
+        lastError = {
+          status: 'NETWORK_ERROR',
+          message: err instanceof Error ? err.message : 'Unknown lookup error',
         };
       }
-
-      const res = await provider.lookup(clean, signal);
-      if (res.success && res.product) {
-        this.cache.set(clean, res.product);
-        return res;
-      }
-
-      // If user aborted, stop immediately
-      if (res.errorCode === 'ABORTED') {
-        return res;
-      }
-
-      lastError = res;
     }
 
-    // If providers confirmed the item is genuinely not found, record null in cache to avoid spamming
-    if (!lastError || lastError.errorCode === 'NOT_FOUND') {
-      this.cache.set(clean, null);
-    }
-
-    return (
-      lastError || {
-        success: false,
-        barcode: clean,
-        errorCode: 'NOT_FOUND',
-        errorMessage: 'Product not found in product databases.',
-      }
-    );
-  }
-
-  /**
-   * Seed or override a product in the memory cache
-   */
-  public setCachedProduct(barcode: string, product: NormalizedProduct): void {
-    const clean = normalizeBarcode(barcode);
-    if (clean) {
-      this.cache.set(clean, product);
-    }
-  }
-
-  /**
-   * Clear in-memory cache
-   */
-  public clearCache(): void {
-    this.cache.clear();
+    return lastError;
   }
 }
 
-export const barcodeLookupService = new BarcodeLookupService();
+// Global singleton instance for application use
+export const defaultBarcodeService = new BarcodeLookupService();

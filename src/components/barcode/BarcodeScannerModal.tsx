@@ -4,978 +4,614 @@ import {
   Camera,
   Flashlight,
   FlashlightOff,
+  Keyboard,
   RefreshCw,
-  Plus,
-  AlertCircle,
-  Check,
   Search,
-  ExternalLink,
-  Loader2,
+  Check,
+  AlertTriangle,
   Package,
+  Plus,
+  Minus,
 } from 'lucide-react';
-import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
-import {
-  NormalizedProduct,
-  barcodeLookupService,
-  normalizeBarcode,
-} from '../../lib/barcode';
-import { CategoryId, CATEGORIES_LIST, ShoppingItem, normalizeCategoryId } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
+import { CategoryId, CATEGORIES_LIST, ShoppingItem, normalizeCategoryId } from '../../types';
+import { defaultBarcodeService } from '../../lib/barcode/service';
+import { normalizeBarcode } from '../../lib/barcode/normalizer';
+import { ScannedProduct } from '../../lib/barcode/types';
 import { ItemVisualIcon } from '../ItemVisualIcon';
-import { triggerHaptic, playItemCheckSound } from '../../lib/sound';
+import { CategoryIcon } from '../CategoryIcon';
+import { triggerHaptic } from '../../lib/sound';
 import { generateUUID } from '../../lib/uuid';
-import { mergeQuantities } from '../../lib/recognition';
 
 export interface BarcodeScannerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddProduct: (item: ShoppingItem) => void;
-  existingItems?: ShoppingItem[];
+  onAddItem: (item: ShoppingItem) => void;
 }
 
-type ScannerStep =
-  | 'permission_prompt'
-  | 'scanning'
-  | 'looking_up'
-  | 'product_preview'
-  | 'not_found'
-  | 'error';
+type ScannerView = 'scanning' | 'searching' | 'review' | 'manual' | 'error';
 
 export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
   isOpen,
   onClose,
-  onAddProduct,
-  existingItems = [],
+  onAddItem,
 }) => {
   const { t, getCategoryName, language } = useLanguage();
   const isUrdu = language === 'ur';
 
-  // Scanner state machine
-  const [step, setStep] = useState<ScannerStep>('permission_prompt');
-  const [errorMessage, setErrorMessage] = useState<string>('');
-  const [scannedBarcode, setScannedBarcode] = useState<string>('');
-  const [productData, setProductData] = useState<NormalizedProduct | null>(null);
+  // Scanner state
+  const [view, setView] = useState<ScannerView>('scanning');
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [isTorchOn, setIsTorchOn] = useState(false);
+  const [hasTorch, setHasTorch] = useState(false);
+  const [manualCode, setManualCode] = useState('');
+  const [searchError, setSearchError] = useState<string | null>(null);
 
-  // Editable confirmation form state
-  const [editName, setEditName] = useState<string>('');
-  const [editCategory, setEditCategory] = useState<CategoryId>('cooking_essentials');
-  const [editQuantity, setEditQuantity] = useState<string>('1');
-  const [imageError, setImageError] = useState<boolean>(false);
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  // Scanned item review state
+  const [scannedProduct, setScannedProduct] = useState<ScannedProduct | null>(null);
+  const [reviewName, setReviewName] = useState('');
+  const [reviewBrand, setReviewBrand] = useState('');
+  const [reviewPackageSize, setReviewPackageSize] = useState('');
+  const [reviewCategory, setReviewCategory] = useState<CategoryId>('other');
+  const [reviewQuantity, setReviewQuantity] = useState('1');
+  const [reviewUnit, setReviewUnit] = useState('');
+  const [reviewNote, setReviewNote] = useState('');
+  const [scannedCode, setScannedCode] = useState('');
 
-  // Manual fallback input state
-  const [manualInput, setManualInput] = useState<string>('');
-  const [manualError, setManualError] = useState<string>('');
+  // Refs for camera management
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const isMountedRef = useRef(true);
+  const isProcessingRef = useRef(false);
+  const animationFrameRef = useRef<number | null>(null);
+  const manualInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Hardware / Torch controls
-  const [hasTorch, setHasTorch] = useState<boolean>(false);
-  const [isTorchOn, setIsTorchOn] = useState<boolean>(false);
-
-  // References
-  const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
-  const isScanningRef = useRef<boolean>(false);
-  const isStartingRef = useRef<boolean>(false);
-  const sessionSeqCounter = useRef<number>(0);
-  const isSubmittingRef = useRef<boolean>(false);
-  const abortControllerRef = useRef<AbortController | null>(null);
-  const scannerContainerId = 'yaad-barcode-scanner-viewport';
-
-  // Check if item is already present in list
-  const existingMatch = useCallback(
-    (name: string, barcode?: string) => {
-      const cleanName = name.trim().toLowerCase();
-      return existingItems.find((it) => {
-        if (barcode && it.barcode && it.barcode === barcode) return true;
-        return it.name.trim().toLowerCase() === cleanName;
-      });
-    },
-    [existingItems]
-  );
-
-  // Stop camera tracks cleanly and release all MediaStreams
-  const stopScanner = useCallback(async () => {
-    // Invalidate any in-flight startup promises
-    sessionSeqCounter.current++;
-    isStartingRef.current = false;
-    isScanningRef.current = false;
-
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      abortControllerRef.current = null;
+  // Stop camera tracks cleanly
+  const stopCamera = useCallback(() => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
     }
-
-    const scanner = html5QrCodeRef.current;
-    html5QrCodeRef.current = null;
-
-    if (scanner) {
-      try {
-        if (scanner.isScanning) {
-          await scanner.stop();
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => {
+        try {
+          track.stop();
+        } catch {
+          // Track already stopped
         }
-        scanner.clear();
-      } catch (err) {
-        console.warn('Notice stopping camera:', err);
-      }
+      });
+      streamRef.current = null;
     }
-
-    // Direct MediaStream track stop guard to ensure zero orphaned camera hardware lights
-    try {
-      const container = document.getElementById(scannerContainerId);
-      if (container) {
-        const videos = container.querySelectorAll('video');
-        videos.forEach((v) => {
-          if (v.srcObject instanceof MediaStream) {
-            v.srcObject.getTracks().forEach((track) => track.stop());
-            v.srcObject = null;
-          }
-        });
-      }
-    } catch {}
-
     setIsTorchOn(false);
     setHasTorch(false);
   }, []);
 
-  // Safe Close Handler
-  const handleClose = useCallback(async () => {
-    await stopScanner();
-    onClose();
-  }, [stopScanner, onClose]);
+  // Process a detected barcode string
+  const handleBarcodeDetected = useCallback(async (rawCode: string) => {
+    if (isProcessingRef.current) return;
+    isProcessingRef.current = true;
+    triggerHaptic(25);
 
-  // Handle ESC key to dismiss modal
+    stopCamera();
+    setView('searching');
+    setSearchError(null);
+    setScannedCode(rawCode);
+
+    try {
+      const result = await defaultBarcodeService.lookupBarcode(rawCode);
+
+      if (!isMountedRef.current) return;
+
+      if (result.status === 'FOUND' && result.product) {
+        setScannedProduct(result.product);
+        setReviewName(result.product.name);
+        setReviewBrand(result.product.brand || '');
+        setReviewPackageSize(result.product.packageSize || '');
+        setReviewCategory(result.product.categoryId || 'other');
+        setReviewQuantity('1');
+        setReviewUnit('');
+        setReviewNote('');
+        setView('review');
+      } else {
+        // Product not found or error: allow user to add it directly with the scanned barcode
+        const normalized = normalizeBarcode(rawCode);
+        setScannedProduct(null);
+        setReviewName('');
+        setReviewBrand('');
+        setReviewPackageSize('');
+        setReviewCategory('other');
+        setReviewQuantity('1');
+        setReviewUnit('');
+        setReviewNote('');
+
+        if (result.status === 'INVALID_BARCODE') {
+          setSearchError((t as any)?.barcode?.invalidBarcode || 'Invalid barcode format');
+        } else if (result.status === 'NETWORK_ERROR') {
+          setSearchError((t as any)?.barcode?.networkError || 'Network connection issue');
+        } else {
+          setSearchError((t as any)?.barcode?.notFound || 'Product not found in database');
+        }
+
+        setView('review');
+      }
+    } catch {
+      if (isMountedRef.current) {
+        setSearchError('Error looking up barcode');
+        setView('review');
+      }
+    } finally {
+      isProcessingRef.current = false;
+    }
+  }, [stopCamera, t]);
+
+  // Start Camera
+  const startCamera = useCallback(async () => {
+    stopCamera();
+    setCameraError(null);
+    setView('scanning');
+    isProcessingRef.current = false;
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setCameraError((t as any)?.barcode?.cameraUnavailable || 'Camera is not available on this device');
+      setView('manual');
+      return;
+    }
+
+    try {
+      const constraints: MediaStreamConstraints = {
+        video: {
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+        audio: false,
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+
+      // Guard if user closed modal during getUserMedia prompt
+      if (!isMountedRef.current) {
+        stream.getTracks().forEach((t) => t.stop());
+        return;
+      }
+
+      streamRef.current = stream;
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play().catch(() => {});
+      }
+
+      // Check torch capability
+      const videoTrack = stream.getVideoTracks()[0];
+      if (videoTrack && typeof videoTrack.getCapabilities === 'function') {
+        const capabilities = videoTrack.getCapabilities() as any;
+        if (capabilities && capabilities.torch) {
+          setHasTorch(true);
+        }
+      }
+
+      // Detection loop using BarcodeDetector if available
+      if ('BarcodeDetector' in window) {
+        const BarcodeDetectorClass = (window as any).BarcodeDetector;
+        try {
+          const detector = new BarcodeDetectorClass({
+            formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'itf'],
+          });
+
+          const scanLoop = async () => {
+            if (!isMountedRef.current || isProcessingRef.current || !videoRef.current) return;
+
+            if (videoRef.current.readyState >= 2) {
+              try {
+                const barcodes = await detector.detect(videoRef.current);
+                if (barcodes && barcodes.length > 0 && !isProcessingRef.current) {
+                  const rawVal = barcodes[0].rawValue;
+                  if (rawVal) {
+                    handleBarcodeDetected(rawVal);
+                    return;
+                  }
+                }
+              } catch {
+                // Ignore transient frame detection error
+              }
+            }
+
+            if (isMountedRef.current && !isProcessingRef.current) {
+              animationFrameRef.current = requestAnimationFrame(scanLoop);
+            }
+          };
+
+          animationFrameRef.current = requestAnimationFrame(scanLoop);
+        } catch {
+          // Fallback to manual entry if detector fails
+        }
+      }
+    } catch (err: unknown) {
+      if (!isMountedRef.current) return;
+
+      const isPermissionDenied =
+        err instanceof DOMException &&
+        (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError');
+
+      if (isPermissionDenied) {
+        setCameraError((t as any)?.barcode?.cameraDenied || 'Camera permission denied');
+      } else {
+        setCameraError((t as any)?.barcode?.cameraInitError || 'Could not start camera');
+      }
+      setView('manual');
+    }
+  }, [stopCamera, handleBarcodeDetected, t]);
+
+  // Torch Toggle
+  const toggleTorch = async () => {
+    if (!streamRef.current) return;
+    const track = streamRef.current.getVideoTracks()[0];
+    if (!track) return;
+
+    try {
+      const nextState = !isTorchOn;
+      await track.applyConstraints({
+        advanced: [{ torch: nextState } as any],
+      });
+      setIsTorchOn(nextState);
+    } catch {
+      // Torch toggle not supported
+    }
+  };
+
+  // Mount/Unmount & Open/Close Lifecycle
   useEffect(() => {
-    if (!isOpen) return;
+    isMountedRef.current = true;
+
+    if (isOpen) {
+      startCamera();
+    } else {
+      stopCamera();
+    }
+
+    return () => {
+      isMountedRef.current = false;
+      stopCamera();
+    };
+  }, [isOpen, startCamera, stopCamera]);
+
+  // Keyboard Escape listener
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        handleClose();
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, handleClose]);
+  }, [isOpen, onClose]);
 
-  // Process decoded or typed barcode and query product database
-  const handleBarcodeDecoded = useCallback(
-    async (rawCode: string) => {
-      const clean = normalizeBarcode(rawCode);
-      if (!clean) return;
-
-      setScannedBarcode(clean);
-      setStep('looking_up');
-      setErrorMessage('');
-      setImageError(false);
-
-      const controller = new AbortController();
-      abortControllerRef.current = controller;
-
-      try {
-        const result = await barcodeLookupService.lookup(clean, controller.signal);
-
-        if (controller.signal.aborted) return;
-
-        if (result.success && result.product) {
-          const prod = result.product;
-          setProductData(prod);
-          setEditName(prod.productName);
-          setEditCategory(prod.categoryId || 'cooking_essentials');
-          setEditQuantity('1');
-          setStep('product_preview');
-        } else {
-          setProductData(null);
-          setEditName('');
-          setEditCategory('cooking_essentials');
-          setEditQuantity('1');
-
-          if (result.errorCode === 'NOT_FOUND') {
-            setStep('not_found');
-          } else if (result.errorCode === 'NETWORK_ERROR') {
-            setErrorMessage(
-              t('barcode.cameraGenericError') ||
-                'Unable to reach the product database. Please check your internet connection.'
-            );
-            setStep('error');
-          } else {
-            setErrorMessage(result.errorMessage || t('barcode.productNotFound') || 'Product record not found.');
-            setStep('not_found');
-          }
-        }
-      } catch (e: unknown) {
-        if (!controller.signal.aborted) {
-          setStep('not_found');
-        }
-      } finally {
-        abortControllerRef.current = null;
-      }
-    },
-    [t]
-  );
-
-  // Start real-time camera scanning
-  const startScanning = useCallback(async () => {
-    const currentSessionId = ++sessionSeqCounter.current;
-    isStartingRef.current = true;
-    isScanningRef.current = false;
-
-    setErrorMessage('');
-    setImageError(false);
-    setStep('scanning');
-
-    // Give DOM a microtick to mount
-    await new Promise((resolve) => setTimeout(resolve, 30));
-
-    // Abort if closed during tick
-    if (sessionSeqCounter.current !== currentSessionId) {
-      isStartingRef.current = false;
-      return;
+  // Focus manual input when manual view opens
+  useEffect(() => {
+    if (view === 'manual') {
+      setTimeout(() => manualInputRef.current?.focus(), 150);
     }
+  }, [view]);
 
-    const element = document.getElementById(scannerContainerId);
-    if (!element) {
-      setErrorMessage(t('barcode.cameraGenericError') || 'Scanner container could not be initialized.');
-      setStep('error');
-      isStartingRef.current = false;
-      return;
-    }
-
-    // Stop any existing instance cleanly
-    if (html5QrCodeRef.current) {
-      try {
-        if (html5QrCodeRef.current.isScanning) {
-          await html5QrCodeRef.current.stop();
-        }
-        html5QrCodeRef.current.clear();
-      } catch {}
-      html5QrCodeRef.current = null;
-    }
-
-    if (sessionSeqCounter.current !== currentSessionId) {
-      isStartingRef.current = false;
-      return;
-    }
-
-    try {
-      const scanner = new Html5Qrcode(scannerContainerId, {
-        formatsToSupport: [
-          Html5QrcodeSupportedFormats.EAN_13,
-          Html5QrcodeSupportedFormats.EAN_8,
-          Html5QrcodeSupportedFormats.UPC_A,
-          Html5QrcodeSupportedFormats.UPC_E,
-          Html5QrcodeSupportedFormats.CODE_128,
-          Html5QrcodeSupportedFormats.CODE_39,
-          Html5QrcodeSupportedFormats.ITF,
-          Html5QrcodeSupportedFormats.QR_CODE,
-        ],
-        verbose: false,
-      });
-
-      html5QrCodeRef.current = scanner;
-
-      const config = {
-        fps: 15,
-        qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
-          // Optimized aspect ratio for standard 1D grocery barcodes
-          const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-          const width = Math.floor(minEdge * 0.85);
-          const height = Math.floor(width * 0.55);
-          return { width: Math.max(width, 220), height: Math.max(height, 140) };
-        },
-        aspectRatio: 1.0,
-      };
-
-      await scanner.start(
-        { facingMode: 'environment' },
-        config,
-        async (decodedText: string) => {
-          // Prevent multiple concurrent triggers or debounced duplicates
-          if (!isScanningRef.current || isStartingRef.current) return;
-          if (barcodeLookupService.shouldIgnoreDuplicateScan(decodedText)) return;
-
-          isScanningRef.current = false;
-          triggerHaptic(20);
-          playItemCheckSound();
-
-          // Stop camera before showing preview
-          try {
-            await scanner.stop();
-            scanner.clear();
-          } catch {}
-
-          handleBarcodeDecoded(decodedText);
-        },
-        () => {
-          // Continuous scanning frame loop
-        }
-      );
-
-      // Check if user dismissed modal while scanner.start was resolving
-      if (sessionSeqCounter.current !== currentSessionId) {
-        try {
-          if (scanner.isScanning) {
-            await scanner.stop();
-          }
-          scanner.clear();
-        } catch {}
-        html5QrCodeRef.current = null;
-        isStartingRef.current = false;
-        return;
-      }
-
-      isScanningRef.current = true;
-      isStartingRef.current = false;
-
-      // Inspect track capabilities for flashlight/torch support
-      try {
-        const video = element.querySelector('video');
-        const track = (video?.srcObject as MediaStream)?.getVideoTracks?.()?.[0];
-        const caps = track?.getCapabilities?.();
-        const qrcodeCaps = (scanner as any).getRunningTrackCameraCapabilities?.();
-        if ((caps && (caps as any).torch) || (qrcodeCaps && qrcodeCaps.torch)) {
-          setHasTorch(true);
-        } else {
-          setHasTorch(false);
-        }
-      } catch {
-        setHasTorch(false);
-      }
-    } catch (err: unknown) {
-      if (sessionSeqCounter.current !== currentSessionId) {
-        return;
-      }
-      isScanningRef.current = false;
-      isStartingRef.current = false;
-      html5QrCodeRef.current = null;
-      const errorStr = String(err);
-      console.warn('Camera start error:', errorStr);
-
-      if (
-        errorStr.includes('NotAllowedError') ||
-        errorStr.includes('Permission denied') ||
-        errorStr.includes('PermissionDismissedError')
-      ) {
-        setErrorMessage(
-          t('barcode.cameraPermissionDenied') ||
-            'Camera permission was denied. Please allow camera access in your browser settings to scan barcodes, or enter the barcode below.'
-        );
-      } else if (
-        errorStr.includes('NotFoundError') ||
-        errorStr.includes('DevicesNotFoundError')
-      ) {
-        setErrorMessage(
-          t('barcode.noCameraHardware') || 'No camera hardware found on this device.'
-        );
-      } else {
-        setErrorMessage(
-          t('barcode.cameraGenericError') ||
-            'Could not access the camera. Check your permissions or type the barcode manually.'
-        );
-      }
-      setStep('error');
-    }
-  }, [t, handleBarcodeDecoded]);
-
-  // Handle flashlight toggle
-  const toggleTorch = async () => {
-    if (!html5QrCodeRef.current || !hasTorch) return;
-    try {
-      const nextTorch = !isTorchOn;
-      await (html5QrCodeRef.current as any).applyVideoConstraints({
-        advanced: [{ torch: nextTorch }],
-      });
-      setIsTorchOn(nextTorch);
-      triggerHaptic(10);
-    } catch (e) {
-      console.warn('Torch toggle failed:', e);
-    }
+  // Handle manual submit
+  const handleManualSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const trimmed = manualCode.trim();
+    if (!trimmed) return;
+    handleBarcodeDetected(trimmed);
   };
 
-  // Manual code or name entry handler
-  const handleManualSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = manualInput.trim();
-    if (!trimmed) {
-      setManualError(t('barcode.manualErrorEmpty') || 'Please enter a barcode number or product name.');
-      return;
-    }
-    setManualError('');
-    stopScanner();
-
-    // Check if it's numeric/barcode-like
-    const isBarcodeLike = /^\d{6,14}$/.test(normalizeBarcode(trimmed));
-    if (isBarcodeLike) {
-      handleBarcodeDecoded(trimmed);
-    } else {
-      // User entered product name directly
-      const newItem: ShoppingItem = {
-        id: generateUUID(),
-        name: trimmed,
-        canonicalName: trimmed,
-        original_input: trimmed,
-        original_name: trimmed,
-        normalized_name: trimmed.toLowerCase(),
-        categoryId: 'cooking_essentials',
-        completed: false,
-        quantity: '1',
-        isRecognized: false,
-      };
-      onAddProduct(newItem);
-      triggerHaptic(15);
-      playItemCheckSound();
-      handleClose();
-    }
-  };
-
-  // Add confirmed product to the active list
-  const handleConfirmAdd = () => {
-    if (isSubmitting || isSubmittingRef.current) return;
-    const finalName = editName.trim() || productData?.productName || scannedBarcode;
-    if (!finalName) return;
-
-    isSubmittingRef.current = true;
-    setIsSubmitting(true);
-    triggerHaptic(15);
-    playItemCheckSound();
-
-    const existing = existingMatch(finalName, scannedBarcode);
-    let finalQty = editQuantity.trim() || '1';
-    let finalUnit = productData?.unit;
-
-    if (existing) {
-      const merged = mergeQuantities(existing.quantity, existing.unit, finalQty, finalUnit);
-      finalQty = merged.quantity || finalQty;
-      finalUnit = merged.unit || finalUnit || existing.unit;
-    }
+  // Confirm and add item
+  const handleConfirmAddItem = () => {
+    const finalName = reviewName.trim() || scannedCode || 'Scanned Item';
+    const itemId = generateUUID();
 
     const newItem: ShoppingItem = {
-      id: existing ? existing.id : generateUUID(),
+      id: itemId,
       name: finalName,
-      canonicalName: finalName,
-      canonical_name: finalName,
-      original_input: scannedBarcode ? `Barcode: ${scannedBarcode}` : finalName,
-      original_name: finalName,
-      normalized_item: finalName,
-      normalized_name: finalName.toLowerCase(),
-      categoryId: editCategory,
-      category: getCategoryName(editCategory),
+      categoryId: reviewCategory,
       completed: false,
-      quantity: finalQty,
-      unit: finalUnit || undefined,
-      barcode: scannedBarcode || undefined,
-      barcode_format: productData?.barcodeFormat,
-      brand: productData?.brand,
-      imageUrl: imageError ? undefined : productData?.imageUrl,
-      image_url: imageError ? undefined : productData?.imageUrl,
-      package_size: productData?.packageQuantity,
-      confidence: 0.95,
-      isRecognized: true,
-      note: productData?.brand ? `Brand: ${productData.brand}` : undefined,
+      quantity: reviewQuantity.trim() || '1',
+      unit: reviewUnit.trim() || undefined,
+      note: reviewNote.trim() || undefined,
+      barcode: scannedCode || undefined,
+      brand: reviewBrand.trim() || undefined,
+      packageSize: reviewPackageSize.trim() || undefined,
+      imageUrl: scannedProduct?.imageUrl || undefined,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
     };
 
-    onAddProduct(newItem);
-    setIsSubmitting(false);
-    handleClose();
+    onAddItem(newItem);
+    triggerHaptic(18);
+    onClose();
   };
-
-  // Reset scanner state to scan again
-  const handleScanAgain = async () => {
-    isSubmittingRef.current = false;
-    setIsSubmitting(false);
-    await stopScanner();
-    setProductData(null);
-    setScannedBarcode('');
-    setEditName('');
-    setErrorMessage('');
-    setImageError(false);
-    startScanning();
-  };
-
-  // Auto-start scanner when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      setStep('permission_prompt');
-      setErrorMessage('');
-      setScannedBarcode('');
-      setProductData(null);
-      setManualInput('');
-      setManualError('');
-      startScanning();
-    } else {
-      stopScanner();
-    }
-    return () => {
-      stopScanner();
-    };
-  }, [isOpen, startScanning, stopScanner]);
 
   if (!isOpen) return null;
 
-  const alreadyInList = editName ? existingMatch(editName, scannedBarcode) : undefined;
-  const isScanningView = step === 'scanning' || step === 'permission_prompt';
+  const barcodeCopy = (t as any)?.barcode || {};
 
   return (
     <div
       role="dialog"
       aria-modal="true"
-      aria-labelledby="barcode_modal_title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-xs animate-in fade-in duration-200"
+      aria-label={barcodeCopy.scanTitle || 'Scan Barcode'}
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200"
     >
-      <div
-        className="w-full max-w-md bg-surface-container-lowest rounded-3xl border border-surface-container-high/80 shadow-2xl flex flex-col overflow-hidden max-h-[92vh] text-on-surface"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="relative w-full max-w-lg bg-surface rounded-3xl shadow-2xl border border-surface-container-high/60 overflow-hidden flex flex-col max-h-[92vh]">
         {/* Header */}
-        <header className="px-5 py-3.5 border-b border-surface-dim/70 flex items-center justify-between bg-surface-container-low/50 shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-surface-container-high/40 bg-surface-container-low/50">
           <div className="flex items-center gap-2">
-            <h2
-              id="barcode_modal_title"
-              className="font-['Plus_Jakarta_Sans'] text-base sm:text-lg font-bold text-primary flex items-center gap-2"
-            >
-              <span>{t('barcode.scanTitle') || 'Scan your item'}</span>
+            <h2 className="font-['Plus_Jakarta_Sans'] font-bold text-lg text-primary">
+              {barcodeCopy.scanTitle || 'Scan Barcode'}
             </h2>
-            <span className="bg-rose-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider leading-none shadow-2xs">
-              BETA
+            <span className="px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase rounded-full bg-red-600 text-white shadow-2xs">
+              {barcodeCopy.beta || 'BETA'}
             </span>
           </div>
 
-          <button
-            type="button"
-            onClick={handleClose}
-            aria-label={t('barcode.closeScanner') || 'Close scanner'}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container-high transition-colors active:scale-95 cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </header>
+          <div className="flex items-center gap-2">
+            {view === 'scanning' && hasTorch && (
+              <button
+                type="button"
+                onClick={toggleTorch}
+                title={isTorchOn ? barcodeCopy.torchOff || 'Turn torch off' : barcodeCopy.torchOn || 'Turn torch on'}
+                className="w-9 h-9 rounded-full flex items-center justify-center bg-surface-container hover:bg-surface-container-high text-primary transition-colors cursor-pointer"
+              >
+                {isTorchOn ? <FlashlightOff className="w-4 h-4" /> : <Flashlight className="w-4 h-4" />}
+              </button>
+            )}
 
-        {/* Content Body */}
-        <div className="p-4 sm:p-5 overflow-y-auto flex-1 space-y-4">
-          {/* STEP: SCANNING / CAMERA VIEW (Always mounted to prevent DOM mount race conditions) */}
-          <div className={isScanningView ? 'space-y-4' : 'hidden'}>
-            <div className="relative w-full aspect-square max-h-[300px] sm:max-h-[340px] mx-auto rounded-2xl overflow-hidden bg-neutral-950 shadow-inner flex items-center justify-center border-2 border-primary/20">
-              {/* HTML5 QR Code Mount Element */}
-              <div
-                id={scannerContainerId}
-                className="w-full h-full object-cover overflow-hidden"
-              />
-
-              {/* Animated Scanning Viewfinder Overlay */}
-              <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center p-6">
-                {/* Outer Frame with Corner Notches */}
-                <div className="relative w-[82%] h-[60%] border-2 border-white/70 rounded-xl shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]">
-                  {/* Viewfinder Corners */}
-                  <div className="absolute -top-1 -start-1 w-5 h-5 border-t-4 border-s-4 border-emerald-400 rounded-tl-sm" />
-                  <div className="absolute -top-1 -end-1 w-5 h-5 border-t-4 border-e-4 border-emerald-400 rounded-tr-sm" />
-                  <div className="absolute -bottom-1 -start-1 w-5 h-5 border-b-4 border-s-4 border-emerald-400 rounded-bl-sm" />
-                  <div className="absolute -bottom-1 -end-1 w-5 h-5 border-b-4 border-e-4 border-emerald-400 rounded-br-sm" />
-
-                  {/* Animated Scanning Laser Beam */}
-                  <div className="absolute inset-x-2 h-0.5 bg-gradient-to-r from-transparent via-rose-500 to-transparent shadow-[0_0_12px_#f43f5e] animate-[bounce_2s_infinite]" />
-                </div>
-
-                <p className="mt-4 px-3 py-1 bg-black/60 backdrop-blur-xs text-white text-xs font-semibold rounded-full border border-white/20 select-none shadow-xs text-center">
-                  {t('barcode.instruction') || 'Place barcode inside the frame'}
-                </p>
-              </div>
-
-              {/* Torch / Flashlight Button (if supported) */}
-              {hasTorch && (
-                <button
-                  type="button"
-                  onClick={toggleTorch}
-                  aria-label={
-                    isTorchOn
-                      ? t('barcode.torchOff') || 'Turn flashlight off'
-                      : t('barcode.torchOn') || 'Turn flashlight on'
-                  }
-                  className={`absolute bottom-3 end-3 w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-md transition-all shadow-md active:scale-95 cursor-pointer z-10 ${
-                    isTorchOn
-                      ? 'bg-amber-400 text-neutral-900 ring-2 ring-amber-300'
-                      : 'bg-black/60 text-white hover:bg-black/80'
-                  }`}
-                >
-                  {isTorchOn ? (
-                    <FlashlightOff className="w-5 h-5" />
-                  ) : (
-                    <Flashlight className="w-5 h-5" />
-                  )}
-                </button>
-              )}
-            </div>
-
-            {/* Manual Barcode Search Fallback */}
-            <div className="pt-1">
-              <form onSubmit={handleManualSearch} className="space-y-2">
-                <label
-                  htmlFor="manual_barcode_input"
-                  className="block text-xs font-medium text-on-surface-variant font-['Manrope']"
-                >
-                  {t('barcode.enterManually') || 'Or enter barcode number / item name manually:'}
-                </label>
-                <div className="relative flex items-center">
-                  <input
-                    id="manual_barcode_input"
-                    type="text"
-                    dir="auto"
-                    value={manualInput}
-                    onChange={(e) => {
-                      setManualInput(e.target.value);
-                      if (manualError) setManualError('');
-                    }}
-                    placeholder={t('barcode.manualPlaceholder') || 'e.g. 5000159459228 or Twix...'}
-                    className="w-full h-11 bg-surface-container-low rounded-xl ps-3 pe-24 text-sm text-on-surface font-['Manrope'] border border-outline-variant/60 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-neutral-400"
-                  />
-                  <button
-                    type="submit"
-                    className="absolute end-1.5 top-1.5 bottom-1.5 px-3 rounded-lg bg-primary text-on-primary text-xs font-bold hover:bg-primary/90 active:scale-95 transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
-                  >
-                    <Search className="w-3.5 h-3.5" />
-                    <span>{t('search') || 'Look up'}</span>
-                  </button>
-                </div>
-                {manualError && (
-                  <p className="text-xs text-rose-600 font-medium">{manualError}</p>
-                )}
-              </form>
-            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label={barcodeCopy.close || 'Close Scanner'}
+              className="w-9 h-9 rounded-full flex items-center justify-center bg-surface-container hover:bg-surface-container-high text-primary transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
+        </div>
 
-          {/* STEP: LOOKING UP SPINNER */}
-          {step === 'looking_up' && (
-            <div className="py-12 flex flex-col items-center justify-center text-center space-y-3">
-              <div className="relative w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-                <Loader2 className="w-8 h-8 animate-spin" />
+        {/* Modal Body */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+          {/* 1. Camera Scanning View */}
+          {view === 'scanning' && (
+            <div className="flex flex-col items-center">
+              <div className="relative w-full aspect-square max-w-[340px] rounded-2xl overflow-hidden bg-black shadow-inner flex items-center justify-center">
+                <video
+                  ref={videoRef}
+                  playsInline
+                  muted
+                  className="w-full h-full object-cover"
+                />
+
+                {/* Viewfinder Overlay */}
+                <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                  {/* Outer dim mask */}
+                  <div className="relative w-3/4 h-3/4 border-2 border-emerald-500/80 rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]">
+                    {/* Corner Reticles */}
+                    <div className="absolute top-0 left-0 w-5 h-5 border-t-4 border-l-4 border-emerald-400 rounded-tl-lg" />
+                    <div className="absolute top-0 right-0 w-5 h-5 border-t-4 border-r-4 border-emerald-400 rounded-tr-lg" />
+                    <div className="absolute bottom-0 left-0 w-5 h-5 border-b-4 border-l-4 border-emerald-400 rounded-bl-lg" />
+                    <div className="absolute bottom-0 right-0 w-5 h-5 border-b-4 border-r-4 border-emerald-400 rounded-br-lg" />
+
+                    {/* Animated Scanning Laser Line */}
+                    <div className="absolute inset-x-2 top-0 h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-bounce duration-1000" />
+                  </div>
+                </div>
               </div>
-              <div className="space-y-1">
-                <p className="font-['Plus_Jakarta_Sans'] font-bold text-base text-primary">
-                  {t('barcode.lookingUp') || 'Looking up product...'}
-                </p>
-                <p className="font-mono text-xs text-outline tracking-wider">
-                  {scannedBarcode}
-                </p>
-                <p className="text-xs text-on-surface-variant font-['Manrope']">
-                  {t('barcode.queryingDatabase') || 'Querying Open Food Facts database'}
-                </p>
-              </div>
+
+              <p className="mt-4 text-xs sm:text-sm text-center text-on-surface-variant font-['Manrope']">
+                {barcodeCopy.scanSubtitle || 'Point your camera at a packaged product barcode'}
+              </p>
+
+              {/* Manual switch button */}
+              <button
+                type="button"
+                onClick={() => {
+                  stopCamera();
+                  setView('manual');
+                }}
+                className="mt-4 flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-primary bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer"
+              >
+                <Keyboard className="w-4 h-4" />
+                <span>{barcodeCopy.manualEntry || 'Enter Barcode Manually'}</span>
+              </button>
             </div>
           )}
 
-          {/* STEP: PRODUCT PREVIEW & CONFIRMATION */}
-          {step === 'product_preview' && productData && (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleConfirmAdd();
-              }}
-              className="space-y-4 animate-in fade-in duration-200"
-            >
-              {/* Product Card with Real Image */}
-              <div className="p-3.5 sm:p-4 rounded-2xl bg-surface-container-low border border-surface-container-high/80 flex gap-3.5 items-start">
-                {/* Product Image or Fallback Visual Icon */}
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-white border border-surface-dim overflow-hidden shrink-0 flex items-center justify-center p-1 relative shadow-2xs">
-                  {productData.imageUrl && !imageError ? (
-                    <img
-                      src={productData.imageUrl}
-                      alt={productData.productName}
-                      onError={() => setImageError(true)}
-                      className="w-full h-full object-contain"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <ItemVisualIcon
-                      name={productData.productName}
-                      categoryId={editCategory}
-                      size={48}
-                      className="w-12 h-12"
-                    />
-                  )}
-                  {productData.brand && (
-                    <span className="absolute bottom-0.5 inset-x-0.5 text-[8px] bg-neutral-900/80 text-white font-bold text-center py-0.5 rounded truncate px-1">
-                      {productData.brand}
-                    </span>
-                  )}
-                </div>
+          {/* 2. Searching Spinner View */}
+          {view === 'searching' && (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <RefreshCw className="w-10 h-10 text-primary animate-spin mb-4" />
+              <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-base text-primary mb-1">
+                {barcodeCopy.searching || 'Searching for product...'}
+              </h3>
+              <p className="text-xs text-on-surface-variant font-mono">
+                {scannedCode}
+              </p>
+            </div>
+          )}
 
-                {/* Details */}
-                <div className="flex-1 min-w-0 space-y-1">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                      {productData.barcodeFormat || 'EAN/UPC'}
-                    </span>
-                    <span className="text-[10px] font-mono text-outline">
-                      {productData.barcode}
-                    </span>
-                  </div>
-
-                  <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-base text-primary leading-snug">
-                    {productData.productName}
-                  </h3>
-
-                  {productData.packageQuantity && (
-                    <p className="text-xs font-semibold text-on-surface-variant font-['Manrope']">
-                      Package: {productData.packageQuantity}
-                    </p>
-                  )}
-
-                  {productData.nutritionSummary && (
-                    <p className="text-[11px] text-outline font-medium">
-                      {productData.nutritionSummary}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Already in List Notice */}
-              {alreadyInList && (
-                <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>
-                    {t('barcode.alreadyInList', { count: alreadyInList.quantity || 1 }) ||
-                      `Already in your list (Qty: ${alreadyInList.quantity || 1}). Adding will update quantity.`}
-                  </span>
+          {/* 3. Manual Entry View */}
+          {view === 'manual' && (
+            <form onSubmit={handleManualSubmit} className="flex flex-col gap-4">
+              {cameraError && (
+                <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-start gap-2.5">
+                  <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                  <p className="text-xs text-amber-900 dark:text-amber-200">
+                    {cameraError}
+                  </p>
                 </div>
               )}
 
-              {/* Editable Name & Category Fields */}
-              <div className="space-y-3 pt-1">
-                <div>
-                  <label className="block text-xs font-bold text-on-surface mb-1 font-['Manrope']">
-                    {t('item') || 'Item Name'}
-                  </label>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1.5">
+                  {barcodeCopy.scanItem || 'Barcode Number'}
+                </label>
+                <div className="relative">
                   <input
+                    ref={manualInputRef}
                     type="text"
-                    dir="auto"
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    className="w-full h-10 bg-surface-container-lowest rounded-xl px-3 text-sm text-on-surface font-['Manrope'] border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+                    inputMode="numeric"
+                    value={manualCode}
+                    onChange={(e) => setManualCode(e.target.value)}
+                    placeholder={barcodeCopy.barcodePlaceholder || 'Enter barcode digits (e.g. 896400012345)'}
+                    className="w-full px-4 py-3 rounded-2xl bg-surface-container-low border border-surface-container-high focus:outline-none focus:ring-2 focus:ring-primary text-sm font-mono text-primary placeholder:text-on-surface-variant/50"
                   />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-bold text-on-surface mb-1 font-['Manrope']">
-                      {t('category') || 'Category'}
-                    </label>
-                    <select
-                      value={editCategory}
-                      onChange={(e) => setEditCategory(normalizeCategoryId(e.target.value))}
-                      className="w-full h-10 bg-surface-container-lowest rounded-xl px-2.5 text-xs text-on-surface font-['Manrope'] border border-outline-variant focus:border-primary outline-none cursor-pointer"
-                    >
-                      {CATEGORIES_LIST.map((cat) => (
-                        <option key={cat.id} value={cat.id}>
-                          {getCategoryName(cat.id)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-on-surface mb-1 font-['Manrope']">
-                      {t('quantity') || 'Quantity'}
-                    </label>
-                    <input
-                      type="text"
-                      value={editQuantity}
-                      onChange={(e) => setEditQuantity(e.target.value)}
-                      placeholder="1"
-                      className="w-full h-10 bg-surface-container-lowest rounded-xl px-3 text-sm text-on-surface font-['Manrope'] border border-outline-variant focus:border-primary outline-none"
-                    />
-                  </div>
+                  <Search className="absolute right-3.5 top-3.5 w-4 h-4 text-on-surface-variant pointer-events-none" />
                 </div>
               </div>
 
-              {/* Attribution */}
-              <div className="pt-1 flex items-center justify-between text-[11px] text-outline">
-                <span className="flex items-center gap-1">
-                  {t('barcode.source') || 'Source'}: {productData.dataSource}
-                </span>
-                {productData.dataSourceUrl && (
-                  <a
-                    href={productData.dataSourceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="hover:underline flex items-center gap-0.5 text-primary"
-                  >
-                    <span>{t('barcode.viewRecord') || 'View Record'}</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                )}
-              </div>
-
-              {/* Actions */}
-              <div className="pt-2 flex flex-col sm:flex-row gap-2.5">
+              <div className="flex items-center gap-2 pt-2">
                 <button
                   type="submit"
-                  disabled={isSubmitting || !editName.trim()}
-                  className="flex-1 h-12 rounded-xl bg-primary text-on-primary font-bold text-sm hover:bg-primary/90 active:scale-95 transition-all shadow-xs cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+                  disabled={!manualCode.trim()}
+                  className="flex-1 py-3 px-4 rounded-2xl bg-primary hover:bg-primary-hover active:bg-primary-active text-on-primary font-bold text-sm shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Plus className="w-4 h-4" />
-                  <span>{t('addToList') || 'Add to list'}</span>
+                  {barcodeCopy.lookupBtn || 'Search Product'}
                 </button>
-                <button
-                  type="button"
-                  onClick={handleScanAgain}
-                  className="h-12 px-4 rounded-xl bg-surface-container-low hover:bg-surface-container text-on-surface font-semibold text-sm border border-surface-container-high active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  <span>{t('barcode.scanAgain') || 'Scan again'}</span>
-                </button>
+
+                {navigator.mediaDevices && (
+                  <button
+                    type="button"
+                    onClick={startCamera}
+                    className="px-4 py-3 rounded-2xl bg-surface-container hover:bg-surface-container-high text-primary font-semibold text-sm transition-colors cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Camera className="w-4 h-4" />
+                    <span>{barcodeCopy.scanMode || 'Camera'}</span>
+                  </button>
+                )}
               </div>
             </form>
           )}
 
-          {/* STEP: NOT FOUND IN DATABASE */}
-          {step === 'not_found' && (
-            <div className="space-y-4 text-center py-2 animate-in fade-in duration-200">
-              <div className="w-14 h-14 mx-auto rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
-                <Package className="w-7 h-7" />
+          {/* 4. Product Confirmation / Review View */}
+          {view === 'review' && (
+            <div className="flex flex-col gap-4">
+              {searchError && (
+                <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-200">
+                  {searchError}
+                </div>
+              )}
+
+              {/* Scanned Card Header with Product Image */}
+              <div className="flex items-center gap-3.5 p-3.5 rounded-2xl bg-surface-container-low border border-surface-container-high/50">
+                <ItemVisualIcon
+                  name={reviewName}
+                  displayName={reviewName}
+                  categoryId={reviewCategory}
+                  imageUrl={scannedProduct?.imageUrl}
+                  size={52}
+                  className="w-13 h-13 rounded-2xl shrink-0"
+                />
+
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs font-mono text-on-surface-variant truncate">
+                    {scannedCode}
+                  </div>
+                  <div className="font-['Plus_Jakarta_Sans'] font-bold text-base text-primary truncate">
+                    {reviewName || (barcodeCopy.notFound || 'Unknown Product')}
+                  </div>
+                  {(reviewBrand || reviewPackageSize) && (
+                    <div className="text-xs text-on-surface-variant flex items-center gap-2 flex-wrap">
+                      {reviewBrand && <span className="font-medium">{reviewBrand}</span>}
+                      {reviewBrand && reviewPackageSize && <span>•</span>}
+                      {reviewPackageSize && <span>{reviewPackageSize}</span>}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className="space-y-1">
-                <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-base text-primary">
-                  {t('barcode.productNotFound') || 'Product Not Found'}
-                </h3>
-                <p className="font-mono text-xs text-outline">{scannedBarcode}</p>
-                <p className="text-xs text-on-surface-variant font-['Manrope'] max-w-xs mx-auto">
-                  {t('barcode.notFoundExplanation') ||
-                    'This barcode is not yet listed in the open product database. You can still add it by typing its name below:'}
-                </p>
-              </div>
-
-              {/* Add with custom name form */}
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleConfirmAdd();
-                }}
-                className="p-3.5 rounded-2xl bg-surface-container-low border border-surface-container-high/80 text-start space-y-3"
-              >
+              {/* Editable Fields */}
+              <div className="space-y-3">
+                {/* Product Name */}
                 <div>
-                  <label className="block text-xs font-bold text-on-surface mb-1">
-                    {t('item') || 'Product Name'}
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant mb-1">
+                    {barcodeCopy.productName || 'Product Name'}
                   </label>
                   <input
                     type="text"
-                    dir="auto"
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    placeholder="Enter item name..."
-                    autoFocus
-                    className="w-full h-10 bg-surface-container-lowest rounded-xl px-3 text-sm text-on-surface border border-outline-variant focus:border-primary outline-none"
+                    value={reviewName}
+                    onChange={(e) => setReviewName(e.target.value)}
+                    placeholder="e.g. Milk, Rice, Biscuit"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low border border-surface-container-high focus:outline-none focus:ring-2 focus:ring-primary text-sm text-primary"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
+                {/* Category & Quantity Row */}
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-on-surface mb-1">
-                      {t('category') || 'Category'}
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant mb-1">
+                      {barcodeCopy.category || 'Category'}
                     </label>
-                    <select
-                      value={editCategory}
-                      onChange={(e) => setEditCategory(normalizeCategoryId(e.target.value))}
-                      className="w-full h-10 bg-surface-container-lowest rounded-xl px-2 text-xs border border-outline-variant outline-none"
-                    >
-                      {CATEGORIES_LIST.map((cat) => (
-                        <option key={cat.id} value={cat.id}>
-                          {getCategoryName(cat.id)}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="relative">
+                      <select
+                        value={reviewCategory}
+                        onChange={(e) => setReviewCategory(e.target.value as CategoryId)}
+                        className="w-full px-3 py-2.5 rounded-xl bg-surface-container-low border border-surface-container-high focus:outline-none focus:ring-2 focus:ring-primary text-xs font-medium text-primary cursor-pointer truncate"
+                      >
+                        {CATEGORIES_LIST.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {getCategoryName(c.id)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
+
                   <div>
-                    <label className="block text-xs font-bold text-on-surface mb-1">
-                      {t('quantity') || 'Quantity'}
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant mb-1">
+                      {barcodeCopy.quantity || 'Quantity'}
                     </label>
-                    <input
-                      type="text"
-                      value={editQuantity}
-                      onChange={(e) => setEditQuantity(e.target.value)}
-                      placeholder="1"
-                      className="w-full h-10 bg-surface-container-lowest rounded-xl px-3 text-sm border border-outline-variant outline-none"
-                    />
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="text"
+                        value={reviewQuantity}
+                        onChange={(e) => setReviewQuantity(e.target.value)}
+                        className="w-full px-3 py-2.5 rounded-xl bg-surface-container-low border border-surface-container-high focus:outline-none focus:ring-2 focus:ring-primary text-xs font-semibold text-primary text-center"
+                      />
+                    </div>
                   </div>
                 </div>
 
-                <div className="pt-1 flex gap-2">
-                  <button
-                    type="submit"
-                    disabled={!editName.trim()}
-                    className="flex-1 h-11 rounded-xl bg-primary text-on-primary font-bold text-xs hover:bg-primary/90 active:scale-95 transition-all shadow-xs cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>{t('addToList') || 'Add to list'}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleScanAgain}
-                    className="h-11 px-3.5 rounded-xl bg-surface-container-high hover:bg-surface-dim text-on-surface font-semibold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1"
-                  >
-                    <RefreshCw className="w-3.5 h-3.5" />
-                    <span>{t('barcode.scanAgain') || 'Scan again'}</span>
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
-
-          {/* STEP: ERROR STATE (Permissions, No Camera, etc.) */}
-          {step === 'error' && (
-            <div className="py-4 space-y-4 text-center animate-in fade-in duration-200">
-              <div className="w-14 h-14 mx-auto rounded-2xl bg-rose-500/10 text-rose-600 flex items-center justify-center">
-                <AlertCircle className="w-7 h-7" />
-              </div>
-
-              <div className="space-y-1">
-                <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-base text-primary">
-                  {t('barcode.cameraUnavailable') || 'Camera Unavailable'}
-                </h3>
-                <p className="text-xs text-on-surface-variant font-['Manrope'] max-w-xs mx-auto">
-                  {errorMessage ||
-                    t('barcode.cameraGenericError') ||
-                    'Please verify camera permissions or type your item manually.'}
-                </p>
-              </div>
-
-              {/* Direct manual entry fallback */}
-              <div className="p-3.5 rounded-2xl bg-surface-container-low border border-surface-container-high/80 text-start">
-                <form onSubmit={handleManualSearch} className="space-y-2.5">
-                  <label className="block text-xs font-bold text-on-surface">
-                    {t('barcode.enterManually') || 'Enter item name or barcode:'}
+                {/* Optional Note */}
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant mb-1">
+                    {barcodeCopy.note || 'Note (Optional)'}
                   </label>
-                  <div className="relative flex items-center">
-                    <input
-                      type="text"
-                      dir="auto"
-                      value={manualInput}
-                      onChange={(e) => setManualInput(e.target.value)}
-                      placeholder={t('barcode.manualPlaceholder') || 'e.g. Milk, Apples, or barcode...'}
-                      autoFocus
-                      className="w-full h-11 bg-surface-container-lowest rounded-xl ps-3 pe-24 text-sm text-on-surface border border-outline-variant focus:border-primary outline-none"
-                    />
-                    <button
-                      type="submit"
-                      className="absolute end-1.5 top-1.5 bottom-1.5 px-3 rounded-lg bg-primary text-on-primary text-xs font-bold hover:bg-primary/90 active:scale-95 transition-all cursor-pointer flex items-center gap-1 shadow-2xs"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>{t('add') || 'Add'}</span>
-                    </button>
-                  </div>
-                </form>
+                  <input
+                    type="text"
+                    value={reviewNote}
+                    onChange={(e) => setReviewNote(e.target.value)}
+                    placeholder="e.g. 2 packs, expiry check"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low border border-surface-container-high focus:outline-none focus:ring-2 focus:ring-primary text-xs text-primary"
+                  />
+                </div>
               </div>
 
-              <div className="pt-2 flex justify-center gap-2">
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={startScanning}
-                  className="h-10 px-4 rounded-xl bg-surface-container-high hover:bg-surface-dim text-on-surface font-semibold text-xs transition-colors cursor-pointer flex items-center gap-1.5"
+                  onClick={handleConfirmAddItem}
+                  className="flex-1 py-3 px-4 rounded-2xl bg-primary hover:bg-primary-hover active:bg-primary-active text-on-primary font-bold text-sm shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
                 >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  <span>{t('barcode.tryCameraAgain') || 'Try camera again'}</span>
+                  <Check className="w-4 h-4" />
+                  <span>{barcodeCopy.confirmAdd || 'Add to Shopping List'}</span>
                 </button>
+
                 <button
                   type="button"
-                  onClick={handleClose}
-                  className="h-10 px-4 rounded-xl bg-surface-container-low text-outline hover:text-on-surface font-semibold text-xs transition-colors cursor-pointer"
+                  onClick={() => {
+                    setView('scanning');
+                    startCamera();
+                  }}
+                  className="px-4 py-3 rounded-2xl bg-surface-container hover:bg-surface-container-high text-primary font-semibold text-xs sm:text-sm transition-colors cursor-pointer"
                 >
-                  {t('close') || 'Close'}
+                  {barcodeCopy.scanAnother || 'Scan Another'}
                 </button>
               </div>
             </div>

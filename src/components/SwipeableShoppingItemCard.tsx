@@ -178,7 +178,7 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
             canonicalName={item.canonicalName || item.canonical_name}
             displayName={item.name}
             categoryId={itemCatId}
-            imageUrl={item.imageUrl || item.image_url}
+            imageUrl={item.imageUrl}
             size={36}
             className={`w-9 h-9 rounded-xl shrink-0 transition-all duration-200 ${
               isChecked
@@ -217,21 +217,35 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
               )}
             </div>
 
-            {/* Line 2: Quantity (below name) */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEditQuantity(item);
-              }}
-              onPointerDown={(e) => e.stopPropagation()}
-              className="text-xs font-['Manrope'] font-medium text-primary/80 hover:text-primary transition-colors flex items-center gap-1 cursor-pointer w-fit text-start"
-              title="Tap to change quantity"
-            >
-              <span className="bg-surface-container px-2 py-0.5 rounded-md border border-surface-dim/60 font-semibold text-[11px]">
-                {formattedQty || (item.quantity ? `${item.quantity}${item.unit ? ' ' + item.unit : ''}` : '1x')}
-              </span>
-            </button>
+            {/* Line 2: Quantity & Brand/Package Size (below name) */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEditQuantity(item);
+                }}
+                onPointerDown={(e) => e.stopPropagation()}
+                className="text-xs font-['Manrope'] font-medium text-primary/80 hover:text-primary transition-colors flex items-center gap-1 cursor-pointer w-fit text-start"
+                title="Tap to change quantity"
+              >
+                <span className="bg-surface-container px-2 py-0.5 rounded-md border border-surface-dim/60 font-semibold text-[11px]">
+                  {formattedQty || (item.quantity ? `${item.quantity}${item.unit ? ' ' + item.unit : ''}` : '1x')}
+                </span>
+              </button>
+
+              {item.brand && (
+                <span className="text-[10px] text-on-surface-variant/80 font-medium bg-surface-container-high/60 px-1.5 py-0.5 rounded border border-surface-dim/40 truncate max-w-[100px]">
+                  {item.brand}
+                </span>
+              )}
+
+              {item.packageSize && !item.unit && (
+                <span className="text-[10px] text-on-surface-variant/70 font-medium">
+                  {item.packageSize}
+                </span>
+              )}
+            </div>
 
             {/* Line 3: Category (below quantity) */}
             <div
