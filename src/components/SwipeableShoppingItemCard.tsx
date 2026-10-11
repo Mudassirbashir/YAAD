@@ -178,6 +178,7 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
             canonicalName={item.canonicalName || item.canonical_name}
             displayName={item.name}
             categoryId={itemCatId}
+            imageUrl={item.imageUrl || item.image_url}
             size={36}
             className={`w-9 h-9 rounded-xl shrink-0 transition-all duration-200 ${
               isChecked

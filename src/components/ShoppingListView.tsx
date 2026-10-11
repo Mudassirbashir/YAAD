@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Plus, Check, Edit3, CheckCheck, Sparkles, ShoppingBag, Loader2, AlertCircle, Trash2, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Plus, Check, Edit3, CheckCheck, Sparkles, ShoppingBag, Loader2, AlertCircle, Trash2, ArrowRight, ArrowLeft, ScanBarcode } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ShoppingList, ShoppingItem, CategoryId, CATEGORIES_LIST, normalizeCategoryId } from '../types';
+import { BarcodeScannerModal } from './barcode/BarcodeScannerModal';
 import { TopHeader } from './TopHeader';
 import { CategoryIcon } from './CategoryIcon';
 import { ItemVisualIcon } from './ItemVisualIcon';
@@ -54,6 +55,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
   const [newItemText, setNewItemText] = useState<string>('');
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
+  const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState<boolean>(false);
 
   // Transient feedback banner for added/updated items
   const [feedbackToast, setFeedbackToast] = useState<{ message: string; type: 'add' | 'merge' } | null>(null);
@@ -539,6 +541,67 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
     playItemCheckSound();
   };
 
+  // Add item scanned via barcode
+  const handleBarcodeAddProduct = (scannedItem: ShoppingItem) => {
+    const existing =
+      list.items.find((it) => it.name.trim().toLowerCase() === scannedItem.name.trim().toLowerCase()) ||
+      (scannedItem.barcode ? list.items.find((it) => it.barcode === scannedItem.barcode) : undefined);
+
+    let updatedItems = [...list.items];
+
+    if (existing) {
+      const merged = mergeQuantities(
+        existing.quantity,
+        existing.unit,
+        scannedItem.quantity,
+        scannedItem.unit
+      );
+      updatedItems = updatedItems.map((it) =>
+        it.id === existing.id
+          ? {
+              ...it,
+              quantity: merged.quantity,
+              unit: merged.unit || it.unit,
+              planned_quantity: merged.quantity,
+              planned_unit: merged.unit || it.planned_unit,
+              barcode: scannedItem.barcode || it.barcode,
+              barcode_format: scannedItem.barcode_format || it.barcode_format,
+              imageUrl: scannedItem.imageUrl || it.imageUrl || it.image_url,
+              image_url: scannedItem.image_url || it.image_url || it.imageUrl,
+              brand: scannedItem.brand || it.brand,
+              package_size: scannedItem.package_size || it.package_size,
+              note: scannedItem.note || it.note,
+              completed: false,
+            }
+          : it
+      );
+      showFeedbackToast(
+        language === 'ur'
+          ? `"${scannedItem.name}" کی مقدار اپڈیٹ ہو گئی`
+          : `Updated quantity for "${scannedItem.name}"`,
+        'merge'
+      );
+    } else {
+      updatedItems = [scannedItem, ...updatedItems];
+      showFeedbackToast(
+        language === 'ur'
+          ? `"${scannedItem.name}" بارکوڈ سے لسٹ میں شامل ہو گیا`
+          : `Added "${scannedItem.name}" to list`,
+        'add'
+      );
+    }
+
+    const updatedList: ShoppingList = {
+      ...list,
+      items: updatedItems,
+      isCompleted: false,
+    };
+
+    onUpdateList(updatedList);
+    triggerHaptic(15);
+    playItemCheckSound();
+  };
+
   // Add new inline item using natural language parser and smart categorizer
   const handleAddInlineItem = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -767,18 +830,34 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                   processAddItems(pasteText);
                 }
               }}
-              className="w-full h-[54px] ps-5 pe-14 rounded-full border-none bg-transparent focus:ring-2 focus:ring-primary/20 text-base text-on-surface placeholder:text-outline font-['Manrope'] outline-none"
+              className="w-full h-[54px] ps-5 pe-28 rounded-full border-none bg-transparent focus:ring-2 focus:ring-primary/20 text-base text-on-surface placeholder:text-outline font-['Manrope'] outline-none"
               placeholder={t('shoppingList.inputPlaceholder')}
               type="text"
             />
-            <button
-              type="submit"
-              aria-label="Add item"
-              style={{ backgroundColor: plusBg }}
-              className="absolute end-1.5 top-1/2 -translate-y-1/2 w-10 h-10 text-white rounded-full flex items-center justify-center hover:opacity-90 active:scale-95 transition-all shadow-xs cursor-pointer"
-            >
-              <Plus className="w-5 h-5 stroke-[2.4]" />
-            </button>
+            <div className="absolute end-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+              {/* Barcode Scanner Button - small raised square button immediately to the LEFT of the plus button */}
+              <button
+                type="button"
+                onClick={() => setIsBarcodeScannerOpen(true)}
+                aria-label="Scan barcode (Beta)"
+                title="Scan product barcode (Beta)"
+                className="relative w-10 h-10 rounded-xl bg-surface-container-lowest text-primary hover:bg-surface-container-low border border-surface-container-high/90 flex items-center justify-center shadow-2xs hover:shadow-xs active:scale-95 transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20 shrink-0"
+              >
+                <ScanBarcode className="w-5 h-5 stroke-[2]" />
+                <span className="absolute -top-1.5 -end-1.5 bg-rose-600 text-white text-[9px] font-black px-1 py-0.5 rounded uppercase tracking-wider leading-none shadow-xs select-none pointer-events-none">
+                  BETA
+                </span>
+              </button>
+
+              <button
+                type="submit"
+                aria-label="Add item"
+                style={{ backgroundColor: plusBg }}
+                className="w-10 h-10 text-white rounded-full flex items-center justify-center hover:opacity-90 active:scale-95 transition-all shadow-xs cursor-pointer shrink-0"
+              >
+                <Plus className="w-5 h-5 stroke-[2.4]" />
+              </button>
+            </div>
           </form>
 
           {/* Real-time Catalog Search Suggestions */}
@@ -1187,6 +1266,14 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
         onClose={() => setEditingItem(null)}
         onSave={handleSaveQuantity}
         onDeleteItem={handleDeleteItem}
+      />
+
+      {/* Barcode Scanner Modal (Beta) */}
+      <BarcodeScannerModal
+        isOpen={isBarcodeScannerOpen}
+        onClose={() => setIsBarcodeScannerOpen(false)}
+        onAddProduct={handleBarcodeAddProduct}
+        existingItems={list.items}
       />
 
       {/* Delete List Confirmation Modal */}

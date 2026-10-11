@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { CategoryId } from '../types';
 import { EssentialItemVisual } from './EssentialItemVisual';
 
@@ -12,14 +12,13 @@ export interface ItemVisualIconProps {
   className?: string;
   iconClassName?: string;
   useImage?: boolean;
+  imageUrl?: string;
 }
 
 /**
  * Unified canonical visual representation for any grocery item in YAAD.
- * Directly maps canonical item identity (Potato, Sugar, Chicken, Onion, etc.)
- * to high-definition, system-quality, offline-first vector visuals.
- * Reused identically across Search Results, Added Item Cards, Shopping Session,
- * History, and Stats.
+ * Displays real product image when available, with automatic fallback
+ * to high-definition, offline-first vector visuals.
  */
 export const ItemVisualIcon: React.FC<ItemVisualIconProps> = ({
   name = '',
@@ -28,7 +27,26 @@ export const ItemVisualIcon: React.FC<ItemVisualIconProps> = ({
   categoryId = 'other',
   size = 36,
   className = 'w-9 h-9 rounded-xl shrink-0',
+  imageUrl,
 }) => {
+  const [imgError, setImgError] = useState(false);
+
+  if (imageUrl && !imgError) {
+    return (
+      <div
+        className={`${className} overflow-hidden bg-white border border-surface-container-high/60 flex items-center justify-center p-0.5 shadow-2xs`}
+      >
+        <img
+          src={imageUrl}
+          alt={displayName || name}
+          onError={() => setImgError(true)}
+          className="w-full h-full object-contain"
+          loading="lazy"
+        />
+      </div>
+    );
+  }
+
   return (
     <EssentialItemVisual
       canonicalName={canonicalName || name}

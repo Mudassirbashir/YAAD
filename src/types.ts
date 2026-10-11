@@ -320,6 +320,14 @@ export interface ShoppingItem {
   plannedUnit?: string;
   purchasedQuantity?: string | number;
   purchasedUnit?: string;
+
+  // Barcode & Scanned Product metadata
+  barcode?: string;
+  barcode_format?: string;
+  brand?: string;
+  imageUrl?: string;
+  image_url?: string;
+  package_size?: string;
 }
 
 export interface ShoppingList {
