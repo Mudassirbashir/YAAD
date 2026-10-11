@@ -41,6 +41,10 @@ export class BarcodeLookupService {
     rawCode: string,
     options?: { signal?: AbortSignal; forceRefresh?: boolean }
   ): Promise<BarcodeLookupResult> {
+    if (options?.signal?.aborted) {
+      return { status: 'NETWORK_ERROR', message: 'Request aborted' };
+    }
+
     const normalized = normalizeBarcode(rawCode);
 
     if (!normalized.isValid) {

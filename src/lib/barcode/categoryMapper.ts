@@ -113,16 +113,27 @@ export function mapProviderCategoryToYAAD(
     if (tag.includes('lentil') || tag.includes('pulse') || tag.includes('bean') || tag.includes('dal')) {
       return 'pulses';
     }
-    if (tag.includes('cereal') || tag.includes('flour') || tag.includes('grain') || tag.includes('wheat') || tag.includes('oat')) {
+    if (
+      tag.includes('cereal') ||
+      tag.includes('flour') ||
+      tag.includes('grain') ||
+      tag.includes('wheat') ||
+      tag.includes('oat') ||
+      tag.includes('pasta') ||
+      tag.includes('noodle')
+    ) {
       return 'grains';
     }
 
-    // 10. Spices & Condiments
+    // 10. Spices & Condiments & Cooking Essentials
     if (tag.includes('spice') || tag.includes('seasoning') || tag.includes('pepper') || tag.includes('salt')) {
       return 'spices';
     }
     if (tag.includes('sauce') || tag.includes('condiment') || tag.includes('ketchup') || tag.includes('mayonnaise') || tag.includes('vinegar')) {
       return 'sauces_condiments';
+    }
+    if (tag.includes('spread') || tag.includes('jam') || tag.includes('honey') || tag.includes('canned')) {
+      return 'cooking_essentials';
     }
 
     // 11. Frozen Foods
@@ -174,7 +185,15 @@ export function mapProviderCategoryToYAAD(
     if (tag.includes('kitchen') || tag.includes('cookware') || tag.includes('tableware')) {
       return 'kitchen';
     }
-    if (tag.includes('household') || tag.includes('home')) {
+    if (
+      tag.includes('household') ||
+      tag.includes('home') ||
+      tag.includes('pet') ||
+      tag.includes('dog') ||
+      tag.includes('cats') ||
+      tag.includes('cat-food') ||
+      tag === 'cat'
+    ) {
       return 'household';
     }
 
@@ -184,5 +203,5 @@ export function mapProviderCategoryToYAAD(
     }
   }
 
-  return 'other';
+  return normalizeCategoryId('other');
 }

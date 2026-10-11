@@ -225,6 +225,16 @@ assert.strictEqual(hydratedItem.packageSize, '1 L', 'Package size must survive h
 assert.strictEqual(hydratedItem.imageUrl, 'https://images.openfoodfacts.org/oatly.jpg', 'Image URL must survive hydration');
 console.log('✅ PASSED: Barcode and product metadata preserved across Supabase hydration');
 
+// --- 8. ABORT SIGNAL HANDLING ---
+console.log('\n--- 7. Abort Signal Handling ---');
+const abortController = new AbortController();
+abortController.abort(); // already aborted
+const abortedRes = await mockService.lookupBarcode('7350053850019', { signal: abortController.signal });
+assert.strictEqual(abortedRes.status, 'NETWORK_ERROR');
+assert.strictEqual(abortedRes.message, 'Request aborted');
+console.log('✅ PASSED: AbortSignal is honored and cancels lookup immediately');
+
 console.log('========================================================');
 console.log('🎉 ALL BARCODE PROVIDER, CACHE & INTEGRATION TESTS PASSED');
 console.log('========================================================');
+

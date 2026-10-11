@@ -105,6 +105,11 @@ export function expandUPCEToUPCA(upce6: string, numberSystem: '0' | '1' = '0'): 
  * Preserves leading zeros, standardizes formats, and computes conversions.
  */
 export function normalizeBarcode(rawInput: string, hintFormat?: BarcodeFormat): NormalizedBarcode {
+  // Normalize hint format if passed with hyphens or lowercase (e.g. 'ean-13' -> 'EAN_13')
+  const cleanHint = hintFormat
+    ? (hintFormat.toUpperCase().replace(/-/g, '_') as BarcodeFormat)
+    : undefined;
+
   if (!rawInput || typeof rawInput !== 'string') {
     return {
       raw: '',
@@ -132,9 +137,9 @@ export function normalizeBarcode(rawInput: string, hintFormat?: BarcodeFormat): 
   if (hasLetters) {
     if (/^[A-Za-z0-9\.\$\/\+\%\*\-\s]+$/.test(trimmed)) {
       const format: BarcodeFormat =
-        hintFormat === 'CODE_39'
+        cleanHint === 'CODE_39'
           ? 'CODE_39'
-          : hintFormat === 'CODE_128'
+          : cleanHint === 'CODE_128'
           ? 'CODE_128'
           : 'CODE_128';
 
@@ -262,7 +267,7 @@ export function normalizeBarcode(rawInput: string, hintFormat?: BarcodeFormat): 
 
     // Disambiguate:
     // If explicitly hinted as UPC_E or if it validly expands to UPC-A and not valid EAN-8:
-    if (hintFormat === 'UPC_E' && isUPCE) {
+    if (cleanHint === 'UPC_E' && isUPCE) {
       return {
         raw: rawInput,
         normalized: cleaned,
@@ -364,3 +369,21 @@ export function normalizeBarcode(rawInput: string, hintFormat?: BarcodeFormat): 
     error: `Unsupported barcode length: ${len} digits`,
   };
 }
+
+/**
+ * Detects the standard format of a barcode string without requiring prior metadata.
+ */
+export function detectBarcodeFormat(rawInput: string): BarcodeFormat {
+  const result = normalizeBarcode(rawInput);
+  return result.format;
+}
+
+/**
+ * Returns true if the barcode format belongs to the GS1 GTIN standard family
+ * (EAN-13, EAN-8, UPC-A, UPC-E, ITF).
+ */
+export function isGTINFormat(format: BarcodeFormat): boolean {
+  const clean = format.toUpperCase().replace(/-/g, '_');
+  return ['EAN_13', 'EAN_8', 'UPC_A', 'UPC_E', 'ITF'].includes(clean);
+}
+

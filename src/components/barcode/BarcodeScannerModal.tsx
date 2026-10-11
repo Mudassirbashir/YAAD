@@ -536,6 +536,12 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                     type="text"
                     value={reviewName}
                     onChange={(e) => setReviewName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleConfirmAddItem();
+                      }
+                    }}
                     placeholder="e.g. Milk, Rice, Biscuit"
                     className="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low border border-surface-container-high focus:outline-none focus:ring-2 focus:ring-primary text-sm text-primary"
                   />
@@ -571,6 +577,12 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                         type="text"
                         value={reviewQuantity}
                         onChange={(e) => setReviewQuantity(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleConfirmAddItem();
+                          }
+                        }}
                         className="w-full px-3 py-2.5 rounded-xl bg-surface-container-low border border-surface-container-high focus:outline-none focus:ring-2 focus:ring-primary text-xs font-semibold text-primary text-center"
                       />
                     </div>
@@ -586,6 +598,12 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                     type="text"
                     value={reviewNote}
                     onChange={(e) => setReviewNote(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleConfirmAddItem();
+                      }
+                    }}
                     placeholder="e.g. 2 packs, expiry check"
                     className="w-full px-3.5 py-2.5 rounded-xl bg-surface-container-low border border-surface-container-high focus:outline-none focus:ring-2 focus:ring-primary text-xs text-primary"
                   />

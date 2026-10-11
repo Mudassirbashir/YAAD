@@ -6,6 +6,8 @@ import {
   validateEAN8Checksum,
   validateITF14Checksum,
   expandUPCEToUPCA,
+  detectBarcodeFormat,
+  isGTINFormat,
 } from '../src/lib/barcode/normalizer';
 import { mapProviderCategoryToYAAD } from '../src/lib/barcode/categoryMapper';
 import { sanitizeImageUrl } from '../src/lib/barcode/providers/openFoodFacts';
@@ -159,6 +161,9 @@ assert.strictEqual(mapProviderCategoryToYAAD(['en:cooking-oils']), 'oils');
 assert.strictEqual(mapProviderCategoryToYAAD(['en:laundry-detergents']), 'cleaning');
 assert.strictEqual(mapProviderCategoryToYAAD(['en:shampoos']), 'personal_care');
 assert.strictEqual(mapProviderCategoryToYAAD(['en:baby-diapers']), 'baby_care');
+assert.strictEqual(mapProviderCategoryToYAAD(['en:pasta', 'en:durum-wheat']), 'grains');
+assert.strictEqual(mapProviderCategoryToYAAD(['en:honeys', 'en:spreads']), 'cooking_essentials');
+assert.strictEqual(mapProviderCategoryToYAAD(['en:dog-food']), 'household');
 assert.strictEqual(mapProviderCategoryToYAAD(['en:unknown-nonexistent-category']), 'other');
 console.log('✅ PASSED: Category mapper accurately maps tags to YAAD canonical categories');
 
@@ -174,6 +179,27 @@ assert.strictEqual(sanitizeImageUrl('relative/path/image.png'), undefined);
 assert.strictEqual(sanitizeImageUrl(''), undefined);
 assert.strictEqual(sanitizeImageUrl(null), undefined);
 console.log('✅ PASSED: Image URL sanitization rejects malicious and invalid schemes');
+
+// 12. Format Detection & GTIN Identification
+console.log('\n--- 12. Format Detection & GTIN Identification ---');
+assert.strictEqual(detectBarcodeFormat('7350053850019'), 'EAN_13');
+assert.strictEqual(detectBarcodeFormat('012345678905'), 'UPC_A');
+assert.strictEqual(detectBarcodeFormat('96385074'), 'EAN_8');
+assert.strictEqual(detectBarcodeFormat('10012345678902'), 'ITF');
+assert.strictEqual(detectBarcodeFormat('PKG-1234'), 'CODE_128');
+
+assert.strictEqual(isGTINFormat('EAN_13'), true);
+assert.strictEqual(isGTINFormat('UPC_A'), true);
+assert.strictEqual(isGTINFormat('EAN_8'), true);
+assert.strictEqual(isGTINFormat('ITF'), true);
+assert.strictEqual(isGTINFormat('UPC_E'), true);
+assert.strictEqual(isGTINFormat('CODE_128'), false);
+assert.strictEqual(isGTINFormat('UNKNOWN'), false);
+
+// Hint format normalization with hyphen / lowercase
+const normHyphenHint = normalizeBarcode('01234565', 'upc-e' as any);
+assert.strictEqual(normHyphenHint.format, 'UPC_E');
+console.log('✅ PASSED: Format detection, GTIN verification, and format hint aliases');
 
 console.log('========================================================');
 console.log('🎉 ALL BARCODE STANDARDS & NORMALIZATION TESTS PASSED');

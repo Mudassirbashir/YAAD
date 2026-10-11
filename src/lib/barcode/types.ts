@@ -8,7 +8,15 @@ export type BarcodeFormat =
   | 'CODE_128'
   | 'CODE_39'
   | 'ITF'
-  | 'UNKNOWN';
+  | 'UNKNOWN'
+  // Common hyphenated and lowercase aliases
+  | 'EAN-13'
+  | 'EAN-8'
+  | 'UPC-A'
+  | 'UPC-E'
+  | 'CODE-128'
+  | 'CODE-39'
+  | 'ITF-14';
 
 export type BarcodeLookupStatus =
   | 'FOUND'
@@ -36,7 +44,7 @@ export interface ScannedProduct {
   packageSize?: string;
   imageUrl?: string;
   categoryId: CategoryId;
-  source: 'open_food_facts' | 'open_products_facts' | 'manual';
+  source: 'open_food_facts' | 'open_products_facts' | 'manual' | string;
   rawData?: unknown;
 }
 
@@ -44,7 +52,7 @@ export interface BarcodeLookupResult {
   status: BarcodeLookupStatus;
   product?: ScannedProduct;
   message?: string;
-  source?: 'open_food_facts' | 'open_products_facts';
+  source?: 'open_food_facts' | 'open_products_facts' | string;
   fromCache?: boolean;
 }
 
@@ -52,3 +60,7 @@ export interface BarcodeProvider {
   name: string;
   lookup(barcode: NormalizedBarcode, signal?: AbortSignal): Promise<BarcodeLookupResult>;
 }
+
+// Backward-compatibility alias
+export type IBarcodeProductProvider = BarcodeProvider;
+

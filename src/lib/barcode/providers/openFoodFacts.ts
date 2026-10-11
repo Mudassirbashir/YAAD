@@ -60,7 +60,11 @@ export class OpenFoodFactsProvider implements BarcodeProvider {
 
     // Link parent signal if provided
     if (parentSignal) {
-      parentSignal.addEventListener('abort', () => controller.abort(), { once: true });
+      if (parentSignal.aborted) {
+        controller.abort();
+      } else {
+        parentSignal.addEventListener('abort', () => controller.abort(), { once: true });
+      }
     }
 
     const url = `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=product_name,product_name_en,generic_name,brands,quantity,image_url,image_front_url,image_small_url,categories_tags,categories`;
