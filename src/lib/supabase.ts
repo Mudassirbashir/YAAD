@@ -330,12 +330,19 @@ export async function getProfile(userId: string): Promise<UserProfile | null> {
       }
     } catch {}
 
+    let localAvatar: string | null = null;
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localAvatar = window.localStorage.getItem(`yaad_avatar_${verifiedUserId}`);
+      }
+    } catch {}
+
     const fullProfile: UserProfile = {
       id: verifiedUserId,
       full_name: data?.full_name ?? userMeta.full_name ?? cached?.full_name ?? null,
       email: data?.email ?? userMeta.email ?? cached?.email ?? null,
       phone_number: data?.phone_number ?? data?.phone ?? userMeta.phone_number ?? userMeta.phone ?? authUserPhone ?? cached?.phone_number ?? null,
-      avatar_url: data?.avatar_url ?? userMeta.avatar_url ?? cached?.avatar_url ?? null,
+      avatar_url: data?.avatar_url || userMeta.avatar_url || localAvatar || cached?.avatar_url || null,
       is_verified: Boolean(data?.is_verified ?? userMeta.is_verified ?? cached?.is_verified),
       is_suspended: Boolean(data?.is_suspended ?? userMeta.is_suspended ?? cached?.is_suspended),
       suspend_reason: data?.suspend_reason ?? userMeta.suspend_reason ?? cached?.suspend_reason ?? undefined,
@@ -539,11 +546,20 @@ export async function updateProfile(
     const finalProfile: UserProfile = {
       ...mergedProfile,
       ...(savedRow || {}),
+      avatar_url: updates.avatar_url !== undefined
+        ? (updates.avatar_url || null)
+        : (savedRow?.avatar_url || mergedProfile.avatar_url || null),
       phone_number: mergedProfile.phone_number,
       has_completed_setup: mergedProfile.has_completed_setup,
       usage_purpose: mergedProfile.usage_purpose,
       referral_source: mergedProfile.referral_source,
     };
+
+    try {
+      if (typeof window !== 'undefined' && window.localStorage && finalProfile.avatar_url) {
+        window.localStorage.setItem(`yaad_avatar_${verifiedUserId}`, finalProfile.avatar_url);
+      }
+    } catch {}
 
     await saveOfflineProfile(verifiedUserId, finalProfile);
     return { data: finalProfile, error: null };

@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingItem } from '../types';
 import { UNIT_MAP } from '../lib/recognition/quantityExtractor';
-import { Minus, Plus, X, Check, Trash2 } from 'lucide-react';
+import { Minus, Plus, X, Check, Trash2, Camera } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { CategoryIcon } from './CategoryIcon';
+import { ItemVisualIcon } from './ItemVisualIcon';
+import { ItemPhotoCaptureModal } from './common/ItemPhotoCaptureModal';
 
-interface QuantityEditModalProps {
+export interface QuantityEditModalProps {
   isOpen: boolean;
   item: ShoppingItem | null;
   onClose: () => void;
-  onSave: (itemId: string, quantity?: string, unit?: string) => void;
+  onSave: (itemId: string, quantity?: string, unit?: string, imageUrl?: string | null) => void;
   onDeleteItem?: (itemId: string) => void;
 }
 
@@ -47,9 +49,12 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
   onSave,
   onDeleteItem,
 }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const isUrdu = language === 'ur';
   const [quantity, setQuantity] = useState<string>('');
   const [unit, setUnit] = useState<string>('');
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
     if (item) {
@@ -57,6 +62,7 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
       const rawUnit = item.planned_unit || item.unit || '';
       const normalized = UNIT_MAP[rawUnit.toLowerCase()]?.standard || rawUnit;
       setUnit(normalized);
+      setImageUrl(item.imageUrl || null);
     }
   }, [item]);
 
@@ -73,12 +79,12 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
   const handleSave = () => {
     const cleanQty = quantity.trim() ? quantity.trim() : undefined;
     const cleanUnit = unit.trim() ? unit.trim() : undefined;
-    onSave(item.id, cleanQty, cleanUnit);
+    onSave(item.id, cleanQty, cleanUnit, imageUrl);
     onClose();
   };
 
   const handleClear = () => {
-    onSave(item.id, undefined, undefined);
+    onSave(item.id, undefined, undefined, imageUrl);
     onClose();
   };
 
@@ -101,9 +107,15 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-surface-container-high/60">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center text-primary shrink-0 border border-surface-dim">
-              <CategoryIcon categoryId={item.categoryId} className="w-5 h-5" />
-            </div>
+            <ItemVisualIcon
+              name={item.name}
+              canonicalName={item.canonicalName}
+              displayName={item.name}
+              categoryId={item.categoryId}
+              imageUrl={imageUrl || item.imageUrl}
+              size={42}
+              className="w-11 h-11 rounded-2xl shrink-0 border border-surface-dim"
+            />
             <div className="min-w-0">
               <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-lg text-primary truncate leading-tight">
                 {item.name}
@@ -123,6 +135,44 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
           >
             <X className="w-4 h-4 stroke-[2]" />
           </button>
+        </div>
+
+        {/* Item Photo Attachment Card */}
+        <div className="flex items-center justify-between p-2.5 rounded-2xl bg-surface-container/50 border border-surface-dim/70">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <Camera className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <span className="text-xs font-['Manrope'] font-bold text-primary block truncate">
+                {imageUrl ? (isUrdu ? 'تصویر منسلک ہے' : 'Item Photo Attached') : (isUrdu ? 'پروڈکٹ کی تصویر' : 'Product Photo')}
+              </span>
+              <span className="text-[10px] text-on-surface-variant font-medium block truncate">
+                {imageUrl ? (isUrdu ? 'کلاؤڈ نری پر محفوظ' : 'Stored in Cloudinary') : (isUrdu ? 'تیز رفتار کیمرہ یا گیلری سے شامل کریں' : 'Snap fast photo or upload')}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            {imageUrl && (
+              <button
+                type="button"
+                onClick={() => setImageUrl(null)}
+                className="p-1.5 rounded-xl text-error hover:bg-error-container/20 transition-colors"
+                title={isUrdu ? 'تصویر ہٹائیں' : 'Remove photo'}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setIsPhotoModalOpen(true)}
+              className="px-2.5 py-1.5 rounded-xl bg-primary text-on-primary hover:bg-primary-container text-xs font-bold font-['Manrope'] flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs active:scale-95"
+            >
+              <Camera className="w-3.5 h-3.5" />
+              <span>{imageUrl ? (isUrdu ? 'تبدیل کریں' : 'Change') : (isUrdu ? 'تصویر لیں' : 'Add Photo')}</span>
+            </button>
+          </div>
         </div>
 
         {/* Stepper + Manual Input */}
@@ -269,6 +319,19 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Fast Item Photo Capture Bottom Sheet */}
+      <ItemPhotoCaptureModal
+        isOpen={isPhotoModalOpen}
+        itemName={item.name}
+        currentImageUrl={imageUrl}
+        onClose={() => setIsPhotoModalOpen(false)}
+        onPhotoCaptured={(url) => {
+          setImageUrl(url);
+          setIsPhotoModalOpen(false);
+        }}
+        onRemovePhoto={() => setImageUrl(null)}
+      />
     </div>
   );
 };

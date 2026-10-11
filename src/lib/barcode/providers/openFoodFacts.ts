@@ -11,6 +11,9 @@ const USER_AGENT = 'YAAD-ShoppingList/1.0 (https://yaadapppk.vercel.app)';
 export function sanitizeImageUrl(url?: string | null): string | undefined {
   if (!url || typeof url !== 'string') return undefined;
   const trimmed = url.trim();
+  if (trimmed.startsWith('data:image/') && trimmed.includes(';base64,')) {
+    return trimmed;
+  }
   try {
     const parsed = new URL(trimmed);
     if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {

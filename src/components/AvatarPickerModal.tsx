@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { X, Check, Search, Sparkles, User, RefreshCw, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { X, Check, Search, Sparkles, User, RefreshCw, Loader2, Camera, Upload } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import {
   EMOJI_CATEGORIES,
@@ -9,6 +9,7 @@ import {
   getAvatarColorOption,
 } from '../data/avatarData';
 import { Avatar } from './Avatar';
+import { uploadImage } from '../utils/cloudinary';
 
 interface AvatarPickerModalProps {
   isOpen: boolean;
@@ -28,6 +29,7 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
   userEmail,
 }) => {
   const { t, language } = useLanguage();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Parse existing avatar
   const initialParsed = useMemo(() => parseAvatarValue(currentAvatarUrl), [currentAvatarUrl]);
@@ -37,21 +39,29 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<string>('faces');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isUseInitials, setIsUseInitials] = useState<boolean>(!initialParsed.isEmoji && !initialParsed.isImageUrl);
+  const [customPhotoUrl, setCustomPhotoUrl] = useState<string | null>(initialParsed.isImageUrl ? currentAvatarUrl || null : null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
   // Sync state whenever modal opens or currentAvatarUrl changes
   useEffect(() => {
     if (isOpen) {
       const parsed = parseAvatarValue(currentAvatarUrl);
-      if (parsed.isEmoji && parsed.emoji) {
+      if (parsed.isImageUrl && currentAvatarUrl) {
+        setCustomPhotoUrl(currentAvatarUrl);
+        setIsUseInitials(false);
+      } else if (parsed.isEmoji && parsed.emoji) {
         setSelectedEmoji(parsed.emoji);
         setSelectedBgId(parsed.bgId || 'mint');
+        setCustomPhotoUrl(null);
         setIsUseInitials(false);
       } else if (!parsed.isImageUrl && !parsed.isEmoji) {
+        setCustomPhotoUrl(null);
         setIsUseInitials(true);
       } else {
         setSelectedEmoji('🥑');
         setSelectedBgId('mint');
+        setCustomPhotoUrl(null);
         setIsUseInitials(false);
       }
       setSearchQuery('');
@@ -108,22 +118,61 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
 
   const handleSelectEmoji = (emoji: string) => {
     setSelectedEmoji(emoji);
+    setCustomPhotoUrl(null);
     setIsUseInitials(false);
   };
 
   const handleSelectColor = (colorId: string) => {
     setSelectedBgId(colorId);
+    setCustomPhotoUrl(null);
     setIsUseInitials(false);
   };
 
   const handleSetInitials = () => {
+    setCustomPhotoUrl(null);
     setIsUseInitials(true);
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      return;
+    }
+
+    setIsUploadingPhoto(true);
+    try {
+      const uploadResult = await uploadImage(file, `avatar_${Date.now()}.jpg`);
+      setCustomPhotoUrl(uploadResult.url);
+      setIsUseInitials(false);
+    } catch (err: unknown) {
+      console.warn('Avatar photo upload notice:', err);
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const dUrl = ev.target?.result as string;
+        if (dUrl) {
+          setCustomPhotoUrl(dUrl);
+          setIsUseInitials(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setIsUploadingPhoto(false);
+      e.target.value = '';
+    }
   };
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      if (isUseInitials) {
+      if (customPhotoUrl) {
+        await onSave(customPhotoUrl);
+      } else if (isUseInitials) {
         await onSave(null);
       } else {
         const encoded = encodeEmojiAvatar(selectedEmoji, selectedBgId);
@@ -138,7 +187,11 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
   };
 
   // Preview string for Avatar component
-  const previewAvatarUrl = isUseInitials ? null : encodeEmojiAvatar(selectedEmoji, selectedBgId);
+  const previewAvatarUrl = customPhotoUrl
+    ? customPhotoUrl
+    : isUseInitials
+    ? null
+    : encodeEmojiAvatar(selectedEmoji, selectedBgId);
   const activeColorOption = getAvatarColorOption(selectedBgId);
 
   return (
@@ -208,7 +261,12 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
                   {t('profile.title') || 'Preview'}
                 </span>
                 <div className="text-sm font-bold text-on-surface flex items-center gap-2">
-                  {isUseInitials ? (
+                  {customPhotoUrl ? (
+                    <span className="inline-flex items-center gap-1.5 text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full font-semibold">
+                      <Camera className="w-3 h-3" />
+                      {language === 'ur' ? 'اپنی تصویر' : 'Custom Photo'}
+                    </span>
+                  ) : isUseInitials ? (
                     <span className="inline-flex items-center gap-1.5 text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full">
                       <User className="w-3 h-3" />
                       {t('settings.avatarUseInitials') || 'Using Initials'}
@@ -225,21 +283,51 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
               </div>
             </div>
 
-            {/* Use Initials Switcher */}
-            <button
-              id="avatar_toggle_initials_btn"
-              type="button"
-              onClick={handleSetInitials}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 ${
-                isUseInitials
-                  ? 'bg-primary text-on-primary shadow-xs'
-                  : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'
-              }`}
-            >
-              <User className="w-3.5 h-3.5" />
-              <span>{t('settings.avatarUseInitials') || 'Use Initials'}</span>
-            </button>
+            {/* Action Buttons: Upload Photo & Use Initials */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                id="avatar_upload_photo_btn"
+                type="button"
+                onClick={handleUploadClick}
+                disabled={isUploadingPhoto}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer ${
+                  customPhotoUrl
+                    ? 'bg-primary text-on-primary shadow-xs'
+                    : 'bg-surface-container text-on-surface hover:bg-surface-container-high'
+                }`}
+              >
+                {isUploadingPhoto ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Camera className="w-3.5 h-3.5" />
+                )}
+                <span>{language === 'ur' ? 'تصویر اپلوڈ کریں' : 'Upload Photo'}</span>
+              </button>
+
+              <button
+                id="avatar_toggle_initials_btn"
+                type="button"
+                onClick={handleSetInitials}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer ${
+                  isUseInitials && !customPhotoUrl
+                    ? 'bg-primary text-on-primary shadow-xs'
+                    : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'
+                }`}
+              >
+                <User className="w-3.5 h-3.5" />
+                <span>{t('settings.avatarUseInitials') || 'Use Initials'}</span>
+              </button>
+            </div>
           </div>
+
+          {/* Hidden File Picker Input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileChange}
+          />
 
           {/* 2. Background Color Palettes */}
           <div className="space-y-2">

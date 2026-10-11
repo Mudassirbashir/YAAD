@@ -1216,11 +1216,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // 3. Save to Supabase profiles table
       const { data, error } = await supabaseUpdateProfile(currentUserId, updates);
 
+      if (typeof window !== 'undefined' && window.localStorage && updates.avatar_url) {
+        window.localStorage.setItem(`yaad_avatar_${currentUserId}`, updates.avatar_url);
+      }
+
       if (error) {
         return { error };
       }
 
       if (data) {
+        if (updates.avatar_url !== undefined && !data.avatar_url) {
+          data.avatar_url = updates.avatar_url;
+        }
         setProfile(data);
         await saveOfflineProfile(currentUserId, data);
       }

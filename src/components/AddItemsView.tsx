@@ -13,11 +13,13 @@ import {
   X,
   Pencil,
   ScanBarcode,
+  Camera,
 } from 'lucide-react';
 import { CategoryId, CATEGORIES_LIST, ShoppingItem, normalizeCategoryId } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { CategoryIcon } from './CategoryIcon';
 import { ItemVisualIcon } from './ItemVisualIcon';
+import { ItemPhotoCaptureModal } from './common/ItemPhotoCaptureModal';
 import { BarcodeScannerModal } from './barcode/BarcodeScannerModal';
 import { BidiText, containsUrdu } from '../utils/bidi';
 import { saveUserCategoryOverride } from '../lib/categorizer';
@@ -69,6 +71,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
   } | null>(null);
   const [isBottomCartDriving, setIsBottomCartDriving] = useState<boolean>(false);
   const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState<boolean>(false);
+  const [photoCaptureItem, setPhotoCaptureItem] = useState<ShoppingItem | null>(null);
 
   const handleAddScannedItem = (scannedItem: ShoppingItem) => {
     const existingIndex = items.findIndex(
@@ -583,7 +586,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
     itemId: string,
     quantity?: string,
     unit?: string,
-    notes?: string
+    imageUrl?: string | null
   ) => {
     const updated = items.map((item) =>
       item.id === itemId
@@ -591,13 +594,13 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
             ...item,
             quantity: quantity?.trim() || undefined,
             unit: unit?.trim() || undefined,
-            notes: notes?.trim() || undefined,
+            ...(imageUrl !== undefined ? { imageUrl: imageUrl || undefined } : {}),
           }
         : item
     );
     updateItems(updated);
     setEditingItem(null);
-    showToast('Updated quantity', 'merge');
+    showToast('Updated item', 'merge');
   };
 
   const handleItemCategoryChange = (
@@ -1077,8 +1080,9 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                             canonicalName={item.canonicalName}
                             displayName={item.name}
                             categoryId={itemCatId}
+                            imageUrl={item.imageUrl}
                             size={36}
-                            className="w-9 h-9 rounded-xl shrink-0"
+                            className="w-9 h-9 rounded-xl shrink-0 cursor-pointer hover:scale-105 transition-transform"
                           />
                           <div className="min-w-0 flex-1 flex flex-col gap-0.5">
                             {/* Line 1: Item Name */}
@@ -1133,18 +1137,36 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                           </div>
                         </div>
 
-                        {/* Explicit Delete Button - isolated from row */}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemoveItem(item.id);
-                          }}
-                          aria-label="Remove item"
-                          className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-error hover:bg-error-container/20 transition-colors cursor-pointer shrink-0"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {/* Actions: Photo and Delete Buttons */}
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPhotoCaptureItem(item);
+                            }}
+                            aria-label={`Attach photo for ${item.name}`}
+                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
+                              item.imageUrl
+                                ? 'text-primary bg-primary/10 hover:bg-primary/20'
+                                : 'text-outline hover:text-primary hover:bg-surface-container'
+                            }`}
+                            title={item.imageUrl ? 'Change photo' : 'Attach photo'}
+                          >
+                            <Camera className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveItem(item.id);
+                            }}
+                            aria-label="Remove item"
+                            className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-error hover:bg-error-container/20 transition-colors cursor-pointer shrink-0"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     );
                   })}
@@ -1168,6 +1190,31 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
         isOpen={isBarcodeScannerOpen}
         onClose={() => setIsBarcodeScannerOpen(false)}
         onAddItem={handleAddScannedItem}
+      />
+
+      {/* Item Photo Capture Bottom Sheet */}
+      <ItemPhotoCaptureModal
+        isOpen={!!photoCaptureItem}
+        itemName={photoCaptureItem?.name}
+        currentImageUrl={photoCaptureItem?.imageUrl}
+        onClose={() => setPhotoCaptureItem(null)}
+        onPhotoCaptured={(url) => {
+          if (!photoCaptureItem) return;
+          const updated = items.map((it) =>
+            it.id === photoCaptureItem.id ? { ...it, imageUrl: url } : it
+          );
+          updateItems(updated);
+          setPhotoCaptureItem(null);
+          showToast('Photo attached', 'merge');
+        }}
+        onRemovePhoto={() => {
+          if (!photoCaptureItem) return;
+          const updated = items.map((it) =>
+            it.id === photoCaptureItem.id ? { ...it, imageUrl: undefined } : it
+          );
+          updateItems(updated);
+          setPhotoCaptureItem(null);
+        }}
       />
 
       {/* Floating Bottom Action for Mobile */}

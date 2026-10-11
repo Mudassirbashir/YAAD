@@ -101,7 +101,12 @@ export const EditListView: React.FC<EditListViewProps> = ({
     );
   };
 
-  const handleSaveQuantity = (itemId: string, newQty?: string, newUnit?: string) => {
+  const handleSaveQuantity = (
+    itemId: string,
+    newQty?: string,
+    newUnit?: string,
+    imageUrl?: string | null
+  ) => {
     setItems((prev) =>
       prev.map((item) =>
         item.id === itemId
@@ -111,6 +116,7 @@ export const EditListView: React.FC<EditListViewProps> = ({
               unit: newUnit,
               planned_quantity: newQty,
               planned_unit: newUnit,
+              ...(imageUrl !== undefined ? { imageUrl: imageUrl || undefined } : {}),
             }
           : item
       )
@@ -335,6 +341,7 @@ export const EditListView: React.FC<EditListViewProps> = ({
                               canonicalName={item.canonicalName}
                               displayName={item.name}
                               categoryId={itemCatId}
+                              imageUrl={item.imageUrl}
                               size={36}
                               className="w-9 h-9 rounded-xl shrink-0"
                             />

@@ -150,7 +150,12 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
     };
   }, []);
 
-  const handleSaveQuantity = (itemId: string, newQty?: string, newUnit?: string) => {
+  const handleSaveQuantity = (
+    itemId: string,
+    newQty?: string,
+    newUnit?: string,
+    imageUrl?: string | null
+  ) => {
     const updatedList: ShoppingList = {
       ...list,
       items: list.items.map((it) =>
@@ -161,6 +166,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
               unit: newUnit,
               planned_quantity: newQty,
               planned_unit: newUnit,
+              ...(imageUrl !== undefined ? { imageUrl: imageUrl || undefined } : {}),
             }
           : it
       ),
@@ -383,10 +389,11 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
     // 1. Immediate optimistic UI update
     onUpdateList(updatedList);
 
-    // 2. Sound & Haptic Feedback (Fast & Premium)
+    // 2. Sound & Haptic Feedback (Fast & Premium tactile physical vibration)
     if (nextCompleted) {
-      triggerHaptic(15);
+      triggerHaptic([40, 30, 45]);
       if (isAllCompleted) {
+        triggerHaptic([50, 40, 60, 40, 80]);
         playCompletionSound();
         setTimeout(() => {
           onCompleteTrip(updatedList);
@@ -404,7 +411,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
       }, 8000);
     } else {
       // Un-marking item
-      triggerHaptic(8);
+      triggerHaptic(20);
       setUndoToast(null);
     }
 
