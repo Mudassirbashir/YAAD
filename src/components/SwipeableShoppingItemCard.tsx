@@ -168,7 +168,7 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
           isChecked
             ? 'bg-surface-container-low/70 opacity-70 border border-surface-container-high/40'
             : justCompletedLocally
-            ? 'bg-emerald-50/95 dark:bg-emerald-950/40 border border-emerald-400/60 shadow-xs'
+            ? 'bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-400/90 ring-2 ring-emerald-500/30 shadow-md scale-[1.01]'
             : 'bg-surface-bright hover:bg-surface-container-low active:bg-surface-container border border-surface-dim/70 shadow-2xs hover:shadow-xs'
         }`}
       >

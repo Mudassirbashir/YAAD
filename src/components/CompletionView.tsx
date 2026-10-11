@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import {
   Check,
@@ -16,6 +16,7 @@ import { TopHeader } from './TopHeader';
 import { CategoryIcon } from './CategoryIcon';
 import { ItemVisualIcon } from './ItemVisualIcon';
 import { BlueTickCheckCircle } from './BlueTickCheckCircle';
+import { ItemImageLightboxModal } from './common/ItemImageLightboxModal';
 import { useLanguage } from '../context/LanguageContext';
 import { playCompletionSound, triggerHaptic } from '../lib/sound';
 import { BidiText } from '../utils/bidi';
@@ -43,6 +44,12 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
 }) => {
   const { t, getCategoryName, language } = useLanguage();
   const isUrdu = language === 'ur';
+
+  const [selectedLightboxItem, setSelectedLightboxItem] = useState<{
+    imageUrl: string;
+    itemName: string;
+    categoryName?: string;
+  } | null>(null);
 
   // Sound and gentle haptic feedback on entrance
   useEffect(() => {
@@ -277,8 +284,26 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
                         canonicalName={item.canonicalName || item.canonical_name}
                         displayName={item.name}
                         categoryId={item.categoryId}
+                        imageUrl={item.imageUrl}
+                        onClick={
+                          item.imageUrl
+                            ? () => {
+                                triggerHaptic(10);
+                                setSelectedLightboxItem({
+                                  imageUrl: item.imageUrl!,
+                                  itemName: item.name,
+                                  categoryName: getCategoryName(item.categoryId || 'other'),
+                                });
+                              }
+                            : undefined
+                        }
                         size={28}
-                        className="w-7 h-7 rounded-lg shrink-0 opacity-80"
+                        className={`w-7 h-7 rounded-lg shrink-0 opacity-80 ${
+                          item.imageUrl
+                            ? 'cursor-pointer hover:opacity-100 hover:scale-110 active:scale-95 transition-all'
+                            : ''
+                        }`}
+                        title={item.imageUrl ? `Click to view photo of ${item.name}` : undefined}
                       />
                       <BidiText className="font-['Newsreader'] text-sm text-on-surface font-medium truncate">
                         {item.name}
@@ -350,6 +375,15 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
           </div>
         </section>
       </main>
+
+      {/* Item Image Lightbox Modal */}
+      <ItemImageLightboxModal
+        isOpen={Boolean(selectedLightboxItem)}
+        onClose={() => setSelectedLightboxItem(null)}
+        imageUrl={selectedLightboxItem?.imageUrl}
+        itemName={selectedLightboxItem?.itemName}
+        categoryName={selectedLightboxItem?.categoryName}
+      />
     </div>
   );
 };

@@ -84,6 +84,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     'privacy' | 'terms' | 'help' | 'about' | null
   >(null);
   const [highlightedSection, setHighlightedSection] = useState<string | null>(null);
+  const [avatarToast, setAvatarToast] = useState<string | null>(null);
 
   // Deep Link & subSection scrolling
   useEffect(() => {
@@ -207,7 +208,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
   // Avatar select handler
   const handleSelectAvatar = async (avatarValue: string | null) => {
-    await updateUserProfile({ avatar_url: avatarValue });
+    const res = await updateUserProfile({ avatar_url: avatarValue });
+    if (!res.error) {
+      triggerHaptic([20, 15, 30]);
+      setAvatarToast(isRTL ? 'پروفائل تصویر کامیابی سے اپڈیٹ ہوگئی!' : 'Profile picture updated successfully!');
+      setTimeout(() => setAvatarToast(null), 3500);
+    }
   };
 
   // Sign out confirmation handler
@@ -829,6 +835,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         userEmail={user?.email || profile?.email}
         userPhone={displayPhone}
       />
+
+      {/* Avatar Save Feedback Toast */}
+      {avatarToast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-[#00422f] text-emerald-100 px-4 py-2.5 rounded-2xl shadow-xl flex items-center gap-2.5 border border-emerald-400/30 animate-in fade-in slide-in-from-bottom-3 duration-200 text-xs font-['Manrope'] font-semibold"
+        >
+          <Check className="w-4 h-4 text-emerald-400 stroke-[3]" />
+          <span>{avatarToast}</span>
+        </div>
+      )}
     </div>
   );
 };

@@ -19,7 +19,9 @@ import { ShoppingList, CategoryId } from '../types';
 import { TopHeader } from './TopHeader';
 import { CategoryIcon } from './CategoryIcon';
 import { ItemVisualIcon } from './ItemVisualIcon';
+import { ItemImageLightboxModal } from './common/ItemImageLightboxModal';
 import { useLanguage } from '../context/LanguageContext';
+import { triggerHaptic } from '../lib/sound';
 import { BidiText } from '../utils/bidi';
 import { ListIcon } from './ListIcon';
 import {
@@ -51,6 +53,11 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
 }) => {
   const { t, getCategoryName } = useLanguage();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [selectedLightboxItem, setSelectedLightboxItem] = useState<{
+    imageUrl: string;
+    itemName: string;
+    categoryName?: string;
+  } | null>(null);
 
   // Close modal when pressing Escape key
   useEffect(() => {
@@ -310,10 +317,28 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
                               canonicalName={item.canonicalName || item.canonical_name}
                               displayName={item.name}
                               categoryId={item.categoryId}
+                              imageUrl={item.imageUrl}
+                              onClick={
+                                item.imageUrl
+                                  ? () => {
+                                      triggerHaptic(10);
+                                      setSelectedLightboxItem({
+                                        imageUrl: item.imageUrl!,
+                                        itemName: item.name,
+                                        categoryName: getCategoryName(item.categoryId || 'other'),
+                                      });
+                                    }
+                                  : undefined
+                              }
                               size={36}
-                              className={`w-9 h-9 rounded-xl shrink-0 transition-opacity ${
+                              className={`w-9 h-9 rounded-xl shrink-0 transition-all ${
                                 item.completed ? 'opacity-60' : 'opacity-100'
+                              } ${
+                                item.imageUrl
+                                  ? 'cursor-pointer hover:opacity-100 hover:scale-105 active:scale-95 shadow-2xs'
+                                  : ''
                               }`}
+                              title={item.imageUrl ? `Click to view photo of ${item.name}` : undefined}
                             />
 
                             {/* Item Name & Details */}
@@ -473,6 +498,15 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
           </div>
         </div>
       )}
+
+      {/* Item High-Resolution Photo Lightbox Preview */}
+      <ItemImageLightboxModal
+        isOpen={Boolean(selectedLightboxItem)}
+        onClose={() => setSelectedLightboxItem(null)}
+        imageUrl={selectedLightboxItem?.imageUrl}
+        itemName={selectedLightboxItem?.itemName}
+        categoryName={selectedLightboxItem?.categoryName}
+      />
     </div>
   );
 };

@@ -1370,7 +1370,13 @@ function AppContent() {
           listTitle={tempNewListTitle || currentActiveList?.title || 'Shopping List'}
           initialItems={currentActiveList?.items || []}
           contextId={activeListContext || currentActiveList?.contextId}
-          onBack={() => navigate('/home')}
+          onBack={() => {
+            if (typeof window !== 'undefined' && window.history.length > 1) {
+              goBack();
+            } else {
+              navigate('/create');
+            }
+          }}
           onStartShopping={handleStartShoppingFromNewItems}
           onItemsChange={handleItemsChangeInAddView}
           onRenameList={(newTitle) => {

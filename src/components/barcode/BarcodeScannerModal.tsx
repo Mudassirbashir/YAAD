@@ -10,6 +10,8 @@ import {
   Check,
   AlertTriangle,
   Package,
+  PackageSearch,
+  ImageOff,
   Plus,
   Minus,
 } from 'lucide-react';
@@ -20,6 +22,7 @@ import { normalizeBarcode } from '../../lib/barcode/normalizer';
 import { ScannedProduct } from '../../lib/barcode/types';
 import { ItemVisualIcon } from '../ItemVisualIcon';
 import { CategoryIcon } from '../CategoryIcon';
+import { ItemPhotoCaptureModal } from '../common/ItemPhotoCaptureModal';
 import { triggerHaptic } from '../../lib/sound';
 import { generateUUID } from '../../lib/uuid';
 
@@ -29,7 +32,7 @@ export interface BarcodeScannerModalProps {
   onAddItem: (item: ShoppingItem) => void;
 }
 
-type ScannerView = 'scanning' | 'searching' | 'review' | 'manual' | 'error';
+type ScannerView = 'scanning' | 'searching' | 'review' | 'manual' | 'error' | 'not_found';
 
 export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
   isOpen,
@@ -49,6 +52,8 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
 
   // Scanned item review state
   const [scannedProduct, setScannedProduct] = useState<ScannedProduct | null>(null);
+  const [customPhotoUrl, setCustomPhotoUrl] = useState<string | null>(null);
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   const [reviewName, setReviewName] = useState('');
   const [reviewBrand, setReviewBrand] = useState('');
   const [reviewPackageSize, setReviewPackageSize] = useState('');
@@ -102,9 +107,10 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
 
       if (!isMountedRef.current) return;
 
-      if (result.status === 'FOUND' && result.product) {
+      if (result.status === 'FOUND' && result.product && result.product.name.trim()) {
         setScannedProduct(result.product);
-        setReviewName(result.product.name);
+        setCustomPhotoUrl(null);
+        setReviewName(result.product.name.trim());
         setReviewBrand(result.product.brand || '');
         setReviewPackageSize(result.product.packageSize || '');
         setReviewCategory(result.product.categoryId || 'other');
@@ -113,9 +119,9 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
         setReviewNote('');
         setView('review');
       } else {
-        // Product not found or error: allow user to add it directly with the scanned barcode
-        const normalized = normalizeBarcode(rawCode);
+        // Dedicated NOT_FOUND view: Never allow raw barcode serial numbers to be auto-added!
         setScannedProduct(null);
+        setCustomPhotoUrl(null);
         setReviewName('');
         setReviewBrand('');
         setReviewPackageSize('');
@@ -132,12 +138,12 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
           setSearchError((t as any)?.barcode?.notFound || 'Product not found in database');
         }
 
-        setView('review');
+        setView('not_found');
       }
     } catch {
       if (isMountedRef.current) {
         setSearchError('Error looking up barcode');
-        setView('review');
+        setView('not_found');
       }
     } finally {
       isProcessingRef.current = false;
@@ -304,7 +310,12 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
 
   // Confirm and add item
   const handleConfirmAddItem = () => {
-    const finalName = reviewName.trim() || scannedCode || 'Scanned Item';
+    const trimmedName = reviewName.trim();
+    if (!trimmedName) {
+      setSearchError(isUrdu ? 'پروڈکٹ کا نام درج کرنا لازمی ہے' : 'Please enter a product name');
+      return;
+    }
+    const finalName = trimmedName;
     const itemId = generateUUID();
 
     const newItem: ShoppingItem = {
@@ -318,7 +329,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
       barcode: scannedCode || undefined,
       brand: reviewBrand.trim() || undefined,
       packageSize: reviewPackageSize.trim() || undefined,
-      imageUrl: scannedProduct?.imageUrl || undefined,
+      imageUrl: customPhotoUrl || scannedProduct?.imageUrl || undefined,
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
@@ -503,7 +514,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                   name={reviewName}
                   displayName={reviewName}
                   categoryId={reviewCategory}
-                  imageUrl={scannedProduct?.imageUrl}
+                  imageUrl={customPhotoUrl || scannedProduct?.imageUrl}
                   size={52}
                   className="w-13 h-13 rounded-2xl shrink-0"
                 />
@@ -522,6 +533,25 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                       {reviewPackageSize && <span>{reviewPackageSize}</span>}
                     </div>
                   )}
+
+                  {/* Catalog Image Status */}
+                  <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+                    {customPhotoUrl || scannedProduct?.imageUrl ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-100 dark:bg-emerald-950/50 dark:text-emerald-300 px-2.5 py-0.5 rounded-full">
+                        <Check className="w-3 h-3 stroke-[2.5]" />
+                        <span>{isUrdu ? 'تصویر موجود ہے' : 'Image available'}</span>
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setIsPhotoModalOpen(true)}
+                        className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-800 bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:text-amber-200 px-2.5 py-1 rounded-full transition-colors cursor-pointer border border-amber-300/40"
+                      >
+                        <Camera className="w-3 h-3 text-amber-700 dark:text-amber-300" />
+                        <span>{isUrdu ? 'کیٹلاگ میں تصویر نہیں — تصویر جوڑیں' : 'No image in catalog — Attach photo'}</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -634,8 +664,76 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
               </div>
             </div>
           )}
+
+          {/* 5. Product Not Found View */}
+          {view === 'not_found' && (
+            <div className="flex flex-col items-center justify-center text-center py-6 px-2 space-y-4">
+              <div className="w-16 h-16 rounded-3xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-700 dark:text-amber-300 shadow-sm">
+                <PackageSearch className="w-8 h-8" />
+              </div>
+
+              <div className="space-y-1.5 max-w-sm">
+                <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-lg text-primary">
+                  {isUrdu ? 'کوئی پروڈکٹ نہیں ملی' : 'No Product Found'}
+                </h3>
+                {scannedCode && (
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container text-xs font-mono font-semibold text-on-surface-variant border border-surface-container-high/60">
+                    <span>Code: {scannedCode}</span>
+                  </div>
+                )}
+                <p className="text-xs text-on-surface-variant leading-relaxed pt-1">
+                  {isUrdu
+                    ? 'اس بارکوڈ کی تفصیلات یا تصویر کیٹلاگ میں موجود نہیں ہے۔ کسی نامعلوم بارکوڈ کو بغیر نام کے لسٹ میں شامل نہیں کیا جا سکتا۔'
+                    : 'We could not find any catalog details or photo for this barcode. Unrecognized serial numbers cannot be added directly.'}
+                </p>
+              </div>
+
+              <div className="w-full flex flex-col sm:flex-row items-center gap-2.5 pt-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setView('scanning');
+                    startCamera();
+                  }}
+                  className="w-full sm:flex-1 py-3 px-4 rounded-2xl bg-primary hover:bg-primary-hover active:bg-primary-active text-on-primary font-bold text-xs sm:text-sm shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  <span>{isUrdu ? 'دوسری پروڈکٹ اسکین کریں' : 'Scan Another Product'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setReviewName('');
+                    setView('review');
+                  }}
+                  className="w-full sm:flex-1 py-3 px-4 rounded-2xl bg-surface-container hover:bg-surface-container-high text-primary font-semibold text-xs sm:text-sm transition-colors cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <Keyboard className="w-4 h-4" />
+                  <span>{isUrdu ? 'خود نام درج کریں' : 'Enter Name Manually'}</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Item Photo Capture for Scanned Products */}
+      <ItemPhotoCaptureModal
+        isOpen={isPhotoModalOpen}
+        itemName={reviewName || 'Product'}
+        currentImageUrl={customPhotoUrl || scannedProduct?.imageUrl}
+        onClose={() => setIsPhotoModalOpen(false)}
+        onPhotoCaptured={(url) => {
+          setCustomPhotoUrl(url);
+          setIsPhotoModalOpen(false);
+          triggerHaptic(15);
+        }}
+        onRemovePhoto={() => {
+          setCustomPhotoUrl(null);
+          setIsPhotoModalOpen(false);
+        }}
+      />
     </div>
   );
 };

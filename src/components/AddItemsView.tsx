@@ -138,12 +138,12 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
 
   const handleStartShoppingWithAnimation = () => {
     if (items.length === 0 || isBottomCartDriving) return;
-    triggerHaptic(18);
+    triggerHaptic([22, 18, 38]);
     setIsBottomCartDriving(true);
     setTimeout(() => {
       onStartShopping(items);
       setIsBottomCartDriving(false);
-    }, 380);
+    }, 480);
   };
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -789,7 +789,6 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                       }}
                       placeholder={t('addItems.inputPlaceholder') || 'Add item (e.g. Milk, Apples)...'}
                       className="w-full h-12 bg-surface-container-low rounded-full ps-11 pe-24 text-sm sm:text-base text-on-surface font-['Manrope'] border border-outline-variant/60 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
-                      autoFocus
                     />
 
                     {/* Clear Button */}
@@ -1091,9 +1090,6 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                   <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-primary text-sm sm:text-base whitespace-nowrap">
                     {t('addItems.listItemsHeaderClean') || 'List Items'}
                   </h3>
-                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-surface-container font-semibold text-primary shrink-0 border border-surface-dim/60 shadow-2xs">
-                    {items.length}
-                  </span>
                 </div>
                 <button
                   type="button"
@@ -1313,18 +1309,70 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
         <button
           onClick={handleStartShoppingWithAnimation}
           disabled={items.length === 0 || isBottomCartDriving}
-          className="relative overflow-hidden w-full h-14 rounded-2xl bg-primary text-on-primary font-['Manrope'] text-base font-bold shadow-md hover:bg-primary-container disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] transition-all flex items-center justify-center gap-2.5 cursor-pointer group"
+          className={`relative overflow-hidden w-full h-14 rounded-2xl font-['Manrope'] text-base font-bold shadow-md disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] transition-all flex items-center justify-center gap-3 cursor-pointer group ${
+            isBottomCartDriving
+              ? 'bg-[#00422f] text-emerald-100 shadow-emerald-950/40'
+              : 'bg-primary text-on-primary hover:bg-primary-container'
+          }`}
         >
-          <span>{t('addItems.startShoppingBtn') || 'Start Shopping'}</span>
-          <span
-            className={`transition-all duration-300 ease-out inline-flex items-center ${
+          {/* Subtle background velocity shimmer during departure */}
+          {isBottomCartDriving && (
+            <span
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent animate-pulse pointer-events-none"
+              aria-hidden="true"
+            />
+          )}
+
+          <span className="transition-opacity duration-200">
+            {isBottomCartDriving
+              ? (language === 'ur' ? 'شاپنگ کے لیے روانہ...' : 'Off to shop...')
+              : (t('addItems.startShoppingBtn') || 'Start Shopping')}
+          </span>
+
+          {/* Animated Shopping Cart with Spinning Wheels and Speed Trails */}
+          <div
+            className={`relative flex items-center transition-all duration-500 ease-in-out ${
               isBottomCartDriving
-                ? 'translate-x-32 sm:translate-x-44 opacity-0 scale-125'
-                : 'translate-x-0 opacity-100'
+                ? 'translate-x-36 sm:translate-x-52 scale-110 opacity-0 -rotate-6'
+                : 'translate-x-0 scale-100 opacity-100 group-hover:scale-110'
             }`}
           >
-            <ShoppingCart className="w-5 h-5" />
-          </span>
+            {/* Speed trail streaks when departing */}
+            {isBottomCartDriving && (
+              <span
+                className="absolute -left-6 top-1/2 -translate-y-1/2 flex flex-col gap-1 opacity-80"
+                aria-hidden="true"
+              >
+                <span className="w-4 h-0.5 bg-emerald-300 rounded-full animate-pulse" />
+                <span className="w-6 h-0.5 bg-emerald-200 rounded-full animate-pulse delay-75" />
+                <span className="w-3 h-0.5 bg-emerald-400 rounded-full animate-pulse delay-150" />
+              </span>
+            )}
+
+            {/* Custom Animated Cart SVG */}
+            <svg
+              className={`w-6 h-6 shrink-0 transition-transform ${
+                isBottomCartDriving ? 'animate-bounce' : 'group-hover:translate-x-0.5'
+              }`}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              {/* Cart Basket Body */}
+              <circle cx="8" cy="21" r="1" className={isBottomCartDriving ? 'animate-spin origin-[8px_21px]' : ''} fill="currentColor" />
+              <circle cx="19" cy="21" r="1" className={isBottomCartDriving ? 'animate-spin origin-[19px_21px]' : ''} fill="currentColor" />
+              <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+              {/* Groceries inside the cart */}
+              <path
+                d="M10 8V6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2"
+                strokeWidth="1.8"
+                className={isBottomCartDriving ? 'animate-pulse text-emerald-200' : 'opacity-80'}
+              />
+            </svg>
+          </div>
         </button>
       </div>
     </div>

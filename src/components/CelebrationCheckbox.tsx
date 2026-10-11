@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { triggerHaptic } from '../lib/sound';
 
 export interface CelebrationCheckboxProps {
   isChecked: boolean;
@@ -43,6 +44,7 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
     prevCheckedRef.current = isChecked;
 
     if (!wasChecked && isChecked) {
+      triggerHaptic([22, 16, 32]);
       setIsPlayingCelebration(true);
       const timer = setTimeout(() => {
         setIsPlayingCelebration(false);
@@ -54,6 +56,7 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
   const shouldCelebrate = isJustCompleted || isPlayingCelebration;
 
   const handleClick = (e: React.MouseEvent) => {
+    triggerHaptic(18);
     if (onClick) {
       onClick(e);
     }
