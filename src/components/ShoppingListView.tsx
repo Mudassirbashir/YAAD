@@ -21,6 +21,7 @@ import { generateUUID } from '../lib/uuid';
 import { QuantityEditModal } from './QuantityEditModal';
 import { SmartSuggestionsSection } from './SmartSuggestionsSection';
 import { SwipeableShoppingItemCard } from './SwipeableShoppingItemCard';
+import { ItemImageLightboxModal } from './common/ItemImageLightboxModal';
 
 interface ShoppingListViewProps {
   list: ShoppingList;
@@ -56,6 +57,11 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
   const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState<boolean>(false);
+  const [lightboxItem, setLightboxItem] = useState<{
+    imageUrl: string;
+    itemName: string;
+    categoryName?: string;
+  } | null>(null);
 
   const handleAddScannedItem = (scannedItem: ShoppingItem) => {
     const existingIndex = list.items.findIndex(
@@ -1100,6 +1106,15 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                             onCategoryChange={handleItemCategoryChange}
                             getCategoryName={getCategoryName}
                             isUrdu={isUrdu}
+                            onOpenImage={(it) => {
+                              if (it.imageUrl) {
+                                setLightboxItem({
+                                  imageUrl: it.imageUrl,
+                                  itemName: it.name,
+                                  categoryName: getCategoryName(normalizeCategoryId(it.categoryId)),
+                                });
+                              }
+                            }}
                           />
                         );
                       })}
@@ -1315,6 +1330,15 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
           </div>
         </div>
       )}
+
+      {/* Item High-Resolution Photo Lightbox Preview */}
+      <ItemImageLightboxModal
+        isOpen={Boolean(lightboxItem)}
+        onClose={() => setLightboxItem(null)}
+        imageUrl={lightboxItem?.imageUrl}
+        itemName={lightboxItem?.itemName}
+        categoryName={lightboxItem?.categoryName}
+      />
     </div>
   );
 };

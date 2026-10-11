@@ -15,6 +15,7 @@ export type AppRouteId =
   | 'edit_list'
   | 'settings'
   | 'settings_subsection'
+  | 'notifications'
   | 'statistics'
   | 'auth'
   | 'reset_password'
@@ -251,6 +252,17 @@ export function parseRoute(rawPathname: string): ParsedRoute {
     }
   }
 
+  // 7b. Dedicated Notifications Screen
+  if (norm === '/notifications') {
+    return {
+      routeId: 'notifications',
+      pathname: '/notifications',
+      params: {},
+      isProtected: true,
+      canonicalPath: '/notifications',
+    };
+  }
+
   // 8. Authentication & Auth Gates
   if (norm === '/auth' || norm === '/login' || norm === '/signin' || norm === '/signup') {
     return {
@@ -424,6 +436,8 @@ export function buildCanonicalPath(
       return '/settings';
     case 'settings_subsection':
       return `/settings/${params?.subSection || 'profile'}`;
+    case 'notifications':
+      return '/notifications';
     case 'statistics':
       return '/stats';
     case 'auth':

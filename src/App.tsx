@@ -16,6 +16,7 @@ import { ListDetailsView } from './components/ListDetailsView';
 import { EditListView } from './components/EditListView';
 import { SettingsView } from './components/SettingsView';
 import { StatisticsView } from './components/StatisticsView';
+import { NotificationsView } from './components/NotificationsView';
 import { NotFoundView } from './components/NotFoundView';
 import { ListNotFoundView } from './components/ListNotFoundView';
 import { BottomNavBar } from './components/BottomNavBar';
@@ -174,6 +175,8 @@ function AppContent() {
       case 'settings':
       case 'settings_subsection':
         return 'settings';
+      case 'notifications':
+        return 'notifications';
       case 'statistics':
         return 'statistics';
       case 'auth':
@@ -1502,6 +1505,13 @@ function AppContent() {
           onBack={() => navigate('/home')}
           onCreateList={handleStartCreateList}
           onSelectList={handleOpenListInShoppingMode}
+        />
+      )}
+
+      {/* 18b. Dedicated Notifications View */}
+      {hasSplashFinished && user && !isPasswordResetRequiredActive && currentScreen === 'notifications' && (
+        <NotificationsView
+          onBack={() => navigate('/home')}
         />
       )}
 

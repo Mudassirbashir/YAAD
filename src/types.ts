@@ -384,6 +384,7 @@ export type ScreenType =
   | 'list_details'
   | 'edit_list'
   | 'settings'
+  | 'notifications'
   | 'statistics'
   | 'terms'
   | 'privacy'

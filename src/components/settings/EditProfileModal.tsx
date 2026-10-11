@@ -58,6 +58,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
   const [showCropper, setShowCropper] = useState<boolean>(false);
   const [pendingCroppedBlob, setPendingCroppedBlob] = useState<Blob | null>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState<boolean>(false);
+  const [photoSuccessMsg, setPhotoSuccessMsg] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cloudinaryConfig = getCloudinaryConfig();
@@ -121,20 +122,50 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     e.target.value = '';
   };
 
-  // Callback from 1:1 Image Cropper Modal
-  const handleCropComplete = (croppedBlob: Blob, croppedDataUrl: string) => {
+  // Callback from 1:1 Image Cropper Modal (Auto-upload & persist immediately)
+  const handleCropComplete = async (croppedBlob: Blob, croppedDataUrl: string) => {
     triggerHaptic(10);
     setPendingCroppedBlob(croppedBlob);
     setAvatarUrl(croppedDataUrl); // Instant responsive preview
     setShowCropper(false);
     setSelectedRawImage(null);
+    setIsUploadingPhoto(true);
+    setPhotoSuccessMsg(null);
+
+    try {
+      const uploadResult = await uploadImage(croppedBlob, `avatar_${Date.now()}.jpg`);
+      const finalAvatar = uploadResult.url || croppedDataUrl;
+      setAvatarUrl(finalAvatar);
+      const cleanPhoneVal = phone.trim() ? cleanPhoneNumber(phone.trim()) : null;
+      await onSave(name.trim() || initialName, cleanPhoneVal, finalAvatar);
+      setPhotoSuccessMsg(
+        language === 'ur'
+          ? 'پروفائل تصویر کامیابی سے محفوظ ہو گئی!'
+          : 'Profile picture saved successfully!'
+      );
+      triggerHaptic(15);
+    } catch (err: any) {
+      console.warn('Auto upload note:', err);
+      const cleanPhoneVal = phone.trim() ? cleanPhoneNumber(phone.trim()) : null;
+      await onSave(name.trim() || initialName, cleanPhoneVal, croppedDataUrl);
+      setPhotoSuccessMsg(
+        language === 'ur'
+          ? 'پروفائل تصویر کامیابی سے محفوظ ہو گئی!'
+          : 'Profile picture saved successfully!'
+      );
+    } finally {
+      setIsUploadingPhoto(false);
+    }
   };
 
-  // Remove custom photo (reset to default avatar)
-  const handleRemovePhoto = () => {
+  // Remove custom photo (reset to default avatar and auto-persist)
+  const handleRemovePhoto = async () => {
     triggerHaptic(8);
     setAvatarUrl(null);
     setPendingCroppedBlob(null);
+    setPhotoSuccessMsg(null);
+    const cleanPhoneVal = phone.trim() ? cleanPhoneNumber(phone.trim()) : null;
+    await onSave(name.trim() || initialName, cleanPhoneVal, null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -317,6 +348,20 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                   </p>
                 </div>
               </div>
+
+              {/* Live photo upload & persist indicators */}
+              {isUploadingPhoto && (
+                <div className="flex items-center gap-2 p-2 rounded-xl bg-primary/10 text-primary text-xs font-semibold animate-pulse">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
+                  <span>{language === 'ur' ? 'تصویر اپلوڈ اور محفوظ ہو رہی ہے...' : 'Uploading & applying profile photo...'}</span>
+                </div>
+              )}
+              {photoSuccessMsg && !isUploadingPhoto && (
+                <div className="flex items-center gap-2 p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs font-semibold animate-in fade-in duration-200">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span>{photoSuccessMsg}</span>
+                </div>
+              )}
 
               {/* Hidden file input */}
               <input

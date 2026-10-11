@@ -21,6 +21,7 @@ interface TopHeaderProps {
   onSettingsClick?: () => void;
   onAvatarClick?: () => void;
   onMenuClick?: () => void;
+  onNotificationsClick?: () => void;
   rightAction?: React.ReactNode;
 }
 
@@ -136,11 +137,11 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   onSettingsClick,
   onAvatarClick,
   onMenuClick,
+  onNotificationsClick,
   rightAction,
 }) => {
   const { language } = useLanguage();
   const [isGearTapped, setIsGearTapped] = useState(false);
-  const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState<InAppNotification[]>(DEFAULT_NOTIFICATIONS);
   const [hasUnread, setHasUnread] = useState(false);
 
@@ -163,10 +164,16 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   }, []);
 
   const handleOpenNotifications = () => {
-    setIsNotifOpen(true);
     setHasUnread(false);
     localStorage.setItem('yaad_last_notif_read', String(Date.now()));
     fetch('/api/notifications/open', { method: 'POST' }).catch(() => {});
+
+    if (onNotificationsClick) {
+      onNotificationsClick();
+    } else if (typeof window !== 'undefined') {
+      window.history.pushState({}, '', '/notifications');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    }
   };
 
   const handleSettingsClick = (e: React.MouseEvent) => {
@@ -287,102 +294,6 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
           </div>
         </div>
       </header>
-
-      {/* Notifications Drawer / Modal (Redesigned per Screenshot 2) */}
-      {isNotifOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-6 bg-black/45 backdrop-blur-xs animate-in fade-in"
-          onClick={() => setIsNotifOpen(false)}
-        >
-          <div
-            className="w-full max-w-sm sm:max-w-md bg-white rounded-3xl shadow-2xl border border-neutral-100 overflow-hidden animate-in zoom-in-95 duration-200 mt-12 sm:mt-16 flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-100 bg-neutral-50/70">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-2xl bg-amber-50 border border-amber-200/60 text-amber-700 flex items-center justify-center shadow-xs">
-                  <Bell className="w-4 h-4 stroke-[2.2]" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-sm text-neutral-900 font-['Plus_Jakarta_Sans']">
-                    {language === 'ur' ? 'نوٹیفکیشنز اور الرٹس' : 'Notifications & Alerts'}
-                  </h3>
-                  <p className="text-[11px] text-neutral-500">
-                    {language === 'ur' ? 'منڈی اپڈیٹس اور راشن یاد دہانی' : 'Mandi updates and grocery reminders'}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsNotifOpen(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-500 hover:text-neutral-800 transition-colors cursor-pointer"
-                aria-label="Close"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Notification List with Relative Timestamps & Category Badges */}
-            <div className="p-4 space-y-2.5 max-h-[60vh] overflow-y-auto divide-y divide-neutral-100">
-              {notifications.map((n) => (
-                <div
-                  key={n.id}
-                  className="pt-2.5 first:pt-0 group hover:bg-neutral-50/60 -mx-2 px-2.5 py-2 rounded-2xl transition-colors"
-                >
-                  <div className="flex items-start gap-2.5">
-                    <div
-                      className={`w-7 h-7 rounded-xl border flex items-center justify-center shrink-0 mt-0.5 ${getNotificationBadgeBg(
-                        n.category
-                      )}`}
-                    >
-                      {getNotificationIcon(n.category)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <h4 className="font-bold text-xs text-neutral-900 truncate">
-                          {language === 'ur' ? n.titleUr || n.titleEn : n.titleEn}
-                        </h4>
-                        {n.sentAt && (
-                          <span className="text-[10px] font-medium text-neutral-400 shrink-0 flex items-center gap-1 font-['Plus_Jakarta_Sans']">
-                            <Clock className="w-3 h-3 text-neutral-400" />
-                            <span>{formatRelativeTime(n.sentAt, language)}</span>
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-neutral-600 mt-1 leading-relaxed">
-                        {language === 'ur' ? n.bodyUr || n.bodyEn : n.bodyEn}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Redesigned Footer per Screenshot 2 */}
-            <div className="px-5 py-3.5 bg-neutral-50/80 border-t border-neutral-100 flex items-center justify-between text-xs">
-              <span className="text-[11px] font-semibold text-neutral-600 flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                <span>{language === 'ur' ? 'سب پڑھ لیے گئے' : 'Up to date'}</span>
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsNotifOpen(false);
-                  if (typeof window !== 'undefined') {
-                    window.history.pushState({}, '', '/settings/notifications');
-                    window.dispatchEvent(new PopStateEvent('popstate'));
-                  }
-                }}
-                className="inline-flex items-center gap-1 text-[#003527] hover:text-[#002b1f] font-bold text-xs group cursor-pointer transition-colors"
-              >
-                <span>{language === 'ur' ? 'نوٹیفکیشن سیٹنگز' : 'Notification Settings'}</span>
-                <ChevronRight className="w-3.5 h-3.5 rtl:rotate-180 group-hover:translate-x-0.5 transition-transform" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 };

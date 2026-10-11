@@ -19,6 +19,7 @@ interface SwipeableShoppingItemCardProps {
   onCategoryChange: (itemId: string, categoryId: CategoryId) => void;
   getCategoryName: (id: CategoryId) => string;
   isUrdu: boolean;
+  onOpenImage?: (item: ShoppingItem) => void;
 }
 
 export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps> = ({
@@ -32,6 +33,7 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
   onCategoryChange,
   getCategoryName,
   isUrdu,
+  onOpenImage,
 }) => {
   const isDraggingRef = useRef<boolean>(false);
   const dragDistanceRef = useRef<number>(0);
@@ -180,6 +182,15 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
             categoryId={itemCatId}
             imageUrl={item.imageUrl}
             size={36}
+            onClick={
+              item.imageUrl
+                ? (e) => {
+                    e.stopPropagation();
+                    onOpenImage?.(item);
+                  }
+                : undefined
+            }
+            title={item.imageUrl ? `Click to view photo of ${item.name}` : undefined}
             className={`w-9 h-9 rounded-xl shrink-0 transition-all duration-200 ${
               isChecked
                 ? 'opacity-50 grayscale-[35%] scale-95'

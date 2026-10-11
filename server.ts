@@ -189,6 +189,46 @@ app.post(['/api/notifications/open', '/api/notifications/:id/open'], (req, res) 
   }
 });
 
+// User reaction and reply to notifications (visible to Super Admin)
+app.post(['/api/notifications/respond', '/api/notifications/:id/respond', '/api/notifications/react'], (req, res) => {
+  try {
+    const notificationId = req.params.id || req.body?.notificationId || req.body?.id || 'broadcast';
+    const reaction = req.body?.reaction || req.body?.emoji;
+    const reply = req.body?.reply || req.body?.message;
+    const userId = req.body?.userId || 'guest';
+    const userName = req.body?.userName || 'Shopper';
+    const userPhone = req.body?.userPhone || '';
+
+    // Record interaction in push campaigns
+    adminStore.recordPushResponse(notificationId, {
+      reaction,
+      reply,
+      userId,
+      userName,
+      userPhone,
+    });
+
+    // Also register support feedback if user wrote a text reply
+    if (reply && String(reply).trim()) {
+      try {
+        adminStore.createSupportTicket({
+          userId,
+          userName,
+          userEmail: userPhone ? `${userPhone}@phone.yaad.app` : 'shopper@yaad.app',
+          subject: `Notification Feedback: ${reaction ? reaction + ' ' : ''}${notificationId}`,
+          description: String(reply).trim(),
+          priority: 'normal',
+          category: 'feedback',
+        });
+      } catch {}
+    }
+
+    return res.status(200).json({ success: true, message: 'Response recorded for Super Admin' });
+  } catch (err: any) {
+    return res.status(200).json({ success: true, message: 'Recorded' });
+  }
+});
+
 // User Account Permanent Deletion (Purges all data + Supabase Auth user)
 app.post('/api/account/delete', async (req, res) => {
   try {

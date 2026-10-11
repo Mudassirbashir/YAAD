@@ -14,6 +14,8 @@ export interface ItemVisualIconProps {
   iconClassName?: string;
   useImage?: boolean;
   imageUrl?: string;
+  onClick?: (e: React.MouseEvent) => void;
+  title?: string;
 }
 
 /**
@@ -30,6 +32,8 @@ export const ItemVisualIcon: React.FC<ItemVisualIconProps> = ({
   size = 36,
   className = 'w-9 h-9 rounded-xl shrink-0',
   imageUrl,
+  onClick,
+  title,
 }) => {
   const sanitizedUrl = sanitizeImageUrl(imageUrl);
   const [hasImgError, setHasImgError] = useState(false);
@@ -41,7 +45,12 @@ export const ItemVisualIcon: React.FC<ItemVisualIconProps> = ({
   if (sanitizedUrl && !hasImgError) {
     return (
       <div
-        className={`relative overflow-hidden flex items-center justify-center bg-white dark:bg-stone-900 border border-surface-container-high/40 shadow-xs ${className}`}
+        onClick={onClick}
+        role={onClick ? 'button' : undefined}
+        tabIndex={onClick ? 0 : undefined}
+        onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(e as any); } } : undefined}
+        title={title || (onClick ? `View photo of ${displayName || name}` : undefined)}
+        className={`relative overflow-hidden flex items-center justify-center bg-white dark:bg-stone-900 border border-surface-container-high/40 shadow-xs ${onClick ? 'cursor-pointer active:scale-95 transition-transform' : ''} ${className}`}
         style={{ width: size, height: size }}
       >
         <img
@@ -56,14 +65,23 @@ export const ItemVisualIcon: React.FC<ItemVisualIconProps> = ({
   }
 
   return (
-    <EssentialItemVisual
-      canonicalName={canonicalName || name}
-      displayName={displayName || name}
-      name={name}
-      categoryId={categoryId}
-      size={size}
-      className={className}
-    />
+    <div
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(e as any); } } : undefined}
+      className={onClick ? 'cursor-pointer active:scale-95 transition-transform' : undefined}
+      title={title}
+    >
+      <EssentialItemVisual
+        canonicalName={canonicalName || name}
+        displayName={displayName || name}
+        name={name}
+        categoryId={categoryId}
+        size={size}
+        className={className}
+      />
+    </div>
   );
 };
 

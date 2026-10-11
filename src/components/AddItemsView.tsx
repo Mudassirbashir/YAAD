@@ -20,6 +20,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { CategoryIcon } from './CategoryIcon';
 import { ItemVisualIcon } from './ItemVisualIcon';
 import { ItemPhotoCaptureModal } from './common/ItemPhotoCaptureModal';
+import { ItemImageLightboxModal } from './common/ItemImageLightboxModal';
 import { BarcodeScannerModal } from './barcode/BarcodeScannerModal';
 import { BidiText, containsUrdu } from '../utils/bidi';
 import { saveUserCategoryOverride } from '../lib/categorizer';
@@ -72,6 +73,31 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
   const [isBottomCartDriving, setIsBottomCartDriving] = useState<boolean>(false);
   const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState<boolean>(false);
   const [photoCaptureItem, setPhotoCaptureItem] = useState<ShoppingItem | null>(null);
+
+  // User-triggered smart suggestions state (not auto on open)
+  const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
+  const [isAnalyzingSuggestions, setIsAnalyzingSuggestions] = useState<boolean>(false);
+
+  // Item high-res photo lightbox state
+  const [lightboxItem, setLightboxItem] = useState<{
+    imageUrl: string;
+    itemName: string;
+    categoryName?: string;
+  } | null>(null);
+
+  const handleTriggerSuggestionsAnalysis = () => {
+    if (showSuggestions) {
+      setShowSuggestions(false);
+      return;
+    }
+    triggerHaptic(12);
+    setIsAnalyzingSuggestions(true);
+    setTimeout(() => {
+      setIsAnalyzingSuggestions(false);
+      setShowSuggestions(true);
+      triggerHaptic(15);
+    }, 1400); // 1.4 seconds realistic AI analysis
+  };
 
   const handleAddScannedItem = (scannedItem: ShoppingItem) => {
     const existingIndex = items.findIndex(
@@ -689,10 +715,10 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
               </button>
             </div>
           ) : (
-            <div className="flex items-center justify-center gap-1.5 max-w-[220px] sm:max-w-md truncate">
+            <div className="flex items-center justify-center gap-2 max-w-[200px] xs:max-w-[240px] sm:max-w-md mx-2 px-2.5 py-1 rounded-2xl bg-surface-container-low/70 border border-surface-dim/60 shadow-2xs">
               <BidiText
                 as="h2"
-                className="font-['Plus_Jakarta_Sans'] text-base sm:text-lg font-bold text-primary truncate text-center"
+                className="font-['Plus_Jakarta_Sans'] text-sm sm:text-base font-bold text-primary truncate text-center max-w-[130px] xs:max-w-[170px] sm:max-w-xs"
               >
                 {currentTitle}
               </BidiText>
@@ -703,15 +729,15 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                   setIsEditingTitle(true);
                 }}
                 aria-label="Rename list"
-                className="p-1.5 rounded-full text-primary/60 hover:text-primary hover:bg-surface-container-low transition-colors cursor-pointer shrink-0"
+                className="w-7 h-7 rounded-full bg-surface-container hover:bg-surface-container-high text-primary/80 hover:text-primary flex items-center justify-center transition-colors cursor-pointer shrink-0 border border-surface-dim/70 shadow-2xs"
                 title="Rename list"
               >
                 <Pencil className="w-3.5 h-3.5" />
               </button>
             </div>
           )}
-          <div className="w-10 flex justify-end">
-            <span className="text-xs font-bold px-2 py-1 rounded-full bg-surface-container text-primary">
+          <div className="min-w-[40px] flex justify-end">
+            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-surface-container text-primary border border-surface-dim/60 shadow-2xs">
               {items.length}
             </span>
           </div>
@@ -904,56 +930,104 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                 )}
               </form>
 
-              {/* UNIFIED CONTEXT-AWARE SUGGESTIONS */}
-              {!inputVal.trim() && (activeUnaddedSuggestions.length > 0 || addedSuggestions.length > 0) && (
-                <div className="space-y-2 pt-1 border-t border-surface-dim/60">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-['Manrope'] font-bold text-primary flex items-center gap-2">
-                      <span className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                        <Sparkles className="w-3.5 h-3.5 stroke-[2.4]" />
-                      </span>
+              {/* USER-CONTROLLED SMART SUGGESTIONS (Triggered on Demand with 1-2s Analysis) */}
+              {!inputVal.trim() && (
+                <div className="pt-2 border-t border-surface-dim/60 space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      onClick={handleTriggerSuggestionsAnalysis}
+                      disabled={isAnalyzingSuggestions}
+                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-['Manrope'] font-bold text-primary bg-primary/10 hover:bg-primary/15 active:scale-95 transition-all border border-primary/20 shadow-2xs cursor-pointer group"
+                    >
+                      <Sparkles
+                        className={`w-3.5 h-3.5 text-primary ${
+                          isAnalyzingSuggestions ? 'animate-spin' : 'group-hover:scale-110 transition-transform'
+                        }`}
+                      />
                       <span>
-                        Suggested for {listTitle || contextData.contextTitle || detectedContext.name || 'Your List'}:
+                        {isAnalyzingSuggestions
+                          ? (language === 'ur' ? 'تجزیہ ہو رہا ہے...' : 'Analyzing context...')
+                          : showSuggestions
+                          ? (language === 'ur' ? 'تجاویز چھپائیں' : 'Hide Suggestions')
+                          : (language === 'ur' ? 'AI سے تجاویز حاصل کریں' : '✨ Get Smart Suggestions')}
                       </span>
-                    </span>
+                    </button>
+                    {showSuggestions && !isAnalyzingSuggestions && (
+                      <span className="text-[11px] font-['Manrope'] text-on-surface-variant font-medium">
+                        {activeUnaddedSuggestions.length} {language === 'ur' ? 'تجاویز دستیاب' : 'suggestions'}
+                      </span>
+                    )}
                   </div>
 
-                  <div className="flex flex-wrap gap-2">
-                    {/* Active un-added context suggestions */}
-                    {activeUnaddedSuggestions.map((sug) => (
-                      <button
-                        key={sug.name}
-                        type="button"
-                        onClick={() => {
-                          if (sug.rawRec) {
-                            handleSelectRecommendation(sug.rawRec);
-                          } else {
-                            handleUnifiedAddItem(sug.name);
-                          }
-                        }}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-['Manrope'] font-semibold transition-all active:scale-95 cursor-pointer shadow-2xs bg-surface-container hover:bg-surface-container-high text-on-surface border border-surface-dim/80 hover:border-primary/50"
-                        title={sug.reason}
-                      >
-                        <Plus className="w-3.5 h-3.5 text-primary/70" />
-                        <span>{sug.displayName}</span>
-                      </button>
-                    ))}
+                  {/* Analysis state animation (1-2 seconds) */}
+                  {isAnalyzingSuggestions && (
+                    <div className="p-3 rounded-2xl bg-surface-container-low border border-primary/30 flex items-center gap-3 animate-in fade-in duration-200">
+                      <div className="w-8 h-8 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
+                        <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-bold text-primary font-['Manrope']">
+                          {language === 'ur' ? 'لسٹ کا AI تجزیہ کیا جا رہا ہے...' : 'Analyzing list context & essentials...'}
+                        </p>
+                        <p className="text-[10px] text-on-surface-variant">
+                          {language === 'ur' ? 'آپ کی ضروری اشیاء کی فوری تجاویز مرتب ہو رہی ہیں' : 'Tailoring recommended items for your trip'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
-                    {/* Already added items (subtle, verified confirmation state) */}
-                    {addedSuggestions.map((sug) => (
-                      <div
-                        key={sug.name}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-['Manrope'] font-medium bg-surface-container-low text-on-surface-variant/70 border border-surface-dim/60 select-none opacity-60 cursor-default"
-                        title="Already in list"
-                      >
-                        <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" strokeWidth={2.5} />
-                        <span className="line-through decoration-outline/40">{sug.displayName}</span>
-                        <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-medium">
-                          Added{sug.addedQuantity ? ` (${sug.addedQuantity})` : ''}
+                  {/* Suggestions Revealed after Analysis */}
+                  {showSuggestions && !isAnalyzingSuggestions && (activeUnaddedSuggestions.length > 0 || addedSuggestions.length > 0) && (
+                    <div className="space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-['Manrope'] font-bold text-primary flex items-center gap-2">
+                          <span>
+                            {language === 'ur'
+                              ? `لسٹ "${currentTitle || 'خریداری'}" کے لیے تجویز کردہ:`
+                              : `Suggested for ${listTitle || contextData.contextTitle || detectedContext.name || 'Your List'}:`}
+                          </span>
                         </span>
                       </div>
-                    ))}
-                  </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        {/* Active un-added context suggestions */}
+                        {activeUnaddedSuggestions.map((sug) => (
+                          <button
+                            key={sug.name}
+                            type="button"
+                            onClick={() => {
+                              if (sug.rawRec) {
+                                handleSelectRecommendation(sug.rawRec);
+                              } else {
+                                handleUnifiedAddItem(sug.name);
+                              }
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-['Manrope'] font-semibold transition-all active:scale-95 cursor-pointer shadow-2xs bg-surface-container hover:bg-surface-container-high text-on-surface border border-surface-dim/80 hover:border-primary/50"
+                            title={sug.reason}
+                          >
+                            <Plus className="w-3.5 h-3.5 text-primary/70" />
+                            <span>{sug.displayName}</span>
+                          </button>
+                        ))}
+
+                        {/* Already added items */}
+                        {addedSuggestions.map((sug) => (
+                          <div
+                            key={sug.name}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-['Manrope'] font-medium bg-surface-container-low text-on-surface-variant/70 border border-surface-dim/60 select-none opacity-60 cursor-default"
+                            title="Already in list"
+                          >
+                            <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" strokeWidth={2.5} />
+                            <span className="line-through decoration-outline/40">{sug.displayName}</span>
+                            <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-medium">
+                              Added{sug.addedQuantity ? ` (${sug.addedQuantity})` : ''}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1012,27 +1086,23 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
           <div className="lg:col-span-5 flex flex-col gap-4">
             {/* Action Card with Summary and Start Shopping Button */}
             <div className="bg-surface-container-lowest p-4 sm:p-5 rounded-3xl border border-surface-dim shadow-2xs space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-primary text-lg sm:text-xl">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-primary text-sm sm:text-base whitespace-nowrap">
                     {t('addItems.listItemsHeaderClean') || 'List Items'}
                   </h3>
-                  <p className="font-['Manrope'] text-xs text-on-surface-variant mt-0.5">
-                    {items.length === 0
-                      ? 'List is currently empty'
-                      : `${items.length} item${items.length === 1 ? '' : 's'} added`}
-                  </p>
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-surface-container font-semibold text-primary shrink-0 border border-surface-dim/60 shadow-2xs">
+                    {items.length}
+                  </span>
                 </div>
                 <button
                   type="button"
                   onClick={() => onStartShopping(items)}
                   disabled={items.length === 0}
-                  className="px-4 py-2 sm:px-5 sm:py-2.5 rounded-full bg-primary text-on-primary font-['Manrope'] text-xs sm:text-sm font-bold flex items-center gap-2.5 hover:bg-primary-container disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-xs active:scale-95 cursor-pointer group"
+                  className="px-3.5 py-2 sm:px-4 sm:py-2 rounded-full bg-primary text-on-primary font-['Manrope'] text-xs sm:text-sm font-bold flex items-center gap-2 hover:bg-primary-container disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-xs active:scale-95 cursor-pointer group whitespace-nowrap shrink-0"
                 >
-                  <span>{t('addItems.startShoppingBtn') || 'Start Shopping'}</span>
-                  <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-white/20 dark:bg-black/20 flex items-center justify-center shrink-0 group-hover:translate-x-0.5 transition-transform">
-                    <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 rtl:rotate-180" />
-                  </div>
+                  <ShoppingCart className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+                  <span className="whitespace-nowrap">{t('addItems.startShoppingBtn') || 'Start Shopping'}</span>
                 </button>
               </div>
 
@@ -1082,6 +1152,18 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                             categoryId={itemCatId}
                             imageUrl={item.imageUrl}
                             size={36}
+                            onClick={
+                              item.imageUrl
+                                ? () => {
+                                    setLightboxItem({
+                                      imageUrl: item.imageUrl!,
+                                      itemName: item.name,
+                                      categoryName: getCategoryName(itemCatId),
+                                    });
+                                  }
+                                : undefined
+                            }
+                            title={item.imageUrl ? `Click to view full photo of ${item.name}` : undefined}
                             className="w-9 h-9 rounded-xl shrink-0 cursor-pointer hover:scale-105 transition-transform"
                           />
                           <div className="min-w-0 flex-1 flex flex-col gap-0.5">
@@ -1215,6 +1297,15 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
           updateItems(updated);
           setPhotoCaptureItem(null);
         }}
+      />
+
+      {/* Item High-Resolution Photo Lightbox Preview */}
+      <ItemImageLightboxModal
+        isOpen={Boolean(lightboxItem)}
+        onClose={() => setLightboxItem(null)}
+        imageUrl={lightboxItem?.imageUrl}
+        itemName={lightboxItem?.itemName}
+        categoryName={lightboxItem?.categoryName}
       />
 
       {/* Floating Bottom Action for Mobile */}

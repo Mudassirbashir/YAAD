@@ -2898,6 +2898,36 @@ class AdminStore {
     return false;
   }
 
+  public recordPushResponse(
+    notificationId?: string,
+    response?: {
+      reaction?: string;
+      reply?: string;
+      userId?: string;
+      userName?: string;
+      userPhone?: string;
+    }
+  ): boolean {
+    if (!this.db.pushCampaigns || this.db.pushCampaigns.length === 0) return false;
+    let target = notificationId ? this.db.pushCampaigns.find((c) => c.id === notificationId) : this.db.pushCampaigns[0];
+    if (!target && this.db.pushCampaigns.length > 0) {
+      target = this.db.pushCampaigns[0];
+    }
+    if (target && response) {
+      if (!(target as any).userResponses) {
+        (target as any).userResponses = [];
+      }
+      (target as any).userResponses.push({
+        id: `resp_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        ...response,
+        createdAt: Date.now(),
+      });
+      this.save();
+      return true;
+    }
+    return false;
+  }
+
   // =========================================================================
   // MODULE 10: REPORTS & ANALYTICS
   // =========================================================================

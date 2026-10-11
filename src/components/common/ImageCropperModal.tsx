@@ -8,6 +8,7 @@ import {
   RefreshCw,
   Move,
   Crop,
+  Loader2,
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { triggerHaptic } from '../../lib/sound';
@@ -386,16 +387,20 @@ export const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
           </button>
           <button
             type="button"
+            id="cropper_apply_btn"
             onClick={handleCrop}
             disabled={!imageLoaded || isProcessing}
             className="px-5 py-2.5 text-xs font-bold text-white bg-primary hover:bg-primary/90 rounded-xl transition-all disabled:opacity-50 active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-md"
           >
             {isProcessing ? (
-              <span>{language === 'ur' ? 'کراپ ہو رہا ہے...' : 'Cropping...'}</span>
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>{language === 'ur' ? 'محفوظ ہو رہا ہے...' : 'Applying...'}</span>
+              </>
             ) : (
               <>
                 <Check className="w-4 h-4 stroke-[2.5]" />
-                <span>{language === 'ur' ? 'اپلائی کریں' : 'Apply & Use'}</span>
+                <span>{language === 'ur' ? 'تصویر اپلائی کریں' : 'Apply & Use'}</span>
               </>
             )}
           </button>
