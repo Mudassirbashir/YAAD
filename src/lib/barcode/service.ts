@@ -1,41 +1,49 @@
-import { BarcodeLookupResult, BarcodeProvider, NormalizedBarcode } from './types';
+﻿import { BarcodeLookupResult, BarcodeProvider, NormalizedBarcode } from './types';
 import { normalizeBarcode } from './normalizer';
 import { OpenFoodFactsProvider } from './providers/openFoodFacts';
 import { OpenProductsFactsProvider } from './providers/openProductsFacts';
+import { UPCItemDBProvider } from './providers/upcItemDB';
+import { defaultPersistentCache, PersistentBarcodeCache } from './persistentCache';
+import { resolveGS1Prefix } from './gs1Prefix';
 
 interface CacheEntry {
   result: BarcodeLookupResult;
   timestamp: number;
 }
 
-const POSITIVE_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes for FOUND
+const POSITIVE_CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes in-memory
 const NOT_FOUND_CACHE_TTL_MS = 5 * 60 * 1000;  // 5 minutes for confirmed NOT_FOUND
 
 export class BarcodeLookupService {
   private providers: BarcodeProvider[];
-  private cache = new Map<string, CacheEntry>();
+  private memoryCache = new Map<string, CacheEntry>();
+  private persistentCache: PersistentBarcodeCache;
   private inFlightRequests = new Map<string, Promise<BarcodeLookupResult>>();
 
-  constructor(providers?: BarcodeProvider[]) {
+  constructor(providers?: BarcodeProvider[], persistentCache?: PersistentBarcodeCache) {
     this.providers = providers || [
       new OpenFoodFactsProvider(),
       new OpenProductsFactsProvider(),
+      new UPCItemDBProvider(),
     ];
+    this.persistentCache = persistentCache || defaultPersistentCache;
   }
 
   /**
-   * Clears lookup cache
+   * Clears lookup cache (both memory and persistent)
    */
   clearCache(): void {
-    this.cache.clear();
+    this.memoryCache.clear();
+    this.persistentCache.clear();
   }
 
   /**
    * Performs end-to-end lookup:
    * 1. Normalizes and validates barcode format and checksum.
-   * 2. Checks cache (ignoring transient failures).
+   * 2. Checks in-memory and persistent local storage cache.
    * 3. Deduplicates in-flight requests.
-   * 4. Queries Open Food Facts, falling back to Open Products Facts.
+   * 4. Queries tiered providers (Open Food Facts -> Open Products Facts -> UPCItemDB).
+   * 5. Enriches result with GS1 origin country/organization metadata.
    */
   async lookupBarcode(
     rawCode: string,
@@ -55,24 +63,42 @@ export class BarcodeLookupService {
     }
 
     const cacheKey = normalized.normalized;
+    const gs1 = resolveGS1Prefix(cacheKey);
 
-    // Check cache if not forcing refresh
+    // 1. Check in-memory cache if not forcing refresh
     if (!options?.forceRefresh) {
-      const cached = this.cache.get(cacheKey);
-      if (cached) {
-        const ttl = cached.result.status === 'FOUND' ? POSITIVE_CACHE_TTL_MS : NOT_FOUND_CACHE_TTL_MS;
-        if (Date.now() - cached.timestamp < ttl) {
+      const memCached = this.memoryCache.get(cacheKey);
+      if (memCached) {
+        const ttl = memCached.result.status === 'FOUND' ? POSITIVE_CACHE_TTL_MS : NOT_FOUND_CACHE_TTL_MS;
+        if (Date.now() - memCached.timestamp < ttl) {
           return {
-            ...cached.result,
+            ...memCached.result,
             fromCache: true,
+            gs1Prefix: gs1 || undefined,
           };
         } else {
-          this.cache.delete(cacheKey);
+          this.memoryCache.delete(cacheKey);
         }
+      }
+
+      // 2. Check persistent localStorage cache
+      const persistent = this.persistentCache.get(cacheKey);
+      if (persistent && persistent.status === 'FOUND') {
+        // Hydrate in-memory cache
+        this.memoryCache.set(cacheKey, {
+          result: persistent,
+          timestamp: Date.now(),
+        });
+
+        return {
+          ...persistent,
+          fromCache: true,
+          gs1Prefix: gs1 || undefined,
+        };
       }
     }
 
-    // Deduplicate simultaneous in-flight queries for the same barcode
+    // 3. Deduplicate simultaneous in-flight queries for the same barcode
     const inFlight = this.inFlightRequests.get(cacheKey);
     if (inFlight) {
       return inFlight;
@@ -84,14 +110,31 @@ export class BarcodeLookupService {
       });
 
     this.inFlightRequests.set(cacheKey, queryPromise);
-    const result = await queryPromise;
+    const rawResult = await queryPromise;
+
+    // Attach GS1 metadata to result
+    const result: BarcodeLookupResult = {
+      ...rawResult,
+      gs1Prefix: gs1 || undefined,
+      product: rawResult.product
+        ? {
+            ...rawResult.product,
+            originCountry: gs1?.country,
+            originFlag: gs1?.flag,
+          }
+        : undefined,
+    };
 
     // Cache ONLY if FOUND or confirmed NOT_FOUND (never cache transient errors)
     if (result.status === 'FOUND' || result.status === 'NOT_FOUND') {
-      this.cache.set(cacheKey, {
+      this.memoryCache.set(cacheKey, {
         result,
         timestamp: Date.now(),
       });
+
+      if (result.status === 'FOUND') {
+        this.persistentCache.set(cacheKey, result);
+      }
     }
 
     return result;
@@ -115,7 +158,7 @@ export class BarcodeLookupService {
           return res;
         }
 
-        // If NOT_FOUND, continue to next provider (e.g., Open Food Facts -> Open Products Facts)
+        // If NOT_FOUND, fall through to next provider
         if (res.status === 'NOT_FOUND') {
           lastError = res;
           continue;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   X,
   Camera,
@@ -14,12 +14,19 @@ import {
   ImageOff,
   Plus,
   Minus,
+  ExternalLink,
+  Zap,
+  Globe,
+  Store,
+  ShoppingBag,
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { CategoryId, CATEGORIES_LIST, ShoppingItem, normalizeCategoryId } from '../../types';
 import { defaultBarcodeService } from '../../lib/barcode/service';
 import { normalizeBarcode } from '../../lib/barcode/normalizer';
 import { ScannedProduct } from '../../lib/barcode/types';
+import { resolveGS1Prefix, GS1PrefixInfo } from '../../lib/barcode/gs1Prefix';
+import { getRetailerLinksForQuery } from '../../lib/barcode/retailerLinks';
 import { ItemVisualIcon } from '../ItemVisualIcon';
 import { CategoryIcon } from '../CategoryIcon';
 import { ItemPhotoCaptureModal } from '../common/ItemPhotoCaptureModal';
@@ -49,6 +56,8 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
   const [hasTorch, setHasTorch] = useState(false);
   const [manualCode, setManualCode] = useState('');
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [isQuickScanMode, setIsQuickScanMode] = useState(false);
+  const [quickScanSuccessCode, setQuickScanSuccessCode] = useState<string | null>(null);
 
   // Scanned item review state
   const [scannedProduct, setScannedProduct] = useState<ScannedProduct | null>(null);
@@ -70,6 +79,17 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
   const isProcessingRef = useRef(false);
   const animationFrameRef = useRef<number | null>(null);
   const manualInputRef = useRef<HTMLInputElement | null>(null);
+
+  // GS1 Prefix Origin Information
+  const gs1Info = useMemo<GS1PrefixInfo | null>(() => {
+    return resolveGS1Prefix(scannedCode);
+  }, [scannedCode]);
+
+  // Retailer deep-links for price checking
+  const retailerLinks = useMemo(() => {
+    const query = reviewName || scannedCode;
+    return getRetailerLinksForQuery(query);
+  }, [reviewName, scannedCode]);
 
   // Stop camera tracks cleanly
   const stopCamera = useCallback(() => {
@@ -97,10 +117,14 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
     isProcessingRef.current = true;
     triggerHaptic(25);
 
-    stopCamera();
-    setView('searching');
-    setSearchError(null);
     setScannedCode(rawCode);
+
+    // If in quick scan mode, do not stop camera unless needed
+    if (!isQuickScanMode) {
+      stopCamera();
+      setView('searching');
+    }
+    setSearchError(null);
 
     try {
       const result = await defaultBarcodeService.lookupBarcode(rawCode);
@@ -108,18 +132,51 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
       if (!isMountedRef.current) return;
 
       if (result.status === 'FOUND' && result.product && result.product.name.trim()) {
-        setScannedProduct(result.product);
+        const prod = result.product;
+
+        // In Quick Scan Mode, immediately add item and keep scanning
+        if (isQuickScanMode) {
+          const newItem: ShoppingItem = {
+            id: generateUUID(),
+            name: prod.name.trim(),
+            categoryId: prod.categoryId || 'other',
+            completed: false,
+            quantity: '1',
+            unit: undefined,
+            note: undefined,
+            barcode: rawCode,
+            brand: prod.brand || undefined,
+            packageSize: prod.packageSize || undefined,
+            imageUrl: prod.imageUrl || undefined,
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          };
+          onAddItem(newItem);
+          triggerHaptic(30);
+          setQuickScanSuccessCode(prod.name.trim());
+          setTimeout(() => {
+            if (isMountedRef.current) {
+              setQuickScanSuccessCode(null);
+              isProcessingRef.current = false;
+            }
+          }, 1600);
+          return;
+        }
+
+        // Standard Review Mode
+        setScannedProduct(prod);
         setCustomPhotoUrl(null);
-        setReviewName(result.product.name.trim());
-        setReviewBrand(result.product.brand || '');
-        setReviewPackageSize(result.product.packageSize || '');
-        setReviewCategory(result.product.categoryId || 'other');
+        setReviewName(prod.name.trim());
+        setReviewBrand(prod.brand || '');
+        setReviewPackageSize(prod.packageSize || '');
+        setReviewCategory(prod.categoryId || 'other');
         setReviewQuantity('1');
         setReviewUnit('');
         setReviewNote('');
         setView('review');
       } else {
         // Dedicated NOT_FOUND view: Never allow raw barcode serial numbers to be auto-added!
+        stopCamera();
         setScannedProduct(null);
         setCustomPhotoUrl(null);
         setReviewName('');
@@ -131,24 +188,27 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
         setReviewNote('');
 
         if (result.status === 'INVALID_BARCODE') {
-          setSearchError((t as any)?.barcode?.invalidBarcode || 'Invalid barcode format');
+          setSearchError((t as any)?.barcode?.invalidBarcode || (isUrdu ? 'غلط یا نامکمل بارکوڈ' : 'Invalid barcode format'));
         } else if (result.status === 'NETWORK_ERROR') {
-          setSearchError((t as any)?.barcode?.networkError || 'Network connection issue');
+          setSearchError((t as any)?.barcode?.networkError || (isUrdu ? 'سروس سے رابطہ نہیں ہو سکا' : 'Network connection issue'));
         } else {
-          setSearchError((t as any)?.barcode?.notFound || 'Product not found in database');
+          setSearchError((t as any)?.barcode?.notFound || (isUrdu ? 'پروڈکٹ کیٹلاگ میں نہیں ملی' : 'Product not found in database'));
         }
 
         setView('not_found');
       }
     } catch {
       if (isMountedRef.current) {
-        setSearchError('Error looking up barcode');
+        stopCamera();
+        setSearchError(isUrdu ? 'بارکوڈ تلاش کرنے میں خرابی پیش آئی' : 'Error looking up barcode');
         setView('not_found');
       }
     } finally {
-      isProcessingRef.current = false;
+      if (!isQuickScanMode) {
+        isProcessingRef.current = false;
+      }
     }
-  }, [stopCamera, t]);
+  }, [stopCamera, t, isQuickScanMode, onAddItem, isUrdu]);
 
   // Start Camera
   const startCamera = useCallback(async () => {
@@ -158,7 +218,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
     isProcessingRef.current = false;
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      setCameraError((t as any)?.barcode?.cameraUnavailable || 'Camera is not available on this device');
+      setCameraError((t as any)?.barcode?.cameraUnavailable || (isUrdu ? 'اس ڈیوائس پر کیمرہ دستیاب نہیں' : 'Camera is not available on this device'));
       setView('manual');
       return;
     }
@@ -241,13 +301,13 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
         (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError');
 
       if (isPermissionDenied) {
-        setCameraError((t as any)?.barcode?.cameraDenied || 'Camera permission denied');
+        setCameraError((t as any)?.barcode?.cameraDenied || (isUrdu ? 'کیمرہ کی اجازت مسترد ہو گئی۔ براؤزر سیٹنگز چیک کریں۔' : 'Camera permission denied'));
       } else {
-        setCameraError((t as any)?.barcode?.cameraInitError || 'Could not start camera');
+        setCameraError((t as any)?.barcode?.cameraInitError || (isUrdu ? 'کیمرہ شروع نہیں ہو سکا۔' : 'Could not start camera'));
       }
       setView('manual');
     }
-  }, [stopCamera, handleBarcodeDetected, t]);
+  }, [stopCamera, handleBarcodeDetected, t, isUrdu]);
 
   // Torch Toggle
   const toggleTorch = async () => {
@@ -282,16 +342,20 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
     };
   }, [isOpen, startCamera, stopCamera]);
 
-  // Keyboard Escape listener
+  // Keyboard Escape & Hardware Shutter listeners
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (!isOpen) return;
+      if (e.key === 'Escape') {
         onClose();
+      } else if ((e.key === ' ' || e.key === 'v') && view === 'scanning') {
+        // Spacebar / 'v' triggers camera focus / re-arm
+        triggerHaptic(10);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, view]);
 
   // Focus manual input when manual view opens
   useEffect(() => {
@@ -347,22 +411,40 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
     <div
       role="dialog"
       aria-modal="true"
-      aria-label={barcodeCopy.scanTitle || 'Scan Barcode'}
+      aria-label={barcodeCopy.scanTitle || (isUrdu ? 'بارکوڈ اسکینر' : 'Scan Barcode')}
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200"
     >
       <div className="relative w-full max-w-lg bg-surface rounded-3xl shadow-2xl border border-surface-container-high/60 overflow-hidden flex flex-col max-h-[92vh]">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-surface-container-high/40 bg-surface-container-low/50">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-surface-container-high/40 bg-surface-container-low/50">
           <div className="flex items-center gap-2">
-            <h2 className="font-['Plus_Jakarta_Sans'] font-bold text-lg text-primary">
-              {barcodeCopy.scanTitle || 'Scan Barcode'}
+            <h2 className="font-['Plus_Jakarta_Sans'] font-bold text-base sm:text-lg text-primary">
+              {barcodeCopy.scanTitle || (isUrdu ? 'بارکوڈ اسکینر' : 'Scan Barcode')}
             </h2>
-            <span className="px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase rounded-full bg-red-600 text-white shadow-2xs">
-              {barcodeCopy.beta || 'BETA'}
+            <span className="px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase rounded-full bg-emerald-600 text-white shadow-2xs">
+              PRO
             </span>
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Quick Scan Continuous Mode Toggle */}
+            <button
+              type="button"
+              onClick={() => {
+                setIsQuickScanMode(!isQuickScanMode);
+                triggerHaptic(15);
+              }}
+              title={isQuickScanMode ? 'Quick Scan Mode Active' : 'Enable Continuous Quick Scan'}
+              className={`px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer ${
+                isQuickScanMode
+                  ? 'bg-amber-500 text-amber-950 font-bold shadow-xs'
+                  : 'bg-surface-container hover:bg-surface-container-high text-on-surface-variant'
+              }`}
+            >
+              <Zap className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{isUrdu ? 'فوری موڈ' : 'Quick'}</span>
+            </button>
+
             {view === 'scanning' && hasTorch && (
               <button
                 type="button"
@@ -412,24 +494,36 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                     <div className="absolute inset-x-2 top-0 h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent shadow-[0_0_8px_rgba(52,211,153,0.9)] animate-bounce duration-1000" />
                   </div>
                 </div>
+
+                {/* Quick Scan Toast pill inside camera */}
+                {quickScanSuccessCode && (
+                  <div className="absolute bottom-4 inset-x-4 flex items-center justify-center animate-in fade-in zoom-in-95 duration-200">
+                    <div className="px-4 py-2 rounded-full bg-emerald-600 text-white font-bold text-xs shadow-lg flex items-center gap-2">
+                      <Check className="w-4 h-4 stroke-[3]" />
+                      <span className="truncate max-w-[200px]">{quickScanSuccessCode}</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <p className="mt-4 text-xs sm:text-sm text-center text-on-surface-variant font-['Manrope']">
-                {barcodeCopy.scanSubtitle || 'Point your camera at a packaged product barcode'}
+                {barcodeCopy.scanSubtitle || (isUrdu ? 'پیک شدہ پروڈکٹ کے بارکوڈ پر کیمرہ فوکس کریں' : 'Point your camera at a packaged product barcode')}
               </p>
 
-              {/* Manual switch button */}
-              <button
-                type="button"
-                onClick={() => {
-                  stopCamera();
-                  setView('manual');
-                }}
-                className="mt-4 flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-primary bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer"
-              >
-                <Keyboard className="w-4 h-4" />
-                <span>{barcodeCopy.manualEntry || 'Enter Barcode Manually'}</span>
-              </button>
+              {/* Action Buttons below scanner */}
+              <div className="mt-4 flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    stopCamera();
+                    setView('manual');
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-primary bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer"
+                >
+                  <Keyboard className="w-4 h-4" />
+                  <span>{barcodeCopy.manualEntry || (isUrdu ? 'بارکوڈ خود درج کریں' : 'Enter Barcode Manually')}</span>
+                </button>
+              </div>
             </div>
           )}
 
@@ -438,11 +532,17 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <RefreshCw className="w-10 h-10 text-primary animate-spin mb-4" />
               <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-base text-primary mb-1">
-                {barcodeCopy.searching || 'Searching for product...'}
+                {barcodeCopy.searching || (isUrdu ? 'پروڈکٹ تلاش ہو رہی ہے...' : 'Searching for product...')}
               </h3>
               <p className="text-xs text-on-surface-variant font-mono">
                 {scannedCode}
               </p>
+              {gs1Info && (
+                <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container text-xs font-medium text-on-surface-variant">
+                  <span>{gs1Info.flag}</span>
+                  <span>{gs1Info.country}</span>
+                </div>
+              )}
             </div>
           )}
 
@@ -458,9 +558,9 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                 </div>
               )}
 
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-on-surface-variant mb-1.5">
-                  {barcodeCopy.scanItem || 'Barcode Number'}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold uppercase tracking-wider text-on-surface-variant">
+                  {isUrdu ? 'بارکوڈ نمبر' : 'Barcode Number'}
                 </label>
                 <div className="relative">
                   <input
@@ -469,7 +569,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                     inputMode="numeric"
                     value={manualCode}
                     onChange={(e) => setManualCode(e.target.value)}
-                    placeholder={barcodeCopy.barcodePlaceholder || 'Enter barcode digits (e.g. 896400012345)'}
+                    placeholder="896400012345"
                     className="w-full px-4 py-3 rounded-2xl bg-surface-container-low border border-surface-container-high focus:outline-none focus:ring-2 focus:ring-primary text-sm font-mono text-primary placeholder:text-on-surface-variant/50"
                   />
                   <Search className="absolute right-3.5 top-3.5 w-4 h-4 text-on-surface-variant pointer-events-none" />
@@ -482,7 +582,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                   disabled={!manualCode.trim()}
                   className="flex-1 py-3 px-4 rounded-2xl bg-primary hover:bg-primary-hover active:bg-primary-active text-on-primary font-bold text-sm shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {barcodeCopy.lookupBtn || 'Search Product'}
+                  {barcodeCopy.lookupBtn || (isUrdu ? 'پروڈکٹ تلاش کریں' : 'Search Product')}
                 </button>
 
                 {navigator.mediaDevices && (
@@ -492,7 +592,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                     className="px-4 py-3 rounded-2xl bg-surface-container hover:bg-surface-container-high text-primary font-semibold text-sm transition-colors cursor-pointer flex items-center gap-1.5"
                   >
                     <Camera className="w-4 h-4" />
-                    <span>{barcodeCopy.scanMode || 'Camera'}</span>
+                    <span>{barcodeCopy.scanMode || (isUrdu ? 'کیمرہ' : 'Camera')}</span>
                   </button>
                 )}
               </div>
@@ -520,11 +620,17 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                 />
 
                 <div className="min-w-0 flex-1">
-                  <div className="text-xs font-mono text-on-surface-variant truncate">
-                    {scannedCode}
+                  <div className="text-xs font-mono text-on-surface-variant flex items-center gap-2 truncate">
+                    <span>{scannedCode}</span>
+                    {gs1Info && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-sans font-semibold px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant border border-surface-container-high">
+                        <span>{gs1Info.flag}</span>
+                        <span>{gs1Info.country}</span>
+                      </span>
+                    )}
                   </div>
                   <div className="font-['Plus_Jakarta_Sans'] font-bold text-base text-primary truncate">
-                    {reviewName || (barcodeCopy.notFound || 'Unknown Product')}
+                    {reviewName || (barcodeCopy.notFound || (isUrdu ? 'نامعلوم پروڈکٹ' : 'Unknown Product'))}
                   </div>
                   {(reviewBrand || reviewPackageSize) && (
                     <div className="text-xs text-on-surface-variant flex items-center gap-2 flex-wrap">
@@ -548,10 +654,34 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                         className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-800 bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 dark:text-amber-200 px-2.5 py-1 rounded-full transition-colors cursor-pointer border border-amber-300/40"
                       >
                         <Camera className="w-3 h-3 text-amber-700 dark:text-amber-300" />
-                        <span>{isUrdu ? 'کیٹلاگ میں تصویر نہیں — تصویر جوڑیں' : 'No image in catalog — Attach photo'}</span>
+                        <span>{isUrdu ? 'تصویر اٹیچ کریں' : 'Attach photo'}</span>
                       </button>
                     )}
                   </div>
+                </div>
+              </div>
+
+              {/* 1-Tap Retailer & Price Check Buttons */}
+              <div className="p-3 rounded-2xl bg-surface-container/60 border border-surface-container-high/40">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant flex items-center gap-1.5">
+                    <Store className="w-3.5 h-3.5 text-primary" />
+                    <span>{isUrdu ? 'آن لائن قیمت اور اسٹورز چیک کریں' : 'Check Prices & Stores'}</span>
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {retailerLinks.map((r) => (
+                    <a
+                      key={r.id}
+                      href={r.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-surface-container-low hover:bg-surface-container border border-surface-container-high text-xs font-semibold text-primary transition-colors"
+                    >
+                      <span>{r.name}</span>
+                      <ExternalLink className="w-3 h-3 opacity-60" />
+                    </a>
+                  ))}
                 </div>
               </div>
 
@@ -560,7 +690,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                 {/* Product Name */}
                 <div>
                   <label className="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant mb-1">
-                    {barcodeCopy.productName || 'Product Name'}
+                    {barcodeCopy.productName || (isUrdu ? 'پروڈکٹ کا نام' : 'Product Name')}
                   </label>
                   <input
                     type="text"
@@ -581,7 +711,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant mb-1">
-                      {barcodeCopy.category || 'Category'}
+                      {barcodeCopy.category || (isUrdu ? 'کیٹگری' : 'Category')}
                     </label>
                     <div className="relative">
                       <select
@@ -600,7 +730,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
 
                   <div>
                     <label className="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant mb-1">
-                      {barcodeCopy.quantity || 'Quantity'}
+                      {barcodeCopy.quantity || (isUrdu ? 'مقدار' : 'Quantity')}
                     </label>
                     <div className="flex items-center gap-1.5">
                       <input
@@ -622,7 +752,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                 {/* Optional Note */}
                 <div>
                   <label className="block text-[11px] font-bold uppercase tracking-wider text-on-surface-variant mb-1">
-                    {barcodeCopy.note || 'Note (Optional)'}
+                    {barcodeCopy.note || (isUrdu ? 'نوٹ (اختیاری)' : 'Note (Optional)')}
                   </label>
                   <input
                     type="text"
@@ -648,7 +778,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                   className="flex-1 py-3 px-4 rounded-2xl bg-primary hover:bg-primary-hover active:bg-primary-active text-on-primary font-bold text-sm shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
                 >
                   <Check className="w-4 h-4" />
-                  <span>{barcodeCopy.confirmAdd || 'Add to Shopping List'}</span>
+                  <span>{barcodeCopy.confirmAdd || (isUrdu ? 'لسٹ میں شامل کریں' : 'Add to Shopping List')}</span>
                 </button>
 
                 <button
@@ -659,7 +789,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                   }}
                   className="px-4 py-3 rounded-2xl bg-surface-container hover:bg-surface-container-high text-primary font-semibold text-xs sm:text-sm transition-colors cursor-pointer"
                 >
-                  {barcodeCopy.scanAnother || 'Scan Another'}
+                  {barcodeCopy.scanAnother || (isUrdu ? 'مزید اسکین کریں' : 'Scan Another')}
                 </button>
               </div>
             </div>
@@ -679,26 +809,72 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                 {scannedCode && (
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container text-xs font-mono font-semibold text-on-surface-variant border border-surface-container-high/60">
                     <span>Code: {scannedCode}</span>
+                    {gs1Info && (
+                      <span className="font-sans font-medium text-[11px] text-primary/80">
+                        • {gs1Info.flag} {gs1Info.country}
+                      </span>
+                    )}
                   </div>
                 )}
                 <p className="text-xs text-on-surface-variant leading-relaxed pt-1">
                   {isUrdu
-                    ? 'اس بارکوڈ کی تفصیلات یا تصویر کیٹلاگ میں موجود نہیں ہے۔ کسی نامعلوم بارکوڈ کو بغیر نام کے لسٹ میں شامل نہیں کیا جا سکتا۔'
-                    : 'We could not find any catalog details or photo for this barcode. Unrecognized serial numbers cannot be added directly.'}
+                    ? 'اس بارکوڈ کی تفصیلات خودکار کیٹلاگ میں موجود نہیں ہیں۔ آپ نیچے دیے گئے بٹن سے آن لائن تلاش کر سکتے ہیں یا خود نام درج کر کے شامل کر سکتے ہیں۔'
+                    : 'We could not find catalog details for this barcode. You can search online or enter the product name directly.'}
                 </p>
               </div>
 
-              <div className="w-full flex flex-col sm:flex-row items-center gap-2.5 pt-3">
+              {/* 1-Tap Retailer Price & Catalog Search when not found */}
+              {scannedCode && (
+                <div className="w-full p-3 rounded-2xl bg-surface-container/60 border border-surface-container-high/40 max-w-sm">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-on-surface-variant mb-2">
+                    {isUrdu ? 'آن لائن تلاش کریں' : 'Search on Online Stores'}
+                  </div>
+                  <div className="flex items-center justify-center gap-2 flex-wrap">
+                    <a
+                      href={`https://www.google.com/search?q=${encodeURIComponent(scannedCode)}&tbm=shop`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-surface-container-low hover:bg-surface-container border border-surface-container-high text-xs font-semibold text-primary transition-colors"
+                    >
+                      <Search className="w-3.5 h-3.5 text-blue-500" />
+                      <span>Google Shopping</span>
+                      <ExternalLink className="w-3 h-3 opacity-60" />
+                    </a>
+                    <a
+                      href={`https://www.amazon.com/s?k=${encodeURIComponent(scannedCode)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-surface-container-low hover:bg-surface-container border border-surface-container-high text-xs font-semibold text-primary transition-colors"
+                    >
+                      <ShoppingBag className="w-3.5 h-3.5 text-amber-500" />
+                      <span>Amazon</span>
+                      <ExternalLink className="w-3 h-3 opacity-60" />
+                    </a>
+                    <a
+                      href={`https://www.daraz.pk/catalog/?q=${encodeURIComponent(scannedCode)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-surface-container-low hover:bg-surface-container border border-surface-container-high text-xs font-semibold text-primary transition-colors"
+                    >
+                      <Store className="w-3.5 h-3.5 text-orange-500" />
+                      <span>Daraz PK</span>
+                      <ExternalLink className="w-3 h-3 opacity-60" />
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              <div className="w-full flex flex-col sm:flex-row items-center gap-2.5 pt-2 max-w-sm">
                 <button
                   type="button"
                   onClick={() => {
                     setView('scanning');
                     startCamera();
                   }}
-                  className="w-full sm:flex-1 py-3 px-4 rounded-2xl bg-primary hover:bg-primary-hover active:bg-primary-active text-on-primary font-bold text-xs sm:text-sm shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+                  className="w-full sm:flex-1 py-3 px-4 rounded-2xl bg-surface-container hover:bg-surface-container-high text-primary font-semibold text-xs sm:text-sm transition-colors cursor-pointer flex items-center justify-center gap-2"
                 >
                   <RefreshCw className="w-4 h-4" />
-                  <span>{isUrdu ? 'دوسری پروڈکٹ اسکین کریں' : 'Scan Another Product'}</span>
+                  <span>{isUrdu ? 'دوبارہ اسکین کریں' : 'Scan Another'}</span>
                 </button>
 
                 <button
@@ -707,7 +883,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                     setReviewName('');
                     setView('review');
                   }}
-                  className="w-full sm:flex-1 py-3 px-4 rounded-2xl bg-surface-container hover:bg-surface-container-high text-primary font-semibold text-xs sm:text-sm transition-colors cursor-pointer flex items-center justify-center gap-2"
+                  className="w-full sm:flex-1 py-3 px-4 rounded-2xl bg-primary hover:bg-primary-hover active:bg-primary-active text-on-primary font-bold text-xs sm:text-sm shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
                 >
                   <Keyboard className="w-4 h-4" />
                   <span>{isUrdu ? 'خود نام درج کریں' : 'Enter Name Manually'}</span>

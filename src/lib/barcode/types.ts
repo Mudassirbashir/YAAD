@@ -1,4 +1,4 @@
-import { CategoryId } from '../../types';
+﻿import { CategoryId } from '../../types';
 
 export type BarcodeFormat =
   | 'EAN_13'
@@ -44,7 +44,9 @@ export interface ScannedProduct {
   packageSize?: string;
   imageUrl?: string;
   categoryId: CategoryId;
-  source: 'open_food_facts' | 'open_products_facts' | 'manual' | string;
+  source: 'open_food_facts' | 'open_products_facts' | 'upc_item_db' | 'manual' | string;
+  originCountry?: string;
+  originFlag?: string;
   rawData?: unknown;
 }
 
@@ -52,8 +54,13 @@ export interface BarcodeLookupResult {
   status: BarcodeLookupStatus;
   product?: ScannedProduct;
   message?: string;
-  source?: 'open_food_facts' | 'open_products_facts' | string;
+  source?: 'open_food_facts' | 'open_products_facts' | 'upc_item_db' | string;
   fromCache?: boolean;
+  gs1Prefix?: {
+    country: string;
+    flag: string;
+    organization: string;
+  };
 }
 
 export interface BarcodeProvider {
@@ -63,4 +70,3 @@ export interface BarcodeProvider {
 
 // Backward-compatibility alias
 export type IBarcodeProductProvider = BarcodeProvider;
-
