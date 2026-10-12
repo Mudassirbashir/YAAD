@@ -145,6 +145,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
             type="button"
             tabIndex={isHomeActive ? 0 : -1}
             onClick={handleHomeClick}
+            onMouseEnter={() => setHomeAnimationTrigger((c) => c + 1)}
             onKeyDown={(e) => handleTabKeyDown(e, 'home')}
             aria-selected={isHomeActive}
             aria-label={t('nav.home') || 'Home'}
@@ -205,6 +206,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
             type="button"
             tabIndex={isListsActive ? 0 : -1}
             onClick={handleListsClick}
+            onMouseEnter={() => setHistoryAnimationTrigger((c) => c + 1)}
             onKeyDown={(e) => handleTabKeyDown(e, 'lists')}
             aria-selected={isListsActive}
             aria-label={t('nav.history') || t('history.title') || 'History'}

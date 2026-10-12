@@ -4,6 +4,7 @@ import cartAnimationData from '../../assets/cart-start-shopping-animation.json';
 
 interface AnimatedCartIconProps {
   isPlaying?: boolean;
+  triggerPlay?: number;
   color?: string; // e.g. 'white' or hex/rgb
   className?: string;
   size?: number;
@@ -23,6 +24,7 @@ function getThemedCartData(color: 'white' | 'primary' = 'white'): any {
 
 export const AnimatedCartIcon: React.FC<AnimatedCartIconProps> = ({
   isPlaying = false,
+  triggerPlay = 0,
   color = 'white',
   className = '',
   size = 24,
@@ -31,6 +33,7 @@ export const AnimatedCartIcon: React.FC<AnimatedCartIconProps> = ({
   const animInstanceRef = useRef<any>(null);
   const [isReady, setIsReady] = useState(false);
   const prevIsPlayingRef = useRef(isPlaying);
+  const prevTriggerRef = useRef(triggerPlay);
 
   // Initialize Lottie player
   useEffect(() => {
@@ -74,23 +77,37 @@ export const AnimatedCartIcon: React.FC<AnimatedCartIconProps> = ({
     };
   }, [color]);
 
-  // Play animation when isPlaying transitions to true
+  // Play animation when isPlaying transitions to true or triggerPlay increments
   useEffect(() => {
     const becamePlaying = isPlaying && !prevIsPlayingRef.current;
+    const triggerChanged = triggerPlay !== prevTriggerRef.current && triggerPlay > 0;
     prevIsPlayingRef.current = isPlaying;
+    prevTriggerRef.current = triggerPlay;
 
-    if (becamePlaying && animInstanceRef.current) {
+    if ((becamePlaying || triggerChanged) && animInstanceRef.current) {
       try {
         animInstanceRef.current.goToAndPlay(0, true);
       } catch (err) {
         console.warn('Cart animation trigger error:', err);
       }
     }
-  }, [isPlaying]);
+  }, [isPlaying, triggerPlay]);
+
+  // Hover animation on computer screen
+  const handleMouseEnter = () => {
+    if (animInstanceRef.current) {
+      try {
+        animInstanceRef.current.goToAndPlay(0, true);
+      } catch (err) {
+        console.warn('Cart hover notice:', err);
+      }
+    }
+  };
 
   return (
     <div
-      className={`relative flex items-center justify-center shrink-0 ${className}`}
+      onMouseEnter={handleMouseEnter}
+      className={`relative flex items-center justify-center shrink-0 cursor-pointer ${className}`}
       style={{ width: `${size}px`, height: `${size}px` }}
     >
       {/* Lottie Animation Canvas */}

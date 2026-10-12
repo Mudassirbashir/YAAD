@@ -142,7 +142,7 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
 
   return (
     <label
-      className={`checkbox-wrapper yaad-checkbox-container container yaad-celebrate-container ${
+      className={`checkbox-wrapper yaad-checkbox-container container yaad-celebrate-container transition-transform duration-200 hover:scale-115 active:scale-90 cursor-pointer ${
         isChecked ? 'is-checked' : ''
       } ${shouldCelebrate ? 'is-celebrating' : ''} ${className}`}
       style={{

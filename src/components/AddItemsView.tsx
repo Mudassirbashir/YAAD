@@ -72,6 +72,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
     type: 'add' | 'merge' | 'remove';
   } | null>(null);
   const [isBottomCartDriving, setIsBottomCartDriving] = useState<boolean>(false);
+  const [cartHoverTrigger, setCartHoverTrigger] = useState<number>(0);
   const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState<boolean>(false);
   const [photoCaptureItem, setPhotoCaptureItem] = useState<ShoppingItem | null>(null);
 
@@ -1095,11 +1096,24 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                 <button
                   type="button"
                   onClick={handleStartShoppingWithAnimation}
+                  onMouseEnter={() => setCartHoverTrigger((c) => c + 1)}
                   disabled={items.length === 0 || isBottomCartDriving}
-                  className="px-3.5 py-2 sm:px-4 sm:py-2 rounded-full bg-primary text-on-primary font-['Manrope'] text-xs sm:text-sm font-bold flex items-center gap-2 hover:bg-primary-container disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-xs active:scale-95 cursor-pointer group whitespace-nowrap shrink-0"
+                  className="px-3.5 py-2 sm:px-4 sm:py-2 rounded-full bg-primary text-on-primary font-['Manrope'] text-xs sm:text-sm font-bold flex items-center gap-2 hover:bg-primary-container disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-xs active:scale-95 cursor-pointer group whitespace-nowrap shrink-0 overflow-hidden"
                 >
-                  <AnimatedCartIcon isPlaying={isBottomCartDriving} size={18} />
                   <span className="whitespace-nowrap">{t('addItems.startShoppingBtn') || 'Start Shopping'}</span>
+                  <div
+                    className={`relative flex items-center transition-all duration-500 ease-out ${
+                      isBottomCartDriving
+                        ? 'translate-x-3.5 scale-110'
+                        : 'translate-x-0 scale-100 group-hover:translate-x-1 group-hover:scale-105'
+                    }`}
+                  >
+                    <AnimatedCartIcon
+                      isPlaying={isBottomCartDriving}
+                      triggerPlay={cartHoverTrigger}
+                      size={18}
+                    />
+                  </div>
                 </button>
               </div>
 
@@ -1309,6 +1323,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
       <div className="lg:hidden fixed bottom-0 left-0 right-0 w-full max-w-xl md:max-w-2xl mx-auto p-4 bg-background/95 backdrop-blur-md border-t border-surface-dim/40 z-40">
         <button
           onClick={handleStartShoppingWithAnimation}
+          onMouseEnter={() => setCartHoverTrigger((c) => c + 1)}
           disabled={items.length === 0 || isBottomCartDriving}
           className={`relative overflow-hidden w-full h-14 rounded-2xl font-['Manrope'] text-base font-bold shadow-md disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] transition-all flex items-center justify-center gap-3 cursor-pointer group ${
             isBottomCartDriving
@@ -1330,13 +1345,19 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
               : (t('addItems.startShoppingBtn') || 'Start Shopping')}
           </span>
 
-          {/* Animated Cart Icon (system-outline-146-cart-hover-slide.json) */}
+          {/* Animated Cart Icon (system-outline-146-cart-hover-slide.json) - drives to the right on click & hover */}
           <div
-            className={`relative flex items-center transition-all duration-300 ease-out ${
-              isBottomCartDriving ? 'scale-115' : 'scale-100 group-hover:scale-105'
+            className={`relative flex items-center transition-all duration-500 ease-out ${
+              isBottomCartDriving
+                ? 'translate-x-12 sm:translate-x-16 scale-110'
+                : 'translate-x-0 scale-100 group-hover:translate-x-1.5 group-hover:scale-105'
             }`}
           >
-            <AnimatedCartIcon isPlaying={isBottomCartDriving} size={28} />
+            <AnimatedCartIcon
+              isPlaying={isBottomCartDriving}
+              triggerPlay={cartHoverTrigger}
+              size={28}
+            />
           </div>
         </button>
       </div>

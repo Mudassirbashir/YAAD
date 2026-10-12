@@ -102,9 +102,21 @@ export const AnimatedHistoryIcon: React.FC<AnimatedHistoryIconProps> = ({
     }
   }, [playTrigger, isActive]);
 
+  // Hover animation handler for mouse on desktop screens
+  const handleMouseEnter = () => {
+    if (animInstanceRef.current) {
+      try {
+        animInstanceRef.current.goToAndPlay(0, true);
+      } catch (err) {
+        console.warn('History hover animation notice:', err);
+      }
+    }
+  };
+
   return (
     <div
-      className={`relative flex items-center justify-center shrink-0 ${className}`}
+      onMouseEnter={handleMouseEnter}
+      className={`relative flex items-center justify-center shrink-0 transition-transform duration-200 hover:scale-115 active:scale-95 cursor-pointer ${className}`}
       style={{ width: `${size}px`, height: `${size}px` }}
     >
       {/* Lottie Animation Canvas */}
