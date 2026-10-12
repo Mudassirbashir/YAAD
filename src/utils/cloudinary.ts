@@ -42,22 +42,29 @@ function setStoredItem(key: string, value: string): void {
   }
 }
 
+export const OFFICIAL_CLOUDINARY_CLOUD_NAME = 'rvhmsppk';
+export const OFFICIAL_CLOUDINARY_UPLOAD_PRESET = 'yaad_preset';
+
 export function getCloudinaryConfig(): CloudinaryConfig {
   const envCloudName = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_CLOUDINARY_CLOUD_NAME) || '';
-  const envUploadPreset = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET) || 'yaad_preset';
+  const envUploadPreset = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET) || OFFICIAL_CLOUDINARY_UPLOAD_PRESET;
 
-  // Official production credentials: rvhmsppk / yaad_preset
-  const cloudName = getStoredItem('yaad_cloudinary_cloud_name') || envCloudName || 'rvhmsppk';
-  const uploadPreset = getStoredItem('yaad_cloudinary_upload_preset') || envUploadPreset || 'yaad_preset';
+  // Stored override or env or official production credentials: rvhmsppk / yaad_preset
+  const storedCloudName = getStoredItem('yaad_cloudinary_cloud_name');
+  const storedPreset = getStoredItem('yaad_cloudinary_upload_preset');
+
+  // Allow explicit config or default to official verified production credentials
+  const cloudName = storedCloudName !== '' ? (storedCloudName || OFFICIAL_CLOUDINARY_CLOUD_NAME) : (envCloudName || OFFICIAL_CLOUDINARY_CLOUD_NAME);
+  const uploadPreset = storedPreset || envUploadPreset || OFFICIAL_CLOUDINARY_UPLOAD_PRESET;
 
   return {
     cloudName: cloudName.trim(),
-    uploadPreset: uploadPreset.trim() || 'yaad_preset',
+    uploadPreset: uploadPreset.trim() || OFFICIAL_CLOUDINARY_UPLOAD_PRESET,
     isConfigured: Boolean(cloudName.trim()),
   };
 }
 
-export function saveCloudinaryConfig(cloudName: string, uploadPreset: string = 'yaad_preset'): void {
+export function saveCloudinaryConfig(cloudName: string, uploadPreset: string = OFFICIAL_CLOUDINARY_UPLOAD_PRESET): void {
   setStoredItem('yaad_cloudinary_cloud_name', cloudName.trim());
   setStoredItem('yaad_cloudinary_upload_preset', uploadPreset.trim());
 }
@@ -73,14 +80,22 @@ export function compressBlobForUpload(
   quality: number = 0.85
 ): Promise<Blob> {
   return new Promise((resolve) => {
+    // If blob is already lightweight (< 800KB), bypass extra canvas pass to preserve fidelity
+    if (blob.size && blob.size < 800 * 1024) {
+      return resolve(blob);
+    }
+
     if (typeof document === 'undefined' || typeof window === 'undefined' || typeof URL === 'undefined' || typeof URL.createObjectURL !== 'function') {
       return resolve(blob);
     }
     const img = new Image();
     const objectUrl = URL.createObjectURL(blob);
     img.onload = () => {
-      URL.revokeObjectURL(objectUrl);
       let { width, height } = img;
+      if (width <= 0 || height <= 0) {
+        URL.revokeObjectURL(objectUrl);
+        return resolve(blob);
+      }
       if (width > maxDimension || height > maxDimension) {
         if (width > height) {
           height = Math.round((height * maxDimension) / width);
@@ -94,8 +109,12 @@ export function compressBlobForUpload(
       canvas.width = Math.max(1, width);
       canvas.height = Math.max(1, height);
       const ctx = canvas.getContext('2d');
-      if (!ctx) return resolve(blob);
+      if (!ctx) {
+        URL.revokeObjectURL(objectUrl);
+        return resolve(blob);
+      }
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(objectUrl);
       canvas.toBlob(
         (compressed) => {
           resolve(compressed || blob);
@@ -113,10 +132,30 @@ export function compressBlobForUpload(
 }
 
 /**
- * Uploads an image Blob or File to Cloudinary.
- * Pre-compresses image locally for lightning-fast uploads on mobile devices.
- * If Cloudinary is configured and succeeds, returns the secure HTTPS CDN URL.
- * If Cloudinary is not configured or fails, falls back to an ultra-compact compressed Data URL.
+ * Converts a Blob to a base64 Data URL string safely across environments.
+ */
+export function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    if (typeof FileReader !== 'undefined') {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    } else {
+      blob.arrayBuffer().then((buf) => {
+        const base64 = typeof Buffer !== 'undefined' ? Buffer.from(buf).toString('base64') : '';
+        resolve(`data:${blob.type || 'image/jpeg'};base64,${base64}`);
+      }).catch(reject);
+    }
+  });
+}
+
+/**
+ * Uploads an image Blob or File to Cloudinary with multi-tier retry resilience.
+ * 1. Tries primary configured cloudName with multipart FormData.
+ * 2. If that fails, tries JSON Base64 payload.
+ * 3. If primary config was custom and failed, retries with official production credentials (rvhmsppk).
+ * 4. Ultra-compact local data URL fallback only if completely offline.
  */
 export async function uploadImage(
   imageBlob: Blob,
@@ -124,7 +163,7 @@ export async function uploadImage(
 ): Promise<{ url: string; source: 'cloudinary' | 'compressed_data_url'; error?: string }> {
   const config = getCloudinaryConfig();
 
-  // Pre-compress locally to guarantee lightning fast transmission (<150KB)
+  // Pre-compress locally only if necessary
   let uploadBlob = imageBlob;
   try {
     uploadBlob = await compressBlobForUpload(imageBlob, 1024, 0.85);
@@ -132,15 +171,25 @@ export async function uploadImage(
     uploadBlob = imageBlob;
   }
 
-  // 1. Attempt Cloudinary upload if cloudName is configured
-  if (config.isConfigured) {
+  // Attempt targets: primary config first, then official fallback if different
+  const targets = [
+    { cloud: config.cloudName || OFFICIAL_CLOUDINARY_CLOUD_NAME, preset: config.uploadPreset || OFFICIAL_CLOUDINARY_UPLOAD_PRESET },
+  ];
+  if (config.cloudName !== OFFICIAL_CLOUDINARY_CLOUD_NAME) {
+    targets.push({ cloud: OFFICIAL_CLOUDINARY_CLOUD_NAME, preset: OFFICIAL_CLOUDINARY_UPLOAD_PRESET });
+  }
+
+  for (const target of targets) {
+    if (!target.cloud) continue;
+
+    // A. Direct Multipart FormData upload
     try {
       const formData = new FormData();
       formData.append('file', uploadBlob, fileName);
-      formData.append('upload_preset', config.uploadPreset);
+      formData.append('upload_preset', target.preset);
 
       const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${config.cloudName}/image/upload`,
+        `https://api.cloudinary.com/v1_1/${target.cloud}/image/upload`,
         {
           method: 'POST',
           body: formData,
@@ -154,19 +203,47 @@ export async function uploadImage(
           source: 'cloudinary',
         };
       } else {
-        console.warn('Cloudinary upload warning:', data.error?.message || 'Upload failed');
+        console.warn(`Cloudinary (${target.cloud}) FormData upload response:`, data.error?.message || response.statusText);
       }
     } catch (err: any) {
-      console.warn('Cloudinary network upload failed, using local fallback:', err?.message);
+      console.warn(`Cloudinary (${target.cloud}) FormData network attempt failed:`, err?.message);
+    }
+
+    // B. Direct JSON Base64 upload fallback (avoids mobile multipart boundary quirks)
+    try {
+      const dataUrl = await blobToDataUrl(uploadBlob);
+      const jsonRes = await fetch(
+        `https://api.cloudinary.com/v1_1/${target.cloud}/image/upload`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            file: dataUrl,
+            upload_preset: target.preset,
+          }),
+        }
+      );
+
+      const jsonData = await jsonRes.json();
+      if (jsonRes.ok && jsonData.secure_url) {
+        return {
+          url: jsonData.secure_url,
+          source: 'cloudinary',
+        };
+      } else {
+        console.warn(`Cloudinary (${target.cloud}) JSON upload response:`, jsonData.error?.message || jsonRes.statusText);
+      }
+    } catch (jsonErr: any) {
+      console.warn(`Cloudinary (${target.cloud}) JSON attempt failed:`, jsonErr?.message);
     }
   }
 
-  // 2. High-performance compressed fallback: 1:1 image < 50KB
+  // 3. Fallback: Compact Data URL (< 45KB) if network / offline prevents cloud upload
   const fallbackDataUrl = await compressBlobToDataUrl(uploadBlob, 360, 0.82);
   return {
     url: fallbackDataUrl,
     source: 'compressed_data_url',
-    error: config.isConfigured ? 'Uploaded with optimized local storage' : undefined,
+    error: 'Uploaded with optimized local storage',
   };
 }
 

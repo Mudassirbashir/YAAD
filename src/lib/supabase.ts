@@ -1570,20 +1570,62 @@ export async function persistCompletedShoppingSession(
 
   try {
     // 2. Persist to Supabase public.shopping_lists
-    const listPayload: Record<string, unknown> = {
-      id: safeListId,
-      user_id: verifiedUserId,
-      title: completedList.title || 'Shopping List',
-      icon: completedList.icon || 'shopping_basket',
-      is_completed: true,
-      completed_at: nowIso,
-      updated_at: new Date().toISOString(),
-    };
+    // Try updating existing list first: this evaluates UPDATE RLS policies (which permit household members)
+    // without triggering PostgreSQL INSERT WITH CHECK policies that can reject upserts on shared lists.
+    let listWriteError: Error | null = null;
+    const { error: updateErr, data: updatedRows } = await supabase
+      .from('shopping_lists')
+      .update({
+        is_completed: true,
+        completed_at: nowIso,
+        items: completedList.items || [],
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', safeListId)
+      .select('id');
 
-    const { error: listError } = await resilientUpsert('shopping_lists', listPayload);
-    if (listError) {
-      console.error('Database write failed for shopping list completion:', listError);
-      return { success: false, error: listError };
+    if (updateErr) {
+      console.warn('Update on shopping_lists returned error, falling back to resilientUpsert:', updateErr.message);
+      const listPayload: Record<string, unknown> = {
+        id: safeListId,
+        user_id: list.userId || verifiedUserId,
+        household_id: list.householdId || (list as any).household_id || null,
+        title: completedList.title || 'Shopping List',
+        icon: completedList.icon || 'shopping_basket',
+        is_completed: true,
+        completed_at: nowIso,
+        items: completedList.items || [],
+        updated_at: new Date().toISOString(),
+      };
+      const { error: upsertErr } = await resilientUpsert('shopping_lists', listPayload, { onConflict: 'id' });
+      listWriteError = upsertErr;
+    } else if (!updatedRows || updatedRows.length === 0) {
+      // Row did not exist in database yet (e.g. created completely offline)
+      const listPayload: Record<string, unknown> = {
+        id: safeListId,
+        user_id: list.userId || verifiedUserId,
+        household_id: list.householdId || (list as any).household_id || null,
+        title: completedList.title || 'Shopping List',
+        icon: completedList.icon || 'shopping_basket',
+        is_completed: true,
+        completed_at: nowIso,
+        items: completedList.items || [],
+        updated_at: new Date().toISOString(),
+      };
+      const { error: upsertErr } = await resilientUpsert('shopping_lists', listPayload, { onConflict: 'id' });
+      listWriteError = upsertErr;
+    }
+
+    if (listWriteError) {
+      console.warn('Remote sync error on shopping list completion, queued for background offline sync:', listWriteError.message);
+      await enqueueOfflineOperation({
+        type: 'SAVE_LIST',
+        userId: verifiedUserId,
+        listId: safeListId,
+        payload: completedList,
+      });
+      // Local IndexedDB persistence already succeeded above; return success so the shopping completion experience is not blocked
+      return { success: true, error: null, isOffline: true };
     }
 
     // 3. Persist child public.shopping_items with completed states
@@ -1598,7 +1640,7 @@ export async function persistCompletedShoppingSession(
         return {
           id: ensureValidUUID(item.id),
           list_id: safeListId,
-          user_id: verifiedUserId,
+          user_id: item.userId || verifiedUserId,
           item_name: item.name,
           category: item.categoryId || item.category || 'other',
           quantity: numericQty,
@@ -1632,7 +1674,14 @@ export async function persistCompletedShoppingSession(
     return { success: true, error: null };
   } catch (err: any) {
     console.error('Exception persisting completed shopping session:', err);
-    return { success: false, error: err instanceof Error ? err : new Error(String(err)) };
+    // Graceful offline fallback: ensure list is queued for sync and don't block user
+    await enqueueOfflineOperation({
+      type: 'SAVE_LIST',
+      userId: verifiedUserId,
+      listId: safeListId,
+      payload: completedList,
+    });
+    return { success: true, error: null, isOffline: true };
   }
 }
 

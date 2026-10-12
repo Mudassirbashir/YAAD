@@ -8,7 +8,6 @@ import {
   Camera,
   Trash2,
   Sparkles,
-  Crop,
   CloudUpload,
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
@@ -18,7 +17,7 @@ import {
 } from '../../utils/phone';
 import { Avatar } from '../Avatar';
 import { ImageCropperModal } from '../common/ImageCropperModal';
-import { uploadImage, getCloudinaryConfig } from '../../utils/cloudinary';
+import { uploadImage } from '../../utils/cloudinary';
 import { triggerHaptic } from '../../lib/sound';
 
 interface EditProfileModalProps {
@@ -61,10 +60,10 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
   const [photoSuccessMsg, setPhotoSuccessMsg] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const cloudinaryConfig = getCloudinaryConfig();
+  const prevIsOpenRef = useRef(false);
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !prevIsOpenRef.current) {
       setName(initialName);
       setPhone(initialPhone);
       setAvatarUrl(initialAvatarUrl || null);
@@ -74,6 +73,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
       setSelectedRawImage(null);
       setShowCropper(false);
       setIsUploadingPhoto(false);
+      setPhotoSuccessMsg(null);
 
       const timer = setTimeout(() => {
         if (focusPhoneOnOpen) {
@@ -84,6 +84,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
       }, 100);
       return () => clearTimeout(timer);
     }
+    prevIsOpenRef.current = isOpen;
   }, [isOpen, initialName, initialPhone, initialAvatarUrl, focusPhoneOnOpen]);
 
   if (!isOpen) return null;
@@ -122,7 +123,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     e.target.value = '';
   };
 
-  // Callback from 1:1 Image Cropper Modal (Auto-upload & persist immediately)
+  // Callback from 1:1 Image Cropper Modal (Auto-upload to Cloudinary with live preview)
   const handleCropComplete = async (croppedBlob: Blob, croppedDataUrl: string) => {
     triggerHaptic(10);
     setPendingCroppedBlob(croppedBlob);
@@ -131,41 +132,33 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     setSelectedRawImage(null);
     setIsUploadingPhoto(true);
     setPhotoSuccessMsg(null);
+    setErrorMessage(null);
 
     try {
       const uploadResult = await uploadImage(croppedBlob, `avatar_${Date.now()}.jpg`);
-      const finalAvatar = uploadResult.url || croppedDataUrl;
-      setAvatarUrl(finalAvatar);
-      const cleanPhoneVal = phone.trim() ? cleanPhoneNumber(phone.trim()) : null;
-      await onSave(name.trim() || initialName, cleanPhoneVal, finalAvatar);
-      setPhotoSuccessMsg(
-        language === 'ur'
-          ? 'پروفائل تصویر کامیابی سے محفوظ ہو گئی!'
-          : 'Profile picture saved successfully!'
-      );
-      triggerHaptic(15);
+      if (uploadResult.url) {
+        setAvatarUrl(uploadResult.url);
+        setPendingCroppedBlob(null);
+        setPhotoSuccessMsg(
+          language === 'ur'
+            ? 'تصویر کلاؤڈ پر محفوظ ہو گئی ہے!'
+            : 'Photo saved to cloud!'
+        );
+        triggerHaptic(15);
+      }
     } catch (err: any) {
-      console.warn('Auto upload note:', err);
-      const cleanPhoneVal = phone.trim() ? cleanPhoneNumber(phone.trim()) : null;
-      await onSave(name.trim() || initialName, cleanPhoneVal, croppedDataUrl);
-      setPhotoSuccessMsg(
-        language === 'ur'
-          ? 'پروفائل تصویر کامیابی سے محفوظ ہو گئی!'
-          : 'Profile picture saved successfully!'
-      );
+      console.warn('Background upload note:', err);
     } finally {
       setIsUploadingPhoto(false);
     }
   };
 
-  // Remove custom photo (reset to default avatar and auto-persist)
-  const handleRemovePhoto = async () => {
+  // Remove custom photo (reset to default avatar)
+  const handleRemovePhoto = () => {
     triggerHaptic(8);
     setAvatarUrl(null);
     setPendingCroppedBlob(null);
     setPhotoSuccessMsg(null);
-    const cleanPhoneVal = phone.trim() ? cleanPhoneNumber(phone.trim()) : null;
-    await onSave(name.trim() || initialName, cleanPhoneVal, null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -200,16 +193,18 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
     let finalAvatarUrl: string | null = avatarUrl;
 
-    // If user cropped a new image, upload to Cloudinary (or compressed local storage)
+    // If user cropped a new image and background upload is still pending
     if (pendingCroppedBlob) {
       setIsUploadingPhoto(true);
       try {
         const uploadResult = await uploadImage(pendingCroppedBlob, `avatar_${Date.now()}.jpg`);
-        finalAvatarUrl = uploadResult.url;
+        if (uploadResult.url) {
+          finalAvatarUrl = uploadResult.url;
+          setAvatarUrl(uploadResult.url);
+          setPendingCroppedBlob(null);
+        }
       } catch (uploadErr: any) {
         console.warn('Image upload notice:', uploadErr);
-        // Fall back to current data URL if upload threw
-        finalAvatarUrl = avatarUrl;
       } finally {
         setIsUploadingPhoto(false);
       }

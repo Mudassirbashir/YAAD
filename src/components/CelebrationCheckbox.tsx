@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { triggerHaptic } from '../lib/sound';
+import checkCircleAnimationData from '../assets/check-circle-animation.json';
 
 export interface CelebrationCheckboxProps {
   isChecked: boolean;
@@ -11,13 +12,25 @@ export interface CelebrationCheckboxProps {
   ariaLabel?: string;
 }
 
+// Dynamically adapt Lottie vector colors to active light/dark theme
+function getThemedAnimationData() {
+  try {
+    const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
+    const primaryRgb = isDark ? [0.063, 0.725, 0.506] : [0.0, 0.314, 0.224]; // #10B981 or #005039
+    const raw = JSON.stringify(checkCircleAnimationData);
+    const replaced = raw.split('[0.071,0.075,0.192').join(`[${primaryRgb.join(',')}`);
+    return JSON.parse(replaced);
+  } catch {
+    return checkCircleAnimationData;
+  }
+}
+
 /**
  * CelebrationCheckbox
- * Rich custom completion checkbox & party popper confetti animation in CSS:
+ * Rich custom completion checkbox with authentic Lottie check-circle-empty-hover-pinch animation:
  * - Responsive container with rounded circular geometry
- * - Checkmark scale/pop with SVG stroke animation
- * - 16-point party popper confetti burst (dots, diamonds, streamers) in CSS
- * - Retains normal completed checkmark state after animation finishes
+ * - Plays system-outline-4489-check-circle-empty-hover-pinch.json on item completion / purchase
+ * - Smoothly transitions to completed checkmark state after animation finishes
  */
 export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
   isChecked,
@@ -31,6 +44,7 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
   const isFirstRender = useRef(true);
   const [isPlayingCelebration, setIsPlayingCelebration] = useState(false);
   const prevCheckedRef = useRef(isChecked);
+  const lottieContainerRef = useRef<HTMLDivElement>(null);
 
   // Play animation once when item changes from incomplete -> completed
   useEffect(() => {
@@ -48,12 +62,48 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
       setIsPlayingCelebration(true);
       const timer = setTimeout(() => {
         setIsPlayingCelebration(false);
-      }, 550);
+      }, 800);
       return () => clearTimeout(timer);
+    } else if (!isChecked) {
+      setIsPlayingCelebration(false);
     }
   }, [isChecked]);
 
   const shouldCelebrate = isJustCompleted || isPlayingCelebration;
+
+  // Lottie player lifecycle management
+  useEffect(() => {
+    let anim: any = null;
+
+    if (shouldCelebrate && lottieContainerRef.current) {
+      const lottieLib = (window as any).lottie || (window as any).bodymovin;
+      if (lottieLib && typeof lottieLib.loadAnimation === 'function') {
+        try {
+          anim = lottieLib.loadAnimation({
+            container: lottieContainerRef.current,
+            renderer: 'svg',
+            loop: false,
+            autoplay: true,
+            animationData: getThemedAnimationData(),
+          });
+
+          anim.setSpeed(1.2);
+
+          anim.addEventListener('complete', () => {
+            setIsPlayingCelebration(false);
+          });
+        } catch (err) {
+          console.warn('Lottie player notice:', err);
+        }
+      }
+    }
+
+    return () => {
+      if (anim) {
+        anim.destroy();
+      }
+    };
+  }, [shouldCelebrate]);
 
   const handleClick = (e: React.MouseEvent) => {
     triggerHaptic(18);
@@ -116,7 +166,9 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
 
       {/* Main Vector Checkbox with Background Circle, Stroke, and Smooth Draw Check */}
       <svg
-        className="checkbox-svg"
+        className={`checkbox-svg transition-opacity duration-150 ${
+          shouldCelebrate ? 'opacity-0' : 'opacity-100'
+        }`}
         viewBox="0 0 35.6 35.6"
         xmlns="http://www.w3.org/2000/svg"
         aria-hidden="true"
@@ -125,6 +177,15 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
         <circle className="stroke" cx="17.8" cy="17.8" r="16.8" />
         <polyline className="check" points="10.7,18.7 15.3,23.3 24.9,13.7" />
       </svg>
+
+      {/* Authentic Lottie Animated Check Circle (Plays system-outline-4489-check-circle-empty-hover-pinch.json on item completion) */}
+      {shouldCelebrate && (
+        <div
+          ref={lottieContainerRef}
+          className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 w-full h-full overflow-visible scale-110"
+          style={{ width: `${size}px`, height: `${size}px` }}
+        />
+      )}
 
       {/* Dynamic Celebration Party Popper Confetti Particle Burst */}
       {shouldCelebrate && (

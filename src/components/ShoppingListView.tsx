@@ -378,7 +378,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
       setRecentLocalCompletedId(itemId);
       setTimeout(() => {
         setRecentLocalCompletedId((prev) => (prev === itemId ? null : prev));
-      }, 700);
+      }, 800);
     }
 
     const updatedItems = currentList.items.map((item) =>
@@ -393,6 +393,9 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
     };
 
     // 1. Immediate optimistic UI update
+    if (completionError && onClearCompletionError) {
+      onClearCompletionError();
+    }
     onUpdateList(updatedList);
 
     // 2. Sound & Haptic Feedback (Fast & Premium tactile physical vibration)

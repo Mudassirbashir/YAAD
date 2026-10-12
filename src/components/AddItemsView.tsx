@@ -21,6 +21,7 @@ import { CategoryIcon } from './CategoryIcon';
 import { ItemVisualIcon } from './ItemVisualIcon';
 import { ItemPhotoCaptureModal } from './common/ItemPhotoCaptureModal';
 import { ItemImageLightboxModal } from './common/ItemImageLightboxModal';
+import { AnimatedCartIcon } from './common/AnimatedCartIcon';
 import { BarcodeScannerModal } from './barcode/BarcodeScannerModal';
 import { BidiText, containsUrdu } from '../utils/bidi';
 import { saveUserCategoryOverride } from '../lib/categorizer';
@@ -143,7 +144,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
     setTimeout(() => {
       onStartShopping(items);
       setIsBottomCartDriving(false);
-    }, 480);
+    }, 720);
   };
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -1093,11 +1094,11 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                 </div>
                 <button
                   type="button"
-                  onClick={() => onStartShopping(items)}
-                  disabled={items.length === 0}
+                  onClick={handleStartShoppingWithAnimation}
+                  disabled={items.length === 0 || isBottomCartDriving}
                   className="px-3.5 py-2 sm:px-4 sm:py-2 rounded-full bg-primary text-on-primary font-['Manrope'] text-xs sm:text-sm font-bold flex items-center gap-2 hover:bg-primary-container disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-xs active:scale-95 cursor-pointer group whitespace-nowrap shrink-0"
                 >
-                  <ShoppingCart className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+                  <AnimatedCartIcon isPlaying={isBottomCartDriving} size={18} />
                   <span className="whitespace-nowrap">{t('addItems.startShoppingBtn') || 'Start Shopping'}</span>
                 </button>
               </div>
@@ -1329,49 +1330,13 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
               : (t('addItems.startShoppingBtn') || 'Start Shopping')}
           </span>
 
-          {/* Animated Shopping Cart with Spinning Wheels and Speed Trails */}
+          {/* Animated Cart Icon (system-outline-146-cart-hover-slide.json) */}
           <div
-            className={`relative flex items-center transition-all duration-500 ease-in-out ${
-              isBottomCartDriving
-                ? 'translate-x-36 sm:translate-x-52 scale-110 opacity-0 -rotate-6'
-                : 'translate-x-0 scale-100 opacity-100 group-hover:scale-110'
+            className={`relative flex items-center transition-all duration-300 ease-out ${
+              isBottomCartDriving ? 'scale-115' : 'scale-100 group-hover:scale-105'
             }`}
           >
-            {/* Speed trail streaks when departing */}
-            {isBottomCartDriving && (
-              <span
-                className="absolute -left-6 top-1/2 -translate-y-1/2 flex flex-col gap-1 opacity-80"
-                aria-hidden="true"
-              >
-                <span className="w-4 h-0.5 bg-emerald-300 rounded-full animate-pulse" />
-                <span className="w-6 h-0.5 bg-emerald-200 rounded-full animate-pulse delay-75" />
-                <span className="w-3 h-0.5 bg-emerald-400 rounded-full animate-pulse delay-150" />
-              </span>
-            )}
-
-            {/* Custom Animated Cart SVG */}
-            <svg
-              className={`w-6 h-6 shrink-0 transition-transform ${
-                isBottomCartDriving ? 'animate-bounce' : 'group-hover:translate-x-0.5'
-              }`}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              {/* Cart Basket Body */}
-              <circle cx="8" cy="21" r="1" className={isBottomCartDriving ? 'animate-spin origin-[8px_21px]' : ''} fill="currentColor" />
-              <circle cx="19" cy="21" r="1" className={isBottomCartDriving ? 'animate-spin origin-[19px_21px]' : ''} fill="currentColor" />
-              <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
-              {/* Groceries inside the cart */}
-              <path
-                d="M10 8V6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2"
-                strokeWidth="1.8"
-                className={isBottomCartDriving ? 'animate-pulse text-emerald-200' : 'opacity-80'}
-              />
-            </svg>
+            <AnimatedCartIcon isPlaying={isBottomCartDriving} size={28} />
           </div>
         </button>
       </div>

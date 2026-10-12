@@ -1178,7 +1178,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         try {
           const metadataUpdates: Record<string, unknown> = {};
           if (updates.full_name !== undefined) metadataUpdates.full_name = updates.full_name;
-          if (updates.avatar_url !== undefined) metadataUpdates.avatar_url = updates.avatar_url;
+          if (updates.avatar_url !== undefined) {
+            // NEVER store large data: URLs in Supabase Auth user_metadata (causes HTTP 431 / JWT overflow)
+            if (!updates.avatar_url || !updates.avatar_url.startsWith('data:image/')) {
+              metadataUpdates.avatar_url = updates.avatar_url;
+            }
+          }
           if (updates.phone_number !== undefined) {
             const cleanPhone = updates.phone_number ? cleanPhoneNumber(updates.phone_number) : null;
             metadataUpdates.phone_number = cleanPhone;
@@ -1216,8 +1221,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // 3. Save to Supabase profiles table
       const { data, error } = await supabaseUpdateProfile(currentUserId, updates);
 
-      if (typeof window !== 'undefined' && window.localStorage && updates.avatar_url) {
-        window.localStorage.setItem(`yaad_avatar_${currentUserId}`, updates.avatar_url);
+      if (typeof window !== 'undefined' && window.localStorage) {
+        if (updates.avatar_url) {
+          window.localStorage.setItem(`yaad_avatar_${currentUserId}`, updates.avatar_url);
+        } else if (updates.avatar_url === null) {
+          window.localStorage.removeItem(`yaad_avatar_${currentUserId}`);
+        }
       }
 
       if (error) {

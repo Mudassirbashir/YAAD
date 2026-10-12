@@ -1,9 +1,11 @@
-import React, { useEffect, useRef } from 'react';
-import { Home, Plus, ClipboardList } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Plus } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import { NavigationTab } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { triggerHaptic } from '../lib/sound';
+import { AnimatedHomeIcon } from './common/AnimatedHomeIcon';
+import { AnimatedHistoryIcon } from './common/AnimatedHistoryIcon';
 
 interface BottomNavBarProps {
   activeTab: NavigationTab;
@@ -18,6 +20,9 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
 }) => {
   const { t, isRTL } = useLanguage();
   const prefersReducedMotion = useReducedMotion();
+
+  const [homeAnimationTrigger, setHomeAnimationTrigger] = useState(0);
+  const [historyAnimationTrigger, setHistoryAnimationTrigger] = useState(0);
 
   const homeBtnRef = useRef<HTMLButtonElement>(null);
   const createBtnRef = useRef<HTMLButtonElement>(null);
@@ -42,6 +47,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
       if (e.key === '1' || e.key.toLowerCase() === 'h') {
         e.preventDefault();
         triggerHaptic(10);
+        setHomeAnimationTrigger((c) => c + 1);
         onTabChange('home');
       } else if (e.key === '2' || e.key.toLowerCase() === 'c' || e.key === '+') {
         e.preventDefault();
@@ -54,6 +60,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
       } else if (e.key === '3' || e.key.toLowerCase() === 'l') {
         e.preventDefault();
         triggerHaptic(10);
+        setHistoryAnimationTrigger((c) => c + 1);
         onTabChange('lists');
       }
     };
@@ -91,6 +98,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
 
   const handleHomeClick = () => {
     triggerHaptic(10);
+    setHomeAnimationTrigger((c) => c + 1);
     onTabChange('home');
   };
 
@@ -105,6 +113,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
 
   const handleListsClick = () => {
     triggerHaptic(10);
+    setHistoryAnimationTrigger((c) => c + 1);
     onTabChange('lists');
   };
 
@@ -156,10 +165,11 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
                 }
               />
             )}
-            <Home
-              className={`w-5 h-5 shrink-0 transition-transform duration-150 ${
-                isHomeActive ? 'stroke-[2.4] scale-105' : 'stroke-[1.8]'
-              }`}
+            <AnimatedHomeIcon
+              isActive={isHomeActive}
+              playTrigger={homeAnimationTrigger}
+              size={22}
+              className="transition-transform duration-150"
             />
             <span className="text-[11px] sm:text-xs font-['Manrope'] font-bold tracking-tight whitespace-nowrap leading-none">
               {t('nav.home') || 'Home'}
@@ -215,10 +225,11 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
                 }
               />
             )}
-            <ClipboardList
-              className={`w-5 h-5 shrink-0 transition-transform duration-150 ${
-                isListsActive ? 'stroke-[2.4] scale-105' : 'stroke-[1.8]'
-              }`}
+            <AnimatedHistoryIcon
+              isActive={isListsActive}
+              playTrigger={historyAnimationTrigger}
+              size={22}
+              className="transition-transform duration-150"
             />
             <span className="text-[11px] sm:text-xs font-['Manrope'] font-bold tracking-tight whitespace-nowrap leading-none">
               {t('nav.history') || t('history.title') || 'History'}
