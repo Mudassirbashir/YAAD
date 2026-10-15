@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "wwdc-quick-look": {
+      "source": "SwiftGGTeam/wwdc-quick-look-skill",
+      "sourceType": "github",
+      "skillPath": "wwdc-quick-look/SKILL.md",
+      "computedHash": "57988c43c4078f5e87b4494eb332315d39f58851ae8aae5af869f69f8fbb847d"
+    }
+  }
+}
