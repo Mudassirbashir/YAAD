@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:yaad_flutter/core/config/supabase_config.dart';
 import 'package:yaad_flutter/data/models/shopping_item_model.dart';
 import 'package:yaad_flutter/data/models/shopping_list_model.dart';
@@ -379,6 +380,76 @@ void main() {
       await tester.tap(find.text('Close'));
       await tester.pumpAndSettle();
       expect(find.text('Guest User'), findsNothing);
+    });
+
+    testWidgets('Session transition: signing in switches user-scoped lists and sign out cleans up', (tester) async {
+      final repo = MockShoppingRepository();
+      final authRepo = MockAuthRepository();
+      final queueEngine = OfflineQueueEngine();
+
+      const authenticatedUser = User(
+        id: 'usr-auth-session-42',
+        appMetadata: {},
+        userMetadata: {},
+        aud: 'authenticated',
+        createdAt: '2026-10-16T12:00:00Z',
+        email: 'member@yaad.app',
+      );
+
+      // Pre-seed an exclusive list for authenticated user
+      await repo.upsertList(const ShoppingListModel(
+        id: 'list-auth-user',
+        userId: 'usr-auth-session-42',
+        title: 'Authenticated User Pantry',
+        items: [
+          ShoppingItemModel(
+            id: 'item-auth-1',
+            listId: 'list-auth-user',
+            userId: 'usr-auth-session-42',
+            itemName: 'Olives',
+            category: 'cooking_essentials',
+          ),
+        ],
+      ));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: ShoppingListScreen(
+            repository: repo,
+            authRepository: authRepo,
+            queueEngine: queueEngine,
+            initialListId: 'list-auth-user',
+            initialUserId: 'guest',
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Guest cannot see authenticated list before signing in
+      expect(find.text('Authenticated User Pantry'), findsNothing);
+      expect(find.text('Olives'), findsNothing);
+
+      authRepo.emitUser(authenticatedUser, AuthChangeEvent.signedIn);
+      await tester.pumpAndSettle();
+
+      // Verify that after sign in event, authenticated list loads
+      expect(find.text('Authenticated User Pantry'), findsOneWidget);
+      expect(find.text('Olives'), findsOneWidget);
+
+      // Sign out
+      await authRepo.signOut();
+      await tester.pumpAndSettle();
+
+      // After sign out, authenticated list is cleared from view
+      expect(find.text('Authenticated User Pantry'), findsNothing);
+      expect(find.text('Olives'), findsNothing);
+
+      // Account status dialog now reflects signed-out state
+      final accountBtn = find.byIcon(Icons.person_outline);
+      expect(accountBtn, findsOneWidget);
+      await tester.tap(accountBtn);
+      await tester.pumpAndSettle();
+      expect(find.text('Guest User'), findsOneWidget);
     });
   });
 

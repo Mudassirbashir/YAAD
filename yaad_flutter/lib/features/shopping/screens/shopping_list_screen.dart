@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/layout/responsive_layout.dart';
 import '../../../core/localization/app_strings.dart';
@@ -43,6 +44,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   String _selectedCategory = 'all';
   bool _isLoading = true;
   ShoppingListModel? _currentList;
+  StreamSubscription? _authSub;
 
   String get _effectiveUserId =>
       widget.authRepository?.currentUserId ?? widget.initialUserId;
@@ -51,11 +53,18 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   void initState() {
     super.initState();
     widget.queueEngine.addListener(_onQueueChanged);
+    _authSub = widget.authRepository?.authStateChanges.listen((_) {
+      if (mounted) {
+        widget.queueEngine.loadPersistedQueue(_effectiveUserId);
+        _loadList();
+      }
+    });
     _loadList();
   }
 
   @override
   void dispose() {
+    _authSub?.cancel();
     widget.queueEngine.removeListener(_onQueueChanged);
     super.dispose();
   }
@@ -69,20 +78,33 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
 
     // Process any pending offline mutations on load
     if (widget.queueEngine.pendingCount > 0) {
-      await widget.queueEngine.processQueue(widget.repository);
+      await widget.queueEngine.processQueue(widget.repository, targetUserId: _effectiveUserId);
     }
 
     var list = await widget.repository.fetchListById(widget.initialListId);
+    // Enforce data boundary: unauthenticated guests or mismatched users cannot access protected lists
+    if (list != null && list.userId != _effectiveUserId) {
+      list = null;
+    }
+
+    if (list == null && _effectiveUserId != 'guest') {
+      final userLists = await widget.repository.fetchLists(_effectiveUserId);
+      if (userLists.isNotEmpty) {
+        list = userLists.first;
+      }
+    }
+
     if (list == null) {
+      final starterListId = _effectiveUserId == 'guest' ? 'guest-starter-list' : widget.initialListId;
       // Create initial starter list with real Pakistani examples
       list = ShoppingListModel(
-        id: widget.initialListId,
+        id: starterListId,
         userId: _effectiveUserId,
         title: 'Weekly Rashan',
         items: [
           ShoppingItemModel(
             id: 'item-sample-1',
-            listId: widget.initialListId,
+            listId: starterListId,
             userId: _effectiveUserId,
             itemName: 'Aloo',
             category: 'vegetables',
@@ -94,7 +116,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           ),
           ShoppingItemModel(
             id: 'item-sample-2',
-            listId: widget.initialListId,
+            listId: starterListId,
             userId: _effectiveUserId,
             itemName: 'Sugar',
             category: 'cooking_essentials',
@@ -106,7 +128,7 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           ),
           ShoppingItemModel(
             id: 'item-sample-3',
-            listId: widget.initialListId,
+            listId: starterListId,
             userId: _effectiveUserId,
             itemName: 'Basmati Rice',
             category: 'rice',
@@ -118,7 +140,6 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
           ),
         ],
       );
-      await widget.repository.upsertList(list);
     }
 
     if (mounted) {
@@ -130,7 +151,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
   }
 
   Future<void> _syncQueue() async {
-    final result = await widget.queueEngine.processQueue(widget.repository);
+    final result = await widget.queueEngine.processQueue(
+      widget.repository,
+      targetUserId: _effectiveUserId,
+    );
     if (_currentList != null) {
       final refreshed = await widget.repository.fetchListById(_currentList!.id);
       if (refreshed != null && mounted) {
@@ -192,8 +216,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     widget.queueEngine.enqueue(op);
 
     try {
-      await widget.repository.upsertItem(newItem);
-      widget.queueEngine.remove(op.id);
+      if (_effectiveUserId != 'guest' || widget.repository is! SupabaseShoppingRepository) {
+        await widget.repository.upsertItem(newItem);
+        widget.queueEngine.remove(op.id);
+      }
     } catch (_) {
       // Retained in queueEngine as pending operation
     }
@@ -228,8 +254,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     widget.queueEngine.enqueue(op);
 
     try {
-      await widget.repository.toggleItemCompleted(itemId, isCompleted);
-      widget.queueEngine.remove(op.id);
+      if (_effectiveUserId != 'guest' || widget.repository is! SupabaseShoppingRepository) {
+        await widget.repository.toggleItemCompleted(itemId, isCompleted);
+        widget.queueEngine.remove(op.id);
+      }
     } catch (_) {
       // Retained in queueEngine as pending operation
     }
@@ -257,8 +285,10 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
     widget.queueEngine.enqueue(op);
 
     try {
-      await widget.repository.deleteItem(itemId);
-      widget.queueEngine.remove(op.id);
+      if (_effectiveUserId != 'guest' || widget.repository is! SupabaseShoppingRepository) {
+        await widget.repository.deleteItem(itemId);
+        widget.queueEngine.remove(op.id);
+      }
     } catch (_) {
       // Retained in queueEngine as pending operation
     }
@@ -296,7 +326,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             if (isAuthenticated)
               TextButton(
                 onPressed: () async {
+                  final prevUserId = _effectiveUserId;
                   await widget.authRepository?.signOut();
+                  widget.queueEngine.clearInMemoryForUser(prevUserId);
                   if (dialogCtx.mounted) Navigator.pop(dialogCtx);
                   if (mounted) _loadList();
                 },
@@ -632,9 +664,9 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
             runSpacing: 4,
             children: [
               Text(
-                YaadStrings.get('trip_progress', _language),
+                _currentList?.title ?? YaadStrings.get('trip_progress', _language),
                 style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: YaadColors.textPrimary,
                 ),

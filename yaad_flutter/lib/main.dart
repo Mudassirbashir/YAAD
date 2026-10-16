@@ -7,14 +7,18 @@ import 'core/theme/tokens.dart';
 import 'data/offline/offline_queue_engine.dart';
 import 'data/repositories/auth_repository.dart';
 import 'data/repositories/shopping_repository.dart';
+import 'data/offline/queue_storage.dart';
 import 'features/shopping/screens/shopping_list_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  const queueStorage = SharedPreferencesQueueStorageDriver();
+  const listStorage = SharedPreferencesListStorageDriver();
+
+  final queueEngine = OfflineQueueEngine(storageDriver: queueStorage);
   ShoppingRepository repository;
   AuthRepository authRepository;
-  final queueEngine = OfflineQueueEngine();
 
   if (YaadSupabaseConfig.isConfigured) {
     try {
@@ -27,12 +31,20 @@ void main() async {
       repository = SupabaseShoppingRepository(client);
       authRepository = SupabaseAuthRepository(client);
     } catch (_) {
-      repository = MockShoppingRepository();
+      repository = MockShoppingRepository(storageDriver: listStorage);
       authRepository = MockAuthRepository();
     }
   } else {
-    repository = MockShoppingRepository();
+    repository = MockShoppingRepository(storageDriver: listStorage);
     authRepository = MockAuthRepository();
+  }
+
+  // Restore durable persisted queue and mock state across cold restarts
+  final activeUserId = authRepository.currentUserId ?? 'guest';
+  await queueEngine.loadPersistedQueue(activeUserId);
+
+  if (repository is MockShoppingRepository) {
+    await repository.loadPersistedState(activeUserId);
   }
 
   runApp(YaadApp(

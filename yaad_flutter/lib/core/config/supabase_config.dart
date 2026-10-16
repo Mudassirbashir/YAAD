@@ -9,8 +9,14 @@
 library;
 
 abstract final class YaadSupabaseConfig {
-  static const String _defaultUrl = String.fromEnvironment('SUPABASE_URL', defaultValue: '');
-  static const String _defaultAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: '');
+  static const String _defaultUrl = String.fromEnvironment(
+    'SUPABASE_URL',
+    defaultValue: String.fromEnvironment('VITE_SUPABASE_URL', defaultValue: ''),
+  );
+  static const String _defaultAnonKey = String.fromEnvironment(
+    'SUPABASE_ANON_KEY',
+    defaultValue: String.fromEnvironment('VITE_SUPABASE_ANON_KEY', defaultValue: ''),
+  );
 
   static String url = _defaultUrl;
   static String anonKey = _defaultAnonKey;

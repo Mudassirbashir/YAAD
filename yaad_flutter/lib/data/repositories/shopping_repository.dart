@@ -4,6 +4,7 @@ library;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/shopping_list_model.dart';
 import '../models/shopping_item_model.dart';
+import '../offline/queue_storage.dart';
 
 abstract interface class ShoppingRepository {
   Future<List<ShoppingListModel>> fetchLists(String userId);
@@ -23,8 +24,21 @@ final class SupabaseShoppingRepository implements ShoppingRepository {
 
   final SupabaseClient _client;
 
+  /// Ensures unauthenticated guest users cannot accidentally write to production Supabase tables.
+  void _assertAuthenticated(String userId) {
+    if (userId == 'guest' || _client.auth.currentUser == null) {
+      throw const AuthException(
+        'Unauthenticated guest users cannot write to production Supabase tables. Sign in first.',
+      );
+    }
+  }
+
   @override
   Future<List<ShoppingListModel>> fetchLists(String userId) async {
+    if (userId == 'guest' || _client.auth.currentUser == null) {
+      return [];
+    }
+
     final response = await _client
         .from('shopping_lists')
         .select('*')
@@ -49,6 +63,8 @@ final class SupabaseShoppingRepository implements ShoppingRepository {
 
   @override
   Future<ShoppingListModel?> fetchListById(String listId) async {
+    if (_client.auth.currentUser == null) return null;
+
     final response = await _client
         .from('shopping_lists')
         .select('*')
@@ -66,20 +82,38 @@ final class SupabaseShoppingRepository implements ShoppingRepository {
 
   @override
   Future<void> upsertList(ShoppingListModel list) async {
+    _assertAuthenticated(list.userId);
+
     await _client.from('shopping_lists').upsert(list.toDbJson());
-    for (final item in list.items) {
-      await _client.from('shopping_items').upsert(item.toDbJson());
+    if (list.items.isNotEmpty) {
+      final itemIds = list.items.map((i) => i.id).toList();
+      await _client
+          .from('shopping_items')
+          .delete()
+          .eq('list_id', list.id)
+          .not('id', 'in', itemIds);
+      for (final item in list.items) {
+        await _client.from('shopping_items').upsert(item.toDbJson());
+      }
+    } else {
+      await _client.from('shopping_items').delete().eq('list_id', list.id);
     }
   }
 
   @override
   Future<void> deleteList(String listId) async {
+    if (_client.auth.currentUser == null) {
+      throw const AuthException('Cannot delete remote shopping list while unauthenticated.');
+    }
+
     await _client.from('shopping_items').delete().eq('list_id', listId);
     await _client.from('shopping_lists').delete().eq('id', listId);
   }
 
   @override
   Future<List<ShoppingItemModel>> fetchItemsForList(String listId) async {
+    if (_client.auth.currentUser == null) return [];
+
     final response = await _client
         .from('shopping_items')
         .select('*')
@@ -93,16 +127,23 @@ final class SupabaseShoppingRepository implements ShoppingRepository {
 
   @override
   Future<void> upsertItem(ShoppingItemModel item) async {
+    _assertAuthenticated(item.userId);
     await _client.from('shopping_items').upsert(item.toDbJson());
   }
 
   @override
   Future<void> deleteItem(String itemId) async {
+    if (_client.auth.currentUser == null) {
+      throw const AuthException('Cannot delete remote shopping item while unauthenticated.');
+    }
     await _client.from('shopping_items').delete().eq('id', itemId);
   }
 
   @override
   Future<void> toggleItemCompleted(String itemId, bool isCompleted) async {
+    if (_client.auth.currentUser == null) {
+      throw const AuthException('Cannot update item completion while unauthenticated.');
+    }
     await _client
         .from('shopping_items')
         .update({'is_completed': isCompleted})
@@ -110,9 +151,11 @@ final class SupabaseShoppingRepository implements ShoppingRepository {
   }
 }
 
-/// In-memory Mock Repository for unit testing and offline simulation.
+/// In-memory Mock Repository for unit testing and offline simulation,
+/// with optional durable ListStorageDriver for restart persistence.
 final class MockShoppingRepository implements ShoppingRepository {
   MockShoppingRepository({
+    this.storageDriver,
     Map<String, ShoppingListModel>? initialLists,
     Map<String, ShoppingItemModel>? initialItems,
   }) {
@@ -120,8 +163,27 @@ final class MockShoppingRepository implements ShoppingRepository {
     if (initialItems != null) items.addAll(initialItems);
   }
 
+  final ListStorageDriver? storageDriver;
   final Map<String, ShoppingListModel> lists = {};
   final Map<String, ShoppingItemModel> items = {};
+
+  /// Loads persisted lists from durable local storage for a user upon cold start.
+  Future<void> loadPersistedState(String userId) async {
+    if (storageDriver == null) return;
+    final loaded = await storageDriver!.loadLists(userId);
+    for (final l in loaded) {
+      lists[l.id] = l;
+      for (final it in l.items) {
+        items[it.id] = it;
+      }
+    }
+  }
+
+  void _autoPersist(String userId) {
+    if (storageDriver == null) return;
+    final userLists = lists.values.where((l) => l.userId == userId).toList();
+    storageDriver!.saveLists(userId, userLists);
+  }
 
   /// Exports current snapshot for testing state restoration across app restarts.
   Map<String, dynamic> exportState() {
@@ -169,12 +231,16 @@ final class MockShoppingRepository implements ShoppingRepository {
     for (final item in list.items) {
       items[item.id] = item;
     }
+    _autoPersist(list.userId);
   }
 
   @override
   Future<void> deleteList(String listId) async {
-    lists.remove(listId);
+    final list = lists.remove(listId);
     items.removeWhere((_, item) => item.listId == listId);
+    if (list != null) {
+      _autoPersist(list.userId);
+    }
   }
 
   @override
@@ -198,6 +264,7 @@ final class MockShoppingRepository implements ShoppingRepository {
       }
       lists[parent.id] = parent.copyWith(items: updatedItems);
     }
+    _autoPersist(item.userId);
   }
 
   @override
@@ -209,6 +276,7 @@ final class MockShoppingRepository implements ShoppingRepository {
         final updatedItems = parent.items.where((i) => i.id != itemId).toList();
         lists[parent.id] = parent.copyWith(items: updatedItems);
       }
+      _autoPersist(item.userId);
     }
   }
 
