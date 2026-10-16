@@ -4,6 +4,7 @@
 /// and terminal error backoff matching `tests/offline-queue.test.ts`.
 library;
 
+import 'package:flutter/foundation.dart';
 import '../models/shopping_list_model.dart';
 import '../models/shopping_item_model.dart';
 import '../repositories/shopping_repository.dart';
@@ -25,12 +26,21 @@ final class SyncResult {
       'SyncResult(synced: $syncedCount, failed: $failedCount, dropped: $droppedCount)';
 }
 
-final class OfflineQueueEngine {
-  OfflineQueueEngine({this.maxRetries = 5});
+class OfflineQueueEngine extends ChangeNotifier {
+  OfflineQueueEngine({
+    this.maxRetries = 5,
+    List<PendingOfflineOperation>? initialQueue,
+  }) {
+    if (initialQueue != null) {
+      _queue.addAll(initialQueue);
+    }
+  }
 
   final int maxRetries;
   final List<PendingOfflineOperation> _queue = [];
+  bool _isSyncing = false;
 
+  bool get isSyncing => _isSyncing;
   List<PendingOfflineOperation> get queue => List.unmodifiable(_queue);
 
   int get pendingCount => _queue.where((o) => o.syncStatus == SyncStatus.pending).length;
@@ -48,23 +58,42 @@ final class OfflineQueueEngine {
       if (existingIndex >= 0) {
         // Update pending operation with newer snapshot
         _queue[existingIndex] = operation;
+        notifyListeners();
         return;
       }
     }
 
     _queue.add(operation);
+    notifyListeners();
   }
 
   /// Removes an operation from the queue by ID.
   bool remove(String operationId) {
     final initialLen = _queue.length;
     _queue.removeWhere((o) => o.id == operationId);
-    return _queue.length < initialLen;
+    final changed = _queue.length < initialLen;
+    if (changed) notifyListeners();
+    return changed;
   }
 
   /// Clears all queue items for a user.
   void clearForUser(String userId) {
     _queue.removeWhere((o) => o.userId == userId);
+    notifyListeners();
+  }
+
+  /// Exports queue to JSON-serializable list for disk persistence across app restarts.
+  List<Map<String, dynamic>> exportQueue() {
+    return _queue.map((op) => op.toJson()).toList();
+  }
+
+  /// Restores queue from JSON-serializable list after app restart.
+  void importQueue(List<Map<String, dynamic>> data) {
+    _queue.clear();
+    for (final item in data) {
+      _queue.add(PendingOfflineOperation.fromJson(item));
+    }
+    notifyListeners();
   }
 
   /// Processes the queue in strict FIFO order against the target repository.
@@ -77,80 +106,88 @@ final class OfflineQueueEngine {
       return const SyncResult(syncedCount: 0, failedCount: 0, droppedCount: 0);
     }
 
+    _isSyncing = true;
+    notifyListeners();
+
     int syncedCount = 0;
     int failedCount = 0;
     int droppedCount = 0;
 
-    // Strict FIFO: sort copy by timestamp
-    final opsToProcess = List<PendingOfflineOperation>.from(_queue)
-      ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+    try {
+      // Strict FIFO: sort copy by timestamp
+      final opsToProcess = List<PendingOfflineOperation>.from(_queue)
+        ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
 
-    for (final op in opsToProcess) {
-      // 1. Terminal Error Quarantine: drop if retry limit exceeded to unblock queue
-      if (op.retryCount >= maxRetries) {
-        _queue.removeWhere((item) => item.id == op.id);
-        droppedCount++;
-        continue;
-      }
-
-      // 2. Conflict Handling: If parent list was deleted remotely, do not resurrect
-      if (remotelyDeletedListIds.contains(op.listId)) {
-        _queue.removeWhere((item) => item.id == op.id);
-        droppedCount++;
-        continue;
-      }
-
-      op.syncStatus = SyncStatus.syncing;
-
-      try {
-        switch (op.type) {
-          case OfflineMutationType.createList:
-          case OfflineMutationType.updateList:
-          case OfflineMutationType.saveList:
-            final list = ShoppingListModel.fromJson(op.payload);
-            await repository.upsertList(list);
-            break;
-
-          case OfflineMutationType.deleteList:
-            await repository.deleteList(op.listId);
-            break;
-
-          case OfflineMutationType.addItem:
-          case OfflineMutationType.updateItem:
-            final item = ShoppingItemModel.fromJson(op.payload);
-            await repository.upsertItem(item);
-            break;
-
-          case OfflineMutationType.deleteItem:
-            final itemId = op.itemId ?? op.payload['id'] as String?;
-            if (itemId != null) {
-              await repository.deleteItem(itemId);
-            }
-            break;
-
-          case OfflineMutationType.completeItem:
-          case OfflineMutationType.uncompleteItem:
-            final itemId = op.itemId ?? op.payload['id'] as String?;
-            final isCompleted = op.type == OfflineMutationType.completeItem;
-            if (itemId != null) {
-              await repository.toggleItemCompleted(itemId, isCompleted);
-            }
-            break;
-
-          case OfflineMutationType.updateProfile:
-            // Handled via profile sync
-            break;
+      for (final op in opsToProcess) {
+        // 1. Terminal Error Quarantine: drop if retry limit exceeded to unblock queue
+        if (op.retryCount >= maxRetries) {
+          _queue.removeWhere((item) => item.id == op.id);
+          droppedCount++;
+          continue;
         }
 
-        op.syncStatus = SyncStatus.synced;
-        _queue.removeWhere((item) => item.id == op.id);
-        syncedCount++;
-      } catch (e) {
-        op.retryCount++;
-        op.lastError = e.toString();
-        op.syncStatus = SyncStatus.failed;
-        failedCount++;
+        // 2. Conflict Handling: If parent list was deleted remotely, do not resurrect
+        if (remotelyDeletedListIds.contains(op.listId)) {
+          _queue.removeWhere((item) => item.id == op.id);
+          droppedCount++;
+          continue;
+        }
+
+        op.syncStatus = SyncStatus.syncing;
+
+        try {
+          switch (op.type) {
+            case OfflineMutationType.createList:
+            case OfflineMutationType.updateList:
+            case OfflineMutationType.saveList:
+              final list = ShoppingListModel.fromJson(op.payload);
+              await repository.upsertList(list);
+              break;
+
+            case OfflineMutationType.deleteList:
+              await repository.deleteList(op.listId);
+              break;
+
+            case OfflineMutationType.addItem:
+            case OfflineMutationType.updateItem:
+              final item = ShoppingItemModel.fromJson(op.payload);
+              await repository.upsertItem(item);
+              break;
+
+            case OfflineMutationType.deleteItem:
+              final itemId = op.itemId ?? op.payload['id'] as String?;
+              if (itemId != null) {
+                await repository.deleteItem(itemId);
+              }
+              break;
+
+            case OfflineMutationType.completeItem:
+            case OfflineMutationType.uncompleteItem:
+              final itemId = op.itemId ?? op.payload['id'] as String?;
+              final isCompleted = op.type == OfflineMutationType.completeItem;
+              if (itemId != null) {
+                await repository.toggleItemCompleted(itemId, isCompleted);
+              }
+              break;
+
+            case OfflineMutationType.updateProfile:
+              // Handled via profile sync
+              break;
+          }
+
+          op.syncStatus = SyncStatus.synced;
+          _queue.removeWhere((item) => item.id == op.id);
+          syncedCount++;
+        } catch (e) {
+          op.retryCount++;
+          op.lastError = e.toString();
+          op.syncStatus = SyncStatus.failed;
+          failedCount++;
+        }
       }
+    } finally {
+      _isSyncing = false;
+      notifyListeners();
     }
 
     return SyncResult(

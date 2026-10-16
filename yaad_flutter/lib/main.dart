@@ -1,22 +1,80 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'core/config/supabase_config.dart';
 import 'core/theme/theme.dart';
 import 'core/theme/tokens.dart';
 
-void main() {
-  runApp(const YaadApp());
+import 'data/offline/offline_queue_engine.dart';
+import 'data/repositories/auth_repository.dart';
+import 'data/repositories/shopping_repository.dart';
+import 'features/shopping/screens/shopping_list_screen.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  ShoppingRepository repository;
+  AuthRepository authRepository;
+  final queueEngine = OfflineQueueEngine();
+
+  if (YaadSupabaseConfig.isConfigured) {
+    try {
+      await Supabase.initialize(
+        url: YaadSupabaseConfig.url,
+        // ignore: deprecated_member_use
+        anonKey: YaadSupabaseConfig.anonKey,
+      );
+      final client = Supabase.instance.client;
+      repository = SupabaseShoppingRepository(client);
+      authRepository = SupabaseAuthRepository(client);
+    } catch (_) {
+      repository = MockShoppingRepository();
+      authRepository = MockAuthRepository();
+    }
+  } else {
+    repository = MockShoppingRepository();
+    authRepository = MockAuthRepository();
+  }
+
+  runApp(YaadApp(
+    repository: repository,
+    authRepository: authRepository,
+    queueEngine: queueEngine,
+  ));
 }
 
 /// Root widget for the YAAD Flutter application.
 class YaadApp extends StatelessWidget {
-  const YaadApp({super.key});
+  const YaadApp({
+    super.key,
+    this.repository,
+    this.authRepository,
+    this.queueEngine,
+    this.home,
+  });
+
+  final ShoppingRepository? repository;
+  final AuthRepository? authRepository;
+  final OfflineQueueEngine? queueEngine;
+  final Widget? home;
 
   @override
   Widget build(BuildContext context) {
+    final repo = repository ?? MockShoppingRepository();
+    final auth = authRepository ?? MockAuthRepository();
+    final queue = queueEngine ?? OfflineQueueEngine();
+    final currentUserId = auth.currentUserId ?? 'guest';
+
     return MaterialApp(
-      title: 'YAAD',
+      title: 'YAAD - یاد',
       debugShowCheckedModeBanner: false,
       theme: YaadTheme.lightTheme,
-      home: const YaadHomePage(),
+      home: home ??
+          ShoppingListScreen(
+            repository: repo,
+            authRepository: auth,
+            queueEngine: queue,
+            initialUserId: currentUserId,
+          ),
     );
   }
 }

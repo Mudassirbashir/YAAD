@@ -3,14 +3,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:yaad_flutter/main.dart';
 
 void main() {
-  testWidgets('YaadApp renders brand header and interactive foundation pulse', (WidgetTester tester) async {
-    // Set a realistic mobile viewport size (e.g. 400x900)
+  testWidgets('YaadHomePage renders brand header and interactive foundation pulse', (WidgetTester tester) async {
     tester.view.physicalSize = const Size(800, 1200);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(const YaadApp());
+    await tester.pumpWidget(const YaadApp(home: YaadHomePage()));
 
     // Verify title and brand Urdu subtitle are rendered
     expect(find.text('YAAD'), findsOneWidget);
@@ -28,5 +27,24 @@ void main() {
 
     // Verify cycle incremented
     expect(find.text('Verified cycles: 1'), findsOneWidget);
+  });
+
+  testWidgets('YaadApp defaults to ShoppingListScreen with Pakistani rashan items', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(800, 1200);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const YaadApp());
+    await tester.pumpAndSettle();
+
+    // Verify app bar title
+    expect(find.text('YAAD'), findsOneWidget);
+    expect(find.text('یاد'), findsOneWidget);
+
+    // Verify sample Pakistani items loaded
+    expect(find.text('Aloo'), findsOneWidget);
+    expect(find.text('Sugar'), findsOneWidget);
+    expect(find.text('Basmati Rice'), findsOneWidget);
   });
 }

@@ -30,6 +30,11 @@ abstract final class YaadColors {
   static const Color textMuted = Color(0xFF717974);
   static const Color textInverse = Color(0xFFEFF2ED);
 
+  // Borders & dividers
+  static const Color borderSubtle = Color(0xFFD8DBD6);
+  static const Color borderMedium = Color(0xFFC0C8C3);
+  static const Color borderStrong = Color(0xFF717974);
+
   // Status
   static const Color success = Color(0xFF16A34A);
   static const Color successContainer = Color(0xFFDCFCE7);
