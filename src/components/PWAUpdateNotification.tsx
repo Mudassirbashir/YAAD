@@ -334,7 +334,7 @@ export const PWAUpdateNotification: React.FC<PWAUpdateNotificationProps> = ({
             <div
               id="yaad_update_offline_notice"
               role="status"
-              className="mt-3 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-200 text-xs flex items-start gap-2.5 animate-fadeIn"
+              className="mt-3 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-200 text-xs flex items-start gap-2.5 animate-fade-in"
             >
               <WifiOff className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
               <span className="font-medium leading-snug">{offlineNotice}</span>
@@ -346,7 +346,7 @@ export const PWAUpdateNotification: React.FC<PWAUpdateNotificationProps> = ({
             <div
               id="yaad_update_error_notice"
               role="alert"
-              className="mt-3 p-2.5 rounded-xl bg-secondary/10 border border-secondary/20 text-on-surface dark:text-stone-200 text-xs flex items-start gap-2.5 animate-fadeIn"
+              className="mt-3 p-2.5 rounded-xl bg-secondary/10 border border-secondary/20 text-on-surface dark:text-stone-200 text-xs flex items-start gap-2.5 animate-fade-in"
             >
               <AlertCircle className="w-4 h-4 text-secondary dark:text-secondary-fixed-dim shrink-0 mt-0.5" />
               <span className="font-medium leading-snug">{errorText}</span>
@@ -358,7 +358,7 @@ export const PWAUpdateNotification: React.FC<PWAUpdateNotificationProps> = ({
             <div
               id="yaad_update_progress_notice"
               role="status"
-              className="mt-3 p-2.5 rounded-xl bg-primary/8 dark:bg-primary-fixed/10 border border-primary/15 text-primary dark:text-primary-fixed text-xs flex items-center gap-2.5 animate-fadeIn"
+              className="mt-3 p-2.5 rounded-xl bg-primary/8 dark:bg-primary-fixed/10 border border-primary/15 text-primary dark:text-primary-fixed text-xs flex items-center gap-2.5 animate-fade-in"
             >
               <RefreshCw className="w-3.5 h-3.5 animate-spin shrink-0 text-primary dark:text-primary-fixed" />
               <span className="font-medium leading-snug">{statusMessage}</span>

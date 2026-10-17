@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   X,
   CheckCircle2,
@@ -30,8 +31,6 @@ export const ShoppingStatisticsModal: React.FC<ShoppingStatisticsModalProps> = (
 }) => {
   const { t, language, isRTL } = useLanguage();
 
-  if (!isOpen) return null;
-
   const totalLists = lists.length;
   const completedTrips = lists.filter((l) =>
     Boolean(l.isCompleted || l.completed || (l as any).is_completed)
@@ -60,16 +59,26 @@ export const ShoppingStatisticsModal: React.FC<ShoppingStatisticsModalProps> = (
   const Chevron = isRTL ? ChevronLeft : ChevronRight;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
-      role="dialog"
-      aria-modal="true"
-      onClick={onClose}
-    >
-      <div
-        className="relative w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl overflow-hidden transition-all duration-300 max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          onClick={onClose}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+            className="relative w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-surface-dim/40">
           <div className="flex items-center gap-2.5">
@@ -227,8 +236,10 @@ export const ShoppingStatisticsModal: React.FC<ShoppingStatisticsModalProps> = (
         >
           {t('statistics.done')}
         </button>
-      </div>
-    </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 

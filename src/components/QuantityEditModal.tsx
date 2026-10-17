@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { ShoppingItem } from '../types';
 import { UNIT_MAP } from '../lib/recognition/quantityExtractor';
 import { Minus, Plus, X, Check, Trash2, Camera } from 'lucide-react';
@@ -66,8 +67,6 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
     }
   }, [item]);
 
-  if (!isOpen || !item) return null;
-
   const handleStep = (delta: number) => {
     const current = parseFloat(quantity) || 0;
     const next = Math.max(0, current + delta);
@@ -96,14 +95,24 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-md bg-surface-container-lowest rounded-t-3xl sm:rounded-3xl border border-surface-container-high shadow-2xl p-5 sm:p-6 overflow-hidden flex flex-col gap-4 animate-in slide-in-from-bottom-6 sm:slide-in-from-bottom-2 duration-200"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <AnimatePresence>
+      {isOpen && item && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs"
+          onClick={onClose}
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 24, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 24, scale: 0.96 }}
+            transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+            className="w-full max-w-md bg-surface-container-lowest rounded-t-3xl sm:rounded-3xl border border-surface-container-high shadow-2xl p-5 sm:p-6 overflow-hidden flex flex-col gap-4"
+            onClick={(e) => e.stopPropagation()}
+          >
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-surface-container-high/60">
           <div className="flex items-center gap-3 min-w-0">
@@ -318,20 +327,22 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
             </button>
           </div>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Fast Item Photo Capture Bottom Sheet */}
-      <ItemPhotoCaptureModal
-        isOpen={isPhotoModalOpen}
-        itemName={item.name}
-        currentImageUrl={imageUrl}
-        onClose={() => setIsPhotoModalOpen(false)}
-        onPhotoCaptured={(url) => {
-          setImageUrl(url);
-          setIsPhotoModalOpen(false);
-        }}
-        onRemovePhoto={() => setImageUrl(null)}
-      />
-    </div>
-  );
+        {/* Fast Item Photo Capture Bottom Sheet */}
+        <ItemPhotoCaptureModal
+          isOpen={isPhotoModalOpen}
+          itemName={item.name}
+          currentImageUrl={imageUrl}
+          onClose={() => setIsPhotoModalOpen(false)}
+          onPhotoCaptured={(url) => {
+            setImageUrl(url);
+            setIsPhotoModalOpen(false);
+          }}
+          onRemovePhoto={() => setImageUrl(null)}
+        />
+      </motion.div>
+    )}
+  </AnimatePresence>
+);
 };

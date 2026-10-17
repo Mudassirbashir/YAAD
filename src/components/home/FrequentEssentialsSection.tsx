@@ -297,7 +297,7 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
               >
                 {isAdded ? (
                   <>
-                    <Check className="w-3.5 h-3.5 stroke-[3] animate-in zoom-in duration-200" />
+                    <Check className="w-3.5 h-3.5 stroke-[3] animate-zoom-in-95" />
                     <span className="truncate">
                       {t('home.essentials.added') || t('recommendations.addedToList') || 'Added'}
                     </span>

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   MoreVertical,
   Trash2,
@@ -215,57 +216,63 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
             </button>
 
             {/* Dropdown Menu: View Details + Reuse List + Delete List */}
-            {isMenuOpen && (
-              <div
-                role="menu"
-                className="absolute right-0 rtl:right-auto rtl:left-0 top-8 z-30 w-44 bg-white dark:bg-surface-container-lowest rounded-2xl shadow-xl border border-surface-dim/80 py-1.5 popover-menu text-xs font-['Manrope'] font-semibold text-on-surface"
-              >
-                {/* 1. View Details (Open Details) */}
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsMenuOpen(false);
-                    triggerHaptic(8);
-                    onSelectList(list);
-                  }}
-                  className="w-full px-3.5 py-2 text-left rtl:text-right flex items-center gap-2 hover:bg-surface-container transition-colors cursor-pointer text-primary font-bold"
+            <AnimatePresence>
+              {isMenuOpen && (
+                <motion.div
+                  role="menu"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+                  className="absolute right-0 rtl:right-auto rtl:left-0 top-8 z-50 w-44 bg-white dark:bg-surface-container-lowest rounded-2xl shadow-xl border border-surface-dim/80 py-1.5 popover-menu text-xs font-['Manrope'] font-semibold text-on-surface"
                 >
-                  <Eye className="w-3.5 h-3.5 text-primary" />
-                  <span>{t('viewDetails') || 'View Details'}</span>
-                </button>
-
-                {/* 2. Reuse as New List */}
-                {onReuseList && (
+                  {/* 1. View Details (Open Details) */}
                   <button
                     type="button"
                     role="menuitem"
-                    onClick={handleReuseClick}
-                    className="w-full px-3.5 py-2 text-left rtl:text-right flex items-center gap-2 hover:bg-surface-container transition-colors cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsMenuOpen(false);
+                      triggerHaptic(8);
+                      onSelectList(list);
+                    }}
+                    className="w-full px-3.5 py-2 text-left rtl:text-right flex items-center gap-2 hover:bg-surface-container transition-colors cursor-pointer text-primary font-bold"
                   >
-                    <RotateCcw className="w-3.5 h-3.5 text-outline" />
-                    <span>{t('history.reuseList') || 'Reuse List'}</span>
+                    <Eye className="w-3.5 h-3.5 text-primary" />
+                    <span>{t('viewDetails') || 'View Details'}</span>
                   </button>
-                )}
 
-                {/* 3. Delete List */}
-                {onDeleteList && (
-                  <>
-                    <div className="my-1 border-t border-surface-dim/60" />
+                  {/* 2. Reuse as New List */}
+                  {onReuseList && (
                     <button
                       type="button"
                       role="menuitem"
-                      onClick={handleDeleteTrigger}
-                      className="w-full px-3.5 py-2 text-left rtl:text-right flex items-center gap-2 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-700 dark:text-rose-400 transition-colors cursor-pointer"
+                      onClick={handleReuseClick}
+                      className="w-full px-3.5 py-2 text-left rtl:text-right flex items-center gap-2 hover:bg-surface-container transition-colors cursor-pointer"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>{t('delete') || 'Delete List'}</span>
+                      <RotateCcw className="w-3.5 h-3.5 text-outline" />
+                      <span>{t('history.reuseList') || 'Reuse List'}</span>
                     </button>
-                  </>
-                )}
-              </div>
-            )}
+                  )}
+
+                  {/* 3. Delete List */}
+                  {onDeleteList && (
+                    <>
+                      <div className="my-1 border-t border-surface-dim/60" />
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={handleDeleteTrigger}
+                        className="w-full px-3.5 py-2 text-left rtl:text-right flex items-center gap-2 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-700 dark:text-rose-400 transition-colors cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>{t('delete') || 'Delete List'}</span>
+                      </button>
+                    </>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         )}
       </div>
@@ -288,54 +295,64 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
       </article>
 
       {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowDeleteConfirm(false);
-          }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="bg-white dark:bg-surface-container-lowest rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-surface-dim space-y-4 animate-scale-in"
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowDeleteConfirm(false);
+            }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4"
           >
-            <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-700 flex items-center justify-center mx-auto border border-rose-100">
-              <Trash2 className="w-6 h-6" />
-            </div>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-surface-container-lowest rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-surface-dim space-y-4"
+            >
+              <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-700 flex items-center justify-center mx-auto border border-rose-100">
+                <Trash2 className="w-6 h-6" />
+              </div>
 
-            <div className="text-center space-y-1">
-              <h3 className="font-['Plus_Jakarta_Sans'] text-lg font-bold text-on-surface">
-                {t('history.deleteConfirmTitle') || 'Delete this shopping list?'}
-              </h3>
-              <p className="font-['Manrope'] text-xs sm:text-sm text-outline leading-relaxed">
-                {t('history.deleteConfirmDesc', { title: list.title }) ||
-                  `"${list.title}" and its ${totalItems} associated items will be removed.`}
-              </p>
-            </div>
+              <div className="text-center space-y-1">
+                <h3 className="font-['Plus_Jakarta_Sans'] text-lg font-bold text-on-surface">
+                  {t('history.deleteConfirmTitle') || 'Delete this shopping list?'}
+                </h3>
+                <p className="font-['Manrope'] text-xs sm:text-sm text-outline leading-relaxed">
+                  {t('history.deleteConfirmDesc', { title: list.title }) ||
+                    `"${list.title}" and its ${totalItems} associated items will be removed.`}
+                </p>
+              </div>
 
-            <div className="grid grid-cols-2 gap-3 pt-2">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowDeleteConfirm(false);
-                }}
-                className="h-11 rounded-full bg-surface-container text-on-surface font-['Manrope'] text-xs sm:text-sm font-semibold hover:bg-surface-container-high transition-colors cursor-pointer"
-              >
-                {t('cancel') || 'Cancel'}
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmDelete}
-                className="h-11 rounded-full bg-rose-600 text-white font-['Manrope'] text-xs sm:text-sm font-semibold hover:bg-rose-700 transition-colors shadow-xs active:scale-95 cursor-pointer"
-              >
-                {t('delete') || 'Delete'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowDeleteConfirm(false);
+                  }}
+                  className="h-11 rounded-full bg-surface-container text-on-surface font-['Manrope'] text-xs sm:text-sm font-semibold hover:bg-surface-container-high transition-colors cursor-pointer"
+                >
+                  {t('cancel') || 'Cancel'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmDelete}
+                  className="h-11 rounded-full bg-rose-600 text-white font-['Manrope'] text-xs sm:text-sm font-semibold hover:bg-rose-700 transition-colors shadow-xs active:scale-95 cursor-pointer"
+                >
+                  {t('delete') || 'Delete'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 };

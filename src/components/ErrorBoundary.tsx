@@ -57,7 +57,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
           id="error_boundary_container"
           className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center select-none"
         >
-          <div className="w-full max-w-md bg-surface-container-lowest border border-surface-dim rounded-3xl p-6 sm:p-8 shadow-xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
+          <div className="w-full max-w-md bg-surface-container-lowest border border-surface-dim rounded-3xl p-6 sm:p-8 shadow-xl space-y-5 animate-zoom-in-95">
             <div className="w-14 h-14 rounded-2xl bg-error-container/40 text-error flex items-center justify-center mx-auto">
               <AlertCircle className="w-7 h-7" />
             </div>

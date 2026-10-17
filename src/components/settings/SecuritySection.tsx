@@ -135,7 +135,7 @@ export const SecuritySection: React.FC<SecuritySectionProps> = ({
           {isChangingPassword && (
             <form
               onSubmit={onUpdatePassword}
-              className="p-4 sm:p-5 bg-surface-container-lowest rounded-2xl border border-primary/20 space-y-4 animate-in fade-in duration-200"
+              className="p-4 sm:p-5 bg-surface-container-lowest rounded-2xl border border-primary/20 space-y-4 animate-fade-in"
             >
               {passwordMessage && (
                 <div

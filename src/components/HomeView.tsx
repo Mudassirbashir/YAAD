@@ -392,7 +392,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
         <aside
           role="status"
           aria-live="polite"
-          className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 max-w-sm sm:max-w-md w-[calc(100%-2rem)] p-3 rounded-2xl bg-white dark:bg-stone-900 border border-primary/20 shadow-lg flex items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-2 duration-200"
+          className="fixed bottom-20 left-1/2 -translate-x-1/2 z-40 max-w-sm sm:max-w-md w-[calc(100%-2rem)] p-3 rounded-2xl bg-white dark:bg-stone-900 border border-primary/20 shadow-lg flex items-center justify-between gap-3 animate-slide-in-from-bottom"
         >
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">

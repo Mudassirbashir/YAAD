@@ -101,7 +101,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
     <div
       id="change_password_modal_backdrop"
       onClick={() => !isUpdating && onClose()}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-xs p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-xs p-4 animate-fade-in"
       role="dialog"
       aria-modal="true"
       dir={isRTL ? 'rtl' : 'ltr'}
@@ -109,7 +109,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
       <div
         id="change_password_modal_container"
         onClick={(e) => e.stopPropagation()}
-        className="bg-surface-container-lowest rounded-2xl sm:rounded-3xl p-5 sm:p-6 max-w-sm w-full shadow-xl border border-surface-dim/80 space-y-4 animate-in zoom-in-95 duration-200"
+        className="bg-surface-container-lowest rounded-2xl sm:rounded-3xl p-5 sm:p-6 max-w-sm w-full shadow-xl border border-surface-dim/80 space-y-4 animate-zoom-in-95"
       >
         {/* Header */}
         <div className="flex items-center justify-between pb-1 border-b border-surface-dim/50">

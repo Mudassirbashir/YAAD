@@ -199,7 +199,7 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
         id="reset_password_loading_screen"
         className="min-h-screen bg-background text-on-background flex flex-col justify-center items-center p-4 sm:p-6"
       >
-        <div className="w-full max-w-md bg-surface border border-outline-variant/60 rounded-3xl p-8 shadow-sm text-center space-y-4 animate-in fade-in duration-200">
+        <div className="w-full max-w-md bg-surface border border-outline-variant/60 rounded-3xl p-8 shadow-sm text-center space-y-4 animate-fade-in">
           <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto ring-8 ring-primary/5">
             <Loader2 className="w-6 h-6 animate-spin" />
           </div>
@@ -289,7 +289,7 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
           <div
             id="reset_password_error_alert"
             role="alert"
-            className="p-3.5 bg-error-container/80 border border-error/20 text-on-error-container rounded-2xl flex items-start gap-2.5 text-xs font-['Manrope'] animate-in fade-in duration-200"
+            className="p-3.5 bg-error-container/80 border border-error/20 text-on-error-container rounded-2xl flex items-start gap-2.5 text-xs font-['Manrope'] animate-fade-in"
           >
             <AlertCircle className="w-4 h-4 text-error shrink-0 mt-0.5" />
             <div className="space-y-1">
@@ -303,7 +303,7 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
         {isSuccess ? (
           <div
             id="reset_password_success_card"
-            className="p-6 bg-surface-container rounded-3xl border border-surface-dim text-center space-y-4 animate-in fade-in zoom-in-95 duration-200"
+            className="p-6 bg-surface-container rounded-3xl border border-surface-dim text-center space-y-4 animate-zoom-in-95"
           >
             <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto ring-8 ring-primary/5 animate-pulse">
               <CheckCircle2 className="w-7 h-7" />
@@ -323,7 +323,7 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
           </div>
         ) : isExpiredOrInvalidLink ? (
           /* ================= Expired / Invalid Link State ================= */
-          <div className="space-y-4 pt-1 animate-in fade-in duration-200">
+          <div className="space-y-4 pt-1 animate-fade-in">
             {/* Inline Request New Link Form */}
             {showInlineRequestForm ? (
               <form onSubmit={handleSendInlineResetEmail} className="space-y-3.5">

@@ -99,7 +99,7 @@ export const PhoneNumberNotification: React.FC<PhoneNumberNotificationProps> = (
         role="region"
         aria-label="Account completion reminder"
         dir={isRTL ? 'rtl' : 'ltr'}
-        className="p-3.5 sm:p-4 rounded-2xl bg-surface-container-lowest border border-surface-dim/70 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in duration-200 select-none"
+        className="p-3.5 sm:p-4 rounded-2xl bg-surface-container-lowest border border-surface-dim/70 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-fade-in select-none"
       >
         <div className="flex items-start sm:items-center gap-3 min-w-0">
           <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5 sm:mt-0 border border-primary/15 shadow-2xs">

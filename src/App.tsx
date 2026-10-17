@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
+import { useLanguage } from './context/LanguageContext';
 import { ShoppingList, ShoppingItem, ScreenType, NavigationTab } from './types';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { SplashView } from './components/SplashView';
@@ -86,6 +88,10 @@ function AppContent() {
     getIntendedDestination,
     clearIntendedDestination,
   } = useAppRouter();
+
+  const { isRTL } = useLanguage();
+  const shouldReduceMotion = useReducedMotion();
+  const slideX = (isRTL || (typeof document !== 'undefined' && document.dir === 'rtl')) ? -24 : 24;
 
   const isPasswordResetRequiredActive = Boolean(
     isPasswordRecovery ||
@@ -1215,313 +1221,379 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-background text-on-background flex flex-col justify-between selection:bg-primary-container selection:text-on-primary-container">
-      {/* 1. Public Dedicated YAAD Landing Page (Root Route `/`) */}
-      {currentScreen === 'landing' && (
-        <LandingPageView
-          user={user}
-          onGetStarted={() => {
-            if (user) {
-              navigate('/home');
-            } else {
-              saveIntendedDestination('/home');
-              navigate('/auth');
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={currentScreen}
+          initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, x: slideX }}
+          animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, x: 0 }}
+          exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, x: -slideX }}
+          transition={
+            shouldReduceMotion
+              ? { duration: 0.15 }
+              : { type: 'spring', stiffness: 340, damping: 34 }
+          }
+          className="flex-1 flex flex-col w-full"
+        >
+          {(() => {
+            if (currentScreen === 'landing') {
+              return (
+                <LandingPageView
+                  user={user}
+                  onGetStarted={() => {
+                    if (user) {
+                      navigate('/home');
+                    } else {
+                      saveIntendedDestination('/home');
+                      navigate('/auth');
+                    }
+                  }}
+                  onSignIn={() => {
+                    saveIntendedDestination('/home');
+                    navigate('/auth');
+                  }}
+                  onOpenLegalPage={handleOpenLegalPage}
+                  onOpenRashanList={() => navigate('/rashan-list')}
+                />
+              );
             }
-          }}
-          onSignIn={() => {
-            saveIntendedDestination('/home');
-            navigate('/auth');
-          }}
-          onOpenLegalPage={handleOpenLegalPage}
-          onOpenRashanList={() => navigate('/rashan-list')}
-        />
-      )}
 
-      {/* 1a. Public Dedicated Legal & Information Pages */}
-      {LEGAL_SCREENS.includes(currentScreen) && (
-        <LegalPageView
-          user={user}
-          initialPage={currentScreen as LegalPageType}
-          onBack={handleBackFromLegal}
-          onNavigate={handleOpenLegalPage}
-        />
-      )}
-
-      {/* 1b. Public Dedicated Monthly Rashan List Page */}
-      {currentScreen === 'rashan_list' && (
-        <RashanListPage
-          onBackToApp={() => {
-            navigate(user ? '/home' : '/');
-          }}
-          onOpenAppWithList={async (newList) => {
-            if (user) {
-              setLists((prev) => [newList, ...prev]);
-              if (isConfigured) {
-                await saveUserShoppingList(user.id, newList);
-              }
-              setActiveListId(newList.id);
-              navigate(`/lists/${newList.id}`);
-            } else {
-              // Persist pending imported list across auth redirect so it is never lost
-              try {
-                localStorage.setItem('yaad_pending_imported_rashan_list', JSON.stringify(newList));
-              } catch {}
-              saveIntendedDestination(`/lists/${newList.id}`);
-              navigate('/auth');
+            if (LEGAL_SCREENS.includes(currentScreen)) {
+              return (
+                <LegalPageView
+                  user={user}
+                  initialPage={currentScreen as LegalPageType}
+                  onBack={handleBackFromLegal}
+                  onNavigate={handleOpenLegalPage}
+                />
+              );
             }
-          }}
-          onNavigatePage={(path) => {
-            navigate(path);
-          }}
-        />
-      )}
 
-      {/* 2. Splash Screen on Launch */}
-      {!hasSplashFinished && currentScreen !== 'landing' && currentScreen !== 'rashan_list' && !LEGAL_SCREENS.includes(currentScreen) && (
-        <SplashView onFinish={handleSplashFinish} />
-      )}
-
-      {/* 3. Password Reset Screen - Strict Gate */}
-      {hasSplashFinished &&
-        (isPasswordResetRequiredActive ||
-          currentScreen === 'reset_password' ||
-          route.routeId === 'reset_password') && (
-          <ResetPasswordView
-            onSuccess={() => {
-              replace('/home');
-            }}
-            onRequestNewLink={() => {
-              replace('/auth');
-            }}
-          />
-        )}
-
-      {/* 4. Public Unauthenticated View */}
-      {hasSplashFinished &&
-        !isPasswordResetRequiredActive &&
-        currentScreen !== 'reset_password' &&
-        route.routeId !== 'reset_password' &&
-        (!user || isAuthSuccessShowing) &&
-        !LEGAL_SCREENS.includes(currentScreen) &&
-        currentScreen !== 'not_found' &&
-        currentScreen !== 'rashan_list' && (
-          <AuthView
-            onSuccess={() => {
-              setIsAuthSuccessShowing(false);
-              handleAuthSuccess();
-            }}
-            onSuccessDisplayChange={setIsAuthSuccessShowing}
-            onOpenLegalPage={handleOpenLegalPage}
-          />
-        )}
-
-      {/* 5. Profile Setup */}
-      {hasSplashFinished && user && !isPasswordResetRequiredActive && currentScreen === 'profile_setup' && (
-        <ProfileSetupView onComplete={handleProfileSetupComplete} />
-      )}
-
-      {/* 6. Onboarding */}
-      {hasSplashFinished && user && !isPasswordResetRequiredActive && currentScreen === 'onboarding' && (
-        <OnboardingView onComplete={handleOnboardingComplete} />
-      )}
-
-      {/* 7. Home View */}
-      {hasSplashFinished && user && !isPasswordResetRequiredActive && currentScreen === 'home' && (
-        <HomeView
-          lists={lists}
-          isLoading={isLoadingLists}
-          error={listsFetchError}
-          onRetry={() => fetchShoppingLists(user?.id || null)}
-          onCreateList={handleStartCreateList}
-          onSelectList={handleOpenListInShoppingMode}
-          onContinueShopping={handleOpenListInShoppingMode}
-          onMarkComplete={handleCompleteTrip}
-          onReuseList={handleReuseList}
-          onOpenProfile={() => navigate('/settings')}
-          onOpenMenu={() => navigate('/settings')}
-          onOpenPhoneSettings={handleOpenPhoneInSettings}
-          onOpenHistory={() => navigate('/history')}
-          onEditList={handleEditList}
-          onDeleteList={handleDeleteList}
-          onQuickAddRecommendation={handleQuickAddRecommendation}
-          onOpenStatistics={() => navigate('/stats')}
-        />
-      )}
-
-      {/* 8. Create List View */}
-      {hasSplashFinished && user && !isPasswordResetRequiredActive && currentScreen === 'create_list' && (
-        <CreateListView
-          onBack={() => navigate('/home')}
-          onCreateList={handleCreateListTitleSubmitted}
-          onContinue={handleCreateListTitleSubmitted}
-        />
-      )}
-
-      {/* 9. Add Items View */}
-      {hasSplashFinished && user && !isPasswordResetRequiredActive && currentScreen === 'add_items' && (
-        <AddItemsView
-          listTitle={tempNewListTitle || currentActiveList?.title || 'Shopping List'}
-          initialItems={currentActiveList?.items || []}
-          contextId={activeListContext || currentActiveList?.contextId}
-          onBack={() => {
-            if (typeof window !== 'undefined' && window.history.length > 1) {
-              goBack();
-            } else {
-              navigate('/create');
+            if (currentScreen === 'rashan_list') {
+              return (
+                <RashanListPage
+                  onBackToApp={() => {
+                    navigate(user ? '/home' : '/');
+                  }}
+                  onOpenAppWithList={async (newList) => {
+                    if (user) {
+                      setLists((prev) => [newList, ...prev]);
+                      if (isConfigured) {
+                        await saveUserShoppingList(user.id, newList);
+                      }
+                      setActiveListId(newList.id);
+                      navigate(`/lists/${newList.id}`);
+                    } else {
+                      try {
+                        localStorage.setItem('yaad_pending_imported_rashan_list', JSON.stringify(newList));
+                      } catch {}
+                      saveIntendedDestination(`/lists/${newList.id}`);
+                      navigate('/auth');
+                    }
+                  }}
+                  onNavigatePage={(path) => {
+                    navigate(path);
+                  }}
+                />
+              );
             }
-          }}
-          onStartShopping={handleStartShoppingFromNewItems}
-          onItemsChange={handleItemsChangeInAddView}
-          onRenameList={(newTitle) => {
-            setTempNewListTitle(newTitle);
-            if (currentActiveList) {
-              handleUpdateList({
-                ...currentActiveList,
-                title: newTitle,
-              });
+
+            if (
+              hasSplashFinished &&
+              (isPasswordResetRequiredActive ||
+                currentScreen === 'reset_password' ||
+                route.routeId === 'reset_password')
+            ) {
+              return (
+                <ResetPasswordView
+                  onSuccess={() => {
+                    replace('/home');
+                  }}
+                  onRequestNewLink={() => {
+                    replace('/auth');
+                  }}
+                />
+              );
             }
-          }}
-        />
-      )}
 
-      {/* 10. Deep Link Loading State */}
-      {hasSplashFinished && user && !isPasswordResetRequiredActive && isDeepLinkLoading && (
-        <div className="flex-1 flex flex-col items-center justify-center p-8">
-          <Loader2 className="w-8 h-8 text-primary animate-spin mb-3" />
-          <p className="text-sm font-medium text-on-surface-variant">Loading shopping details...</p>
-        </div>
-      )}
+            if (
+              hasSplashFinished &&
+              !isPasswordResetRequiredActive &&
+              currentScreen !== 'reset_password' &&
+              route.routeId !== 'reset_password' &&
+              (!user || isAuthSuccessShowing) &&
+              !LEGAL_SCREENS.includes(currentScreen) &&
+              currentScreen !== 'not_found'
+            ) {
+              return (
+                <AuthView
+                  onSuccess={() => {
+                    setIsAuthSuccessShowing(false);
+                    handleAuthSuccess();
+                  }}
+                  onSuccessDisplayChange={setIsAuthSuccessShowing}
+                  onOpenLegalPage={handleOpenLegalPage}
+                />
+              );
+            }
 
-      {/* 11. Deep Link Not Found / Private List Protected Screen */}
-      {hasSplashFinished && user && !isPasswordResetRequiredActive && !isDeepLinkLoading && (deepLinkNotFound || deepLinkSessionNotFound) && (
-        <ListNotFoundView
-          type={deepLinkSessionNotFound ? 'session' : 'list'}
-          onGoHome={() => navigate('/home')}
-          onGoHistory={() => navigate('/history')}
-        />
-      )}
+            if (hasSplashFinished && user && !isPasswordResetRequiredActive && currentScreen === 'profile_setup') {
+              return <ProfileSetupView onComplete={handleProfileSetupComplete} />;
+            }
 
-      {/* 12. Shopping List View (Active shopping mode) */}
-      {hasSplashFinished && user && !isPasswordResetRequiredActive && !isDeepLinkLoading && !deepLinkNotFound && currentScreen === 'shopping_list' && currentActiveList && (
-        <ShoppingListView
-          list={currentActiveList}
-          onBack={() => navigate('/home')}
-          onUpdateList={handleUpdateList}
-          onCompleteTrip={handleCompleteTrip}
-          onEditList={handleEditList}
-          onDeleteList={handleDeleteList}
-          onOpenProfile={() => navigate('/settings')}
-          isCompletingTrip={isCompletingTrip}
-          completionError={completionError}
-          onClearCompletionError={() => setCompletionError(null)}
-        />
-      )}
+            if (hasSplashFinished && user && !isPasswordResetRequiredActive && currentScreen === 'onboarding') {
+              return <OnboardingView onComplete={handleOnboardingComplete} />;
+            }
 
-      {/* 13. Completion View */}
-      {hasSplashFinished && user && !isPasswordResetRequiredActive && currentScreen === 'completion' && currentActiveList && (
-        <CompletionView
-          list={currentActiveList}
-          onReturnHome={() => {
-            setActiveListId(null);
-            navigate('/home');
-          }}
-          onViewHistory={handleFinishCompletion}
-          onAddMoreItems={() => navigate(`/lists/${currentActiveList.id}`)}
-          onOpenProfile={() => navigate('/settings')}
-          onStartNewList={handleStartCreateList}
-          onReviewTrip={() => navigate(`/lists/${currentActiveList.id}`)}
-        />
-      )}
+            if (hasSplashFinished && user && !isPasswordResetRequiredActive && currentScreen === 'home') {
+              return (
+                <HomeView
+                  lists={lists}
+                  isLoading={isLoadingLists}
+                  error={listsFetchError}
+                  onRetry={() => fetchShoppingLists(user?.id || null)}
+                  onCreateList={handleStartCreateList}
+                  onSelectList={handleOpenListInShoppingMode}
+                  onContinueShopping={handleOpenListInShoppingMode}
+                  onMarkComplete={handleCompleteTrip}
+                  onReuseList={handleReuseList}
+                  onOpenProfile={() => navigate('/settings')}
+                  onOpenMenu={() => navigate('/settings')}
+                  onOpenPhoneSettings={handleOpenPhoneInSettings}
+                  onOpenHistory={() => navigate('/history')}
+                  onEditList={handleEditList}
+                  onDeleteList={handleDeleteList}
+                  onQuickAddRecommendation={handleQuickAddRecommendation}
+                  onOpenStatistics={() => navigate('/stats')}
+                />
+              );
+            }
 
-      {/* 14. History View */}
-      {hasSplashFinished && user && !isPasswordResetRequiredActive && currentScreen === 'history' && (
-        <ListHistoryView
-          lists={lists}
-          isLoading={isLoadingLists}
-          error={listsFetchError}
-          onRetry={() => fetchShoppingLists(user?.id || null)}
-          onSelectList={handleOpenListDetails}
-          onCreateNewList={handleStartCreateList}
-          onContinueShopping={handleOpenListInShoppingMode}
-          onMarkComplete={handleCompleteTrip}
-          onDeleteList={handleDeleteList}
-          onDeleteMultipleLists={handleDeleteMultipleLists}
-          onClearAllHistory={handleClearAllHistory}
-          onReuseList={handleReuseList}
-          onOpenProfile={() => navigate('/settings')}
-          onOpenMenu={() => navigate('/settings')}
-          onBack={() => navigate('/home')}
-          isOnline={isOnline}
-        />
-      )}
+            if (hasSplashFinished && user && !isPasswordResetRequiredActive && currentScreen === 'create_list') {
+              return (
+                <CreateListView
+                  onBack={() => navigate('/home')}
+                  onCreateList={handleCreateListTitleSubmitted}
+                  onContinue={handleCreateListTitleSubmitted}
+                />
+              );
+            }
 
-      {/* 15. List Details View (or History Session View) */}
-      {hasSplashFinished && user && !isPasswordResetRequiredActive && !isDeepLinkLoading && !deepLinkNotFound && !deepLinkSessionNotFound && currentScreen === 'list_details' && currentActiveList && (
-        <ListDetailsView
-          list={currentActiveList}
-          onBack={() => navigate('/history')}
-          onReuseList={handleReuseList}
-          onContinueShopping={handleOpenListInShoppingMode}
-          onMarkComplete={handleCompleteTrip}
-          onEditList={handleEditList}
-          onDeleteList={handleDeleteList}
-          onOpenProfile={() => navigate('/settings')}
-        />
-      )}
+            if (hasSplashFinished && user && !isPasswordResetRequiredActive && currentScreen === 'add_items') {
+              return (
+                <AddItemsView
+                  listTitle={tempNewListTitle || currentActiveList?.title || 'Shopping List'}
+                  initialItems={currentActiveList?.items || []}
+                  contextId={activeListContext || currentActiveList?.contextId}
+                  onBack={() => {
+                    if (typeof window !== 'undefined' && window.history.length > 1) {
+                      goBack();
+                    } else {
+                      navigate('/create');
+                    }
+                  }}
+                  onStartShopping={handleStartShoppingFromNewItems}
+                  onItemsChange={handleItemsChangeInAddView}
+                  onRenameList={(newTitle) => {
+                    setTempNewListTitle(newTitle);
+                    if (currentActiveList) {
+                      handleUpdateList({
+                        ...currentActiveList,
+                        title: newTitle,
+                      });
+                    }
+                  }}
+                />
+              );
+            }
 
-      {/* 16. Edit List View */}
-      {hasSplashFinished && user && !isPasswordResetRequiredActive && !isDeepLinkLoading && !deepLinkNotFound && currentScreen === 'edit_list' && currentActiveList && (
-        <EditListView
-          list={currentActiveList}
-          onBack={() => navigate(`/lists/${currentActiveList.id}`)}
-          onSave={handleSaveEditedList}
-          onDeleteList={handleDeleteList}
-          onOpenProfile={() => navigate('/settings')}
-        />
-      )}
+            if (hasSplashFinished && user && !isPasswordResetRequiredActive && isDeepLinkLoading) {
+              return (
+                <div className="flex-1 flex flex-col items-center justify-center p-8">
+                  <Loader2 className="w-8 h-8 text-primary animate-spin mb-3" />
+                  <p className="text-sm font-medium text-on-surface-variant">Loading shopping details...</p>
+                </div>
+              );
+            }
 
-      {/* 17. Settings View (with direct SubSection navigation) */}
-      {hasSplashFinished && user && !isPasswordResetRequiredActive && currentScreen === 'settings' && (
-        <SettingsView
-          subSection={route.params?.subSection as SettingsSubSection || null}
-          onSubSectionChange={(section) => navigate(`/settings/${section}`)}
-          onBack={() => navigate('/home')}
-          onSignOut={handleSignOut}
-          onDeleteAccount={handleDeleteAccount}
-          onOpenAuth={handleOpenAuth}
-          onReplayOnboarding={handleResetOnboarding}
-          onOpenLegalPage={handleOpenLegalPage}
-        />
-      )}
+            if (
+              hasSplashFinished &&
+              user &&
+              !isPasswordResetRequiredActive &&
+              !isDeepLinkLoading &&
+              (deepLinkNotFound || deepLinkSessionNotFound)
+            ) {
+              return (
+                <ListNotFoundView
+                  type={deepLinkSessionNotFound ? 'session' : 'list'}
+                  onGoHome={() => navigate('/home')}
+                  onGoHistory={() => navigate('/history')}
+                />
+              );
+            }
 
-      {/* 18. Statistics View */}
-      {hasSplashFinished && user && !isPasswordResetRequiredActive && currentScreen === 'statistics' && (
-        <StatisticsView
-          lists={lists}
-          isLoading={isLoadingLists}
-          error={listsFetchError}
-          onRetry={() => fetchShoppingLists(user?.id || null)}
-          onBack={() => navigate('/home')}
-          onCreateList={handleStartCreateList}
-          onSelectList={handleOpenListInShoppingMode}
-        />
-      )}
+            if (
+              hasSplashFinished &&
+              user &&
+              !isPasswordResetRequiredActive &&
+              !isDeepLinkLoading &&
+              !deepLinkNotFound &&
+              currentScreen === 'shopping_list' &&
+              currentActiveList
+            ) {
+              return (
+                <ShoppingListView
+                  list={currentActiveList}
+                  onBack={() => navigate('/home')}
+                  onUpdateList={handleUpdateList}
+                  onCompleteTrip={handleCompleteTrip}
+                  onEditList={handleEditList}
+                  onDeleteList={handleDeleteList}
+                  onOpenProfile={() => navigate('/settings')}
+                  isCompletingTrip={isCompletingTrip}
+                  completionError={completionError}
+                  onClearCompletionError={() => setCompletionError(null)}
+                />
+              );
+            }
 
-      {/* 18b. Dedicated Notifications View */}
-      {hasSplashFinished && user && !isPasswordResetRequiredActive && currentScreen === 'notifications' && (
-        <NotificationsView
-          onBack={() => navigate('/home')}
-        />
-      )}
+            if (
+              hasSplashFinished &&
+              user &&
+              !isPasswordResetRequiredActive &&
+              currentScreen === 'completion' &&
+              currentActiveList
+            ) {
+              return (
+                <CompletionView
+                  list={currentActiveList}
+                  onReturnHome={() => {
+                    setActiveListId(null);
+                    navigate('/home');
+                  }}
+                  onViewHistory={handleFinishCompletion}
+                  onAddMoreItems={() => navigate(`/lists/${currentActiveList.id}`)}
+                  onOpenProfile={() => navigate('/settings')}
+                  onStartNewList={handleStartCreateList}
+                  onReviewTrip={() => navigate(`/lists/${currentActiveList.id}`)}
+                />
+              );
+            }
 
-      {/* 19. 404 Page Not Found View */}
-      {hasSplashFinished && currentScreen === 'not_found' && (
-        <NotFoundView
-          attemptedPath={currentPath}
-          onGoHome={() => navigate(user ? '/home' : '/auth')}
-          onGoHistory={user ? () => navigate('/history') : undefined}
-          onGoBack={goBack}
-        />
-      )}
+            if (hasSplashFinished && user && !isPasswordResetRequiredActive && currentScreen === 'history') {
+              return (
+                <ListHistoryView
+                  lists={lists}
+                  isLoading={isLoadingLists}
+                  error={listsFetchError}
+                  onRetry={() => fetchShoppingLists(user?.id || null)}
+                  onSelectList={handleOpenListDetails}
+                  onCreateNewList={handleStartCreateList}
+                  onContinueShopping={handleOpenListInShoppingMode}
+                  onMarkComplete={handleCompleteTrip}
+                  onDeleteList={handleDeleteList}
+                  onDeleteMultipleLists={handleDeleteMultipleLists}
+                  onClearAllHistory={handleClearAllHistory}
+                  onReuseList={handleReuseList}
+                  onOpenProfile={() => navigate('/settings')}
+                  onOpenMenu={() => navigate('/settings')}
+                  onBack={() => navigate('/home')}
+                  isOnline={isOnline}
+                />
+              );
+            }
+
+            if (
+              hasSplashFinished &&
+              user &&
+              !isPasswordResetRequiredActive &&
+              !isDeepLinkLoading &&
+              !deepLinkNotFound &&
+              !deepLinkSessionNotFound &&
+              currentScreen === 'list_details' &&
+              currentActiveList
+            ) {
+              return (
+                <ListDetailsView
+                  list={currentActiveList}
+                  onBack={() => navigate('/history')}
+                  onReuseList={handleReuseList}
+                  onContinueShopping={handleOpenListInShoppingMode}
+                  onMarkComplete={handleCompleteTrip}
+                  onEditList={handleEditList}
+                  onDeleteList={handleDeleteList}
+                  onOpenProfile={() => navigate('/settings')}
+                />
+              );
+            }
+
+            if (
+              hasSplashFinished &&
+              user &&
+              !isPasswordResetRequiredActive &&
+              !isDeepLinkLoading &&
+              !deepLinkNotFound &&
+              currentScreen === 'edit_list' &&
+              currentActiveList
+            ) {
+              return (
+                <EditListView
+                  list={currentActiveList}
+                  onBack={() => navigate(`/lists/${currentActiveList.id}`)}
+                  onSave={handleSaveEditedList}
+                  onDeleteList={handleDeleteList}
+                  onOpenProfile={() => navigate('/settings')}
+                />
+              );
+            }
+
+            if (hasSplashFinished && user && !isPasswordResetRequiredActive && currentScreen === 'settings') {
+              return (
+                <SettingsView
+                  subSection={route.params?.subSection as SettingsSubSection || null}
+                  onSubSectionChange={(section) => navigate(`/settings/${section}`)}
+                  onBack={() => navigate('/home')}
+                  onSignOut={handleSignOut}
+                  onDeleteAccount={handleDeleteAccount}
+                  onOpenAuth={handleOpenAuth}
+                  onReplayOnboarding={handleResetOnboarding}
+                  onOpenLegalPage={handleOpenLegalPage}
+                />
+              );
+            }
+
+            if (hasSplashFinished && user && !isPasswordResetRequiredActive && currentScreen === 'statistics') {
+              return (
+                <StatisticsView
+                  lists={lists}
+                  isLoading={isLoadingLists}
+                  error={listsFetchError}
+                  onRetry={() => fetchShoppingLists(user?.id || null)}
+                  onBack={() => navigate('/home')}
+                  onCreateList={handleStartCreateList}
+                  onSelectList={handleOpenListInShoppingMode}
+                />
+              );
+            }
+
+            if (hasSplashFinished && user && !isPasswordResetRequiredActive && currentScreen === 'notifications') {
+              return <NotificationsView onBack={() => navigate('/home')} />;
+            }
+
+            if (hasSplashFinished && currentScreen === 'not_found') {
+              return (
+                <NotFoundView
+                  attemptedPath={currentPath}
+                  onGoHome={() => navigate(user ? '/home' : '/auth')}
+                  onGoHistory={user ? () => navigate('/history') : undefined}
+                  onGoBack={goBack}
+                />
+              );
+            }
+
+            return null;
+          })()}
+        </motion.div>
+      </AnimatePresence>
 
       {/* Persistent Bottom Navigation */}
       {showBottomNav && (

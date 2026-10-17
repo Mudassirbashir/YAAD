@@ -111,7 +111,7 @@ export const LegalDocModal: React.FC<LegalDocModalProps> = ({
     <div
       id="legal_doc_modal_backdrop"
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-xs p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-xs p-4 animate-fade-in"
       role="dialog"
       aria-modal="true"
       dir={isRTL ? 'rtl' : 'ltr'}
@@ -119,7 +119,7 @@ export const LegalDocModal: React.FC<LegalDocModalProps> = ({
       <div
         id="legal_doc_modal_container"
         onClick={(e) => e.stopPropagation()}
-        className="bg-surface-container-lowest rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl border border-surface-dim space-y-4 animate-in zoom-in-95 duration-200"
+        className="bg-surface-container-lowest rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl border border-surface-dim space-y-4 animate-zoom-in-95"
       >
         <div className="flex items-center justify-between pb-2 border-b border-surface-dim/70">
           <div className="flex items-center gap-2.5">

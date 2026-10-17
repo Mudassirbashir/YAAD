@@ -42,7 +42,10 @@ export const SplashView: React.FC<SplashViewProps> = ({ onFinish, isRestoringAut
       <div className="absolute top-1/3 w-72 h-72 bg-primary-fixed/20 rounded-full blur-3xl pointer-events-none -z-10 animate-pulse" />
 
       {/* Main Logo Container */}
-      <div className="flex flex-col items-center justify-center gap-8 animate-in fade-in zoom-in-95 duration-700">
+      <div
+        className="flex flex-col items-center justify-center gap-8 animate-zoom-in-95"
+        style={{ animationDuration: '700ms' }}
+      >
         <div className="relative w-48 h-48 sm:w-56 sm:h-56 flex items-center justify-center filter drop-shadow-[0px_12px_28px_rgba(0,53,39,0.18)] hover:scale-105 transition-transform duration-300">
           <img
             src={APP_IMAGES.logo3d}

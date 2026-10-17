@@ -218,14 +218,14 @@ export const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
   return (
     <div
       id="image_cropper_modal_backdrop"
-      className="fixed inset-0 z-60 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-60 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-fade-in"
       role="dialog"
       aria-modal="true"
       dir={isRTL ? 'rtl' : 'ltr'}
     >
       <div
         id="image_cropper_modal_container"
-        className="bg-surface-container-lowest text-on-surface rounded-3xl p-5 sm:p-6 max-w-md w-full shadow-2xl border border-surface-dim/80 space-y-4 animate-in zoom-in-95 duration-200 flex flex-col"
+        className="bg-surface-container-lowest text-on-surface rounded-3xl p-5 sm:p-6 max-w-md w-full shadow-2xl border border-surface-dim/80 space-y-4 animate-zoom-in-95 flex flex-col"
       >
         {/* Header */}
         <div className="flex items-center justify-between pb-2 border-b border-surface-dim/50">

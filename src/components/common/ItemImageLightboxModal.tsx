@@ -34,7 +34,7 @@ export const ItemImageLightboxModal: React.FC<ItemImageLightboxModalProps> = ({
     <div
       id="item_image_lightbox_backdrop"
       onClick={onClose}
-      className="fixed inset-0 z-70 flex items-center justify-center bg-black/85 backdrop-blur-md p-3 sm:p-6 animate-in fade-in duration-200"
+      className="fixed inset-0 z-70 flex items-center justify-center bg-black/85 backdrop-blur-md p-3 sm:p-6 animate-fade-in"
       role="dialog"
       aria-modal="true"
       aria-label={itemName}
@@ -43,7 +43,7 @@ export const ItemImageLightboxModal: React.FC<ItemImageLightboxModalProps> = ({
       <div
         id="item_image_lightbox_container"
         onClick={(e) => e.stopPropagation()}
-        className="relative max-w-lg w-full max-h-[92vh] flex flex-col bg-stone-900 rounded-3xl overflow-hidden shadow-2xl border border-white/10 animate-in zoom-in-95 duration-200"
+        className="relative max-w-lg w-full max-h-[92vh] flex flex-col bg-stone-900 rounded-3xl overflow-hidden shadow-2xl border border-white/10 animate-zoom-in-95"
       >
         {/* Top Header Bar */}
         <div className="flex items-center justify-between px-4 py-3 bg-black/50 backdrop-blur-md border-b border-white/10 shrink-0 z-10">

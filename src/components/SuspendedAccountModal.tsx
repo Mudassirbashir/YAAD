@@ -19,7 +19,7 @@ export const SuspendedAccountModal: React.FC<SuspendedAccountModalProps> = ({
       id="account_suspended_modal_backdrop"
       className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4 select-none"
     >
-      <div className="bg-surface-container-lowest max-w-md w-full rounded-3xl p-6 sm:p-8 border border-red-500/30 shadow-2xl text-center space-y-5 animate-in fade-in zoom-in-95 duration-200">
+      <div className="bg-surface-container-lowest max-w-md w-full rounded-3xl p-6 sm:p-8 border border-red-500/30 shadow-2xl text-center space-y-5 animate-zoom-in-95">
         {/* Warning Icon Badge */}
         <div className="w-16 h-16 rounded-2xl bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 flex items-center justify-center mx-auto ring-8 ring-red-500/10 shadow-xs">
           <ShieldAlert className="w-8 h-8 stroke-[2.2]" />

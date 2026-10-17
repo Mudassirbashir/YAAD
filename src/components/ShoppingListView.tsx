@@ -800,7 +800,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
         {/* Transient Feedback Banner */}
         {feedbackToast && (
           <div
-            className={`p-2.5 rounded-xl text-xs font-['Manrope'] font-semibold flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-150 ${
+            className={`p-2.5 rounded-xl text-xs font-['Manrope'] font-semibold flex items-center gap-2 animate-slide-in-from-top ${
               feedbackToast.type === 'merge'
                 ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20'
                 : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20'
@@ -860,7 +860,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
 
           {/* Real-time Catalog Search Suggestions */}
           {searchSuggestions.length > 0 && newItemText.trim().length > 0 && (
-            <div className="space-y-1.5 pt-1 animate-in fade-in duration-150">
+            <div className="space-y-1.5 pt-1 animate-fade-in">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 {searchSuggestions.map((sug) => (
                   <button
@@ -904,7 +904,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
 
           {/* Real-time Recognition Badge */}
           {quickAddParsed && newItemText.trim().length > 0 && (
-            <div className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2 rounded-2xl bg-surface-container-low border border-surface-container-high/80 text-xs animate-in fade-in duration-150">
+            <div className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2 rounded-2xl bg-surface-container-low border border-surface-container-high/80 text-xs animate-fade-in">
               <div className="flex items-center gap-2 min-w-0">
                 <span className="w-5 h-5 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
                   <CategoryIcon categoryId={quickAddParsed.suggestedCategoryId} className="w-3 h-3" />
@@ -1007,11 +1007,11 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
           {showSwipeHint && list.items.length > 0 && (
             <motion.div
               id="swipe-hint-banner"
-              initial={{ opacity: 0, y: -6, height: 0 }}
-              animate={{ opacity: 1, y: 0, height: 'auto' }}
-              exit={{ opacity: 0, y: -6, height: 0 }}
-              transition={{ duration: 0.2 }}
-              className="overflow-hidden"
+              initial={{ opacity: 0, scaleY: 0.8, y: -6 }}
+              animate={{ opacity: 1, scaleY: 1, y: 0 }}
+              exit={{ opacity: 0, scaleY: 0.8, y: -6 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 34 }}
+              className="overflow-hidden origin-top"
             >
               <div className="flex items-center justify-between gap-3 px-3.5 py-2 rounded-2xl bg-surface-container-low border border-surface-dim/80 text-on-surface-variant text-xs font-['Manrope'] shadow-2xs">
                 <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -1042,7 +1042,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
 
         {/* Empty State when list has no items */}
         {list.items.length === 0 ? (
-          <div className="bg-surface-container-lowest rounded-3xl p-8 text-center border border-surface-container-high/60 my-4 flex flex-col items-center justify-center space-y-3 shadow-xs animate-in fade-in duration-200">
+          <div className="bg-surface-container-lowest rounded-3xl p-8 text-center border border-surface-container-high/60 my-4 flex flex-col items-center justify-center space-y-3 shadow-xs animate-fade-in">
             <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-primary flex items-center justify-center">
               <ShoppingBag className="w-7 h-7 stroke-[2]" />
             </div>
@@ -1225,8 +1225,8 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
             id="shopping-undo-toast"
             initial={{ opacity: 0, y: 24, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            transition={{ duration: 0.22, ease: 'easeOut' }}
+            exit={{ opacity: 0, y: 24, scale: 0.95 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 34 }}
             className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between gap-3 px-4 py-3 rounded-2xl text-white shadow-2xl border max-w-md w-[92vw] sm:w-auto min-w-[320px] ${
               undoToast.type === 'deleted'
                 ? 'bg-rose-950 border-rose-500/60 shadow-rose-950/60'
@@ -1283,56 +1283,66 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
       />
 
       {/* Delete List Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div
-          onClick={() => setShowDeleteConfirm(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="bg-white dark:bg-surface-container-lowest rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-surface-dim space-y-4 animate-scale-in"
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+            onClick={() => setShowDeleteConfirm(false)}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4"
           >
-            <div className="flex items-center gap-3 text-rose-700 dark:text-rose-400">
-              <div className="w-10 h-10 rounded-full bg-rose-50 dark:bg-rose-950/40 flex items-center justify-center shrink-0">
-                <Trash2 className="w-5 h-5" />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-surface-container-lowest rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-surface-dim space-y-4"
+            >
+              <div className="flex items-center gap-3 text-rose-700 dark:text-rose-400">
+                <div className="w-10 h-10 rounded-full bg-rose-50 dark:bg-rose-950/40 flex items-center justify-center shrink-0">
+                  <Trash2 className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-base text-on-surface truncate">
+                    {t('delete') || 'Delete List'}
+                  </h3>
+                  <p className="text-xs text-outline font-['Manrope'] truncate">
+                    {list.title}
+                  </p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-base text-on-surface truncate">
-                  {t('delete') || 'Delete List'}
-                </h3>
-                <p className="text-xs text-outline font-['Manrope'] truncate">
-                  {list.title}
-                </p>
+
+              <p className="text-xs text-on-surface-variant leading-relaxed">
+                Are you sure you want to delete this shopping list? This action cannot be undone.
+              </p>
+
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="h-11 rounded-full bg-surface-container text-on-surface font-['Manrope'] text-xs sm:text-sm font-semibold hover:bg-surface-container-high transition-colors cursor-pointer"
+                >
+                  {t('cancel')}
+                </button>
+                <button
+                  type="button"
+                  id="confirm_delete_list_btn"
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    onDeleteList?.(list.id);
+                  }}
+                  className="h-11 rounded-full bg-rose-600 text-white font-['Manrope'] text-xs sm:text-sm font-semibold hover:bg-rose-700 transition-colors shadow-xs active:scale-95 cursor-pointer"
+                >
+                  {t('delete')}
+                </button>
               </div>
-            </div>
-
-            <p className="text-xs text-on-surface-variant leading-relaxed">
-              Are you sure you want to delete this shopping list? This action cannot be undone.
-            </p>
-
-            <div className="grid grid-cols-2 gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(false)}
-                className="h-11 rounded-full bg-surface-container text-on-surface font-['Manrope'] text-xs sm:text-sm font-semibold hover:bg-surface-container-high transition-colors cursor-pointer"
-              >
-                {t('cancel')}
-              </button>
-              <button
-                type="button"
-                id="confirm_delete_list_btn"
-                onClick={() => {
-                  setShowDeleteConfirm(false);
-                  onDeleteList?.(list.id);
-                }}
-                className="h-11 rounded-full bg-rose-600 text-white font-['Manrope'] text-xs sm:text-sm font-semibold hover:bg-rose-700 transition-colors shadow-xs active:scale-95 cursor-pointer"
-              >
-                {t('delete')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Item High-Resolution Photo Lightbox Preview */}
       <ItemImageLightboxModal

@@ -23,7 +23,7 @@ export const SignOutConfirmModal: React.FC<SignOutConfirmModalProps> = ({
     <div
       id="sign_out_modal_backdrop"
       onClick={() => !isSigningOut && onClose()}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in"
       role="dialog"
       aria-modal="true"
       aria-labelledby="sign_out_modal_title"
@@ -32,7 +32,7 @@ export const SignOutConfirmModal: React.FC<SignOutConfirmModalProps> = ({
       <div
         id="sign_out_modal_container"
         onClick={(e) => e.stopPropagation()}
-        className="bg-surface-container-lowest rounded-3xl p-6 sm:p-7 max-w-sm sm:max-w-md w-full shadow-2xl border border-surface-dim/80 space-y-5 text-center animate-in zoom-in-95 duration-200"
+        className="bg-surface-container-lowest rounded-3xl p-6 sm:p-7 max-w-sm sm:max-w-md w-full shadow-2xl border border-surface-dim/80 space-y-5 text-center animate-zoom-in-95"
       >
         {/* Visual Badge */}
         <div className="w-14 h-14 rounded-2xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto border border-rose-500/20 shadow-xs">

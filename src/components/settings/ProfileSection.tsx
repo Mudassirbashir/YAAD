@@ -99,7 +99,7 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
         {profileMessage && (
           <div
             id="settings_profile_msg"
-            className={`p-3.5 rounded-2xl text-xs sm:text-sm flex items-center gap-2.5 transition-all animate-in fade-in slide-in-from-top-2 duration-200 ${
+            className={`p-3.5 rounded-2xl text-xs sm:text-sm flex items-center gap-2.5 transition-all animate-slide-in-from-top ${
               profileMessage.type === 'success'
                 ? 'bg-secondary-fixed/50 text-on-secondary-fixed font-semibold border border-secondary-fixed'
                 : 'bg-error-container text-on-error-container border border-error/20'
@@ -218,7 +218,7 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
             {isEditingName && (
               <form
                 onSubmit={onSaveName}
-                className="p-4 sm:p-4.5 bg-surface-container-lowest rounded-2xl border border-primary/20 space-y-3 animate-in fade-in duration-200"
+                className="p-4 sm:p-4.5 bg-surface-container-lowest rounded-2xl border border-primary/20 space-y-3 animate-fade-in"
               >
                 <div className="flex items-center justify-between">
                   <label
@@ -284,7 +284,7 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
             {isEditingPhone && (
               <form
                 onSubmit={onSavePhone}
-                className="p-4 sm:p-4.5 bg-surface-container-lowest rounded-2xl border border-primary/20 space-y-3 animate-in fade-in duration-200"
+                className="p-4 sm:p-4.5 bg-surface-container-lowest rounded-2xl border border-primary/20 space-y-3 animate-fade-in"
               >
                 <div className="flex items-center justify-between">
                   <label

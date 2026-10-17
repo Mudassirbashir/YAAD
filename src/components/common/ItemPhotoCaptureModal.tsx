@@ -244,7 +244,7 @@ export const ItemPhotoCaptureModal: React.FC<ItemPhotoCaptureModalProps> = ({
     <div
       id="item_photo_capture_backdrop"
       onClick={() => !isUploading && onClose()}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-4 animate-fade-in"
       role="dialog"
       aria-modal="true"
       dir={isRTL ? 'rtl' : 'ltr'}
@@ -252,7 +252,7 @@ export const ItemPhotoCaptureModal: React.FC<ItemPhotoCaptureModalProps> = ({
       <div
         id="item_photo_capture_sheet"
         onClick={(e) => e.stopPropagation()}
-        className="bg-surface-container-lowest rounded-t-3xl sm:rounded-3xl p-4 sm:p-5 max-w-md w-full shadow-2xl border border-surface-dim/80 space-y-4 animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200"
+        className="bg-surface-container-lowest rounded-t-3xl sm:rounded-3xl p-4 sm:p-5 max-w-md w-full shadow-2xl border border-surface-dim/80 space-y-4 animate-slide-in-from-bottom sm:animate-zoom-in-95"
       >
         {/* Header */}
         <div className="flex items-center justify-between pb-2 border-b border-surface-dim/50">

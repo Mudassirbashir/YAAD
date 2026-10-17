@@ -319,7 +319,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 sm:space-y-7">
         {/* Error Banner if fetch failed */}
         {error && (
-          <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-2xl p-4 flex items-center justify-between gap-3 text-rose-800 dark:text-rose-200 animate-in fade-in duration-200">
+          <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-2xl p-4 flex items-center justify-between gap-3 text-rose-800 dark:text-rose-200 animate-fade-in">
             <div className="flex items-center gap-3">
               <AlertCircle className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0" />
               <p className="text-xs sm:text-sm font-medium font-['Manrope']">{error}</p>

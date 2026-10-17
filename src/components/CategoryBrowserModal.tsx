@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { X, Search, Plus, Check, Grid, Tag } from 'lucide-react';
 import { CategoryId, CATEGORIES_LIST } from '../types';
 import { useLanguage } from '../context/LanguageContext';
@@ -47,8 +48,6 @@ export const CategoryBrowserModal: React.FC<CategoryBrowserModalProps> = ({
 
     return result;
   }, [isOpen, selectedCategory, searchQuery]);
-
-  if (!isOpen) return null;
 
   const handleAdd = (item: typeof INITIAL_MASTER_CATALOG[0]) => {
     const candidate: RecommendationCandidate = {
@@ -125,16 +124,26 @@ export const CategoryBrowserModal: React.FC<CategoryBrowserModalProps> = ({
   const primaryCategories = CATEGORIES_LIST.slice(0, 16);
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
-      role="dialog"
-      aria-modal="true"
-      onClick={onClose}
-    >
-      <div
-        className="relative w-full max-w-xl sm:max-w-2xl lg:max-w-3xl bg-white rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 shadow-2xl overflow-hidden transition-all duration-300 max-h-[90vh] flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          onClick={onClose}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+            className="relative w-full max-w-xl sm:max-w-2xl lg:max-w-3xl bg-white rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-surface-dim/40 shrink-0">
           <div className="flex items-center gap-2.5">
@@ -266,7 +275,9 @@ export const CategoryBrowserModal: React.FC<CategoryBrowserModalProps> = ({
             {t('home.categoriesModal.close')}
           </button>
         </div>
-      </div>
-    </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };

@@ -230,7 +230,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
       <div
         id="edit_profile_modal_backdrop"
         onClick={() => !isSaving && onClose()}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-xs p-4 animate-in fade-in duration-200"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-xs p-4 animate-fade-in"
         role="dialog"
         aria-modal="true"
         dir={isRTL ? 'rtl' : 'ltr'}
@@ -238,7 +238,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
         <div
           id="edit_profile_modal_container"
           onClick={(e) => e.stopPropagation()}
-          className="bg-surface-container-lowest rounded-2xl sm:rounded-3xl p-5 sm:p-6 max-w-sm w-full shadow-xl border border-surface-dim/80 space-y-4 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto"
+          className="bg-surface-container-lowest rounded-2xl sm:rounded-3xl p-5 sm:p-6 max-w-sm w-full shadow-xl border border-surface-dim/80 space-y-4 animate-zoom-in-95 max-h-[90vh] overflow-y-auto"
         >
           {/* Header */}
           <div className="flex items-center justify-between pb-1 border-b border-surface-dim/50">
@@ -352,7 +352,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 </div>
               )}
               {photoSuccessMsg && !isUploadingPhoto && (
-                <div className="flex items-center gap-2 p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs font-semibold animate-in fade-in duration-200">
+                <div className="flex items-center gap-2 p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs font-semibold animate-fade-in">
                   <Sparkles className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                   <span>{photoSuccessMsg}</span>
                 </div>

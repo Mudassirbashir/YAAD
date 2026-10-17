@@ -86,7 +86,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         </div>
 
         {error && (
-          <p className="text-xs font-['Manrope'] text-error font-medium flex items-center gap-1 mt-0.5 animate-in fade-in duration-150">
+          <p className="text-xs font-['Manrope'] text-error font-medium flex items-center gap-1 mt-0.5 animate-fade-in">
             <span>{error}</span>
           </p>
         )}

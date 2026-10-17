@@ -280,7 +280,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
 
         {/* Bulk Selection Action Bar (when in selection mode) */}
         {isSelectionMode && lists.length > 0 && (
-          <div className="p-3 bg-surface-container-high/90 rounded-2xl border border-surface-dim flex flex-wrap items-center justify-between gap-2.5 shadow-2xs animate-fadeIn">
+          <div className="p-3 bg-surface-container-high/90 rounded-2xl border border-surface-dim flex flex-wrap items-center justify-between gap-2.5 shadow-2xs animate-fade-in">
             <div className="flex items-center gap-2 sm:gap-3">
               <button
                 type="button"
@@ -564,7 +564,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-fadeIn"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-fade-in"
           onClick={() => !isDeleting && setShowBulkDeleteModal(false)}
         >
           <div
@@ -611,7 +611,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-fadeIn"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-fade-in"
           onClick={() => !isDeleting && setShowClearAllModal(false)}
         >
           <div

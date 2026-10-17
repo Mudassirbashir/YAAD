@@ -176,7 +176,7 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-xs animate-in fade-in duration-200 p-0 sm:p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-xs animate-fade-in p-0 sm:p-4"
       onClick={() => {
         if (!isSubmitting) onClose();
       }}
@@ -188,7 +188,7 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
         aria-modal="true"
         aria-labelledby="add_phone_modal_title"
         onClick={(e) => e.stopPropagation()}
-        className="relative w-full max-w-md max-h-[92vh] flex flex-col bg-surface-container-lowest rounded-t-3xl sm:rounded-3xl shadow-2xl border border-surface-dim/80 overflow-hidden animate-in slide-in-from-bottom-4 duration-300 sm:zoom-in-95"
+        className="relative w-full max-w-md max-h-[92vh] flex flex-col bg-surface-container-lowest rounded-t-3xl sm:rounded-3xl shadow-2xl border border-surface-dim/80 overflow-hidden animate-slide-in-from-bottom sm:animate-zoom-in-95"
       >
         {/* Mobile Pull Bar */}
         <div className="w-full flex sm:hidden items-center justify-center pt-3 pb-1">
@@ -230,7 +230,7 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
         <div className="p-5 sm:p-6 overflow-y-auto max-h-[calc(92vh-120px)] flex-1 flex flex-col gap-4">
           {isSuccess ? (
             /* Subtle Success State */
-            <div className="py-8 sm:py-10 flex flex-col items-center justify-center text-center animate-in zoom-in-95 duration-200">
+            <div className="py-8 sm:py-10 flex flex-col items-center justify-center text-center animate-zoom-in-95">
               <div className="w-14 h-14 rounded-full bg-emerald-50 text-emerald-800 flex items-center justify-center mb-3.5 border border-emerald-200/80 shadow-xs">
                 <CheckCircle2 className="w-8 h-8 stroke-[2.4]" />
               </div>
@@ -248,7 +248,7 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
             </div>
           ) : isCountryPickerOpen ? (
             /* Searchable Country Selector View */
-            <div className="flex flex-col gap-3 animate-in fade-in duration-150">
+            <div className="flex flex-col gap-3 animate-fade-in">
               <div className="flex items-center justify-between gap-2">
                 <span className="font-['Plus_Jakarta_Sans'] text-sm font-bold text-on-surface">
                   'Select Country'
@@ -329,7 +329,7 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
               {errorMessage && (
                 <div
                   id="phone_error_message"
-                  className="p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-xl text-xs font-['Manrope'] text-red-700 dark:text-red-300 flex items-start gap-2 animate-in fade-in"
+                  className="p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-xl text-xs font-['Manrope'] text-red-700 dark:text-red-300 flex items-start gap-2 animate-fade-in"
                 >
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                   <span>{errorMessage}</span>

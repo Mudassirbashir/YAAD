@@ -841,7 +841,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         <div
           role="status"
           aria-live="polite"
-          className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-[#00422f] text-emerald-100 px-4 py-2.5 rounded-2xl shadow-xl flex items-center gap-2.5 border border-emerald-400/30 animate-in fade-in slide-in-from-bottom-3 duration-200 text-xs font-['Manrope'] font-semibold"
+          className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-[#00422f] text-emerald-100 px-4 py-2.5 rounded-2xl shadow-xl flex items-center gap-2.5 border border-emerald-400/30 animate-slide-in-from-bottom text-xs font-['Manrope'] font-semibold"
         >
           <Check className="w-4 h-4 text-emerald-400 stroke-[3]" />
           <span>{avatarToast}</span>

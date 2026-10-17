@@ -113,7 +113,7 @@ export const SupportDeskModal: React.FC<SupportDeskModalProps> = ({
     <div
       id="support_modal_backdrop"
       onClick={() => !isSubmitting && handleDone()}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-xs p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-xs p-4 animate-fade-in"
       role="dialog"
       aria-modal="true"
       dir={isRTL ? 'rtl' : 'ltr'}
@@ -121,7 +121,7 @@ export const SupportDeskModal: React.FC<SupportDeskModalProps> = ({
       <div
         id="support_modal_container"
         onClick={(e) => e.stopPropagation()}
-        className="bg-white rounded-3xl p-5 sm:p-6 max-w-md w-full shadow-2xl border border-neutral-200 text-neutral-900 space-y-4 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200"
+        className="bg-white rounded-3xl p-5 sm:p-6 max-w-md w-full shadow-2xl border border-neutral-200 text-neutral-900 space-y-4 max-h-[90vh] overflow-y-auto animate-zoom-in-95"
       >
         {/* Header */}
         <div className="flex items-center justify-between pb-3 border-b border-neutral-100">

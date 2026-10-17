@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   ArrowLeft,
   ArrowRight,
@@ -62,6 +63,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
   const [currentTitle, setCurrentTitle] = useState<string>(listTitle);
   const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
   const [titleInputVal, setTitleInputVal] = useState<string>(listTitle);
+  const renameInputRef = useRef<HTMLInputElement>(null);
   const [inputVal, setInputVal] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<CategoryId>('vegetables');
   const [userManuallySelectedCategory, setUserManuallySelectedCategory] = useState<boolean>(false);
@@ -663,7 +665,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
   return (
     <div className="w-full max-w-6xl mx-auto min-h-screen flex flex-col antialiased bg-background text-on-surface">
       {/* Header */}
-      <header className="sticky top-0 w-full z-40 bg-background/95 backdrop-blur-md border-b border-surface-dim/40">
+      <header className="sticky top-0 w-full z-40 bg-background/80 backdrop-blur-xl [backdrop-filter:blur(24px)] [-webkit-backdrop-filter:blur(24px)] border-b border-surface-dim/40">
         <div className="flex justify-between items-center px-4 sm:px-6 md:px-8 h-14 w-full max-w-6xl mx-auto">
           <button
             onClick={onBack}
@@ -672,72 +674,94 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
           >
             <ArrowLeft className="w-5 h-5 rtl:rotate-180 text-primary" />
           </button>
-          {isEditingTitle ? (
-            <div className="flex items-center gap-1.5 flex-1 max-w-[260px] sm:max-w-md mx-2">
-              <input
-                type="text"
-                value={titleInputVal}
-                onChange={(e) => setTitleInputVal(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
+          <AnimatePresence mode="wait" initial={false}>
+            {isEditingTitle ? (
+              <motion.div
+                key="editing-title"
+                layoutId="list-title"
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.96 }}
+                transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                onAnimationComplete={() => {
+                  renameInputRef.current?.focus();
+                }}
+                className="flex items-center gap-1.5 flex-1 max-w-[260px] sm:max-w-md mx-2"
+              >
+                <input
+                  ref={renameInputRef}
+                  type="text"
+                  value={titleInputVal}
+                  onChange={(e) => setTitleInputVal(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const trimmed = titleInputVal.trim() || 'Shopping List';
+                      setCurrentTitle(trimmed);
+                      setIsEditingTitle(false);
+                      onRenameList?.(trimmed);
+                    } else if (e.key === 'Escape') {
+                      setTitleInputVal(currentTitle);
+                      setIsEditingTitle(false);
+                    }
+                  }}
+                  className="w-full text-sm sm:text-base font-bold text-primary bg-surface-container-low px-2.5 py-1 rounded-lg border border-primary/30 outline-none focus:ring-1 focus:ring-primary transition-[box-shadow] duration-150"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
                     const trimmed = titleInputVal.trim() || 'Shopping List';
                     setCurrentTitle(trimmed);
                     setIsEditingTitle(false);
                     onRenameList?.(trimmed);
-                  } else if (e.key === 'Escape') {
+                  }}
+                  aria-label="Save list name"
+                  className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center hover:bg-primary/90 transition-colors cursor-pointer shrink-0"
+                >
+                  <Check className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTitleInputVal(currentTitle);
                     setIsEditingTitle(false);
-                  }
-                }}
-                className="w-full text-sm sm:text-base font-bold text-primary bg-surface-container-low px-2.5 py-1 rounded-lg border border-primary/30 outline-none focus:ring-1 focus:ring-primary"
-                autoFocus
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  const trimmed = titleInputVal.trim() || 'Shopping List';
-                  setCurrentTitle(trimmed);
-                  setIsEditingTitle(false);
-                  onRenameList?.(trimmed);
-                }}
-                aria-label="Save list name"
-                className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center hover:bg-primary/90 transition-colors cursor-pointer shrink-0"
+                  }}
+                  aria-label="Cancel editing"
+                  className="w-8 h-8 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center hover:bg-surface-container-high transition-colors cursor-pointer shrink-0"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="static-title"
+                layoutId="list-title"
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.96 }}
+                transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                className="flex items-center justify-center gap-2 max-w-[200px] xs:max-w-[240px] sm:max-w-md mx-2 px-2.5 py-1 rounded-2xl bg-surface-container-low/70 border border-surface-dim/60 shadow-2xs"
               >
-                <Check className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setTitleInputVal(currentTitle);
-                  setIsEditingTitle(false);
-                }}
-                aria-label="Cancel editing"
-                className="w-8 h-8 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center hover:bg-surface-container-high transition-colors cursor-pointer shrink-0"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center gap-2 max-w-[200px] xs:max-w-[240px] sm:max-w-md mx-2 px-2.5 py-1 rounded-2xl bg-surface-container-low/70 border border-surface-dim/60 shadow-2xs">
-              <BidiText
-                as="h2"
-                className="font-['Plus_Jakarta_Sans'] text-sm sm:text-base font-bold text-primary truncate text-center max-w-[130px] xs:max-w-[170px] sm:max-w-xs"
-              >
-                {currentTitle}
-              </BidiText>
-              <button
-                type="button"
-                onClick={() => {
-                  setTitleInputVal(currentTitle);
-                  setIsEditingTitle(true);
-                }}
-                aria-label="Rename list"
-                className="w-7 h-7 rounded-full bg-surface-container hover:bg-surface-container-high text-primary/80 hover:text-primary flex items-center justify-center transition-colors cursor-pointer shrink-0 border border-surface-dim/70 shadow-2xs"
-                title="Rename list"
-              >
-                <Pencil className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          )}
+                <BidiText
+                  as="h2"
+                  className="font-['Plus_Jakarta_Sans'] text-sm sm:text-base font-bold text-primary truncate text-center max-w-[130px] xs:max-w-[170px] sm:max-w-xs"
+                >
+                  {currentTitle}
+                </BidiText>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTitleInputVal(currentTitle);
+                    setIsEditingTitle(true);
+                  }}
+                  aria-label="Rename list"
+                  className="w-7 h-7 rounded-full bg-surface-container hover:bg-surface-container-high text-primary/80 hover:text-primary flex items-center justify-center transition-colors cursor-pointer shrink-0 border border-surface-dim/70 shadow-2xs"
+                  title="Rename list"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
           <div className="min-w-[40px] flex justify-end">
             <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-surface-container text-primary border border-surface-dim/60 shadow-2xs">
               {items.length}
@@ -842,7 +866,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
 
                 {/* Real-time Catalog Search Suggestions Dropdown */}
                 {inputVal.trim().length > 0 && (
-                  <div className="space-y-2 pt-1 animate-in fade-in duration-150">
+                  <div className="space-y-2 pt-1 animate-fade-in">
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-['Manrope'] font-bold text-outline uppercase tracking-wider block">
                         {searchSuggestions.length > 0
@@ -963,7 +987,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
 
                   {/* Analysis state animation (1-2 seconds) */}
                   {isAnalyzingSuggestions && (
-                    <div className="p-3 rounded-2xl bg-surface-container-low border border-primary/30 flex items-center gap-3 animate-in fade-in duration-200">
+                    <div className="p-3 rounded-2xl bg-surface-container-low border border-primary/30 flex items-center gap-3 animate-fade-in">
                       <div className="w-8 h-8 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
                         <Sparkles className="w-4 h-4 text-primary animate-pulse" />
                       </div>
@@ -980,7 +1004,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
 
                   {/* Suggestions Revealed after Analysis */}
                   {showSuggestions && !isAnalyzingSuggestions && (activeUnaddedSuggestions.length > 0 || addedSuggestions.length > 0) && (
-                    <div className="space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div className="space-y-2 animate-slide-in-from-top">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-['Manrope'] font-bold text-primary flex items-center gap-2">
                           <span>
@@ -1120,7 +1144,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
               {/* Transient Feedback Banner */}
               {feedbackToast && (
                 <div
-                  className={`p-2.5 rounded-xl text-xs font-['Manrope'] font-semibold flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-150 ${
+                  className={`p-2.5 rounded-xl text-xs font-['Manrope'] font-semibold flex items-center gap-2 animate-slide-in-from-top ${
                     feedbackToast.type === 'remove'
                       ? 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20'
                       : feedbackToast.type === 'merge'
@@ -1320,7 +1344,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
       />
 
       {/* Floating Bottom Action for Mobile */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 w-full max-w-xl md:max-w-2xl mx-auto p-4 bg-background/95 backdrop-blur-md border-t border-surface-dim/40 z-40">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 w-full max-w-xl md:max-w-2xl mx-auto p-4 bg-background/80 backdrop-blur-xl [backdrop-filter:blur(24px)] [-webkit-backdrop-filter:blur(24px)] border-t border-surface-dim/40 z-40">
         <button
           onClick={handleStartShoppingWithAnimation}
           onMouseEnter={() => setCartHoverTrigger((c) => c + 1)}

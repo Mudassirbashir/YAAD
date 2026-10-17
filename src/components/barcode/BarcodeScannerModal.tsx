@@ -412,7 +412,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-label={barcodeCopy.scanTitle || (isUrdu ? 'بارکوڈ اسکینر' : 'Scan Barcode')}
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-fade-in"
     >
       <div className="relative w-full max-w-lg bg-surface rounded-3xl shadow-2xl border border-surface-container-high/60 overflow-hidden flex flex-col max-h-[92vh]">
         {/* Header */}
@@ -497,7 +497,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
 
                 {/* Quick Scan Toast pill inside camera */}
                 {quickScanSuccessCode && (
-                  <div className="absolute bottom-4 inset-x-4 flex items-center justify-center animate-in fade-in zoom-in-95 duration-200">
+                  <div className="absolute bottom-4 inset-x-4 flex items-center justify-center animate-zoom-in-95">
                     <div className="px-4 py-2 rounded-full bg-emerald-600 text-white font-bold text-xs shadow-lg flex items-center gap-2">
                       <Check className="w-4 h-4 stroke-[3]" />
                       <span className="truncate max-w-[200px]">{quickScanSuccessCode}</span>

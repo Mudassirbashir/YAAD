@@ -217,7 +217,7 @@ export const SmartSuggestionsSection: React.FC<SmartSuggestionsSectionProps> = (
         </div>
       ) : (
         /* Expanded state: Show analyzed suggestions */
-        <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="space-y-2 animate-slide-in-from-top">
           {/* Header bar */}
           <div className="flex items-center justify-between px-1">
             <div className="flex items-center gap-1.5 flex-wrap">
@@ -369,7 +369,7 @@ export const SmartSuggestionsSection: React.FC<SmartSuggestionsSectionProps> = (
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in"
           onClick={() => setShowExplanationModal(null)}
         >
           <div

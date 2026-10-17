@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { X, CheckCircle2, AlertCircle, Edit2, LogOut, LogIn, Check, Camera } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -35,8 +36,6 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
       setEditName('');
     }
   }, [profile, user, isOpen]);
-
-  if (!isOpen) return null;
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,14 +76,24 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   const displayEmail = profile?.email || user?.email || (user ? 'No email' : 'Not signed in');
 
   return (
-    <div
-      onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-in fade-in duration-200"
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="bg-surface-container-lowest rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-surface-dim space-y-4 text-center animate-in zoom-in-95 duration-200 relative"
-      >
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+          onClick={onClose}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+            onClick={(e) => e.stopPropagation()}
+            className="bg-surface-container-lowest rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-surface-dim space-y-4 text-center relative"
+          >
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -255,18 +264,20 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             {t('cancel')}
           </button>
         </div>
-      </div>
+          </motion.div>
 
-      {/* Avatar Picker Modal */}
-      <AvatarPickerModal
-        isOpen={showAvatarPicker}
-        onClose={() => setShowAvatarPicker(false)}
-        currentAvatarUrl={profile?.avatar_url}
-        onSave={handleSelectAvatar}
-        userName={displayName}
-        userEmail={user?.email}
-      />
-    </div>
+          {/* Avatar Picker Modal */}
+          <AvatarPickerModal
+            isOpen={showAvatarPicker}
+            onClose={() => setShowAvatarPicker(false)}
+            currentAvatarUrl={profile?.avatar_url}
+            onSave={handleSelectAvatar}
+            userName={displayName}
+            userEmail={user?.email}
+          />
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 

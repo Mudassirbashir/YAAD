@@ -215,7 +215,7 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
           {errorMsg && (
             <div
               role="alert"
-              className="px-3.5 py-2 rounded-2xl bg-error/10 border border-error/20 text-error font-['Manrope'] text-xs sm:text-sm font-medium flex items-center gap-2 animate-in fade-in duration-150"
+              className="px-3.5 py-2 rounded-2xl bg-error/10 border border-error/20 text-error font-['Manrope'] text-xs sm:text-sm font-medium flex items-center gap-2 animate-fade-in"
             >
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{errorMsg}</span>

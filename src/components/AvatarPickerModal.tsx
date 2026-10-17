@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { X, Check, Search, Sparkles, User, RefreshCw, Loader2, Camera, Upload } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import {
@@ -78,8 +79,6 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
 
   // Category translation mapping
   const getCategoryLabel = (catId: string, defaultName: string) => {
@@ -195,19 +194,29 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
   const activeColorOption = getAvatarColorOption(selectedBgId);
 
   return (
-    <div
-      id="avatar_picker_backdrop"
-      onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto animate-in fade-in duration-200"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="avatar_picker_modal_title"
-    >
-      <div
-        id="avatar_picker_container"
-        onClick={(e) => e.stopPropagation()}
-        className="bg-surface-container-lowest rounded-3xl w-full max-w-lg shadow-2xl border border-surface-dim overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[88vh] animate-in zoom-in-95 duration-200"
-      >
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          id="avatar_picker_backdrop"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+          onClick={onClose}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="avatar_picker_modal_title"
+        >
+          <motion.div
+            id="avatar_picker_container"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+            onClick={(e) => e.stopPropagation()}
+            className="bg-surface-container-lowest rounded-3xl w-full max-w-lg shadow-2xl border border-surface-dim overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[88vh]"
+          >
         {/* Header */}
         <div className="p-4 sm:p-5 border-b border-surface-dim/60 flex items-center justify-between bg-surface-container-low/40 shrink-0">
           <div className="flex items-center gap-2.5">
@@ -485,7 +494,9 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
             )}
           </button>
         </div>
-      </div>
-    </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };

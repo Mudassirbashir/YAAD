@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   X,
   UserPlus,
@@ -85,8 +86,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
 
   const handleGoogleAuth = async () => {
     if (isSubmittingRef.current || isSubmitting || googleLoading) return;
@@ -226,14 +225,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   return (
-    <div
-      onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200"
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="bg-white rounded-[28px] sm:rounded-[32px] p-6 sm:p-7 max-w-[430px] w-full shadow-2xl border border-neutral-100 space-y-4 animate-in zoom-in-95 duration-200 font-['Manrope']"
-      >
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+          onClick={onClose}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-[28px] sm:rounded-[32px] p-6 sm:p-7 max-w-[430px] w-full shadow-2xl border border-neutral-100 space-y-4 font-['Manrope']"
+          >
         {/* Header with Logo and Close */}
         <div className="flex justify-between items-center pb-1">
           <div className="flex items-center gap-2.5">
@@ -335,14 +344,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
         {/* Error and Success alerts */}
         {errorMsg && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-700 flex items-start gap-2 animate-in fade-in duration-200">
+          <div className="p-3 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-700 flex items-start gap-2 animate-fade-in">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-600" />
             <span className="flex-1 font-medium">{errorMsg}</span>
           </div>
         )}
 
         {successMsg && (
-          <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-800 font-semibold flex items-center gap-2 animate-in fade-in duration-200">
+          <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-800 font-semibold flex items-center gap-2 animate-fade-in">
             <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
             <span>{successMsg}</span>
           </div>
@@ -579,8 +588,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </button>
           </div>
         </div>
-      </div>
-    </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 

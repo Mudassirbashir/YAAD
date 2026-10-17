@@ -284,6 +284,7 @@ export interface ShoppingItem {
   categoryId: CategoryId;
   category?: string;
   completed: boolean;
+  userId?: string;
   quantity?: string;
   unit?: string;
   rawInput?: string;

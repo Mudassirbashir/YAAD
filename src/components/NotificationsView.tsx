@@ -361,7 +361,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ onBack }) 
 
                 {/* Feedback Delivered Confirmation Banner */}
                 {hasConfirmed && (
-                  <div className="p-2.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-xs flex items-center gap-2 animate-in fade-in duration-200">
+                  <div className="p-2.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-xs flex items-center gap-2 animate-fade-in">
                     <Check className="w-4 h-4 text-emerald-600 shrink-0" strokeWidth={2.5} />
                     <span>
                       {language === 'ur'
@@ -373,7 +373,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ onBack }) 
 
                 {/* Reply Input Box */}
                 {isReplying && (
-                  <div className="pt-2 space-y-2 animate-in fade-in duration-150">
+                  <div className="pt-2 space-y-2 animate-fade-in">
                     <div className="relative">
                       <textarea
                         value={replyText[notif.id] || ''}

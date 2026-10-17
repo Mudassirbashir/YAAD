@@ -546,7 +546,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         {errorMessage && mode !== 'success' && (
           <div
             role="alert"
-            className="mb-5 p-3.5 rounded-xl bg-red-50 border border-red-200/80 text-red-800 text-xs sm:text-sm font-medium flex items-start gap-2.5 animate-fadeIn"
+            className="mb-5 p-3.5 rounded-xl bg-red-50 border border-red-200/80 text-red-800 text-xs sm:text-sm font-medium flex items-start gap-2.5 animate-fade-in"
           >
             <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
             <span className="leading-snug flex-1">{errorMessage}</span>
@@ -556,7 +556,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         {infoMessage && mode !== 'success' && (
           <div
             role="status"
-            className="mb-5 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-xs sm:text-sm font-medium flex items-start gap-2.5 animate-fadeIn"
+            className="mb-5 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-xs sm:text-sm font-medium flex items-start gap-2.5 animate-fade-in"
           >
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
             <span className="leading-snug flex-1">{infoMessage}</span>
@@ -943,7 +943,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
         {/* ─── STATE 3: SUCCESSFUL AUTHENTICATION / ACCOUNT CREATED ─── */}
         {/* ═════════════════════════════════════════════════════════════ */}
         {mode === 'success' && (
-          <div className="flex-1 flex flex-col items-center justify-center py-6 text-center animate-fadeIn">
+          <div className="flex-1 flex flex-col items-center justify-center py-6 text-center animate-fade-in">
             {/* Animated Circular Success Badge */}
             <div className="relative flex items-center justify-center my-6">
               {/* Central Circle with YAAD Deep Green gradient */}

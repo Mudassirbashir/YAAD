@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Plus, Search, Trash2, Check, ArrowLeft } from 'lucide-react';
 import { ShoppingList, ShoppingItem, CategoryId, CATEGORIES_LIST, normalizeCategoryId } from '../types';
 import { TopHeader } from './TopHeader';
@@ -207,7 +208,7 @@ export const EditListView: React.FC<EditListViewProps> = ({
         {/* Transient Feedback Banner */}
         {feedbackToast && (
           <div
-            className={`p-2.5 rounded-xl text-xs font-['Manrope'] font-semibold flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-150 ${
+            className={`p-2.5 rounded-xl text-xs font-['Manrope'] font-semibold flex items-center gap-2 animate-slide-in-from-top ${
               feedbackToast.type === 'remove'
                 ? 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20'
                 : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20'
@@ -451,56 +452,66 @@ export const EditListView: React.FC<EditListViewProps> = ({
       </main>
 
       {/* Delete List Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div
-          onClick={() => setShowDeleteConfirm(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-fade-in"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="bg-white dark:bg-stone-900 rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-surface-dim space-y-4 animate-scale-in"
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+            onClick={() => setShowDeleteConfirm(false)}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4"
           >
-            <div className="flex items-center gap-3 text-rose-700 dark:text-rose-400">
-              <div className="w-10 h-10 rounded-full bg-rose-50 dark:bg-rose-950/40 flex items-center justify-center shrink-0">
-                <Trash2 className="w-5 h-5" />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-stone-900 rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-surface-dim space-y-4"
+            >
+              <div className="flex items-center gap-3 text-rose-700 dark:text-rose-400">
+                <div className="w-10 h-10 rounded-full bg-rose-50 dark:bg-rose-950/40 flex items-center justify-center shrink-0">
+                  <Trash2 className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-base text-on-surface truncate">
+                    {t('delete') || 'Delete List'}
+                  </h3>
+                  <p className="text-xs text-outline font-['Manrope'] truncate">
+                    {list.title}
+                  </p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-base text-on-surface truncate">
-                  {t('delete') || 'Delete List'}
-                </h3>
-                <p className="text-xs text-outline font-['Manrope'] truncate">
-                  {list.title}
-                </p>
+
+              <p className="text-xs text-on-surface-variant leading-relaxed">
+                Are you sure you want to delete this shopping list? This action cannot be undone.
+              </p>
+
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="h-11 rounded-full bg-surface-container text-on-surface font-['Manrope'] text-xs sm:text-sm font-semibold hover:bg-surface-container-high transition-colors cursor-pointer"
+                >
+                  {t('cancel')}
+                </button>
+                <button
+                  type="button"
+                  id="confirm_delete_list_edit_btn"
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    onDeleteList?.(list.id);
+                  }}
+                  className="h-11 rounded-full bg-rose-600 text-white font-['Manrope'] text-xs sm:text-sm font-semibold hover:bg-rose-700 transition-colors shadow-xs active:scale-95 cursor-pointer"
+                >
+                  {t('delete')}
+                </button>
               </div>
-            </div>
-
-            <p className="text-xs text-on-surface-variant leading-relaxed">
-              Are you sure you want to delete this shopping list? This action cannot be undone.
-            </p>
-
-            <div className="grid grid-cols-2 gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(false)}
-                className="h-11 rounded-full bg-surface-container text-on-surface font-['Manrope'] text-xs sm:text-sm font-semibold hover:bg-surface-container-high transition-colors cursor-pointer"
-              >
-                {t('cancel')}
-              </button>
-              <button
-                type="button"
-                id="confirm_delete_list_edit_btn"
-                onClick={() => {
-                  setShowDeleteConfirm(false);
-                  onDeleteList?.(list.id);
-                }}
-                className="h-11 rounded-full bg-rose-600 text-white font-['Manrope'] text-xs sm:text-sm font-semibold hover:bg-rose-700 transition-colors shadow-xs active:scale-95 cursor-pointer"
-              >
-                {t('delete')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Quantity Edit Modal */}
       <QuantityEditModal

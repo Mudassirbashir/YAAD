@@ -127,7 +127,7 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
 
   return (
     <div className="min-h-screen bg-background flex flex-col justify-center items-center p-4 py-8">
-      <div className="w-full max-w-md bg-surface-container-lowest rounded-3xl p-6 sm:p-8 shadow-xl border border-surface-dim space-y-6 animate-in fade-in zoom-in-95 duration-200">
+      <div className="w-full max-w-md bg-surface-container-lowest rounded-3xl p-6 sm:p-8 shadow-xl border border-surface-dim space-y-6 animate-zoom-in-95">
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="w-14 h-14 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-2 shadow-inner">

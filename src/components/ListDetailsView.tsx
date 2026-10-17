@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   Calendar,
   Clock,
@@ -454,50 +455,60 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
       </main>
 
       {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div
-          onClick={() => setShowDeleteConfirm(false)}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-fade-in"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-surface-dim space-y-4 animate-scale-in"
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+            onClick={() => setShowDeleteConfirm(false)}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4"
           >
-            <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-700 flex items-center justify-center mx-auto border border-rose-100">
-              <Trash2 className="w-6 h-6" />
-            </div>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-surface-dim space-y-4"
+            >
+              <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-700 flex items-center justify-center mx-auto border border-rose-100">
+                <Trash2 className="w-6 h-6" />
+              </div>
 
-            <div className="text-center space-y-1">
-              <h3 className="font-['Plus_Jakarta_Sans'] text-lg font-bold text-on-surface">
-                {t('history.deleteConfirmTitle')}
-              </h3>
-              <p className="font-['Manrope'] text-xs sm:text-sm text-outline leading-relaxed">
-                {t('history.deleteConfirmDesc', { title: list.title })}
-              </p>
-            </div>
+              <div className="text-center space-y-1">
+                <h3 className="font-['Plus_Jakarta_Sans'] text-lg font-bold text-on-surface">
+                  {t('history.deleteConfirmTitle')}
+                </h3>
+                <p className="font-['Manrope'] text-xs sm:text-sm text-outline leading-relaxed">
+                  {t('history.deleteConfirmDesc', { title: list.title })}
+                </p>
+              </div>
 
-            <div className="grid grid-cols-2 gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(false)}
-                className="h-11 rounded-full bg-surface-container text-on-surface font-['Manrope'] text-xs sm:text-sm font-semibold hover:bg-surface-container-high transition-colors"
-              >
-                {t('cancel')}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowDeleteConfirm(false);
-                  onDeleteList(list.id);
-                }}
-                className="h-11 rounded-full bg-rose-600 text-white font-['Manrope'] text-xs sm:text-sm font-semibold hover:bg-rose-700 transition-colors shadow-xs active:scale-95"
-              >
-                {t('delete')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="h-11 rounded-full bg-surface-container text-on-surface font-['Manrope'] text-xs sm:text-sm font-semibold hover:bg-surface-container-high transition-colors"
+                >
+                  {t('cancel')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    onDeleteList(list.id);
+                  }}
+                  className="h-11 rounded-full bg-rose-600 text-white font-['Manrope'] text-xs sm:text-sm font-semibold hover:bg-rose-700 transition-colors shadow-xs active:scale-95"
+                >
+                  {t('delete')}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Item High-Resolution Photo Lightbox Preview */}
       <ItemImageLightboxModal
