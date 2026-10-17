@@ -218,7 +218,7 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
             {isMenuOpen && (
               <div
                 role="menu"
-                className="absolute right-0 rtl:right-auto rtl:left-0 top-8 z-30 w-44 bg-white dark:bg-stone-800 rounded-2xl shadow-xl border border-surface-dim/80 py-1.5 animate-scale-in text-xs font-['Manrope'] font-semibold text-on-surface"
+                className="absolute right-0 rtl:right-auto rtl:left-0 top-8 z-30 w-44 bg-white dark:bg-surface-container-lowest rounded-2xl shadow-xl border border-surface-dim/80 py-1.5 popover-menu text-xs font-['Manrope'] font-semibold text-on-surface"
               >
                 {/* 1. View Details (Open Details) */}
                 <button
@@ -294,11 +294,11 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
             e.stopPropagation();
             setShowDeleteConfirm(false);
           }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="bg-white dark:bg-stone-900 rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-surface-dim space-y-4 animate-scale-in"
+            className="bg-white dark:bg-surface-container-lowest rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-surface-dim space-y-4 animate-scale-in"
           >
             <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-700 flex items-center justify-center mx-auto border border-rose-100">
               <Trash2 className="w-6 h-6" />

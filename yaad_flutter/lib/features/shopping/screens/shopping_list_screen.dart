@@ -652,8 +652,15 @@ class _ShoppingListScreenState extends State<ShoppingListScreen> {
       padding: const EdgeInsets.all(YaadSpacing.md),
       decoration: BoxDecoration(
         color: YaadColors.surfaceLowest,
-        borderRadius: BorderRadius.circular(YaadRadii.md),
-        border: Border.all(color: YaadColors.borderSubtle),
+        borderRadius: BorderRadius.circular(YaadRadii.lg),
+        border: Border.all(color: YaadColors.borderSubtle.withValues(alpha: 0.7)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
