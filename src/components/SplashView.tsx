@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useReducedMotion } from 'motion/react';
 import { APP_IMAGES } from '../data/initialData';
 
 interface SplashViewProps {
@@ -7,6 +8,7 @@ interface SplashViewProps {
 }
 
 export const SplashView: React.FC<SplashViewProps> = ({ onFinish, isRestoringAuth = false }) => {
+  const prefersReducedMotion = useReducedMotion();
   useEffect(() => {
     const timer = setTimeout(() => {
       if (!isRestoringAuth) {
@@ -67,8 +69,8 @@ export const SplashView: React.FC<SplashViewProps> = ({ onFinish, isRestoringAut
 
       <div className="absolute bottom-10 flex flex-col items-center gap-2">
         {isRestoringAuth ? (
-          <div className="flex items-center gap-2 text-xs text-outline font-['Manrope'] animate-pulse">
-            <span className="w-2 h-2 rounded-full bg-primary animate-ping" />
+          <div className={`flex items-center gap-2 text-xs text-outline font-['Manrope'] ${prefersReducedMotion ? '' : 'animate-pulse'}`}>
+            <span className={`w-2 h-2 rounded-full bg-primary ${prefersReducedMotion ? '' : 'animate-ping'}`} />
             <span>Restoring session...</span>
           </div>
         ) : (

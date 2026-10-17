@@ -488,7 +488,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                     <div className="text-2xl sm:text-3xl font-extrabold text-[#0F3D2E] font-['Plus_Jakarta_Sans'] leading-none">
                       {analytics.completedListsCount}
                     </div>
-                    <div className="text-[11px] text-outline font-medium font-['Manrope'] mt-1">
+                    <div className="text-[0.6875rem] text-outline font-medium font-['Manrope'] mt-1">
                       {analytics.totalLists > 0
                         ? `${Math.round((analytics.completedListsCount / analytics.totalLists) * 100)}% of lists`
                         : '—'}
@@ -513,7 +513,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                     <div className="text-2xl sm:text-3xl font-extrabold text-on-surface font-['Plus_Jakarta_Sans'] leading-none">
                       {analytics.activeListsCount}
                     </div>
-                    <div className="text-[11px] text-outline font-medium font-['Manrope'] mt-1">
+                    <div className="text-[0.6875rem] text-outline font-medium font-['Manrope'] mt-1">
                       {analytics.activeListsCount > 0 ? 'Ready to shop' : 'All caught up'}
                     </div>
                   </div>
@@ -536,7 +536,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                     <div className="text-2xl sm:text-3xl font-extrabold text-on-surface font-['Plus_Jakarta_Sans'] leading-none">
                       {analytics.totalItemsPurchased}
                     </div>
-                    <div className="text-[11px] text-outline font-medium font-['Manrope'] mt-1">
+                    <div className="text-[0.6875rem] text-outline font-medium font-['Manrope'] mt-1">
                       {analytics.totalItemsPlanned > 0
                         ? `${analytics.totalItemsPurchased} of ${analytics.totalItemsPlanned} planned items purchased`
                         : '—'}
@@ -588,7 +588,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                 </div>
                 <div className="space-y-1 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-[#0F3D2E]/80 font-['Manrope']">
+                    <span className="text-[0.6875rem] font-bold uppercase tracking-wider text-[#0F3D2E]/80 font-['Manrope']">
                       {t('statistics.smartInsightsTitle')}
                     </span>
                   </div>
@@ -686,7 +686,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
 
                           {/* Day Label */}
                           <span
-                            className={`text-[11px] font-['Manrope'] mt-2 transition-colors ${
+                            className={`text-[0.6875rem] font-['Manrope'] mt-2 transition-colors ${
                               isPeak || isSelected
                                 ? 'font-bold text-[#0F3D2E]'
                                 : 'font-medium text-outline'
@@ -700,11 +700,11 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                   </div>
                 </div>
 
-                <div className="text-[11px] text-outline font-medium font-['Manrope'] pt-2 border-t border-surface-dim/50 flex items-center justify-between">
+                <div className="text-[0.6875rem] text-outline font-medium font-['Manrope'] pt-2 border-t border-surface-dim/50 flex items-center justify-between">
                   <span>{t('statistics.activityHint')}</span>
                   <span className="inline-flex items-center gap-1 text-[#0F3D2E] font-semibold">
                     <Clock className="w-3 h-3" />
-                    <span>{analytics.totalLists} trips recorded</span>
+                    <span>{analytics.totalLists} {analytics.totalLists === 1 ? 'trip' : 'trips'} recorded</span>
                   </span>
                 </div>
               </motion.section>
@@ -778,7 +778,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                   )}
                 </div>
 
-                <div className="text-[11px] text-outline font-medium font-['Manrope'] pt-2 border-t border-surface-dim/50">
+                <div className="text-[0.6875rem] text-outline font-medium font-['Manrope'] pt-2 border-t border-surface-dim/50">
                   {analytics.topCategory
                     ? `Top focus: ${getCategoryLabel(analytics.topCategory)}`
                     : t('statistics.noData')}

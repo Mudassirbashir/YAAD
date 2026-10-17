@@ -23,7 +23,7 @@ export const SignOutConfirmModal: React.FC<SignOutConfirmModalProps> = ({
     <div
       id="sign_out_modal_backdrop"
       onClick={() => !isSigningOut && onClose()}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in"
       role="dialog"
       aria-modal="true"
       aria-labelledby="sign_out_modal_title"

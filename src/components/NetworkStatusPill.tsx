@@ -58,7 +58,7 @@ export const NetworkStatusPill: React.FC<NetworkStatusPillProps> = ({
               {language === 'ur' ? 'آف لائن • دوبارہ کوشش کریں' : 'Offline • Tap to retry'}
             </span>
             {pendingCount > 0 && (
-              <span className="ml-0.5 px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/30 text-amber-200">
+              <span className="ml-0.5 px-1.5 py-0.5 text-[0.625rem] font-bold rounded-full bg-amber-500/30 text-amber-200">
                 {pendingCount}
               </span>
             )}
@@ -72,7 +72,7 @@ export const NetworkStatusPill: React.FC<NetworkStatusPillProps> = ({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -12, scale: 0.95 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="pointer-events-auto flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/95 text-white backdrop-blur-md shadow-[0_4px_16px_rgba(0,30,21,0.25)] border border-white/15 text-xs font-medium"
+            className="pointer-events-auto flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/80 text-white backdrop-blur-xl shadow-[0_4px_16px_rgba(0,30,21,0.25)] border border-white/15 text-xs font-medium"
           >
             <RefreshCw className="w-3.5 h-3.5 text-primary-fixed animate-spin" />
             <span className="font-['Manrope']">
@@ -87,7 +87,7 @@ export const NetworkStatusPill: React.FC<NetworkStatusPillProps> = ({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -12, scale: 0.95 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-900/90 text-white backdrop-blur-md shadow-[0_4px_16px_rgba(0,0,0,0.15)] border border-emerald-500/30 text-xs font-medium"
+            className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-900/80 text-white backdrop-blur-xl shadow-[0_4px_16px_rgba(0,0,0,0.15)] border border-emerald-500/30 text-xs font-medium"
           >
             <Check className="w-3.5 h-3.5 text-emerald-300 stroke-[2.5]" />
             <span className="font-['Manrope'] text-emerald-100">
@@ -104,7 +104,7 @@ export const NetworkStatusPill: React.FC<NetworkStatusPillProps> = ({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -12, scale: 0.95 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container-high/95 text-on-surface backdrop-blur-md shadow-[0_4px_14px_rgba(0,0,0,0.08)] border border-surface-dim text-xs font-medium hover:bg-surface-container-highest active:scale-95 transition-all"
+            className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container-high/80 text-on-surface backdrop-blur-xl shadow-[0_4px_14px_rgba(0,0,0,0.08)] border border-surface-dim text-xs font-medium hover:bg-surface-container-highest active:scale-95 transition-all"
           >
             <Cloud className="w-3.5 h-3.5 text-primary" />
             <span className="font-['Manrope']">

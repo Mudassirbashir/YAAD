@@ -205,7 +205,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
 
   return (
     <>
-      <header className="sticky top-0 w-full z-40 bg-background/95 backdrop-blur-md border-b border-surface-dim/40 transition-colors select-none">
+      <header className="sticky top-0 w-full z-40 bg-background/80 backdrop-blur-xl border-b border-surface-dim/40 transition-colors select-none">
         <div className="relative flex justify-between items-center px-4 sm:px-6 lg:px-8 h-14 w-full max-w-7xl mx-auto">
           {/* Left Action: Back Arrow on non-home screens, Official Logo on Home */}
           <div className="flex items-center z-10 min-w-[40px]">

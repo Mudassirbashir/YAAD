@@ -81,7 +81,7 @@ export const AppPublicHeader: React.FC<AppPublicHeaderProps> = ({
   return (
     <header
       id="app_public_header"
-      className={`fixed top-0 left-0 right-0 z-50 bg-[#faf8f5]/95 backdrop-blur-md border-b border-[#e5e1d8] transition-transform duration-300 ease-in-out select-none ${
+      className={`fixed top-0 left-0 right-0 z-50 bg-[#faf8f5]/80 backdrop-blur-xl border-b border-[#e5e1d8] transition-transform duration-300 ease-in-out select-none ${
         isVisible ? 'translate-y-0 shadow-2xs' : '-translate-y-full'
       }`}
     >

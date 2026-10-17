@@ -114,7 +114,7 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
         dragDirectionLock={true}
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={{ left: 0.35, right: 0.35 }}
-        dragTransition={{ bounceStiffness: 400, bounceDamping: 38 }}
+        dragTransition={{ bounceStiffness: 400, bounceDamping: 40, power: 0 }}
         onDragStart={() => {
           isDraggingRef.current = true;
           dragDistanceRef.current = 0;

@@ -89,7 +89,43 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
 
   // 2. SUGAR (Crystalline white container & scoop with sparkling amber granules)
   // Handles: sugar, chini, cheeni, chinni, chenni, shakar, shakkar, , 
+  // 1B. CINNAMON / DAR CHINI (Aromatic cinnamon bark sticks)
+  // Handles: cinnamon, darchini, dar cheeni, darcheeni, dalchini, daal cheeni
   if (
+    matches([
+      'cinnamon',
+      'darchini',
+      'dar cheeni',
+      'darcheeni',
+      'dalchini',
+      'daal cheeni',
+      'cinnamon sticks',
+      'cinnamon powder',
+    ])
+  ) {
+    return (
+      <div
+        className={`relative flex items-center justify-center rounded-xl bg-gradient-to-br from-amber-50 to-orange-100/80 border border-amber-300/80 shadow-2xs shrink-0 overflow-hidden ${className}`}
+        style={{ width: size, height: size }}
+        aria-label="Cinnamon illustration"
+      >
+        <svg viewBox="0 0 48 48" fill="none" className="w-4/5 h-4/5">
+          <ellipse cx="24" cy="40" rx="12" ry="3" fill="#D97706" opacity="0.25" />
+          {/* Rolled cinnamon quill 1 */}
+          <path d="M 16 14 L 28 34" stroke="#78350F" strokeWidth="6" strokeLinecap="round" />
+          <path d="M 16 14 L 28 34" stroke="#92400E" strokeWidth="4" strokeLinecap="round" />
+          <circle cx="16" cy="14" r="3" fill="#B45309" stroke="#78350F" strokeWidth="1" />
+          {/* Rolled cinnamon quill 2 (crossed) */}
+          <path d="M 32 16 L 20 36" stroke="#92400E" strokeWidth="6" strokeLinecap="round" />
+          <path d="M 32 16 L 20 36" stroke="#B45309" strokeWidth="4" strokeLinecap="round" />
+          <circle cx="32" cy="16" r="3" fill="#D97706" stroke="#92400E" strokeWidth="1" />
+        </svg>
+      </div>
+    );
+  }
+
+  if (
+    !matches(['cinnamon', 'darchini', 'dar cheeni', 'darcheeni', 'dalchini', 'daal cheeni']) &&
     matches([
       'sugar',
       'sugr',
@@ -144,7 +180,50 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
 
   // 3. GREEN CHILI (Curved fresh green chili pepper with stem)
   // Handles: green chili, green chilli, hari mirch, hri mirch, sabz mirch,  
+  // 2C. RED CHILI / RED CHILI POWDER (Vibrant red chili pepper & spice)
+  // Handles: red chili, red chilli, red chili powder, lal mirch, surkh mirch, kuti mirch
   if (
+    matches([
+      'red chili',
+      'red chilli',
+      'red chili powder',
+      'red chilli powder',
+      'lal mirch',
+      'surkh mirch',
+      'kuti mirch',
+      'chili powder',
+      'chilli powder',
+      'chili flakes',
+    ])
+  ) {
+    return (
+      <div
+        className={`relative flex items-center justify-center rounded-xl bg-gradient-to-br from-red-50 to-rose-100/80 border border-red-300/80 shadow-2xs shrink-0 overflow-hidden ${className}`}
+        style={{ width: size, height: size }}
+        aria-label="Red chili illustration"
+      >
+        <svg viewBox="0 0 48 48" fill="none" className="w-4/5 h-4/5">
+          <ellipse cx="24" cy="40" rx="11" ry="3" fill="#DC2626" opacity="0.25" />
+          {/* Curved vibrant red chili pepper body */}
+          <path
+            d="M 16 16 C 18 20, 23 26, 34 32 C 30 33, 23 30, 16 23 C 14 20, 14 17, 16 16 Z"
+            fill="#DC2626"
+            stroke="#991B1B"
+            strokeWidth="1.5"
+            strokeLinejoin="round"
+          />
+          {/* Chili highlight */}
+          <path d="M 18 19 C 20 22, 23 26, 28 29" stroke="#EF4444" strokeWidth="1" strokeLinecap="round" />
+          {/* Fresh green calyx / stem */}
+          <path d="M 16 16 Q 13 14 12 11 Q 14 13 16 14" stroke="#15803D" strokeWidth="2" strokeLinecap="round" />
+          <circle cx="16" cy="15" r="1.8" fill="#16A34A" />
+        </svg>
+      </div>
+    );
+  }
+
+  if (
+    !matches(['red chili', 'red chilli', 'lal mirch', 'surkh mirch', 'chili powder', 'kuti mirch']) &&
     matches([
       'green chili',
       'green chilli',
@@ -489,6 +568,8 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
       'chakki atta',
       'suji',
       'sooji',
+      'semolina',
+      'rava',
     ])
   ) {
     return (
@@ -823,6 +904,18 @@ export const EssentialItemVisual: React.FC<EssentialItemVisualProps> = ({
       'masoor',
       'moong',
       'mash',
+      'chana',
+      'chanay',
+      'chickpea',
+      'chickpeas',
+      'white chickpeas',
+      'black chickpeas',
+      'kabuli chana',
+      'kala chana',
+      'safaid chana',
+      'safed chana',
+      'cholay',
+      'chole',
     ])
   ) {
     return (

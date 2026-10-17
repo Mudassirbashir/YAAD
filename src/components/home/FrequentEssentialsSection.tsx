@@ -118,7 +118,8 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
     if (norm.includes('soap') || norm.includes('sabun')) return '🧼';
     if (norm.includes('shampoo')) return '🧴';
     if (norm.includes('detergent') || norm.includes('surf')) return '🫧';
-    if (norm.includes('flour') || norm.includes('atta') || norm.includes('maida')) return '🌾';
+    if (norm.includes('flour') || norm.includes('atta') || norm.includes('maida') || norm.includes('suji') || norm.includes('semolina') || norm.includes('rava')) return '🌾';
+    if (norm.includes('chana') || norm.includes('chickpea') || norm.includes('cholay') || norm.includes('daal') || norm.includes('lentil') || norm.includes('pulse')) return '🍲';
     if (norm.includes('fish') || norm.includes('machli')) return '🐟';
     if (norm.includes('biscuit') || norm.includes('cookie')) return '🍪';
     if (norm.includes('juice') || norm.includes('drink')) return '🧃';
@@ -137,7 +138,9 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
       case 'household': return '🧼';
       case 'personal_care': return '🧴';
       case 'cooking_essentials': return '🧂';
-      default: return '🛍️';
+      case 'grains':
+      case 'pulses': return '🍲';
+      default: return '🍲';
     }
   };
 
@@ -156,7 +159,7 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
               : t('home.essentials.title') || 'Frequent Essentials'}
           </h3>
           {hasPersonalized && (
-            <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-semibold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full border border-primary/20">
+            <span className="hidden sm:inline-flex items-center gap-1 text-[0.6875rem] font-semibold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full border border-primary/20">
               <Sparkles className="w-3 h-3 text-primary stroke-[2]" />
               <span>For You</span>
             </span>
@@ -166,7 +169,7 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
 
       {/* Target Active List notification chip */}
       {mostRecentActiveList && (
-        <div className="text-[11px] text-primary bg-primary/5 border border-primary/20 rounded-xl px-3 py-1.5 flex items-center justify-between gap-2 shadow-2xs">
+        <div className="text-[0.6875rem] text-primary bg-primary/5 border border-primary/20 rounded-xl px-3 py-1.5 flex items-center justify-between gap-2 shadow-2xs">
           <div className="flex items-center gap-1.5 truncate">
             <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 animate-pulse" />
             <span className="text-outline truncate">
@@ -174,7 +177,7 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
               <strong className="text-primary font-bold">{mostRecentActiveList.title}</strong>
             </span>
           </div>
-          <span className="text-[10px] text-outline shrink-0 font-medium bg-primary/10 px-2 py-0.5 rounded-md">
+          <span className="text-[0.625rem] text-outline shrink-0 font-medium bg-primary/10 px-2 py-0.5 rounded-md">
             {t('home.itemsCount', { count: (mostRecentActiveList.items || []).length })}
           </span>
         </div>
@@ -239,7 +242,7 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
 
                 {/* Top Right Corner: Packaging Quantity Badge (e.g. "1 kg", "1 dozen") */}
                 <div className="absolute top-1.5 right-1.5 z-10 pointer-events-none">
-                  <span className="px-2 py-0.5 rounded-md text-[10px] sm:text-[10.5px] font-bold bg-black/70 backdrop-blur-md text-white border border-white/20 shadow-xs font-['Manrope'] tracking-tight">
+                  <span className="px-2 py-0.5 rounded-md text-[0.625rem] sm:text-[0.65625rem] font-bold bg-black/70 backdrop-blur-md text-white border border-white/20 shadow-xs font-['Manrope']">
                     {item.quantity} {item.unit}
                   </span>
                 </div>
@@ -247,7 +250,7 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
                 {/* Top Left Corner: In-List Status Badge if already present in active list */}
                 {activeStatus.inList && (
                   <div className="absolute top-1.5 left-1.5 z-10 pointer-events-none">
-                    <span className="px-2 py-0.5 rounded-md text-[9px] sm:text-[9.5px] font-bold bg-emerald-600/90 backdrop-blur-md text-white border border-white/20 shadow-xs flex items-center gap-1">
+                    <span className="px-2 py-0.5 rounded-md text-[0.5625rem] sm:text-[0.6rem] font-bold bg-emerald-600/90 backdrop-blur-md text-white border border-white/20 shadow-xs flex items-center gap-1">
                       <Check className="w-2.5 h-2.5 stroke-[3]" />
                       <span>{t('home.essentials.inList')}</span>
                     </span>
@@ -255,9 +258,9 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
                 )}
               </div>
 
-              {/* 2. Item Details: English Name | Urdu Name on a single clean line */}
-              <div className="flex items-center gap-1.5 min-w-0 px-0.5 pt-0.5">
-                <span className="font-['Plus_Jakarta_Sans'] text-sm sm:text-[15px] font-bold text-on-surface truncate leading-tight group-hover:text-primary transition-colors">
+              {/* 2. Item Details: English Name | Urdu Name wrapping cleanly without truncation */}
+              <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 min-w-0 px-0.5 pt-0.5">
+                <span className="font-['Plus_Jakarta_Sans'] text-sm sm:text-[0.9375rem] font-bold text-on-surface leading-snug group-hover:text-primary transition-colors">
                   {item.displayName}
                 </span>
                 {urduName && (
@@ -269,7 +272,7 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
                       |
                     </span>
                     <span
-                      className="font-urdu text-[13px] sm:text-[14px] font-bold text-primary shrink-0 leading-none"
+                      className="font-urdu text-[0.8125rem] sm:text-[0.875rem] font-bold text-primary shrink-0 leading-none"
                       dir="rtl"
                     >
                       {urduName}

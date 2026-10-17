@@ -151,7 +151,7 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
   return (
     <div className="w-full min-h-screen flex flex-col antialiased bg-background text-on-surface">
       {/* 1. Header: Minimal with back button only */}
-      <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-md border-b border-surface-dim/40">
+      <header className="sticky top-0 z-30 bg-background/75 backdrop-blur-xl border-b border-surface-dim/40">
         <div className="w-full max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto flex items-center justify-between px-4 sm:px-6 h-12">
           <button
             type="button"

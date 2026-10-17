@@ -60,18 +60,22 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
     prevCheckedRef.current = isChecked;
 
     if (!wasChecked && isChecked) {
-      triggerHaptic([22, 16, 32]);
-      setIsPlayingCelebration(true);
-      const timer = setTimeout(() => {
-        setIsPlayingCelebration(false);
-      }, 800);
-      return () => clearTimeout(timer);
+      if (!prefersReducedMotion) {
+        triggerHaptic([22, 16, 32]);
+        setIsPlayingCelebration(true);
+        const timer = setTimeout(() => {
+          setIsPlayingCelebration(false);
+        }, 800);
+        return () => clearTimeout(timer);
+      } else {
+        triggerHaptic(12);
+      }
     } else if (!isChecked) {
       setIsPlayingCelebration(false);
     }
-  }, [isChecked]);
+  }, [isChecked, prefersReducedMotion]);
 
-  const shouldCelebrate = isJustCompleted || isPlayingCelebration;
+  const shouldCelebrate = (isJustCompleted || isPlayingCelebration) && !prefersReducedMotion;
 
   // Lottie player lifecycle management
   useEffect(() => {

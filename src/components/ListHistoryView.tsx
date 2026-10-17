@@ -564,7 +564,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in"
           onClick={() => !isDeleting && setShowBulkDeleteModal(false)}
         >
           <div
@@ -611,7 +611,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in"
           onClick={() => !isDeleting && setShowClearAllModal(false)}
         >
           <div

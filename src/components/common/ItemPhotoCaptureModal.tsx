@@ -244,7 +244,7 @@ export const ItemPhotoCaptureModal: React.FC<ItemPhotoCaptureModalProps> = ({
     <div
       id="item_photo_capture_backdrop"
       onClick={() => !isUploading && onClose()}
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-xs p-0 sm:p-4 animate-fade-in"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4 animate-fade-in"
       role="dialog"
       aria-modal="true"
       dir={isRTL ? 'rtl' : 'ltr'}
@@ -264,7 +264,7 @@ export const ItemPhotoCaptureModal: React.FC<ItemPhotoCaptureModalProps> = ({
               <h3 className="text-sm sm:text-base font-bold text-on-surface font-['Plus_Jakarta_Sans'] line-clamp-1">
                 {isUrdu ? `${itemName} کی تصویر` : `Photo for ${itemName}`}
               </h3>
-              <p className="text-[11px] text-on-surface-variant font-['Manrope']">
+              <p className="text-[0.6875rem] text-on-surface-variant font-['Manrope']">
                 {isUrdu ? 'تیز رفتار کیپچر یا گیلری سے منتخب کریں' : 'Instant camera capture or pick from gallery'}
               </p>
             </div>

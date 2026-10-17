@@ -58,7 +58,7 @@ const DEFAULT_NOTIFICATIONS: NotificationItem[] = [
     category: 'system',
     titleEn: 'Smart Cloud Backup Active ☁️',
     titleUr: 'کلاؤڈ بیک اپ مکمل فعال ہے ☁️',
-    bodyEn: 'Your shopping items and attached photos are safely synced across all your devices in real-time.',
+    bodyEn: 'Your shopping items and attached photos are safely synced across your devices.',
     bodyUr: 'آپ کی تمام خریدی گئی اشیاء اور تصاویر آپ کے تمام فونز پر خودکار طور پر محفوظ ہیں۔',
     sentAt: Date.now() - 3600000 * 48,
   },
@@ -186,7 +186,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ onBack }) 
       dir={isRTL ? 'rtl' : 'ltr'}
     >
       {/* Dedicated Header Bar */}
-      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-surface-dim/50">
+      <header className="sticky top-0 z-40 bg-background/75 backdrop-blur-xl border-b border-surface-dim/50">
         <div className="flex items-center justify-between px-4 sm:px-6 h-14 max-w-3xl mx-auto w-full">
           <div className="flex items-center gap-3">
             <button

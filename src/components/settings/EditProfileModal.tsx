@@ -230,7 +230,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
       <div
         id="edit_profile_modal_backdrop"
         onClick={() => !isSaving && onClose()}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-xs p-4 animate-fade-in"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in"
         role="dialog"
         aria-modal="true"
         dir={isRTL ? 'rtl' : 'ltr'}

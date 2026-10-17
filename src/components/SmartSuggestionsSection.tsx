@@ -243,7 +243,7 @@ export const SmartSuggestionsSection: React.FC<SmartSuggestionsSectionProps> = (
               <button
                 type="button"
                 onClick={() => setIsExpanded(false)}
-                className="text-[11px] font-['Manrope'] text-outline hover:text-primary font-semibold flex items-center gap-0.5 cursor-pointer"
+                className="text-[0.6875rem] font-['Manrope'] text-outline hover:text-primary font-semibold flex items-center gap-0.5 cursor-pointer"
               >
                 <span>{language === 'ur' ? 'چھپائیں' : 'Hide'}</span>
                 <ChevronUp className="w-3.5 h-3.5" />
@@ -369,7 +369,7 @@ export const SmartSuggestionsSection: React.FC<SmartSuggestionsSectionProps> = (
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in"
+          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in"
           onClick={() => setShowExplanationModal(null)}
         >
           <div
@@ -385,7 +385,7 @@ export const SmartSuggestionsSection: React.FC<SmartSuggestionsSectionProps> = (
                   <h4 className="font-['Plus_Jakarta_Sans'] font-bold text-sm text-primary">
                     {showExplanationModal.displayName}
                   </h4>
-                  <span className="text-[11px] text-outline font-['Manrope']">
+                  <span className="text-[0.6875rem] text-outline font-['Manrope']">
                     {showExplanationModal.explanation.displayReason}
                   </span>
                 </div>
@@ -409,35 +409,35 @@ export const SmartSuggestionsSection: React.FC<SmartSuggestionsSectionProps> = (
               </div>
               <div className="h-px bg-surface-container-high my-1" />
 
-              <div className="flex justify-between items-center text-[11px]">
+              <div className="flex justify-between items-center text-[0.6875rem]">
                 <span className="text-outline">Purchase Interval (Replenishment):</span>
                 <span className="font-semibold text-emerald-700 font-mono">
                   {Math.round(showExplanationModal.scoringFactors.intervalScore * 100)}%
                 </span>
               </div>
 
-              <div className="flex justify-between items-center text-[11px]">
+              <div className="flex justify-between items-center text-[0.6875rem]">
                 <span className="text-outline">Purchase Frequency:</span>
                 <span className="font-semibold text-primary font-mono">
                   {Math.round(showExplanationModal.scoringFactors.frequencyScore * 100)}%
                 </span>
               </div>
 
-              <div className="flex justify-between items-center text-[11px]">
+              <div className="flex justify-between items-center text-[0.6875rem]">
                 <span className="text-outline">Recency:</span>
                 <span className="font-semibold text-primary font-mono">
                   {Math.round(showExplanationModal.scoringFactors.recencyScore * 100)}%
                 </span>
               </div>
 
-              <div className="flex justify-between items-center text-[11px]">
+              <div className="flex justify-between items-center text-[0.6875rem]">
                 <span className="text-outline">Context Match ({detectedContext.name}):</span>
                 <span className="font-semibold text-emerald-700 font-mono">
                   {Math.round(showExplanationModal.scoringFactors.contextScore * 100)}%
                 </span>
               </div>
 
-              <div className="flex justify-between items-center text-[11px]">
+              <div className="flex justify-between items-center text-[0.6875rem]">
                 <span className="text-outline">Category Affinity:</span>
                 <span className="font-semibold text-primary font-mono">
                   {Math.round(showExplanationModal.scoringFactors.categoryScore * 100)}%

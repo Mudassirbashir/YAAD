@@ -67,10 +67,10 @@ export const PhoneNumberReminderModal: React.FC<PhoneNumberReminderModalProps> =
               exit={
                 prefersReducedMotion
                   ? { opacity: 0 }
-                  : { opacity: 0, scale: 0.95, y: 16 }
+                  : { opacity: 0, scale: 0.95, y: 20 }
               }
               transition={{ type: 'spring', damping: 25, stiffness: 320 }}
-              className="pointer-events-auto relative w-full bg-surface-container-lowest/95 backdrop-blur-md rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-xl border border-surface-dim/90 overflow-hidden"
+              className="pointer-events-auto relative w-full bg-surface-container-lowest/80 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-xl border border-surface-dim/90 overflow-hidden"
             >
               {/* Top Close Button */}
               <button

@@ -857,11 +857,28 @@ html.dark .border-neutral-100 {
   .celebrate-particle,
   .celebrate,
   .animate-pulse,
-  .animate-ping {
+  .animate-ping,
+  .yaad-checkbox-pop,
+  .yaad-ripple-burst,
+  .kfr-particle-burst,
+  [class*="yaad-checkbox-pop"],
+  [class*="yaad-ripple-burst"],
+  [class*="kfr-particle-burst"] {
     animation: none !important;
     transition: none !important;
     transform: none !important;
   }
+}
+
+/* Genuine Translucent Materials: -webkit-backdrop-filter fallbacks for Safari/iOS PWA */
+@supports (-webkit-backdrop-filter: none) {
+  .backdrop-blur-xs { -webkit-backdrop-filter: blur(4px); }
+  .backdrop-blur-sm { -webkit-backdrop-filter: blur(8px); }
+  .backdrop-blur-md { -webkit-backdrop-filter: blur(12px); }
+  .backdrop-blur-lg { -webkit-backdrop-filter: blur(16px); }
+  .backdrop-blur-xl { -webkit-backdrop-filter: blur(24px); }
+  .backdrop-blur-2xl { -webkit-backdrop-filter: blur(40px); }
+  .backdrop-blur-3xl { -webkit-backdrop-filter: blur(64px); }
 }
 
 

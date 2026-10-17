@@ -188,12 +188,12 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
             <div className="flex flex-col min-w-0 flex-1 -mt-0.5">
               <BidiText
                 as="h3"
-                className="font-['Plus_Jakarta_Sans'] text-[15px] sm:text-base font-bold text-on-surface group-hover:text-primary transition-colors truncate leading-tight"
+                className="font-['Plus_Jakarta_Sans'] text-[0.9375rem] sm:text-base font-bold text-on-surface group-hover:text-primary transition-colors truncate leading-tight"
               >
                 {list.title}
               </BidiText>
               {timeAgoStr && (
-                <span className="text-[11px] sm:text-xs font-medium text-outline font-['Manrope'] mt-0.5 truncate">
+                <span className="text-[0.6875rem] sm:text-xs font-medium text-outline font-['Manrope'] mt-0.5 truncate">
                   {timeAgoStr}
                 </span>
               )}
@@ -283,14 +283,14 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
         <div className="flex items-center justify-between mt-auto pt-2 w-full">
           <div>
             {!isAllDone && totalItems > 0 && (
-              <span className="text-[10.5px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200/60 px-2 py-0.5 rounded-md">
+              <span className="text-[0.65625rem] font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200/60 px-2 py-0.5 rounded-md">
                 {percentComplete}% bought
               </span>
             )}
           </div>
 
           {/* Item count clearly positioned on bottom-right side */}
-          <div className="text-[11px] sm:text-xs font-bold text-on-surface-variant font-['Manrope'] bg-surface-container/70 border border-surface-dim/60 px-2 py-0.5 rounded-md shrink-0">
+          <div className="text-[0.6875rem] sm:text-xs font-bold text-on-surface-variant font-['Manrope'] bg-surface-container/70 border border-surface-dim/60 px-2 py-0.5 rounded-md shrink-0">
             {totalItems} {totalItems === 1 ? 'item' : 'items'}
           </div>
         </div>

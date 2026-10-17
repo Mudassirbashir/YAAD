@@ -73,7 +73,7 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ mode = 'bann
         {/* iOS Safari Guide Modal */}
         <AnimatePresence>
           {showIOSModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -176,7 +176,7 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ mode = 'bann
         {showIOSModal && (
           <div
             onClick={() => setShowIOSModal(false)}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs cursor-pointer"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm cursor-pointer"
           >
             <motion.div
               onClick={(e) => e.stopPropagation()}

@@ -222,7 +222,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
         >
           <div className="flex flex-col min-w-0">
             {/* Top: Time greeting slightly increased */}
-            <span className="font-['Manrope'] text-[13.5px] sm:text-[15px] font-semibold text-outline leading-tight">
+            <span className="font-['Manrope'] text-[0.84375rem] sm:text-[0.9375rem] font-semibold text-outline leading-tight">
               {greetingData.timeGreeting}
             </span>
             {/* Middle: User's name prominently enlarged with Verified Badge if granted */}

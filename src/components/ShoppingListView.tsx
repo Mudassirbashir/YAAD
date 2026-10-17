@@ -1148,11 +1148,11 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                           )}
                         </>
                       ) : (
-                        <div className="w-full flex items-center justify-between text-[11px] font-['Manrope'] text-outline font-medium">
+                        <div className="w-full flex items-center justify-between text-[0.6875rem] font-['Manrope'] text-outline font-medium">
                           <span>
                             {isCategoryComplete
                               ? '✓ All items in this category bought'
-                              : `${categoryItems.length - completedCatCount} items remaining`}
+                              : `${categoryItems.length - completedCatCount} ${categoryItems.length - completedCatCount === 1 ? 'item' : 'items'} remaining`}
                           </span>
                           <button
                             type="button"
