@@ -44,9 +44,8 @@ export const Toast: React.FC<ToastProps> = ({
         <div className="fixed bottom-20 sm:bottom-6 inset-x-4 sm:inset-x-auto sm:end-6 z-50 flex justify-center pointer-events-none">
           <motion.div
             initial={{ opacity: 0, y: 16, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 12, scale: 0.95 }}
-            transition={{ duration: 0.18, ease: 'easeOut' }}
+            animate={{ opacity: 1, y: 0, scale: 1, transition: { duration: 0.18, ease: [0.32, 0.72, 0, 1] } }}
+            exit={{ opacity: 0, y: 12, scale: 0.95, transition: { duration: 0.15, ease: [0.36, 0, 0.66, 0] } }}
             className="pointer-events-auto flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-surface-container-lowest border border-surface-dim shadow-[0_8px_24px_rgba(15,61,46,0.15)] text-on-surface max-w-md"
           >
             {icons[type]}

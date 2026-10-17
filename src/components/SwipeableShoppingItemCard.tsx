@@ -114,7 +114,7 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
         dragDirectionLock={true}
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={{ left: 0.35, right: 0.35 }}
-        dragTransition={{ bounceStiffness: 400, bounceDamping: 40, power: 0 }}
+        dragTransition={{ bounceStiffness: 520, bounceDamping: 42, power: 0 }}
         onDragStart={() => {
           isDraggingRef.current = true;
           dragDistanceRef.current = 0;
@@ -153,7 +153,7 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
         animate={{
           scale: 1,
         }}
-        transition={{ type: 'spring', stiffness: 500, damping: 33 }}
+        transition={{ type: 'spring', stiffness: 520, damping: 40 }}
         className={`relative flex items-center justify-between gap-3 py-2.5 px-3.5 rounded-2xl cursor-pointer select-none transition-[background-color,border-color,box-shadow,opacity] duration-150 ease-out active:duration-75 outline-none w-full min-h-[64px] sm:min-h-[70px] focus-visible:ring-2 focus-visible:ring-primary ${
           isChecked
             ? 'bg-surface-container-low/70 opacity-70 border border-surface-container-high/40'

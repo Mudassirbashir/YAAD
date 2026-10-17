@@ -14,7 +14,7 @@ export const SplashView: React.FC<SplashViewProps> = ({ onFinish, isRestoringAut
       if (!isRestoringAuth) {
         onFinish();
       }
-    }, 2000);
+    }, 750);
 
     return () => clearTimeout(timer);
   }, [onFinish, isRestoringAuth]);
@@ -24,7 +24,7 @@ export const SplashView: React.FC<SplashViewProps> = ({ onFinish, isRestoringAut
     if (!isRestoringAuth) {
       const finishTimer = setTimeout(() => {
         onFinish();
-      }, 300);
+      }, 200);
       return () => clearTimeout(finishTimer);
     }
   }, [isRestoringAuth, onFinish]);
@@ -46,7 +46,7 @@ export const SplashView: React.FC<SplashViewProps> = ({ onFinish, isRestoringAut
       {/* Main Logo Container */}
       <div
         className="flex flex-col items-center justify-center gap-8 animate-zoom-in-95"
-        style={{ animationDuration: '700ms' }}
+        style={{ animationDuration: '600ms' }}
       >
         <div className="relative w-48 h-48 sm:w-56 sm:h-56 flex items-center justify-center filter drop-shadow-[0px_12px_28px_rgba(0,53,39,0.18)] hover:scale-105 transition-transform duration-300">
           <img

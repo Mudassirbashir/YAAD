@@ -149,7 +149,7 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
   return (
     <motion.label
       animate={{ scale: isChecked ? [1, 0.94, 1] : 1 }}
-      transition={{ type: 'spring', stiffness: 500, damping: 33 }}
+      transition={{ type: 'spring', stiffness: 520, damping: 38 }}
       className={`checkbox-wrapper yaad-checkbox-container container yaad-celebrate-container cursor-pointer select-none ${
         isChecked ? 'is-checked' : ''
       } ${shouldCelebrate && !prefersReducedMotion ? 'is-celebrating' : ''} ${className}`}
@@ -201,7 +201,7 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
           transition={
             prefersReducedMotion
               ? { duration: 0.1 }
-              : { type: 'spring', stiffness: 500, damping: 33 }
+              : { duration: 0.18, ease: [0.32, 0.72, 0, 1] }
           }
         />
       </svg>

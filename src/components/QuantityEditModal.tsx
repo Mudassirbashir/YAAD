@@ -99,17 +99,15 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
       {isOpen && item && (
         <motion.div
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+          animate={{ opacity: 1, transition: { duration: 0.16, ease: [0.32, 0.72, 0, 1] } }}
+          exit={{ opacity: 0, transition: { duration: 0.14, ease: [0.36, 0, 0.66, 0] } }}
           className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm"
           onClick={onClose}
         >
           <motion.div
             initial={{ opacity: 0, y: 24, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 24, scale: 0.96 }}
-            transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+            animate={{ opacity: 1, y: 0, scale: 1, transition: { duration: 0.18, ease: [0.32, 0.72, 0, 1] } }}
+            exit={{ opacity: 0, y: 24, scale: 0.96, transition: { duration: 0.16, ease: [0.36, 0, 0.66, 0] } }}
             className="w-full max-w-md bg-surface-container-lowest rounded-t-3xl sm:rounded-3xl border border-surface-container-high shadow-2xl p-5 sm:p-6 overflow-hidden flex flex-col gap-4"
             onClick={(e) => e.stopPropagation()}
           >

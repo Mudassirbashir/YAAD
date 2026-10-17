@@ -406,7 +406,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
             id="statistics_empty_state"
             initial={prefersReducedMotion ? false : { opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
+            transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
             className="bg-white rounded-3xl p-8 sm:p-10 border border-surface-dim/70 shadow-xs text-center flex flex-col items-center justify-center space-y-5 my-6"
           >
             <div className="w-16 h-16 rounded-3xl bg-emerald-50 text-[#0F3D2E] flex items-center justify-center shadow-xs border border-emerald-100/60">
@@ -447,7 +447,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
               id="statistics_overview_section"
               initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
+              transition={{ duration: 0.18, ease: [0.32, 0.72, 0, 1] }}
               className="space-y-3"
             >
               <div className="flex items-center justify-between px-1">
@@ -563,7 +563,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                     </div>
                     <div className="w-full bg-surface-container rounded-full h-1.5 mt-2 overflow-hidden">
                       <div
-                        className="bg-[#0F3D2E] h-1.5 rounded-full transition-all duration-500"
+                        className="bg-[#0F3D2E] h-1.5 rounded-full transition-all duration-200 ease-out"
                         style={{ width: `${Math.min(100, Math.max(5, analytics.completionRate))}%` }}
                       />
                     </div>
@@ -580,7 +580,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                 id="statistics_smart_insight"
                 initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.22, delay: 0.05, ease: 'easeOut' }}
+                transition={{ duration: 0.18, delay: 0.03, ease: [0.32, 0.72, 0, 1] }}
                 className="bg-emerald-50/90 border border-emerald-200/70 rounded-3xl p-4 sm:p-5 shadow-xs flex items-start gap-3.5"
               >
                 <div className="w-10 h-10 rounded-2xl bg-[#0F3D2E] text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
@@ -615,7 +615,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                 id="statistics_activity_card"
                 initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.24, delay: 0.08, ease: 'easeOut' }}
+                transition={{ duration: 0.2, delay: 0.04, ease: [0.32, 0.72, 0, 1] }}
                 className="bg-white rounded-3xl p-5 sm:p-6 border border-surface-dim/70 shadow-xs flex flex-col justify-between space-y-5"
               >
                 <div className="flex items-start justify-between">
@@ -673,7 +673,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                           {/* Bar Capsule */}
                           <div className="w-full max-w-[28px] bg-surface-container rounded-full h-full flex flex-col justify-end p-0.5">
                             <div
-                              className={`w-full rounded-full transition-all duration-300 ${
+                              className={`w-full rounded-full transition-all duration-200 ease-out ${
                                 isPeak
                                   ? 'bg-[#0F3D2E] shadow-[0_2px_8px_rgba(15,61,46,0.3)]'
                                   : totalDayScore > 0
@@ -714,7 +714,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                 id="statistics_categories_card"
                 initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.26, delay: 0.1, ease: 'easeOut' }}
+                transition={{ duration: 0.2, delay: 0.05, ease: [0.32, 0.72, 0, 1] }}
                 className="bg-white rounded-3xl p-5 sm:p-6 border border-surface-dim/70 shadow-xs flex flex-col justify-between space-y-4"
               >
                 <div className="flex items-start justify-between">
@@ -758,7 +758,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
 
                           <div className="w-full bg-surface-container rounded-full h-2 overflow-hidden">
                             <div
-                              className={`h-2 rounded-full transition-all duration-400 ${
+                              className={`h-2 rounded-full transition-all duration-200 ease-out ${
                                 idx === 0
                                   ? 'bg-[#0F3D2E]'
                                   : idx === 1
@@ -794,7 +794,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                 id="statistics_top_staples_section"
                 initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.26, delay: 0.11, ease: 'easeOut' }}
+                transition={{ duration: 0.2, delay: 0.06, ease: [0.32, 0.72, 0, 1] }}
                 className="bg-white rounded-3xl p-5 sm:p-6 border border-surface-dim/70 shadow-xs space-y-4"
               >
                 <div className="flex items-center justify-between">
@@ -847,7 +847,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                 id="statistics_recent_lists_section"
                 initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.28, delay: 0.12, ease: 'easeOut' }}
+                transition={{ duration: 0.2, delay: 0.06, ease: [0.32, 0.72, 0, 1] }}
                 className="space-y-3 pt-2"
               >
                 <div className="flex items-center justify-between px-1">

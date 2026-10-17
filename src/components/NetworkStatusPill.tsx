@@ -45,7 +45,7 @@ export const NetworkStatusPill: React.FC<NetworkStatusPillProps> = ({
             initial={{ opacity: 0, y: -16, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -12, scale: 0.95 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
+            transition={{ type: 'spring', stiffness: 500, damping: 38 }}
             className="pointer-events-auto flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#1c190e]/90 hover:bg-[#282417] text-white backdrop-blur-md shadow-[0_4px_16px_rgba(0,0,0,0.18)] border border-white/10 text-xs font-medium cursor-pointer transition-[transform,background-color,box-shadow] duration-150 ease-out active:duration-75 active:scale-95"
             title="Tap to retry connection"
           >
@@ -71,7 +71,7 @@ export const NetworkStatusPill: React.FC<NetworkStatusPillProps> = ({
             initial={{ opacity: 0, y: -16, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -12, scale: 0.95 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
+            transition={{ type: 'spring', stiffness: 500, damping: 38 }}
             className="pointer-events-auto flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/80 text-white backdrop-blur-xl shadow-[0_4px_16px_rgba(0,30,21,0.25)] border border-white/15 text-xs font-medium"
           >
             <RefreshCw className="w-3.5 h-3.5 text-primary-fixed animate-spin" />
@@ -86,7 +86,7 @@ export const NetworkStatusPill: React.FC<NetworkStatusPillProps> = ({
             initial={{ opacity: 0, y: -16, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -12, scale: 0.95 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
+            transition={{ type: 'spring', stiffness: 500, damping: 38 }}
             className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-900/80 text-white backdrop-blur-xl shadow-[0_4px_16px_rgba(0,0,0,0.15)] border border-emerald-500/30 text-xs font-medium"
           >
             <Check className="w-3.5 h-3.5 text-emerald-300 stroke-[2.5]" />
@@ -103,7 +103,7 @@ export const NetworkStatusPill: React.FC<NetworkStatusPillProps> = ({
             initial={{ opacity: 0, y: -16, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -12, scale: 0.95 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
+            transition={{ type: 'spring', stiffness: 500, damping: 38 }}
             className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container-high/80 text-on-surface backdrop-blur-xl shadow-[0_4px_14px_rgba(0,0,0,0.08)] border border-surface-dim text-xs font-medium hover:bg-surface-container-highest active:scale-95 transition-all"
           >
             <Cloud className="w-3.5 h-3.5 text-primary" />

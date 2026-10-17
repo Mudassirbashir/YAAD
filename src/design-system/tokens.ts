@@ -129,13 +129,21 @@ export const elevation = {
 } as const;
 
 export const motionTokens = {
-  fast: '150ms cubic-bezier(0.16, 1, 0.3, 1)',
-  normal: '250ms cubic-bezier(0.16, 1, 0.3, 1)',
-  slow: '350ms cubic-bezier(0.16, 1, 0.3, 1)',
+  easeEnter: 'cubic-bezier(0.32, 0.72, 0, 1)',
+  easeExit: 'cubic-bezier(0.36, 0, 0.66, 0)',
+  easeInOut: 'cubic-bezier(0.65, 0, 0.35, 1)',
+  fast: '160ms cubic-bezier(0.32, 0.72, 0, 1)',
+  normal: '220ms cubic-bezier(0.32, 0.72, 0, 1)',
+  slow: '300ms cubic-bezier(0.32, 0.72, 0, 1)',
   spring: {
     type: 'spring',
-    stiffness: 400,
-    damping: 30,
+    stiffness: 520,
+    damping: 40,
+  },
+  houseSpring: {
+    type: 'spring',
+    stiffness: 520,
+    damping: 40,
   },
   pressScale: 'active:scale-[0.98] transition-[transform,background-color,box-shadow] duration-150 ease-out active:duration-75',
   cardPressScale: 'active:scale-[0.99] transition-[transform,background-color,box-shadow] duration-150 ease-out active:duration-75',

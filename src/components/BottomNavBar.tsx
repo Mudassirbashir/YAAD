@@ -162,7 +162,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
                 transition={
                   prefersReducedMotion
                     ? { duration: 0 }
-                    : { type: 'spring', stiffness: 420, damping: 41 }
+                    : { type: 'spring', stiffness: 520, damping: 44 }
                 }
               />
             )}
@@ -223,7 +223,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
                 transition={
                   prefersReducedMotion
                     ? { duration: 0 }
-                    : { type: 'spring', stiffness: 420, damping: 41 }
+                    : { type: 'spring', stiffness: 520, damping: 44 }
                 }
               />
             )}

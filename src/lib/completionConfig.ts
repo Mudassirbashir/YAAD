@@ -82,24 +82,24 @@ export interface CompletionConfig {
 
 export const YAAD_COMPLETION_CONFIG: CompletionConfig = {
   timing: {
-    heroBadgeDelay: 0.05,
-    heroBadgeDuration: 0.6,
+    heroBadgeDelay: 0.03,
+    heroBadgeDuration: 0.35,
     badgeSpring: {
-      stiffness: 260,
-      damping: 20,
+      stiffness: 520,
+      damping: 38,
       mass: 0.9,
     },
-    checkMarkDelay: 0.22,
+    checkMarkDelay: 0.08,
     checkSpring: {
-      stiffness: 340,
-      damping: 18,
+      stiffness: 520,
+      damping: 36,
     },
-    // Synced with checkmark arrival at apex (~220ms)
-    soundDelayMs: 200,
-    hapticDelayMs: 210,
-    metricsFadeDelay: 0.35,
-    actionsFadeDelay: 0.48,
-    totalSequenceDuration: 1.1,
+    // Synced with checkmark arrival at apex (~120ms)
+    soundDelayMs: 120,
+    hapticDelayMs: 125,
+    metricsFadeDelay: 0.18,
+    actionsFadeDelay: 0.25,
+    totalSequenceDuration: 0.6,
   },
   motion: {
     initialBadgeScale: 0.55,

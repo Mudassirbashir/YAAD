@@ -682,14 +682,12 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                 initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.96 }}
-                transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-                onAnimationComplete={() => {
-                  renameInputRef.current?.focus();
-                }}
+                transition={{ type: 'spring', stiffness: 520, damping: 38 }}
                 className="flex items-center gap-1.5 flex-1 max-w-[260px] sm:max-w-md mx-2"
               >
                 <input
                   ref={renameInputRef}
+                  autoFocus
                   type="text"
                   value={titleInputVal}
                   onChange={(e) => setTitleInputVal(e.target.value)}
@@ -738,7 +736,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                 initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.96 }}
-                transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                transition={{ type: 'spring', stiffness: 520, damping: 38 }}
                 className="flex items-center justify-center gap-2 max-w-[200px] xs:max-w-[240px] sm:max-w-md mx-2 px-2.5 py-1 rounded-2xl bg-surface-container-low/70 border border-surface-dim/60 shadow-2xs"
               >
                 <BidiText

@@ -450,18 +450,18 @@ html[data-app-theme="rose"] {
   box-sizing: border-box;
   flex-shrink: 0;
   touch-action: manipulation;
-  transition: transform 0.2s cubic-bezier(0.23, 1, 0.32, 1);
+  transition: transform 0.18s var(--ease-enter);
 }
 
 .checkbox-wrapper.is-celebrating,
 .yaad-checkbox-container.is-celebrating {
-  animation: yaad-checkbox-pop 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+  animation: yaad-checkbox-pop 0.22s var(--ease-enter);
 }
 
 @keyframes yaad-checkbox-pop {
-  0% { transform: scale(1); }
-  35% { transform: scale(0.92); }
-  70% { transform: scale(1.04); }
+  0% { transform: scale(1); animation-timing-function: var(--ease-enter); }
+  40% { transform: scale(0.94); animation-timing-function: var(--ease-in-out); }
+  75% { transform: scale(1.03); animation-timing-function: var(--ease-enter); }
   100% { transform: scale(1); }
 }
 
@@ -493,7 +493,7 @@ html[data-app-theme="rose"] {
   fill: transparent;
   transform-origin: 17.8px 17.8px;
   transform: scale(0.88);
-  transition: fill 0.26s ease, transform 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: fill 0.18s var(--ease-enter), transform 0.18s var(--ease-enter);
 }
 
 .checkbox-wrapper input:checked ~ .checkbox-svg .background,
@@ -514,7 +514,7 @@ html[data-app-theme="rose"] {
   stroke-linejoin: round;
   stroke-dasharray: 105.5;
   stroke-dashoffset: 0;
-  transition: stroke 0.24s ease, stroke-dashoffset 0.32s ease;
+  transition: stroke 0.18s var(--ease-enter), stroke-dashoffset 0.18s var(--ease-enter);
 }
 
 .dark .checkbox-wrapper .checkbox-svg .stroke,
@@ -540,7 +540,7 @@ html[data-app-theme="rose"] {
   stroke-linejoin: round;
   stroke-dasharray: 24;
   stroke-dashoffset: 24;
-  transition: stroke-dashoffset 0.26s cubic-bezier(0.16, 1, 0.3, 1) 0.04s;
+  transition: stroke-dashoffset 0.18s var(--ease-enter);
 }
 
 .checkbox-wrapper input:checked ~ .checkbox-svg .check,
@@ -562,7 +562,7 @@ html[data-app-theme="rose"] {
   pointer-events: none;
   border: 2px solid #10b981;
   opacity: 0.85;
-  animation: yaad-ripple-burst 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: yaad-ripple-burst 0.36s var(--ease-enter) forwards;
   z-index: 1;
 }
 
@@ -571,9 +571,11 @@ html[data-app-theme="rose"] {
     transform: translate(-50%, -50%) scale(0.85);
     opacity: 0.9;
     border-width: 2.5px;
+    animation-timing-function: var(--ease-enter);
   }
   50% {
     opacity: 0.6;
+    animation-timing-function: var(--ease-exit);
   }
   100% {
     transform: translate(-50%, -50%) scale(2.4);
@@ -599,17 +601,19 @@ html[data-app-theme="rose"] {
 
 .celebrate-particle {
   transform-origin: center;
-  animation: kfr-particle-burst 0.46s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: kfr-particle-burst 0.38s var(--ease-enter) forwards;
 }
 
 @keyframes kfr-particle-burst {
   0% {
     transform: scale(0.2) translate(0, 0);
     opacity: 1;
+    animation-timing-function: var(--ease-enter);
   }
   40% {
     opacity: 1;
     transform: scale(1.15) translate(calc(var(--dx, 0px) * 0.65), calc(var(--dy, 0px) * 0.65));
+    animation-timing-function: var(--ease-exit);
   }
   100% {
     transform: scale(0) translate(var(--dx, 0px), var(--dy, 0px));
@@ -621,10 +625,12 @@ html[data-app-theme="rose"] {
   0% {
     transform: scale(0.2);
     opacity: 0.9;
+    animation-timing-function: var(--ease-enter);
   }
   45% {
     opacity: 1;
     transform: scale(1.15);
+    animation-timing-function: var(--ease-exit);
   }
   100% {
     transform: scale(1.35);
@@ -650,7 +656,7 @@ html[data-app-theme="rose"] {
   position: relative;
   height: 100%;
   width: 100%;
-  transition: transform .3s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color .3s;
+  transition: transform 0.18s var(--ease-enter), background-color 0.18s var(--ease-enter);
   border-radius: 50%;
   box-sizing: border-box;
 }
@@ -745,8 +751,15 @@ html.dark .border-neutral-100 {
    EMIL KOWALSKI DESIGN ENGINEERING & APPLE DESIGN MOTION SYSTEM
    ==================================================================== */
 :root {
-  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
-  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  /* ENTRANCES — fast start, smooth landing (like a video ease-out keyframe) */
+  --ease-enter: cubic-bezier(0.32, 0.72, 0, 1);
+  /* EXITS — smooth start, fast finish (like a video ease-in keyframe) */
+  --ease-exit: cubic-bezier(0.36, 0, 0.66, 0);
+  /* TRAVEL + SETTLE — smooth on both ends (like ease-in-out between keyframes) */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* Legacy aliases mapped to standardized curves */
+  --ease-out: cubic-bezier(0.32, 0.72, 0, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
@@ -761,12 +774,32 @@ html.dark .border-neutral-100 {
   }
 }
 
+@keyframes scale-out {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+}
+
 @keyframes fade-in {
   0% {
     opacity: 0;
   }
   100% {
     opacity: 1;
+  }
+}
+
+@keyframes fade-out {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
   }
 }
 
@@ -781,6 +814,17 @@ html.dark .border-neutral-100 {
   }
 }
 
+@keyframes slide-out-to-top {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-0.25rem);
+  }
+}
+
 @keyframes slide-in-from-bottom {
   from {
     opacity: 0;
@@ -789,6 +833,17 @@ html.dark .border-neutral-100 {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes slide-out-to-bottom {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(0.75rem);
   }
 }
 
@@ -803,35 +858,71 @@ html.dark .border-neutral-100 {
   }
 }
 
+@keyframes zoom-out-95 {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
 .animate-scale-in {
-  animation: scale-in 200ms cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  animation: scale-in 180ms var(--ease-enter) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-scale-out {
+  animation: scale-out 160ms var(--ease-exit) forwards;
   will-change: transform, opacity;
 }
 
 .animate-fade-in {
-  animation: fade-in 180ms ease-out forwards;
+  animation: fade-in 160ms var(--ease-enter) forwards;
+  will-change: opacity;
+}
+
+.animate-fade-out {
+  animation: fade-out 140ms var(--ease-exit) forwards;
   will-change: opacity;
 }
 
 .animate-slide-in-from-top {
-  animation: slide-in-from-top 200ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  animation: slide-in-from-top 180ms var(--ease-enter) both;
+  will-change: transform, opacity;
+}
+
+.animate-slide-out-to-top {
+  animation: slide-out-to-top 160ms var(--ease-exit) both;
   will-change: transform, opacity;
 }
 
 .animate-slide-in-from-bottom {
-  animation: slide-in-from-bottom 220ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  animation: slide-in-from-bottom 180ms var(--ease-enter) both;
+  will-change: transform, opacity;
+}
+
+.animate-slide-out-to-bottom {
+  animation: slide-out-to-bottom 160ms var(--ease-exit) both;
   will-change: transform, opacity;
 }
 
 .animate-zoom-in-95 {
-  animation: zoom-in-95 200ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  animation: zoom-in-95 180ms var(--ease-enter) both;
+  will-change: transform, opacity;
+}
+
+.animate-zoom-out-95 {
+  animation: zoom-out-95 160ms var(--ease-exit) both;
   will-change: transform, opacity;
 }
 
 /* Origin-aware popover styling */
 .popover-menu {
   transform-origin: top right;
-  animation: scale-in 180ms cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  animation: scale-in 160ms var(--ease-enter) forwards;
   will-change: transform, opacity;
 }
 
@@ -841,9 +932,13 @@ html.dark .border-neutral-100 {
 
 @media (prefers-reduced-motion: reduce) {
   .animate-scale-in,
+  .animate-scale-out,
   .animate-zoom-in-95,
+  .animate-zoom-out-95,
   .animate-slide-in-from-top,
+  .animate-slide-out-to-top,
   .animate-slide-in-from-bottom,
+  .animate-slide-out-to-bottom,
   .popover-menu {
     animation: fade-in 150ms ease forwards !important;
     transform: none !important;

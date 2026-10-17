@@ -311,7 +311,7 @@ export const PWAUpdateNotification: React.FC<PWAUpdateNotificationProps> = ({
           initial={{ opacity: 0, y: 24, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 24, scale: 0.96 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 34 }}
+          transition={{ type: 'spring', stiffness: 500, damping: 38 }}
           className={`pointer-events-auto w-full max-w-[390px] sm:max-w-[400px] lg:max-w-[430px]
             rounded-2xl sm:rounded-3xl
             bg-surface-container-lowest dark:bg-[#1a211e]

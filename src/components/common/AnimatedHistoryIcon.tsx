@@ -64,7 +64,7 @@ export const AnimatedHistoryIcon: React.FC<AnimatedHistoryIconProps> = ({
             animationData: getThemedClipboardData(isActive),
           });
 
-          anim.setSpeed(1.2);
+          anim.setSpeed(1.5);
           animInstanceRef.current = anim;
           setIsReady(true);
 

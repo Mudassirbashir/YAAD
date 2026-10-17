@@ -199,9 +199,8 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
         <motion.div
           id="avatar_picker_backdrop"
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+          animate={{ opacity: 1, transition: { duration: 0.16, ease: [0.32, 0.72, 0, 1] } }}
+          exit={{ opacity: 0, transition: { duration: 0.14, ease: [0.36, 0, 0.66, 0] } }}
           onClick={onClose}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto"
           role="dialog"
@@ -211,9 +210,8 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
           <motion.div
             id="avatar_picker_container"
             initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
+            animate={{ opacity: 1, scale: 1, transition: { duration: 0.18, ease: [0.32, 0.72, 0, 1] } }}
+            exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.16, ease: [0.36, 0, 0.66, 0] } }}
             onClick={(e) => e.stopPropagation()}
             className="bg-surface-container-lowest rounded-3xl w-full max-w-lg shadow-2xl border border-surface-dim overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[88vh]"
           >

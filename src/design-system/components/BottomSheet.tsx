@@ -36,9 +36,8 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
+            animate={{ opacity: 1, transition: { duration: 0.16, ease: [0.32, 0.72, 0, 1] } }}
+            exit={{ opacity: 0, transition: { duration: 0.14, ease: [0.36, 0, 0.66, 0] } }}
             onClick={onClose}
             className="fixed inset-0 bg-black/50 backdrop-blur-sm"
           />
@@ -48,7 +47,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+            transition={{ type: 'spring', damping: 40, stiffness: 520 }}
             className={`relative w-full max-w-lg mx-auto bg-surface-container-lowest rounded-t-[28px] border-t border-x border-surface-dim/80 shadow-[0_-10px_30px_rgba(15,61,46,0.12)] p-4 sm:p-6 pb-safe z-10 flex flex-col ${maxHeight}`}
           >
             {/* Grab Bar Indicator */}

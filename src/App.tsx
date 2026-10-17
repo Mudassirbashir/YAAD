@@ -1295,7 +1295,7 @@ function AppContent() {
           transition={
             shouldReduceMotion
               ? { duration: 0.15 }
-              : { type: 'spring', stiffness: 340, damping: 34 }
+              : { type: 'spring', stiffness: 520, damping: 40 }
           }
           className="flex-1 flex flex-col w-full"
         >

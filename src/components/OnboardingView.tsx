@@ -170,7 +170,7 @@ export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) =>
             transition={
               prefersReducedMotion
                 ? { duration: 0.15 }
-                : { type: 'spring', stiffness: 380, damping: 34 }
+                : { type: 'spring', stiffness: 520, damping: 40 }
             }
             className="flex flex-col items-center w-full"
           >
@@ -210,7 +210,7 @@ export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) =>
               key={s.id}
               onClick={() => setStep(s.id)}
               aria-label={`Go to step ${s.id}`}
-              className={`transition-all duration-300 rounded-full h-2 ${
+              className={`transition-all duration-200 ease-out rounded-full h-2 ${
                 step === s.id
                   ? 'w-7 bg-primary shadow-xs'
                   : 'w-2 bg-surface-dim hover:bg-surface-variant'

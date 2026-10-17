@@ -64,7 +64,7 @@ export const AnimatedHomeIcon: React.FC<AnimatedHomeIconProps> = ({
             animationData: getThemedHomeData(isActive),
           });
 
-          anim.setSpeed(1.2);
+          anim.setSpeed(1.5);
           animInstanceRef.current = anim;
           setIsReady(true);
 

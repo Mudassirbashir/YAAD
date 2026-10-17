@@ -151,7 +151,7 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
             <motion.div
               initial={{ scale: 0.85, opacity: 0, y: 8 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              transition={{ type: 'spring', stiffness: 420, damping: 28 }}
+              transition={{ type: 'spring', stiffness: 520, damping: 38 }}
               className="relative w-18 h-18 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center shadow-[0px_12px_30px_rgba(10,46,34,0.25)] border border-emerald-500/25 overflow-hidden"
               style={{
                 background: `linear-gradient(135deg, ${YAAD_COMPLETION_CONFIG.visual.brandEmerald} 0%, ${YAAD_COMPLETION_CONFIG.visual.brandEmeraldDeep} 100%)`,
@@ -161,7 +161,7 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
               <motion.div
                 initial={{ scale: 0, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: 'spring', stiffness: 450, damping: 26, delay: 0.12 }}
+                transition={{ type: 'spring', stiffness: 520, damping: 36, delay: 0.05 }}
                 className="relative z-10"
               >
                 <Check className="w-9 h-9 sm:w-10 sm:h-10 text-emerald-100 stroke-[3.2] drop-shadow-xs" />
@@ -179,7 +179,7 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
           <motion.div
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.28, delay: 0.15 }}
+            transition={{ duration: 0.2, delay: 0.06, ease: [0.32, 0.72, 0, 1] }}
             className="space-y-1 mt-1"
           >
             <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-300 text-xs font-['Manrope'] font-bold tracking-tight">
