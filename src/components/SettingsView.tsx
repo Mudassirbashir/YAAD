@@ -289,7 +289,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     <div
       id="settings_screen_container"
       dir={isRTL ? 'rtl' : 'ltr'}
-      className="min-h-screen bg-background text-on-surface flex flex-col font-sans pb-28 sm:pb-32"
+      className="min-h-screen bg-background text-on-surface flex flex-col font-sans pb-[calc(env(safe-area-inset-bottom,0px)+112px)] sm:pb-36"
     >
       {/* 1. Standard Top Navigation Header */}
       <TopHeader

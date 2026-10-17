@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import {
   ArrowLeft,
   ArrowRight,
@@ -51,6 +51,25 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
 
   // Chevron icon direction
   const Chevron = isRTL ? ChevronLeft : ChevronRight;
+
+  // Localized date formatter using Intl.DateTimeFormat
+  const formatTripDate = useCallback(
+    (dateVal?: string | number) => {
+      if (!dateVal) return t('common.recentTrip') || 'Recent trip';
+      const d = new Date(dateVal);
+      if (isNaN(d.getTime())) return String(dateVal);
+      try {
+        const locale = language === 'ur' ? 'ur-PK' : undefined;
+        return new Intl.DateTimeFormat(locale, {
+          dateStyle: 'medium',
+          timeStyle: 'short',
+        }).format(d);
+      } catch {
+        return d.toLocaleDateString();
+      }
+    },
+    [language, t]
+  );
 
   // ---------------------------------------------------------------------------
   // DATA ENGINE: Derive 100% Real User Statistics
@@ -264,7 +283,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
     <div
       id="statistics_screen_container"
       dir={isRTL ? 'rtl' : 'ltr'}
-      className="min-h-screen bg-surface-container-lowest text-on-surface font-['Plus_Jakarta_Sans'] pb-28 selection:bg-[#0F3D2E]/10"
+      className="min-h-screen bg-surface-container-lowest text-on-surface font-['Plus_Jakarta_Sans'] pb-[calc(env(safe-area-inset-bottom,0px)+104px)] selection:bg-[#0F3D2E]/10"
     >
       {/* ==================================================================== */}
       {/* 1. HEADER                                                            */}
@@ -519,7 +538,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                     </div>
                     <div className="text-[11px] text-outline font-medium font-['Manrope'] mt-1">
                       {analytics.totalItemsPlanned > 0
-                        ? `of ${analytics.totalItemsPlanned} planned`
+                        ? `${analytics.totalItemsPurchased} of ${analytics.totalItemsPlanned} planned items purchased`
                         : '—'}
                     </div>
                   </div>
@@ -884,7 +903,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                               {list.title}
                             </h4>
                             <p className="text-xs text-outline font-['Manrope'] flex items-center gap-1.5">
-                              <span>{list.createdAt || 'Recent trip'}</span>
+                              <span>{formatTripDate(list.createdAt || list.createdTimestamp || list.completedAt)}</span>
                               <span>•</span>
                               <span>
                                 {t('statistics.itemsCompleted', {

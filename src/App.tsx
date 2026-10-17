@@ -298,6 +298,14 @@ function AppContent() {
     }, [user?.id, fetchShoppingLists])
   );
 
+  // Authoritative retry handler that triggers pending sync & fresh lists fetch
+  const handleRetrySyncAndFetch = useCallback(() => {
+    triggerSync();
+    if (user?.id) {
+      fetchShoppingLists(user.id);
+    }
+  }, [triggerSync, fetchShoppingLists, user?.id]);
+
   useEffect(() => {
     const currentUserId = user?.id || null;
     const previousUserId = prevUserId || null;
@@ -399,25 +407,65 @@ function AppContent() {
       setActiveListId(routeListId);
       setDeepLinkNotFound(false);
 
-      // Check if list is already present in loaded lists
+      // Check if list is already present in in-memory state
       const foundInCache = lists.some((l) => l.id === routeListId);
       if (!foundInCache && !isLoadingLists) {
         setIsDeepLinkLoading(true);
-        fetchSingleShoppingList(user.id, routeListId)
-          .then(({ list, error }) => {
-            if (error || !list) {
-              setDeepLinkNotFound(true);
-            } else {
-              setLists((prev) => [list, ...prev.filter((l) => l.id !== list.id)]);
+
+        const resolveList = async () => {
+          // 1. Check local IndexedDB store first before failing
+          try {
+            const offlineLists = await getOfflineLists(user.id);
+            const localMatch = offlineLists.find((l) => l.id === routeListId);
+            if (localMatch) {
+              setLists((prev) => [localMatch, ...prev.filter((l) => l.id !== localMatch.id)]);
+              setActiveListId(localMatch.id);
               setDeepLinkNotFound(false);
+              setIsDeepLinkLoading(false);
+              return;
             }
-          })
-          .catch(() => {
+          } catch (e) {
+            console.warn('[DeepLink] IndexedDB check notice:', e);
+          }
+
+          // 2. Check localStorage cache
+          try {
+            const localRaw = localStorage.getItem(getStorageKey(user.id));
+            if (localRaw) {
+              const parsed = JSON.parse(localRaw);
+              if (Array.isArray(parsed)) {
+                const storageMatch = parsed.find((l: any) => l.id === routeListId);
+                if (storageMatch) {
+                  setLists((prev) => [storageMatch, ...prev.filter((l) => l.id !== storageMatch.id)]);
+                  setActiveListId(storageMatch.id);
+                  setDeepLinkNotFound(false);
+                  setIsDeepLinkLoading(false);
+                  return;
+                }
+              }
+            }
+          } catch (e) {
+            console.warn('[DeepLink] localStorage check notice:', e);
+          }
+
+          // 3. Fallback to cloud backend fetch only if local store misses
+          try {
+            const { list, error } = await fetchSingleShoppingList(user.id, routeListId);
+            if (!error && list) {
+              setLists((prev) => [list, ...prev.filter((l) => l.id !== list.id)]);
+              setActiveListId(list.id);
+              setDeepLinkNotFound(false);
+            } else {
+              setDeepLinkNotFound(true);
+            }
+          } catch {
             setDeepLinkNotFound(true);
-          })
-          .finally(() => {
+          } finally {
             setIsDeepLinkLoading(false);
-          });
+          }
+        };
+
+        resolveList();
       }
     } else {
       setDeepLinkNotFound(false);
@@ -433,24 +481,41 @@ function AppContent() {
       if (sessionList) {
         setActiveListId(sessionList.id);
       } else if (!isLoadingLists) {
-        // Attempt load
         setIsDeepLinkLoading(true);
-        fetchSingleShoppingList(user.id, routeSessionId)
-          .then(({ list, error }) => {
-            if (error || !list) {
-              setDeepLinkSessionNotFound(true);
-            } else {
+
+        const resolveSession = async () => {
+          // Check local store first
+          try {
+            const offlineLists = await getOfflineLists(user.id);
+            const localMatch = offlineLists.find(
+              (l) => l.completionSessionId === routeSessionId || l.id === routeSessionId
+            );
+            if (localMatch) {
+              setLists((prev) => [localMatch, ...prev.filter((l) => l.id !== localMatch.id)]);
+              setActiveListId(localMatch.id);
+              setDeepLinkSessionNotFound(false);
+              setIsDeepLinkLoading(false);
+              return;
+            }
+          } catch {}
+
+          try {
+            const { list, error } = await fetchSingleShoppingList(user.id, routeSessionId);
+            if (!error && list) {
               setLists((prev) => [list, ...prev.filter((l) => l.id !== list.id)]);
               setActiveListId(list.id);
               setDeepLinkSessionNotFound(false);
+            } else {
+              setDeepLinkSessionNotFound(true);
             }
-          })
-          .catch(() => {
+          } catch {
             setDeepLinkSessionNotFound(true);
-          })
-          .finally(() => {
+          } finally {
             setIsDeepLinkLoading(false);
-          });
+          }
+        };
+
+        resolveSession();
       }
     } else {
       setDeepLinkSessionNotFound(false);
@@ -1350,7 +1415,7 @@ function AppContent() {
                   lists={lists}
                   isLoading={isLoadingLists}
                   error={listsFetchError}
-                  onRetry={() => fetchShoppingLists(user?.id || null)}
+                  onRetry={handleRetrySyncAndFetch}
                   onCreateList={handleStartCreateList}
                   onSelectList={handleOpenListInShoppingMode}
                   onContinueShopping={handleOpenListInShoppingMode}
@@ -1485,7 +1550,7 @@ function AppContent() {
                   lists={lists}
                   isLoading={isLoadingLists}
                   error={listsFetchError}
-                  onRetry={() => fetchShoppingLists(user?.id || null)}
+                  onRetry={handleRetrySyncAndFetch}
                   onSelectList={handleOpenListDetails}
                   onCreateNewList={handleStartCreateList}
                   onContinueShopping={handleOpenListInShoppingMode}
@@ -1567,7 +1632,7 @@ function AppContent() {
                   lists={lists}
                   isLoading={isLoadingLists}
                   error={listsFetchError}
-                  onRetry={() => fetchShoppingLists(user?.id || null)}
+                  onRetry={handleRetrySyncAndFetch}
                   onBack={() => navigate('/home')}
                   onCreateList={handleStartCreateList}
                   onSelectList={handleOpenListInShoppingMode}

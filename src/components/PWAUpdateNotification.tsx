@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, RefreshCw, WifiOff, AlertCircle, X, ArrowUpCircle } from 'lucide-react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
+import { Workbox } from 'workbox-window';
 import { useAuth } from '../context/AuthContext';
 import { getPendingOperationsCount } from '../lib/offlineDb';
 import { syncPendingOfflineChanges } from '../lib/supabase';
@@ -44,6 +45,7 @@ export const PWAUpdateNotification: React.FC<PWAUpdateNotificationProps> = ({
   // Prevent duplicate concurrent clicks
   const isUpdatingRef = useRef<boolean>(false);
   const primaryButtonRef = useRef<HTMLButtonElement | null>(null);
+  const wbRef = useRef<Workbox | null>(null);
 
   // Real Service Worker registration hook
   const {
@@ -62,6 +64,54 @@ export const PWAUpdateNotification: React.FC<PWAUpdateNotificationProps> = ({
       console.warn('[YAAD PWA] Service worker registration notice:', error);
     },
   });
+
+  // Dedicated Workbox update detection (waiting, controlling, updatefound)
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+
+    try {
+      const wb = new Workbox('/sw.js');
+      wbRef.current = wb;
+
+      // Surface update prompt when new service worker has installed and is waiting
+      wb.addEventListener('waiting', () => {
+        setNeedRefresh(true);
+      });
+
+      // Automatically reload when new service worker takes control
+      wb.addEventListener('controlling', () => {
+        window.location.reload();
+      });
+
+      wb.register().catch((err) => {
+        console.warn('[YAAD PWA] Workbox registration notice:', err);
+      });
+    } catch (e) {
+      console.warn('[YAAD PWA] Workbox init notice:', e);
+    }
+
+    // Direct registration inspector for DevTools Application -> Service Workers -> Update
+    const checkWaitingWorker = async () => {
+      try {
+        const reg = await navigator.serviceWorker.getRegistration();
+        if (reg?.waiting) {
+          setNeedRefresh(true);
+        }
+        reg?.addEventListener('updatefound', () => {
+          const installing = reg.installing;
+          if (installing) {
+            installing.addEventListener('statechange', () => {
+              if (installing.state === 'installed' && navigator.serviceWorker.controller) {
+                setNeedRefresh(true);
+              }
+            });
+          }
+        });
+      } catch {}
+    };
+
+    checkWaitingWorker();
+  }, [setNeedRefresh]);
 
   // Determine if notification should be rendered
   const isAvailable = (needRefresh || forceVisible) && !isSnoozed;
@@ -176,6 +226,13 @@ export const PWAUpdateNotification: React.FC<PWAUpdateNotificationProps> = ({
           if (onMockUpdate) {
             await onMockUpdate();
           } else {
+            // Send skip waiting to the waiting service worker
+            if (wbRef.current) {
+              try {
+                wbRef.current.messageSkipWaiting();
+              } catch {}
+            }
+
             // Safety timeout: If browser does not reload within 10 seconds, reset state
             const timeoutPromise = new Promise((_, reject) => {
               setTimeout(() => reject(new Error('Update reload timed out')), 10000);
@@ -253,8 +310,8 @@ export const PWAUpdateNotification: React.FC<PWAUpdateNotificationProps> = ({
           aria-describedby="yaad_update_card_desc"
           initial={{ opacity: 0, y: 24, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 16, scale: 0.96 }}
-          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+          exit={{ opacity: 0, y: 24, scale: 0.96 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 34 }}
           className={`pointer-events-auto w-full max-w-[390px] sm:max-w-[400px] lg:max-w-[430px]
             rounded-2xl sm:rounded-3xl
             bg-surface-container-lowest dark:bg-[#1a211e]

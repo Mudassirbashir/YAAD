@@ -36,15 +36,18 @@ export const NetworkStatusPill: React.FC<NetworkStatusPillProps> = ({
       className="fixed top-3 sm:top-4 left-1/2 -translate-x-1/2 z-50 pointer-events-none px-4 w-full max-w-xs flex justify-center"
     >
       <AnimatePresence mode="wait">
-        {/* State 1: Offline */}
+        {/* State 1: Offline (Tappable to re-check connectivity and retry sync) */}
         {!isOnline || syncStatus === 'offline' ? (
-          <motion.div
+          <motion.button
             key="status-offline"
+            type="button"
+            onClick={onSyncClick}
             initial={{ opacity: 0, y: -16, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -12, scale: 0.95 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="pointer-events-auto flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#1c190e]/90 text-white backdrop-blur-md shadow-[0_4px_16px_rgba(0,0,0,0.18)] border border-white/10 text-xs font-medium"
+            className="pointer-events-auto flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#1c190e]/90 hover:bg-[#282417] text-white backdrop-blur-md shadow-[0_4px_16px_rgba(0,0,0,0.18)] border border-white/10 text-xs font-medium cursor-pointer transition-[transform,background-color,box-shadow] duration-150 ease-out active:duration-75 active:scale-95"
+            title="Tap to retry connection"
           >
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
@@ -52,14 +55,15 @@ export const NetworkStatusPill: React.FC<NetworkStatusPillProps> = ({
             </span>
             <WifiOff className="w-3.5 h-3.5 text-amber-300" />
             <span className="font-['Manrope']">
-              Offline • Saved on device
+              {language === 'ur' ? 'آف لائن • دوبارہ کوشش کریں' : 'Offline • Tap to retry'}
             </span>
             {pendingCount > 0 && (
               <span className="ml-0.5 px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/30 text-amber-200">
                 {pendingCount}
               </span>
             )}
-          </motion.div>
+            <RefreshCw className="w-3 h-3 text-amber-300/80 ml-0.5" />
+          </motion.button>
         ) : syncStatus === 'syncing' ? (
           /* State 2: Back online & syncing */
           <motion.div

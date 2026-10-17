@@ -322,7 +322,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               type="button"
               onClick={handleGoogleAuth}
               disabled={isSubmitting || googleLoading}
-              className="w-full h-12 rounded-full bg-white hover:bg-neutral-50 border border-neutral-300 text-neutral-800 text-sm font-semibold transition-all flex items-center justify-center gap-3 shadow-2xs hover:shadow-xs active:scale-[0.99] disabled:opacity-60 cursor-pointer"
+              className="w-full h-12 rounded-full bg-white hover:bg-neutral-50 border border-neutral-300 text-neutral-800 text-sm font-semibold transition-[transform,background-color,box-shadow] duration-150 ease-out active:duration-75 flex items-center justify-center gap-3 shadow-2xs hover:shadow-xs active:scale-[0.99] disabled:opacity-60 cursor-pointer"
             >
               {googleLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin text-neutral-800" />
@@ -378,7 +378,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full h-12 rounded-full bg-neutral-900 hover:bg-black text-white text-sm font-bold shadow-md hover:shadow-lg disabled:opacity-50 transition-all flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer"
+                  className="w-full h-12 rounded-full bg-neutral-900 hover:bg-black text-white text-sm font-bold shadow-md hover:shadow-lg disabled:opacity-50 transition-[transform,background-color,box-shadow] duration-150 ease-out active:duration-75 flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer"
                 >
                   {isSubmitting ? (
                     <Loader2 className="w-4 h-4 animate-spin text-white" />
@@ -496,7 +496,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting || googleLoading}
-              className="w-full h-12 rounded-full bg-neutral-900 hover:bg-black text-white text-sm font-bold tracking-tight shadow-md hover:shadow-lg disabled:opacity-50 transition-all flex items-center justify-center gap-2 active:scale-[0.99] mt-2 cursor-pointer"
+              className="w-full h-12 rounded-full bg-neutral-900 hover:bg-black text-white text-sm font-bold tracking-tight shadow-md hover:shadow-lg disabled:opacity-50 transition-[transform,background-color,box-shadow] duration-150 ease-out active:duration-75 flex items-center justify-center gap-2 active:scale-[0.99] mt-2 cursor-pointer"
             >
               {isSubmitting ? (
                 <Loader2 className="w-4 h-4 animate-spin text-white" />

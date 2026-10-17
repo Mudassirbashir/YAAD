@@ -39,6 +39,7 @@ export const EditListView: React.FC<EditListViewProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<CategoryId>('vegetables');
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
 
   // Transient feedback banner for added/removed items
   const [feedbackToast, setFeedbackToast] = useState<{ message: string; type: 'add' | 'remove' } | null>(null);
@@ -158,7 +159,10 @@ export const EditListView: React.FC<EditListViewProps> = ({
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
+    triggerHaptic(15);
     const trimmedTitle = title.trim() || t('createList.suggestions.0');
     const updatedList: ShoppingList = {
       ...list,
@@ -166,7 +170,15 @@ export const EditListView: React.FC<EditListViewProps> = ({
       items,
       isCompleted: items.length > 0 && items.every((i) => i.completed),
     };
-    onSave(updatedList);
+    showFeedbackToast(
+      language === 'ur' ? 'تبدیلیاں محفوظ ہو گئیں' : 'Changes saved successfully',
+      'add'
+    );
+    try {
+      await onSave(updatedList);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Group items by categoryId for organized sections
@@ -525,10 +537,11 @@ export const EditListView: React.FC<EditListViewProps> = ({
       <div className="fixed bottom-0 left-0 right-0 w-full max-w-5xl mx-auto z-40 bg-gradient-to-t from-background via-background to-transparent pb-6 pt-8 px-5 flex justify-center pointer-events-none">
         <button
           onClick={handleSave}
-          className="pointer-events-auto bg-primary text-on-primary font-['Manrope'] font-bold rounded-full h-[56px] px-8 w-full max-w-md shadow-[0px_8px_24px_rgba(0,30,21,0.2)] hover:bg-primary-container active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
+          disabled={isSaving}
+          className="pointer-events-auto bg-primary text-on-primary font-['Manrope'] font-bold rounded-full h-[56px] px-8 w-full max-w-md shadow-[0px_8px_24px_rgba(0,30,21,0.2)] hover:bg-primary-container active:scale-[0.98] transition-[transform,background-color,box-shadow] duration-150 ease-out active:duration-75 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75"
         >
-          <span>{t('editList.saveChanges')}</span>
-          <Check className="w-5 h-5" />
+          <span>{isSaving ? (language === 'ur' ? 'محفوظ کیا جا رہا ہے...' : 'Saving...') : t('editList.saveChanges')}</span>
+          <Check className="w-5 h-5 stroke-[2.5]" />
         </button>
       </div>
     </div>

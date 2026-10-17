@@ -229,7 +229,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
   const friendlyError = error ? getFriendlyErrorMessage(error) : null;
 
   return (
-    <div className="w-full max-w-7xl mx-auto min-h-screen flex flex-col antialiased bg-background pb-28 selection:bg-emerald-100 selection:text-emerald-900">
+    <div className="w-full max-w-7xl mx-auto min-h-screen flex flex-col antialiased bg-background pb-[calc(env(safe-area-inset-bottom,0px)+104px)] selection:bg-emerald-100 selection:text-emerald-900">
       {/* Top Header */}
       <TopHeader
         title="YAAD"

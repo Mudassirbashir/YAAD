@@ -234,7 +234,7 @@ html[data-app-theme="rose"] {
   }
 
   body {
-    font-family: "Plus Jakarta Sans", "Manrope", sans-serif;
+    font-family: "Plus Jakarta Sans", "Manrope", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
     background-color: var(--color-background);
     color: var(--color-on-background);
     text-rendering: optimizeLegibility;
@@ -450,19 +450,18 @@ html[data-app-theme="rose"] {
   box-sizing: border-box;
   flex-shrink: 0;
   touch-action: manipulation;
-  transition: transform 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: transform 0.2s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .checkbox-wrapper.is-celebrating,
 .yaad-checkbox-container.is-celebrating {
-  animation: yaad-checkbox-pop 0.42s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  animation: yaad-checkbox-pop 0.35s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 @keyframes yaad-checkbox-pop {
   0% { transform: scale(1); }
-  25% { transform: scale(0.82); }
-  55% { transform: scale(1.18); }
-  80% { transform: scale(0.96); }
+  35% { transform: scale(0.92); }
+  70% { transform: scale(1.04); }
   100% { transform: scale(1); }
 }
 
@@ -851,6 +850,17 @@ html.dark .border-neutral-100 {
   }
   .animate-fade-in {
     animation: fade-in 150ms ease forwards !important;
+  }
+  .checkbox-wrapper.is-celebrating,
+  .yaad-checkbox-container.is-celebrating,
+  .yaad-celebrate-ripple,
+  .celebrate-particle,
+  .celebrate,
+  .animate-pulse,
+  .animate-ping {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
   }
 }
 

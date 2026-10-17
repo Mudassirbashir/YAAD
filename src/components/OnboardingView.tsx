@@ -153,21 +153,25 @@ export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) =>
 
       {/* Main Slide Content with smooth transition */}
       <div className="flex-1 flex flex-col items-center justify-center text-center z-10 w-full my-4">
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="popLayout">
           <motion.div
             key={`onboarding-step-${step}`}
             initial={
               prefersReducedMotion
                 ? { opacity: 0 }
-                : { opacity: 0, x: isRTL ? -20 : 20 }
+                : { opacity: 0, x: isRTL ? -24 : 24 }
             }
             animate={{ opacity: 1, x: 0 }}
             exit={
               prefersReducedMotion
                 ? { opacity: 0 }
-                : { opacity: 0, x: isRTL ? 20 : -20 }
+                : { opacity: 0, x: isRTL ? 24 : -24 }
             }
-            transition={{ duration: 0.25, ease: 'easeOut' }}
+            transition={
+              prefersReducedMotion
+                ? { duration: 0.15 }
+                : { type: 'spring', stiffness: 380, damping: 34 }
+            }
             className="flex flex-col items-center w-full"
           >
             {/* Visual Illustration Card */}
@@ -221,7 +225,7 @@ export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) =>
             <button
               id="onboarding_next_btn"
               onClick={handleNext}
-              className="w-full h-12 sm:h-13 rounded-full bg-primary text-on-primary font-['Manrope'] text-base font-bold flex items-center justify-center gap-2 shadow-[0px_8px_20px_rgba(0,30,21,0.12)] hover:bg-primary-container active:scale-[0.98] transition-all"
+              className="w-full h-12 sm:h-13 rounded-full bg-primary text-on-primary font-['Manrope'] text-base font-bold flex items-center justify-center gap-2 shadow-[0px_8px_20px_rgba(0,30,21,0.12)] hover:bg-primary-container active:scale-[0.98] transition-[transform,background-color,box-shadow] duration-150 ease-out active:duration-75"
             >
               <span>{t('onboarding.next')}</span>
               {isRTL ? <ArrowLeft className="w-4 h-4 stroke-[2.5]" /> : <ArrowRight className="w-4 h-4 stroke-[2.5]" />}
@@ -230,7 +234,7 @@ export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) =>
             <button
               id="onboarding_get_started_btn"
               onClick={() => onComplete(false)}
-              className="w-full h-12 sm:h-13 rounded-full bg-primary text-on-primary font-['Manrope'] text-base font-bold flex items-center justify-center gap-2 shadow-[0px_8px_20px_rgba(0,30,21,0.12)] hover:bg-primary-container active:scale-[0.98] transition-all cursor-pointer"
+              className="w-full h-12 sm:h-13 rounded-full bg-primary text-on-primary font-['Manrope'] text-base font-bold flex items-center justify-center gap-2 shadow-[0px_8px_20px_rgba(0,30,21,0.12)] hover:bg-primary-container active:scale-[0.98] transition-[transform,background-color,box-shadow] duration-150 ease-out active:duration-75 cursor-pointer"
             >
               <span>{t('onboarding.getStarted')}</span>
               <Check className="w-4 h-4 stroke-[2.5]" />

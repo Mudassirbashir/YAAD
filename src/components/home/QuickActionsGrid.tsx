@@ -53,7 +53,7 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({
           type="button"
           id="quick_action_recent_lists"
           onClick={onOpenRecentLists}
-          className="h-12 sm:h-13 rounded-xl sm:rounded-2xl bg-surface-container-lowest border border-surface-dim/75 shadow-2xs hover:border-zinc-400 dark:hover:border-zinc-600 hover:shadow-xs active:scale-[0.98] transition-all flex items-center px-2.5 py-1.5 sm:px-3 sm:py-2 gap-2 group cursor-pointer text-start"
+          className="h-12 sm:h-13 rounded-xl sm:rounded-2xl bg-surface-container-lowest border border-surface-dim/75 shadow-2xs hover:border-zinc-400 dark:hover:border-zinc-600 hover:shadow-xs active:scale-[0.98] transition-[transform,background-color,box-shadow,border-color] duration-150 ease-out active:duration-75 flex items-center px-2.5 py-1.5 sm:px-3 sm:py-2 gap-2 group cursor-pointer text-start"
         >
           <div className="w-7.5 h-7.5 sm:w-8 sm:h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200/80 dark:border-zinc-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
             <ListChecks className="w-4 h-4 stroke-[2.2]" />
@@ -68,12 +68,12 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({
           </div>
         </button>
 
-        {/* 2. Favorites */}
+        {/* 2. Favorites / Staples Catalog */}
         <button
           type="button"
           id="quick_action_favorites"
           onClick={onOpenFavorites}
-          className="h-12 sm:h-13 rounded-xl sm:rounded-2xl bg-surface-container-lowest border border-surface-dim/75 shadow-2xs hover:border-zinc-400 dark:hover:border-zinc-600 hover:shadow-xs active:scale-[0.98] transition-all flex items-center px-2.5 py-1.5 sm:px-3 sm:py-2 gap-2 group cursor-pointer text-start"
+          className="h-12 sm:h-13 rounded-xl sm:rounded-2xl bg-surface-container-lowest border border-surface-dim/75 shadow-2xs hover:border-zinc-400 dark:hover:border-zinc-600 hover:shadow-xs active:scale-[0.98] transition-[transform,background-color,box-shadow,border-color] duration-150 ease-out active:duration-75 flex items-center px-2.5 py-1.5 sm:px-3 sm:py-2 gap-2 group cursor-pointer text-start"
         >
           <div className="w-7.5 h-7.5 sm:w-8 sm:h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200/80 dark:border-zinc-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
             <Bookmark className="w-4 h-4 stroke-[2.2]" />
@@ -83,9 +83,7 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({
               {t('home.quickActions.favorites')}
             </span>
             <span className="text-[9.5px] sm:text-[10px] font-medium text-outline font-['Manrope'] truncate mt-0.5">
-              {stats.totalItems > 0
-                ? `${stats.totalItems} ${t('nav.lists') ? 'Items' : 'Items'}`
-                : t('home.quickAdd') || 'Quick Add'}
+              {t('home.staplesCatalog') || 'Staples Catalog'}
             </span>
           </div>
         </button>
@@ -95,7 +93,7 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({
           type="button"
           id="quick_action_categories"
           onClick={onOpenCategories}
-          className="h-12 sm:h-13 rounded-xl sm:rounded-2xl bg-surface-container-lowest border border-surface-dim/75 shadow-2xs hover:border-zinc-400 dark:hover:border-zinc-600 hover:shadow-xs active:scale-[0.98] transition-all flex items-center px-2.5 py-1.5 sm:px-3 sm:py-2 gap-2 group cursor-pointer text-start"
+          className="h-12 sm:h-13 rounded-xl sm:rounded-2xl bg-surface-container-lowest border border-surface-dim/75 shadow-2xs hover:border-zinc-400 dark:hover:border-zinc-600 hover:shadow-xs active:scale-[0.98] transition-[transform,background-color,box-shadow,border-color] duration-150 ease-out active:duration-75 flex items-center px-2.5 py-1.5 sm:px-3 sm:py-2 gap-2 group cursor-pointer text-start"
         >
           <div className="w-7.5 h-7.5 sm:w-8 sm:h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200/80 dark:border-zinc-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
             <LayoutGrid className="w-4 h-4 stroke-[2.2]" />
@@ -115,7 +113,7 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({
           type="button"
           id="quick_action_statistics"
           onClick={onOpenStatistics}
-          className="h-12 sm:h-13 rounded-xl sm:rounded-2xl bg-surface-container-lowest border border-surface-dim/75 shadow-2xs hover:border-zinc-400 dark:hover:border-zinc-600 hover:shadow-xs active:scale-[0.98] transition-all flex items-center px-2.5 py-1.5 sm:px-3 sm:py-2 gap-2 group cursor-pointer text-start"
+          className="h-12 sm:h-13 rounded-xl sm:rounded-2xl bg-surface-container-lowest border border-surface-dim/75 shadow-2xs hover:border-zinc-400 dark:hover:border-zinc-600 hover:shadow-xs active:scale-[0.98] transition-[transform,background-color,box-shadow,border-color] duration-150 ease-out active:duration-75 flex items-center px-2.5 py-1.5 sm:px-3 sm:py-2 gap-2 group cursor-pointer text-start"
         >
           <div className="w-7.5 h-7.5 sm:w-8 sm:h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border border-zinc-200/80 dark:border-zinc-700 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
             <BarChart3 className="w-4 h-4 stroke-[2.2]" />
@@ -125,9 +123,9 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({
               {t('home.quickActions.statistics')}
             </span>
             <span className="text-[9.5px] sm:text-[10px] font-medium text-outline font-['Manrope'] truncate mt-0.5">
-              {stats.completionRate > 0
-                ? `${stats.completionRate}% ${t('done') || 'Done'}`
-                : `${stats.totalItems} Items`}
+              {stats.totalLists > 0 && stats.totalItems > 0
+                ? `${stats.completionRate}% completed`
+                : t('home.insights') || 'Insights'}
             </span>
           </div>
         </button>

@@ -204,7 +204,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto min-h-screen flex flex-col antialiased bg-background pb-28 selection:bg-primary-container selection:text-on-primary-container">
+    <div className="w-full max-w-7xl mx-auto min-h-screen flex flex-col antialiased bg-background pb-[calc(env(safe-area-inset-bottom,0px)+104px)] selection:bg-primary-container selection:text-on-primary-container">
       {/* 1. TOP HEADER (Height 56px, original YAAD logo, centered title, settings gear) */}
       <TopHeader
         title={t('appName')}

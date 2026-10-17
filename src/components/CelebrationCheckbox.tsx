@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
 import { triggerHaptic } from '../lib/sound';
 import checkCircleAnimationData from '../assets/check-circle-animation.json';
 
@@ -41,6 +42,7 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
   onChange,
   ariaLabel,
 }) => {
+  const prefersReducedMotion = useReducedMotion();
   const isFirstRender = useRef(true);
   const [isPlayingCelebration, setIsPlayingCelebration] = useState(false);
   const prevCheckedRef = useRef(isChecked);
@@ -141,10 +143,12 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
   ];
 
   return (
-    <label
-      className={`checkbox-wrapper yaad-checkbox-container container yaad-celebrate-container transition-transform duration-200 hover:scale-115 active:scale-90 cursor-pointer ${
+    <motion.label
+      animate={{ scale: isChecked ? [1, 0.94, 1] : 1 }}
+      transition={{ type: 'spring', stiffness: 500, damping: 33 }}
+      className={`checkbox-wrapper yaad-checkbox-container container yaad-celebrate-container cursor-pointer select-none ${
         isChecked ? 'is-checked' : ''
-      } ${shouldCelebrate ? 'is-celebrating' : ''} ${className}`}
+      } ${shouldCelebrate && !prefersReducedMotion ? 'is-celebrating' : ''} ${className}`}
       style={{
         width: `${size}px`,
         height: `${size}px`,
@@ -162,12 +166,14 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
       />
 
       {/* Outer celebratory glowing ripple ring */}
-      {shouldCelebrate && <span className="yaad-celebrate-ripple" aria-hidden="true" />}
+      {shouldCelebrate && !prefersReducedMotion && (
+        <span className="yaad-celebrate-ripple" aria-hidden="true" />
+      )}
 
       {/* Main Vector Checkbox with Background Circle, Stroke, and Smooth Draw Check */}
       <svg
         className={`checkbox-svg transition-opacity duration-150 ${
-          shouldCelebrate ? 'opacity-0' : 'opacity-100'
+          shouldCelebrate && !prefersReducedMotion ? 'opacity-0' : 'opacity-100'
         }`}
         viewBox="0 0 35.6 35.6"
         xmlns="http://www.w3.org/2000/svg"
@@ -175,11 +181,29 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
       >
         <circle className="background" cx="17.8" cy="17.8" r="16.8" />
         <circle className="stroke" cx="17.8" cy="17.8" r="16.8" />
-        <polyline className="check" points="10.7,18.7 15.3,23.3 24.9,13.7" />
+        <motion.path
+          className="check"
+          d="M10.7 18.7 L15.3 23.3 L24.9 13.7"
+          fill="none"
+          stroke="#ffffff"
+          strokeWidth="3.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          initial={false}
+          animate={{
+            pathLength: isChecked ? 1 : 0,
+            opacity: isChecked ? 1 : 0,
+          }}
+          transition={
+            prefersReducedMotion
+              ? { duration: 0.1 }
+              : { type: 'spring', stiffness: 500, damping: 33 }
+          }
+        />
       </svg>
 
       {/* Authentic Lottie Animated Check Circle (Plays system-outline-4489-check-circle-empty-hover-pinch.json on item completion) */}
-      {shouldCelebrate && (
+      {shouldCelebrate && !prefersReducedMotion && (
         <div
           ref={lottieContainerRef}
           className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 w-full h-full overflow-visible scale-110"
@@ -188,7 +212,7 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
       )}
 
       {/* Dynamic Celebration Party Popper Confetti Particle Burst */}
-      {shouldCelebrate && (
+      {shouldCelebrate && !prefersReducedMotion && (
         <svg
           key={isPlayingCelebration ? 'celebrating' : 'idle'}
           width="72"
@@ -243,6 +267,6 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
           })}
         </svg>
       )}
-    </label>
+    </motion.label>
   );
 };

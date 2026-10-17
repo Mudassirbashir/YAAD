@@ -137,8 +137,8 @@ export const motionTokens = {
     stiffness: 400,
     damping: 30,
   },
-  pressScale: 'active:scale-[0.98] transition-transform duration-100',
-  cardPressScale: 'active:scale-[0.99] transition-transform duration-150',
+  pressScale: 'active:scale-[0.98] transition-[transform,background-color,box-shadow] duration-150 ease-out active:duration-75',
+  cardPressScale: 'active:scale-[0.99] transition-[transform,background-color,box-shadow] duration-150 ease-out active:duration-75',
 } as const;
 
 export const accessibility = {

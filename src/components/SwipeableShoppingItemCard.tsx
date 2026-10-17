@@ -114,7 +114,7 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
         dragDirectionLock={true}
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={{ left: 0.35, right: 0.35 }}
-        dragTransition={{ bounceStiffness: 480, bounceDamping: 28 }}
+        dragTransition={{ bounceStiffness: 400, bounceDamping: 38 }}
         onDragStart={() => {
           isDraggingRef.current = true;
           dragDistanceRef.current = 0;
@@ -137,10 +137,11 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
             }
           }
 
-          setTimeout(() => {
+          // Release drag lock on next frame so fast second tap isn't swallowed
+          requestAnimationFrame(() => {
             isDraggingRef.current = false;
             dragDistanceRef.current = 0;
-          }, 100);
+          });
         }}
         onClick={handleCardClick}
         onKeyDown={(e) => {
@@ -149,22 +150,11 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
             onComplete(item.id);
           }
         }}
-        animate={
-          justCompletedLocally
-            ? {
-                scale: [1, 1.025, 0.995, 1],
-                boxShadow: [
-                  '0 0 0 0 rgba(16,185,129,0)',
-                  '0 0 0 4px rgba(16,185,129,0.28)',
-                  '0 0 0 0 rgba(16,185,129,0)',
-                ],
-                transition: { duration: 0.38, ease: 'easeOut' },
-              }
-            : {
-                scale: 1,
-              }
-        }
-        className={`relative flex items-center justify-between gap-3 py-2.5 px-3.5 rounded-2xl cursor-pointer select-none transition-colors duration-150 ease-out outline-none w-full min-h-[64px] sm:min-h-[70px] focus-visible:ring-2 focus-visible:ring-primary ${
+        animate={{
+          scale: 1,
+        }}
+        transition={{ type: 'spring', stiffness: 500, damping: 33 }}
+        className={`relative flex items-center justify-between gap-3 py-2.5 px-3.5 rounded-2xl cursor-pointer select-none transition-[background-color,border-color,box-shadow,opacity] duration-150 ease-out active:duration-75 outline-none w-full min-h-[64px] sm:min-h-[70px] focus-visible:ring-2 focus-visible:ring-primary ${
           isChecked
             ? 'bg-surface-container-low/70 opacity-70 border border-surface-container-high/40'
             : justCompletedLocally

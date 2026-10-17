@@ -144,7 +144,9 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
           triggerHaptic(8);
           onSelectList(list);
         }}
-        className={`w-full min-h-[78px] sm:min-h-[84px] bg-white dark:bg-surface-container-lowest rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between border shadow-2xs hover:shadow-xs active:scale-[0.99] transition-all relative select-none cursor-pointer group ${
+        className={`w-full min-h-[78px] sm:min-h-[84px] bg-white dark:bg-surface-container-lowest rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between border shadow-2xs hover:shadow-xs active:scale-[0.99] transition-[transform,background-color,box-shadow] duration-150 ease-out active:duration-75 relative select-none cursor-pointer group ${
+          isMenuOpen ? 'z-50' : 'z-auto'
+        } ${
           selectable && selected
             ? 'border-primary ring-2 ring-primary/30 bg-primary/5 dark:bg-primary/10'
             : 'border-surface-dim/80 hover:border-primary/40'
@@ -210,7 +212,7 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
                   triggerHaptic(6);
                   setIsMenuOpen((prev) => !prev);
                 }}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-all active:scale-95 cursor-pointer"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-[transform,background-color,color] duration-150 ease-out active:duration-75 active:scale-95 cursor-pointer"
             >
               <MoreVertical className="w-4 h-4" />
             </button>
@@ -224,7 +226,7 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
-                  className="absolute right-0 rtl:right-auto rtl:left-0 top-8 z-50 w-44 bg-white dark:bg-surface-container-lowest rounded-2xl shadow-xl border border-surface-dim/80 py-1.5 popover-menu text-xs font-['Manrope'] font-semibold text-on-surface"
+                  className="absolute right-0 rtl:right-auto rtl:left-0 top-8 z-[60] w-44 bg-white dark:bg-surface-container-lowest rounded-2xl shadow-xl border border-surface-dim/80 py-1.5 popover-menu text-xs font-['Manrope'] font-semibold text-on-surface"
                 >
                   {/* 1. View Details (Open Details) */}
                   <button

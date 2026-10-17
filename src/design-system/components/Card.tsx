@@ -27,7 +27,7 @@ export const Card: React.FC<CardProps> = ({
     elevated:
       'bg-surface-container-lowest border border-surface-dim/60 shadow-[0_4px_20px_rgba(15,61,46,0.06)] rounded-2xl sm:rounded-3xl',
     interactive:
-      'bg-surface-container-lowest border border-surface-dim/70 shadow-2xs hover:shadow-[0_6px_20px_rgba(15,61,46,0.08)] hover:border-primary/30 active:scale-[0.99] transition-all duration-200 cursor-pointer rounded-2xl sm:rounded-3xl',
+      'bg-surface-container-lowest border border-surface-dim/70 shadow-2xs hover:shadow-[0_6px_20px_rgba(15,61,46,0.08)] hover:border-primary/30 active:scale-[0.99] transition-[transform,background-color,box-shadow,border-color] duration-150 ease-out active:duration-75 cursor-pointer rounded-2xl sm:rounded-3xl',
   }[variant];
 
   return (

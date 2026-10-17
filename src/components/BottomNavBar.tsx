@@ -130,7 +130,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
         id="bottom_navigation_bar"
         role="navigation"
         aria-label={t('nav.mainNavigation') || 'Main Navigation'}
-        className="pointer-events-auto w-full sm:w-auto sm:min-w-[380px] sm:max-w-[440px] bg-surface-container-lowest/95 backdrop-blur-xl border-t sm:border border-surface-dim/70 rounded-none sm:rounded-full px-5 sm:px-7 pt-1.5 pb-[max(env(safe-area-inset-bottom,0px),0.5rem)] sm:py-2 sm:mb-3 shadow-[0_-2px_16px_rgba(0,0,0,0.04)] sm:shadow-[0_8px_32px_-6px_rgba(0,0,0,0.12)] select-none transition-all duration-200"
+        className="pointer-events-auto w-full sm:w-auto sm:min-w-[380px] sm:max-w-[440px] bg-surface-container-lowest/80 backdrop-blur-xl [backdrop-filter:blur(24px)] [-webkit-backdrop-filter:blur(24px)] border-t sm:border border-surface-dim/70 rounded-none sm:rounded-full px-5 sm:px-7 pt-1.5 pb-[max(env(safe-area-inset-bottom,0px),0.5rem)] sm:py-2 sm:mb-3 shadow-[0_-2px_16px_rgba(0,0,0,0.04)] sm:shadow-[0_8px_32px_-6px_rgba(0,0,0,0.12)] select-none transition-all duration-200"
       >
         <div
           role="tablist"
@@ -149,7 +149,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
             onKeyDown={(e) => handleTabKeyDown(e, 'home')}
             aria-selected={isHomeActive}
             aria-label={t('nav.home') || 'Home'}
-            className={`relative flex-1 sm:flex-initial min-w-[76px] sm:min-w-[88px] flex flex-col items-center justify-center gap-1 py-1 px-2 rounded-2xl text-center transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-pointer min-h-[50px] ${
+            className={`relative flex-1 sm:flex-initial min-w-[76px] sm:min-w-[88px] flex flex-col items-center justify-center gap-1 py-1 px-2 rounded-2xl text-center transition-[transform,background-color,box-shadow] duration-150 ease-out active:duration-75 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-pointer min-h-[50px] ${
               isHomeActive
                 ? 'text-primary font-bold'
                 : 'text-on-surface-variant/80 hover:text-on-surface font-medium hover:bg-surface-container'
@@ -162,7 +162,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
                 transition={
                   prefersReducedMotion
                     ? { duration: 0 }
-                    : { type: 'spring', stiffness: 480, damping: 34 }
+                    : { type: 'spring', stiffness: 420, damping: 41 }
                 }
               />
             )}
@@ -172,7 +172,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               size={22}
               className="transition-transform duration-150"
             />
-            <span className="text-[11px] sm:text-xs font-['Manrope'] font-bold tracking-tight whitespace-nowrap leading-none">
+            <span className="text-[0.6875rem] sm:text-xs font-['Manrope'] font-bold whitespace-nowrap leading-none">
               {t('nav.home') || 'Home'}
             </span>
           </button>
@@ -189,11 +189,11 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               onKeyDown={(e) => handleTabKeyDown(e, 'create')}
               aria-selected={isCreateActive}
               aria-label={t('nav.create') || 'Create New List'}
-              className="w-14 h-14 sm:w-15 sm:h-15 rounded-full bg-gradient-to-tr from-primary to-primary-container text-on-primary flex items-center justify-center shadow-[0_6px_20px_rgba(15,61,46,0.35)] hover:shadow-[0_8px_24px_rgba(15,61,46,0.45)] ring-4 ring-background dark:ring-stone-900 active:scale-95 transition-all duration-200 cursor-pointer group"
+              className="w-14 h-14 sm:w-15 sm:h-15 rounded-full bg-gradient-to-tr from-primary to-primary-container text-on-primary flex items-center justify-center shadow-[0_6px_20px_rgba(15,61,46,0.35)] hover:shadow-[0_8px_24px_rgba(15,61,46,0.45)] ring-4 ring-background dark:ring-stone-900 active:scale-95 transition-[transform,background-color,box-shadow] duration-150 ease-out active:duration-75 cursor-pointer group"
             >
-              <Plus className="w-7 h-7 sm:w-8 sm:h-8 stroke-[2.6] transition-transform duration-300 group-hover:rotate-90" />
+              <Plus className="w-7 h-7 sm:w-8 sm:h-8 stroke-[2.6]" />
             </button>
-            <span className="text-[10px] sm:text-[11px] font-['Manrope'] font-bold text-on-surface mt-1 tracking-tight">
+            <span className="text-[0.625rem] sm:text-[0.6875rem] font-['Manrope'] font-bold text-on-surface mt-1">
               {t('nav.create') || 'Create'}
             </span>
           </div>
@@ -210,7 +210,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
             onKeyDown={(e) => handleTabKeyDown(e, 'lists')}
             aria-selected={isListsActive}
             aria-label={t('nav.history') || t('history.title') || 'History'}
-            className={`relative flex-1 sm:flex-initial min-w-[76px] sm:min-w-[88px] flex flex-col items-center justify-center gap-1 py-1 px-2 rounded-2xl text-center transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-pointer min-h-[50px] ${
+            className={`relative flex-1 sm:flex-initial min-w-[76px] sm:min-w-[88px] flex flex-col items-center justify-center gap-1 py-1 px-2 rounded-2xl text-center transition-[transform,background-color,box-shadow] duration-150 ease-out active:duration-75 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-pointer min-h-[50px] ${
               isListsActive
                 ? 'text-primary font-bold'
                 : 'text-on-surface-variant/80 hover:text-on-surface font-medium hover:bg-surface-container'
@@ -223,7 +223,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
                 transition={
                   prefersReducedMotion
                     ? { duration: 0 }
-                    : { type: 'spring', stiffness: 480, damping: 34 }
+                    : { type: 'spring', stiffness: 420, damping: 41 }
                 }
               />
             )}
@@ -233,7 +233,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               size={22}
               className="transition-transform duration-150"
             />
-            <span className="text-[11px] sm:text-xs font-['Manrope'] font-bold tracking-tight whitespace-nowrap leading-none">
+            <span className="text-[0.6875rem] sm:text-xs font-['Manrope'] font-bold whitespace-nowrap leading-none">
               {t('nav.history') || t('history.title') || 'History'}
             </span>
           </button>
