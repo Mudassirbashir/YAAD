@@ -46,8 +46,8 @@ class ShoppingItemTile extends StatelessWidget {
         child: const Icon(Icons.delete_outline, color: Colors.white, size: 24),
       ),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeInOut,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOutCubic,
         margin: const EdgeInsets.symmetric(vertical: YaadSpacing.xs),
         padding: const EdgeInsets.symmetric(
           horizontal: YaadSpacing.base,

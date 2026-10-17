@@ -90,6 +90,7 @@ class _FilterPill extends StatelessWidget {
       borderRadius: BorderRadius.circular(YaadRadii.full),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOutCubic,
         padding: const EdgeInsets.symmetric(
           horizontal: YaadSpacing.base,
           vertical: YaadSpacing.xs,

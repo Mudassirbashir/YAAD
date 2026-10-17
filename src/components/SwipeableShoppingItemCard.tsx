@@ -164,7 +164,7 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
                 scale: 1,
               }
         }
-        className={`relative flex items-center justify-between gap-3 py-2.5 px-3.5 rounded-2xl cursor-pointer select-none transition-all duration-200 outline-none w-full min-h-[64px] sm:min-h-[70px] focus-visible:ring-2 focus-visible:ring-primary ${
+        className={`relative flex items-center justify-between gap-3 py-2.5 px-3.5 rounded-2xl cursor-pointer select-none transition-colors duration-150 ease-out outline-none w-full min-h-[64px] sm:min-h-[70px] focus-visible:ring-2 focus-visible:ring-primary ${
           isChecked
             ? 'bg-surface-container-low/70 opacity-70 border border-surface-container-high/40'
             : justCompletedLocally
