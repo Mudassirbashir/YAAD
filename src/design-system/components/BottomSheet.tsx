@@ -47,7 +47,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 40, stiffness: 520 }}
+            transition={{ type: 'spring', damping: 34, stiffness: 400, mass: 0.85 }}
             className={`relative w-full max-w-lg mx-auto bg-surface-container-lowest rounded-t-[28px] border-t border-x border-surface-dim/80 shadow-[0_-10px_30px_rgba(15,61,46,0.12)] p-4 sm:p-6 pb-safe z-10 flex flex-col ${maxHeight}`}
           >
             {/* Grab Bar Indicator */}

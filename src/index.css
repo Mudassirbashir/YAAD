@@ -455,13 +455,14 @@ html[data-app-theme="rose"] {
 
 .checkbox-wrapper.is-celebrating,
 .yaad-checkbox-container.is-celebrating {
-  animation: yaad-checkbox-pop 0.22s var(--ease-enter);
+  animation: yaad-checkbox-pop 0.34s var(--ease-spring-smooth);
 }
 
 @keyframes yaad-checkbox-pop {
-  0% { transform: scale(1); animation-timing-function: var(--ease-enter); }
-  40% { transform: scale(0.94); animation-timing-function: var(--ease-in-out); }
-  75% { transform: scale(1.03); animation-timing-function: var(--ease-enter); }
+  0% { transform: scale(1); }
+  25% { transform: scale(0.86); animation-timing-function: var(--ease-enter); }
+  60% { transform: scale(1.14); animation-timing-function: var(--ease-elastic); }
+  85% { transform: scale(0.97); animation-timing-function: var(--ease-in-out); }
   100% { transform: scale(1); }
 }
 
@@ -558,27 +559,27 @@ html[data-app-theme="rose"] {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  transform: translate(-50%, -50%) scale(0.8);
+  transform: translate(-50%, -50%) scale(0.85);
   pointer-events: none;
   border: 2px solid #10b981;
-  opacity: 0.85;
-  animation: yaad-ripple-burst 0.36s var(--ease-enter) forwards;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.45), inset 0 0 6px rgba(16, 185, 129, 0.25);
+  opacity: 0.9;
+  animation: yaad-ripple-burst 0.42s var(--ease-spring-smooth) forwards;
   z-index: 1;
 }
 
 @keyframes yaad-ripple-burst {
   0% {
     transform: translate(-50%, -50%) scale(0.85);
-    opacity: 0.9;
+    opacity: 0.95;
     border-width: 2.5px;
-    animation-timing-function: var(--ease-enter);
   }
-  50% {
-    opacity: 0.6;
-    animation-timing-function: var(--ease-exit);
+  45% {
+    opacity: 0.65;
+    border-width: 2px;
   }
   100% {
-    transform: translate(-50%, -50%) scale(2.4);
+    transform: translate(-50%, -50%) scale(2.6);
     opacity: 0;
     border-width: 0.5px;
   }
@@ -601,22 +602,22 @@ html[data-app-theme="rose"] {
 
 .celebrate-particle {
   transform-origin: center;
-  animation: kfr-particle-burst 0.38s var(--ease-enter) forwards;
+  animation: kfr-particle-burst 0.44s var(--ease-spring-smooth) forwards;
 }
 
 @keyframes kfr-particle-burst {
   0% {
-    transform: scale(0.2) translate(0, 0);
+    transform: scale(0.2) translate(0, 0) rotate(0deg);
     opacity: 1;
-    animation-timing-function: var(--ease-enter);
+    animation-timing-function: cubic-bezier(0.12, 0.8, 0.32, 1);
   }
-  40% {
+  45% {
     opacity: 1;
-    transform: scale(1.15) translate(calc(var(--dx, 0px) * 0.65), calc(var(--dy, 0px) * 0.65));
-    animation-timing-function: var(--ease-exit);
+    transform: scale(1.2) translate(calc(var(--dx, 0px) * 0.7), calc(var(--dy, 0px) * 0.7)) rotate(calc(var(--rot, 0deg) * 0.5));
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   }
   100% {
-    transform: scale(0) translate(var(--dx, 0px), var(--dy, 0px));
+    transform: scale(0) translate(var(--dx, 0px), var(--dy, 0px)) rotate(var(--rot, 0deg));
     opacity: 0;
   }
 }
@@ -757,6 +758,10 @@ html.dark .border-neutral-100 {
   --ease-exit: cubic-bezier(0.36, 0, 0.66, 0);
   /* TRAVEL + SETTLE — smooth on both ends (like ease-in-out between keyframes) */
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* SPRING-OVERSHOOT — organic, elastic bounce for tactile feedback & celebrations */
+  --ease-elastic: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-spring-smooth: cubic-bezier(0.16, 1, 0.3, 1);
 
   /* Legacy aliases mapped to standardized curves */
   --ease-out: cubic-bezier(0.32, 0.72, 0, 1);

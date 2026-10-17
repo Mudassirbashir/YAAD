@@ -77,9 +77,19 @@ export const Modal: React.FC<ModalProps> = ({
           {/* Dialog Container */}
           <motion.div
             ref={modalRef}
-            initial={{ opacity: 0, scale: 0.96, y: 8 }}
-            animate={{ opacity: 1, scale: 1, y: 0, transition: { duration: 0.18, ease: [0.32, 0.72, 0, 1] } }}
-            exit={{ opacity: 0, scale: 0.96, y: 8, transition: { duration: 0.16, ease: [0.36, 0, 0.66, 0] } }}
+            initial={{ opacity: 0, scale: 0.93, y: 12 }}
+            animate={{
+              opacity: 1,
+              scale: 1,
+              y: 0,
+              transition: { type: 'spring', stiffness: 420, damping: 32, mass: 0.85 },
+            }}
+            exit={{
+              opacity: 0,
+              scale: 0.95,
+              y: 8,
+              transition: { duration: 0.15, ease: [0.36, 0, 0.66, 0] },
+            }}
             className={`relative w-full ${maxWidthStyles} bg-surface-container-lowest rounded-3xl border border-surface-dim/80 shadow-[0_20px_50px_rgba(15,61,46,0.18)] p-5 sm:p-6 flex flex-col z-10 max-h-[90vh] overflow-hidden`}
           >
             {/* Header */}

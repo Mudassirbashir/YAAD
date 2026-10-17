@@ -148,8 +148,17 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
 
   return (
     <motion.label
-      animate={{ scale: isChecked ? [1, 0.94, 1] : 1 }}
-      transition={{ type: 'spring', stiffness: 520, damping: 38 }}
+      whileTap={{ scale: 0.88 }}
+      animate={
+        isChecked
+          ? { scale: [1, 0.88, 1.12, 1] }
+          : { scale: 1 }
+      }
+      transition={
+        prefersReducedMotion
+          ? { duration: 0.1 }
+          : { duration: 0.34, ease: [0.34, 1.56, 0.64, 1] }
+      }
       className={`checkbox-wrapper yaad-checkbox-container container yaad-celebrate-container cursor-pointer select-none ${
         isChecked ? 'is-checked' : ''
       } ${shouldCelebrate && !prefersReducedMotion ? 'is-celebrating' : ''} ${className}`}
@@ -179,6 +188,7 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
         className={`checkbox-svg transition-opacity duration-150 ${
           shouldCelebrate && !prefersReducedMotion ? 'opacity-0' : 'opacity-100'
         }`}
+        style={isChecked ? { filter: 'drop-shadow(0 2px 4px rgba(16, 185, 129, 0.35))' } : undefined}
         viewBox="0 0 35.6 35.6"
         xmlns="http://www.w3.org/2000/svg"
         aria-hidden="true"
@@ -201,7 +211,7 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
           transition={
             prefersReducedMotion
               ? { duration: 0.1 }
-              : { duration: 0.18, ease: [0.32, 0.72, 0, 1] }
+              : { duration: 0.22, ease: [0.16, 1, 0.3, 1] }
           }
         />
       </svg>

@@ -159,18 +159,18 @@ export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) =>
             initial={
               prefersReducedMotion
                 ? { opacity: 0 }
-                : { opacity: 0, x: isRTL ? -24 : 24 }
+                : { opacity: 0, x: isRTL ? -32 : 32, scale: 0.94 }
             }
-            animate={{ opacity: 1, x: 0 }}
+            animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={
               prefersReducedMotion
                 ? { opacity: 0 }
-                : { opacity: 0, x: isRTL ? 24 : -24 }
+                : { opacity: 0, x: isRTL ? 32 : -32, scale: 0.94 }
             }
             transition={
               prefersReducedMotion
                 ? { duration: 0.15 }
-                : { type: 'spring', stiffness: 520, damping: 40 }
+                : { type: 'spring', stiffness: 380, damping: 32, mass: 0.8 }
             }
             className="flex flex-col items-center w-full"
           >
@@ -203,42 +203,69 @@ export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) =>
 
       {/* Bottom Controls: Step Dots & Navigation Actions */}
       <footer className="w-full flex flex-col items-center z-10 gap-5 pb-2">
-        {/* Step Progress Indicators */}
-        <div className="flex items-center gap-2" role="progressbar" aria-valuenow={step} aria-valuemin={1} aria-valuemax={4}>
-          {steps.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => setStep(s.id)}
-              aria-label={`Go to step ${s.id}`}
-              className={`transition-all duration-200 ease-out rounded-full h-2 ${
-                step === s.id
-                  ? 'w-7 bg-primary shadow-xs'
-                  : 'w-2 bg-surface-dim hover:bg-surface-variant'
-              }`}
-            />
-          ))}
+        {/* Step Progress Indicators with Fluid Sliding Capsule */}
+        <div
+          className="flex items-center gap-2 relative p-1"
+          role="progressbar"
+          aria-valuenow={step}
+          aria-valuemin={1}
+          aria-valuemax={4}
+        >
+          {steps.map((s) => {
+            const isActive = step === s.id;
+            return (
+              <button
+                key={s.id}
+                onClick={() => setStep(s.id)}
+                aria-label={`Go to step ${s.id}`}
+                className="relative h-6 flex items-center justify-center p-1 cursor-pointer focus:outline-none"
+              >
+                {/* Subtle base dot */}
+                <span className="w-2.5 h-2.5 rounded-full bg-surface-dim hover:bg-surface-variant transition-colors" />
+
+                {/* Fluid Sliding Active Pill */}
+                {isActive && (
+                  <motion.div
+                    layoutId="onboarding-active-pill"
+                    className="absolute inset-y-1.5 inset-x-0 w-8 h-2.5 rounded-full bg-gradient-to-r from-primary to-primary-container shadow-[0_2px_8px_rgba(15,61,46,0.30)]"
+                    transition={
+                      prefersReducedMotion
+                        ? { duration: 0 }
+                        : { type: 'spring', stiffness: 380, damping: 30 }
+                    }
+                  />
+                )}
+              </button>
+            );
+          })}
         </div>
 
         {/* Action Buttons */}
         <div className="w-full max-w-sm flex flex-col gap-2.5">
           {step < steps.length ? (
-            <button
+            <motion.button
+              whileHover={{ scale: 1.015 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 26 }}
               id="onboarding_next_btn"
               onClick={handleNext}
-              className="w-full h-12 sm:h-13 rounded-full bg-primary text-on-primary font-['Manrope'] text-base font-bold flex items-center justify-center gap-2 shadow-[0px_8px_20px_rgba(0,30,21,0.12)] hover:bg-primary-container active:scale-[0.98] transition-[transform,background-color,box-shadow] duration-150 ease-out active:duration-75"
+              className="w-full h-12 sm:h-13 rounded-full bg-primary text-on-primary font-['Manrope'] text-base font-bold flex items-center justify-center gap-2 shadow-[0px_8px_20px_rgba(0,30,21,0.12)] hover:bg-primary-container transition-colors cursor-pointer"
             >
               <span>{t('onboarding.next')}</span>
               {isRTL ? <ArrowLeft className="w-4 h-4 stroke-[2.5]" /> : <ArrowRight className="w-4 h-4 stroke-[2.5]" />}
-            </button>
+            </motion.button>
           ) : (
-            <button
+            <motion.button
+              whileHover={{ scale: 1.015 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 26 }}
               id="onboarding_get_started_btn"
               onClick={() => onComplete(false)}
-              className="w-full h-12 sm:h-13 rounded-full bg-primary text-on-primary font-['Manrope'] text-base font-bold flex items-center justify-center gap-2 shadow-[0px_8px_20px_rgba(0,30,21,0.12)] hover:bg-primary-container active:scale-[0.98] transition-[transform,background-color,box-shadow] duration-150 ease-out active:duration-75 cursor-pointer"
+              className="w-full h-12 sm:h-13 rounded-full bg-primary text-on-primary font-['Manrope'] text-base font-bold flex items-center justify-center gap-2 shadow-[0px_8px_20px_rgba(0,30,21,0.12)] hover:bg-primary-container transition-colors cursor-pointer"
             >
               <span>{t('onboarding.getStarted')}</span>
               <Check className="w-4 h-4 stroke-[2.5]" />
-            </button>
+            </motion.button>
           )}
         </div>
       </footer>

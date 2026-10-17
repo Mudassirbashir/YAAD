@@ -158,11 +158,11 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
             {isHomeActive && (
               <motion.div
                 layoutId="nav-active-indicator"
-                className="absolute inset-0 bg-primary/10 rounded-2xl -z-10"
+                className="absolute inset-0 bg-primary/12 dark:bg-primary/25 border border-primary/20 dark:border-primary/30 rounded-2xl -z-10 shadow-[0_2px_12px_rgba(15,61,46,0.08)]"
                 transition={
                   prefersReducedMotion
                     ? { duration: 0 }
-                    : { type: 'spring', stiffness: 520, damping: 44 }
+                    : { type: 'spring', stiffness: 360, damping: 30, mass: 0.75 }
                 }
               />
             )}
@@ -179,7 +179,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
 
           {/* 2. Center: Prominent Elevated Floating Create Button */}
           <div className="relative -top-4 sm:-top-5 flex flex-col items-center shrink-0 z-20">
-            <button
+            <motion.button
               ref={createBtnRef}
               id="nav_tab_create"
               role="tab"
@@ -189,10 +189,20 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               onKeyDown={(e) => handleTabKeyDown(e, 'create')}
               aria-selected={isCreateActive}
               aria-label={t('nav.create') || 'Create New List'}
-              className="w-14 h-14 sm:w-15 sm:h-15 rounded-full bg-gradient-to-tr from-primary to-primary-container text-on-primary flex items-center justify-center shadow-[0_6px_20px_rgba(15,61,46,0.35)] hover:shadow-[0_8px_24px_rgba(15,61,46,0.45)] ring-4 ring-background dark:ring-stone-900 active:scale-95 transition-[transform,background-color,box-shadow] duration-150 ease-out active:duration-75 cursor-pointer group"
+              whileHover={{ scale: 1.06 }}
+              whileTap={{ scale: 0.92 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 24 }}
+              className="relative w-14 h-14 sm:w-15 sm:h-15 rounded-full bg-gradient-to-tr from-primary to-primary-container text-on-primary flex items-center justify-center shadow-[0_6px_22px_rgba(15,61,46,0.38)] hover:shadow-[0_8px_28px_rgba(15,61,46,0.48)] ring-4 ring-background dark:ring-stone-900 cursor-pointer group"
             >
-              <Plus className="w-7 h-7 sm:w-8 sm:h-8 stroke-[2.6]" />
-            </button>
+              {/* Eye-catching subtle ambient breathing halo behind button */}
+              <div className="absolute -inset-1 rounded-full bg-emerald-500/30 dark:bg-emerald-400/25 blur-md -z-10 opacity-70 group-hover:opacity-100 transition-opacity" />
+              <motion.div
+                whileHover={{ rotate: 90 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+              >
+                <Plus className="w-7 h-7 sm:w-8 sm:h-8 stroke-[2.6]" />
+              </motion.div>
+            </motion.button>
             <span className="text-[0.625rem] sm:text-[0.6875rem] font-['Manrope'] font-bold text-on-surface mt-1">
               {t('nav.create') || 'Create'}
             </span>
@@ -219,11 +229,11 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
             {isListsActive && (
               <motion.div
                 layoutId="nav-active-indicator"
-                className="absolute inset-0 bg-primary/10 rounded-2xl -z-10"
+                className="absolute inset-0 bg-primary/12 dark:bg-primary/25 border border-primary/20 dark:border-primary/30 rounded-2xl -z-10 shadow-[0_2px_12px_rgba(15,61,46,0.08)]"
                 transition={
                   prefersReducedMotion
                     ? { duration: 0 }
-                    : { type: 'spring', stiffness: 520, damping: 44 }
+                    : { type: 'spring', stiffness: 360, damping: 30, mass: 0.75 }
                 }
               />
             )}

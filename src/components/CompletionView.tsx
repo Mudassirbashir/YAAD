@@ -140,31 +140,40 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
         <section className="text-center py-2 flex flex-col items-center select-none">
           {/* Brand Emerald Badge */}
           <div className="relative my-2 flex items-center justify-center">
-            {/* Subtle atmospheric glow */}
-            <div
-              className="absolute -inset-4 rounded-full blur-xl opacity-30 pointer-events-none"
+            {/* Subtle atmospheric pulsating glow */}
+            <motion.div
+              animate={{
+                scale: [1, 1.18, 1],
+                opacity: [0.25, 0.45, 0.25],
+              }}
+              transition={{
+                duration: 2.6,
+                repeat: Infinity,
+                ease: 'easeInOut',
+              }}
+              className="absolute -inset-4 rounded-full blur-xl pointer-events-none"
               style={{
                 background: `radial-gradient(circle, ${YAAD_COMPLETION_CONFIG.visual.brandEmerald} 0%, transparent 70%)`,
               }}
             />
 
             <motion.div
-              initial={{ scale: 0.85, opacity: 0, y: 8 }}
+              initial={{ scale: 0.8, opacity: 0, y: 12 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              transition={{ type: 'spring', stiffness: 520, damping: 38 }}
-              className="relative w-18 h-18 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center shadow-[0px_12px_30px_rgba(10,46,34,0.25)] border border-emerald-500/25 overflow-hidden"
+              transition={{ type: 'spring', stiffness: 380, damping: 26, mass: 0.8 }}
+              className="relative w-18 h-18 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center shadow-[0px_12px_32px_rgba(10,46,34,0.30)] border border-emerald-500/30 overflow-hidden"
               style={{
                 background: `linear-gradient(135deg, ${YAAD_COMPLETION_CONFIG.visual.brandEmerald} 0%, ${YAAD_COMPLETION_CONFIG.visual.brandEmeraldDeep} 100%)`,
               }}
             >
               {/* Animated Stroke Checkmark */}
               <motion.div
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: 'spring', stiffness: 520, damping: 36, delay: 0.05 }}
+                initial={{ scale: 0, rotate: -30 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 22, delay: 0.12 }}
                 className="relative z-10"
               >
-                <Check className="w-9 h-9 sm:w-10 sm:h-10 text-emerald-100 stroke-[3.2] drop-shadow-xs" />
+                <Check className="w-9 h-9 sm:w-10 sm:h-10 text-emerald-100 stroke-[3.2] drop-shadow-sm" />
               </motion.div>
 
               {/* Signature YAAD Golden Accent Dot */}
@@ -197,10 +206,31 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
           </motion.div>
         </section>
 
-        {/* Clear Summary Metrics Grid */}
-        <section className="grid grid-cols-3 gap-2.5 sm:gap-3">
+        {/* Clear Summary Metrics Grid - Cascading Staggered Reveal */}
+        <motion.section
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: {
+                staggerChildren: 0.07,
+                delayChildren: 0.12,
+              },
+            },
+          }}
+          className="grid grid-cols-3 gap-2.5 sm:gap-3"
+        >
           {/* 1. Items Completed */}
-          <div className="bg-surface-container-lowest rounded-2xl p-3 sm:p-3.5 border border-surface-container-high/80 shadow-2xs flex flex-col justify-between">
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, y: 16, scale: 0.94 },
+              visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 420, damping: 28 } },
+            }}
+            whileHover={{ y: -2, transition: { duration: 0.15 } }}
+            className="bg-surface-container-lowest rounded-2xl p-3 sm:p-3.5 border border-surface-container-high/80 shadow-2xs hover:shadow-xs flex flex-col justify-between transition-shadow"
+          >
             <div className="flex items-center gap-1.5 text-outline text-[11px] font-['Manrope'] font-semibold">
               <ShoppingBag className="w-3.5 h-3.5 text-primary" />
               <span className="truncate">Items</span>
@@ -213,10 +243,17 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
                 /{totalItemsCount}
               </span>
             </div>
-          </div>
+          </motion.div>
 
           {/* 2. Trip Duration & Time */}
-          <div className="bg-surface-container-lowest rounded-2xl p-3 sm:p-3.5 border border-surface-container-high/80 shadow-2xs flex flex-col justify-between">
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, y: 16, scale: 0.94 },
+              visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 420, damping: 28 } },
+            }}
+            whileHover={{ y: -2, transition: { duration: 0.15 } }}
+            className="bg-surface-container-lowest rounded-2xl p-3 sm:p-3.5 border border-surface-container-high/80 shadow-2xs hover:shadow-xs flex flex-col justify-between transition-shadow"
+          >
             <div className="flex items-center gap-1.5 text-outline text-[11px] font-['Manrope'] font-semibold">
               <Clock className="w-3.5 h-3.5 text-primary" />
               <span className="truncate">Duration</span>
@@ -226,10 +263,17 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
                 {tripDurationText}
               </span>
             </div>
-          </div>
+          </motion.div>
 
           {/* 3. Categories Covered */}
-          <div className="bg-surface-container-lowest rounded-2xl p-3 sm:p-3.5 border border-surface-container-high/80 shadow-2xs flex flex-col justify-between">
+          <motion.div
+            variants={{
+              hidden: { opacity: 0, y: 16, scale: 0.94 },
+              visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 420, damping: 28 } },
+            }}
+            whileHover={{ y: -2, transition: { duration: 0.15 } }}
+            className="bg-surface-container-lowest rounded-2xl p-3 sm:p-3.5 border border-surface-container-high/80 shadow-2xs hover:shadow-xs flex flex-col justify-between transition-shadow"
+          >
             <div className="flex items-center gap-1.5 text-outline text-[11px] font-['Manrope'] font-semibold">
               <Layers className="w-3.5 h-3.5 text-primary" />
               <span className="truncate">Categories</span>
@@ -239,12 +283,17 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
                 {purchasedCategoryIds.length}
               </span>
             </div>
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
 
         {/* Completed Items Preview (Compact, responsive, space-efficient) */}
         {purchasedItems.length > 0 && (
-          <section className="bg-surface-container-lowest rounded-3xl p-4 sm:p-5 border border-surface-container-high/80 shadow-2xs space-y-3">
+          <motion.section
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30, delay: 0.28 }}
+            className="bg-surface-container-lowest rounded-3xl p-4 sm:p-5 border border-surface-container-high/80 shadow-2xs space-y-3"
+          >
             <div className="flex items-center justify-between border-b border-surface-dim/60 pb-2.5">
               <div className="flex items-center gap-2">
                 <span className="font-['Manrope'] text-xs font-bold text-primary uppercase tracking-wider">
@@ -322,43 +371,57 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
                 );
               })}
             </div>
-          </section>
+          </motion.section>
         )}
 
         {/* Working Actions: Done / Return Home, Start New List, Review / Edit Trip */}
-        <section className="space-y-2.5 pt-1">
+        <motion.section
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 30, delay: 0.35 }}
+          className="space-y-2.5 pt-1"
+        >
           {/* Primary Action: Done / Return Home */}
-          <button
+          <motion.button
+            whileHover={{ scale: 1.015 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: 'spring', stiffness: 440, damping: 26 }}
             id="completion_return_home_btn"
             type="button"
             onClick={onReturnHome}
-            className="w-full h-[50px] rounded-2xl bg-primary text-on-primary font-['Manrope'] text-sm font-bold shadow-sm hover:bg-primary/90 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full h-[50px] rounded-2xl bg-primary text-on-primary font-['Manrope'] text-sm font-bold shadow-sm hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 cursor-pointer"
           >
             <Home className="w-4 h-4" />
             <span>Done • Go Home</span>
-          </button>
+          </motion.button>
 
           {/* Secondary Actions Row: Start New List + Review / Edit Trip */}
           <div className="grid grid-cols-2 gap-2.5">
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ type: 'spring', stiffness: 440, damping: 26 }}
               id="completion_start_new_list_btn"
               type="button"
               onClick={handleStartNewList}
-              className="h-[46px] rounded-2xl bg-surface-container hover:bg-surface-container-high text-primary font-['Manrope'] text-xs sm:text-sm font-bold border border-surface-dim/80 active:scale-[0.99] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+              className="h-[46px] rounded-2xl bg-surface-container hover:bg-surface-container-high text-primary font-['Manrope'] text-xs sm:text-sm font-bold border border-surface-dim/80 transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
             >
               <PlusCircle className="w-4 h-4 text-primary" />
               <span>Start New List</span>
-            </button>
+            </motion.button>
 
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ type: 'spring', stiffness: 440, damping: 26 }}
               id="completion_review_trip_btn"
               type="button"
               onClick={handleReviewTrip}
-              className="h-[46px] rounded-2xl bg-surface-container-low hover:bg-surface-container text-primary font-['Manrope'] text-xs sm:text-sm font-bold border border-surface-dim/80 active:scale-[0.99] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+              className="h-[46px] rounded-2xl bg-surface-container-low hover:bg-surface-container text-primary font-['Manrope'] text-xs sm:text-sm font-bold border border-surface-dim/80 transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
             >
               <FileEdit className="w-4 h-4 text-primary" />
               <span>Review Trip</span>
-            </button>
+            </motion.button>
           </div>
 
           {/* View in History Link */}
@@ -373,7 +436,7 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
               <span>View in History</span>
             </button>
           </div>
-        </section>
+        </motion.section>
       </main>
 
       {/* Item Image Lightbox Modal */}
