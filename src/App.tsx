@@ -1049,9 +1049,7 @@ function AppContent() {
       navigate('/history');
     }
 
-    if (isConfigured) {
-      await deleteUserShoppingList(user.id, listId);
-    }
+    await deleteUserShoppingList(user.id, listId);
   };
 
   const handleDeleteMultipleLists = async (listIds: string[]) => {
@@ -1061,18 +1059,14 @@ function AppContent() {
     if (activeListId && idSet.has(activeListId)) {
       setActiveListId(null);
     }
-    if (isConfigured) {
-      await deleteMultipleUserShoppingLists(user.id, listIds);
-    }
+    await deleteMultipleUserShoppingLists(user.id, listIds);
   };
 
   const handleClearAllHistory = async () => {
     if (!user) return;
     setLists([]);
     setActiveListId(null);
-    if (isConfigured) {
-      await clearAllUserShoppingLists(user.id);
-    }
+    await clearAllUserShoppingLists(user.id);
   };
 
   const handleSaveEditedList = async (savedList: ShoppingList) => {

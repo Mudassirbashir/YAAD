@@ -776,16 +776,17 @@ export async function loadUserShoppingLists(
     });
 
     // Include local lists that have not been explicitly deleted:
-    // If a list was created or modified locally, preserve it so it never vanishes unexpectedly
+    // Only preserve local lists that are genuinely unsynced drafts or pending save.
+    // Lists that were already synced (isSynced: true) and are absent from remote were deleted remotely.
     cachedOfflineLists.forEach((localList) => {
       const isPendingSave = pendingSaveListIds.has(localList.id);
       const isUnsyncedDraft = localList.isSynced === false;
       const isNotDeleted = !pendingDeleteListIds.has(localList.id);
       const existsInRemote = activeRemoteLists.some((rl) => rl.id === localList.id);
 
-      if (isNotDeleted && !existsInRemote) {
-        // Keep the local list active so it doesn't vanish
-        mergedLists.push({ ...localList, isSynced: isPendingSave || isUnsyncedDraft ? false : true });
+      if (isNotDeleted && !existsInRemote && (isPendingSave || isUnsyncedDraft)) {
+        // Keep the local unsynced draft active so it doesn't vanish
+        mergedLists.push({ ...localList, isSynced: false });
       }
     });
 
@@ -838,6 +839,14 @@ async function executeInternalSaveUserShoppingList(
     userId: verifiedUserId,
     isSynced: false,
   };
+
+  // Check if this list was already deleted or is pending deletion in the offline queue
+  const pendingOps = await getPendingOfflineOperations(verifiedUserId);
+  const isPendingDelete = pendingOps.some((op) => op.type === 'DELETE_LIST' && op.listId === safeListId);
+  if (isPendingDelete) {
+    console.warn(`Aborting save for list ${safeListId}: list has a pending DELETE_LIST operation`);
+    return { success: false, error: new Error('Cannot save list: list is pending deletion') };
+  }
 
   // 1. Immediately persist to IndexedDB (Instant optimistic write)
   await saveOfflineList(verifiedUserId, listToSave);
@@ -1044,18 +1053,49 @@ export async function updateShoppingItemCompletionStatus(
       .eq('id', safeItemId);
 
     if (itemUpdateErr) {
-      console.warn('Notice updating individual shopping_item, attempting fallback update:', itemUpdateErr.message);
+      if (isNetworkOrOfflineError(itemUpdateErr)) {
+        await saveOfflineList(verifiedUserId, { ...updatedList, isSynced: false });
+        await enqueueOfflineOperation({
+          type: 'SAVE_LIST',
+          userId: verifiedUserId,
+          listId: safeListId,
+          payload: updatedList,
+        });
+        return { success: true, error: null, isOffline: true };
+      }
+      console.warn('Notice updating individual shopping_item, attempting fallback update on parent list:', itemUpdateErr.message);
     }
 
-    // 2. Update the parent shopping_list row (completion flag and updated_at)
-    await supabase
+    // 2. Update the parent shopping_list row (items JSON fallback, completion flag and updated_at)
+    const { error: listUpdateErr } = await supabase
       .from('shopping_lists')
       .update({
+        items: updatedList.items,
         is_completed: Boolean(updatedList.isCompleted),
         completed_at: updatedList.isCompleted ? (updatedList.completedAt || nowIso) : null,
         updated_at: nowIso,
       })
       .eq('id', safeListId);
+
+    if (listUpdateErr) {
+      if (isNetworkOrOfflineError(listUpdateErr)) {
+        await saveOfflineList(verifiedUserId, { ...updatedList, isSynced: false });
+        await enqueueOfflineOperation({
+          type: 'SAVE_LIST',
+          userId: verifiedUserId,
+          listId: safeListId,
+          payload: updatedList,
+        });
+        return { success: true, error: null, isOffline: true };
+      }
+
+      // If both item update and parent list update failed with database errors, remote write failed!
+      if (itemUpdateErr) {
+        console.error('Fatal database failure updating item completion in Supabase:', { itemUpdateErr, listUpdateErr });
+        await saveOfflineList(verifiedUserId, { ...updatedList, isSynced: false });
+        return { success: false, error: new Error(itemUpdateErr.message || listUpdateErr.message), isOffline: false };
+      }
+    }
 
     // 3. Keep local cache in IndexedDB in sync
     await saveOfflineList(verifiedUserId, { ...updatedList, isSynced: true });
@@ -1078,7 +1118,8 @@ export async function updateShoppingItemCompletionStatus(
       });
       return { success: true, error: null, isOffline: true };
     }
-    return { success: false, error: err instanceof Error ? err : new Error(String(err)) };
+    await saveOfflineList(verifiedUserId, { ...updatedList, isSynced: false });
+    return { success: false, error: err instanceof Error ? err : new Error(String(err)), isOffline: false };
   }
 }
 
@@ -1233,13 +1274,8 @@ export async function deleteUserShoppingList(
         });
         return { success: true, error: null, isOffline: true };
       }
-      console.warn('Error deleting from Supabase, queuing offline mutation:', listError.message);
-      await enqueueOfflineOperation({
-        type: 'DELETE_LIST',
-        userId: verifiedUserId,
-        listId,
-        payload: { listId },
-      });
+      console.error('Error deleting from Supabase:', listError.message);
+      return { success: false, error: new Error(listError.message), isOffline: false };
     }
 
     // Broadcast delete to other devices
@@ -1248,7 +1284,7 @@ export async function deleteUserShoppingList(
       listId,
     }).catch(() => {});
 
-    return { success: true, error: null };
+    return { success: true, error: null, isOffline: false };
   } catch (err) {
     if (isNetworkOrOfflineError(err)) {
       await enqueueOfflineOperation({
@@ -1259,14 +1295,8 @@ export async function deleteUserShoppingList(
       });
       return { success: true, error: null, isOffline: true };
     }
-    console.warn('Exception deleting from Supabase, queuing offline:', err);
-    await enqueueOfflineOperation({
-      type: 'DELETE_LIST',
-      userId: verifiedUserId,
-      listId,
-      payload: { listId },
-    });
-    return { success: true, error: null, isOffline: true };
+    console.error('Exception deleting from Supabase:', err);
+    return { success: false, error: err instanceof Error ? err : new Error(String(err)), isOffline: false };
   }
 }
 
@@ -1313,7 +1343,31 @@ export async function deleteMultipleUserShoppingLists(
       .in('id', listIds);
 
     if (listsError) {
-      console.warn('Error deleting lists in bulk from Supabase:', listsError.message);
+      if (isNetworkOrOfflineError(listsError)) {
+        for (const listId of listIds) {
+          await enqueueOfflineOperation({
+            type: 'DELETE_LIST',
+            userId: verifiedUserId,
+            listId,
+            payload: { listId },
+          });
+        }
+        return { success: true, error: null, isOffline: true };
+      }
+      console.error('Error deleting lists in bulk from Supabase:', listsError.message);
+      return { success: false, error: new Error(listsError.message), isOffline: false };
+    }
+
+    for (const listId of listIds) {
+      broadcastCrossDeviceSync(verifiedUserId, {
+        type: 'LIST_DELETE',
+        listId,
+      }).catch(() => {});
+    }
+
+    return { success: true, error: null, isOffline: false };
+  } catch (err) {
+    if (isNetworkOrOfflineError(err)) {
       for (const listId of listIds) {
         await enqueueOfflineOperation({
           type: 'DELETE_LIST',
@@ -1324,26 +1378,8 @@ export async function deleteMultipleUserShoppingLists(
       }
       return { success: true, error: null, isOffline: true };
     }
-
-    for (const listId of listIds) {
-      broadcastCrossDeviceSync(verifiedUserId, {
-        type: 'LIST_DELETE',
-        listId,
-      }).catch(() => {});
-    }
-
-    return { success: true, error: null };
-  } catch (err) {
-    console.warn('Exception deleting lists in bulk, queuing offline:', err);
-    for (const listId of listIds) {
-      await enqueueOfflineOperation({
-        type: 'DELETE_LIST',
-        userId: verifiedUserId,
-        listId,
-        payload: { listId },
-      });
-    }
-    return { success: true, error: null, isOffline: true };
+    console.error('Exception deleting lists in bulk:', err);
+    return { success: false, error: err instanceof Error ? err : new Error(String(err)), isOffline: false };
   }
 }
 
@@ -1921,6 +1957,15 @@ export async function syncPendingOfflineChanges(
       if (item.type === 'SAVE_LIST' || item.type === 'UPDATE_LIST' || item.type === 'CREATE_LIST') {
         const list = item.payload;
         if (list && list.id) {
+          // If a DELETE_LIST exists in the queue for this list, drop the stale save attempt to prevent resurrection!
+          const hasSubsequentDelete = queue.some(
+            (other) => other.type === 'DELETE_LIST' && other.listId === list.id
+          );
+          if (hasSubsequentDelete) {
+            console.warn(`Dropping stale ${item.type} for list ${list.id} because list has a pending DELETE_LIST`);
+            await removePendingOfflineOperation(item.id);
+            continue;
+          }
           const isCompleted = list.items?.length > 0
             ? list.items.every((i: ShoppingItem) => i.completed)
             : Boolean(list.isCompleted);
@@ -2241,14 +2286,61 @@ export function formatAuthErrorMessage(
     return 'Please enter a valid email address.';
   }
 
-  // 4. WEAK PASSWORD
+  // 4. WEAK PASSWORD & PASSWORD POLICY VIOLATIONS
+  if (
+    lower.includes('uppercase') &&
+    (lower.includes('password') || lower.includes('character') || lower.includes('letter'))
+  ) {
+    return 'Password must include at least one uppercase letter.';
+  }
+
+  if (
+    lower.includes('lowercase') &&
+    (lower.includes('password') || lower.includes('character') || lower.includes('letter'))
+  ) {
+    return 'Password must include at least one lowercase letter.';
+  }
+
+  if (
+    (lower.includes('number') || lower.includes('digit')) &&
+    lower.includes('password')
+  ) {
+    return 'Password must include at least one number.';
+  }
+
+  if (
+    (lower.includes('symbol') || lower.includes('special character')) &&
+    lower.includes('password')
+  ) {
+    return 'Password must include at least one special character.';
+  }
+
+  if (
+    lower.includes('pwned') ||
+    lower.includes('breach') ||
+    lower.includes('compromised') ||
+    lower.includes('common password')
+  ) {
+    return 'This password is too common or has appeared in a data breach. Please choose a more secure password.';
+  }
+
   if (
     lower.includes('password should be at least') ||
     lower.includes('password is too short') ||
-    lower.includes('weak_password') ||
-    lower.includes('signup requires a valid password')
+    lower.includes('at least 6 characters')
   ) {
+    if (context === 'sign_up') {
+      return 'Password must be at least 6 characters.';
+    }
     return 'Please choose a stronger password.';
+  }
+
+  if (
+    lower.includes('weak_password') ||
+    lower.includes('signup requires a valid password') ||
+    (lower.includes('password') && lower.includes('weak'))
+  ) {
+    return 'Password is too weak. Please choose a stronger password.';
   }
 
   // 5. RATE LIMIT

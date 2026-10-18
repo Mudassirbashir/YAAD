@@ -20,6 +20,8 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { profile, updateUserProfile, user } = useAuth();
   const prevUserIdRef = useRef<string | null>(null);
+  const prevProfileLanguageRef = useRef<string | undefined>(undefined);
+  const lastExplicitSelectionTimeRef = useRef<number>(0);
 
   const [language, setLanguageState] = useState<Language>(() => {
     // 1. Check URL search param first (for SEO / direct shared links, e.g. /about?lang=ur)
@@ -59,15 +61,16 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     return () => window.removeEventListener('popstate', handleLocationChange);
   }, [language]);
 
-  // When user signs in or signs up, the default language must be English
+  // When user signs in or signs up, or when remote profile language is loaded
   useEffect(() => {
     const currentUserId = user?.id || null;
     const isNewLogin = !prevUserIdRef.current && !!currentUserId;
     prevUserIdRef.current = currentUserId;
 
     if (isNewLogin) {
-      // User just authenticated (sign in or sign up) -> default language is English
+      // User just authenticated (sign in or sign up) -> default language is English or existing profile language
       const targetLang = profile?.language || 'en';
+      prevProfileLanguageRef.current = targetLang;
       setLanguageState(targetLang);
       if (typeof localStorage !== 'undefined') {
         localStorage.setItem(LANGUAGE_STORAGE_KEY, targetLang);
@@ -75,14 +78,21 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
       return;
     }
 
-    // Sync with user profile if profile specifically specifies language
-    if (profile?.language && profile.language !== language) {
+    // Sync with user profile only if:
+    // 1. Profile specifies language and it differs from previous profile language
+    // 2. User has not made an explicit selection in the current session (last 5 seconds)
+    if (
+      profile?.language &&
+      profile.language !== prevProfileLanguageRef.current &&
+      Date.now() - lastExplicitSelectionTimeRef.current > 5000
+    ) {
+      prevProfileLanguageRef.current = profile.language;
       setLanguageState(profile.language);
       if (typeof localStorage !== 'undefined') {
         localStorage.setItem(LANGUAGE_STORAGE_KEY, profile.language);
       }
     }
-  }, [user?.id, profile?.language, language]);
+  }, [user?.id, profile?.language]);
 
   // Apply direction and language attributes to document HTML
   useEffect(() => {
@@ -92,6 +102,8 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
   }, [language]);
 
   const setLanguage = (lang: Language) => {
+    lastExplicitSelectionTimeRef.current = Date.now();
+    prevProfileLanguageRef.current = lang;
     setLanguageState(lang);
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);

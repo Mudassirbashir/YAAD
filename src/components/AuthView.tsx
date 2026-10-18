@@ -372,8 +372,6 @@ export const AuthView: React.FC<AuthViewProps> = ({
           lower.includes('already exists')
         ) {
           setErrorMessage('This email is already registered. Please sign in instead.');
-        } else if (lower.includes('password') && lower.includes('weak')) {
-          setErrorMessage('Please choose a stronger password.');
         } else {
           setErrorMessage(formatAuthErrorMessage(res.error, 'sign_up'));
         }
@@ -838,6 +836,9 @@ export const AuthView: React.FC<AuthViewProps> = ({
                     )}
                   </button>
                 </div>
+                <p className="text-[11px] text-neutral-500 mt-1 font-['Manrope']">
+                  Must be at least 6 characters.
+                </p>
               </div>
 
               {/* Confirm Password */}

@@ -57,6 +57,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
   const [editingItem, setEditingItem] = useState<ShoppingItem | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
   const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState<boolean>(false);
+  const [itemSyncError, setItemSyncError] = useState<string | null>(null);
   const [lightboxItem, setLightboxItem] = useState<{
     imageUrl: string;
     itemName: string;
@@ -396,18 +397,13 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
     if (completionError && onClearCompletionError) {
       onClearCompletionError();
     }
+    setItemSyncError(null);
     onUpdateList(updatedList);
 
     // 2. Sound & Haptic Feedback (Fast & Premium tactile physical vibration)
     if (nextCompleted) {
       triggerHaptic([40, 30, 45]);
-      if (isAllCompleted) {
-        triggerHaptic([50, 40, 60, 40, 80]);
-        playCompletionSound();
-        setTimeout(() => {
-          onCompleteTrip(updatedList);
-        }, 500);
-      } else {
+      if (!isAllCompleted) {
         playItemCheckSound();
       }
 
@@ -427,13 +423,27 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
     // 3. Supabase Database Update (is_completed = true/false, updated_at = current timestamp)
     try {
       if (user?.id) {
-        await updateShoppingItemCompletionStatus(
+        const res = await updateShoppingItemCompletionStatus(
           user.id,
           currentList.id,
           itemId,
           nextCompleted,
           updatedList
         );
+
+        if (!res.success && res.error && !res.isOffline) {
+          // Revert optimistic update on fatal/unrecoverable database error
+          onUpdateList(currentList);
+          setItemSyncError(res.error.message || 'Failed to update item status');
+          return;
+        }
+      }
+
+      // 4. Safely handle trip completion only AFTER changes are safely persisted or offline queued
+      if (nextCompleted && isAllCompleted) {
+        triggerHaptic([50, 40, 60, 40, 80]);
+        playCompletionSound();
+        onCompleteTrip(updatedList);
       }
     } catch (dbErr) {
       console.warn('Notice syncing item completion to Supabase:', dbErr);
@@ -1172,20 +1182,22 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
         )}
 
         {/* Error banner if database persistence failed */}
-        {completionError && (
+        {(completionError || itemSyncError) && (
           <div className="p-3.5 bg-red-50 border border-red-200 rounded-2xl flex items-center justify-between gap-3 text-red-700 text-xs font-['Manrope'] mb-2">
             <div className="flex items-center gap-2 min-w-0">
               <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
-              <span className="font-medium">{completionError}</span>
+              <span className="font-medium">{completionError || itemSyncError}</span>
             </div>
-            {onClearCompletionError && (
-              <button
-                onClick={onClearCompletionError}
-                className="p-1 rounded-full hover:bg-red-100 text-red-700 font-bold shrink-0"
-              >
-                ✕
-              </button>
-            )}
+            <button
+              onClick={() => {
+                if (onClearCompletionError) onClearCompletionError();
+                setItemSyncError(null);
+              }}
+              aria-label="Dismiss error"
+              className="p-1 rounded-full hover:bg-red-100 text-red-700 font-bold shrink-0 cursor-pointer"
+            >
+              ✕
+            </button>
           </div>
         )}
 

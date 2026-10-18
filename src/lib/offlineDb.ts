@@ -339,18 +339,23 @@ export async function enqueueOfflineOperation(
           }
         };
       } else if (item.type === 'SAVE_LIST' || item.type === 'UPDATE_LIST') {
-        // Replace previous pending SAVE_LIST for the same list to prevent duplicate syncing
+        // If a DELETE_LIST is already queued for this list, drop this stale save attempt to prevent resurrection!
+        let hasPendingDelete = false;
         const index = store.index('by_list');
         const req = index.openCursor(IDBKeyRange.only(item.listId));
         req.onsuccess = (e) => {
           const cursor = (e.target as IDBRequest<IDBCursorWithValue>).result;
           if (cursor) {
-            if (cursor.value.type === 'SAVE_LIST' || cursor.value.type === 'UPDATE_LIST') {
+            if (cursor.value.type === 'DELETE_LIST') {
+              hasPendingDelete = true;
+            } else if (cursor.value.type === 'SAVE_LIST' || cursor.value.type === 'UPDATE_LIST') {
               cursor.delete();
             }
             cursor.continue();
           } else {
-            store.put(item);
+            if (!hasPendingDelete) {
+              store.put(item);
+            }
           }
         };
       } else if (item.type === 'UPDATE_PROFILE') {
