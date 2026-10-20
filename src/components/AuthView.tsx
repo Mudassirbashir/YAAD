@@ -529,6 +529,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
             <img
               src={APP_IMAGES.logoTransparent || '/logo.png'}
               alt="YAAD"
+              width={32}
+              height={32}
               className="w-8 h-8 object-contain"
             />
             <span className="font-['Plus_Jakarta_Sans'] font-extrabold text-lg tracking-tight text-[#003527]">

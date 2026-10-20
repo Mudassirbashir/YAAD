@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { triggerHaptic } from '../lib/sound';
+import { loadLottie } from '../lib/lottieLoader';
 import checkCircleAnimationData from '../assets/check-circle-animation.json';
 
 export interface CelebrationCheckboxProps {
@@ -80,11 +81,15 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
   // Lottie player lifecycle management
   useEffect(() => {
     let anim: any = null;
+    let isCancelled = false;
 
     if (shouldCelebrate && lottieContainerRef.current) {
-      const lottieLib = (window as any).lottie || (window as any).bodymovin;
-      if (lottieLib && typeof lottieLib.loadAnimation === 'function') {
+      loadLottie().then((lottieLib) => {
+        if (isCancelled || !lottieLib || !lottieContainerRef.current) return;
         try {
+          if (anim) {
+            anim.destroy();
+          }
           anim = lottieLib.loadAnimation({
             container: lottieContainerRef.current,
             renderer: 'svg',
@@ -96,15 +101,18 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
           anim.setSpeed(1.2);
 
           anim.addEventListener('complete', () => {
-            setIsPlayingCelebration(false);
+            if (!isCancelled) {
+              setIsPlayingCelebration(false);
+            }
           });
         } catch (err) {
           console.warn('Lottie player notice:', err);
         }
-      }
+      });
     }
 
     return () => {
+      isCancelled = true;
       if (anim) {
         anim.destroy();
       }

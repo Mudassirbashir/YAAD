@@ -23,7 +23,9 @@ import { ItemVisualIcon } from './ItemVisualIcon';
 import { ItemPhotoCaptureModal } from './common/ItemPhotoCaptureModal';
 import { ItemImageLightboxModal } from './common/ItemImageLightboxModal';
 import { AnimatedCartIcon } from './common/AnimatedCartIcon';
-import { BarcodeScannerModal } from './barcode/BarcodeScannerModal';
+const BarcodeScannerModal = React.lazy(() =>
+  import('./barcode/BarcodeScannerModal').then((m) => ({ default: m.BarcodeScannerModal }))
+);
 import { BidiText, containsUrdu } from '../utils/bidi';
 import { saveUserCategoryOverride } from '../lib/categorizer';
 import { parseShoppingItem, parseMultiItemInput } from '../lib/recognition/engine';
@@ -1301,11 +1303,15 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
       />
 
       {/* Barcode Scanner Modal */}
-      <BarcodeScannerModal
-        isOpen={isBarcodeScannerOpen}
-        onClose={() => setIsBarcodeScannerOpen(false)}
-        onAddItem={handleAddScannedItem}
-      />
+      {isBarcodeScannerOpen && (
+        <React.Suspense fallback={null}>
+          <BarcodeScannerModal
+            isOpen={isBarcodeScannerOpen}
+            onClose={() => setIsBarcodeScannerOpen(false)}
+            onAddItem={handleAddScannedItem}
+          />
+        </React.Suspense>
+      )}
 
       {/* Item Photo Capture Bottom Sheet */}
       <ItemPhotoCaptureModal

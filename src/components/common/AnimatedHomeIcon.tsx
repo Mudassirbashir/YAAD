@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Home } from 'lucide-react';
+import { loadLottie } from '../../lib/lottieLoader';
 import homeAnimationData from '../../assets/home-tab-animation.json';
 
 interface AnimatedHomeIconProps {
@@ -46,10 +47,11 @@ export const AnimatedHomeIcon: React.FC<AnimatedHomeIconProps> = ({
   // Initialize and update Lottie animation instance when active state or theme changes
   useEffect(() => {
     let anim: any = null;
+    let isCancelled = false;
 
     if (containerRef.current) {
-      const lottieLib = (window as any).lottie || (window as any).bodymovin;
-      if (lottieLib && typeof lottieLib.loadAnimation === 'function') {
+      loadLottie().then((lottieLib) => {
+        if (isCancelled || !lottieLib || !containerRef.current) return;
         try {
           if (animInstanceRef.current) {
             animInstanceRef.current.destroy();
@@ -75,10 +77,11 @@ export const AnimatedHomeIcon: React.FC<AnimatedHomeIconProps> = ({
         } catch (err) {
           console.warn('AnimatedHomeIcon error:', err);
         }
-      }
+      });
     }
 
     return () => {
+      isCancelled = true;
       if (anim) {
         anim.destroy();
       }

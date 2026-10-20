@@ -38,7 +38,7 @@
         } catch (e) {}
       })();
     </script>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>YAAD (yaadapppk) | Smart Shopping List &amp; Reminder App</title>
     <meta name="description" content="YAAD (yaadapppk) is a simple shopping memory assistant — never forget what you came to buy. Made for everyday shopping in Pakistan. Works offline." />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
@@ -164,16 +164,17 @@
     <meta name="apple-mobile-web-app-title" content="YAAD" />
     <meta name="application-name" content="YAAD" />
 
-    <!-- Fonts: Plus Jakarta Sans (Full weights 400-800), Manrope, Noto Nastaliq Urdu & Noto Sans Arabic (Universal Cross-Platform) -->
+    <!-- Fonts: Plus Jakarta Sans, Manrope, Noto Nastaliq Urdu & Noto Sans Arabic (Optimized Asynchronous Loading) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Nastaliq+Urdu:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <!-- Material Symbols Outlined -->
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Noto+Nastaliq+Urdu:wght@400;700&family=Noto+Sans+Arabic:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Noto+Nastaliq+Urdu:wght@400;700&family=Noto+Sans+Arabic:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'" />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Noto+Nastaliq+Urdu:wght@400;700&family=Noto+Sans+Arabic:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" />
+    </noscript>
   </head>
   <body class="bg-background text-on-background min-h-screen antialiased selection:bg-primary-container selection:text-on-primary-container">
     <div id="root"></div>
-    <script src="/vendor/lottie.min.js"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

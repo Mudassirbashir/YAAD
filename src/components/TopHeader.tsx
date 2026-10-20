@@ -222,13 +222,18 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             ) : (
               <div id="top_header_logo_area" className="flex items-center">
                 <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white border border-[#e5e1d8] flex items-center justify-center shadow-2xs p-1">
-                  <img
-                    id="top_header_logo"
-                    src={APP_IMAGES.logoTransparent || '/logo.png'}
-                    alt="YAAD Logo"
-                    draggable={false}
-                    className="h-full w-full object-contain select-none transition-transform duration-200 hover:scale-105 active:scale-95"
-                  />
+                  <picture className="h-full w-full flex items-center justify-center">
+                    <source srcSet="/logo-128.webp" type="image/webp" />
+                    <img
+                      id="top_header_logo"
+                      src="/logo.png"
+                      alt="YAAD Logo"
+                      width={36}
+                      height={36}
+                      draggable={false}
+                      className="h-full w-full object-contain select-none transition-transform duration-200 hover:scale-105 active:scale-95"
+                    />
+                  </picture>
                 </div>
               </div>
             )}

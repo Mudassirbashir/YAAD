@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ShoppingCart } from 'lucide-react';
+import { loadLottie } from '../../lib/lottieLoader';
 import cartAnimationData from '../../assets/cart-start-shopping-animation.json';
 
 interface AnimatedCartIconProps {
@@ -38,10 +39,11 @@ export const AnimatedCartIcon: React.FC<AnimatedCartIconProps> = ({
   // Initialize Lottie player
   useEffect(() => {
     let anim: any = null;
+    let isCancelled = false;
 
     if (containerRef.current) {
-      const lottieLib = (window as any).lottie || (window as any).bodymovin;
-      if (lottieLib && typeof lottieLib.loadAnimation === 'function') {
+      loadLottie().then((lottieLib) => {
+        if (isCancelled || !lottieLib || !containerRef.current) return;
         try {
           if (animInstanceRef.current) {
             animInstanceRef.current.destroy();
@@ -66,10 +68,11 @@ export const AnimatedCartIcon: React.FC<AnimatedCartIconProps> = ({
         } catch (err) {
           console.warn('AnimatedCartIcon error:', err);
         }
-      }
+      });
     }
 
     return () => {
+      isCancelled = true;
       if (anim) {
         anim.destroy();
       }

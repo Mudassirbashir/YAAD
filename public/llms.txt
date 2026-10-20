@@ -1,0 +1,23 @@
+# YAAD
+
+> YAAD (yaadapppk) is a simple, private smart shopping list and grocery memory assistant made for everyday grocery shopping in Pakistan. It supports English, Nastaliq Urdu, and Roman Urdu with 100% offline functionality.
+
+## Core Information & Public Pages
+
+- [YAAD Homepage](https://yaadapppk.vercel.app/): Official web application and interactive shopping list assistant.
+- [About YAAD](https://yaadapppk.vercel.app/about): Background, mission, and story behind the Pakistani grocery assistant.
+- [Monthly Rashan List Guide](https://yaadapppk.vercel.app/rashan-list): Curated monthly grocery checklist tailored for Pakistani households with family-size scaling.
+- [Features Overview](https://yaadapppk.vercel.app/features): Detailed overview of offline capabilities, bilingual categorization, and smart memory features.
+- [How YAAD Works](https://yaadapppk.vercel.app/how-it-works): Guide to making shopping lists, organizing aisles, and checking off items offline.
+- [Frequently Asked Questions (FAQ)](https://yaadapppk.vercel.app/faq): Answers to common questions regarding offline sync, privacy, and account usage.
+- [Grocery & Shopping Guides (Blog)](https://yaadapppk.vercel.app/blog): Helpful guides on shopping planning, Pakistani unit conversions, and grocery budgeting.
+- [Privacy Policy](https://yaadapppk.vercel.app/privacy): Commitment to private data storage and zero ad-tracking.
+- [Terms of Service](https://yaadapppk.vercel.app/terms): Clear and transparent terms of service for application users.
+- [Legal Information Hub](https://yaadapppk.vercel.app/legal): Comprehensive compliance and legal information.
+
+## Key Capabilities
+
+- **Bilingual & Roman Urdu Recognition**: Recognizes grocery items in English, Urdu (آلو, پیاز, دودھ), and Roman Urdu (aloo, pyaaz, doodh).
+- **Pakistani Units Support**: Built-in support for kg, gram, pao, adha kilo, sawa kilo, darjan, and local packaging units.
+- **Offline-First Resilience**: Full list creation, item checking, and editing in basement markets without cellular connectivity.
+- **Private & Secure**: Zero third-party ad networks, private encrypted user data, and transparent data ownership.

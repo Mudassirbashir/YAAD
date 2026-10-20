@@ -236,7 +236,7 @@ export const AppPublicFooter: React.FC<AppPublicFooterProps> = ({
       </div>
 
       {/* Bottom Copyright Strip */}
-      <div className="max-w-6xl mx-auto pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#788880]">
+      <div className="max-w-6xl mx-auto pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#4a5c53]">
         <p>&copy; 2026 YAAD (yaadapppk). All rights reserved.</p>
         <div className="flex items-center gap-4">
           <a

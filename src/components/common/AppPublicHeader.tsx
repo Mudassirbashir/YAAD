@@ -107,11 +107,18 @@ export const AppPublicHeader: React.FC<AppPublicHeaderProps> = ({
           >
             {/* High-contrast container for the official logo */}
             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white border border-[#e5e1d8] flex items-center justify-center shadow-xs p-1">
-              <img
-                src={APP_IMAGES.logoTransparent || '/logo.png'}
-                alt="YAAD Logo"
-                className="w-full h-full object-contain"
-              />
+              <picture className="w-full h-full flex items-center justify-center">
+                <source srcSet="/logo-128.webp" type="image/webp" />
+                <img
+                  src="/logo.png"
+                  alt="YAAD Logo"
+                  width={36}
+                  height={36}
+                  className="w-full h-full object-contain"
+                  loading="eager"
+                  decoding="async"
+                />
+              </picture>
             </div>
           </button>
         </div>

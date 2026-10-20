@@ -510,7 +510,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
               <span>{meta.badge}</span>
             </span>
 
-            <span className="text-xs text-[#788880] font-medium">
+            <span className="text-xs text-[#4a5c53] font-medium">
               Direct Link: <code className="bg-[#faf8f5] px-2 py-0.5 rounded border border-[#e5e1d8] font-mono text-[#1c2826]">{meta.path}</code>
             </span>
           </div>
@@ -527,7 +527,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
             {getLocalizedText(meta.subtitle)}
           </p>
 
-          <div className="pt-2 flex flex-wrap items-center gap-4 text-xs text-[#788880]">
+          <div className="pt-2 flex flex-wrap items-center gap-4 text-xs text-[#4a5c53]">
             <span>Last Updated: <strong className="text-[#1c2826]">{meta.lastUpdated}</strong></span>
             <span>•</span>
             <span>Platform: <strong className="text-[#1c2826]">YAAD PWA &amp; Web</strong></span>
@@ -1130,13 +1130,13 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
             {/* Search & Category Filter */}
             <div className="space-y-3.5">
               <div className="relative">
-                <Search className="w-4 h-4 text-[#788880] absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <Search className="w-4 h-4 text-[#4a5c53] absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="text"
                   value={faqSearchQuery}
                   onChange={(e) => setFaqSearchQuery(e.target.value)}
                   placeholder="Search questions (e.g. offline, sync, urdu)..."
-                  className="w-full h-11 bg-white rounded-2xl ps-10 pe-4 text-sm border border-[#e5e1d8] focus:border-[#005039] focus:ring-2 focus:ring-[#005039]/20 outline-none text-[#1c2826] placeholder:text-[#788880] shadow-2xs"
+                  className="w-full h-11 bg-white rounded-2xl ps-10 pe-4 text-sm border border-[#e5e1d8] focus:border-[#005039] focus:ring-2 focus:ring-[#005039]/20 outline-none text-[#1c2826] placeholder:text-[#4a5c53] shadow-2xs"
                 />
               </div>
 
@@ -1166,7 +1166,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
             {/* Accordion List */}
             <div className="space-y-3">
               {filteredFaqs.length === 0 ? (
-                <div className="p-8 text-center rounded-3xl bg-white border border-[#e5e1d8] text-[#788880] space-y-1 shadow-2xs">
+                <div className="p-8 text-center rounded-3xl bg-white border border-[#e5e1d8] text-[#4a5c53] space-y-1 shadow-2xs">
                   <p className="font-bold text-sm text-[#1c2826]">No matching questions found</p>
                   <p className="text-xs">Try searching for different keywords or email our team directly.</p>
                 </div>
@@ -1224,7 +1224,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
 
               <div className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div>
-                  <span className="text-[11px] font-bold uppercase text-[#788880] block">
+                  <span className="text-[11px] font-bold uppercase text-[#4a5c53] block">
                     Direct Support Email
                   </span>
                   <a
@@ -1452,7 +1452,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                         <span className="px-2.5 py-1 rounded-full bg-[#005039]/10 text-[#005039] font-bold">
                           {art.category || 'Grocery Guide'}
                         </span>
-                        <span className="text-[#788880] font-medium">
+                        <span className="text-[#4a5c53] font-medium">
                           {art.readTimeMinutes || 3} min read
                         </span>
                       </div>
@@ -1623,7 +1623,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                                   Reader Advice &amp; Comments ({art.commentsCount ?? art.comments?.length ?? 0})
                                 </h4>
                               </div>
-                              <span className="text-[11px] text-[#788880]">Public discussion • No login required</span>
+                              <span className="text-[11px] text-[#4a5c53]">Public discussion • No login required</span>
                             </div>
 
                             {/* Existing Comments */}
@@ -1633,7 +1633,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                                   <div key={cmt.id} className="pt-3 first:pt-0 space-y-2">
                                     <div className="flex items-center justify-between text-xs">
                                       <span className="font-bold text-[#1c2826]">{cmt.name}</span>
-                                      <span className="text-[#788880] text-[10.5px]">
+                                      <span className="text-[#4a5c53] text-[10.5px]">
                                         {new Date(cmt.createdAt).toLocaleDateString()}
                                       </span>
                                     </div>
@@ -1652,7 +1652,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                                 ))}
                               </div>
                             ) : (
-                              <p className="text-xs text-[#788880] italic">
+                              <p className="text-xs text-[#4a5c53] italic">
                                 No comments posted yet. Be the first to share your shopping tip or question!
                               </p>
                             )}
@@ -1727,7 +1727,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                             >
                               ↑ Collapse Guide
                             </button>
-                            <span className="text-xs text-[#788880] font-medium">Published by {art.authorName || 'YAAD Editorial'}</span>
+                            <span className="text-xs text-[#4a5c53] font-medium">Published by {art.authorName || 'YAAD Editorial'}</span>
                           </div>
                         </div>
                       ) : (
@@ -1740,7 +1740,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                             <span>Read Complete Guide</span>
                             <ArrowRight className="w-3.5 h-3.5" />
                           </button>
-                          <span className="text-xs text-[#788880]">
+                          <span className="text-xs text-[#4a5c53]">
                             {art.publishedAt ? new Date(art.publishedAt).toLocaleDateString() : 'Live'}
                           </span>
                         </div>
@@ -1775,7 +1775,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                         <span className="px-2.5 py-1 rounded-full bg-[#005039]/10 text-[#005039] font-bold">
                           {category}
                         </span>
-                        <span className="text-[#788880] font-medium">{post.readTime}</span>
+                        <span className="text-[#4a5c53] font-medium">{post.readTime}</span>
                       </div>
 
                       <h3
@@ -1906,7 +1906,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                                 {post.citations.map((cite, cIdx) => (
                                   <li key={cIdx} className={`${cIdx > 0 ? 'pt-2' : ''} space-y-0.5`}>
                                     <p className="font-semibold text-[#1c2826]">{cite.claim}</p>
-                                    <p className="text-[#788880]">
+                                    <p className="text-[#4a5c53]">
                                       Source:{' '}
                                       {cite.sourceUrl ? (
                                         <a
@@ -1948,7 +1948,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                             >
                               ↑ Collapse Guide
                             </button>
-                            <span className="text-xs text-[#788880] font-medium">Published {post.publishDate} • YAAD Editorial</span>
+                            <span className="text-xs text-[#4a5c53] font-medium">Published {post.publishDate} • YAAD Editorial</span>
                           </div>
                         </div>
                       ) : (
@@ -1961,7 +1961,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                             <span>Read Complete Guide</span>
                             <ArrowRight className="w-3.5 h-3.5" />
                           </button>
-                          <span className="text-xs text-[#788880]">{post.publishDate}</span>
+                          <span className="text-xs text-[#4a5c53]">{post.publishDate}</span>
                         </div>
                       )}
                     </div>
@@ -2324,7 +2324,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                         <span className="text-xs font-bold text-[#1c2826] uppercase tracking-wide">
                           {catName}
                         </span>
-                        <span className="text-[11px] font-semibold text-[#788880]">
+                        <span className="text-[11px] font-semibold text-[#4a5c53]">
                           {catItems.filter((i) => i.completed).length}/{catItems.length} Done
                         </span>
                       </div>
@@ -2346,7 +2346,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                               />
                               <span
                                 className={`text-xs sm:text-sm font-semibold truncate ${
-                                  item.completed ? 'line-through text-[#788880]' : 'text-[#1c2826]'
+                                  item.completed ? 'line-through text-[#4a5c53]' : 'text-[#1c2826]'
                                 }`}
                               >
                                 {item.name}

@@ -25,6 +25,31 @@ import { generateUUID } from '../lib/uuid';
 import { cleanPhoneNumber } from '../utils/phone';
 import { UserProfile, AppLanguage } from '../types';
 import { getAuthRedirectUrl } from '../config/siteConfig';
+import { reportAuthFailed } from '../lib/monitoring';
+
+function isExpectedAuthError(errMessage: string): boolean {
+  const lower = (errMessage || '').toLowerCase();
+  return (
+    lower.includes('invalid login credentials') ||
+    lower.includes('invalid email or password') ||
+    lower.includes('invalid_grant') ||
+    lower.includes('user already registered') ||
+    lower.includes('already registered') ||
+    lower.includes('already exists') ||
+    lower.includes('email already in use') ||
+    lower.includes('email_exists') ||
+    lower.includes('password should be at least') ||
+    lower.includes('at least 6 characters') ||
+    lower.includes('password is too short') ||
+    lower.includes('weak_password') ||
+    lower.includes('invalid email') ||
+    lower.includes('access_denied') ||
+    lower.includes('user denied access') ||
+    lower.includes('flow was cancelled') ||
+    lower.includes('cancelled') ||
+    lower.includes('canceled')
+  );
+}
 
 export type AuthState =
   | 'AUTH_LOADING'
@@ -340,6 +365,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             lowerDesc.includes('trigger') ||
             lowerDesc.includes('error saving new user')
           ) {
+            reportAuthFailed({
+              category: 'auth_error',
+              errorCode: errorCode || 'OAUTH_CALLBACK_SERVER_ERROR',
+              operationType: 'OAUTH_CALLBACK',
+            });
             setOauthError(
               'A server error occurred during Google sign-in. Please try again or sign in with Email.'
             );
@@ -662,6 +692,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
 
       if (error) {
+        if (!isExpectedAuthError(error.message) && !isNetworkOrOfflineError(error)) {
+          reportAuthFailed({
+            category: 'auth_error',
+            error: new Error(formatAuthErrorMessage(error)),
+            errorCode: (error as any)?.code || (error as any)?.status?.toString() || 'SIGN_IN_FAILED',
+            operationType: 'SIGN_IN',
+          });
+        }
         return { error: new Error(formatAuthErrorMessage(error)) };
       }
 
@@ -690,6 +728,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       return { error: null };
     } catch (err: unknown) {
+      if (!isNetworkOrOfflineError(err)) {
+        reportAuthFailed({
+          category: 'auth_error',
+          error: err,
+          errorCode: 'SIGN_IN_EXCEPTION',
+          operationType: 'SIGN_IN',
+        });
+      }
       return { error: new Error(formatAuthErrorMessage(err)) };
     } finally {
       isAuthenticatingRef.current = false;
@@ -758,6 +804,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           status: (error as any)?.status,
           name: error?.name,
         });
+        if (!isExpectedAuthError(error.message) && !isNetworkOrOfflineError(error)) {
+          reportAuthFailed({
+            category: 'auth_error',
+            error: new Error(formatAuthErrorMessage(error, 'sign_up')),
+            errorCode: (error as any)?.code || (error as any)?.status?.toString() || 'SIGN_UP_FAILED',
+            operationType: 'SIGN_UP',
+          });
+        }
         return { error: new Error(formatAuthErrorMessage(error, 'sign_up')) };
       }
 
@@ -816,6 +870,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return { error: null };
     } catch (err: unknown) {
       console.error('[YAAD SIGNUP EXCEPTION]', err);
+      if (!isNetworkOrOfflineError(err)) {
+        reportAuthFailed({
+          category: 'auth_error',
+          error: err,
+          errorCode: 'SIGN_UP_EXCEPTION',
+          operationType: 'SIGN_UP',
+        });
+      }
       return { error: new Error(formatAuthErrorMessage(err, 'sign_up')) };
     } finally {
       isAuthenticatingRef.current = false;
@@ -853,6 +915,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
 
       if (error) {
+        if (!isExpectedAuthError(error.message) && !isNetworkOrOfflineError(error)) {
+          reportAuthFailed({
+            category: 'auth_error',
+            error: new Error(formatAuthErrorMessage(error)),
+            errorCode: (error as any)?.code || (error as any)?.status?.toString() || 'GOOGLE_SIGN_IN_FAILED',
+            operationType: 'GOOGLE_SIGN_IN',
+          });
+        }
         return { error: new Error(formatAuthErrorMessage(error)) };
       }
 
@@ -867,6 +937,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       return { error: null };
     } catch (err: unknown) {
+      if (!isNetworkOrOfflineError(err) && !isExpectedAuthError((err as any)?.message)) {
+        reportAuthFailed({
+          category: 'auth_error',
+          error: new Error(formatAuthErrorMessage(err)),
+          errorCode: 'GOOGLE_SIGN_IN_EXCEPTION',
+          operationType: 'GOOGLE_SIGN_IN',
+        });
+      }
       return { error: new Error(formatAuthErrorMessage(err)) };
     } finally {
       isAuthenticatingRef.current = false;
@@ -1036,6 +1114,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       if (error) {
         console.error('[Supabase Auth] updateUser error:', error);
+        if (!isExpectedAuthError(error.message) && !isNetworkOrOfflineError(error)) {
+          reportAuthFailed({
+            category: 'auth_error',
+            error: new Error(formatAuthErrorMessage(error, 'password_reset')),
+            errorCode: (error as any)?.code || (error as any)?.status?.toString() || 'UPDATE_PASSWORD_FAILED',
+            operationType: 'UPDATE_PASSWORD',
+          });
+        }
         return { error: new Error(formatAuthErrorMessage(error, 'password_reset')) };
       }
 
@@ -1087,6 +1173,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (isNetworkOrOfflineError(err)) {
         return { error: new Error("You're offline. Please reconnect to update your password.") };
       }
+      if (!isExpectedAuthError((err as any)?.message)) {
+        reportAuthFailed({
+          category: 'auth_error',
+          error: new Error(formatAuthErrorMessage(err, 'password_reset')),
+          errorCode: 'UPDATE_PASSWORD_EXCEPTION',
+          operationType: 'UPDATE_PASSWORD',
+        });
+      }
       return { error: new Error(formatAuthErrorMessage(err, 'password_reset')) };
     }
   };
@@ -1116,6 +1210,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
 
       if (updateError) {
+        if (!isExpectedAuthError(updateError.message) && !isNetworkOrOfflineError(updateError)) {
+          reportAuthFailed({
+            category: 'auth_error',
+            error: new Error(formatAuthErrorMessage(updateError)),
+            errorCode: (updateError as any)?.code || (updateError as any)?.status?.toString() || 'CHANGE_PASSWORD_FAILED',
+            operationType: 'CHANGE_PASSWORD',
+          });
+        }
         return { error: new Error(formatAuthErrorMessage(updateError)) };
       }
 
@@ -1134,6 +1236,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (err: unknown) {
       if (isNetworkOrOfflineError(err)) {
         return { error: new Error("You're offline. Please reconnect to change your password.") };
+      }
+      if (!isExpectedAuthError((err as any)?.message)) {
+        reportAuthFailed({
+          category: 'auth_error',
+          error: new Error(formatAuthErrorMessage(err)),
+          errorCode: 'CHANGE_PASSWORD_EXCEPTION',
+          operationType: 'CHANGE_PASSWORD',
+        });
       }
       return { error: new Error(formatAuthErrorMessage(err)) };
     }

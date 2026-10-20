@@ -5,7 +5,9 @@ import { ShoppingList, ShoppingItem, CategoryId, CATEGORIES_LIST, normalizeCateg
 import { TopHeader } from './TopHeader';
 import { CategoryIcon } from './CategoryIcon';
 import { ItemVisualIcon } from './ItemVisualIcon';
-import { BarcodeScannerModal } from './barcode/BarcodeScannerModal';
+const BarcodeScannerModal = React.lazy(() =>
+  import('./barcode/BarcodeScannerModal').then((m) => ({ default: m.BarcodeScannerModal }))
+);
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { useAppTheme } from '../context/ThemeContext';
@@ -17,6 +19,7 @@ import { recordLearnedAlias } from '../lib/recognition/userAliases';
 import { defaultCatalogSearchEngine, CatalogSearchResult } from '../lib/catalog';
 import { playCompletionSound, playItemCheckSound, triggerHaptic } from '../lib/sound';
 import { updateShoppingItemCompletionStatus } from '../lib/supabase';
+import { reportItemCompletionFailed } from '../lib/monitoring';
 import { generateUUID } from '../lib/uuid';
 import { QuantityEditModal } from './QuantityEditModal';
 import { SmartSuggestionsSection } from './SmartSuggestionsSection';
@@ -447,6 +450,14 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
       }
     } catch (dbErr) {
       console.warn('Notice syncing item completion to Supabase:', dbErr);
+      reportItemCompletionFailed({
+        category: 'database_error',
+        error: dbErr,
+        errorCode: 'ITEM_COMPLETION_UI_EXCEPTION',
+        opaqueReference: itemId,
+        operationType: 'ITEM_COMPLETION',
+        isOffline: false,
+      });
     } finally {
       setTimeout(() => {
         inFlightItemIdsRef.current.delete(itemId);
@@ -1288,11 +1299,15 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
       />
 
       {/* Barcode Scanner Modal */}
-      <BarcodeScannerModal
-        isOpen={isBarcodeScannerOpen}
-        onClose={() => setIsBarcodeScannerOpen(false)}
-        onAddItem={handleAddScannedItem}
-      />
+      {isBarcodeScannerOpen && (
+        <React.Suspense fallback={null}>
+          <BarcodeScannerModal
+            isOpen={isBarcodeScannerOpen}
+            onClose={() => setIsBarcodeScannerOpen(false)}
+            onAddItem={handleAddScannedItem}
+          />
+        </React.Suspense>
+      )}
 
       {/* Delete List Confirmation Modal */}
       <AnimatePresence>

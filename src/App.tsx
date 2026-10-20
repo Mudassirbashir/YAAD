@@ -4,26 +4,28 @@ import { useLanguage } from './context/LanguageContext';
 import { ShoppingList, ShoppingItem, ScreenType, NavigationTab } from './types';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { SplashView } from './components/SplashView';
-import { OnboardingView } from './components/OnboardingView';
-import { AuthView } from './components/AuthView';
-import { ProfileSetupView } from './components/ProfileSetupView';
-import { ResetPasswordView } from './components/ResetPasswordView';
 import { HomeView } from './components/HomeView';
-import { CreateListView } from './components/CreateListView';
-import { AddItemsView } from './components/AddItemsView';
-import { ShoppingListView } from './components/ShoppingListView';
-import { CompletionView } from './components/CompletionView';
-import { ListHistoryView } from './components/ListHistoryView';
-import { ListDetailsView } from './components/ListDetailsView';
-import { EditListView } from './components/EditListView';
-import { SettingsView } from './components/SettingsView';
-import { StatisticsView } from './components/StatisticsView';
-import { NotificationsView } from './components/NotificationsView';
 import { NotFoundView } from './components/NotFoundView';
 import { ListNotFoundView } from './components/ListNotFoundView';
 import { BottomNavBar } from './components/BottomNavBar';
 import { AuthModal } from './components/AuthModal';
 import { PhoneNumberReminderModal } from './components/PhoneNumberReminderModal';
+
+// Code-split secondary views & heavy feature screens for fast initial rendering
+const OnboardingView = React.lazy(() => import('./components/OnboardingView').then((m) => ({ default: m.OnboardingView })));
+const AuthView = React.lazy(() => import('./components/AuthView').then((m) => ({ default: m.AuthView })));
+const ProfileSetupView = React.lazy(() => import('./components/ProfileSetupView').then((m) => ({ default: m.ProfileSetupView })));
+const ResetPasswordView = React.lazy(() => import('./components/ResetPasswordView').then((m) => ({ default: m.ResetPasswordView })));
+const CreateListView = React.lazy(() => import('./components/CreateListView').then((m) => ({ default: m.CreateListView })));
+const AddItemsView = React.lazy(() => import('./components/AddItemsView').then((m) => ({ default: m.AddItemsView })));
+const ShoppingListView = React.lazy(() => import('./components/ShoppingListView').then((m) => ({ default: m.ShoppingListView })));
+const CompletionView = React.lazy(() => import('./components/CompletionView').then((m) => ({ default: m.CompletionView })));
+const ListHistoryView = React.lazy(() => import('./components/ListHistoryView').then((m) => ({ default: m.ListHistoryView })));
+const ListDetailsView = React.lazy(() => import('./components/ListDetailsView').then((m) => ({ default: m.ListDetailsView })));
+const EditListView = React.lazy(() => import('./components/EditListView').then((m) => ({ default: m.EditListView })));
+const SettingsView = React.lazy(() => import('./components/SettingsView').then((m) => ({ default: m.SettingsView })));
+const StatisticsView = React.lazy(() => import('./components/StatisticsView').then((m) => ({ default: m.StatisticsView })));
+const NotificationsView = React.lazy(() => import('./components/NotificationsView').then((m) => ({ default: m.NotificationsView })));
 import { usePhoneNumberReminder } from './hooks/usePhoneNumberReminder';
 import { useAuth } from './context/AuthContext';
 import { RouterProvider, useAppRouter } from './router/RouterContext';
@@ -49,13 +51,14 @@ import { Loader2 } from 'lucide-react';
 import { recommendationService, RecommendationCandidate } from './lib/recommendations';
 import { detectDuplicateItem, mergeQuantities } from './lib/recognition';
 import { getFriendlyErrorMessage } from './utils/errorFormatting';
-import { LegalPageView } from './components/legal/LegalPageView';
 import { LegalPageType } from './components/legal/legalContent';
-import { RashanListPage } from './components/rashan/RashanListPage';
 import { LandingPageView } from './components/LandingPageView';
 import { HeadManager } from './seo/HeadManager';
-import { AdminApp } from './admin/AdminApp';
 import { SuspendedAccountModal } from './components/SuspendedAccountModal';
+
+const LegalPageView = React.lazy(() => import('./components/legal/LegalPageView').then((m) => ({ default: m.LegalPageView })));
+const RashanListPage = React.lazy(() => import('./components/rashan/RashanListPage').then((m) => ({ default: m.RashanListPage })));
+const AdminApp = React.lazy(() => import('./admin/AdminApp').then((m) => ({ default: m.AdminApp })));
 
 const STORAGE_ONBOARDED_KEY = 'yaad_has_onboarded_v2';
 const STORAGE_PROFILE_SETUP_KEY = 'yaad_profile_setup_done';
@@ -380,14 +383,34 @@ function AppContent() {
     };
   }, [user?.id, isConfigured, fetchShoppingLists]);
 
-  // Initialize Master Item Catalog on startup
+  // Initialize Master Item Catalog:
+  // On public landing page and legal pages, defer until idle so critical FCP/LCP is not delayed
   useEffect(() => {
-    supabaseCatalog.initialize();
-  }, []);
+    const isPublicLanding = currentScreen === 'landing' || LEGAL_SCREENS.includes(currentScreen);
+    if (isPublicLanding) {
+      if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+        const handle = (window as any).requestIdleCallback(
+          () => {
+            supabaseCatalog.initialize();
+          },
+          { timeout: 3000 }
+        );
+        return () => (window as any).cancelIdleCallback(handle);
+      } else {
+        const timer = setTimeout(() => {
+          supabaseCatalog.initialize();
+        }, 2000);
+        return () => clearTimeout(timer);
+      }
+    } else {
+      supabaseCatalog.initialize();
+    }
+  }, [currentScreen]);
 
-  // Initialize personalized recommendation behavior model for user
+  // Initialize personalized recommendation behavior model for user only when authenticated
   useEffect(() => {
-    recommendationService.initialize(user?.id || 'guest');
+    if (!user?.id) return;
+    recommendationService.initialize(user.id);
   }, [user?.id]);
 
   // Save lists to IndexedDB whenever lists state changes
@@ -1293,7 +1316,14 @@ function AppContent() {
           }
           className="flex-1 flex flex-col w-full"
         >
-          {(() => {
+          <React.Suspense
+            fallback={
+              <div className="flex-1 flex flex-col items-center justify-center p-8 min-h-[50vh]">
+                <Loader2 className="w-8 h-8 text-[#005039] animate-spin" />
+              </div>
+            }
+          >
+            {(() => {
             if (currentScreen === 'landing') {
               return (
                 <LandingPageView
@@ -1651,6 +1681,7 @@ function AppContent() {
 
             return null;
           })()}
+          </React.Suspense>
         </motion.div>
       </AnimatePresence>
 
@@ -1715,7 +1746,16 @@ export default function App() {
   if (isAdminPath) {
     return (
       <ErrorBoundary>
-        <AdminApp />
+        <React.Suspense
+          fallback={
+            <div className="min-h-screen bg-[#1c2826] flex flex-col items-center justify-center p-8">
+              <Loader2 className="w-8 h-8 text-emerald-500 animate-spin mb-3" />
+              <p className="text-sm font-medium text-emerald-400">Loading YAAD Administration...</p>
+            </div>
+          }
+        >
+          <AdminApp />
+        </React.Suspense>
       </ErrorBoundary>
     );
   }

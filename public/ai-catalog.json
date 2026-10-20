@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "name": "YAAD",
+  "version": "1.0.0",
+  "description": "Smart shopping list and grocery memory assistant for everyday shopping in Pakistan. Supports English, Urdu, Roman Urdu, and Pakistani measurement units.",
+  "url": "https://yaadapppk.vercel.app",
+  "category": "Shopping & Productivity",
+  "provider": {
+    "name": "YAAD",
+    "url": "https://yaadapppk.vercel.app",
+    "email": "yaadapppk@gmail.com"
+  },
+  "documentation": {
+    "llms": "https://yaadapppk.vercel.app/llms.txt",
+    "privacy": "https://yaadapppk.vercel.app/privacy",
+    "terms": "https://yaadapppk.vercel.app/terms"
+  },
+  "endpoints": [
+    {
+      "name": "Public Landing Page",
+      "path": "/",
+      "description": "Main public application interface and interactive grocery preview."
+    },
+    {
+      "name": "Monthly Rashan Guide",
+      "path": "/rashan-list",
+      "description": "Curated Pakistani household grocery list with family-size scaling profiles."
+    },
+    {
+      "name": "Features Hub",
+      "path": "/features",
+      "description": "Feature documentation including bilingual parsing and offline capabilities."
+    },
+    {
+      "name": "How It Works",
+      "path": "/how-it-works",
+      "description": "Step-by-step guide to using YAAD for market shopping."
+    },
+    {
+      "name": "FAQs",
+      "path": "/faq",
+      "description": "Answers to common customer questions."
+    }
+  ],
+  "capabilities": [
+    "grocery_list_management",
+    "bilingual_item_recognition",
+    "offline_storage",
+    "pakistani_units_conversion"
+  ]
+}

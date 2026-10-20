@@ -22,6 +22,12 @@ import {
   saveOfflineProfile,
   getOfflineProfile,
 } from './offlineDb';
+import {
+  reportListSaveFailed,
+  reportItemCompletionFailed,
+  reportListDeleteFailed,
+  reportSyncFailed,
+} from './monitoring';
 
 const env = (import.meta as unknown as { env?: Record<string, string> }).env || {};
 const supabaseUrl = (env.VITE_SUPABASE_URL || '').trim();
@@ -845,11 +851,28 @@ async function executeInternalSaveUserShoppingList(
   const isPendingDelete = pendingOps.some((op) => op.type === 'DELETE_LIST' && op.listId === safeListId);
   if (isPendingDelete) {
     console.warn(`Aborting save for list ${safeListId}: list has a pending DELETE_LIST operation`);
+    reportListSaveFailed({
+      category: 'conflict_error',
+      errorCode: 'PENDING_DELETE_ABORT',
+      opaqueReference: safeListId,
+      operationType: 'SAVE_LIST',
+    });
     return { success: false, error: new Error('Cannot save list: list is pending deletion') };
   }
 
   // 1. Immediately persist to IndexedDB (Instant optimistic write)
-  await saveOfflineList(verifiedUserId, listToSave);
+  try {
+    await saveOfflineList(verifiedUserId, listToSave);
+  } catch (idbErr) {
+    console.warn('Error saving list to IndexedDB:', idbErr);
+    reportListSaveFailed({
+      category: 'storage_error',
+      error: idbErr,
+      errorCode: 'INDEXEDDB_SAVE_FAILED',
+      opaqueReference: safeListId,
+      operationType: 'SAVE_LIST',
+    });
+  }
 
   // 2. If offline or Supabase not available, queue for background sync
   const isCurrentlyOffline = typeof navigator !== 'undefined' && !navigator.onLine;
@@ -886,6 +909,15 @@ async function executeInternalSaveUserShoppingList(
     const { error: listError } = await resilientUpsert('shopping_lists', listPayload, { onConflict: 'id' });
 
     if (listError) {
+      if (!isNetworkOrOfflineError(listError)) {
+        reportListSaveFailed({
+          category: 'database_error',
+          error: listError,
+          errorCode: (listError as any)?.code || 'DATABASE_UPSERT_FAILED',
+          opaqueReference: safeListId,
+          operationType: 'SAVE_LIST',
+        });
+      }
       console.warn('Error saving list to Supabase, queuing offline mutation:', listError.message);
       await enqueueOfflineOperation({
         type: 'SAVE_LIST',
@@ -996,6 +1028,13 @@ async function executeInternalSaveUserShoppingList(
       return { success: true, error: null, isOffline: true };
     }
     console.warn('Network exception saving list, queuing offline:', err);
+    reportListSaveFailed({
+      category: 'database_error',
+      error: err,
+      errorCode: 'SAVE_LIST_EXCEPTION',
+      opaqueReference: safeListId,
+      operationType: 'SAVE_LIST',
+    });
     await enqueueOfflineOperation({
       type: 'SAVE_LIST',
       userId: verifiedUserId,
@@ -1093,7 +1132,16 @@ export async function updateShoppingItemCompletionStatus(
       if (itemUpdateErr) {
         console.error('Fatal database failure updating item completion in Supabase:', { itemUpdateErr, listUpdateErr });
         await saveOfflineList(verifiedUserId, { ...updatedList, isSynced: false });
-        return { success: false, error: new Error(itemUpdateErr.message || listUpdateErr.message), isOffline: false };
+        const failureError = new Error(itemUpdateErr.message || listUpdateErr.message);
+        reportItemCompletionFailed({
+          category: 'database_error',
+          error: failureError,
+          errorCode: (itemUpdateErr as any)?.code || (listUpdateErr as any)?.code || 'ITEM_COMPLETION_DB_ERROR',
+          opaqueReference: safeItemId,
+          operationType: 'ITEM_COMPLETION',
+          isOffline: false,
+        });
+        return { success: false, error: failureError, isOffline: false };
       }
     }
 
@@ -1119,7 +1167,16 @@ export async function updateShoppingItemCompletionStatus(
       return { success: true, error: null, isOffline: true };
     }
     await saveOfflineList(verifiedUserId, { ...updatedList, isSynced: false });
-    return { success: false, error: err instanceof Error ? err : new Error(String(err)), isOffline: false };
+    const errObj = err instanceof Error ? err : new Error(String(err));
+    reportItemCompletionFailed({
+      category: 'database_error',
+      error: errObj,
+      errorCode: 'ITEM_COMPLETION_EXCEPTION',
+      opaqueReference: safeItemId,
+      operationType: 'ITEM_COMPLETION',
+      isOffline: false,
+    });
+    return { success: false, error: errObj, isOffline: false };
   }
 }
 
@@ -1275,6 +1332,14 @@ export async function deleteUserShoppingList(
         return { success: true, error: null, isOffline: true };
       }
       console.error('Error deleting from Supabase:', listError.message);
+      reportListDeleteFailed({
+        category: 'database_error',
+        error: listError,
+        errorCode: (listError as any)?.code || 'LIST_DELETE_FAILED',
+        opaqueReference: listId,
+        operationType: 'DELETE_LIST',
+        isOffline: false,
+      });
       return { success: false, error: new Error(listError.message), isOffline: false };
     }
 
@@ -1296,7 +1361,16 @@ export async function deleteUserShoppingList(
       return { success: true, error: null, isOffline: true };
     }
     console.error('Exception deleting from Supabase:', err);
-    return { success: false, error: err instanceof Error ? err : new Error(String(err)), isOffline: false };
+    const errObj = err instanceof Error ? err : new Error(String(err));
+    reportListDeleteFailed({
+      category: 'database_error',
+      error: errObj,
+      errorCode: 'LIST_DELETE_EXCEPTION',
+      opaqueReference: listId,
+      operationType: 'DELETE_LIST',
+      isOffline: false,
+    });
+    return { success: false, error: errObj, isOffline: false };
   }
 }
 
@@ -1355,6 +1429,13 @@ export async function deleteMultipleUserShoppingLists(
         return { success: true, error: null, isOffline: true };
       }
       console.error('Error deleting lists in bulk from Supabase:', listsError.message);
+      reportListDeleteFailed({
+        category: 'database_error',
+        error: listsError,
+        errorCode: (listsError as any)?.code || 'BULK_LIST_DELETE_FAILED',
+        operationType: 'DELETE_MULTIPLE_LISTS',
+        isOffline: false,
+      });
       return { success: false, error: new Error(listsError.message), isOffline: false };
     }
 
@@ -1379,7 +1460,15 @@ export async function deleteMultipleUserShoppingLists(
       return { success: true, error: null, isOffline: true };
     }
     console.error('Exception deleting lists in bulk:', err);
-    return { success: false, error: err instanceof Error ? err : new Error(String(err)), isOffline: false };
+    const errObj = err instanceof Error ? err : new Error(String(err));
+    reportListDeleteFailed({
+      category: 'database_error',
+      error: errObj,
+      errorCode: 'BULK_LIST_DELETE_EXCEPTION',
+      operationType: 'DELETE_MULTIPLE_LISTS',
+      isOffline: false,
+    });
+    return { success: false, error: errObj, isOffline: false };
   }
 }
 
@@ -1653,6 +1742,15 @@ export async function persistCompletedShoppingSession(
     }
 
     if (listWriteError) {
+      if (!isNetworkOrOfflineError(listWriteError)) {
+        reportListSaveFailed({
+          category: 'database_error',
+          error: listWriteError,
+          errorCode: (listWriteError as any)?.code || 'COMPLETION_SESSION_UPSERT_FAILED',
+          opaqueReference: safeListId,
+          operationType: 'COMPLETION_SAVE',
+        });
+      }
       console.warn('Remote sync error on shopping list completion, queued for background offline sync:', listWriteError.message);
       await enqueueOfflineOperation({
         type: 'SAVE_LIST',
@@ -2027,6 +2125,14 @@ export async function syncPendingOfflineChanges(
             const isTerminalError = item.retryCount >= 2 || errCode === '23503' || errCode === '42501';
             if (isTerminalError) {
               console.warn('Terminal error syncing list mutation, dropping from queue:', listErr.message);
+              reportSyncFailed({
+                category: errCode === '42501' ? 'permission_error' : 'sync_error',
+                error: listErr,
+                errorCode: errCode || 'SYNC_TERMINAL_DROPPED',
+                opaqueReference: item.listId,
+                operationType: item.type,
+                retryCount: item.retryCount,
+              });
               await removePendingOfflineOperation(item.id);
             } else {
               await updatePendingOperationStatus(item.id, {
@@ -2060,6 +2166,14 @@ export async function syncPendingOfflineChanges(
           } else {
             const isTerminalError = item.retryCount >= 2 || delErr.code === '42501';
             if (isTerminalError) {
+              reportSyncFailed({
+                category: delErr.code === '42501' ? 'permission_error' : 'sync_error',
+                error: delErr,
+                errorCode: delErr.code || 'SYNC_DELETE_TERMINAL',
+                opaqueReference: listId,
+                operationType: 'DELETE_LIST',
+                retryCount: item.retryCount,
+              });
               await removePendingOfflineOperation(item.id);
             } else {
               await updatePendingOperationStatus(item.id, {
@@ -2088,6 +2202,14 @@ export async function syncPendingOfflineChanges(
           } else {
             const isTerminalError = item.retryCount >= 2 || delItemErr.code === '42501';
             if (isTerminalError) {
+              reportSyncFailed({
+                category: delItemErr.code === '42501' ? 'permission_error' : 'sync_error',
+                error: delItemErr,
+                errorCode: delItemErr.code || 'SYNC_DELETE_ITEM_TERMINAL',
+                opaqueReference: itemId,
+                operationType: 'DELETE_ITEM',
+                retryCount: item.retryCount,
+              });
               await removePendingOfflineOperation(item.id);
             } else {
               await updatePendingOperationStatus(item.id, {
@@ -2110,6 +2232,14 @@ export async function syncPendingOfflineChanges(
           } else {
             const isTerminalError = item.retryCount >= 2;
             if (isTerminalError) {
+              reportSyncFailed({
+                category: 'sync_error',
+                error: profileErr,
+                errorCode: 'SYNC_PROFILE_TERMINAL',
+                opaqueReference: 'profile',
+                operationType: 'UPDATE_PROFILE',
+                retryCount: item.retryCount,
+              });
               await removePendingOfflineOperation(item.id);
             } else {
               await updatePendingOperationStatus(item.id, {
@@ -2126,6 +2256,16 @@ export async function syncPendingOfflineChanges(
         break;
       }
       console.warn('Error processing queued offline item:', e);
+      if (item.retryCount >= 2) {
+        reportSyncFailed({
+          category: 'sync_error',
+          error: e,
+          errorCode: 'SYNC_EXCEPTION_DROPPED',
+          opaqueReference: item.listId || item.id,
+          operationType: item.type,
+          retryCount: item.retryCount,
+        });
+      }
       await updatePendingOperationStatus(item.id, {
         retryCount: item.retryCount + 1,
         lastError: e?.message || 'Unknown sync error',

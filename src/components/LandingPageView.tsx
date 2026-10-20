@@ -89,7 +89,18 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
         <section className="pt-8 sm:pt-14 pb-12 sm:pb-16 px-4 sm:px-6 max-w-4xl mx-auto text-center">
           {/* Subtle Announcement Pill with Original YAAD Logo */}
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white border border-[#e5e1d8] text-[#005039] text-xs font-semibold mb-6 shadow-2xs">
-            <img src="/logo.png" alt="YAAD" className="w-4 h-4 rounded-full object-contain shrink-0" />
+            <picture className="w-4 h-4 rounded-full overflow-hidden shrink-0 flex items-center justify-center">
+              <source srcSet="/logo-128.webp" type="image/webp" />
+              <img
+                src="/logo.png"
+                alt="YAAD"
+                width={16}
+                height={16}
+                className="w-4 h-4 rounded-full object-contain shrink-0"
+                loading="eager"
+                decoding="async"
+              />
+            </picture>
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
             <span className="whitespace-nowrap">Simple, Private Grocery Memory</span>
           </div>
@@ -351,7 +362,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
                   key={item.id}
                   onClick={() => toggleDemoItem(item.id)}
                   className={`py-3 px-3 flex items-center justify-between gap-3 rounded-xl transition-all select-none cursor-pointer ${
-                    item.completed ? 'bg-[#faf8f5]/80 opacity-60' : 'hover:bg-[#faf8f5]'
+                    item.completed ? 'bg-[#f5f1e8]/70' : 'hover:bg-[#faf8f5]'
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -362,7 +373,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
                     />
                     <span
                       className={`text-sm font-semibold truncate ${
-                        item.completed ? 'line-through text-[#788880]' : 'text-[#1c2826]'
+                        item.completed ? 'line-through text-[#4a5c53]' : 'text-[#1c2826]'
                       }`}
                     >
                       {item.name}
@@ -419,7 +430,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
               <span>Create Your Own List</span>
               <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
-            <span className="text-xs text-[#788880] font-medium whitespace-nowrap">
+            <span className="text-xs text-[#4a5c53] font-medium whitespace-nowrap">
               Sign in to sync across your household devices
             </span>
           </div>

@@ -37,8 +37,11 @@ app.use('/api', (req, res, next) => {
 
 // Standard security headers and strict noindex for all Staff Admin endpoints
 app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
   if (req.path.startsWith('/admin') || req.path.startsWith('/api/admin')) {
-    res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
     res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet');
   }
@@ -1611,6 +1614,34 @@ app.get('/sitemap.xml', (req, res) => {
     return res.sendFile(filePath);
   }
   return res.status(404).send('Sitemap not found');
+});
+
+// AI Discoverability: llms.txt
+app.get('/llms.txt', (req, res) => {
+  const filePublic = path.join(process.cwd(), 'public', 'llms.txt');
+  const fileDist = path.join(process.cwd(), 'dist', 'llms.txt');
+  const filePath = fs.existsSync(filePublic) ? filePublic : fileDist;
+
+  if (fs.existsSync(filePath)) {
+    res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    return res.sendFile(filePath);
+  }
+  return res.status(404).send('Not found');
+});
+
+// AI Discoverability: ai-catalog.json
+app.get('/ai-catalog.json', (req, res) => {
+  const filePublic = path.join(process.cwd(), 'public', 'ai-catalog.json');
+  const fileDist = path.join(process.cwd(), 'dist', 'ai-catalog.json');
+  const filePath = fs.existsSync(filePublic) ? filePublic : fileDist;
+
+  if (fs.existsSync(filePath)) {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    return res.sendFile(filePath);
+  }
+  return res.status(404).send('Not found');
 });
 
 // Fallback for unmatched API routes (guarantee JSON response, never HTML)

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ClipboardList } from 'lucide-react';
+import { loadLottie } from '../../lib/lottieLoader';
 import clipboardAnimationData from '../../assets/clipboard-history-animation.json';
 
 interface AnimatedHistoryIconProps {
@@ -46,10 +47,11 @@ export const AnimatedHistoryIcon: React.FC<AnimatedHistoryIconProps> = ({
   // Initialize and update Lottie animation instance when active state or theme changes
   useEffect(() => {
     let anim: any = null;
+    let isCancelled = false;
 
     if (containerRef.current) {
-      const lottieLib = (window as any).lottie || (window as any).bodymovin;
-      if (lottieLib && typeof lottieLib.loadAnimation === 'function') {
+      loadLottie().then((lottieLib) => {
+        if (isCancelled || !lottieLib || !containerRef.current) return;
         try {
           if (animInstanceRef.current) {
             animInstanceRef.current.destroy();
@@ -75,10 +77,11 @@ export const AnimatedHistoryIcon: React.FC<AnimatedHistoryIconProps> = ({
         } catch (err) {
           console.warn('AnimatedHistoryIcon error:', err);
         }
-      }
+      });
     }
 
     return () => {
+      isCancelled = true;
       if (anim) {
         anim.destroy();
       }

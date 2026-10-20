@@ -4,11 +4,11 @@ export const INITIAL_LISTS: ShoppingList[] = [];
 
 export const APP_IMAGES = {
   // Official YAAD 3D Logo (Bundled local asset)
-  logo3d: '/logo.png',
+  logo3d: '/logo.webp',
   // Small Header Logo (Bundled local asset)
-  logoSmall: '/logo.png',
+  logoSmall: '/logo-128.webp',
   // Transparent Brand Logo (Bundled local asset)
-  logoTransparent: '/logo.png',
+  logoTransparent: '/logo-128.webp',
   // Onboarding 1 3D Shopper in Aisle
   onboarding1: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDo6G5NGG55rio6owdXd4PQe1jO1rhwf9D8F9N-LcoHPodWAhI63B8RQI7SgpPNYt3ZfNDlSD6_vwgpK-h3FF83q8C1ZxstgoZ968ywtSvtfaX53UWJZl7n5X0j7xAuk1JE7x6wNgMoiJ2yomUTNxphHdGF_Tgvaz9qfadxQc9oYzQGnhLv7phMLCKU2gACqOVYslk8y54fS51oCBdMK_0iRUNNoDXN-ArM2s7XLOpsag54zY7ZJS8',
   // Onboarding 2 3D Tapping digital list

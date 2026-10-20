@@ -1,10 +1,19 @@
+import { sentryVitePlugin } from '@sentry/vite-plugin';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import packageInfo from './package.json';
 
 export default defineConfig(() => {
+  const sentryAuthToken = process.env.SENTRY_AUTH_TOKEN;
+  const isProductionDeploy = process.env.VERCEL_ENV === 'production';
+  // Staging and production projects are strictly separated
+  const sentryProject = process.env.SENTRY_PROJECT || (isProductionDeploy ? 'yaad-production' : 'yaad-staging');
+  const sentryOrg = process.env.SENTRY_ORG || 'yaad';
+  const appRelease = `${packageInfo.name || 'yaad'}@${packageInfo.version}`;
+
   return {
     plugins: [
       react(),
@@ -19,6 +28,9 @@ export default defineConfig(() => {
           'favicon.png',
           'apple-touch-icon.png',
           'logo.png',
+          'logo.webp',
+          'logo-128.webp',
+          'logo-128.png',
           'pwa-192x192.png',
           'pwa-512x512.png',
           'pwa-maskable-512x512.png',
@@ -143,6 +155,22 @@ export default defineConfig(() => {
           type: 'module',
         },
       }),
+      sentryAuthToken
+        ? sentryVitePlugin({
+            org: sentryOrg,
+            project: sentryProject,
+            authToken: sentryAuthToken,
+            release: {
+              name: appRelease,
+            },
+            sourcemaps: {
+              filesToDeleteAfterUpload: ['**/*.map'],
+            },
+            disable: false,
+          })
+        : sentryVitePlugin({
+            disable: true,
+          }),
     ],
     resolve: {
       alias: {
@@ -150,6 +178,7 @@ export default defineConfig(() => {
       },
     },
     build: {
+      sourcemap: sentryAuthToken ? ('hidden' as const) : false,
       chunkSizeWarningLimit: 2500,
       rollupOptions: {
         output: {
@@ -157,6 +186,7 @@ export default defineConfig(() => {
             'vendor-react': ['react', 'react-dom'],
             'vendor-supabase': ['@supabase/supabase-js'],
             'vendor-icons': ['lucide-react'],
+            'vendor-motion': ['motion'],
           },
         },
       },

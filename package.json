@@ -10,11 +10,12 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "test": "tsx tests/recognition.test.ts && tsx tests/rls-logic.test.ts && tsx tests/offline-queue.test.ts && tsx tests/pakistani-units.test.ts && tsx tests/shopping-interaction.test.ts && tsx tests/step7-stats-history-qa.test.ts && tsx tests/step8-settings-language-about.test.ts && tsx tests/seo-master.test.ts && tsx tests/crawl-simulation.test.ts && tsx tests/phase4-rashan-landing.test.ts && tsx tests/password-security-flow.test.ts && tsx tests/app-update-ux.test.ts && tsx tests/auth-redesign-reference.test.ts && tsx tests/oauth-production-domain.test.ts && tsx tests/public-landing-page.test.ts && tsx tests/normalize-category-id.test.ts && tsx tests/barcode-standards.test.ts && tsx tests/barcode-providers-integration.test.ts && tsx tests/item-photo-and-avatar-persistence.test.ts && tsx tests/shopping-durability-and-delete.test.ts && tsx tests/password-and-language-persistence.test.ts",
+    "test": "tsx tests/recognition.test.ts && tsx tests/rls-logic.test.ts && tsx tests/offline-queue.test.ts && tsx tests/pakistani-units.test.ts && tsx tests/shopping-interaction.test.ts && tsx tests/step7-stats-history-qa.test.ts && tsx tests/step8-settings-language-about.test.ts && tsx tests/seo-master.test.ts && tsx tests/crawl-simulation.test.ts && tsx tests/phase4-rashan-landing.test.ts && tsx tests/password-security-flow.test.ts && tsx tests/app-update-ux.test.ts && tsx tests/auth-redesign-reference.test.ts && tsx tests/oauth-production-domain.test.ts && tsx tests/public-landing-page.test.ts && tsx tests/normalize-category-id.test.ts && tsx tests/barcode-standards.test.ts && tsx tests/barcode-providers-integration.test.ts && tsx tests/item-photo-and-avatar-persistence.test.ts && tsx tests/shopping-durability-and-delete.test.ts && tsx tests/password-and-language-persistence.test.ts && tsx tests/sentry-monitoring.test.ts && tsx tests/production-audit-verification.test.ts",
     "notify:indexnow": "tsx scripts/notify-indexnow.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",
+    "@sentry/react": "^11.8.0",
     "@supabase/supabase-js": "^2.112.4",
     "@tailwindcss/vite": "^4.1.14",
     "@vitejs/plugin-react": "^5.0.4",
@@ -30,6 +31,7 @@
     "workbox-window": "^7.4.1"
   },
   "devDependencies": {
+    "@sentry/vite-plugin": "^11.8.0",
     "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",
     "@types/qrcode": "^1.5.6",
