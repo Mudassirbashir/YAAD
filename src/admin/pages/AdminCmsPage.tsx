@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   BookOpen,
   Search,
@@ -29,9 +29,18 @@ import {
   Link as LinkIcon,
   ToggleLeft,
   ToggleRight,
+  ListOrdered,
+  CalendarClock,
+  FileSpreadsheet,
+  Layers,
+  ArrowUp,
+  ArrowDown,
+  ChevronRight,
+  CheckCircle,
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { adminCache } from '../utils/adminCache';
+import { validateArticleSeoGate } from '../../../server/admin/seoValidator';
 
 interface SocialLinks {
   facebook?: string;
@@ -67,6 +76,7 @@ interface CmsArticle {
   body: string;
   headingSize?: 'h1' | 'h2' | 'h3';
   coverImageUrl?: string;
+  coverImageAlt?: string;
   authorName: string;
   authorEmail?: string;
   category: string;
@@ -76,8 +86,27 @@ interface CmsArticle {
   comments?: CmsComment[];
   status: 'draft' | 'published';
   publishedAt?: number;
+  scheduledFor?: number;
   readTimeMinutes: number;
   viewsCount: number;
+  seoTitle?: string;
+  seoDescription?: string;
+  ogImageUrl?: string;
+  canonicalUrl?: string;
+  focusKeyword?: string;
+  searchIntent?: 'informational' | 'list' | 'comparison' | 'template';
+  cluster?: string;
+  quickAnswer?: string;
+  keyTakeaways?: string[];
+  faqs?: { q: string; a: string }[];
+  hashtags?: string[];
+  relatedSlugs?: string[];
+  queueStatus?: 'idea' | 'draft_ready' | 'scheduled' | 'published' | 'needs_review';
+  publishDate?: string;
+  priority?: number;
+  wordCount?: number;
+  sourceSet?: string;
+  needsReviewReasons?: string[];
   createdAt: number;
   updatedAt: number;
 }
@@ -227,6 +256,55 @@ export const AdminCmsPage: React.FC = () => {
   const [replyInputs, setReplyInputs] = useState<Record<string, string>>({});
   const [submittingReplyId, setSubmittingReplyId] = useState<string | null>(null);
 
+  // View Navigation: 'library' | 'queue' | 'import'
+  const [activeTab, setActiveTab] = useState<'library' | 'queue' | 'import'>('library');
+
+  // Daily Auto-Publish State
+  const [isAutoPublishing, setIsAutoPublishing] = useState(false);
+  const [publishReport, setPublishReport] = useState<{
+    targetDate: string;
+    published: Array<{ id: string; title: string; slug: string; url: string }>;
+    blocked: Array<{ id: string; title: string; slug: string; reasons: string[] }>;
+    totalAttempted: number;
+    totalPublished: number;
+    totalBlocked: number;
+  } | null>(null);
+
+  // Queue Scheduling Settings
+  const [articlesPerDay, setArticlesPerDay] = useState(2);
+  const [isSchedulingQueue, setIsSchedulingQueue] = useState(false);
+
+  // Idea Bank Import State
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importDryRun, setImportDryRun] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importResult, setImportResult] = useState<{
+    imported: number;
+    skippedDuplicates: number;
+    errors: string[];
+    dryRun?: boolean;
+  } | null>(null);
+
+  // Extended SEO Form Fields (Phase 1 & 3)
+  const [seoTitle, setSeoTitle] = useState('');
+  const [seoDescription, setSeoDescription] = useState('');
+  const [focusKeyword, setFocusKeyword] = useState('');
+  const [coverImageAlt, setCoverImageAlt] = useState('');
+  const [ogImageUrl, setOgImageUrl] = useState('');
+  const [canonicalUrl, setCanonicalUrl] = useState('');
+  const [cluster, setCluster] = useState('Monthly Rashan');
+  const [searchIntent, setSearchIntent] = useState<'informational' | 'list' | 'comparison' | 'template'>('informational');
+  const [quickAnswer, setQuickAnswer] = useState('');
+  const [keyTakeawaysText, setKeyTakeawaysText] = useState('');
+  const [faqsList, setFaqsList] = useState<Array<{ q: string; a: string }>>([
+    { q: '', a: '' },
+  ]);
+  const [hashtagsInput, setHashtagsInput] = useState('');
+  const [relatedSlugsInput, setRelatedSlugsInput] = useState('');
+  const [publishDate, setPublishDate] = useState('');
+  const [priorityNum, setPriorityNum] = useState<number>(100);
+  const [queueStatus, setQueueStatus] = useState<'idea' | 'draft_ready' | 'scheduled' | 'published' | 'needs_review'>('draft_ready');
+
   const fetchArticles = useCallback(
     async (forceRefresh: boolean = false) => {
       if (!token) return;
@@ -298,6 +376,25 @@ export const AdminCmsPage: React.FC = () => {
     setLiUrl(OFFICIAL_SOCIAL_DEFAULTS.linkedin);
     setYtUrl(OFFICIAL_SOCIAL_DEFAULTS.youtube);
     setXUrl(OFFICIAL_SOCIAL_DEFAULTS.twitter);
+
+    // Reset extended SEO fields
+    setSeoTitle('');
+    setSeoDescription('');
+    setFocusKeyword('');
+    setCoverImageAlt('');
+    setOgImageUrl('');
+    setCanonicalUrl('');
+    setCluster('Monthly Rashan');
+    setSearchIntent('informational');
+    setQuickAnswer('');
+    setKeyTakeawaysText('');
+    setFaqsList([{ q: '', a: '' }]);
+    setHashtagsInput('');
+    setRelatedSlugsInput('');
+    setPublishDate('');
+    setPriorityNum(100);
+    setQueueStatus('draft_ready');
+
     setErrorMsg(null);
     setSuccessMsg(null);
     setIsModalOpen(true);
@@ -335,6 +432,24 @@ export const AdminCmsPage: React.FC = () => {
     setYtUrl(links.youtube || OFFICIAL_SOCIAL_DEFAULTS.youtube);
     setXUrl(links.twitter || OFFICIAL_SOCIAL_DEFAULTS.twitter);
 
+    // Populate extended SEO fields
+    setSeoTitle(art.seoTitle || art.title);
+    setSeoDescription(art.seoDescription || art.excerpt || '');
+    setFocusKeyword(art.focusKeyword || '');
+    setCoverImageAlt(art.coverImageAlt || '');
+    setOgImageUrl(art.ogImageUrl || art.coverImageUrl || '');
+    setCanonicalUrl(art.canonicalUrl || `/blog/${art.slug}`);
+    setCluster(art.cluster || 'Monthly Rashan');
+    setSearchIntent(art.searchIntent || 'informational');
+    setQuickAnswer(art.quickAnswer || '');
+    setKeyTakeawaysText((art.keyTakeaways || []).join('\n'));
+    setFaqsList(art.faqs && art.faqs.length > 0 ? art.faqs : [{ q: '', a: '' }]);
+    setHashtagsInput((art.hashtags || []).join(', '));
+    setRelatedSlugsInput((art.relatedSlugs || []).join(', '));
+    setPublishDate(art.publishDate || '');
+    setPriorityNum(art.priority !== undefined ? art.priority : 100);
+    setQueueStatus(art.queueStatus || (art.status === 'published' ? 'published' : 'draft_ready'));
+
     setErrorMsg(null);
     setSuccessMsg(null);
     setIsModalOpen(true);
@@ -348,6 +463,148 @@ export const AdminCmsPage: React.FC = () => {
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)/g, '');
       setSlug(generated);
+      if (!seoTitle || seoTitle === title) {
+        setSeoTitle(val.length <= 60 ? val : val.slice(0, 57) + '...');
+      }
+    }
+  };
+
+  const handleUploadTodayArticlesAutomatically = async () => {
+    if (!token) return;
+    setIsAutoPublishing(true);
+    try {
+      const res = await fetch('/api/admin/cms/articles/publish-today', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ limit: articlesPerDay }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Auto-publishing failed');
+      }
+      setPublishReport(data);
+      adminCache.invalidatePrefix('/api/admin/cms');
+      await fetchArticles(true);
+    } catch (err: any) {
+      alert(`Auto-publish error: ${err.message}`);
+    } finally {
+      setIsAutoPublishing(false);
+    }
+  };
+
+  const handleAutoScheduleQueue = async () => {
+    if (!token) return;
+    setIsSchedulingQueue(true);
+    try {
+      const res = await fetch('/api/admin/cms/articles/auto-schedule', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ articlesPerDay }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Auto-scheduling failed');
+      }
+      alert(`Auto-scheduled ${data.scheduledCount} articles across ${data.datesCount || data.scheduledDates?.length || 0} publishing days.`);
+      adminCache.invalidatePrefix('/api/admin/cms');
+      await fetchArticles(true);
+    } catch (err: any) {
+      alert(`Schedule error: ${err.message}`);
+    } finally {
+      setIsSchedulingQueue(false);
+    }
+  };
+
+  const handleImportBank = async (useDefault = false) => {
+    if (!token) return;
+    setIsImporting(true);
+    setImportResult(null);
+
+    try {
+      let bodyData: any = { dryRun: importDryRun };
+      if (!useDefault && importFile) {
+        const text = await importFile.text();
+        if (importFile.name.endsWith('.json')) {
+          bodyData.items = JSON.parse(text);
+        } else {
+          bodyData.csvContent = text;
+        }
+      }
+
+      const res = await fetch('/api/admin/cms/articles/import-bank', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(bodyData),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Import failed');
+      }
+      setImportResult(data);
+      if (!importDryRun) {
+        adminCache.invalidatePrefix('/api/admin/cms');
+        await fetchArticles(true);
+      }
+    } catch (err: any) {
+      alert(`Import error: ${err.message}`);
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const handlePriorityChange = async (art: CmsArticle, delta: number) => {
+    if (!token) return;
+    const newPriority = Math.max(1, (art.priority ?? 100) + delta);
+    try {
+      const res = await fetch(`/api/admin/cms/articles/${art.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ priority: newPriority }),
+      });
+      if (res.ok) {
+        setArticles((prev) =>
+          prev.map((a) => (a.id === art.id ? { ...a, priority: newPriority } : a))
+        );
+      }
+    } catch (err: any) {
+      console.error('Failed to change priority', err);
+    }
+  };
+
+  const handlePublishDateChange = async (art: CmsArticle, newDate: string) => {
+    if (!token) return;
+    try {
+      const res = await fetch(`/api/admin/cms/articles/${art.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          publishDate: newDate,
+          queueStatus: newDate ? 'scheduled' : 'draft_ready',
+        }),
+      });
+      if (res.ok) {
+        setArticles((prev) =>
+          prev.map((a) => (a.id === art.id ? { ...a, publishDate: newDate, queueStatus: newDate ? 'scheduled' : 'draft_ready' } : a))
+        );
+      }
+    } catch (err: any) {
+      console.error('Failed to update date', err);
     }
   };
 
@@ -452,6 +709,22 @@ export const AdminCmsPage: React.FC = () => {
       tags: tagsInput.split(',').map((t) => t.trim()).filter(Boolean),
       status,
       socialLinks: socialLinksPayload,
+      seoTitle: seoTitle.trim() || title.trim(),
+      seoDescription: seoDescription.trim() || excerpt.trim(),
+      focusKeyword: focusKeyword.trim(),
+      coverImageAlt: coverImageAlt.trim(),
+      ogImageUrl: ogImageUrl.trim() || finalCoverImageUrl,
+      canonicalUrl: canonicalUrl.trim() || `/blog/${slug.trim() || title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+      cluster: cluster.trim(),
+      searchIntent,
+      quickAnswer: quickAnswer.trim(),
+      keyTakeaways: keyTakeawaysText.split('\n').map((l) => l.trim()).filter(Boolean),
+      faqs: faqsList.filter((f) => f.q.trim() && f.a.trim()),
+      hashtags: hashtagsInput.split(',').map((h) => h.trim().replace(/^#/, '')).filter(Boolean),
+      relatedSlugs: relatedSlugsInput.split(',').map((s) => s.trim().replace(/^\/blog\//, '')).filter(Boolean),
+      publishDate: publishDate || undefined,
+      priority: Number(priorityNum) || 100,
+      queueStatus,
     };
 
     try {
@@ -609,269 +882,787 @@ export const AdminCmsPage: React.FC = () => {
     }
   };
 
+  const currentSlugsSet = useMemo(() => new Set(articles.map((a) => a.slug)), [articles]);
+
+  const seoChecklist = useMemo(() => {
+    return validateArticleSeoGate(
+      {
+        title,
+        slug,
+        body,
+        quickAnswer,
+        seoTitle,
+        seoDescription,
+        focusKeyword,
+        coverImageUrl,
+        coverImageAlt,
+        hashtags: hashtagsInput.split(',').map((h) => h.trim().replace(/^#/, '')).filter(Boolean),
+        relatedSlugs: relatedSlugsInput.split(',').map((s) => s.trim().replace(/^\/blog\//, '')).filter(Boolean),
+      },
+      currentSlugsSet
+    );
+  }, [
+    title,
+    slug,
+    body,
+    quickAnswer,
+    seoTitle,
+    seoDescription,
+    focusKeyword,
+    coverImageUrl,
+    coverImageAlt,
+    hashtagsInput,
+    relatedSlugsInput,
+    currentSlugsSet,
+  ]);
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-black text-[#003527] tracking-tight font-['Manrope'] flex items-center gap-2">
-            <span>Grocery Guides &amp; Content CMS</span>
-            <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
-              {total} Total
-            </span>
-          </h2>
-          <p className="text-xs sm:text-sm text-neutral-500 mt-1">
-            Publish seasonal grocery guides and Pakistani recipe lists. All published articles are instantly live in the app with direct short links.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => fetchArticles(true)}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-neutral-200 text-neutral-700 font-bold text-xs hover:bg-neutral-50 cursor-pointer shadow-2xs"
-            title="Refresh articles"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:inline">Refresh</span>
-          </button>
-          <button
-            type="button"
-            onClick={openCreateModal}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#003527] text-white font-bold text-xs hover:bg-[#00281e] cursor-pointer shadow-sm transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Create Article</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Filters Bar */}
-      <div className="bg-white border border-neutral-200/90 rounded-2xl p-4 flex flex-col sm:flex-row gap-3 items-center justify-between shadow-xs">
-        <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search guides, recipes or tags..."
-            className="w-full pl-9 pr-3 py-2 rounded-xl border border-neutral-200 text-xs focus:outline-none focus:border-[#003527]"
-          />
-        </div>
-
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Filter className="w-4 h-4 text-neutral-400" />
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as any)}
-            className="px-3 py-2 rounded-xl border border-neutral-200 text-xs bg-white text-neutral-700 focus:outline-none focus:border-[#003527]"
-          >
-            <option value="all">All Statuses ({total})</option>
-            <option value="published">Published (Live in App)</option>
-            <option value="draft">Drafts</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Article Cards Grid */}
-      {articles.length === 0 ? (
-        <div className="bg-white border border-neutral-200/90 rounded-2xl p-12 text-center space-y-4 shadow-xs">
-          <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center mx-auto">
-            <BookOpen className="w-7 h-7" />
-          </div>
-          <div>
-            <h3 className="text-base font-bold text-neutral-900">Zero Articles Found</h3>
-            <p className="text-xs text-neutral-500 max-w-md mx-auto mt-1">
-              No grocery guides match your criteria. Click below to compose and publish your first article.
+      {/* Top Banner / Actions Header */}
+      <div className="bg-gradient-to-br from-emerald-900 via-[#003527] to-[#002219] rounded-3xl p-6 sm:p-7 text-white shadow-lg space-y-5">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="space-y-1.5 max-w-2xl">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[11px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-400/20 text-emerald-200 border border-emerald-400/30">
+                SEO Content Pipeline
+              </span>
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-white/90">
+                {total} Articles in System
+              </span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black tracking-tight font-['Manrope']">
+              In-App Articles &amp; SEO Auto-Upload
+            </h2>
+            <p className="text-xs sm:text-sm text-emerald-100/80 leading-relaxed">
+              256-idea bank scheduled queue, 1-click daily publishing gate, verified feature claims, and public indexable article pages.
             </p>
           </div>
+
+          {/* Prominent Daily Auto-Upload Button */}
+          <div className="flex flex-wrap items-center gap-2.5 sm:self-end lg:self-center shrink-0">
+            <button
+              type="button"
+              onClick={handleUploadTodayArticlesAutomatically}
+              disabled={isAutoPublishing}
+              className="inline-flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-emerald-400 hover:bg-emerald-300 text-emerald-950 font-black text-xs sm:text-sm shadow-md hover:shadow-lg transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer"
+              title="Publish today's scheduled batch passing all SEO checks"
+            >
+              <Sparkles className={`w-4 h-4 text-emerald-900 ${isAutoPublishing ? 'animate-spin' : ''}`} />
+              <span>{isAutoPublishing ? 'Publishing Today’s Batch...' : "Upload Today's Articles Automatically"}</span>
+            </button>
+            <button
+              type="button"
+              onClick={openCreateModal}
+              className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs cursor-pointer transition-all border border-white/15"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create Article</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => fetchArticles(true)}
+              className="p-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white cursor-pointer transition-all border border-white/15"
+              title="Refresh articles"
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="flex items-center gap-2 pt-2 border-t border-white/10 overflow-x-auto">
           <button
             type="button"
-            onClick={openCreateModal}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#003527] text-white font-bold text-xs hover:bg-[#00281e] cursor-pointer"
+            onClick={() => setActiveTab('library')}
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'library'
+                ? 'bg-white text-emerald-950 shadow-sm'
+                : 'bg-white/10 text-emerald-100 hover:bg-white/15'
+            }`}
           >
-            <Plus className="w-4 h-4" />
-            <span>Create First Article</span>
+            <Layers className="w-3.5 h-3.5" />
+            <span>Article Library</span>
+            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/10">
+              {articles.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('queue')}
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'queue'
+                ? 'bg-white text-emerald-950 shadow-sm'
+                : 'bg-white/10 text-emerald-100 hover:bg-white/15'
+            }`}
+          >
+            <CalendarClock className="w-3.5 h-3.5" />
+            <span>Publishing Queue</span>
+            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-700/40 text-emerald-200">
+              {articles.filter((a) => a.queueStatus === 'scheduled' || a.queueStatus === 'draft_ready').length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('import')}
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'import'
+                ? 'bg-white text-emerald-950 shadow-sm'
+                : 'bg-white/10 text-emerald-100 hover:bg-white/15'
+            }`}
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5" />
+            <span>Import Idea Bank (256)</span>
           </button>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {articles.map((art) => (
-            <div
-              key={art.id}
-              className="bg-white border border-neutral-200/90 rounded-2xl overflow-hidden hover:border-[#003527]/40 hover:shadow-md transition-all flex flex-col justify-between group"
-            >
-              {/* Short Link Bar at top of Card */}
-              <div className="px-3.5 py-2 bg-neutral-50/90 border-b border-neutral-100 flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5 text-neutral-600 truncate font-mono text-[10.5px]">
-                  <LinkIcon className="w-3 h-3 text-neutral-400 shrink-0" />
-                  <span className="truncate">/blog#{art.slug}</span>
+      </div>
+
+      {/* ============================================================== */}
+      {/* Auto-Publish Results Modal / Report                           */}
+      {/* ============================================================== */}
+      {publishReport && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 space-y-5 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
+                  <Sparkles className="w-5 h-5" />
                 </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => copyShortLink(art.slug)}
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white border border-neutral-200 hover:bg-neutral-100 text-[10px] font-bold text-neutral-600 cursor-pointer shadow-2xs"
-                    title="Copy short link"
-                  >
-                    {copiedSlug === art.slug ? (
-                      <>
-                        <Check className="w-2.5 h-2.5 text-emerald-600" />
-                        <span className="text-emerald-700">Copied!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-2.5 h-2.5" />
-                        <span>Copy</span>
-                      </>
-                    )}
-                  </button>
-                  <a
-                    href={`/blog#${art.slug}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 text-[10px] font-bold text-[#003527] cursor-pointer shadow-2xs"
-                    title="Open live article in app"
-                  >
-                    <span>View</span>
-                    <ExternalLink className="w-2.5 h-2.5" />
-                  </a>
+                <div>
+                  <h3 className="font-bold text-neutral-900 text-base">Daily Auto-Upload Report</h3>
+                  <p className="text-xs text-neutral-500">Date: {publishReport.targetDate}</p>
                 </div>
               </div>
+              <button
+                type="button"
+                onClick={() => setPublishReport(null)}
+                className="p-1.5 rounded-xl hover:bg-neutral-100 text-neutral-500 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-              {/* Cover Image */}
-              {art.coverImageUrl ? (
-                <div className="h-40 w-full overflow-hidden bg-neutral-100 relative">
-                  <img
-                    src={art.coverImageUrl}
-                    alt={art.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    onError={(e) => {
-                      (e.target as HTMLElement).style.display = 'none';
-                    }}
-                  />
-                  <div className="absolute top-2.5 right-2.5">
-                    <span
-                      className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-xs ${
-                        art.status === 'published'
-                          ? 'bg-emerald-600 text-white'
-                          : 'bg-amber-500 text-white'
-                      }`}
-                    >
-                      {art.status === 'published' ? 'Live in App' : 'Draft'}
-                    </span>
-                  </div>
-                  <div className="absolute bottom-2.5 left-2.5">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-950 bg-emerald-100/95 backdrop-blur-xs px-2.5 py-0.5 rounded-md shadow-2xs">
-                      {art.category}
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <div className="h-28 w-full bg-gradient-to-br from-emerald-900 to-[#003527] p-3 flex flex-col justify-between text-white relative">
-                  <span className="text-[10px] font-bold uppercase tracking-wider self-start bg-white/20 px-2 py-0.5 rounded">
-                    {art.category}
-                  </span>
-                  <span
-                    className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full absolute top-3 right-3 ${
-                      art.status === 'published' ? 'bg-emerald-500 text-white' : 'bg-amber-400 text-neutral-900'
-                    }`}
-                  >
-                    {art.status === 'published' ? 'Live in App' : 'Draft'}
-                  </span>
-                </div>
-              )}
-
-              {/* Card Body */}
-              <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
-                <div className="space-y-2">
-                  <h4 className="font-bold text-neutral-900 text-sm leading-snug line-clamp-2">
-                    {art.title}
-                  </h4>
-                  {art.excerpt && (
-                    <p className="text-xs text-neutral-500 line-clamp-2">{art.excerpt}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2 pt-2 border-t border-neutral-100 text-[11px] text-neutral-500">
-                  <div className="flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1 font-medium text-neutral-700">
-                      <User className="w-3 h-3 text-neutral-400" />
-                      {art.authorName || 'YAAD Staff'}
-                    </span>
-                    <span className="inline-flex items-center gap-1 text-[10.5px] text-neutral-400">
-                      <Clock className="w-3 h-3 text-neutral-400" />
-                      {formatArticleRelativeTime(art.publishedAt || art.createdAt)}
-                    </span>
-                  </div>
-
-                  {art.authorEmail && (
-                    <div className="flex items-center gap-1 text-[10px] text-neutral-400 truncate">
-                      <Mail className="w-2.5 h-2.5 shrink-0" />
-                      <span className="truncate">{art.authorEmail}</span>
-                    </div>
-                  )}
-
-                  {/* Social Handles Badges */}
-                  {art.socialLinks && Object.values(art.socialLinks).some(Boolean) && (
-                    <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
-                      <span className="text-[9px] font-bold text-neutral-400 uppercase">Official:</span>
-                      {art.socialLinks.facebook && (
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 font-semibold">FB</span>
-                      )}
-                      {art.socialLinks.instagram && (
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-pink-50 text-pink-700 font-semibold">IG</span>
-                      )}
-                      {art.socialLinks.tiktok && (
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-800 font-semibold">TikTok</span>
-                      )}
-                      {art.socialLinks.linkedin && (
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-sky-50 text-sky-700 font-semibold">LinkedIn</span>
-                      )}
-                      {art.socialLinks.youtube && (
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-50 text-red-700 font-semibold">YT</span>
-                      )}
-                      {art.socialLinks.twitter && (
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-900 font-semibold">X</span>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Card Actions & Comments Count */}
-                <div className="flex items-center justify-between pt-2 border-t border-neutral-100">
-                  {/* Comments Modal Trigger */}
-                  <button
-                    type="button"
-                    onClick={() => openCommentsModal(art)}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-bold cursor-pointer transition-colors"
-                    title="View and reply to reader comments"
-                  >
-                    <MessageSquare className="w-3 h-3 text-emerald-700" />
-                    <span>{art.commentsCount ?? art.comments?.length ?? 0} Comments</span>
-                  </button>
-
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => openEditModal(art)}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-neutral-200 text-neutral-700 hover:bg-neutral-50 text-xs font-semibold cursor-pointer"
-                    >
-                      <Edit className="w-3 h-3 text-neutral-500" />
-                      <span>Edit</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(art.id, art.title)}
-                      className="inline-flex items-center p-1 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 text-xs cursor-pointer"
-                      title="Delete article"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  </div>
-                </div>
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="p-3 rounded-2xl bg-neutral-50 border border-neutral-200">
+                <span className="text-[11px] font-bold text-neutral-500 uppercase">Attempted</span>
+                <p className="text-xl font-black text-neutral-800 mt-0.5">{publishReport.totalAttempted}</p>
+              </div>
+              <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200">
+                <span className="text-[11px] font-bold text-emerald-700 uppercase">Published</span>
+                <p className="text-xl font-black text-emerald-800 mt-0.5">{publishReport.totalPublished}</p>
+              </div>
+              <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200">
+                <span className="text-[11px] font-bold text-amber-700 uppercase">Blocked</span>
+                <p className="text-xl font-black text-amber-800 mt-0.5">{publishReport.totalBlocked}</p>
               </div>
             </div>
-          ))}
+
+            {/* Published List */}
+            {publishReport.published.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <CheckCircle className="w-3.5 h-3.5" />
+                  <span>Published Successfully (Live Now)</span>
+                </h4>
+                <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                  {publishReport.published.map((p) => (
+                    <div
+                      key={p.id}
+                      className="p-2.5 rounded-xl bg-emerald-50/80 border border-emerald-200 flex items-center justify-between text-xs"
+                    >
+                      <span className="font-semibold text-emerald-950 truncate max-w-[280px]">{p.title}</span>
+                      <a
+                        href={p.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-bold text-[11px] hover:bg-emerald-700"
+                      >
+                        <span>View Live</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Blocked List */}
+            {publishReport.blocked.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  <span>Blocked by Pre-Publish Gate</span>
+                </h4>
+                <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+                  {publishReport.blocked.map((b) => (
+                    <div
+                      key={b.id}
+                      className="p-3 rounded-xl bg-amber-50/80 border border-amber-200 text-xs space-y-1"
+                    >
+                      <p className="font-bold text-amber-950">{b.title}</p>
+                      <ul className="list-disc list-inside text-[11px] text-amber-900/80 space-y-0.5">
+                        {b.reasons.map((r, i) => (
+                          <li key={i}>{r}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {publishReport.totalAttempted === 0 && (
+              <div className="p-4 rounded-2xl bg-neutral-50 text-center text-xs text-neutral-500">
+                No articles were scheduled for today ({publishReport.targetDate}). Visit the <strong>Publishing Queue</strong> tab to schedule or auto-schedule upcoming articles.
+              </div>
+            )}
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setPublishReport(null)}
+                className="px-5 py-2 rounded-xl bg-[#003527] text-white font-bold text-xs hover:bg-[#00281e] cursor-pointer"
+              >
+                Close Report
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* TAB 1: ARTICLE LIBRARY                                         */}
+      {/* ============================================================== */}
+      {activeTab === 'library' && (
+        <div className="space-y-6">
+          {/* Filters Bar */}
+          <div className="bg-white border border-neutral-200/90 rounded-2xl p-4 flex flex-col sm:flex-row gap-3 items-center justify-between shadow-xs">
+            <div className="relative w-full sm:w-80">
+              <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search guides, recipes or tags..."
+                className="w-full pl-9 pr-3 py-2 rounded-xl border border-neutral-200 text-xs focus:outline-none focus:border-[#003527]"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Filter className="w-4 h-4 text-neutral-400" />
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as any)}
+                className="px-3 py-2 rounded-xl border border-neutral-200 text-xs bg-white text-neutral-700 focus:outline-none focus:border-[#003527]"
+              >
+                <option value="all">All Statuses ({total})</option>
+                <option value="published">Published (Live in App)</option>
+                <option value="draft">Drafts / Queued</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Article Cards Grid */}
+          {articles.length === 0 ? (
+            <div className="bg-white border border-neutral-200/90 rounded-2xl p-12 text-center space-y-4 shadow-xs">
+              <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center mx-auto">
+                <BookOpen className="w-7 h-7" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-neutral-900">Zero Articles Found</h3>
+                <p className="text-xs text-neutral-500 max-w-md mx-auto mt-1">
+                  No grocery guides match your criteria. Click below to compose and publish your first article.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={openCreateModal}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#003527] text-white font-bold text-xs hover:bg-[#00281e] cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Create First Article</span>
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {articles.map((art) => (
+                <div
+                  key={art.id}
+                  className="bg-white border border-neutral-200/90 rounded-2xl overflow-hidden hover:border-[#003527]/40 hover:shadow-md transition-all flex flex-col justify-between group"
+                >
+                  {/* Short Link Bar at top of Card */}
+                  <div className="px-3.5 py-2 bg-neutral-50/90 border-b border-neutral-100 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 text-neutral-600 truncate font-mono text-[10.5px]">
+                      <LinkIcon className="w-3 h-3 text-neutral-400 shrink-0" />
+                      <span className="truncate">/blog/{art.slug}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => copyShortLink(art.slug)}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white border border-neutral-200 hover:bg-neutral-100 text-[10px] font-bold text-neutral-600 cursor-pointer shadow-2xs"
+                        title="Copy article link"
+                      >
+                        {copiedSlug === art.slug ? (
+                          <>
+                            <Check className="w-2.5 h-2.5 text-emerald-600" />
+                            <span className="text-emerald-700">Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-2.5 h-2.5" />
+                            <span>Copy</span>
+                          </>
+                        )}
+                      </button>
+                      <a
+                        href={`/blog/${art.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 text-[10px] font-bold text-[#003527] cursor-pointer shadow-2xs"
+                        title="Open live article page"
+                      >
+                        <span>View</span>
+                        <ExternalLink className="w-2.5 h-2.5" />
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* Cover Image */}
+                  {art.coverImageUrl ? (
+                    <div className="h-40 w-full overflow-hidden bg-neutral-100 relative">
+                      <img
+                        src={art.coverImageUrl}
+                        alt={art.coverImageAlt || art.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          (e.target as HTMLElement).style.display = 'none';
+                        }}
+                      />
+                      <div className="absolute top-2.5 right-2.5 flex items-center gap-1">
+                        <span
+                          className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-xs ${
+                            art.status === 'published'
+                              ? 'bg-emerald-600 text-white'
+                              : 'bg-amber-500 text-white'
+                          }`}
+                        >
+                          {art.status === 'published' ? 'Live in App' : 'Draft'}
+                        </span>
+                      </div>
+                      <div className="absolute bottom-2.5 left-2.5">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-950 bg-emerald-100/95 backdrop-blur-xs px-2.5 py-0.5 rounded-md shadow-2xs">
+                          {art.category}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="h-28 w-full bg-gradient-to-br from-emerald-900 to-[#003527] p-3 flex flex-col justify-between text-white relative">
+                      <span className="text-[10px] font-bold uppercase tracking-wider self-start bg-white/20 px-2 py-0.5 rounded">
+                        {art.category}
+                      </span>
+                      <span
+                        className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full absolute top-3 right-3 ${
+                          art.status === 'published' ? 'bg-emerald-500 text-white' : 'bg-amber-400 text-neutral-900'
+                        }`}
+                      >
+                        {art.status === 'published' ? 'Live in App' : 'Draft'}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Card Body */}
+                  <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+                    <div className="space-y-2">
+                      <h4 className="font-bold text-neutral-900 text-sm leading-snug line-clamp-2">
+                        {art.title}
+                      </h4>
+                      {art.excerpt && (
+                        <p className="text-xs text-neutral-500 line-clamp-2">{art.excerpt}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2 pt-2 border-t border-neutral-100 text-[11px] text-neutral-500">
+                      <div className="flex items-center justify-between">
+                        <span className="inline-flex items-center gap-1 font-medium text-neutral-700">
+                          <User className="w-3 h-3 text-neutral-400" />
+                          {art.authorName || 'YAAD Staff'}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-[10.5px] text-neutral-400">
+                          <Clock className="w-3 h-3 text-neutral-400" />
+                          {formatArticleRelativeTime(art.publishedAt || art.createdAt)}
+                        </span>
+                      </div>
+
+                      {art.queueStatus && (
+                        <div className="flex items-center gap-2 text-[10px]">
+                          <span className="font-bold text-neutral-400 uppercase">Queue:</span>
+                          <span
+                            className={`px-2 py-0.5 rounded-full font-bold uppercase ${
+                              art.queueStatus === 'published'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : art.queueStatus === 'scheduled'
+                                ? 'bg-blue-100 text-blue-800'
+                                : art.queueStatus === 'needs_review'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-neutral-100 text-neutral-700'
+                            }`}
+                          >
+                            {art.queueStatus}
+                          </span>
+                          {art.publishDate && <span>📅 {art.publishDate}</span>}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Card Actions & Comments Count */}
+                    <div className="flex items-center justify-between pt-2 border-t border-neutral-100">
+                      <button
+                        type="button"
+                        onClick={() => openCommentsModal(art)}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-bold cursor-pointer transition-colors"
+                        title="View and reply to reader comments"
+                      >
+                        <MessageSquare className="w-3 h-3 text-emerald-700" />
+                        <span>{art.commentsCount ?? art.comments?.length ?? 0}</span>
+                      </button>
+
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(art)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-neutral-200 text-neutral-700 hover:bg-neutral-50 text-xs font-semibold cursor-pointer"
+                        >
+                          <Edit className="w-3 h-3 text-neutral-500" />
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(art.id, art.title)}
+                          className="inline-flex items-center p-1 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 text-xs cursor-pointer"
+                          title="Delete article"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* TAB 2: PUBLISHING QUEUE & SCHEDULER VIEW                       */}
+      {/* ============================================================== */}
+      {activeTab === 'queue' && (
+        <div className="space-y-6">
+          {/* Controls Bar */}
+          <div className="bg-white border border-neutral-200/90 rounded-2xl p-5 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <h3 className="font-bold text-neutral-900 text-base flex items-center gap-2">
+                <CalendarClock className="w-4 h-4 text-[#003527]" />
+                <span>Publishing Queue &amp; Auto-Scheduler</span>
+              </h3>
+              <p className="text-xs text-neutral-500">
+                Organize draft articles by publish date and priority. The daily button publishes today's batch.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2 bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-1.5 text-xs">
+                <span className="font-bold text-neutral-600">Articles / day:</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={10}
+                  value={articlesPerDay}
+                  onChange={(e) => setArticlesPerDay(Math.max(1, parseInt(e.target.value) || 2))}
+                  className="w-12 px-1.5 py-0.5 rounded border border-neutral-300 font-bold text-center text-xs focus:outline-none focus:border-[#003527]"
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={handleAutoScheduleQueue}
+                disabled={isSchedulingQueue}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#003527] text-white font-bold text-xs hover:bg-[#00281e] cursor-pointer shadow-xs disabled:opacity-50"
+              >
+                <CalendarClock className={`w-3.5 h-3.5 ${isSchedulingQueue ? 'animate-spin' : ''}`} />
+                <span>{isSchedulingQueue ? 'Auto-Scheduling...' : 'Auto-schedule queue'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Queue Status Stats */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="p-3.5 rounded-2xl bg-white border border-neutral-200 shadow-2xs">
+              <span className="text-[10.5px] font-bold text-neutral-500 uppercase tracking-wider">Scheduled</span>
+              <p className="text-xl font-black text-blue-700 mt-0.5">
+                {articles.filter((a) => a.queueStatus === 'scheduled').length}
+              </p>
+            </div>
+            <div className="p-3.5 rounded-2xl bg-white border border-neutral-200 shadow-2xs">
+              <span className="text-[10.5px] font-bold text-neutral-500 uppercase tracking-wider">Draft Ready</span>
+              <p className="text-xl font-black text-purple-700 mt-0.5">
+                {articles.filter((a) => a.queueStatus === 'draft_ready').length}
+              </p>
+            </div>
+            <div className="p-3.5 rounded-2xl bg-white border border-neutral-200 shadow-2xs">
+              <span className="text-[10.5px] font-bold text-neutral-500 uppercase tracking-wider">Needs Review</span>
+              <p className="text-xl font-black text-red-600 mt-0.5">
+                {articles.filter((a) => a.queueStatus === 'needs_review').length}
+              </p>
+            </div>
+            <div className="p-3.5 rounded-2xl bg-white border border-neutral-200 shadow-2xs">
+              <span className="text-[10.5px] font-bold text-neutral-500 uppercase tracking-wider">Published</span>
+              <p className="text-xl font-black text-emerald-700 mt-0.5">
+                {articles.filter((a) => a.queueStatus === 'published' || a.status === 'published').length}
+              </p>
+            </div>
+          </div>
+
+          {/* Scheduled by Date */}
+          {(() => {
+            const scheduled = articles
+              .filter((a) => a.queueStatus === 'scheduled' || a.queueStatus === 'needs_review')
+              .sort((a, b) => {
+                const dateCmp = (a.publishDate || '9999').localeCompare(b.publishDate || '9999');
+                if (dateCmp !== 0) return dateCmp;
+                return (a.priority ?? 100) - (b.priority ?? 100);
+              });
+
+            if (scheduled.length === 0) {
+              return (
+                <div className="bg-white border border-neutral-200 rounded-2xl p-10 text-center space-y-3">
+                  <CalendarClock className="w-10 h-10 text-neutral-300 mx-auto" />
+                  <p className="text-sm font-bold text-neutral-700">No scheduled articles in the queue</p>
+                  <p className="text-xs text-neutral-400 max-w-md mx-auto">
+                    Click <strong>Auto-schedule queue</strong> above to automatically assign publishing dates to draft articles at {articlesPerDay} articles per day.
+                  </p>
+                </div>
+              );
+            }
+
+            // Group by publishDate
+            const datesMap: Record<string, CmsArticle[]> = {};
+            for (const art of scheduled) {
+              const d = art.publishDate || 'No Date';
+              if (!datesMap[d]) datesMap[d] = [];
+              datesMap[d].push(art);
+            }
+
+            return (
+              <div className="space-y-6">
+                {Object.entries(datesMap).map(([pDate, groupArticles]) => (
+                  <div key={pDate} className="bg-white border border-neutral-200/90 rounded-2xl overflow-hidden shadow-xs">
+                    <div className="px-5 py-3 bg-neutral-50 border-b border-neutral-200 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-emerald-800" />
+                        <span className="font-bold text-neutral-900 text-xs sm:text-sm">
+                          Publish Date: {pDate}
+                        </span>
+                        <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
+                          {groupArticles.length} Article{groupArticles.length > 1 ? 's' : ''}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="divide-y divide-neutral-100">
+                      {groupArticles.map((art) => (
+                        <div key={art.id} className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-neutral-50/50 transition-colors">
+                          <div className="space-y-1.5 flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span
+                                className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
+                                  art.queueStatus === 'needs_review'
+                                    ? 'bg-red-100 text-red-800'
+                                    : 'bg-blue-100 text-blue-800'
+                                }`}
+                              >
+                                {art.queueStatus}
+                              </span>
+                              {art.cluster && (
+                                <span className="text-[10px] font-semibold bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded">
+                                  {art.cluster}
+                                </span>
+                              )}
+                              {art.searchIntent && (
+                                <span className="text-[10px] font-semibold bg-neutral-100 text-neutral-700 px-2 py-0.5 rounded">
+                                  {art.searchIntent}
+                                </span>
+                              )}
+                              <span className="text-[10px] text-neutral-400">
+                                {art.wordCount || (art.body ? art.body.trim().split(/\s+/).length : 0)} words
+                              </span>
+                            </div>
+
+                            <h4 className="font-bold text-neutral-900 text-sm truncate">{art.title}</h4>
+
+                            {art.needsReviewReasons && art.needsReviewReasons.length > 0 && (
+                              <div className="text-[11px] text-red-600 bg-red-50 p-2 rounded-lg space-y-0.5 border border-red-200">
+                                <span className="font-bold">Failing Pre-Publish Checks:</span>
+                                <ul className="list-disc list-inside">
+                                  {art.needsReviewReasons.map((r, i) => (
+                                    <li key={i}>{r}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Reordering & Date Controls */}
+                          <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
+                            {/* Priority Reordering Buttons */}
+                            <div className="flex items-center gap-1 bg-neutral-100 p-1 rounded-xl">
+                              <span className="text-[11px] font-bold text-neutral-500 px-1.5" title="Priority order">
+                                #{art.priority ?? 100}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handlePriorityChange(art, -1)}
+                                className="p-1 rounded-lg bg-white hover:bg-neutral-200 text-neutral-700 cursor-pointer shadow-2xs"
+                                title="Move up in priority"
+                              >
+                                <ArrowUp className="w-3 h-3" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handlePriorityChange(art, 1)}
+                                className="p-1 rounded-lg bg-white hover:bg-neutral-200 text-neutral-700 cursor-pointer shadow-2xs"
+                                title="Move down in priority"
+                              >
+                                <ArrowDown className="w-3 h-3" />
+                              </button>
+                            </div>
+
+                            {/* Per-Article Date Picker */}
+                            <input
+                              type="date"
+                              value={art.publishDate || ''}
+                              onChange={(e) => handlePublishDateChange(art, e.target.value)}
+                              className="px-2 py-1 rounded-lg border border-neutral-300 text-xs font-medium text-neutral-700 focus:outline-none focus:border-[#003527]"
+                            />
+
+                            <button
+                              type="button"
+                              onClick={() => openEditModal(art)}
+                              className="px-2.5 py-1 rounded-lg border border-neutral-200 text-neutral-700 hover:bg-neutral-100 text-xs font-bold cursor-pointer"
+                            >
+                              Edit
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* TAB 3: IMPORT IDEA BANK (256)                                 */}
+      {/* ============================================================== */}
+      {activeTab === 'import' && (
+        <div className="bg-white border border-neutral-200/90 rounded-2xl p-6 sm:p-8 space-y-6 shadow-xs max-w-3xl">
+          <div className="space-y-1.5">
+            <h3 className="font-bold text-neutral-900 text-base sm:text-lg flex items-center gap-2">
+              <FileSpreadsheet className="w-5 h-5 text-[#003527]" />
+              <span>Import 256-Idea Bank into CMS Queue</span>
+            </h3>
+            <p className="text-xs sm:text-sm text-neutral-500 leading-relaxed">
+              Upload or auto-load the 256 SEO article ideas. Title and slug deduplication is enforced automatically. Running import twice is completely idempotent (0 duplicates added).
+            </p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-neutral-50 border border-neutral-200 space-y-4">
+            <div className="space-y-2">
+              <label className="block text-xs font-bold text-neutral-700">
+                Option A: Choose Bank CSV / JSON File
+              </label>
+              <input
+                type="file"
+                accept=".csv,.json"
+                onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                className="block w-full text-xs text-neutral-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[#003527] file:text-white hover:file:bg-[#00281e] cursor-pointer"
+              />
+            </div>
+
+            <div className="pt-2 border-t border-neutral-200 flex items-center justify-between">
+              <span className="text-xs text-neutral-500">Option B: Use built-in bank file</span>
+              <button
+                type="button"
+                onClick={() => handleImportBank(true)}
+                disabled={isImporting}
+                className="px-3.5 py-1.5 rounded-xl bg-emerald-100 text-emerald-900 font-bold text-xs hover:bg-emerald-200 cursor-pointer disabled:opacity-50"
+              >
+                Auto-Load built-in 256 Bank
+              </button>
+            </div>
+          </div>
+
+          {/* Dry Run Toggle */}
+          <div className="flex items-center gap-2.5">
+            <input
+              type="checkbox"
+              id="dryRunToggle"
+              checked={importDryRun}
+              onChange={(e) => setImportDryRun(e.target.checked)}
+              className="w-4 h-4 rounded text-[#003527] focus:ring-[#003527]"
+            />
+            <label htmlFor="dryRunToggle" className="text-xs font-bold text-neutral-700 cursor-pointer">
+              Dry-run mode (calculate counts and verify deduplication without writing to database)
+            </label>
+          </div>
+
+          {/* Action Button */}
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => handleImportBank(false)}
+              disabled={isImporting || (!importFile && !importDryRun)}
+              className="px-6 py-3 rounded-xl bg-[#003527] text-white font-bold text-xs sm:text-sm hover:bg-[#00281e] cursor-pointer shadow-md disabled:opacity-50 inline-flex items-center gap-2"
+            >
+              {isImporting && <RefreshCw className="w-4 h-4 animate-spin" />}
+              <span>{isImporting ? 'Importing Bank...' : importDryRun ? 'Run Import Dry-Run' : 'Import File into Queue'}</span>
+            </button>
+          </div>
+
+          {/* Import Result Summary */}
+          {importResult && (
+            <div className="p-5 rounded-2xl bg-emerald-50 border border-emerald-200 space-y-3">
+              <h4 className="font-bold text-emerald-950 text-sm flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-emerald-700" />
+                <span>Import Summary {importResult.dryRun ? '(Dry Run Simulation)' : '(Saved)'}</span>
+              </h4>
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="p-3 bg-white rounded-xl border border-emerald-100">
+                  <span className="text-neutral-500 font-medium">Unique Ideas Imported:</span>
+                  <p className="text-lg font-black text-emerald-800 mt-0.5">{importResult.imported}</p>
+                </div>
+                <div className="p-3 bg-white rounded-xl border border-emerald-100">
+                  <span className="text-neutral-500 font-medium">Duplicates Skipped:</span>
+                  <p className="text-lg font-black text-amber-700 mt-0.5">{importResult.skippedDuplicates}</p>
+                </div>
+              </div>
+              {importResult.errors.length > 0 && (
+                <div className="text-xs text-red-600 bg-red-50 p-2.5 rounded-xl border border-red-200">
+                  <span className="font-bold">Errors encountered:</span>
+                  <ul className="list-disc list-inside mt-1 space-y-0.5">
+                    {importResult.errors.map((e, idx) => (
+                      <li key={idx}>{e}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -1499,6 +2290,369 @@ export const AdminCmsPage: React.FC = () => {
                   placeholder="Ramadan, Rashan, Rice, Budgeting, Sabzi"
                   className="w-full px-3 py-2 rounded-xl border border-neutral-200 text-neutral-700 focus:outline-none focus:border-[#003527]"
                 />
+              </div>
+
+              {/* ============================================================== */}
+              {/* SEO & On-Page Quality Engine Specification                      */}
+              {/* ============================================================== */}
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-50/50 to-neutral-50 border border-emerald-200/80 space-y-4">
+                <div className="flex items-center justify-between border-b border-emerald-100 pb-2">
+                  <div className="flex items-center gap-2 text-emerald-950 font-black text-sm">
+                    <Sparkles className="w-4 h-4 text-emerald-700" />
+                    <span>On-Page SEO &amp; Publishing Gate Specification</span>
+                  </div>
+                  <span className={`text-[10.5px] font-bold px-2 py-0.5 rounded-full ${seoChecklist.passed ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'}`}>
+                    {seoChecklist.passed ? '✓ Ready for Publishing Gate' : `! ${seoChecklist.errors.length} Gate Checks Pending`}
+                  </span>
+                </div>
+
+                {/* Focus Keyword & Pillar Cluster */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block font-bold text-neutral-800 mb-1">
+                      Focus Keyword <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={focusKeyword}
+                      onChange={(e) => setFocusKeyword(e.target.value)}
+                      placeholder="e.g. monthly rashan list"
+                      className="w-full px-3 py-2 rounded-xl border border-neutral-200 bg-white text-neutral-900 focus:outline-none focus:border-[#003527]"
+                    />
+                    <span className="text-[10px] text-neutral-500">Target search query for this guide</span>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-neutral-800 mb-1">Pillar Cluster</label>
+                    <input
+                      type="text"
+                      value={cluster}
+                      onChange={(e) => setCluster(e.target.value)}
+                      placeholder="Monthly Rashan, Ramadan, Kiryana"
+                      className="w-full px-3 py-2 rounded-xl border border-neutral-200 bg-white text-neutral-900 focus:outline-none focus:border-[#003527]"
+                    />
+                    <span className="text-[10px] text-neutral-500">Internal pillar grouping</span>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-neutral-800 mb-1">Search Intent</label>
+                    <select
+                      value={searchIntent}
+                      onChange={(e) => setSearchIntent(e.target.value as any)}
+                      className="w-full px-3 py-2 rounded-xl border border-neutral-200 bg-white text-neutral-900 focus:outline-none focus:border-[#003527]"
+                    >
+                      <option value="informational">Informational Guide</option>
+                      <option value="list">Master Checklist / List</option>
+                      <option value="comparison">Comparison / Review</option>
+                      <option value="template">Budget Template / Calculator</option>
+                    </select>
+                    <span className="text-[10px] text-neutral-500">One clear search intent</span>
+                  </div>
+                </div>
+
+                {/* Meta Title & Meta Description with Character Counters */}
+                <div className="space-y-3">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="font-bold text-neutral-800">
+                        Meta Title (seoTitle) <span className="text-red-500">*</span>
+                      </label>
+                      <span className={`text-[11px] font-mono font-bold ${seoTitle.length > 60 ? 'text-red-600 font-black' : seoTitle.length >= 45 ? 'text-emerald-700' : 'text-neutral-500'}`}>
+                        {seoTitle.length}/60 chars {seoTitle.length > 60 && '(Exceeds 60 max)'}
+                      </span>
+                    </div>
+                    <input
+                      type="text"
+                      value={seoTitle}
+                      onChange={(e) => setSeoTitle(e.target.value)}
+                      placeholder="Front-load keyword ≤ 60 chars (e.g. Monthly Rashan List for Pakistani Family 2026)"
+                      className={`w-full px-3.5 py-2 rounded-xl border bg-white text-neutral-900 focus:outline-none ${seoTitle.length > 60 ? 'border-red-400 focus:border-red-600' : 'border-neutral-200 focus:border-[#003527]'}`}
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="font-bold text-neutral-800">
+                        Meta Description (seoDescription) <span className="text-red-500">*</span>
+                      </label>
+                      <span className={`text-[11px] font-mono font-bold ${seoDescription.length >= 140 && seoDescription.length <= 160 ? 'text-emerald-700' : seoDescription.length > 160 ? 'text-red-600' : 'text-amber-700'}`}>
+                        {seoDescription.length} chars (Target: 140–160 chars)
+                      </span>
+                    </div>
+                    <textarea
+                      rows={2}
+                      value={seoDescription}
+                      onChange={(e) => setSeoDescription(e.target.value)}
+                      placeholder="One-line direct answer + what reader gets + soft CTA (140-160 characters)"
+                      className={`w-full px-3.5 py-2 rounded-xl border bg-white text-neutral-900 focus:outline-none ${seoDescription.length > 160 || (seoDescription.length > 0 && seoDescription.length < 140) ? 'border-amber-300 focus:border-[#003527]' : 'border-neutral-200 focus:border-[#003527]'}`}
+                    />
+                  </div>
+                </div>
+
+                {/* Quick Answer Box (40-60 words) */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="font-bold text-neutral-800">
+                      Quick Answer Box <span className="text-red-500">*</span>
+                    </label>
+                    {(() => {
+                      const words = quickAnswer.trim().split(/\s+/).filter(Boolean).length;
+                      return (
+                        <span className={`text-[11px] font-mono font-bold ${words >= 40 && words <= 60 ? 'text-emerald-700' : 'text-amber-700'}`}>
+                          {words} words (Target: 40–60 words)
+                        </span>
+                      );
+                    })()}
+                  </div>
+                  <textarea
+                    rows={2}
+                    value={quickAnswer}
+                    onChange={(e) => setQuickAnswer(e.target.value)}
+                    placeholder="Answers the article title outright in 40–60 words for reader search engines and AI previews..."
+                    className="w-full px-3.5 py-2 rounded-xl border border-neutral-200 bg-white text-neutral-900 focus:outline-none focus:border-[#003527]"
+                  />
+                </div>
+
+                {/* Key Takeaways & Cover Image Alt */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-neutral-800 mb-1">Key Takeaways (3-4 bullets, one per line)</label>
+                    <textarea
+                      rows={3}
+                      value={keyTakeawaysText}
+                      onChange={(e) => setKeyTakeawaysText(e.target.value)}
+                      placeholder="Staples needed per person per month&#10;How local units (pao, darjan) convert&#10;Offline store check-off saves 40% time"
+                      className="w-full px-3 py-2 rounded-xl border border-neutral-200 bg-white text-neutral-900 focus:outline-none focus:border-[#003527]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-neutral-800 mb-1">Cover Image Alt Text (Required if image set)</label>
+                    <textarea
+                      rows={3}
+                      value={coverImageAlt}
+                      onChange={(e) => setCoverImageAlt(e.target.value)}
+                      placeholder="Descriptive alt text describing the photo (e.g. Traditional Pakistani kitchen pantry shelf with chakki atta, pulses, and spices)"
+                      className="w-full px-3 py-2 rounded-xl border border-neutral-200 bg-white text-neutral-900 focus:outline-none focus:border-[#003527]"
+                    />
+                  </div>
+                </div>
+
+                {/* Hashtags & Internal Related Slugs */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="font-bold text-neutral-800">Hashtags (Comma-separated)</label>
+                      <span className="text-[10px] text-neutral-500">Target: 3–5 tags</span>
+                    </div>
+                    <input
+                      type="text"
+                      value={hashtagsInput}
+                      onChange={(e) => setHashtagsInput(e.target.value)}
+                      placeholder="MonthlyRashan, GroceryList, PakistanKitchen, YaadApp"
+                      className="w-full px-3 py-2 rounded-xl border border-neutral-200 bg-white text-neutral-900 focus:outline-none focus:border-[#003527]"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="font-bold text-neutral-800">Related Guide Slugs (3-5 internal links)</label>
+                      <span className="text-[10px] text-neutral-500">Real published slugs</span>
+                    </div>
+                    <input
+                      type="text"
+                      value={relatedSlugsInput}
+                      onChange={(e) => setRelatedSlugsInput(e.target.value)}
+                      placeholder="how-to-make-grocery-list, stop-forgetting-groceries, grocery-budget-pakistan"
+                      className="w-full px-3 py-2 rounded-xl border border-neutral-200 bg-white text-neutral-900 focus:outline-none focus:border-[#003527]"
+                    />
+                  </div>
+                </div>
+
+                {/* Repeatable FAQs */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="font-bold text-neutral-800 flex items-center gap-1.5">
+                      <HelpCircle className="w-3.5 h-3.5 text-emerald-700" />
+                      <span>Visible FAQs (Schema FAQPage entity, 3-5 questions)</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setFaqsList((prev) => [...prev, { q: '', a: '' }])}
+                      className="text-xs text-emerald-700 hover:underline font-bold cursor-pointer"
+                    >
+                      + Add FAQ Row
+                    </button>
+                  </div>
+                  {faqsList.map((faq, idx) => (
+                    <div key={idx} className="p-2.5 rounded-xl bg-white border border-neutral-200 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-neutral-500 uppercase">Question {idx + 1}</span>
+                        {faqsList.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => setFaqsList((prev) => prev.filter((_, i) => i !== idx))}
+                            className="text-[10px] text-red-500 hover:underline cursor-pointer"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                      <input
+                        type="text"
+                        value={faq.q}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setFaqsList((prev) => prev.map((f, i) => (i === idx ? { ...f, q: val } : f)));
+                        }}
+                        placeholder="e.g. How much atta does a family of 5 need for one month?"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-neutral-200 text-xs text-neutral-900 focus:outline-none focus:border-[#003527]"
+                      />
+                      <textarea
+                        rows={2}
+                        value={faq.a}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setFaqsList((prev) => prev.map((f, i) => (i === idx ? { ...f, a: val } : f)));
+                        }}
+                        placeholder="2-4 sentence direct, authoritative answer..."
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-neutral-200 text-xs text-neutral-900 focus:outline-none focus:border-[#003527]"
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Queue Scheduling Status & Date */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 rounded-xl bg-white border border-neutral-200">
+                  <div>
+                    <label className="block font-bold text-neutral-800 mb-1">Queue Status</label>
+                    <select
+                      value={queueStatus}
+                      onChange={(e) => setQueueStatus(e.target.value as any)}
+                      className="w-full px-3 py-1.5 rounded-lg border border-neutral-200 bg-white text-xs font-semibold focus:outline-none focus:border-[#003527]"
+                    >
+                      <option value="draft_ready">Draft Ready (Eligible for Queue)</option>
+                      <option value="scheduled">Scheduled</option>
+                      <option value="published">Published</option>
+                      <option value="needs_review">Needs Review</option>
+                      <option value="idea">Idea (Bank Only)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-neutral-800 mb-1">Target Publish Date</label>
+                    <input
+                      type="date"
+                      value={publishDate}
+                      onChange={(e) => setPublishDate(e.target.value)}
+                      className="w-full px-3 py-1.5 rounded-lg border border-neutral-200 bg-white text-xs text-neutral-900 focus:outline-none focus:border-[#003527]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-neutral-800 mb-1">Priority (Lower publishes earlier)</label>
+                    <input
+                      type="number"
+                      value={priorityNum}
+                      onChange={(e) => setPriorityNum(parseInt(e.target.value, 10) || 0)}
+                      className="w-full px-3 py-1.5 rounded-lg border border-neutral-200 bg-white text-xs text-neutral-900 focus:outline-none focus:border-[#003527]"
+                    />
+                  </div>
+                </div>
+
+                {/* Live Pre-Publish Gate Checklist Panel */}
+                <div className="p-3.5 rounded-xl bg-white border border-neutral-200 space-y-2">
+                  <span className="font-bold text-xs text-neutral-900 flex items-center justify-between">
+                    <span>Pre-Publish Gate Verification Checklist</span>
+                    <span className="text-[10px] text-neutral-400 font-mono">11 Quality Rules</span>
+                  </span>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                    <div className="flex items-center gap-1.5">
+                      <span className={title.trim() ? 'text-emerald-600' : 'text-red-500'}>
+                        {title.trim() ? '✓' : '✗'}
+                      </span>
+                      <span>Title provided</span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <span className={slug.trim() ? 'text-emerald-600' : 'text-red-500'}>
+                        {slug.trim() ? '✓' : '✗'}
+                      </span>
+                      <span>URL slug provided</span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <span className={seoChecklist.stats.wordCount >= 700 ? 'text-emerald-600' : 'text-red-500'}>
+                        {seoChecklist.stats.wordCount >= 700 ? '✓' : '✗'}
+                      </span>
+                      <span>Body ≥ 700 words ({seoChecklist.stats.wordCount} words)</span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <span className={seoChecklist.stats.quickAnswerWords >= 40 && seoChecklist.stats.quickAnswerWords <= 60 ? 'text-emerald-600' : 'text-red-500'}>
+                        {seoChecklist.stats.quickAnswerWords >= 40 && seoChecklist.stats.quickAnswerWords <= 60 ? '✓' : '✗'}
+                      </span>
+                      <span>Quick Answer 40–60 words ({seoChecklist.stats.quickAnswerWords} words)</span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <span className={seoTitle.length > 0 && seoTitle.length <= 60 ? 'text-emerald-600' : 'text-red-500'}>
+                        {seoTitle.length > 0 && seoTitle.length <= 60 ? '✓' : '✗'}
+                      </span>
+                      <span>Meta title ≤ 60 chars ({seoTitle.length} chars)</span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <span className={seoDescription.length >= 140 && seoDescription.length <= 160 ? 'text-emerald-600' : 'text-red-500'}>
+                        {seoDescription.length >= 140 && seoDescription.length <= 160 ? '✓' : '✗'}
+                      </span>
+                      <span>Meta description 140–160 chars ({seoDescription.length} chars)</span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <span className={seoChecklist.stats.keywordInTitle ? 'text-emerald-600' : 'text-red-500'}>
+                        {seoChecklist.stats.keywordInTitle ? '✓' : '✗'}
+                      </span>
+                      <span>Keyword in Title</span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <span className={seoChecklist.stats.keywordInFirst100Words ? 'text-emerald-600' : 'text-red-500'}>
+                        {seoChecklist.stats.keywordInFirst100Words ? '✓' : '✗'}
+                      </span>
+                      <span>Keyword in first 100 words</span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <span className={seoChecklist.stats.keywordInH2 ? 'text-emerald-600' : 'text-red-500'}>
+                        {seoChecklist.stats.keywordInH2 ? '✓' : '✗'}
+                      </span>
+                      <span>Keyword in at least one H2 heading</span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <span className={seoChecklist.stats.hasCoverOrAlt ? 'text-emerald-600' : 'text-red-500'}>
+                        {seoChecklist.stats.hasCoverOrAlt ? '✓' : '✗'}
+                      </span>
+                      <span>Cover image with descriptive alt</span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <span className={seoChecklist.stats.hashtagCount >= 3 && seoChecklist.stats.hashtagCount <= 5 ? 'text-emerald-600' : 'text-red-500'}>
+                        {seoChecklist.stats.hashtagCount >= 3 && seoChecklist.stats.hashtagCount <= 5 ? '✓' : '✗'}
+                      </span>
+                      <span>3–5 hashtags ({seoChecklist.stats.hashtagCount})</span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <span className={seoChecklist.stats.bannedPhrasesFound.length === 0 ? 'text-emerald-600' : 'text-red-500'}>
+                        {seoChecklist.stats.bannedPhrasesFound.length === 0 ? '✓' : '✗'}
+                      </span>
+                      <span>Zero banned AI phrases {seoChecklist.stats.bannedPhrasesFound.length > 0 && `(Found: ${seoChecklist.stats.bannedPhrasesFound.join(', ')})`}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Form Action Buttons */}

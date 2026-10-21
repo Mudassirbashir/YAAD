@@ -32,7 +32,12 @@ import {
   setAuthoritativeAppUserVerified,
   setAuthoritativeAppUserStatus,
   getSupabaseAdmin,
+  persistSharedCmsArticle,
+  deleteSharedCmsArticleFromDb,
 } from './supabaseAdmin';
+import { validateArticleSeoGate } from './seoValidator';
+// @ts-ignore
+import { buildSitemapXml } from '../../scripts/generate-sitemap.mjs';
 
 export type AdminRole = 'super_admin' | 'support_agent' | 'content_editor' | 'analyst';
 
@@ -290,6 +295,7 @@ export interface CmsArticle {
   body: string;
   headingSize?: 'h1' | 'h2' | 'h3';
   coverImageUrl?: string;
+  coverImageAlt?: string;
   authorName: string;
   authorEmail?: string;
   category: string;
@@ -311,6 +317,22 @@ export interface CmsArticle {
   viewsCount: number;
   seoTitle?: string;
   seoDescription?: string;
+  ogImageUrl?: string;
+  canonicalUrl?: string;
+  focusKeyword?: string;
+  searchIntent?: 'informational' | 'list' | 'comparison' | 'template';
+  cluster?: string;
+  quickAnswer?: string;
+  keyTakeaways?: string[];
+  faqs?: { q: string; a: string }[];
+  hashtags?: string[];
+  relatedSlugs?: string[];
+  queueStatus?: 'idea' | 'draft_ready' | 'scheduled' | 'published' | 'needs_review';
+  publishDate?: string;
+  priority?: number;
+  wordCount?: number;
+  sourceSet?: string;
+  needsReviewReasons?: string[];
   versions?: CmsArticleVersion[];
   createdAt: number;
   updatedAt: number;
@@ -1062,7 +1084,7 @@ class AdminStore {
           moderationLists: Array.isArray(parsed.moderationLists) ? parsed.moderationLists : [],
           catalogProducts: Array.isArray(parsed.catalogProducts) ? parsed.catalogProducts : [],
           catalogCategories: Array.isArray(parsed.catalogCategories) && parsed.catalogCategories.length > 0 ? parsed.catalogCategories : getInitialCategories(),
-          cmsArticles: Array.isArray(parsed.cmsArticles) && parsed.cmsArticles.length > 0 && !parsed.cmsArticles.some((a: any) => a.id?.startsWith('art_')) ? parsed.cmsArticles : getInitialCmsArticles(),
+          cmsArticles: Array.isArray(parsed.cmsArticles) && parsed.cmsArticles.length > 0 ? parsed.cmsArticles : getInitialCmsArticles(),
           pushCampaigns: Array.isArray(parsed.pushCampaigns) ? parsed.pushCampaigns : getInitialPushCampaigns(),
           pushTemplates: Array.isArray(parsed.pushTemplates) && parsed.pushTemplates.length > 0 ? parsed.pushTemplates : getInitialPushTemplates(),
           supportTickets: Array.isArray(parsed.supportTickets) ? parsed.supportTickets : [],
@@ -2653,32 +2675,90 @@ class AdminStore {
       .sort((a, b) => (b.publishedAt || b.createdAt) - (a.publishedAt || a.createdAt));
   }
 
+  public getPublicCmsArticles(): CmsArticle[] {
+    return this.getPublicPublishedArticles();
+  }
+
   public getCmsArticleBySlug(slug: string): CmsArticle | undefined {
-    return (this.db.cmsArticles || []).find((a) => a.slug === slug);
+    if (!this.db.cmsArticles) return undefined;
+    const clean = slug.toLowerCase().trim();
+    return this.db.cmsArticles.find((a) => a.slug === clean || a.id === clean);
+  }
+
+  public getCmsArticleById(id: string): CmsArticle | undefined {
+    if (!this.db.cmsArticles) return undefined;
+    return this.db.cmsArticles.find((a) => a.id === id);
   }
 
   public saveCmsArticle(articleData: Partial<CmsArticle>, author: string): CmsArticle {
     if (!this.db.cmsArticles) this.db.cmsArticles = [];
     const now = Date.now();
-    const cleanSlug = (articleData.slug || articleData.title || 'post')
+
+    // Auto-generate slug from title or provided slug
+    const rawSlug = (articleData.slug && articleData.slug.trim().length > 0)
+      ? articleData.slug
+      : (articleData.title || 'post');
+    const cleanSlug = rawSlug
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
+      .replace(/(^-|-$)/g, '') || 'post';
 
-    if (articleData.id) {
-      const idx = this.db.cmsArticles.findIndex((a) => a.id === articleData.id);
+    const targetId = articleData.id;
+    // Reject duplicate slugs
+    const duplicate = this.db.cmsArticles.find((a) => a.slug === cleanSlug && a.id !== targetId);
+    if (duplicate) {
+      const err: any = new Error(`An article with slug "${cleanSlug}" already exists.`);
+      err.statusCode = 400;
+      err.code = 'DUPLICATE_SLUG';
+      throw err;
+    }
+
+    const bodyText = articleData.body !== undefined ? articleData.body : '';
+    const wordCount = bodyText.trim().split(/\s+/).filter(Boolean).length;
+    const readTimeMinutes = Math.max(1, Math.ceil(wordCount / 200));
+
+    if (targetId) {
+      const idx = this.db.cmsArticles.findIndex((a) => a.id === targetId);
       if (idx !== -1) {
         const existing = this.db.cmsArticles[idx];
+        const effectiveBody = articleData.body !== undefined ? articleData.body : existing.body;
+        const effectiveWordCount = effectiveBody.trim().split(/\s+/).filter(Boolean).length;
+        const effectiveReadTime = Math.max(1, Math.ceil(effectiveWordCount / 200));
+
         const updated: CmsArticle = {
           ...existing,
           ...articleData,
+          id: existing.id,
           slug: cleanSlug,
           headingSize: articleData.headingSize || existing.headingSize || 'h2',
           authorEmail: articleData.authorEmail || existing.authorEmail,
           socialLinks: articleData.socialLinks || existing.socialLinks,
           comments: existing.comments || [],
           commentsCount: existing.commentsCount || (existing.comments?.length || 0),
-          publishedAt: articleData.status === 'published' && !existing.publishedAt ? now : existing.publishedAt,
+          status: articleData.status || existing.status || 'draft',
+          publishedAt: articleData.status === 'published' && !existing.publishedAt ? now : (articleData.publishedAt ?? existing.publishedAt),
+          scheduledFor: articleData.scheduledFor !== undefined ? articleData.scheduledFor : existing.scheduledFor,
+          readTimeMinutes: effectiveReadTime,
+          wordCount: effectiveWordCount,
+          viewsCount: existing.viewsCount || 0,
+          seoTitle: articleData.seoTitle || existing.seoTitle || articleData.title || existing.title,
+          seoDescription: articleData.seoDescription || existing.seoDescription || articleData.excerpt || existing.excerpt,
+          coverImageAlt: articleData.coverImageAlt !== undefined ? articleData.coverImageAlt : existing.coverImageAlt,
+          ogImageUrl: articleData.ogImageUrl || existing.ogImageUrl || articleData.coverImageUrl || existing.coverImageUrl,
+          canonicalUrl: articleData.canonicalUrl || existing.canonicalUrl || `/blog/${cleanSlug}`,
+          focusKeyword: articleData.focusKeyword !== undefined ? articleData.focusKeyword : (existing.focusKeyword || ''),
+          searchIntent: articleData.searchIntent || existing.searchIntent || 'informational',
+          cluster: articleData.cluster !== undefined ? articleData.cluster : (existing.cluster || ''),
+          quickAnswer: articleData.quickAnswer !== undefined ? articleData.quickAnswer : (existing.quickAnswer || ''),
+          keyTakeaways: articleData.keyTakeaways || existing.keyTakeaways || [],
+          faqs: articleData.faqs || existing.faqs || [],
+          hashtags: articleData.hashtags || existing.hashtags || [],
+          relatedSlugs: articleData.relatedSlugs || existing.relatedSlugs || [],
+          queueStatus: articleData.queueStatus || existing.queueStatus || (articleData.status === 'published' ? 'published' : 'draft_ready'),
+          publishDate: articleData.publishDate || existing.publishDate,
+          priority: articleData.priority !== undefined ? articleData.priority : (existing.priority ?? 0),
+          sourceSet: articleData.sourceSet !== undefined ? articleData.sourceSet : (existing.sourceSet || ''),
+          needsReviewReasons: articleData.needsReviewReasons || existing.needsReviewReasons || [],
           updatedAt: now,
           versions: [
             ...(existing.versions || []),
@@ -2693,6 +2773,7 @@ class AdminStore {
         };
         this.db.cmsArticles[idx] = updated;
         this.save();
+        persistSharedCmsArticle(updated).catch(() => {});
         return updated;
       }
     }
@@ -2706,9 +2787,10 @@ class AdminStore {
       excerpt: articleData.excerpt || '',
       excerptUr: articleData.excerptUr,
       excerptRomanUrdu: articleData.excerptRomanUrdu,
-      body: articleData.body || '',
+      body: bodyText,
       headingSize: articleData.headingSize || 'h2',
       coverImageUrl: articleData.coverImageUrl || '',
+      coverImageAlt: articleData.coverImageAlt || '',
       authorName: articleData.authorName || author,
       authorEmail: articleData.authorEmail,
       socialLinks: articleData.socialLinks,
@@ -2717,14 +2799,30 @@ class AdminStore {
       comments: [],
       commentsCount: 0,
       status: articleData.status || 'draft',
-      publishedAt: articleData.status === 'published' ? now : undefined,
+      publishedAt: articleData.status === 'published' ? (articleData.publishedAt || now) : undefined,
       scheduledFor: articleData.scheduledFor,
-      readTimeMinutes: Math.max(1, Math.ceil((articleData.body?.split(/\s+/).length || 100) / 200)),
+      readTimeMinutes,
+      wordCount,
       viewsCount: 0,
       seoTitle: articleData.seoTitle || articleData.title,
       seoDescription: articleData.seoDescription || articleData.excerpt,
+      ogImageUrl: articleData.ogImageUrl || articleData.coverImageUrl,
+      canonicalUrl: articleData.canonicalUrl || `/blog/${cleanSlug}`,
+      focusKeyword: articleData.focusKeyword || '',
+      searchIntent: articleData.searchIntent || 'informational',
+      cluster: articleData.cluster || '',
+      quickAnswer: articleData.quickAnswer || '',
+      keyTakeaways: articleData.keyTakeaways || [],
+      faqs: articleData.faqs || [],
+      hashtags: articleData.hashtags || [],
+      relatedSlugs: articleData.relatedSlugs || [],
+      queueStatus: articleData.queueStatus || (articleData.status === 'published' ? 'published' : (bodyText.length > 0 ? 'draft_ready' : 'idea')),
+      publishDate: articleData.publishDate,
+      priority: articleData.priority !== undefined ? articleData.priority : 0,
+      sourceSet: articleData.sourceSet || '',
+      needsReviewReasons: articleData.needsReviewReasons || [],
       versions: [
-        { versionNumber: 1, timestamp: now, savedBy: author, title: articleData.title || 'Untitled', body: articleData.body || '' },
+        { versionNumber: 1, timestamp: now, savedBy: author, title: articleData.title || 'Untitled', body: bodyText },
       ],
       createdAt: now,
       updatedAt: now,
@@ -2732,15 +2830,17 @@ class AdminStore {
 
     this.db.cmsArticles.unshift(newArticle);
     this.save();
+    persistSharedCmsArticle(newArticle).catch(() => {});
     return newArticle;
   }
 
   public deleteCmsArticle(id: string): boolean {
     if (!this.db.cmsArticles) return false;
     const len = this.db.cmsArticles.length;
-    this.db.cmsArticles = this.db.cmsArticles.filter((a) => a.id !== id);
+    this.db.cmsArticles = this.db.cmsArticles.filter((a) => a.id !== id && a.slug !== id);
     if (this.db.cmsArticles.length !== len) {
       this.save();
+      deleteSharedCmsArticleFromDb(id).catch(() => {});
       return true;
     }
     return false;
@@ -2794,6 +2894,255 @@ class AdminStore {
     art.commentsCount = art.comments.length;
     this.save();
     return art.comments.length < before;
+  }
+
+  public importIdeaBank(
+    items: Array<{
+      title: string;
+      focusKeyword?: string;
+      cluster?: string;
+      searchIntent?: string;
+      sourceSet?: string;
+      priority?: number;
+      body?: string;
+    }>,
+    dryRun = false
+  ): { imported: number; skippedDuplicates: number; errors: string[] } {
+    if (!this.db.cmsArticles) this.db.cmsArticles = [];
+    const errors: string[] = [];
+    let imported = 0;
+    let skippedDuplicates = 0;
+
+    const normalizeTitle = (t: string) =>
+      t.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    const normalizeSlug = (t: string) =>
+      t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+    // Track existing normalized titles and slugs
+    const existingTitles = new Set(this.db.cmsArticles.map((a) => normalizeTitle(a.title)));
+    const existingSlugs = new Set(this.db.cmsArticles.map((a) => a.slug));
+
+    // Also track within-batch duplicates
+    const batchTitles = new Set<string>();
+    const batchSlugs = new Set<string>();
+
+    const toInsert: CmsArticle[] = [];
+    const now = Date.now();
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      const title = (item.title || '').trim();
+      if (!title) {
+        errors.push(`Row ${i + 1}: Title is empty`);
+        continue;
+      }
+
+      const nTitle = normalizeTitle(title);
+      const slug = normalizeSlug(title) || `idea-${i + 1}`;
+
+      if (existingTitles.has(nTitle) || existingSlugs.has(slug) || batchTitles.has(nTitle) || batchSlugs.has(slug)) {
+        skippedDuplicates++;
+        continue;
+      }
+
+      batchTitles.add(nTitle);
+      batchSlugs.add(slug);
+
+      const bodyText = (item.body || '').trim();
+      const wordCount = bodyText ? bodyText.split(/\s+/).filter(Boolean).length : 0;
+      const readTimeMinutes = wordCount > 0 ? Math.max(1, Math.ceil(wordCount / 200)) : 1;
+
+      const newArticle: CmsArticle = {
+        id: 'art_' + crypto.randomUUID(),
+        slug,
+        title,
+        excerpt: '',
+        body: bodyText,
+        headingSize: 'h2',
+        authorName: 'YAAD Editorial Team',
+        category: item.cluster || 'Shopping Guides',
+        tags: [item.cluster, 'Grocery Guide'].filter(Boolean) as string[],
+        comments: [],
+        commentsCount: 0,
+        status: 'draft',
+        readTimeMinutes,
+        wordCount,
+        viewsCount: 0,
+        seoTitle: title.length <= 60 ? title : title.slice(0, 57) + '...',
+        seoDescription: '',
+        canonicalUrl: `/blog/${slug}`,
+        focusKeyword: item.focusKeyword || '',
+        searchIntent: (item.searchIntent as any) || 'informational',
+        cluster: item.cluster || '',
+        quickAnswer: '',
+        keyTakeaways: [],
+        faqs: [],
+        hashtags: [],
+        relatedSlugs: [],
+        queueStatus: bodyText.length > 0 ? 'draft_ready' : 'idea',
+        publishDate: undefined,
+        priority: item.priority !== undefined ? Number(item.priority) : 100,
+        sourceSet: item.sourceSet || 'bank',
+        needsReviewReasons: [],
+        versions: [
+          {
+            versionNumber: 1,
+            timestamp: now,
+            savedBy: 'Bank Import',
+            title,
+            body: bodyText,
+          },
+        ],
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      toInsert.push(newArticle);
+      imported++;
+    }
+
+    if (!dryRun && toInsert.length > 0) {
+      this.db.cmsArticles.push(...toInsert);
+      this.save();
+      for (const art of toInsert) {
+        persistSharedCmsArticle(art).catch(() => {});
+      }
+    }
+
+    return { imported, skippedDuplicates, errors };
+  }
+
+  public autoScheduleQueue(options?: { articlesPerDay?: number; startDate?: string }): {
+    scheduledCount: number;
+    scheduledDates: string[];
+  } {
+    if (!this.db.cmsArticles) this.db.cmsArticles = [];
+    const perDay = Math.max(1, options?.articlesPerDay || 2);
+
+    // Candidates: draft articles with body ready or marked draft_ready
+    const candidates = this.db.cmsArticles
+      .filter((a) => a.status === 'draft' && (a.queueStatus === 'draft_ready' || (a.body && a.body.length > 0)))
+      .sort((a, b) => (a.priority ?? 100) - (b.priority ?? 100));
+
+    let currentDate = options?.startDate
+      ? new Date(options.startDate)
+      : new Date();
+    // Normalize to date string YYYY-MM-DD
+    const formatDate = (d: Date) => d.toISOString().split('T')[0];
+
+    let scheduledCount = 0;
+    const scheduledDatesSet = new Set<string>();
+
+    for (let i = 0; i < candidates.length; i += perDay) {
+      const dateStr = formatDate(currentDate);
+      scheduledDatesSet.add(dateStr);
+
+      const batch = candidates.slice(i, i + perDay);
+      for (const art of batch) {
+        art.publishDate = dateStr;
+        art.queueStatus = 'scheduled';
+        art.updatedAt = Date.now();
+        scheduledCount++;
+      }
+
+      // Next day
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    if (scheduledCount > 0) {
+      this.save();
+      for (const art of candidates) {
+        persistSharedCmsArticle(art).catch(() => {});
+      }
+    }
+
+    return { scheduledCount, scheduledDates: Array.from(scheduledDatesSet) };
+  }
+
+  public publishTodayArticles(options?: { targetDate?: string; limit?: number }): {
+    targetDate: string;
+    published: Array<{ id: string; title: string; slug: string; url: string }>;
+    blocked: Array<{ id: string; title: string; slug: string; reasons: string[] }>;
+    totalAttempted: number;
+    totalPublished: number;
+    totalBlocked: number;
+  } {
+    if (!this.db.cmsArticles) this.db.cmsArticles = [];
+    const targetDate = options?.targetDate || new Date().toISOString().split('T')[0];
+    const limit = options?.limit !== undefined ? options.limit : 2;
+
+    // Find candidates where publishDate === targetDate and queueStatus === 'scheduled'
+    const candidates = this.db.cmsArticles
+      .filter((a) => a.publishDate === targetDate && a.queueStatus === 'scheduled')
+      .sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0))
+      .slice(0, limit);
+
+    const published: Array<{ id: string; title: string; slug: string; url: string }> = [];
+    const blocked: Array<{ id: string; title: string; slug: string; reasons: string[] }> = [];
+
+    // Slugs set for checking relatedSlugs
+    const allKnownSlugs = new Set(this.db.cmsArticles.map((a) => a.slug));
+
+    const now = Date.now();
+    for (const article of candidates) {
+      const gateResult = validateArticleSeoGate(article, allKnownSlugs);
+      if (gateResult.passed) {
+        article.status = 'published';
+        article.publishedAt = now;
+        article.queueStatus = 'published';
+        article.needsReviewReasons = [];
+        article.updatedAt = now;
+        published.push({
+          id: article.id,
+          title: article.title,
+          slug: article.slug,
+          url: `/blog/${article.slug}`,
+        });
+      } else {
+        article.queueStatus = 'needs_review';
+        article.needsReviewReasons = gateResult.errors;
+        article.updatedAt = now;
+        blocked.push({
+          id: article.id,
+          title: article.title,
+          slug: article.slug,
+          reasons: gateResult.errors,
+        });
+      }
+      persistSharedCmsArticle(article).catch(() => {});
+    }
+
+    if (candidates.length > 0) {
+      this.save();
+    }
+
+    if (published.length > 0) {
+      this.regenerateSitemap();
+    }
+
+    return {
+      targetDate,
+      published,
+      blocked,
+      totalAttempted: candidates.length,
+      totalPublished: published.length,
+      totalBlocked: blocked.length,
+    };
+  }
+
+  public regenerateSitemap(): void {
+    try {
+      const publishedArticles = (this.db.cmsArticles || []).filter((a) => a.status === 'published');
+      const xml = buildSitemapXml(publishedArticles);
+      const publicPath = path.join(process.cwd(), 'public', 'sitemap.xml');
+      fs.writeFileSync(publicPath, xml, 'utf8');
+      const distPath = path.join(process.cwd(), 'dist', 'sitemap.xml');
+      if (fs.existsSync(path.dirname(distPath))) {
+        fs.writeFileSync(distPath, xml, 'utf8');
+      }
+    } catch (err) {
+      console.error('[AdminStore] Error regenerating sitemap:', err);
+    }
   }
 
   // =========================================================================
@@ -3182,10 +3531,6 @@ class AdminStore {
     this.db.supportTickets.unshift(newTicket);
     this.save();
     return newTicket;
-  }
-
-  public getPublicCmsArticles(): CmsArticle[] {
-    return (this.db.cmsArticles || []).filter((a) => a.status === 'published');
   }
 
   public createAccessRequest(data: {

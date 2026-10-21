@@ -395,6 +395,7 @@ export type ScreenType =
   | 'how_it_works'
   | 'legal'
   | 'blog'
+  | 'blog_article'
   | 'rashan_list'
   | 'not_found';
 

@@ -11,7 +11,7 @@ import { getSupabaseAdmin } from './server/admin/supabaseAdmin';
 dotenv.config();
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
@@ -1540,12 +1540,126 @@ function getInjectedHtml(originalHtml: string, reqPath: string, reqLang?: string
     }
   }
 
+  // Dedicated CMS Blog Article Pages (/blog/<slug>)
+  let articleJsonLd = '';
+  let articleBodyHtml = '';
+  let isArticle = false;
+  let articleOgImage = '';
+
+  if (cleanPath.startsWith('/blog/') && cleanPath !== '/blog' && cleanPath !== '/blog/') {
+    const slug = cleanPath.replace(/^\/blog\//, '').replace(/\/+$/, '');
+    const article = adminStore.getCmsArticleBySlug(slug);
+    if (article && (article.status === 'published' || process.env.NODE_ENV !== 'production')) {
+      isArticle = true;
+      title = article.seoTitle || article.title;
+      description = article.seoDescription || article.excerpt || `${article.title} - YAAD Grocery & Shopping Guide`;
+      articleOgImage = article.ogImageUrl || article.coverImageUrl || `${baseCanonical}/og-cover.png`;
+
+      const datePub = article.publishedAt
+        ? new Date(article.publishedAt).toISOString().split('T')[0]
+        : '2026-10-21';
+      const dateMod = article.updatedAt
+        ? new Date(article.updatedAt).toISOString().split('T')[0]
+        : datePub;
+
+      const graph: any[] = [
+        {
+          '@type': 'BlogPosting',
+          '@id': `${baseCanonical}/blog/${article.slug}#article`,
+          headline: title,
+          name: title,
+          description: description,
+          articleBody: article.quickAnswer || article.body.slice(0, 500),
+          url: `${baseCanonical}/blog/${article.slug}`,
+          datePublished: datePub,
+          dateModified: dateMod,
+          inLanguage: 'en',
+          author: {
+            '@type': 'Person',
+            name: article.authorName || 'YAAD Editorial Team',
+            url: `${baseCanonical}/about`,
+          },
+          publisher: {
+            '@type': 'Organization',
+            name: 'YAAD',
+            url: baseCanonical,
+            logo: {
+              '@type': 'ImageObject',
+              url: `${baseCanonical}/logo.png`,
+            },
+          },
+          mainEntityOfPage: {
+            '@type': 'WebPage',
+            '@id': `${baseCanonical}/blog/${article.slug}`,
+          },
+        },
+        {
+          '@type': 'BreadcrumbList',
+          '@id': `${baseCanonical}/blog/${article.slug}#breadcrumb`,
+          itemListElement: [
+            {
+              '@type': 'ListItem',
+              position: 1,
+              name: 'Home',
+              item: `${baseCanonical}/`,
+            },
+            {
+              '@type': 'ListItem',
+              position: 2,
+              name: 'Blog',
+              item: `${baseCanonical}/blog`,
+            },
+            {
+              '@type': 'ListItem',
+              position: 3,
+              name: article.title,
+              item: `${baseCanonical}/blog/${article.slug}`,
+            },
+          ],
+        },
+      ];
+
+      if (article.coverImageUrl) {
+        graph[0].image = article.coverImageUrl;
+      }
+
+      if (Array.isArray(article.faqs) && article.faqs.length > 0) {
+        graph.push({
+          '@type': 'FAQPage',
+          '@id': `${baseCanonical}/blog/${article.slug}#faq`,
+          mainEntity: article.faqs.map((f) => ({
+            '@type': 'Question',
+            name: f.q,
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: f.a,
+            },
+          })),
+        });
+      }
+
+      articleJsonLd = `\n  <script type="application/ld+json" id="article-jsonld">${JSON.stringify({
+        '@context': 'https://schema.org',
+        '@graph': graph,
+      })}</script>`;
+
+      const quickAnswerSafe = (article.quickAnswer || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const titleSafe = (article.title || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      articleBodyHtml = `\n    <article id="ssr-article-root" class="sr-only" aria-hidden="true">
+      <h1>${titleSafe}</h1>
+      <p class="quick-answer"><strong>Quick Answer:</strong> ${quickAnswerSafe}</p>
+    </article>`;
+    }
+  }
+
   // Canonical calculation
   const pageBasePath = cleanPath === '/' ? '/' : cleanPath;
-  let canonical = `${baseCanonical}${pageBasePath}`;
-  if (isUrdu) {
+  let canonical = isArticle
+    ? `${baseCanonical}${cleanPath}`
+    : `${baseCanonical}${pageBasePath}`;
+  if (isUrdu && !isArticle) {
     canonical = `${baseCanonical}${cleanPath === '/' ? '' : cleanPath}?lang=ur`;
-  } else if (isRomanUrdu) {
+  } else if (isRomanUrdu && !isArticle) {
     canonical = `${baseCanonical}${cleanPath === '/' ? '' : cleanPath}?lang=roman-urdu`;
   }
 
@@ -1577,6 +1691,27 @@ function getInjectedHtml(originalHtml: string, reqPath: string, reqLang?: string
   modified = modified.replace(/<meta property="og:url" content=".*?"\s*\/?>/i, `<meta property="og:url" content="${canonical}" />`);
   modified = modified.replace(/<meta name="twitter:title" content=".*?"\s*\/?>/i, `<meta name="twitter:title" content="${title}" />`);
   modified = modified.replace(/<meta name="twitter:description" content=".*?"\s*\/?>/i, `<meta name="twitter:description" content="${description}" />`);
+
+  if (isArticle) {
+    modified = modified.replace(/<meta property="og:type" content=".*?"\s*\/?>/i, '<meta property="og:type" content="article" />');
+    if (!modified.includes('property="og:type"')) {
+      modified = modified.replace('</head>', '  <meta property="og:type" content="article" />\n</head>');
+    }
+    if (articleOgImage) {
+      modified = modified.replace(/<meta property="og:image" content=".*?"\s*\/?>/i, `<meta property="og:image" content="${articleOgImage}" />`);
+      modified = modified.replace(/<meta name="twitter:image" content=".*?"\s*\/?>/i, `<meta name="twitter:image" content="${articleOgImage}" />`);
+    }
+    if (articleJsonLd) {
+      modified = modified.replace('</head>', `${articleJsonLd}\n</head>`);
+    }
+    if (articleBodyHtml) {
+      if (modified.includes('<div id="root"></div>')) {
+        modified = modified.replace('<div id="root"></div>', `<div id="root">${articleBodyHtml}</div>`);
+      } else {
+        modified = modified.replace('</body>', `${articleBodyHtml}\n</body>`);
+      }
+    }
+  }
 
   if (cleanPath.startsWith('/admin')) {
     modified = modified.replace(/<title>.*?<\/title>/i, '<title>YAAD Admin Portal</title>');
@@ -1666,8 +1801,23 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    app.use(express.static(distPath, { index: false }));
+    app.use(express.static(distPath, { index: false, redirect: false }));
     app.get('*', (req, res) => {
+      // If a static prerendered blog file exists for this route, serve it directly (prerender is source of truth)
+      const cleanPath = req.path.replace(/\/+$/, '');
+      if (cleanPath.startsWith('/blog/') && cleanPath !== '/blog') {
+        const slug = cleanPath.replace(/^\/blog\//, '');
+        const prerenderDirFile = path.join(distPath, 'blog', slug, 'index.html');
+        const prerenderFlatFile = path.join(distPath, 'blog', `${slug}.html`);
+        if (fs.existsSync(prerenderDirFile)) {
+          res.setHeader('Content-Type', 'text/html; charset=utf-8');
+          return res.sendFile(prerenderDirFile);
+        } else if (fs.existsSync(prerenderFlatFile)) {
+          res.setHeader('Content-Type', 'text/html; charset=utf-8');
+          return res.sendFile(prerenderFlatFile);
+        }
+      }
+
       const indexPath = path.join(distPath, 'index.html');
       if (fs.existsSync(indexPath)) {
         const rawHtml = fs.readFileSync(indexPath, 'utf-8');

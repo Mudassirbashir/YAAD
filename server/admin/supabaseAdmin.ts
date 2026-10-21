@@ -1289,6 +1289,102 @@ export async function getAuthoritativeTickets(options?: {
   }
 }
 
+export function mapDbArticleToCms(row: any): any {
+  if (!row) return row;
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    titleUr: row.title_ur || row.titleUr,
+    titleRomanUrdu: row.title_roman_urdu || row.titleRomanUrdu,
+    excerpt: row.excerpt || '',
+    excerptUr: row.excerpt_ur || row.excerptUr,
+    excerptRomanUrdu: row.excerpt_roman_urdu || row.excerptRomanUrdu,
+    body: row.body || '',
+    headingSize: row.heading_size || row.headingSize || 'h2',
+    coverImageUrl: row.cover_image_url || row.coverImageUrl || '',
+    coverImageAlt: row.cover_image_alt || row.coverImageAlt || '',
+    authorName: row.author_name || row.authorName || 'Staff',
+    authorEmail: row.author_email || row.authorEmail,
+    category: row.category || 'General',
+    tags: Array.isArray(row.tags) ? row.tags : [],
+    socialLinks: row.social_links || row.socialLinks,
+    comments: row.comments || [],
+    commentsCount: row.comments_count || row.commentsCount || 0,
+    status: row.status || 'draft',
+    publishedAt: row.published_at ? new Date(row.published_at).getTime() : (row.publishedAt || undefined),
+    scheduledFor: row.scheduled_for ? new Date(row.scheduled_for).getTime() : (row.scheduledFor || undefined),
+    readTimeMinutes: row.read_time_minutes || row.readTimeMinutes || 3,
+    viewsCount: row.views_count || row.viewsCount || 0,
+    seoTitle: row.seo_title || row.seoTitle || row.title,
+    seoDescription: row.seo_description || row.seoDescription || row.excerpt,
+    ogImageUrl: row.og_image_url || row.ogImageUrl,
+    canonicalUrl: row.canonical_url || row.canonicalUrl,
+    focusKeyword: row.focus_keyword || row.focusKeyword || '',
+    searchIntent: row.search_intent || row.searchIntent || 'informational',
+    cluster: row.cluster || '',
+    quickAnswer: row.quick_answer || row.quickAnswer || '',
+    keyTakeaways: row.key_takeaways || row.keyTakeaways || [],
+    faqs: row.faqs || [],
+    hashtags: row.hashtags || [],
+    relatedSlugs: row.related_slugs || row.relatedSlugs || [],
+    queueStatus: row.queue_status || row.queueStatus || (row.status === 'published' ? 'published' : 'draft_ready'),
+    publishDate: row.publish_date || row.publishDate,
+    priority: row.priority ?? 0,
+    wordCount: row.word_count || row.wordCount || (row.body ? row.body.split(/\s+/).length : 0),
+    sourceSet: row.source_set || row.sourceSet || '',
+    needsReviewReasons: row.needs_review_reasons || row.needsReviewReasons || [],
+    versions: row.versions || [],
+    createdAt: row.created_at ? new Date(row.created_at).getTime() : (row.createdAt || Date.now()),
+    updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : (row.updatedAt || Date.now()),
+  };
+}
+
+export function mapCmsToDbRow(article: any): any {
+  return {
+    id: article.id,
+    slug: article.slug,
+    title: article.title,
+    title_ur: article.titleUr || null,
+    title_roman_urdu: article.titleRomanUrdu || null,
+    excerpt: article.excerpt || null,
+    excerpt_ur: article.excerptUr || null,
+    excerpt_roman_urdu: article.excerptRomanUrdu || null,
+    body: article.body || '',
+    cover_image_url: article.coverImageUrl || null,
+    cover_image_alt: article.coverImageAlt || null,
+    author_name: article.authorName || 'Staff',
+    category: article.category || 'General',
+    tags: article.tags || [],
+    status: article.status || 'draft',
+    published_at: article.publishedAt ? new Date(article.publishedAt).toISOString() : null,
+    scheduled_for: article.scheduledFor ? new Date(article.scheduledFor).toISOString() : null,
+    read_time_minutes: article.readTimeMinutes || 3,
+    views_count: article.viewsCount || 0,
+    seo_title: article.seoTitle || null,
+    seo_description: article.seoDescription || null,
+    og_image_url: article.ogImageUrl || null,
+    canonical_url: article.canonicalUrl || null,
+    focus_keyword: article.focusKeyword || null,
+    search_intent: article.searchIntent || null,
+    cluster: article.cluster || null,
+    quick_answer: article.quickAnswer || null,
+    key_takeaways: article.keyTakeaways || [],
+    faqs: article.faqs || [],
+    hashtags: article.hashtags || [],
+    related_slugs: article.relatedSlugs || [],
+    queue_status: article.queueStatus || (article.status === 'published' ? 'published' : 'draft_ready'),
+    publish_date: article.publishDate || null,
+    priority: article.priority ?? 0,
+    word_count: article.wordCount || 0,
+    source_set: article.sourceSet || null,
+    needs_review_reasons: article.needsReviewReasons || [],
+    versions: article.versions || [],
+    created_at: new Date(article.createdAt || Date.now()).toISOString(),
+    updated_at: new Date(article.updatedAt || Date.now()).toISOString(),
+  };
+}
+
 export async function getAuthoritativeCms(options?: {
   status?: string;
   search?: string;
@@ -1317,9 +1413,46 @@ export async function getAuthoritativeCms(options?: {
       return null;
     }
 
-    return { articles: data || [], total: count ?? (data?.length || 0) };
+    const mapped = (data || []).map(mapDbArticleToCms);
+    return { articles: mapped, total: count ?? mapped.length };
   } catch {
     return null;
+  }
+}
+
+export async function persistSharedCmsArticle(article: any): Promise<boolean> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase || isTableMissingInSupabase('cms_articles')) return false;
+
+  try {
+    const row = mapCmsToDbRow(article);
+    const { error } = await supabase.from('cms_articles').upsert(row);
+    if (error) {
+      if (isSchemaCacheMissingTableError(error)) {
+        markTableMissingInSupabase('cms_articles');
+      }
+      console.warn('[SupabaseAdmin] cms_articles upsert error (falling back to durable settings):', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn('[SupabaseAdmin] Failed to persist CMS article to Supabase:', err);
+    return false;
+  }
+}
+
+export async function deleteSharedCmsArticleFromDb(id: string): Promise<boolean> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase || isTableMissingInSupabase('cms_articles')) return false;
+
+  try {
+    const { error } = await supabase.from('cms_articles').delete().eq('id', id);
+    if (error) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
   }
 }
 

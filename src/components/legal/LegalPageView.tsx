@@ -1732,14 +1732,17 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                         </div>
                       ) : (
                         <div className="pt-2 border-t border-[#f2efe9] flex items-center justify-between">
-                          <button
-                            type="button"
-                            onClick={() => setExpandedBlogPostId(art.slug || art.id)}
+                          <a
+                            href={`/blog/${art.slug || art.id}`}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              navigate(`/blog/${art.slug || art.id}`);
+                            }}
                             className="text-xs font-bold text-[#005039] hover:text-[#003d2b] flex items-center gap-1 cursor-pointer"
                           >
                             <span>Read Complete Guide</span>
                             <ArrowRight className="w-3.5 h-3.5" />
-                          </button>
+                          </a>
                           <span className="text-xs text-[#4a5c53]">
                             {art.publishedAt ? new Date(art.publishedAt).toLocaleDateString() : 'Live'}
                           </span>

@@ -1,0 +1,2562 @@
+[
+  {
+    "title": "Best Grocery List Apps for Busy Families",
+    "focusKeyword": "Best Grocery List Apps for Busy Families",
+    "cluster": "Grocery List Core",
+    "searchIntent": "comparison",
+    "sourceSet": "pdf-original",
+    "priority": 1,
+    "isDup": false,
+    "summary": "Finding the right app to manage shopping"
+  },
+  {
+    "title": "Digital vs Paper Grocery Lists: Which Works Better?",
+    "focusKeyword": "Digital vs Paper Grocery Lists Which Works Better",
+    "cluster": "Grocery List Core",
+    "searchIntent": "comparison",
+    "sourceSet": "pdf-original",
+    "priority": 2,
+    "isDup": false,
+    "summary": "Deciding between traditional and modern methods"
+  },
+  {
+    "title": "How to Stop Forgetting Items on Your Grocery List",
+    "focusKeyword": "How to Stop Forgetting Items on Your Grocery List",
+    "cluster": "Grocery List Core",
+    "searchIntent": "list",
+    "sourceSet": "pdf-original",
+    "priority": 3,
+    "isDup": false,
+    "summary": "Tips to remember everything before shopping"
+  },
+  {
+    "title": "Can a Smart Shopping List Save You Time at the Store?",
+    "focusKeyword": "Can a Smart Shopping List Save You Time at the Store",
+    "cluster": "Grocery List Core",
+    "searchIntent": "list",
+    "sourceSet": "pdf-original",
+    "priority": 4,
+    "isDup": false,
+    "summary": "Understanding benefits of organized lists"
+  },
+  {
+    "title": "What's the Best Grocery List App for Meal Planning?",
+    "focusKeyword": "What's the Best Grocery List App for Meal Planning",
+    "cluster": "Grocery List Core",
+    "searchIntent": "comparison",
+    "sourceSet": "pdf-original",
+    "priority": 5,
+    "isDup": false,
+    "summary": "Looking for combined meal planning + shopping solutions"
+  },
+  {
+    "title": "How to Organize Your Grocery List by Store Layout",
+    "focusKeyword": "How to Organize Your Grocery List by Store Layout",
+    "cluster": "Grocery List Core",
+    "searchIntent": "list",
+    "sourceSet": "pdf-original",
+    "priority": 6,
+    "isDup": false,
+    "summary": "Shopping faster with smart organization"
+  },
+  {
+    "title": "Best Free Grocery List Apps That Actually Work",
+    "focusKeyword": "Best Free Grocery List Apps That Actually Work",
+    "cluster": "Grocery List Core",
+    "searchIntent": "list",
+    "sourceSet": "pdf-original",
+    "priority": 7,
+    "isDup": false,
+    "summary": "Budget-friendly shopping list solutions"
+  },
+  {
+    "title": "Grocery List App vs Google Keep: Which Should You Use?",
+    "focusKeyword": "Grocery List App vs Google Keep Which Should You Use",
+    "cluster": "Grocery List Core",
+    "searchIntent": "comparison",
+    "sourceSet": "pdf-original",
+    "priority": 8,
+    "isDup": false,
+    "summary": "Comparing popular options"
+  },
+  {
+    "title": "How to Extract Recipes Into Your Shopping List Automatically",
+    "focusKeyword": "How to Extract Recipes Into Your Shopping List Automatically",
+    "cluster": "Grocery List Core",
+    "searchIntent": "list",
+    "sourceSet": "pdf-original",
+    "priority": 9,
+    "isDup": false,
+    "summary": "Saving time by syncing recipes and groceries"
+  },
+  {
+    "title": "Voice-Activated Grocery Lists: Are They Worth It?",
+    "focusKeyword": "Voice Activated Grocery Lists Are They Worth It",
+    "cluster": "Grocery List Core",
+    "searchIntent": "list",
+    "sourceSet": "pdf-original",
+    "priority": 10,
+    "isDup": false,
+    "summary": "Hands-free shopping list options"
+  },
+  {
+    "title": "Smart Shopping List Features That Save Money",
+    "focusKeyword": "Smart Shopping List Features That Save Money",
+    "cluster": "Grocery List Core",
+    "searchIntent": "list",
+    "sourceSet": "pdf-original",
+    "priority": 11,
+    "isDup": false,
+    "summary": "Using technology to reduce grocery spending"
+  },
+  {
+    "title": "What Makes a Good Grocery List App?",
+    "focusKeyword": "What Makes a Good Grocery List App",
+    "cluster": "Grocery List Core",
+    "searchIntent": "list",
+    "sourceSet": "pdf-original",
+    "priority": 12,
+    "isDup": false,
+    "summary": "Understanding essential features"
+  },
+  {
+    "title": "How to Share Grocery Lists With Family Members",
+    "focusKeyword": "How to Share Grocery Lists With Family Members",
+    "cluster": "Grocery List Core",
+    "searchIntent": "list",
+    "sourceSet": "pdf-original",
+    "priority": 13,
+    "isDup": false,
+    "summary": "Collaborative shopping solutions"
+  },
+  {
+    "title": "Best Grocery List Apps for People With Dietary Restrictions",
+    "focusKeyword": "Best Grocery List Apps for People With Dietary Restrictions",
+    "cluster": "Grocery List Core",
+    "searchIntent": "comparison",
+    "sourceSet": "pdf-original",
+    "priority": 14,
+    "isDup": false,
+    "summary": "Finding specialized shopping solutions"
+  },
+  {
+    "title": "Can Your Grocery List App Learn Your Shopping Habits?",
+    "focusKeyword": "Can Your Grocery List App Learn Your Shopping Habits",
+    "cluster": "Grocery List Core",
+    "searchIntent": "list",
+    "sourceSet": "pdf-original",
+    "priority": 15,
+    "isDup": false,
+    "summary": "Understanding smart list technology"
+  },
+  {
+    "title": "Why You're Spending Too Much at the Grocery Store",
+    "focusKeyword": "Why You're Spending Too Much at the Grocery Store",
+    "cluster": "Grocery List Core",
+    "searchIntent": "informational",
+    "sourceSet": "pdf-original",
+    "priority": 16,
+    "isDup": false,
+    "summary": "Understanding overspending causes"
+  },
+  {
+    "title": "How to Create a Grocery List That Matches Your Budget",
+    "focusKeyword": "How to Create a Grocery List That Matches Your Budget",
+    "cluster": "Grocery List Core",
+    "searchIntent": "list",
+    "sourceSet": "pdf-original",
+    "priority": 17,
+    "isDup": false,
+    "summary": "Planning affordable shopping trips"
+  },
+  {
+    "title": "Best Apps for Grocery Lists and Meal Prep Planning",
+    "focusKeyword": "Best Apps for Grocery Lists and Meal Prep Planning",
+    "cluster": "Grocery List Core",
+    "searchIntent": "comparison",
+    "sourceSet": "pdf-original",
+    "priority": 18,
+    "isDup": false,
+    "summary": "Combined functionality solutions"
+  },
+  {
+    "title": "How to Use Reminders for Grocery Shopping Effectively",
+    "focusKeyword": "How to Use Reminders for Grocery Shopping Effectively",
+    "cluster": "Grocery List Core",
+    "searchIntent": "informational",
+    "sourceSet": "pdf-original",
+    "priority": 19,
+    "isDup": false,
+    "summary": "Never forgetting grocery trips"
+  },
+  {
+    "title": "What Should Be on Every Grocery List?",
+    "focusKeyword": "What Should Be on Every Grocery List",
+    "cluster": "Grocery List Core",
+    "searchIntent": "list",
+    "sourceSet": "pdf-original",
+    "priority": 20,
+    "isDup": false,
+    "summary": "Staple items and basics"
+  },
+  {
+    "title": "Grocery List Organization: Categories That Work",
+    "focusKeyword": "Grocery List Organization Categories That Work",
+    "cluster": "Grocery List Core",
+    "searchIntent": "list",
+    "sourceSet": "pdf-original",
+    "priority": 21,
+    "isDup": false,
+    "summary": "Best ways to group items"
+  },
+  {
+    "title": "Can a Smart Shopping List Reduce Food Waste?",
+    "focusKeyword": "Can a Smart Shopping List Reduce Food Waste",
+    "cluster": "Grocery List Core",
+    "searchIntent": "list",
+    "sourceSet": "pdf-original",
+    "priority": 22,
+    "isDup": false,
+    "summary": "Using lists to buy smarter"
+  },
+  {
+    "title": "Best Grocery List Features for Price Comparison",
+    "focusKeyword": "Best Grocery List Features for Price Comparison",
+    "cluster": "Grocery List Core",
+    "searchIntent": "list",
+    "sourceSet": "pdf-original",
+    "priority": 23,
+    "isDup": false,
+    "summary": "Finding deals through apps"
+  },
+  {
+    "title": "How to Keep Your Grocery List Updated in Real Time",
+    "focusKeyword": "How to Keep Your Grocery List Updated in Real Time",
+    "cluster": "Grocery List Core",
+    "searchIntent": "list",
+    "sourceSet": "pdf-original",
+    "priority": 24,
+    "isDup": false,
+    "summary": "Family coordination and syncing"
+  },
+  {
+    "title": "Why Smart Categorization Speeds Up Your Shopping",
+    "focusKeyword": "Why Smart Categorization Speeds Up Your Shopping",
+    "cluster": "Grocery List Core",
+    "searchIntent": "informational",
+    "sourceSet": "pdf-original",
+    "priority": 25,
+    "isDup": false,
+    "summary": "Understanding organizational benefits"
+  },
+  {
+    "title": "Grocery List Apps That Work Offline",
+    "focusKeyword": "Grocery List Apps That Work Offline",
+    "cluster": "Grocery List Core",
+    "searchIntent": "list",
+    "sourceSet": "pdf-original",
+    "priority": 26,
+    "isDup": false,
+    "summary": "Solutions for poor store connectivity"
+  },
+  {
+    "title": "How to Add Recipes to Your Shopping List Automatically",
+    "focusKeyword": "How to Add Recipes to Your Shopping List Automatically",
+    "cluster": "Grocery List Core",
+    "searchIntent": "list",
+    "sourceSet": "pdf-original",
+    "priority": 27,
+    "isDup": false,
+    "summary": "Streamlining meal planning workflow"
+  },
+  {
+    "title": "Best Grocery List Apps for Couples Managing a Household",
+    "focusKeyword": "Best Grocery List Apps for Couples Managing a Household",
+    "cluster": "Grocery List Core",
+    "searchIntent": "comparison",
+    "sourceSet": "pdf-original",
+    "priority": 28,
+    "isDup": false,
+    "summary": "Shared shopping solutions"
+  },
+  {
+    "title": "What Features Make a Grocery List App Worth Using?",
+    "focusKeyword": "What Features Make a Grocery List App Worth Using",
+    "cluster": "Grocery List Core",
+    "searchIntent": "list",
+    "sourceSet": "pdf-original",
+    "priority": 29,
+    "isDup": false,
+    "summary": "Evaluating app value"
+  },
+  {
+    "title": "How Artificial Intelligence Improves Your Shopping List",
+    "focusKeyword": "How Artificial Intelligence Improves Your Shopping List",
+    "cluster": "Grocery List Core",
+    "searchIntent": "list",
+    "sourceSet": "pdf-original",
+    "priority": 30,
+    "isDup": false,
+    "summary": "Understanding smart list technology"
+  },
+  {
+    "title": "Grocery List App Comparison: Top Choices for 2026",
+    "focusKeyword": "Grocery List App Comparison Top Choices for 2026",
+    "cluster": "Grocery List Core",
+    "searchIntent": "list",
+    "sourceSet": "pdf-original",
+    "priority": 31,
+    "isDup": false,
+    "summary": "Finding the best current options"
+  },
+  {
+    "title": "How to Never Forget an Ingredient Again",
+    "focusKeyword": "How to Never Forget an Ingredient Again",
+    "cluster": "Grocery List Core",
+    "searchIntent": "informational",
+    "sourceSet": "pdf-original",
+    "priority": 32,
+    "isDup": false,
+    "summary": "Memory and organization solutions"
+  },
+  {
+    "title": "Can a Grocery List App Really Save You Money?",
+    "focusKeyword": "Can a Grocery List App Really Save You Money",
+    "cluster": "Grocery List Core",
+    "searchIntent": "list",
+    "sourceSet": "pdf-original",
+    "priority": 33,
+    "isDup": false,
+    "summary": "Cost-benefit analysis"
+  },
+  {
+    "title": "Best Way to Organize Groceries by Department",
+    "focusKeyword": "Best Way to Organize Groceries by Department",
+    "cluster": "Grocery List Core",
+    "searchIntent": "informational",
+    "sourceSet": "pdf-original",
+    "priority": 34,
+    "isDup": false,
+    "summary": "Efficient store navigation"
+  },
+  {
+    "title": "How Smart Lists Learn What You Buy Most Often",
+    "focusKeyword": "How Smart Lists Learn What You Buy Most Often",
+    "cluster": "Grocery List Core",
+    "searchIntent": "list",
+    "sourceSet": "pdf-original",
+    "priority": 35,
+    "isDup": false,
+    "summary": "Understanding predictive features"
+  },
+  {
+    "title": "Grocery List Tips for People Who Hate Planning",
+    "focusKeyword": "Grocery List Tips for People Who Hate Planning",
+    "cluster": "Grocery List Core",
+    "searchIntent": "list",
+    "sourceSet": "pdf-original",
+    "priority": 36,
+    "isDup": false,
+    "summary": "Low-effort shopping solutions"
+  },
+  {
+    "title": "Why Your Grocery List Needs Smart Categorization",
+    "focusKeyword": "Why Your Grocery List Needs Smart Categorization",
+    "cluster": "Grocery List Core",
+    "searchIntent": "list",
+    "sourceSet": "pdf-original",
+    "priority": 37,
+    "isDup": false,
+    "summary": "Benefits of organized shopping"
+  },
+  {
+    "title": "How to Sync Your Grocery List Across All Devices",
+    "focusKeyword": "How to Sync Your Grocery List Across All Devices",
+    "cluster": "Grocery List Core",
+    "searchIntent": "list",
+    "sourceSet": "pdf-original",
+    "priority": 38,
+    "isDup": false,
+    "summary": "Cloud-based list management"
+  },
+  {
+    "title": "Best Grocery List Apps for Saving Recipes and Shopping",
+    "focusKeyword": "Best Grocery List Apps for Saving Recipes and Shopping",
+    "cluster": "Grocery List Core",
+    "searchIntent": "comparison",
+    "sourceSet": "pdf-original",
+    "priority": 39,
+    "isDup": false,
+    "summary": "Integrated meal planning tools"
+  },
+  {
+    "title": "How to Build a Grocery List When You Don't Know What to Cook",
+    "focusKeyword": "How to Build a Grocery List When You Don't Know What to Cook",
+    "cluster": "Grocery List Core",
+    "searchIntent": "list",
+    "sourceSet": "pdf-original",
+    "priority": 40,
+    "isDup": false,
+    "summary": "Meal inspiration and shopping planning"
+  },
+  {
+    "title": "Meal Planning Without Stress",
+    "focusKeyword": "Meal Planning Without Stress",
+    "cluster": "Home & Kitchen Organization",
+    "searchIntent": "informational",
+    "sourceSet": "pdf-bonus",
+    "priority": 41,
+    "isDup": false,
+    "summary": "From your PDF's bonus list — the calm, low-effort angle that matches YAAD's feel"
+  },
+  {
+    "title": "Smart Shopping Habits for Families",
+    "focusKeyword": "Smart Shopping Habits for Families",
+    "cluster": "Home & Kitchen Organization",
+    "searchIntent": "informational",
+    "sourceSet": "pdf-bonus",
+    "priority": 42,
+    "isDup": false,
+    "summary": "From your PDF's bonus list — habit roundup format"
+  },
+  {
+    "title": "Using Technology to Reduce Kitchen Waste",
+    "focusKeyword": "Using Technology to Reduce Kitchen Waste",
+    "cluster": "Home & Kitchen Organization",
+    "searchIntent": "informational",
+    "sourceSet": "pdf-bonus",
+    "priority": 43,
+    "isDup": false,
+    "summary": "From your PDF's bonus list — waste + tech crossover"
+  },
+  {
+    "title": "Budget Grocery Shopping Strategies",
+    "focusKeyword": "Budget Grocery Shopping Strategies",
+    "cluster": "Home & Kitchen Organization",
+    "searchIntent": "informational",
+    "sourceSet": "pdf-bonus",
+    "priority": 44,
+    "isDup": false,
+    "summary": "From your PDF's bonus list — supports the Budget pillar"
+  },
+  {
+    "title": "How to Meal Prep Efficiently",
+    "focusKeyword": "How to Meal Prep Efficiently",
+    "cluster": "Home & Kitchen Organization",
+    "searchIntent": "informational",
+    "sourceSet": "pdf-bonus",
+    "priority": 45,
+    "isDup": false,
+    "summary": "From your PDF's bonus list — meal-prep cluster"
+  },
+  {
+    "title": "Pantry Organization Tips",
+    "focusKeyword": "Pantry Organization Tips",
+    "cluster": "Home & Kitchen Organization",
+    "searchIntent": "informational",
+    "sourceSet": "pdf-bonus",
+    "priority": 46,
+    "isDup": false,
+    "summary": "From your PDF's bonus list — home-organisation crossover"
+  },
+  {
+    "title": "Weekly Grocery Planning Systems",
+    "focusKeyword": "Weekly Grocery Planning Systems",
+    "cluster": "Home & Kitchen Organization",
+    "searchIntent": "informational",
+    "sourceSet": "pdf-bonus",
+    "priority": 47,
+    "isDup": false,
+    "summary": "From your PDF's bonus list — systems and routine angle"
+  },
+  {
+    "title": "Seasonal Shopping Strategies",
+    "focusKeyword": "Seasonal Shopping Strategies",
+    "cluster": "Home & Kitchen Organization",
+    "searchIntent": "informational",
+    "sourceSet": "pdf-bonus",
+    "priority": 48,
+    "isDup": false,
+    "summary": "From your PDF's bonus list — refreshes every season"
+  },
+  {
+    "title": "Batch Cooking and List Planning",
+    "focusKeyword": "Batch Cooking and List Planning",
+    "cluster": "Home & Kitchen Organization",
+    "searchIntent": "list",
+    "sourceSet": "pdf-bonus",
+    "priority": 49,
+    "isDup": false,
+    "summary": "From your PDF's bonus list — cook-once workflow"
+  },
+  {
+    "title": "Creating Custom Grocery Templates",
+    "focusKeyword": "Creating Custom Grocery Templates",
+    "cluster": "Home & Kitchen Organization",
+    "searchIntent": "template",
+    "sourceSet": "pdf-bonus",
+    "priority": 50,
+    "isDup": false,
+    "summary": "From your PDF's bonus list — template intent; pair with a tool page, not just an article"
+  },
+  {
+    "title": "Monthly Rashan List: The Complete Checklist for a Pakistani Family",
+    "focusKeyword": "Monthly Rashan List The Complete Checklist for a Pakistani Family",
+    "cluster": "Rashan & Pakistan",
+    "searchIntent": "list",
+    "sourceSet": "new-rashan",
+    "priority": 51,
+    "isDup": false,
+    "summary": "The pillar local list — atta, chawal, daal, masalay. YAAD's answer to Listonic's diet lists; the sample article on this page is built from this idea"
+  },
+  {
+    "title": "Essential Rashan Items Every Pakistani Kitchen Needs",
+    "focusKeyword": "Essential Rashan Items Every Pakistani Kitchen Needs",
+    "cluster": "Rashan & Pakistan",
+    "searchIntent": "list",
+    "sourceSet": "new-rashan",
+    "priority": 52,
+    "isDup": false,
+    "summary": "Evergreen staples checklist; pairs with YAAD's Pakistan product catalog"
+  },
+  {
+    "title": "How Much Does Monthly Rashan Cost for a Family of Five?",
+    "focusKeyword": "How Much Does Monthly Rashan Cost for a Family of Five",
+    "cluster": "Rashan & Pakistan",
+    "searchIntent": "informational",
+    "sourceSet": "new-rashan",
+    "priority": 53,
+    "isDup": false,
+    "summary": "Budget intent with a PKR table — refresh the prices every quarter"
+  },
+  {
+    "title": "Ramadan Grocery List: Everything to Buy Before the First Roza",
+    "focusKeyword": "Ramadan Grocery List Everything to Buy Before the First Roza",
+    "cluster": "Rashan & Pakistan",
+    "searchIntent": "list",
+    "sourceSet": "new-rashan",
+    "priority": 54,
+    "isDup": false,
+    "summary": "Seasonal spike — publish 4–6 weeks before Ramadan"
+  },
+  {
+    "title": "Eid Dawat Shopping List: What to Buy for a Family Feast",
+    "focusKeyword": "Eid Dawat Shopping List What to Buy for a Family Feast",
+    "cluster": "Rashan & Pakistan",
+    "searchIntent": "list",
+    "sourceSet": "new-rashan",
+    "priority": 55,
+    "isDup": false,
+    "summary": "Occasion list: meat, mithaas, drinks, disposables"
+  },
+  {
+    "title": "Kiryana vs Supermarket: Where Is Your Rashan Actually Cheaper?",
+    "focusKeyword": "Kiryana vs Supermarket Where Is Your Rashan Actually Cheaper",
+    "cluster": "Rashan & Pakistan",
+    "searchIntent": "comparison",
+    "sourceSet": "new-rashan",
+    "priority": 56,
+    "isDup": false,
+    "summary": "The local comparison no global app blog can copy"
+  },
+  {
+    "title": "Rashan Item Names in Urdu and English: A Complete Glossary List",
+    "focusKeyword": "Rashan Item Names in Urdu and English A Complete Glossary List",
+    "cluster": "Rashan & Pakistan",
+    "searchIntent": "list",
+    "sourceSet": "new-rashan",
+    "priority": 57,
+    "isDup": false,
+    "summary": "Bilingual search intent — matches how people actually search"
+  },
+  {
+    "title": "Weekly Sabzi List: Vegetables to Buy Every Week in Pakistan",
+    "focusKeyword": "Weekly Sabzi List Vegetables to Buy Every Week in Pakistan",
+    "cluster": "Rashan & Pakistan",
+    "searchIntent": "list",
+    "sourceSet": "new-rashan",
+    "priority": 58,
+    "isDup": false,
+    "summary": "Repeat-visit content; update seasonally"
+  },
+  {
+    "title": "How to Plan a Dawat: Guest Count, Menu and Shopping List",
+    "focusKeyword": "How to Plan a Dawat Guest Count, Menu and Shopping List",
+    "cluster": "Rashan & Pakistan",
+    "searchIntent": "list",
+    "sourceSet": "new-rashan",
+    "priority": 59,
+    "isDup": false,
+    "summary": "Event-planning crossover with a working checklist"
+  },
+  {
+    "title": "Hostel Grocery List: Essentials for Students Living Away From Home",
+    "focusKeyword": "Hostel Grocery List Essentials for Students Living Away From Home",
+    "cluster": "Rashan & Pakistan",
+    "searchIntent": "list",
+    "sourceSet": "new-rashan",
+    "priority": 60,
+    "isDup": false,
+    "summary": "Young audience, small-budget angle"
+  },
+  {
+    "title": "First Rashan for a New Home: A Starter List for Couples",
+    "focusKeyword": "First Rashan for a New Home A Starter List for Couples",
+    "cluster": "Rashan & Pakistan",
+    "searchIntent": "list",
+    "sourceSet": "new-rashan",
+    "priority": 61,
+    "isDup": false,
+    "summary": "Life-event intent in checklist format"
+  },
+  {
+    "title": "Sabzi Mandi vs Supermarket: What to Buy Where",
+    "focusKeyword": "Sabzi Mandi vs Supermarket What to Buy Where",
+    "cluster": "Rashan & Pakistan",
+    "searchIntent": "comparison",
+    "sourceSet": "new-rashan",
+    "priority": 62,
+    "isDup": false,
+    "summary": "Practical local guide; pairs with the by-aisle article"
+  },
+  {
+    "title": "Winter Rashan List: Seasonal Staples for Pakistani Kitchens",
+    "focusKeyword": "Winter Rashan List Seasonal Staples for Pakistani Kitchens",
+    "cluster": "Rashan & Pakistan",
+    "searchIntent": "list",
+    "sourceSet": "new-rashan",
+    "priority": 63,
+    "isDup": false,
+    "summary": "Seasonal refresh every November"
+  },
+  {
+    "title": "How Joint Families Can Run One Shared Rashan List",
+    "focusKeyword": "How Joint Families Can Run One Shared Rashan List",
+    "cluster": "Rashan & Pakistan",
+    "searchIntent": "list",
+    "sourceSet": "new-rashan",
+    "priority": 64,
+    "isDup": false,
+    "summary": "YAAD's shared-list feature story — high local relevance"
+  },
+  {
+    "title": "Meal Planning for Beginners: Start With Just 3 Dinners",
+    "focusKeyword": "Meal Planning for Beginners Start With Just 3 Dinners",
+    "cluster": "Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "new-meal",
+    "priority": 65,
+    "isDup": false,
+    "summary": "Matches the winning beginner format: numbered steps + sample week"
+  },
+  {
+    "title": "A Sample Week of Pakistani Dinners (With the Full Shopping List)",
+    "focusKeyword": "A Sample Week of Pakistani Dinners (With the Full Shopping List)",
+    "cluster": "Meal Planning",
+    "searchIntent": "list",
+    "sourceSet": "new-meal",
+    "priority": 66,
+    "isDup": false,
+    "summary": "Sample-week table + a list readers can open in YAAD"
+  },
+  {
+    "title": "How to Turn a Weekly Meal Plan Into a Grocery List Automatically",
+    "focusKeyword": "How to Turn a Weekly Meal Plan Into a Grocery List Automatically",
+    "cluster": "Meal Planning",
+    "searchIntent": "list",
+    "sourceSet": "new-meal",
+    "priority": 67,
+    "isDup": false,
+    "summary": "Feature-led; recipe-to-list search intent"
+  },
+  {
+    "title": "Meal Prep Sunday: One Hour, a Week of Lunches",
+    "focusKeyword": "Meal Prep Sunday One Hour, a Week of Lunches",
+    "cluster": "Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "new-meal",
+    "priority": 68,
+    "isDup": false,
+    "summary": "Highly social — built for a carousel + Reel kit"
+  },
+  {
+    "title": "Batch Cooking Basics: Cook Once, Eat All Week",
+    "focusKeyword": "Batch Cooking Basics Cook Once, Eat All Week",
+    "cluster": "Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "new-meal",
+    "priority": 69,
+    "isDup": false,
+    "summary": "Expands the PDF bonus theme into a full guide"
+  },
+  {
+    "title": "How to Meal Plan Around What Is Already in Your Pantry",
+    "focusKeyword": "How to Meal Plan Around What Is Already in Your Pantry",
+    "cluster": "Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "new-meal",
+    "priority": 70,
+    "isDup": false,
+    "summary": "Pantry-first method; food-waste angle"
+  },
+  {
+    "title": "Desi Meal Planning: A Weekly Menu That Actually Rotates",
+    "focusKeyword": "Desi Meal Planning A Weekly Menu That Actually Rotates",
+    "cluster": "Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "new-meal",
+    "priority": 71,
+    "isDup": false,
+    "summary": "Localised menu rhythm — daal, sabzi, karahi days"
+  },
+  {
+    "title": "How Long Should Meal Planning Take Each Week?",
+    "focusKeyword": "How Long Should Meal Planning Take Each Week",
+    "cluster": "Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "new-meal",
+    "priority": 72,
+    "isDup": false,
+    "summary": "Quick-answer format in exact People-Also-Ask phrasing"
+  },
+  {
+    "title": "7 Meal Planning Mistakes That Waste Food and Money",
+    "focusKeyword": "7 Meal Planning Mistakes That Waste Food and Money",
+    "cluster": "Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "new-meal",
+    "priority": 73,
+    "isDup": false,
+    "summary": "Mistakes listicle — a proven format in this niche"
+  },
+  {
+    "title": "Meal Planning for Working Parents: The 20-Minute Weekly System",
+    "focusKeyword": "Meal Planning for Working Parents The 20 Minute Weekly System",
+    "cluster": "Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "new-meal",
+    "priority": 74,
+    "isDup": false,
+    "summary": "Persona-led weekday survival angle"
+  },
+  {
+    "title": "How to Save Money on Groceries in Pakistan: 15 Tips That Work",
+    "focusKeyword": "How to Save Money on Groceries in Pakistan 15 Tips That Work",
+    "cluster": "Budget & Saving",
+    "searchIntent": "informational",
+    "sourceSet": "new-budget",
+    "priority": 75,
+    "isDup": false,
+    "summary": "The local version of WalletHub's winner — numbered tips, a stat each, PKR table"
+  },
+  {
+    "title": "What Is a Realistic Monthly Grocery Budget for a Pakistani Family?",
+    "focusKeyword": "What Is a Realistic Monthly Grocery Budget for a Pakistani Family",
+    "cluster": "Budget & Saving",
+    "searchIntent": "list",
+    "sourceSet": "new-budget",
+    "priority": 76,
+    "isDup": false,
+    "summary": "Data-led; refresh with every update"
+  },
+  {
+    "title": "Unit Prices Explained: How to Spot the Cheaper Pack Every Time",
+    "focusKeyword": "Unit Prices Explained How to Spot the Cheaper Pack Every Time",
+    "cluster": "Budget & Saving",
+    "searchIntent": "informational",
+    "sourceSet": "new-budget",
+    "priority": 77,
+    "isDup": false,
+    "summary": "Educational; strong featured-snippet potential"
+  },
+  {
+    "title": "Buying Staples in Bulk: When It Saves Money and When It Doesn't",
+    "focusKeyword": "Buying Staples in Bulk When It Saves Money and When It Doesn't",
+    "cluster": "Budget & Saving",
+    "searchIntent": "list",
+    "sourceSet": "new-budget",
+    "priority": 78,
+    "isDup": false,
+    "summary": "Balanced take with atta, rice and oil examples"
+  },
+  {
+    "title": "Store Brands vs Big Brands: Where the Real Savings Are",
+    "focusKeyword": "Store Brands vs Big Brands Where the Real Savings Are",
+    "cluster": "Budget & Saving",
+    "searchIntent": "comparison",
+    "sourceSet": "new-budget",
+    "priority": 79,
+    "isDup": false,
+    "summary": "Includes supermarket own-label ranges such as Imtiaz's Ponam"
+  },
+  {
+    "title": "How a Grocery List Stops Impulse Buying (The Psychology)",
+    "focusKeyword": "How a Grocery List Stops Impulse Buying (The Psychology)",
+    "cluster": "Budget & Saving",
+    "searchIntent": "list",
+    "sourceSet": "new-budget",
+    "priority": 80,
+    "isDup": false,
+    "summary": "Behaviour angle; statistic-friendly"
+  },
+  {
+    "title": "Price Tracking: How to Know When a 'Sale' Price Is Real",
+    "focusKeyword": "Price Tracking How to Know When a 'Sale' Price Is Real",
+    "cluster": "Budget & Saving",
+    "searchIntent": "informational",
+    "sourceSet": "new-budget",
+    "priority": 81,
+    "isDup": false,
+    "summary": "Feature-led — price history as the hero"
+  },
+  {
+    "title": "The Pantry-First Method: Shop Your Kitchen Before the Store",
+    "focusKeyword": "The Pantry First Method Shop Your Kitchen Before the Store",
+    "cluster": "Budget & Saving",
+    "searchIntent": "informational",
+    "sourceSet": "new-budget",
+    "priority": 82,
+    "isDup": false,
+    "summary": "Zero-cost habit; pairs with the waste cluster"
+  },
+  {
+    "title": "Duplicate Buys: The Hidden Leak in Your Grocery Budget",
+    "focusKeyword": "Duplicate Buys The Hidden Leak in Your Grocery Budget",
+    "cluster": "Budget & Saving",
+    "searchIntent": "informational",
+    "sourceSet": "new-budget",
+    "priority": 83,
+    "isDup": false,
+    "summary": "The relatable problem a shared family list solves"
+  },
+  {
+    "title": "Grocery Shopping on a Student Budget: Eat Well for Less",
+    "focusKeyword": "Grocery Shopping on a Student Budget Eat Well for Less",
+    "cluster": "Budget & Saving",
+    "searchIntent": "informational",
+    "sourceSet": "new-budget",
+    "priority": 84,
+    "isDup": false,
+    "summary": "Persona-led; pairs with the hostel list"
+  },
+  {
+    "title": "Keto Food List (+ Shopping List)",
+    "focusKeyword": "Keto Food List (+ Shopping List)",
+    "cluster": "Diet & Occasion Lists",
+    "searchIntent": "list",
+    "sourceSet": "new-diet",
+    "priority": 85,
+    "isDup": false,
+    "summary": "Listonic's programmatic template: list first, guidelines, tips, FAQ, open-in-app CTA"
+  },
+  {
+    "title": "Low-Carb Grocery List for Beginners (+ Shopping List)",
+    "focusKeyword": "Low Carb Grocery List for Beginners (+ Shopping List)",
+    "cluster": "Diet & Occasion Lists",
+    "searchIntent": "list",
+    "sourceSet": "new-diet",
+    "priority": 86,
+    "isDup": false,
+    "summary": "Same template, new diet — one build, many pages"
+  },
+  {
+    "title": "Gluten-Free Food List (+ Shopping List and PDF)",
+    "focusKeyword": "Gluten Free Food List (+ Shopping List and PDF)",
+    "cluster": "Diet & Occasion Lists",
+    "searchIntent": "list",
+    "sourceSet": "new-diet",
+    "priority": 87,
+    "isDup": false,
+    "summary": "Same template; PDF download as the lead magnet"
+  },
+  {
+    "title": "Diabetic-Friendly Grocery List: What to Buy, What to Skip",
+    "focusKeyword": "Diabetic Friendly Grocery List What to Buy, What to Skip",
+    "cluster": "Diet & Occasion Lists",
+    "searchIntent": "list",
+    "sourceSet": "new-diet",
+    "priority": 88,
+    "isDup": false,
+    "summary": "High local relevance; buy/skip table format"
+  },
+  {
+    "title": "High-Protein Grocery List on a Budget",
+    "focusKeyword": "High Protein Grocery List on a Budget",
+    "cluster": "Diet & Occasion Lists",
+    "searchIntent": "list",
+    "sourceSet": "new-diet",
+    "priority": 89,
+    "isDup": false,
+    "summary": "Same template with a budget twist"
+  },
+  {
+    "title": "Vegetarian Grocery List: The Complete Staples List",
+    "focusKeyword": "Vegetarian Grocery List The Complete Staples List",
+    "cluster": "Diet & Occasion Lists",
+    "searchIntent": "list",
+    "sourceSet": "new-diet",
+    "priority": 90,
+    "isDup": false,
+    "summary": "Same template; evergreen staples"
+  },
+  {
+    "title": "Weight-Loss Grocery List: Foods That Keep You Full",
+    "focusKeyword": "Weight Loss Grocery List Foods That Keep You Full",
+    "cluster": "Diet & Occasion Lists",
+    "searchIntent": "list",
+    "sourceSet": "new-diet",
+    "priority": 91,
+    "isDup": false,
+    "summary": "Same template; satiety angle"
+  },
+  {
+    "title": "Anti-Inflammatory Food List (+ Shopping List)",
+    "focusKeyword": "Anti Inflammatory Food List (+ Shopping List)",
+    "cluster": "Diet & Occasion Lists",
+    "searchIntent": "list",
+    "sourceSet": "new-diet",
+    "priority": 92,
+    "isDup": false,
+    "summary": "Mirrors a live Listonic page type"
+  },
+  {
+    "title": "Heart-Healthy Grocery List (Low Salt, Low Fat)",
+    "focusKeyword": "Heart Healthy Grocery List (Low Salt, Low Fat)",
+    "cluster": "Diet & Occasion Lists",
+    "searchIntent": "list",
+    "sourceSet": "new-diet",
+    "priority": 93,
+    "isDup": false,
+    "summary": "Same template; older-audience intent"
+  },
+  {
+    "title": "Grocery List for New Mothers: Simple, Nourishing Staples",
+    "focusKeyword": "Grocery List for New Mothers Simple, Nourishing Staples",
+    "cluster": "Diet & Occasion Lists",
+    "searchIntent": "list",
+    "sourceSet": "new-diet",
+    "priority": 94,
+    "isDup": false,
+    "summary": "Life-stage list; gift-guide potential"
+  },
+  {
+    "title": "Kids' Lunchbox Grocery List: A Week of Ideas",
+    "focusKeyword": "Kids' Lunchbox Grocery List A Week of Ideas",
+    "cluster": "Diet & Occasion Lists",
+    "searchIntent": "list",
+    "sourceSet": "new-diet",
+    "priority": 95,
+    "isDup": false,
+    "summary": "School-season spike every August"
+  },
+  {
+    "title": "Gym Grocery List: Desi Protein Sources That Don't Break the Bank",
+    "focusKeyword": "Gym Grocery List Desi Protein Sources That Don't Break the Bank",
+    "cluster": "Diet & Occasion Lists",
+    "searchIntent": "list",
+    "sourceSet": "new-diet",
+    "priority": 96,
+    "isDup": false,
+    "summary": "Fitness audience; local protein sources"
+  },
+  {
+    "title": "Best Grocery List App in Pakistan (2026): Ranked and Compared",
+    "focusKeyword": "Best Grocery List App in Pakistan (2026) Ranked and Compared",
+    "cluster": "App Comparisons",
+    "searchIntent": "comparison",
+    "sourceSet": "new-compare",
+    "priority": 97,
+    "isDup": false,
+    "summary": "Local commercial intent — nobody owns this query yet"
+  },
+  {
+    "title": "YAAD vs AnyList: Which Grocery List App Fits Your Family?",
+    "focusKeyword": "YAAD vs AnyList Which Grocery List App Fits Your Family",
+    "cluster": "App Comparisons",
+    "searchIntent": "comparison",
+    "sourceSet": "new-compare",
+    "priority": 98,
+    "isDup": false,
+    "summary": "Honest comparison-table format, Nutrio style"
+  },
+  {
+    "title": "YAAD vs Google Keep for Grocery Lists: An Honest Comparison",
+    "focusKeyword": "YAAD vs Google Keep for Grocery Lists An Honest Comparison",
+    "cluster": "App Comparisons",
+    "searchIntent": "comparison",
+    "sourceSet": "new-compare",
+    "priority": 99,
+    "isDup": false,
+    "summary": "Puts YAAD into your original idea #8"
+  },
+  {
+    "title": "Best Shared Grocery List Apps for Families (2026)",
+    "focusKeyword": "Best Shared Grocery List Apps for Families (2026)",
+    "cluster": "App Comparisons",
+    "searchIntent": "comparison",
+    "sourceSet": "new-compare",
+    "priority": 100,
+    "isDup": false,
+    "summary": "Roundup with quick picks per need"
+  },
+  {
+    "title": "Best Grocery List App for Android (2026)",
+    "focusKeyword": "Best Grocery List App for Android (2026)",
+    "cluster": "App Comparisons",
+    "searchIntent": "comparison",
+    "sourceSet": "new-compare",
+    "priority": 101,
+    "isDup": false,
+    "summary": "Platform-variant cluster page, Recipe One style"
+  },
+  {
+    "title": "Best Grocery List App for iPhone (2026)",
+    "focusKeyword": "Best Grocery List App for iPhone (2026)",
+    "cluster": "App Comparisons",
+    "searchIntent": "comparison",
+    "sourceSet": "new-compare",
+    "priority": 102,
+    "isDup": false,
+    "summary": "Platform-variant cluster page, Recipe One style"
+  },
+  {
+    "title": "What Is the Best Free Shared Shopping List App?",
+    "focusKeyword": "What Is the Best Free Shared Shopping List App",
+    "cluster": "App Comparisons",
+    "searchIntent": "comparison",
+    "sourceSet": "new-compare",
+    "priority": 103,
+    "isDup": false,
+    "summary": "Question format — a featured-snippet target"
+  },
+  {
+    "title": "Paper List vs App: A One-Month Test With a Real Family",
+    "focusKeyword": "Paper List vs App A One Month Test With a Real Family",
+    "cluster": "App Comparisons",
+    "searchIntent": "comparison",
+    "sourceSet": "new-compare",
+    "priority": 104,
+    "isDup": false,
+    "summary": "First-hand testing = the strongest E-E-A-T signal there is"
+  },
+  {
+    "title": "Best Grocery List Apps for Large and Joint Families",
+    "focusKeyword": "Best Grocery List Apps for Large and Joint Families",
+    "cluster": "App Comparisons",
+    "searchIntent": "comparison",
+    "sourceSet": "new-compare",
+    "priority": 105,
+    "isDup": false,
+    "summary": "Local persona roundup"
+  },
+  {
+    "title": "How to Choose a Grocery List App: The 90-Second Decision Guide",
+    "focusKeyword": "How to Choose a Grocery List App The 90 Second Decision Guide",
+    "cluster": "App Comparisons",
+    "searchIntent": "comparison",
+    "sourceSet": "new-compare",
+    "priority": 106,
+    "isDup": false,
+    "summary": "Nutrio's decision-table format"
+  },
+  {
+    "title": "How Much Should a Family of 4 Spend on Monthly Groceries in Pakistan?",
+    "focusKeyword": "How Much Should a Family of 4 Spend on Monthly Groceries in Pakistan",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 107,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "What's the Average Weekly Grocery Budget Per Person?",
+    "focusKeyword": "What's the Average Weekly Grocery Budget Per Person",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 108,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How to Feed a Family on PKR 10,000-12,000 Per Month",
+    "focusKeyword": "How to Feed a Family on PKR 10,000 12,000 Per Month",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 109,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Best Online Grocery App in Pakistan for Monthly Rashan Shopping",
+    "focusKeyword": "Best Online Grocery App in Pakistan for Monthly Rashan Shopping",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 110,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How to Create a Shared Family Grocery List App",
+    "focusKeyword": "How to Create a Shared Family Grocery List App",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "list",
+    "sourceSet": "fq-set2",
+    "priority": 111,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Can You Really Save Money Using Grocery Shopping Apps?",
+    "focusKeyword": "Can You Really Save Money Using Grocery Shopping Apps",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 112,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "What's the Best Grocery List App for Pakistani Families?",
+    "focusKeyword": "What's the Best Grocery List App for Pakistani Families",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "comparison",
+    "sourceSet": "fq-set2",
+    "priority": 113,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How to Plan Monthly Rashan Shopping Without Wasting Money",
+    "focusKeyword": "How to Plan Monthly Rashan Shopping Without Wasting Money",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 114,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Which Grocery Stores in Pakistan Offer the Best Prices?",
+    "focusKeyword": "Which Grocery Stores in Pakistan Offer the Best Prices",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 115,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How Much Money Do I Need to Send for Monthly Groceries?",
+    "focusKeyword": "How Much Money Do I Need to Send for Monthly Groceries",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 116,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Best Tips for Reducing Your Monthly Grocery Expenses",
+    "focusKeyword": "Best Tips for Reducing Your Monthly Grocery Expenses",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 117,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How to Use the 3-3-3 Rule for Grocery Shopping",
+    "focusKeyword": "How to Use the 3 3 3 Rule for Grocery Shopping",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 118,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "What's Included in a Basic Monthly Ration Package?",
+    "focusKeyword": "What's Included in a Basic Monthly Ration Package",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 119,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How to Make a Grocery List That Saves the Most Money",
+    "focusKeyword": "How to Make a Grocery List That Saves the Most Money",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "list",
+    "sourceSet": "fq-set2",
+    "priority": 120,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Can I Get 15 Days of Food for PKR 3,000-4,000?",
+    "focusKeyword": "Can I Get 15 Days of Food for PKR 3,000 4,000",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 121,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Best Grocery Apps for Family Meal Planning",
+    "focusKeyword": "Best Grocery Apps for Family Meal Planning",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 122,
+    "isDup": true,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026 — cross-set repeat of idea #5, not counted twice"
+  },
+  {
+    "title": "How to Compare Grocery Prices Across Different Stores",
+    "focusKeyword": "How to Compare Grocery Prices Across Different Stores",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 123,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "What's the 5-4-3-2-1 Rule for Grocery Shopping?",
+    "focusKeyword": "What's the 5 4 3 2 1 Rule for Grocery Shopping",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 124,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How Often Should You Do Your Monthly Rashan Shopping?",
+    "focusKeyword": "How Often Should You Do Your Monthly Rashan Shopping",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 125,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Best Free Grocery List Apps for Pakistani Households",
+    "focusKeyword": "Best Free Grocery List Apps for Pakistani Households",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "list",
+    "sourceSet": "fq-set2",
+    "priority": 126,
+    "isDup": true,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026 — cross-set repeat of idea #7, not counted twice"
+  },
+  {
+    "title": "How to Feed Your Family Cheaply Without Sacrificing Quality",
+    "focusKeyword": "How to Feed Your Family Cheaply Without Sacrificing Quality",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 127,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "What's a Reasonable Weekly Grocery Budget for One Person?",
+    "focusKeyword": "What's a Reasonable Weekly Grocery Budget for One Person",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 128,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How to Use Coupons and Deals to Cut Grocery Costs",
+    "focusKeyword": "How to Use Coupons and Deals to Cut Grocery Costs",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 129,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Best Apps for Sharing Grocery Lists With Family Members",
+    "focusKeyword": "Best Apps for Sharing Grocery Lists With Family Members",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "comparison",
+    "sourceSet": "fq-set2",
+    "priority": 130,
+    "isDup": true,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026 — cross-set repeat of idea #13, not counted twice"
+  },
+  {
+    "title": "How Much Can You Save by Meal Planning Before Shopping?",
+    "focusKeyword": "How Much Can You Save by Meal Planning Before Shopping",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 131,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Which Online Grocery Delivery Service is Most Affordable?",
+    "focusKeyword": "Which Online Grocery Delivery Service is Most Affordable",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 132,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How to Budget for Groceries When Money is Tight",
+    "focusKeyword": "How to Budget for Groceries When Money is Tight",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 133,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "What Should Be in Your Basic Monthly Grocery Package?",
+    "focusKeyword": "What Should Be in Your Basic Monthly Grocery Package",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 134,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How to Organize Your Rashan Shopping List by Store",
+    "focusKeyword": "How to Organize Your Rashan Shopping List by Store",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "list",
+    "sourceSet": "fq-set2",
+    "priority": 135,
+    "isDup": true,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026 — cross-set repeat of idea #6, not counted twice"
+  },
+  {
+    "title": "Best Grocery Shopping Hacks to Save Money This Month",
+    "focusKeyword": "Best Grocery Shopping Hacks to Save Money This Month",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 136,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How to Track Your Grocery Spending and Stay on Budget",
+    "focusKeyword": "How to Track Your Grocery Spending and Stay on Budget",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 137,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "What's the Cheapest Way to Buy Groceries in Bulk?",
+    "focusKeyword": "What's the Cheapest Way to Buy Groceries in Bulk",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 138,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How to Plan a Month's Worth of Meals on a Budget",
+    "focusKeyword": "How to Plan a Month's Worth of Meals on a Budget",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 139,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Best Popular Grocery Shopper Apps Used in Pakistan",
+    "focusKeyword": "Best Popular Grocery Shopper Apps Used in Pakistan",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 140,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How to Make Your Grocery List on Your Phone Easily",
+    "focusKeyword": "How to Make Your Grocery List on Your Phone Easily",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "list",
+    "sourceSet": "fq-set2",
+    "priority": 141,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Should You Shop at Multiple Stores for the Best Prices?",
+    "focusKeyword": "Should You Shop at Multiple Stores for the Best Prices",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 142,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How to Reduce Food Waste and Save Money on Groceries",
+    "focusKeyword": "How to Reduce Food Waste and Save Money on Groceries",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 143,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "What Do Pakistani Families Actually Spend on Monthly Groceries?",
+    "focusKeyword": "What Do Pakistani Families Actually Spend on Monthly Groceries",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 144,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How to Buy Groceries Smart: Tips from Budget-Conscious Shoppers",
+    "focusKeyword": "How to Buy Groceries Smart Tips from Budget Conscious Shoppers",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 145,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Can You Really Manage Family Groceries Through an App?",
+    "focusKeyword": "Can You Really Manage Family Groceries Through an App",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 146,
+    "isDup": false,
+    "summary": "findquestions.com · Set 2 (Pakistani households & monthly rashan) · generated 20 Oct 2026"
+  },
+  {
+    "title": "meal prep for a month on a tight budget",
+    "focusKeyword": "meal prep for a month on a tight budget",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 147,
+    "isDup": false,
+    "summary": "Bonus topic from the Set 2 findquestions.com PDF · 20 Oct 2026"
+  },
+  {
+    "title": "seasonal groceries that save money",
+    "focusKeyword": "seasonal groceries that save money",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 148,
+    "isDup": false,
+    "summary": "Bonus topic from the Set 2 findquestions.com PDF · 20 Oct 2026"
+  },
+  {
+    "title": "store loyalty programs vs online grocery apps",
+    "focusKeyword": "store loyalty programs vs online grocery apps",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "comparison",
+    "sourceSet": "fq-set2",
+    "priority": 149,
+    "isDup": false,
+    "summary": "Bonus topic from the Set 2 findquestions.com PDF · 20 Oct 2026"
+  },
+  {
+    "title": "negotiate better prices for monthly rashan",
+    "focusKeyword": "negotiate better prices for monthly rashan",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 150,
+    "isDup": false,
+    "summary": "Bonus topic from the Set 2 findquestions.com PDF · 20 Oct 2026"
+  },
+  {
+    "title": "best vegetables and proteins to buy in bulk",
+    "focusKeyword": "best vegetables and proteins to buy in bulk",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 151,
+    "isDup": false,
+    "summary": "Bonus topic from the Set 2 findquestions.com PDF · 20 Oct 2026"
+  },
+  {
+    "title": "common grocery shopping mistakes that waste money",
+    "focusKeyword": "common grocery shopping mistakes that waste money",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 152,
+    "isDup": false,
+    "summary": "Bonus topic from the Set 2 findquestions.com PDF · 20 Oct 2026"
+  },
+  {
+    "title": "shopping with kids without overspending",
+    "focusKeyword": "shopping with kids without overspending",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 153,
+    "isDup": false,
+    "summary": "Bonus topic from the Set 2 findquestions.com PDF · 20 Oct 2026"
+  },
+  {
+    "title": "digital payment discounts",
+    "focusKeyword": "digital payment discounts",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 154,
+    "isDup": false,
+    "summary": "Bonus topic from the Set 2 findquestions.com PDF · 20 Oct 2026"
+  },
+  {
+    "title": "avoid impulse buying",
+    "focusKeyword": "avoid impulse buying",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 155,
+    "isDup": false,
+    "summary": "Bonus topic from the Set 2 findquestions.com PDF · 20 Oct 2026"
+  },
+  {
+    "title": "community bulk buying groups",
+    "focusKeyword": "community bulk buying groups",
+    "cluster": "Rashan & Pakistani Households",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set2",
+    "priority": 156,
+    "isDup": false,
+    "summary": "Bonus topic from the Set 2 findquestions.com PDF · 20 Oct 2026"
+  },
+  {
+    "title": "Why Do I Keep Forgetting Items at the Grocery Store?",
+    "focusKeyword": "Why Do I Keep Forgetting Items at the Grocery Store",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "list",
+    "sourceSet": "fq-set3",
+    "priority": 157,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Best Grocery List Apps for People Who Forget Things",
+    "focusKeyword": "Best Grocery List Apps for People Who Forget Things",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "comparison",
+    "sourceSet": "fq-set3",
+    "priority": 158,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How to Stop Forgetting Groceries Even When You Have a List",
+    "focusKeyword": "How to Stop Forgetting Groceries Even When You Have a List",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "list",
+    "sourceSet": "fq-set3",
+    "priority": 159,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Digital vs Paper Grocery Lists: Which Actually Works Better?",
+    "focusKeyword": "Digital vs Paper Grocery Lists Which Actually Works Better",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "comparison",
+    "sourceSet": "fq-set3",
+    "priority": 160,
+    "isDup": true,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026 — cross-set repeat of idea #2, not counted twice"
+  },
+  {
+    "title": "Grocery Shopping Tips for People with ADHD",
+    "focusKeyword": "Grocery Shopping Tips for People with ADHD",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set3",
+    "priority": 161,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "What's the Best Free Grocery List App?",
+    "focusKeyword": "What's the Best Free Grocery List App",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "list",
+    "sourceSet": "fq-set3",
+    "priority": 162,
+    "isDup": true,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026 — cross-set repeat of idea #7, not counted twice"
+  },
+  {
+    "title": "How to Organize a Grocery List by Store Layout",
+    "focusKeyword": "How to Organize a Grocery List by Store Layout",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "list",
+    "sourceSet": "fq-set3",
+    "priority": 163,
+    "isDup": true,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026 — cross-set repeat of idea #6, not counted twice"
+  },
+  {
+    "title": "Can Two People Share a Grocery List?",
+    "focusKeyword": "Can Two People Share a Grocery List",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "list",
+    "sourceSet": "fq-set3",
+    "priority": 164,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Why Do I Forget the Main Items But Buy Random Things?",
+    "focusKeyword": "Why Do I Forget the Main Items But Buy Random Things",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "list",
+    "sourceSet": "fq-set3",
+    "priority": 165,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Quick Grocery List Hacks That Actually Prevent Forgetting",
+    "focusKeyword": "Quick Grocery List Hacks That Actually Prevent Forgetting",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "list",
+    "sourceSet": "fq-set3",
+    "priority": 166,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How to Remember Groceries Without Making a List Every Time",
+    "focusKeyword": "How to Remember Groceries Without Making a List Every Time",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "list",
+    "sourceSet": "fq-set3",
+    "priority": 167,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Best Phone Reminder Apps for Grocery Shopping",
+    "focusKeyword": "Best Phone Reminder Apps for Grocery Shopping",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set3",
+    "priority": 168,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How to Drag and Rearrange Your Grocery List",
+    "focusKeyword": "How to Drag and Rearrange Your Grocery List",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "list",
+    "sourceSet": "fq-set3",
+    "priority": 169,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Grocery List Apps That Auto-Sort Items by Category",
+    "focusKeyword": "Grocery List Apps That Auto Sort Items by Category",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "list",
+    "sourceSet": "fq-set3",
+    "priority": 170,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Why Am I Forgetting Fresh Produce at the Store?",
+    "focusKeyword": "Why Am I Forgetting Fresh Produce at the Store",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set3",
+    "priority": 171,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How to Keep a Shared Grocery List with Family",
+    "focusKeyword": "How to Keep a Shared Grocery List with Family",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "list",
+    "sourceSet": "fq-set3",
+    "priority": 172,
+    "isDup": true,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026 — cross-set repeat of idea #13, not counted twice"
+  },
+  {
+    "title": "Best Grocery Reminder App for Busy People",
+    "focusKeyword": "Best Grocery Reminder App for Busy People",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set3",
+    "priority": 173,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How to Stop Wasting Money on Forgotten Groceries",
+    "focusKeyword": "How to Stop Wasting Money on Forgotten Groceries",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set3",
+    "priority": 174,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Grocery List Ideas for Weekly Meal Planning",
+    "focusKeyword": "Grocery List Ideas for Weekly Meal Planning",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "list",
+    "sourceSet": "fq-set3",
+    "priority": 175,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Can I Access My Grocery List Across Devices?",
+    "focusKeyword": "Can I Access My Grocery List Across Devices",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "list",
+    "sourceSet": "fq-set3",
+    "priority": 176,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Best Way to Organize Grocery Lists for Large Families",
+    "focusKeyword": "Best Way to Organize Grocery Lists for Large Families",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "list",
+    "sourceSet": "fq-set3",
+    "priority": 177,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How to Use Voice Commands for Grocery Lists",
+    "focusKeyword": "How to Use Voice Commands for Grocery Lists",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "list",
+    "sourceSet": "fq-set3",
+    "priority": 178,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Why Do People Forget Half Their Groceries Even With Lists?",
+    "focusKeyword": "Why Do People Forget Half Their Groceries Even With Lists",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "list",
+    "sourceSet": "fq-set3",
+    "priority": 179,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Grocery List App with Checkboxes and Categories",
+    "focusKeyword": "Grocery List App with Checkboxes and Categories",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "list",
+    "sourceSet": "fq-set3",
+    "priority": 180,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How to Backup Your Grocery Lists",
+    "focusKeyword": "How to Backup Your Grocery Lists",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "list",
+    "sourceSet": "fq-set3",
+    "priority": 181,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Best Grocery Apps That Work Offline",
+    "focusKeyword": "Best Grocery Apps That Work Offline",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set3",
+    "priority": 182,
+    "isDup": true,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026 — cross-set repeat of idea #26, not counted twice"
+  },
+  {
+    "title": "How to Copy Your Grocery List from Instacart",
+    "focusKeyword": "How to Copy Your Grocery List from Instacart",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "list",
+    "sourceSet": "fq-set3",
+    "priority": 183,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Grocery List Templates to Copy and Paste",
+    "focusKeyword": "Grocery List Templates to Copy and Paste",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "template",
+    "sourceSet": "fq-set3",
+    "priority": 184,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How to Remember Seasonal Grocery Items",
+    "focusKeyword": "How to Remember Seasonal Grocery Items",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "list",
+    "sourceSet": "fq-set3",
+    "priority": 185,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Best Grocery List for Budget Shopping",
+    "focusKeyword": "Best Grocery List for Budget Shopping",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "list",
+    "sourceSet": "fq-set3",
+    "priority": 186,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How to Reorganize Your Grocery List While at the Store",
+    "focusKeyword": "How to Reorganize Your Grocery List While at the Store",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "list",
+    "sourceSet": "fq-set3",
+    "priority": 187,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Why Do Grocery Lists Get Messy and Unorganized?",
+    "focusKeyword": "Why Do Grocery Lists Get Messy and Unorganized",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "list",
+    "sourceSet": "fq-set3",
+    "priority": 188,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Grocery Reminder App That Notifies You at the Store",
+    "focusKeyword": "Grocery Reminder App That Notifies You at the Store",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set3",
+    "priority": 189,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How to Print Your Digital Grocery List",
+    "focusKeyword": "How to Print Your Digital Grocery List",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "list",
+    "sourceSet": "fq-set3",
+    "priority": 190,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Best Grocery List App for Meal Prep Planning",
+    "focusKeyword": "Best Grocery List App for Meal Prep Planning",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "comparison",
+    "sourceSet": "fq-set3",
+    "priority": 191,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How to Never Forget Pantry Staples Again",
+    "focusKeyword": "How to Never Forget Pantry Staples Again",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "list",
+    "sourceSet": "fq-set3",
+    "priority": 192,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Can You Color-Code Grocery Lists?",
+    "focusKeyword": "Can You Color Code Grocery Lists",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "list",
+    "sourceSet": "fq-set3",
+    "priority": 193,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Grocery List App That Syncs with Store Loyalty Programs",
+    "focusKeyword": "Grocery List App That Syncs with Store Loyalty Programs",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "list",
+    "sourceSet": "fq-set3",
+    "priority": 194,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How to Handle Grocery List Changes on the Fly",
+    "focusKeyword": "How to Handle Grocery List Changes on the Fly",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "list",
+    "sourceSet": "fq-set3",
+    "priority": 195,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Best Grocery Apps Compared: Features That Prevent Forgetting",
+    "focusKeyword": "Best Grocery Apps Compared Features That Prevent Forgetting",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set3",
+    "priority": 196,
+    "isDup": false,
+    "summary": "findquestions.com · Set 3 (forgetting items & reminders) · generated 20 Oct 2026"
+  },
+  {
+    "title": "impulse buying vs planned shopping",
+    "focusKeyword": "impulse buying vs planned shopping",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "comparison",
+    "sourceSet": "fq-set3",
+    "priority": 197,
+    "isDup": false,
+    "summary": "Bonus topic from the Set 3 findquestions.com PDF · 20 Oct 2026"
+  },
+  {
+    "title": "memory tricks for grocery shopping",
+    "focusKeyword": "memory tricks for grocery shopping",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set3",
+    "priority": 198,
+    "isDup": false,
+    "summary": "Bonus topic from the Set 3 findquestions.com PDF · 20 Oct 2026"
+  },
+  {
+    "title": "the psychology of forgetting at the store",
+    "focusKeyword": "the psychology of forgetting at the store",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set3",
+    "priority": 199,
+    "isDup": false,
+    "summary": "Bonus topic from the Set 3 findquestions.com PDF · 20 Oct 2026"
+  },
+  {
+    "title": "meal plan without forgetting ingredients",
+    "focusKeyword": "meal plan without forgetting ingredients",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set3",
+    "priority": 200,
+    "isDup": false,
+    "summary": "Bonus topic from the Set 3 findquestions.com PDF · 20 Oct 2026"
+  },
+  {
+    "title": "grocery shopping stress and anxiety",
+    "focusKeyword": "grocery shopping stress and anxiety",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set3",
+    "priority": 201,
+    "isDup": false,
+    "summary": "Bonus topic from the Set 3 findquestions.com PDF · 20 Oct 2026"
+  },
+  {
+    "title": "time-saving strategies",
+    "focusKeyword": "time saving strategies",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set3",
+    "priority": 202,
+    "isDup": false,
+    "summary": "Bonus topic from the Set 3 findquestions.com PDF · 20 Oct 2026"
+  },
+  {
+    "title": "reducing food waste through better lists",
+    "focusKeyword": "reducing food waste through better lists",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "list",
+    "sourceSet": "fq-set3",
+    "priority": 203,
+    "isDup": false,
+    "summary": "Bonus topic from the Set 3 findquestions.com PDF · 20 Oct 2026"
+  },
+  {
+    "title": "visual vs written lists",
+    "focusKeyword": "visual vs written lists",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "comparison",
+    "sourceSet": "fq-set3",
+    "priority": 204,
+    "isDup": false,
+    "summary": "Bonus topic from the Set 3 findquestions.com PDF · 20 Oct 2026"
+  },
+  {
+    "title": "shopping with kids",
+    "focusKeyword": "shopping with kids",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set3",
+    "priority": 205,
+    "isDup": false,
+    "summary": "Bonus topic from the Set 3 findquestions.com PDF · 20 Oct 2026"
+  },
+  {
+    "title": "grocery budget tracking alongside lists",
+    "focusKeyword": "grocery budget tracking alongside lists",
+    "cluster": "Forgetting & Reminders",
+    "searchIntent": "list",
+    "sourceSet": "fq-set3",
+    "priority": 206,
+    "isDup": false,
+    "summary": "Bonus topic from the Set 3 findquestions.com PDF · 20 Oct 2026"
+  },
+  {
+    "title": "Best Free Grocery List App for Couples and Families",
+    "focusKeyword": "Best Free Grocery List App for Couples and Families",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "list",
+    "sourceSet": "fq-set4",
+    "priority": 207,
+    "isDup": true,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026 — cross-set repeat of idea #7, not counted twice"
+  },
+  {
+    "title": "How to Share a Grocery List with Family Members",
+    "focusKeyword": "How to Share a Grocery List with Family Members",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "list",
+    "sourceSet": "fq-set4",
+    "priority": 208,
+    "isDup": true,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026 — cross-set repeat of idea #13, not counted twice"
+  },
+  {
+    "title": "Meal Planning Apps That Sync Across Devices",
+    "focusKeyword": "Meal Planning Apps That Sync Across Devices",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 209,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Can You Share Meal Plans with Your Spouse?",
+    "focusKeyword": "Can You Share Meal Plans with Your Spouse",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 210,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Best Grocery List App for Working Moms",
+    "focusKeyword": "Best Grocery List App for Working Moms",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "comparison",
+    "sourceSet": "fq-set4",
+    "priority": 211,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Meal Prep Apps That Generate Shopping Lists Automatically",
+    "focusKeyword": "Meal Prep Apps That Generate Shopping Lists Automatically",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "list",
+    "sourceSet": "fq-set4",
+    "priority": 212,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "What's the Easiest Way to Meal Plan for a Family?",
+    "focusKeyword": "What's the Easiest Way to Meal Plan for a Family",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 213,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How to Organize Family Meals, Shopping, and Calendars in One App",
+    "focusKeyword": "How to Organize Family Meals, Shopping, and Calendars in One App",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 214,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Best Meal Planning App Without Subscription Fees",
+    "focusKeyword": "Best Meal Planning App Without Subscription Fees",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 215,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Grocery List App That Works with Google Home",
+    "focusKeyword": "Grocery List App That Works with Google Home",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "list",
+    "sourceSet": "fq-set4",
+    "priority": 216,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How Do Families Coordinate Grocery Shopping?",
+    "focusKeyword": "How Do Families Coordinate Grocery Shopping",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 217,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Best App for Swapping Recipes You Don't Like",
+    "focusKeyword": "Best App for Swapping Recipes You Don't Like",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 218,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Can I Add My Own Recipes to Meal Planning Apps?",
+    "focusKeyword": "Can I Add My Own Recipes to Meal Planning Apps",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 219,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Pantry Tracker Apps That Work with Meal Planning",
+    "focusKeyword": "Pantry Tracker Apps That Work with Meal Planning",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "template",
+    "sourceSet": "fq-set4",
+    "priority": 220,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How to Stop Wasting Money on Duplicate Groceries",
+    "focusKeyword": "How to Stop Wasting Money on Duplicate Groceries",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 221,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Best Meal Planning App for Families on a Budget",
+    "focusKeyword": "Best Meal Planning App for Families on a Budget",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 222,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How Do I Know What Groceries to Buy for the Week?",
+    "focusKeyword": "How Do I Know What Groceries to Buy for the Week",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 223,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Meal Planning Apps with Adjustable Serving Sizes",
+    "focusKeyword": "Meal Planning Apps with Adjustable Serving Sizes",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 224,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Best App to Keep Track of What's in Your Fridge",
+    "focusKeyword": "Best App to Keep Track of What's in Your Fridge",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 225,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How to Meal Plan When Everyone Likes Different Foods",
+    "focusKeyword": "How to Meal Plan When Everyone Likes Different Foods",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 226,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Grocery List Apps That Remind You What You Need",
+    "focusKeyword": "Grocery List Apps That Remind You What You Need",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "list",
+    "sourceSet": "fq-set4",
+    "priority": 227,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Can Multiple People Edit a Grocery List at the Same Time?",
+    "focusKeyword": "Can Multiple People Edit a Grocery List at the Same Time",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "list",
+    "sourceSet": "fq-set4",
+    "priority": 228,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Best Meal Planner for Reducing Food Waste",
+    "focusKeyword": "Best Meal Planner for Reducing Food Waste",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 229,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How to Create a Weekly Meal Plan for Your Family",
+    "focusKeyword": "How to Create a Weekly Meal Plan for Your Family",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 230,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Grocery List App vs. Meal Planning App: What's the Difference?",
+    "focusKeyword": "Grocery List App vs. Meal Planning App What's the Difference",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "list",
+    "sourceSet": "fq-set4",
+    "priority": 231,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Best Apps for Families Who Meal Prep Together",
+    "focusKeyword": "Best Apps for Families Who Meal Prep Together",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "comparison",
+    "sourceSet": "fq-set4",
+    "priority": 232,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How to Share Recipe Ideas with Family Members",
+    "focusKeyword": "How to Share Recipe Ideas with Family Members",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 233,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Meal Planning Apps with Healthy Recipe Options",
+    "focusKeyword": "Meal Planning Apps with Healthy Recipe Options",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 234,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "What Should I Meal Plan for When I'm Short on Time?",
+    "focusKeyword": "What Should I Meal Plan for When I'm Short on Time",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 235,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Best Grocery List App for Large Families",
+    "focusKeyword": "Best Grocery List App for Large Families",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "comparison",
+    "sourceSet": "fq-set4",
+    "priority": 236,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How to Make Grocery Shopping Faster and Easier",
+    "focusKeyword": "How to Make Grocery Shopping Faster and Easier",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 237,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Meal Planning Apps That Show Cost Per Meal",
+    "focusKeyword": "Meal Planning Apps That Show Cost Per Meal",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 238,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Can You Customize Grocery Lists by Store?",
+    "focusKeyword": "Can You Customize Grocery Lists by Store",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "list",
+    "sourceSet": "fq-set4",
+    "priority": 239,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Best App for Planning Meals When You Have Dietary Restrictions",
+    "focusKeyword": "Best App for Planning Meals When You Have Dietary Restrictions",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 240,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How to Keep Everyone in Your Family on the Same Meal Plan",
+    "focusKeyword": "How to Keep Everyone in Your Family on the Same Meal Plan",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 241,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Grocery List Apps That Sync with Your Partner's Phone",
+    "focusKeyword": "Grocery List Apps That Sync with Your Partner's Phone",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "list",
+    "sourceSet": "fq-set4",
+    "priority": 242,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "Best Meal Planning Apps for Beginners",
+    "focusKeyword": "Best Meal Planning Apps for Beginners",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 243,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "How to Organize Your Grocery List by Aisle",
+    "focusKeyword": "How to Organize Your Grocery List by Aisle",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "list",
+    "sourceSet": "fq-set4",
+    "priority": 244,
+    "isDup": true,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026 — cross-set repeat of idea #6, not counted twice"
+  },
+  {
+    "title": "Meal Planning Apps with Built-in Recipe Ratings",
+    "focusKeyword": "Meal Planning Apps with Built in Recipe Ratings",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 245,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "What's the Easiest Way to Feed a Family on a Budget?",
+    "focusKeyword": "What's the Easiest Way to Feed a Family on a Budget",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 246,
+    "isDup": false,
+    "summary": "findquestions.com · Set 4 (family shared lists & meal planning) · generated 20 Oct 2026"
+  },
+  {
+    "title": "meal prep for beginners",
+    "focusKeyword": "meal prep for beginners",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 247,
+    "isDup": false,
+    "summary": "Bonus topic from the Set 4 findquestions.com PDF · 20 Oct 2026"
+  },
+  {
+    "title": "grocery list templates",
+    "focusKeyword": "grocery list templates",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "template",
+    "sourceSet": "fq-set4",
+    "priority": 248,
+    "isDup": false,
+    "summary": "Bonus topic from the Set 4 findquestions.com PDF · 20 Oct 2026"
+  },
+  {
+    "title": "family meal planning strategies",
+    "focusKeyword": "family meal planning strategies",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 249,
+    "isDup": false,
+    "summary": "Bonus topic from the Set 4 findquestions.com PDF · 20 Oct 2026"
+  },
+  {
+    "title": "budget-friendly meal ideas",
+    "focusKeyword": "budget friendly meal ideas",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 250,
+    "isDup": false,
+    "summary": "Bonus topic from the Set 4 findquestions.com PDF · 20 Oct 2026"
+  },
+  {
+    "title": "reduce food waste",
+    "focusKeyword": "reduce food waste",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 251,
+    "isDup": false,
+    "summary": "Bonus topic from the Set 4 findquestions.com PDF · 20 Oct 2026"
+  },
+  {
+    "title": "weekly meal prep routines",
+    "focusKeyword": "weekly meal prep routines",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 252,
+    "isDup": false,
+    "summary": "Bonus topic from the Set 4 findquestions.com PDF · 20 Oct 2026"
+  },
+  {
+    "title": "cooking together as a family",
+    "focusKeyword": "cooking together as a family",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 253,
+    "isDup": false,
+    "summary": "Bonus topic from the Set 4 findquestions.com PDF · 20 Oct 2026"
+  },
+  {
+    "title": "nutrition tips for families",
+    "focusKeyword": "nutrition tips for families",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 254,
+    "isDup": false,
+    "summary": "Bonus topic from the Set 4 findquestions.com PDF · 20 Oct 2026"
+  },
+  {
+    "title": "quick weeknight dinners",
+    "focusKeyword": "quick weeknight dinners",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 255,
+    "isDup": false,
+    "summary": "Bonus topic from the Set 4 findquestions.com PDF · 20 Oct 2026"
+  },
+  {
+    "title": "managing dietary restrictions",
+    "focusKeyword": "managing dietary restrictions",
+    "cluster": "Family Lists & Meal Planning",
+    "searchIntent": "informational",
+    "sourceSet": "fq-set4",
+    "priority": 256,
+    "isDup": false,
+    "summary": "Bonus topic from the Set 4 findquestions.com PDF · 20 Oct 2026"
+  }
+]

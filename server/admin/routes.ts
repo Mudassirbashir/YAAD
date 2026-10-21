@@ -1,4 +1,6 @@
 import { Router, Request, Response } from 'express';
+import fs from 'fs';
+import path from 'path';
 import crypto from 'crypto';
 import {
   adminStore,
@@ -1739,6 +1741,151 @@ adminRouter.delete('/cms/articles/:id', requireAdminAuth, requirePermission('con
     res.status(200).json({ success: true });
   } catch (err: any) {
     res.status(500).json({ error: 'Failed to delete article', details: err.message });
+  }
+});
+
+adminRouter.post('/cms/articles/import-bank', requireAdminAuth, requirePermission('content.publish'), (req: AdminAuthRequest, res: Response) => {
+  try {
+    const { items, csvContent, dryRun = false } = req.body || {};
+    let parsedItems: any[] = [];
+
+    if (Array.isArray(items) && items.length > 0) {
+      parsedItems = items;
+    } else if (typeof csvContent === 'string' && csvContent.trim()) {
+      const lines = csvContent.split('\n').map((l) => l.trim()).filter(Boolean);
+      if (lines.length > 1) {
+        const header = lines[0].split(',').map((h) => h.trim().toLowerCase());
+        const titleIdx = header.indexOf('title');
+        const kwIdx = header.indexOf('focuskeyword');
+        const clusterIdx = header.indexOf('cluster');
+        const intentIdx = header.indexOf('searchintent');
+        const setIdx = header.indexOf('sourceset');
+        const prioIdx = header.indexOf('priority');
+        const bodyIdx = header.indexOf('body');
+
+        for (let i = 1; i < lines.length; i++) {
+          const rawRow = lines[i];
+          const parts = rawRow.split(',');
+          const cleanCol = (idx: number) => {
+            if (idx === -1 || idx >= parts.length) return '';
+            return parts[idx].replace(/^"|"$/g, '').trim();
+          };
+          if (titleIdx !== -1 && cleanCol(titleIdx)) {
+            parsedItems.push({
+              title: cleanCol(titleIdx),
+              focusKeyword: cleanCol(kwIdx),
+              cluster: cleanCol(clusterIdx),
+              searchIntent: cleanCol(intentIdx),
+              sourceSet: cleanCol(setIdx),
+              priority: prioIdx !== -1 ? parseInt(cleanCol(prioIdx), 10) || 100 : 100,
+              body: cleanCol(bodyIdx),
+            });
+          }
+        }
+      }
+    } else {
+      const bankJsonPath = path.join(process.cwd(), 'data', 'inapp-articles', 'bank.json');
+      if (fs.existsSync(bankJsonPath)) {
+        parsedItems = JSON.parse(fs.readFileSync(bankJsonPath, 'utf8'));
+      }
+    }
+
+    if (parsedItems.length === 0) {
+      return res.status(400).json({ error: 'No article ideas found to import. Provide items array or CSV.' });
+    }
+
+    const result = adminStore.importIdeaBank(parsedItems, Boolean(dryRun));
+
+    adminStore.writeAuditLog({
+      action: 'cms_article_import_bank',
+      adminId: req.admin?.id,
+      adminEmail: req.admin?.email,
+      targetType: 'cms_article',
+      metadata: {
+        totalReceived: parsedItems.length,
+        imported: result.imported,
+        skippedDuplicates: result.skippedDuplicates,
+        dryRun: Boolean(dryRun),
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      dryRun: Boolean(dryRun),
+      ...result,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to import article ideas', details: err.message });
+  }
+});
+
+adminRouter.post('/cms/articles/publish-today', requireAdminAuth, requirePermission('content.publish'), (req: AdminAuthRequest, res: Response) => {
+  try {
+    const { targetDate, limit = 2 } = req.body || {};
+    const result = adminStore.publishTodayArticles({
+      targetDate: targetDate ? String(targetDate) : undefined,
+      limit: Number(limit) || 2,
+    });
+
+    for (const pub of result.published) {
+      adminStore.writeAuditLog({
+        action: 'cms_article_auto_published',
+        adminId: req.admin?.id,
+        adminEmail: req.admin?.email,
+        targetType: 'cms_article',
+        targetId: pub.id,
+        afterValue: { title: pub.title, slug: pub.slug, url: pub.url, status: 'published' },
+      });
+    }
+
+    adminStore.writeAuditLog({
+      action: 'cms_article_auto_published_summary',
+      adminId: req.admin?.id,
+      adminEmail: req.admin?.email,
+      targetType: 'cms_article',
+      metadata: {
+        targetDate: result.targetDate,
+        totalAttempted: result.totalAttempted,
+        totalPublished: result.totalPublished,
+        totalBlocked: result.totalBlocked,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      ...result,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to run daily auto-publishing', details: err.message });
+  }
+});
+
+adminRouter.post('/cms/articles/auto-schedule', requireAdminAuth, requirePermission('content.publish'), (req: AdminAuthRequest, res: Response) => {
+  try {
+    const { articlesPerDay = 2, startDate } = req.body || {};
+    const result = adminStore.autoScheduleQueue({
+      articlesPerDay: Number(articlesPerDay) || 2,
+      startDate: startDate ? String(startDate) : undefined,
+    });
+
+    adminStore.writeAuditLog({
+      action: 'cms_article_auto_scheduled',
+      adminId: req.admin?.id,
+      adminEmail: req.admin?.email,
+      targetType: 'cms_article',
+      metadata: {
+        articlesPerDay,
+        scheduledCount: result.scheduledCount,
+        datesCount: result.scheduledDates.length,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      ...result,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: 'Failed to auto-schedule queue', details: err.message });
   }
 });
 

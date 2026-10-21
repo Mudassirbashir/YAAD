@@ -133,6 +133,11 @@ export const HeadManager: React.FC = () => {
     const isPublicLanding = routeId === 'root' || (routeId === 'home' && !user);
     const isIndexablePublicRoute = isPublicLanding || isPublicEditorial;
 
+    if (routeId === 'blog_article') {
+      // BlogArticlePage directly mounts its own dynamic BlogPosting JSON-LD, title, and meta tags
+      return;
+    }
+
     if (!isIndexablePublicRoute) {
       // -------------------------------------------------------------
       // PRIVATE / AUTH / UTILITY ROUTE: Strictly prevent indexing

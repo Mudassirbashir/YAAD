@@ -29,6 +29,7 @@ export type AppRouteId =
   | 'how_it_works'
   | 'legal'
   | 'blog'
+  | 'blog_article'
   | 'rashan_list'
   | 'not_found';
 
@@ -62,6 +63,7 @@ export function isProtectedRoute(routeId: AppRouteId): boolean {
     case 'how_it_works':
     case 'legal':
     case 'blog':
+    case 'blog_article':
     case 'rashan_list':
     case 'auth':
     case 'reset_password':
@@ -385,6 +387,19 @@ export function parseRoute(rawPathname: string): ParsedRoute {
     };
   }
 
+  // 9b. Dedicated Public Blog Article Pages (/blog/<slug>)
+  const blogArticleMatch = norm.match(/^\/blog\/([^/]+)$/);
+  if (blogArticleMatch) {
+    const slug = blogArticleMatch[1];
+    return {
+      routeId: 'blog_article',
+      pathname: norm,
+      params: { slug },
+      isProtected: false,
+      canonicalPath: `/blog/${slug}`,
+    };
+  }
+
   // 10. Dedicated Public Editorial & Rashan Guide
   if (norm === '/rashan-list' || norm === '/rashan' || norm === '/rashan-ki-list' || norm === '/monthly-rashan') {
     return {
@@ -460,6 +475,8 @@ export function buildCanonicalPath(
       return '/legal';
     case 'blog':
       return '/blog';
+    case 'blog_article':
+      return params?.slug ? `/blog/${params.slug}` : '/blog';
     case 'features':
       return '/features';
     case 'how_it_works':

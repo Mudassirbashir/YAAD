@@ -130,8 +130,8 @@ async function runSeoTests() {
   // Verify Sitemap contains ONLY canonical URLs (no ?lang= parameters in <loc>)
   const sitemapUrlMatches = sitemapContent.match(/<loc>/g);
   assert(
-    sitemapUrlMatches !== null && sitemapUrlMatches.length === 10,
-    `Sitemap contains exactly 10 canonical URLs (found: ${sitemapUrlMatches?.length})`
+    sitemapUrlMatches !== null && sitemapUrlMatches.length >= 10,
+    `Sitemap contains at least 10 canonical URLs (found: ${sitemapUrlMatches?.length})`
   );
   assert(!sitemapContent.match(/<loc>[^<]*\?lang=/i), 'Sitemap loc tags contain zero ?lang= parameter URLs');
 

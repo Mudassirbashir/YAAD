@@ -57,6 +57,7 @@ import { HeadManager } from './seo/HeadManager';
 import { SuspendedAccountModal } from './components/SuspendedAccountModal';
 
 const LegalPageView = React.lazy(() => import('./components/legal/LegalPageView').then((m) => ({ default: m.LegalPageView })));
+const BlogArticlePage = React.lazy(() => import('./components/legal/BlogArticlePage').then((m) => ({ default: m.BlogArticlePage })));
 const RashanListPage = React.lazy(() => import('./components/rashan/RashanListPage').then((m) => ({ default: m.RashanListPage })));
 const AdminApp = React.lazy(() => import('./admin/AdminApp').then((m) => ({ default: m.AdminApp })));
 
@@ -66,7 +67,7 @@ const getStorageKey = (userId?: string | null) => {
   return userId ? `yaad_shopping_lists_u_${userId}` : 'yaad_shopping_lists_guest';
 };
 
-const LEGAL_SCREENS: ScreenType[] = ['terms', 'privacy', 'about', 'help', 'legal', 'blog', 'features', 'how_it_works'];
+const LEGAL_SCREENS: ScreenType[] = ['terms', 'privacy', 'about', 'help', 'legal', 'blog', 'blog_article', 'features', 'how_it_works'];
 
 function AppContent() {
   const {
@@ -159,6 +160,7 @@ function AppContent() {
 
     // Public rashan and legal pages render immediately without splash delay
     if (route.routeId === 'rashan_list') return 'rashan_list';
+    if (route.routeId === 'blog_article') return 'blog_article';
     if (LEGAL_SCREENS.includes(route.routeId as ScreenType)) return route.routeId as ScreenType;
 
     if (!hasSplashFinished) return 'splash';
@@ -355,6 +357,20 @@ function AppContent() {
     } catch {}
   }, [user?.id]);
 
+  // Backward compatibility: redirect old /blog#<slug> hash links to /blog/<slug>
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash;
+      const pathname = window.location.pathname;
+      if (pathname.startsWith('/blog') && hash && hash.length > 1) {
+        const cleanSlug = hash.replace(/^#/, '');
+        if (cleanSlug) {
+          navigate(`/blog/${cleanSlug}`);
+        }
+      }
+    }
+  }, [navigate, route.pathname]);
+
   // Cross-device realtime broadcast listener (instant cross-device sync)
   useEffect(() => {
     if (!user?.id || !isConfigured) return;
@@ -544,6 +560,23 @@ function AppContent() {
       setDeepLinkSessionNotFound(false);
     }
   }, [route.routeId, route.params?.listId, route.params?.sessionId, user, lists, isLoadingLists]);
+
+  // Legacy /blog#slug hash compatibility (redirects /blog#<slug> to /blog/<slug>)
+  useEffect(() => {
+    const handleHashCheck = () => {
+      const hash = window.location.hash;
+      const pathname = window.location.pathname;
+      if ((pathname === '/blog' || pathname === '/blog/') && hash && hash.length > 1) {
+        const slug = hash.replace(/^#/, '').trim();
+        if (slug) {
+          navigate(`/blog/${slug}`);
+        }
+      }
+    };
+    handleHashCheck();
+    window.addEventListener('hashchange', handleHashCheck);
+    return () => window.removeEventListener('hashchange', handleHashCheck);
+  }, [navigate]);
 
   // ===========================================================================
   // PRODUCTION ROUTE GUARDS & INTENDED DESTINATION ENGINE
@@ -1342,6 +1375,16 @@ function AppContent() {
                   }}
                   onOpenLegalPage={handleOpenLegalPage}
                   onOpenRashanList={() => navigate('/rashan-list')}
+                />
+              );
+            }
+
+            if (currentScreen === 'blog_article') {
+              return (
+                <BlogArticlePage
+                  slug={route.params?.slug}
+                  onBack={() => navigate('/blog')}
+                  onNavigate={(path) => navigate(path)}
                 />
               );
             }
