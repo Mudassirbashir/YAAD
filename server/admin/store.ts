@@ -33,6 +33,7 @@ import {
   setAuthoritativeAppUserStatus,
   getSupabaseAdmin,
   persistSharedCmsArticle,
+  persistSharedCmsArticlesBatch,
   deleteSharedCmsArticleFromDb,
 } from './supabaseAdmin';
 import { validateArticleSeoGate } from './seoValidator';
@@ -2773,7 +2774,11 @@ class AdminStore {
         };
         this.db.cmsArticles[idx] = updated;
         this.save();
-        persistSharedCmsArticle(updated).catch(() => {});
+        persistSharedCmsArticle(updated).then((r) => {
+          if (!r.success) console.warn('[CMS] Supabase article update warning:', r.error);
+        }).catch((err) => {
+          console.error('[CMS] Supabase article update exception:', err);
+        });
         return updated;
       }
     }
@@ -2830,7 +2835,11 @@ class AdminStore {
 
     this.db.cmsArticles.unshift(newArticle);
     this.save();
-    persistSharedCmsArticle(newArticle).catch(() => {});
+    persistSharedCmsArticle(newArticle).then((r) => {
+      if (!r.success) console.warn('[CMS] Supabase article create warning:', r.error);
+    }).catch((err) => {
+      console.error('[CMS] Supabase article create exception:', err);
+    });
     return newArticle;
   }
 
@@ -2840,7 +2849,11 @@ class AdminStore {
     this.db.cmsArticles = this.db.cmsArticles.filter((a) => a.id !== id && a.slug !== id);
     if (this.db.cmsArticles.length !== len) {
       this.save();
-      deleteSharedCmsArticleFromDb(id).catch(() => {});
+      deleteSharedCmsArticleFromDb(id).then((ok) => {
+        if (!ok) console.warn('[CMS] Supabase article delete returned false for id:', id);
+      }).catch((err) => {
+        console.error('[CMS] Supabase article delete exception:', err);
+      });
       return true;
     }
     return false;
@@ -3004,12 +3017,186 @@ class AdminStore {
     if (!dryRun && toInsert.length > 0) {
       this.db.cmsArticles.push(...toInsert);
       this.save();
-      for (const art of toInsert) {
-        persistSharedCmsArticle(art).catch(() => {});
-      }
+      persistSharedCmsArticlesBatch(toInsert).then((res) => {
+        if (res.errors.length > 0) {
+          console.warn('[CMS Import] Batch persistence warnings:', res.errors);
+        }
+      }).catch((err) => {
+        console.error('[CMS Import] Batch persistence exception:', err);
+      });
     }
 
     return { imported, skippedDuplicates, errors };
+  }
+
+  public async importIdeaBankAsync(
+    items: Array<{
+      title: string;
+      focusKeyword?: string;
+      cluster?: string;
+      searchIntent?: string;
+      sourceSet?: string;
+      priority?: number;
+      body?: string;
+    }>,
+    dryRun = false
+  ): Promise<{
+    success: boolean;
+    imported: number;
+    skippedDuplicates: number;
+    persistedCount: number;
+    totalInSystemAfter: number;
+    errors: string[];
+    dryRun: boolean;
+  }> {
+    if (!this.db.cmsArticles) this.db.cmsArticles = [];
+    const errors: string[] = [];
+    let imported = 0;
+    let skippedDuplicates = 0;
+
+    const normalizeTitle = (t: string) =>
+      t.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    const normalizeSlug = (t: string) =>
+      t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+    // Authoritative check before import for deduplication and verification
+    const countBeforeRes = await this.getCmsArticlesAsync();
+    const totalInSystemBefore = countBeforeRes.total;
+    const allExisting = [...(this.db.cmsArticles || []), ...(countBeforeRes.articles || [])];
+
+    // Track existing normalized titles and slugs
+    const existingTitles = new Set(allExisting.map((a) => normalizeTitle(a.title)));
+    const existingSlugs = new Set(allExisting.map((a) => a.slug));
+
+    // Also track within-batch duplicates
+    const batchTitles = new Set<string>();
+    const batchSlugs = new Set<string>();
+
+    const toInsert: CmsArticle[] = [];
+    const now = Date.now();
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      const title = (item.title || '').trim();
+      if (!title) {
+        errors.push(`Row ${i + 1}: Title is empty`);
+        continue;
+      }
+
+      const nTitle = normalizeTitle(title);
+      const slug = normalizeSlug(title) || `idea-${i + 1}`;
+
+      if (existingTitles.has(nTitle) || existingSlugs.has(slug) || batchTitles.has(nTitle) || batchSlugs.has(slug)) {
+        skippedDuplicates++;
+        continue;
+      }
+
+      batchTitles.add(nTitle);
+      batchSlugs.add(slug);
+
+      const bodyText = (item.body || '').trim();
+      const wordCount = bodyText ? bodyText.split(/\s+/).filter(Boolean).length : 0;
+      const readTimeMinutes = wordCount > 0 ? Math.max(1, Math.ceil(wordCount / 200)) : 1;
+
+      const newArticle: CmsArticle = {
+        id: 'art_' + crypto.randomUUID(),
+        slug,
+        title,
+        excerpt: '',
+        body: bodyText,
+        headingSize: 'h2',
+        authorName: 'YAAD Editorial Team',
+        category: item.cluster || 'Shopping Guides',
+        tags: [item.cluster, 'Grocery Guide'].filter(Boolean) as string[],
+        comments: [],
+        commentsCount: 0,
+        status: 'draft',
+        readTimeMinutes,
+        wordCount,
+        viewsCount: 0,
+        seoTitle: title.length <= 60 ? title : title.slice(0, 57) + '...',
+        seoDescription: '',
+        canonicalUrl: `/blog/${slug}`,
+        focusKeyword: item.focusKeyword || '',
+        searchIntent: (item.searchIntent as any) || 'informational',
+        cluster: item.cluster || '',
+        quickAnswer: '',
+        keyTakeaways: [],
+        faqs: [],
+        hashtags: [],
+        relatedSlugs: [],
+        queueStatus: bodyText.length > 0 ? 'draft_ready' : 'idea',
+        publishDate: undefined,
+        priority: item.priority !== undefined ? Number(item.priority) : 100,
+        sourceSet: item.sourceSet || 'bank',
+        needsReviewReasons: [],
+        versions: [
+          {
+            versionNumber: 1,
+            timestamp: now,
+            savedBy: 'Bank Import',
+            title,
+            body: bodyText,
+          },
+        ],
+        createdAt: now,
+        updatedAt: now,
+      };
+
+      toInsert.push(newArticle);
+      imported++;
+    }
+
+    if (dryRun) {
+      return {
+        success: true,
+        imported,
+        skippedDuplicates,
+        persistedCount: 0,
+        totalInSystemAfter: totalInSystemBefore,
+        errors,
+        dryRun: true,
+      };
+    }
+
+    let persistedCount = 0;
+    if (toInsert.length > 0) {
+      this.db.cmsArticles.push(...toInsert);
+      this.save();
+
+      const batchResult = await persistSharedCmsArticlesBatch(toInsert);
+      persistedCount = batchResult.persistedCount;
+      if (batchResult.errors && batchResult.errors.length > 0) {
+        errors.push(...batchResult.errors);
+      }
+    }
+
+    // Re-read authoritative count through the exact path CMS list uses
+    const countAfterRes = await this.getCmsArticlesAsync();
+    const totalInSystemAfter = countAfterRes.total;
+
+    // Verify persistence integrity
+    if (persistedCount < imported) {
+      errors.unshift(
+        `Database persistence incomplete: ${persistedCount} of ${imported} articles were saved to Supabase. Please ensure migration 'supabase/migrations/20261021_cms_articles_seo_fields.sql' has been executed in the Supabase Dashboard SQL editor.`
+      );
+    } else if (getSupabaseAdmin() !== null && totalInSystemAfter < totalInSystemBefore + imported) {
+      errors.push(
+        `Authoritative count discrepancy: System article count is ${totalInSystemAfter} (expected ${totalInSystemBefore + imported}).`
+      );
+    }
+
+    const success = imported === 0 || (persistedCount === imported && errors.length === 0);
+
+    return {
+      success,
+      imported,
+      skippedDuplicates,
+      persistedCount,
+      totalInSystemAfter,
+      errors,
+      dryRun: false,
+    };
   }
 
   public autoScheduleQueue(options?: { articlesPerDay?: number; startDate?: string }): {
@@ -3019,7 +3206,6 @@ class AdminStore {
     if (!this.db.cmsArticles) this.db.cmsArticles = [];
     const perDay = Math.max(1, options?.articlesPerDay || 2);
 
-    // Candidates: draft articles with body ready or marked draft_ready
     const candidates = this.db.cmsArticles
       .filter((a) => a.status === 'draft' && (a.queueStatus === 'draft_ready' || (a.body && a.body.length > 0)))
       .sort((a, b) => (a.priority ?? 100) - (b.priority ?? 100));
@@ -3027,7 +3213,6 @@ class AdminStore {
     let currentDate = options?.startDate
       ? new Date(options.startDate)
       : new Date();
-    // Normalize to date string YYYY-MM-DD
     const formatDate = (d: Date) => d.toISOString().split('T')[0];
 
     let scheduledCount = 0;
@@ -3045,18 +3230,80 @@ class AdminStore {
         scheduledCount++;
       }
 
-      // Next day
       currentDate.setDate(currentDate.getDate() + 1);
     }
 
     if (scheduledCount > 0) {
       this.save();
-      for (const art of candidates) {
-        persistSharedCmsArticle(art).catch(() => {});
-      }
+      persistSharedCmsArticlesBatch(candidates).then((res) => {
+        if (res.errors.length > 0) {
+          console.warn('[CMS AutoSchedule] Persistence warnings:', res.errors);
+        }
+      }).catch((err) => {
+        console.error('[CMS AutoSchedule] Persistence exception:', err);
+      });
     }
 
     return { scheduledCount, scheduledDates: Array.from(scheduledDatesSet) };
+  }
+
+  public async autoScheduleQueueAsync(options?: { articlesPerDay?: number; startDate?: string }): Promise<{
+    success: boolean;
+    scheduledCount: number;
+    scheduledDates: string[];
+    persistedCount: number;
+    errors: string[];
+  }> {
+    if (!this.db.cmsArticles) this.db.cmsArticles = [];
+    const perDay = Math.max(1, options?.articlesPerDay || 2);
+
+    const candidates = this.db.cmsArticles
+      .filter((a) => a.status === 'draft' && (a.queueStatus === 'draft_ready' || (a.body && a.body.length > 0)))
+      .sort((a, b) => (a.priority ?? 100) - (b.priority ?? 100));
+
+    let currentDate = options?.startDate
+      ? new Date(options.startDate)
+      : new Date();
+    const formatDate = (d: Date) => d.toISOString().split('T')[0];
+
+    let scheduledCount = 0;
+    const scheduledDatesSet = new Set<string>();
+
+    for (let i = 0; i < candidates.length; i += perDay) {
+      const dateStr = formatDate(currentDate);
+      scheduledDatesSet.add(dateStr);
+
+      const batch = candidates.slice(i, i + perDay);
+      for (const art of batch) {
+        art.publishDate = dateStr;
+        art.queueStatus = 'scheduled';
+        art.updatedAt = Date.now();
+        scheduledCount++;
+      }
+
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    let persistedCount = 0;
+    const errors: string[] = [];
+
+    if (scheduledCount > 0) {
+      this.save();
+      const batchResult = await persistSharedCmsArticlesBatch(candidates);
+      persistedCount = batchResult.persistedCount;
+      if (batchResult.errors.length > 0) {
+        errors.push(...batchResult.errors);
+        console.error('[CMS AutoSchedule] Persistence errors:', batchResult.errors);
+      }
+    }
+
+    return {
+      success: errors.length === 0,
+      scheduledCount,
+      scheduledDates: Array.from(scheduledDatesSet),
+      persistedCount,
+      errors,
+    };
   }
 
   public publishTodayArticles(options?: { targetDate?: string; limit?: number }): {
@@ -3071,7 +3318,6 @@ class AdminStore {
     const targetDate = options?.targetDate || new Date().toISOString().split('T')[0];
     const limit = options?.limit !== undefined ? options.limit : 2;
 
-    // Find candidates where publishDate === targetDate and queueStatus === 'scheduled'
     const candidates = this.db.cmsArticles
       .filter((a) => a.publishDate === targetDate && a.queueStatus === 'scheduled')
       .sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0))
@@ -3079,11 +3325,9 @@ class AdminStore {
 
     const published: Array<{ id: string; title: string; slug: string; url: string }> = [];
     const blocked: Array<{ id: string; title: string; slug: string; reasons: string[] }> = [];
-
-    // Slugs set for checking relatedSlugs
     const allKnownSlugs = new Set(this.db.cmsArticles.map((a) => a.slug));
-
     const now = Date.now();
+
     for (const article of candidates) {
       const gateResult = validateArticleSeoGate(article, allKnownSlugs);
       if (gateResult.passed) {
@@ -3109,7 +3353,11 @@ class AdminStore {
           reasons: gateResult.errors,
         });
       }
-      persistSharedCmsArticle(article).catch(() => {});
+      persistSharedCmsArticle(article).then((r) => {
+        if (!r.success) console.warn('[CMS PublishToday] Supabase persistence error:', r.error);
+      }).catch((err) => {
+        console.error('[CMS PublishToday] Supabase persistence exception:', err);
+      });
     }
 
     if (candidates.length > 0) {
@@ -3127,6 +3375,97 @@ class AdminStore {
       totalAttempted: candidates.length,
       totalPublished: published.length,
       totalBlocked: blocked.length,
+    };
+  }
+
+  public async publishTodayArticlesAsync(options?: { targetDate?: string; limit?: number }): Promise<{
+    success: boolean;
+    targetDate: string;
+    published: Array<{ id: string; title: string; slug: string; url: string }>;
+    blocked: Array<{ id: string; title: string; slug: string; reasons: string[] }>;
+    totalAttempted: number;
+    totalPublished: number;
+    totalBlocked: number;
+    persistedCount: number;
+    errors: string[];
+  }> {
+    if (!this.db.cmsArticles) this.db.cmsArticles = [];
+    const targetDate = options?.targetDate || new Date().toISOString().split('T')[0];
+    const limit = options?.limit !== undefined ? options.limit : 2;
+
+    const candidates = this.db.cmsArticles
+      .filter((a) => a.publishDate === targetDate && a.queueStatus === 'scheduled')
+      .sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0))
+      .slice(0, limit);
+
+    const published: Array<{ id: string; title: string; slug: string; url: string }> = [];
+    const blocked: Array<{ id: string; title: string; slug: string; reasons: string[] }> = [];
+    const allKnownSlugs = new Set(this.db.cmsArticles.map((a) => a.slug));
+    const now = Date.now();
+
+    for (const article of candidates) {
+      const gateResult = validateArticleSeoGate(article, allKnownSlugs);
+      if (gateResult.passed) {
+        article.status = 'published';
+        article.publishedAt = now;
+        article.queueStatus = 'published';
+        article.needsReviewReasons = [];
+        article.updatedAt = now;
+        published.push({
+          id: article.id,
+          title: article.title,
+          slug: article.slug,
+          url: `/blog/${article.slug}`,
+        });
+      } else {
+        article.queueStatus = 'needs_review';
+        article.needsReviewReasons = gateResult.errors;
+        article.updatedAt = now;
+        blocked.push({
+          id: article.id,
+          title: article.title,
+          slug: article.slug,
+          reasons: gateResult.errors,
+        });
+      }
+    }
+
+    if (candidates.length > 0) {
+      this.save();
+    }
+
+    if (published.length > 0) {
+      this.regenerateSitemap();
+    }
+
+    let persistedCount = 0;
+    const errors: string[] = [];
+    if (candidates.length > 0) {
+      const persistResults = await Promise.allSettled(
+        candidates.map((art) => persistSharedCmsArticle(art))
+      );
+      persistResults.forEach((res, idx) => {
+        if (res.status === 'fulfilled' && res.value.success) {
+          persistedCount++;
+        } else {
+          const errMsg = res.status === 'rejected' ? res.reason?.message : res.value.error;
+          const msg = `Failed to persist article ${candidates[idx].slug}: ${errMsg || 'Unknown error'}`;
+          console.error(`[CMS PublishToday] ${msg}`);
+          errors.push(msg);
+        }
+      });
+    }
+
+    return {
+      success: errors.length === 0,
+      targetDate,
+      published,
+      blocked,
+      totalAttempted: candidates.length,
+      totalPublished: published.length,
+      totalBlocked: blocked.length,
+      persistedCount,
+      errors,
     };
   }
 

@@ -20,6 +20,7 @@ import {
   User,
   Sparkles,
   AlertCircle,
+  AlertTriangle,
   MessageSquare,
   Copy,
   Check,
@@ -279,10 +280,14 @@ export const AdminCmsPage: React.FC = () => {
   const [importDryRun, setImportDryRun] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [importResult, setImportResult] = useState<{
+    success?: boolean;
     imported: number;
     skippedDuplicates: number;
+    persistedCount?: number;
+    totalInSystemAfter?: number;
     errors: string[];
     dryRun?: boolean;
+    code?: string;
   } | null>(null);
 
   // Extended SEO Form Fields (Phase 1 & 3)
@@ -308,6 +313,7 @@ export const AdminCmsPage: React.FC = () => {
   const fetchArticles = useCallback(
     async (forceRefresh: boolean = false) => {
       if (!token) return;
+      setIsLoading(true);
       const params = new URLSearchParams();
       if (search.trim()) params.set('search', search.trim());
       if (statusFilter !== 'all') params.set('status', statusFilter);
@@ -315,23 +321,28 @@ export const AdminCmsPage: React.FC = () => {
       const url = `/api/admin/cms/articles?${params.toString()}`;
       const headers = { Authorization: `Bearer ${token}` };
 
-      const { data } = await adminCache.fetchWithSwr<{ articles: CmsArticle[]; total: number }>(
-        url,
-        headers,
-        (fresh) => {
-          if (fresh) {
-            setArticles(fresh.articles || []);
-            setTotal(fresh.total || 0);
-          }
-        },
-        forceRefresh
-      );
+      try {
+        const { data } = await adminCache.fetchWithSwr<{ articles: CmsArticle[]; total: number }>(
+          url,
+          headers,
+          (fresh) => {
+            if (fresh) {
+              setArticles(fresh.articles || []);
+              setTotal(fresh.total || 0);
+            }
+          },
+          forceRefresh
+        );
 
-      if (data) {
-        setArticles(data.articles || []);
-        setTotal(data.total || 0);
+        if (data) {
+          setArticles(data.articles || []);
+          setTotal(data.total || 0);
+        }
+      } catch (err) {
+        console.error('[AdminCmsPage] Failed to fetch articles:', err);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     },
     [token, search, statusFilter]
   );
@@ -547,16 +558,35 @@ export const AdminCmsPage: React.FC = () => {
       });
 
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Import failed');
+      if (!res.ok && res.status !== 207) {
+        setImportResult({
+          imported: data.imported || 0,
+          skippedDuplicates: data.skippedDuplicates || 0,
+          persistedCount: data.persistedCount || 0,
+          totalInSystemAfter: total,
+          errors: [data.error || 'Import request failed'],
+          code: data.code,
+          success: false,
+          dryRun: importDryRun,
+        });
+        return;
       }
+
       setImportResult(data);
       if (!importDryRun) {
         adminCache.invalidatePrefix('/api/admin/cms');
         await fetchArticles(true);
       }
     } catch (err: any) {
-      alert(`Import error: ${err.message}`);
+      setImportResult({
+        imported: 0,
+        skippedDuplicates: 0,
+        persistedCount: 0,
+        totalInSystemAfter: total,
+        errors: [`Request failed: ${err.message}`],
+        success: false,
+        dryRun: importDryRun,
+      });
     } finally {
       setIsImporting(false);
     }
@@ -1164,7 +1194,27 @@ export const AdminCmsPage: React.FC = () => {
           </div>
 
           {/* Article Cards Grid */}
-          {articles.length === 0 ? (
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 animate-pulse">
+              {[1, 2, 3, 4, 5, 6].map((idx) => (
+                <div key={idx} className="bg-white border border-neutral-200/90 rounded-2xl p-5 space-y-4 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <div className="h-3.5 bg-neutral-200 rounded-md w-28" />
+                    <div className="h-4 bg-neutral-200 rounded-full w-14" />
+                  </div>
+                  <div className="h-5 bg-neutral-200 rounded-md w-4/5" />
+                  <div className="space-y-2">
+                    <div className="h-3.5 bg-neutral-100 rounded-md w-full" />
+                    <div className="h-3.5 bg-neutral-100 rounded-md w-3/4" />
+                  </div>
+                  <div className="pt-3 border-t border-neutral-100 flex items-center justify-between">
+                    <div className="h-3.5 bg-neutral-100 rounded w-20" />
+                    <div className="h-6 bg-neutral-200 rounded-lg w-16" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : articles.length === 0 ? (
             <div className="bg-white border border-neutral-200/90 rounded-2xl p-12 text-center space-y-4 shadow-xs">
               <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center mx-auto">
                 <BookOpen className="w-7 h-7" />
@@ -1435,6 +1485,18 @@ export const AdminCmsPage: React.FC = () => {
                 return (a.priority ?? 100) - (b.priority ?? 100);
               });
 
+            if (isLoading) {
+              return (
+                <div className="bg-white border border-neutral-200/90 rounded-2xl p-8 space-y-4 animate-pulse">
+                  <div className="h-4 bg-neutral-200 rounded w-48" />
+                  <div className="space-y-3">
+                    <div className="h-16 bg-neutral-100 rounded-xl w-full" />
+                    <div className="h-16 bg-neutral-100 rounded-xl w-full" />
+                  </div>
+                </div>
+              );
+            }
+
             if (scheduled.length === 0) {
               return (
                 <div className="bg-white border border-neutral-200 rounded-2xl p-10 text-center space-y-3">
@@ -1635,34 +1697,123 @@ export const AdminCmsPage: React.FC = () => {
           </div>
 
           {/* Import Result Summary */}
-          {importResult && (
-            <div className="p-5 rounded-2xl bg-emerald-50 border border-emerald-200 space-y-3">
-              <h4 className="font-bold text-emerald-950 text-sm flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-emerald-700" />
-                <span>Import Summary {importResult.dryRun ? '(Dry Run Simulation)' : '(Saved)'}</span>
-              </h4>
-              <div className="grid grid-cols-2 gap-3 text-xs">
-                <div className="p-3 bg-white rounded-xl border border-emerald-100">
-                  <span className="text-neutral-500 font-medium">Unique Ideas Imported:</span>
-                  <p className="text-lg font-black text-emerald-800 mt-0.5">{importResult.imported}</p>
+          {importResult && (() => {
+            const isPersistenceFailed =
+              !importResult.dryRun &&
+              (importResult.success === false ||
+                (importResult.persistedCount !== undefined && importResult.persistedCount < importResult.imported) ||
+                importResult.errors.length > 0);
+
+            return (
+              <div
+                className={`p-5 rounded-2xl border space-y-4 ${
+                  isPersistenceFailed
+                    ? 'bg-red-50/80 border-red-300 text-red-950'
+                    : importResult.dryRun
+                    ? 'bg-blue-50/80 border-blue-200 text-blue-950'
+                    : 'bg-emerald-50/80 border-emerald-200 text-emerald-950'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <h4 className="font-bold text-sm sm:text-base flex items-center gap-2">
+                    {isPersistenceFailed ? (
+                      <>
+                        <AlertTriangle className="w-5 h-5 text-red-600 shrink-0" />
+                        <span>
+                          {importResult.code === 'BANK_FILE_NOT_FOUND'
+                            ? 'Bank File Not Found (BANK_FILE_NOT_FOUND)'
+                            : importResult.persistedCount === 0 && importResult.imported > 0
+                            ? 'Import Failed — Supabase Persistence Incomplete'
+                            : 'Import Completed With Persistence Warnings'}
+                        </span>
+                      </>
+                    ) : importResult.dryRun ? (
+                      <>
+                        <CheckCircle className="w-5 h-5 text-blue-600 shrink-0" />
+                        <span>Import Summary (Dry Run Simulation — No DB Writes)</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-5 h-5 text-emerald-700 shrink-0" />
+                        <span>Import Summary (Saved to Supabase Database)</span>
+                      </>
+                    )}
+                  </h4>
+                  <span
+                    className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
+                      isPersistenceFailed
+                        ? 'bg-red-200 text-red-900'
+                        : importResult.dryRun
+                        ? 'bg-blue-100 text-blue-800'
+                        : 'bg-emerald-100 text-emerald-800'
+                    }`}
+                  >
+                    {isPersistenceFailed ? 'Action Required' : importResult.dryRun ? 'Dry Run' : 'Persisted'}
+                  </span>
                 </div>
-                <div className="p-3 bg-white rounded-xl border border-emerald-100">
-                  <span className="text-neutral-500 font-medium">Duplicates Skipped:</span>
-                  <p className="text-lg font-black text-amber-700 mt-0.5">{importResult.skippedDuplicates}</p>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                  <div className="p-3 bg-white rounded-xl border border-neutral-200 shadow-2xs">
+                    <span className="text-neutral-500 font-medium">Unique Ideas:</span>
+                    <p className="text-lg font-black text-neutral-900 mt-0.5">{importResult.imported}</p>
+                  </div>
+                  <div className="p-3 bg-white rounded-xl border border-neutral-200 shadow-2xs">
+                    <span className="text-neutral-500 font-medium">Persisted to DB:</span>
+                    <p
+                      className={`text-lg font-black mt-0.5 ${
+                        !importResult.dryRun && importResult.persistedCount !== undefined && importResult.persistedCount < importResult.imported
+                          ? 'text-red-600'
+                          : 'text-emerald-700'
+                      }`}
+                    >
+                      {importResult.dryRun ? '0 (Simulated)' : (importResult.persistedCount ?? 0)}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-white rounded-xl border border-neutral-200 shadow-2xs">
+                    <span className="text-neutral-500 font-medium">Duplicates Skipped:</span>
+                    <p className="text-lg font-black text-amber-700 mt-0.5">{importResult.skippedDuplicates}</p>
+                  </div>
+                  <div className="p-3 bg-white rounded-xl border border-neutral-200 shadow-2xs">
+                    <span className="text-neutral-500 font-medium">Total In System:</span>
+                    <p className="text-lg font-black text-blue-700 mt-0.5">
+                      {importResult.totalInSystemAfter ?? total}
+                    </p>
+                  </div>
                 </div>
+
+                {isPersistenceFailed && (
+                  <div className="p-3.5 bg-white rounded-xl border border-red-200 text-xs text-red-800 space-y-1.5 shadow-2xs">
+                    <div className="font-bold flex items-center gap-1.5 text-red-900">
+                      <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
+                      <span>Required Action — Supabase Database Migration Needed:</span>
+                    </div>
+                    <p className="text-neutral-600 leading-relaxed">
+                      Articles could not be persisted to Supabase because the required SEO columns do not exist yet. Please execute the SQL migration file in the Supabase Dashboard:
+                    </p>
+                    <code className="block p-2 bg-neutral-900 text-emerald-400 font-mono text-[11px] rounded-lg overflow-x-auto">
+                      supabase/migrations/20261021_cms_articles_seo_fields.sql
+                    </code>
+                    <p className="text-[11px] text-neutral-500">
+                      Steps: Open Supabase Dashboard → SQL Editor → New Query → paste contents of this file → Run. Once executed, click Import again.
+                    </p>
+                  </div>
+                )}
+
+                {importResult.errors.length > 0 && (
+                  <div className="text-xs text-red-700 bg-white p-3 rounded-xl border border-red-200 shadow-2xs">
+                    <span className="font-bold flex items-center gap-1">
+                      <span>Error details:</span>
+                    </span>
+                    <ul className="list-disc list-inside mt-1.5 space-y-1 font-mono text-[11px]">
+                      {importResult.errors.map((e, idx) => (
+                        <li key={idx} className="break-words">{e}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
-              {importResult.errors.length > 0 && (
-                <div className="text-xs text-red-600 bg-red-50 p-2.5 rounded-xl border border-red-200">
-                  <span className="font-bold">Errors encountered:</span>
-                  <ul className="list-disc list-inside mt-1 space-y-0.5">
-                    {importResult.errors.map((e, idx) => (
-                      <li key={idx}>{e}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
+            );
+          })()}
         </div>
       )}
 

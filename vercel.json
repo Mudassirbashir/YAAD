@@ -2,7 +2,7 @@
   "version": 2,
   "functions": {
     "api/index.ts": {
-      "includeFiles": "{dist/server.cjs,data/admin_data.json}"
+      "includeFiles": "{dist/server.cjs,data/admin_data.json,data/inapp-articles/bank.json}"
     }
   },
   "headers": [

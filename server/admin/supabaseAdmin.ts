@@ -51,13 +51,13 @@ export function isSchemaCacheMissingTableError(error: any): boolean {
   if (!error) return false;
   const code = error.code || '';
   const message = typeof error.message === 'string' ? error.message : '';
-  return (
-    code === 'PGRST205' ||
-    code === '42P01' ||
-    message.includes('schema cache') ||
-    message.includes('Could not find the table') ||
-    (message.includes('relation') && message.includes('does not exist'))
-  );
+  // PGRST205: Could not find the table '...' in the schema cache
+  // 42P01: undefined_table (relation "..." does not exist)
+  // Ensure we don't treat missing columns (PGRST204) as missing table!
+  if (code === 'PGRST205' || code === '42P01') return true;
+  if (message.includes('Could not find the table')) return true;
+  if (message.includes('relation') && message.includes('does not exist') && !message.includes('column')) return true;
+  return false;
 }
 
 /**
@@ -1420,9 +1420,19 @@ export async function getAuthoritativeCms(options?: {
   }
 }
 
-export async function persistSharedCmsArticle(article: any): Promise<boolean> {
+export interface CmsPersistResult {
+  success: boolean;
+  error?: string;
+}
+
+export async function persistSharedCmsArticle(article: any): Promise<CmsPersistResult> {
   const supabase = getSupabaseAdmin();
-  if (!supabase || isTableMissingInSupabase('cms_articles')) return false;
+  if (!supabase) {
+    return { success: true };
+  }
+  if (isTableMissingInSupabase('cms_articles')) {
+    return { success: false, error: 'Table cms_articles is missing or unreachable in Supabase' };
+  }
 
   try {
     const row = mapCmsToDbRow(article);
@@ -1431,14 +1441,60 @@ export async function persistSharedCmsArticle(article: any): Promise<boolean> {
       if (isSchemaCacheMissingTableError(error)) {
         markTableMissingInSupabase('cms_articles');
       }
-      console.warn('[SupabaseAdmin] cms_articles upsert error (falling back to durable settings):', error.message);
-      return false;
+      console.warn('[SupabaseAdmin] cms_articles upsert error:', error.message);
+      return { success: false, error: error.message };
     }
-    return true;
-  } catch (err) {
-    console.warn('[SupabaseAdmin] Failed to persist CMS article to Supabase:', err);
-    return false;
+    return { success: true };
+  } catch (err: any) {
+    const msg = err?.message || String(err);
+    console.warn('[SupabaseAdmin] Failed to persist CMS article to Supabase:', msg);
+    return { success: false, error: msg };
   }
+}
+
+export async function persistSharedCmsArticlesBatch(articles: any[]): Promise<{
+  persistedCount: number;
+  errors: string[];
+}> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) {
+    // Local / in-memory mode active (e.g. tests or local dev without Supabase creds)
+    return { persistedCount: articles.length, errors: [] };
+  }
+  if (isTableMissingInSupabase('cms_articles')) {
+    return {
+      persistedCount: 0,
+      errors: ['Table cms_articles is marked as missing in Supabase. Please ensure migration 20261021_cms_articles_seo_fields.sql has been executed.'],
+    };
+  }
+
+  const errors: string[] = [];
+  let persistedCount = 0;
+  const CHUNK_SIZE = 50;
+
+  for (let i = 0; i < articles.length; i += CHUNK_SIZE) {
+    const chunk = articles.slice(i, i + CHUNK_SIZE);
+    const rows = chunk.map(mapCmsToDbRow);
+
+    try {
+      const { error } = await supabase.from('cms_articles').upsert(rows);
+      if (error) {
+        if (isSchemaCacheMissingTableError(error)) {
+          markTableMissingInSupabase('cms_articles');
+        }
+        console.warn(`[SupabaseAdmin] Batch upsert error (chunk ${Math.floor(i / CHUNK_SIZE) + 1}):`, error.message);
+        errors.push(`Chunk ${Math.floor(i / CHUNK_SIZE) + 1} (${chunk.length} items): ${error.message}`);
+      } else {
+        persistedCount += chunk.length;
+      }
+    } catch (err: any) {
+      const msg = err?.message || String(err);
+      console.warn(`[SupabaseAdmin] Batch upsert exception (chunk ${Math.floor(i / CHUNK_SIZE) + 1}):`, msg);
+      errors.push(`Chunk ${Math.floor(i / CHUNK_SIZE) + 1} exception: ${msg}`);
+    }
+  }
+
+  return { persistedCount, errors };
 }
 
 export async function deleteSharedCmsArticleFromDb(id: string): Promise<boolean> {

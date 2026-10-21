@@ -1744,7 +1744,7 @@ adminRouter.delete('/cms/articles/:id', requireAdminAuth, requirePermission('con
   }
 });
 
-adminRouter.post('/cms/articles/import-bank', requireAdminAuth, requirePermission('content.publish'), (req: AdminAuthRequest, res: Response) => {
+adminRouter.post('/cms/articles/import-bank', requireAdminAuth, requirePermission('content.publish'), async (req: AdminAuthRequest, res: Response) => {
   try {
     const { items, csvContent, dryRun = false } = req.body || {};
     let parsedItems: any[] = [];
@@ -1784,17 +1784,44 @@ adminRouter.post('/cms/articles/import-bank', requireAdminAuth, requirePermissio
         }
       }
     } else {
-      const bankJsonPath = path.join(process.cwd(), 'data', 'inapp-articles', 'bank.json');
-      if (fs.existsSync(bankJsonPath)) {
-        parsedItems = JSON.parse(fs.readFileSync(bankJsonPath, 'utf8'));
+      // Option B: Auto-Load built-in 256-idea bank
+      const candidatePaths = [
+        path.join(process.cwd(), 'data', 'inapp-articles', 'bank.json'),
+        path.join(__dirname, '..', '..', 'data', 'inapp-articles', 'bank.json'),
+        path.join(__dirname, '..', 'data', 'inapp-articles', 'bank.json'),
+        path.join(__dirname, 'data', 'inapp-articles', 'bank.json'),
+        path.resolve('data/inapp-articles/bank.json'),
+      ];
+      let resolvedBankPath: string | null = null;
+      for (const cand of candidatePaths) {
+        if (fs.existsSync(cand)) {
+          resolvedBankPath = cand;
+          break;
+        }
+      }
+
+      if (resolvedBankPath) {
+        console.log('[CMS] Resolved built-in bank.json at:', resolvedBankPath);
+        parsedItems = JSON.parse(fs.readFileSync(resolvedBankPath, 'utf8'));
+      } else {
+        console.error('[CMS] Built-in bank.json not found. Checked candidate paths:', candidatePaths);
+        return res.status(404).json({
+          success: false,
+          code: 'BANK_FILE_NOT_FOUND',
+          error: 'Built-in 256-idea bank file (bank.json) was not found in server bundle. Please upload bank.json manually or verify Vercel includeFiles deployment.',
+          checkedPaths: candidatePaths,
+        });
       }
     }
 
     if (parsedItems.length === 0) {
-      return res.status(400).json({ error: 'No article ideas found to import. Provide items array or CSV.' });
+      return res.status(400).json({
+        success: false,
+        error: 'No article ideas found to import. Provide items array, CSV content, or use built-in bank.',
+      });
     }
 
-    const result = adminStore.importIdeaBank(parsedItems, Boolean(dryRun));
+    const result = await adminStore.importIdeaBankAsync(parsedItems, Boolean(dryRun));
 
     adminStore.writeAuditLog({
       action: 'cms_article_import_bank',
@@ -1805,24 +1832,29 @@ adminRouter.post('/cms/articles/import-bank', requireAdminAuth, requirePermissio
         totalReceived: parsedItems.length,
         imported: result.imported,
         skippedDuplicates: result.skippedDuplicates,
+        persistedCount: result.persistedCount,
+        totalInSystemAfter: result.totalInSystemAfter,
+        errorsCount: result.errors.length,
         dryRun: Boolean(dryRun),
       },
     });
 
-    return res.status(200).json({
-      success: true,
-      dryRun: Boolean(dryRun),
-      ...result,
-    });
+    const statusCode = (!result.dryRun && result.persistedCount < result.imported) ? 207 : 200;
+    return res.status(statusCode).json(result);
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to import article ideas', details: err.message });
+    console.error('[CMS Import Bank] Exception:', err);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to import article ideas',
+      details: err.message,
+    });
   }
 });
 
-adminRouter.post('/cms/articles/publish-today', requireAdminAuth, requirePermission('content.publish'), (req: AdminAuthRequest, res: Response) => {
+adminRouter.post('/cms/articles/publish-today', requireAdminAuth, requirePermission('content.publish'), async (req: AdminAuthRequest, res: Response) => {
   try {
     const { targetDate, limit = 2 } = req.body || {};
-    const result = adminStore.publishTodayArticles({
+    const result = await adminStore.publishTodayArticlesAsync({
       targetDate: targetDate ? String(targetDate) : undefined,
       limit: Number(limit) || 2,
     });
@@ -1848,22 +1880,27 @@ adminRouter.post('/cms/articles/publish-today', requireAdminAuth, requirePermiss
         totalAttempted: result.totalAttempted,
         totalPublished: result.totalPublished,
         totalBlocked: result.totalBlocked,
+        persistedCount: result.persistedCount,
+        errorsCount: result.errors.length,
       },
     });
 
-    return res.status(200).json({
-      success: true,
-      ...result,
-    });
+    const statusCode = result.errors.length > 0 ? 207 : 200;
+    return res.status(statusCode).json(result);
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to run daily auto-publishing', details: err.message });
+    console.error('[CMS PublishToday] Exception:', err);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to run daily auto-publishing',
+      details: err.message,
+    });
   }
 });
 
-adminRouter.post('/cms/articles/auto-schedule', requireAdminAuth, requirePermission('content.publish'), (req: AdminAuthRequest, res: Response) => {
+adminRouter.post('/cms/articles/auto-schedule', requireAdminAuth, requirePermission('content.publish'), async (req: AdminAuthRequest, res: Response) => {
   try {
     const { articlesPerDay = 2, startDate } = req.body || {};
-    const result = adminStore.autoScheduleQueue({
+    const result = await adminStore.autoScheduleQueueAsync({
       articlesPerDay: Number(articlesPerDay) || 2,
       startDate: startDate ? String(startDate) : undefined,
     });
@@ -1877,15 +1914,20 @@ adminRouter.post('/cms/articles/auto-schedule', requireAdminAuth, requirePermiss
         articlesPerDay,
         scheduledCount: result.scheduledCount,
         datesCount: result.scheduledDates.length,
+        persistedCount: result.persistedCount,
+        errorsCount: result.errors.length,
       },
     });
 
-    return res.status(200).json({
-      success: true,
-      ...result,
-    });
+    const statusCode = result.errors.length > 0 ? 207 : 200;
+    return res.status(statusCode).json(result);
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to auto-schedule queue', details: err.message });
+    console.error('[CMS AutoSchedule] Exception:', err);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to auto-schedule queue',
+      details: err.message,
+    });
   }
 });
 

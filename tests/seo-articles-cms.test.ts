@@ -7,9 +7,9 @@ console.log('=== Running SEO Articles & Publishing CMS Test Suite ===\n');
 
 let passedTests = 0;
 
-function runTest(name: string, fn: () => void) {
+async function runTest(name: string, fn: () => void | Promise<void>) {
   try {
-    fn();
+    await fn();
     console.log(`✓ ${name}`);
     passedTests++;
   } catch (err: any) {
@@ -247,6 +247,70 @@ runTest('Sitemap generator includes published articles and excludes drafts & nee
     xml.includes('https://yaadapppk.vercel.app/rashan-list'),
     'Sitemap must retain all static public pages'
   );
+});
+
+// -------------------------------------------------------------
+// Test 5: Async Bank Import, Auto-Schedule & Publish Metrics
+// -------------------------------------------------------------
+await runTest('Async import bank tracks persistedCount and totalInSystemAfter without silent swallow', async () => {
+  const testBatchAsync = [
+    {
+      title: 'Async Persistence Test Recipe 1',
+      focusKeyword: 'async test recipe 1',
+      cluster: 'Recipes',
+      searchIntent: 'informational' as const,
+      priority: 15,
+      body: 'Detailed body for test recipe 1 with sufficient content for testing.',
+    },
+    {
+      title: 'Async Persistence Test Recipe 2',
+      focusKeyword: 'async test recipe 2',
+      cluster: 'Recipes',
+      searchIntent: 'list' as const,
+      priority: 16,
+      body: 'Detailed body for test recipe 2 with sufficient content for testing.',
+    },
+  ];
+
+  // Dry-run
+  const dryRes = await adminStore.importIdeaBankAsync(testBatchAsync, true);
+  assert.strictEqual(dryRes.dryRun, true, 'Dry run flag must be true');
+  assert.strictEqual(dryRes.imported, 2, 'Must report 2 unique ideas');
+  assert.strictEqual(dryRes.persistedCount, 0, 'Dry run persistedCount must be 0');
+  assert.strictEqual(dryRes.success, true, 'Dry run success must be true');
+
+  // Live import
+  const liveRes = await adminStore.importIdeaBankAsync(testBatchAsync, false);
+  assert.strictEqual(liveRes.dryRun, false, 'Live run flag must be false');
+  assert.strictEqual(liveRes.imported, 2, 'Live run must import 2 unique ideas');
+  assert.ok(typeof liveRes.persistedCount === 'number', 'persistedCount must be a number');
+  assert.ok(typeof liveRes.totalInSystemAfter === 'number', 'totalInSystemAfter must be a number');
+  assert.strictEqual(liveRes.skippedDuplicates, 0, 'First live run must have 0 duplicates');
+
+  // Re-run for idempotency and deduplication
+  const repeatRes = await adminStore.importIdeaBankAsync(testBatchAsync, false);
+  assert.strictEqual(repeatRes.imported, 0, 'Second run must import 0 new items');
+  assert.strictEqual(repeatRes.skippedDuplicates, 2, 'Second run must skip both as duplicates');
+
+  // Test autoScheduleQueueAsync
+  const schedRes = await adminStore.autoScheduleQueueAsync({ articlesPerDay: 1 });
+  assert.ok(typeof schedRes.scheduledCount === 'number', 'scheduledCount must be number');
+  assert.ok(Array.isArray(schedRes.scheduledDates), 'scheduledDates must be array');
+
+  // Test publishTodayArticlesAsync
+  const todayStr = new Date().toISOString().split('T')[0];
+  const pubRes = await adminStore.publishTodayArticlesAsync({ targetDate: todayStr, limit: 1 });
+  assert.ok(typeof pubRes.totalAttempted === 'number', 'totalAttempted must be number');
+  assert.ok(Array.isArray(pubRes.published), 'published must be array');
+  assert.ok(Array.isArray(pubRes.blocked), 'blocked must be array');
+
+  // Clean up
+  const allArts = adminStore.getCmsArticles();
+  for (const art of allArts) {
+    if (art.title.startsWith('Async Persistence Test Recipe')) {
+      adminStore.deleteCmsArticle(art.id);
+    }
+  }
 });
 
 console.log(`\nAll ${passedTests} SEO Articles CMS tests passed with 100% success!`);
