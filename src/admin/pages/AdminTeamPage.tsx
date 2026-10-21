@@ -343,7 +343,7 @@ Barah-e-karam 24 ghante ke andar is link ko open karke apna secure password aur 
   const handleApproveRequest = async (req: AccessRequestItem) => {
     setInviteName(req.name);
     setInviteEmail(req.email);
-    const validRoles: AdminRole[] = ['support_agent', 'content_editor', 'analyst', 'super_admin'];
+    const validRoles: AdminRole[] = ['support_agent', 'content_editor', 'content_writer', 'analyst', 'super_admin'];
     const assignedRole = validRoles.includes(req.requestedRole as AdminRole)
       ? (req.requestedRole as AdminRole)
       : 'support_agent';
@@ -722,6 +722,7 @@ Barah-e-karam 24 ghante ke andar is link ko open karke apna secure password aur 
                 <option value="super_admin">Super Admin</option>
                 <option value="support_agent">Support Agent</option>
                 <option value="content_editor">Content Editor</option>
+                <option value="content_writer">Content Writer</option>
                 <option value="analyst">Analyst</option>
               </select>
 
@@ -1323,6 +1324,7 @@ Barah-e-karam 24 ghante ke andar is link ko open karke apna secure password aur 
                   >
                     <option value="support_agent">Support Agent (User help &amp; tickets)</option>
                     <option value="content_editor">Content Editor (Catalog &amp; in-app content)</option>
+                    <option value="content_writer">Content Writer (Full CMS &amp; SEO publishing authority)</option>
                     <option value="analyst">Analyst (Read-only reports)</option>
                     <option value="super_admin">Super Admin (Full system control)</option>
                   </select>

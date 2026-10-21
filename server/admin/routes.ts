@@ -912,7 +912,7 @@ adminRouter.post('/invites', requireAdminAuth, requireRoles('super_admin'), (req
       return;
     }
 
-    const validRoles: AdminRole[] = ['super_admin', 'support_agent', 'content_editor', 'analyst'];
+    const validRoles: AdminRole[] = ['super_admin', 'support_agent', 'content_editor', 'content_writer', 'analyst'];
     if (!validRoles.includes(role)) {
       res.status(400).json({ error: `Invalid role. Allowed roles: ${validRoles.join(', ')}` });
       return;
@@ -1693,9 +1693,9 @@ adminRouter.get('/cms/articles', requireAdminAuth, async (req: AdminAuthRequest,
   }
 });
 
-adminRouter.post('/cms/articles', requireAdminAuth, requirePermission('content.publish'), (req: AdminAuthRequest, res: Response) => {
+adminRouter.post('/cms/articles', requireAdminAuth, requirePermission('content.publish'), async (req: AdminAuthRequest, res: Response) => {
   try {
-    const article = adminStore.saveCmsArticle(req.body, req.admin?.name || 'Staff');
+    const article = await adminStore.saveCmsArticleAsync(req.body, req.admin?.name || 'Staff');
     adminStore.writeAuditLog({
       action: 'cms_article_created',
       adminId: req.admin?.id,
@@ -1710,9 +1710,9 @@ adminRouter.post('/cms/articles', requireAdminAuth, requirePermission('content.p
   }
 });
 
-adminRouter.put('/cms/articles/:id', requireAdminAuth, requirePermission('content.publish'), (req: AdminAuthRequest, res: Response) => {
+adminRouter.put('/cms/articles/:id', requireAdminAuth, requirePermission('content.publish'), async (req: AdminAuthRequest, res: Response) => {
   try {
-    const article = adminStore.saveCmsArticle({ ...req.body, id: req.params.id }, req.admin?.name || 'Staff');
+    const article = await adminStore.saveCmsArticleAsync({ ...req.body, id: req.params.id }, req.admin?.name || 'Staff');
     adminStore.writeAuditLog({
       action: 'cms_article_updated',
       adminId: req.admin?.id,
@@ -1727,9 +1727,9 @@ adminRouter.put('/cms/articles/:id', requireAdminAuth, requirePermission('conten
   }
 });
 
-adminRouter.delete('/cms/articles/:id', requireAdminAuth, requirePermission('content.publish'), (req: AdminAuthRequest, res: Response) => {
+adminRouter.delete('/cms/articles/:id', requireAdminAuth, requirePermission('content.publish'), async (req: AdminAuthRequest, res: Response) => {
   try {
-    const ok = adminStore.deleteCmsArticle(req.params.id);
+    const ok = await adminStore.deleteCmsArticleAsync(req.params.id);
     if (!ok) return res.status(404).json({ error: 'Article not found' });
     adminStore.writeAuditLog({
       action: 'cms_article_deleted',

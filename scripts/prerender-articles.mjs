@@ -42,6 +42,14 @@ export function renderArticleHtml(templateHtml, article) {
           '@type': 'ImageObject',
           url: `${baseCanonical}/logo.png`,
         },
+        sameAs: [
+          'https://www.instagram.com/yaadapppk/',
+          'https://www.facebook.com/yaadapppk/',
+          'https://www.youtube.com/@yaadapppk',
+          'https://x.com/yaadapppk',
+          'https://www.linkedin.com/in/yaadapppk/',
+          'https://www.tiktok.com/@yaadapppk',
+        ],
       },
       mainEntityOfPage: {
         '@type': 'WebPage',
@@ -114,6 +122,17 @@ export function renderArticleHtml(templateHtml, article) {
       <h1>${titleSafe}</h1>
       ${quickAnswerSafe ? `<p class="quick-answer"><strong>Quick Answer:</strong> ${quickAnswerSafe}</p>` : ''}
       ${firstSectionSafe ? `<p class="first-section">${firstSectionSafe}</p>` : ''}
+      <section class="follow-yaad-ssr">
+        <p><strong>Follow YAAD:</strong></p>
+        <p>
+          <a href="https://www.instagram.com/yaadapppk/">Instagram (@yaadapppk)</a> | 
+          <a href="https://www.facebook.com/yaadapppk/">Facebook (yaadapppk)</a> | 
+          <a href="https://www.youtube.com/@yaadapppk">YouTube (@yaadapppk)</a> | 
+          <a href="https://x.com/yaadapppk">X (@yaadapppk)</a> | 
+          <a href="https://www.linkedin.com/in/yaadapppk/">LinkedIn (yaadapppk)</a> | 
+          <a href="https://www.tiktok.com/@yaadapppk">TikTok (@yaadapppk)</a>
+        </p>
+      </section>
     </article>`;
 
   const hreflangTags = `

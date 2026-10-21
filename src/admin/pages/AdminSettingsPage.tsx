@@ -350,6 +350,7 @@ export const AdminSettingsPage: React.FC = () => {
                   <th className="py-3.5 px-4 text-center">Super Admin</th>
                   <th className="py-3.5 px-4 text-center">Support Agent</th>
                   <th className="py-3.5 px-4 text-center">Content Editor</th>
+                  <th className="py-3.5 px-4 text-center">Content Writer</th>
                   <th className="py-3.5 px-4 text-center">Analyst</th>
                 </tr>
               </thead>
@@ -362,7 +363,7 @@ export const AdminSettingsPage: React.FC = () => {
                         ✓
                       </span>
                     </td>
-                    {(['support_agent', 'content_editor', 'analyst'] as const).map((role) => (
+                    {(['support_agent', 'content_editor', 'content_writer', 'analyst'] as const).map((role) => (
                       <td key={role} className="py-3.5 px-4 text-center">
                         <input
                           type="checkbox"

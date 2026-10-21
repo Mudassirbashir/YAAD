@@ -1395,8 +1395,13 @@ export async function getAuthoritativeCms(options?: {
   try {
     let query = supabase
       .from('cms_articles')
-      .select('*', { count: 'exact' })
-      .order('created_at', { ascending: false });
+      .select('*', { count: 'exact' });
+
+    if (options?.status === 'published') {
+      query = query.order('published_at', { ascending: false, nullsFirst: false }).order('created_at', { ascending: false });
+    } else {
+      query = query.order('priority', { ascending: true }).order('created_at', { ascending: false });
+    }
 
     if (options?.status && options.status !== 'all') {
       query = query.eq('status', options.status);
@@ -1415,6 +1420,43 @@ export async function getAuthoritativeCms(options?: {
 
     const mapped = (data || []).map(mapDbArticleToCms);
     return { articles: mapped, total: count ?? mapped.length };
+  } catch {
+    return null;
+  }
+}
+
+export async function getAuthoritativeCmsArticleBySlugOrId(slugOrId: string): Promise<any | null> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase || isTableMissingInSupabase('cms_articles')) return null;
+
+  try {
+    const clean = slugOrId.toLowerCase().trim();
+    // Try matching slug first
+    let { data, error } = await supabase
+      .from('cms_articles')
+      .select('*')
+      .eq('slug', clean)
+      .maybeSingle();
+
+    if (!data && !error) {
+      // Try matching id
+      const res = await supabase
+        .from('cms_articles')
+        .select('*')
+        .eq('id', clean)
+        .maybeSingle();
+      data = res.data;
+      error = res.error;
+    }
+
+    if (error) {
+      if (isSchemaCacheMissingTableError(error)) {
+        markTableMissingInSupabase('cms_articles');
+      }
+      return null;
+    }
+
+    return data ? mapDbArticleToCms(data) : null;
   } catch {
     return null;
   }

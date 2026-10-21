@@ -6,7 +6,7 @@ import dotenv from 'dotenv';
 import { GoogleGenAI, Type } from '@google/genai';
 import { adminRouter } from './server/admin/routes';
 import { adminStore } from './server/admin/store';
-import { getSupabaseAdmin } from './server/admin/supabaseAdmin';
+import { getSupabaseAdmin, getAuthoritativeCms, getAuthoritativeCmsArticleBySlugOrId } from './server/admin/supabaseAdmin';
 
 dotenv.config();
 
@@ -111,24 +111,37 @@ app.post(['/api/support/tickets', '/api/tickets'], (req, res) => {
   }
 });
 
-// Public Blog Articles API (synced with Admin CMS)
-app.get(['/api/blog/articles', '/api/cms/articles', '/api/articles', '/api/public/cms/articles'], (req, res) => {
+// Public Blog Articles API (synced with Admin CMS & Supabase)
+app.get(['/api/blog/articles', '/api/cms/articles', '/api/articles', '/api/public/cms/articles'], async (req, res) => {
   try {
+    const authCms = await getAuthoritativeCms({ status: 'published' });
+    if (authCms && Array.isArray(authCms.articles)) {
+      return res.status(200).json({ success: true, articles: authCms.articles, total: authCms.total });
+    }
+
+    console.warn('[Blog API Fallback] Supabase cms_articles returned null, falling back to local memory articles.');
     const articles = adminStore.getPublicCmsArticles();
-    return res.status(200).json({ success: true, articles });
+    return res.status(200).json({ success: true, articles, fallback: true });
   } catch (err: any) {
+    console.error('[Blog API Error]:', err);
     return res.status(500).json({ error: 'Failed to retrieve blog articles', details: err?.message });
   }
 });
 
 // Single Public Article by ID or Slug
-app.get(['/api/blog/articles/:id', '/api/articles/:id'], (req, res) => {
+app.get(['/api/blog/articles/:id', '/api/articles/:id'], async (req, res) => {
   try {
     const id = req.params.id;
+    const authArticle = await getAuthoritativeCmsArticleBySlugOrId(id);
+    if (authArticle && (authArticle.status === 'published' || req.query.preview === 'true')) {
+      return res.status(200).json({ success: true, article: authArticle });
+    }
+
     const article = adminStore.getCmsArticleBySlug(id) || (adminStore.getPublicCmsArticles().find(a => a.id === id));
     if (!article) return res.status(404).json({ error: 'Article not found' });
-    return res.status(200).json({ success: true, article });
+    return res.status(200).json({ success: true, article, fallback: true });
   } catch (err: any) {
+    console.error('[Blog Article API Error]:', err);
     return res.status(500).json({ error: 'Failed to retrieve article', details: err?.message });
   }
 });

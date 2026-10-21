@@ -40,7 +40,7 @@ import { validateArticleSeoGate } from './seoValidator';
 // @ts-ignore
 import { buildSitemapXml } from '../../scripts/generate-sitemap.mjs';
 
-export type AdminRole = 'super_admin' | 'support_agent' | 'content_editor' | 'analyst';
+export type AdminRole = 'super_admin' | 'support_agent' | 'content_editor' | 'content_writer' | 'analyst';
 
 export type AdminStatus = 'active' | 'suspended';
 
@@ -746,6 +746,7 @@ function getDefaultPermissionMatrix(): Record<string, Record<AdminRole, boolean>
       super_admin: true,
       support_agent: ['users.view', 'tickets.manage', 'reports.view'].includes(perm.key),
       content_editor: ['content.publish', 'catalog.edit'].includes(perm.key),
+      content_writer: ['content.publish'].includes(perm.key),
       analyst: ['reports.view', 'users.view'].includes(perm.key),
     };
   });
@@ -2232,13 +2233,22 @@ class AdminStore {
   // MODULE 2: ROLE MATRIX PERMISSIONS
   // =========================================================================
   public getPermissionMatrix(): Record<string, Record<AdminRole, boolean>> {
-    return this.db.permissionMatrix || getDefaultPermissionMatrix();
+    const defaults = getDefaultPermissionMatrix();
+    if (!this.db.permissionMatrix) return defaults;
+    const merged: Record<string, Record<AdminRole, boolean>> = {};
+    for (const [permKey, roles] of Object.entries(defaults)) {
+      merged[permKey] = {
+        ...roles,
+        ...(this.db.permissionMatrix[permKey] || {}),
+      };
+    }
+    return merged;
   }
 
   public updatePermissionMatrix(matrix: Record<string, Record<AdminRole, boolean>>): Record<string, Record<AdminRole, boolean>> {
     this.db.permissionMatrix = matrix;
     this.save();
-    return this.db.permissionMatrix;
+    return this.getPermissionMatrix();
   }
 
   public hasPermission(role: AdminRole, permissionKey: string): boolean {
@@ -2843,6 +2853,15 @@ class AdminStore {
     return newArticle;
   }
 
+  public async saveCmsArticleAsync(articleData: Partial<CmsArticle>, author: string): Promise<CmsArticle> {
+    const article = this.saveCmsArticle(articleData, author);
+    const result = await persistSharedCmsArticle(article);
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to persist article to Supabase database');
+    }
+    return article;
+  }
+
   public deleteCmsArticle(id: string): boolean {
     if (!this.db.cmsArticles) return false;
     const len = this.db.cmsArticles.length;
@@ -2857,6 +2876,14 @@ class AdminStore {
       return true;
     }
     return false;
+  }
+
+  public async deleteCmsArticleAsync(id: string): Promise<boolean> {
+    const ok = this.deleteCmsArticle(id);
+    if (ok) {
+      await deleteSharedCmsArticleFromDb(id);
+    }
+    return ok;
   }
 
   public addArticleComment(articleId: string, commentData: { name: string; content: string; email?: string }): CmsComment {

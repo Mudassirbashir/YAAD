@@ -23,6 +23,7 @@ import {
   FileText,
   BookOpen,
   Sparkles,
+  CalendarClock,
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { ROLE_LABELS } from '../types';
@@ -312,7 +313,9 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNaviga
             <p className="text-xs sm:text-sm text-neutral-600 max-w-2xl leading-relaxed">
               Authenticated as{' '}
               <strong className="text-neutral-900 font-bold">{roleMeta?.title || admin?.role}</strong>.
-              {admin?.role === 'content_editor'
+              {admin?.role === 'content_writer'
+                ? ' Full CMS workspace for article authoring, 256-idea bank, and instant publishing.'
+                : admin?.role === 'content_editor'
                 ? ' Manage bilingual grocery item catalog, seasonal recipes, and shopping guides.'
                 : admin?.role === 'support_agent'
                 ? ' Dedicated workspace for shopper inquiries, parchi assistance, and ticket management.'
@@ -466,6 +469,92 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNaviga
               <li>Keep vegetable and staple item prices aligned with standard Pakistani retail averages (PKR).</li>
               <li>Guides should highlight local buying wisdom: seasonal freshness, Mandi timings, and pantry storage tips.</li>
             </ul>
+          </div>
+        </div>
+      )}
+
+      {/* ==================================================================== */}
+      {/* ROLE: CONTENT WRITER DASHBOARD                                      */}
+      {/* Full CMS authority: authoring, ideas, queue, publishing             */}
+      {/* ==================================================================== */}
+      {admin?.role === 'content_writer' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div
+              onClick={() => onNavigate('/admin/cms')}
+              className="bg-white border border-neutral-200/90 rounded-2xl p-5 space-y-2 shadow-xs hover:border-[#003527]/40 transition-colors cursor-pointer group"
+            >
+              <div className="flex items-center justify-between text-neutral-500">
+                <span className="text-xs font-bold uppercase tracking-wider group-hover:text-[#003527] transition-colors">
+                  Article Pipeline
+                </span>
+                <BookOpen className="w-4 h-4 text-[#003527]" />
+              </div>
+              <div className="text-2xl sm:text-3xl font-black text-[#003527] font-mono">260</div>
+              <div className="text-[11px] text-neutral-500 flex items-center justify-between">
+                <span>Published &amp; Queue</span>
+                <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
+                  Supabase Live
+                </span>
+              </div>
+            </div>
+
+            <div
+              onClick={() => onNavigate('/admin/cms')}
+              className="bg-white border border-neutral-200/90 rounded-2xl p-5 space-y-2 shadow-xs hover:border-emerald-600/40 transition-colors cursor-pointer group"
+            >
+              <div className="flex items-center justify-between text-neutral-500">
+                <span className="text-xs font-bold uppercase tracking-wider group-hover:text-emerald-700 transition-colors">
+                  SEO Quality Gate
+                </span>
+                <Sparkles className="w-4 h-4 text-emerald-600" />
+              </div>
+              <div className="text-2xl sm:text-3xl font-black text-emerald-800 font-mono">11 Rules</div>
+              <div className="text-[11px] text-neutral-500 flex items-center justify-between">
+                <span>Auto-fill &amp; pre-publish checks</span>
+                <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded">
+                  Active
+                </span>
+              </div>
+            </div>
+
+            <div
+              onClick={() => onNavigate('/admin/cms')}
+              className="bg-white border border-neutral-200/90 rounded-2xl p-5 space-y-2 shadow-xs hover:border-purple-600/40 transition-colors cursor-pointer group"
+            >
+              <div className="flex items-center justify-between text-neutral-500">
+                <span className="text-xs font-bold uppercase tracking-wider group-hover:text-purple-700 transition-colors">
+                  256-Idea Bank
+                </span>
+                <CalendarClock className="w-4 h-4 text-purple-600" />
+              </div>
+              <div className="text-2xl sm:text-3xl font-black text-purple-800 font-mono">256</div>
+              <div className="text-[11px] text-neutral-500 flex items-center justify-between">
+                <span>Idempotent queue bank</span>
+                <span className="text-[10px] font-mono text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded">
+                  Ready
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white border border-neutral-200/90 rounded-2xl p-6 space-y-3 shadow-xs">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-neutral-900 text-sm flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-emerald-700" />
+                <span>Content Writer Quick Actions</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => onNavigate('/admin/cms')}
+                className="text-xs font-bold text-[#003527] hover:underline cursor-pointer"
+              >
+                Go to Full CMS &rarr;
+              </button>
+            </div>
+            <p className="text-xs text-neutral-600 leading-relaxed">
+              You have full authoring and publishing authority. All articles created or edited by you are synchronized directly with Supabase and verified via the 11-rule SEO quality gate before going live.
+            </p>
           </div>
         </div>
       )}

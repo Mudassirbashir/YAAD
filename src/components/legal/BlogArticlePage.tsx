@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useAppRouter } from '../../router/RouterContext';
 import { ArticleBodyRenderer, slugifyHeading } from './ArticleBodyRenderer';
+import { FollowYaadBlock } from './FollowYaadBlock';
 
 interface CmsArticleDetail {
   id: string;
@@ -315,12 +316,28 @@ export const BlogArticlePage: React.FC<BlogArticlePageProps> = ({
         {/* Hero / Cover Image */}
         <figure className="my-8">
           {article.coverImageUrl ? (
-            <img
-              src={article.coverImageUrl}
-              alt={article.coverImageAlt || article.title}
-              className="w-full h-auto max-h-[460px] object-cover rounded-3xl shadow-md border border-[#e5dfce]"
-              loading="eager"
-            />
+            <div className="w-full relative">
+              <img
+                src={article.coverImageUrl}
+                alt={article.coverImageAlt || article.title}
+                className="w-full h-auto max-h-[460px] object-cover rounded-3xl shadow-md border border-[#e5dfce]"
+                loading="eager"
+                onError={(e) => {
+                  (e.currentTarget as HTMLElement).style.display = 'none';
+                  const fb = (e.currentTarget.parentElement?.querySelector('.branded-hero-fallback') as HTMLElement);
+                  if (fb) fb.style.display = 'flex';
+                }}
+              />
+              <div className="branded-hero-fallback hidden w-full h-48 sm:h-64 rounded-3xl bg-gradient-to-br from-[#003527] to-[#0a4d38] text-white flex-col items-center justify-center p-6 text-center border border-[#0a4d38] shadow-md">
+                <ShoppingBag className="w-12 h-12 text-[#FCBC1F] mb-3 opacity-90" />
+                <p className="text-xl sm:text-2xl font-black text-white max-w-lg mb-2">
+                  {article.title}
+                </p>
+                <p className="text-xs uppercase font-extrabold tracking-widest text-[#FCBC1F]">
+                  YAAD Official Grocery &amp; Rashan Guide
+                </p>
+              </div>
+            </div>
           ) : (
             <div className="w-full h-48 sm:h-64 rounded-3xl bg-gradient-to-br from-[#003527] to-[#0a4d38] text-white flex flex-col items-center justify-center p-6 text-center border border-[#0a4d38] shadow-md">
               <ShoppingBag className="w-12 h-12 text-[#FCBC1F] mb-3 opacity-90" />
@@ -469,6 +486,9 @@ export const BlogArticlePage: React.FC<BlogArticlePageProps> = ({
             </button>
           </div>
         )}
+
+        {/* Follow YAAD Community & Social Profiles Block */}
+        <FollowYaadBlock className="my-10" />
 
         {/* Related Guides Section */}
         {relatedArticles.length > 0 && (

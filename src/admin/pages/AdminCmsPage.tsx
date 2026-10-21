@@ -42,6 +42,7 @@ import {
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { adminCache } from '../utils/adminCache';
 import { validateArticleSeoGate } from '../../../server/admin/seoValidator';
+import { autoFillArticleSeo } from '../../seo/autoFiller';
 
 interface SocialLinks {
   facebook?: string;
@@ -257,8 +258,11 @@ export const AdminCmsPage: React.FC = () => {
   const [replyInputs, setReplyInputs] = useState<Record<string, string>>({});
   const [submittingReplyId, setSubmittingReplyId] = useState<string | null>(null);
 
-  // View Navigation: 'library' | 'queue' | 'import'
-  const [activeTab, setActiveTab] = useState<'library' | 'queue' | 'import'>('library');
+  // View Navigation: 'published' | 'to_upload' | 'queue' | 'import'
+  const [activeTab, setActiveTab] = useState<'published' | 'to_upload' | 'queue' | 'import'>('published');
+  const [toUploadSubFilter, setToUploadSubFilter] = useState<'all' | 'draft_ready' | 'scheduled' | 'needs_review' | 'idea'>('all');
+  const [rowGateErrors, setRowGateErrors] = useState<Record<string, string[]>>({});
+  const [uploadingArticleId, setUploadingArticleId] = useState<string | null>(null);
 
   // Daily Auto-Publish State
   const [isAutoPublishing, setIsAutoPublishing] = useState(false);
@@ -642,8 +646,14 @@ export const AdminCmsPage: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 10 * 1024 * 1024) {
-      alert('Image size exceeds 10MB limit. Please choose a smaller photo.');
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      alert('Please select a valid JPG, PNG, or WebP image file.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size exceeds 5MB limit. Please choose a photo under 5MB.');
       return;
     }
 
@@ -669,7 +679,12 @@ export const AdminCmsPage: React.FC = () => {
         }
 
         if (data.secure_url) {
+          // Cache-busting URL version is returned by Cloudinary automatically
           setCoverImageUrl(data.secure_url);
+          setOgImageUrl(data.secure_url);
+          if (!coverImageAlt.trim() && title.trim()) {
+            setCoverImageAlt(`${title.trim()} guide cover photo`);
+          }
           setIsUploadingToCloudinary(false);
           return;
         }
@@ -946,6 +961,148 @@ export const AdminCmsPage: React.FC = () => {
     currentSlugsSet,
   ]);
 
+  const publishedArticles = useMemo(() => {
+    return articles.filter((a) => a.status === 'published' || a.queueStatus === 'published');
+  }, [articles]);
+
+  const toUploadArticles = useMemo(() => {
+    return articles.filter((a) => a.status !== 'published' && a.queueStatus !== 'published');
+  }, [articles]);
+
+  const filteredPublishedArticles = useMemo(() => {
+    let list = publishedArticles;
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      list = list.filter(
+        (a) =>
+          a.title.toLowerCase().includes(q) ||
+          (a.cluster && a.cluster.toLowerCase().includes(q)) ||
+          (a.tags && a.tags.some((t) => t.toLowerCase().includes(q)))
+      );
+    }
+    return list;
+  }, [publishedArticles, search]);
+
+  const filteredToUploadArticles = useMemo(() => {
+    let list = toUploadArticles;
+    if (toUploadSubFilter !== 'all') {
+      list = list.filter((a) => a.queueStatus === toUploadSubFilter);
+    }
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      list = list.filter(
+        (a) =>
+          a.title.toLowerCase().includes(q) ||
+          (a.cluster && a.cluster.toLowerCase().includes(q)) ||
+          (a.tags && a.tags.some((t) => t.toLowerCase().includes(q)))
+      );
+    }
+    return list;
+  }, [toUploadArticles, toUploadSubFilter, search]);
+
+  const handleUploadSingleArticle = async (art: CmsArticle) => {
+    if (!token) return;
+    const gate = validateArticleSeoGate(art, currentSlugsSet);
+    if (!gate.passed) {
+      setRowGateErrors((prev) => ({ ...prev, [art.id]: gate.errors }));
+      return;
+    }
+
+    setRowGateErrors((prev) => ({ ...prev, [art.id]: [] }));
+    setUploadingArticleId(art.id);
+
+    try {
+      const res = await fetch(`/api/admin/cms/articles/${art.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          status: 'published',
+          queueStatus: 'published',
+          publishedAt: Date.now(),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || data.details || 'Failed to publish article');
+      }
+
+      adminCache.invalidatePrefix('/api/admin/cms');
+      await fetchArticles(true);
+      alert(`Successfully uploaded & published "${art.title}"! It is now live on the public blog and inside the app.`);
+    } catch (err: any) {
+      setRowGateErrors((prev) => ({ ...prev, [art.id]: [err.message || 'Upload failed'] }));
+    } finally {
+      setUploadingArticleId(null);
+    }
+  };
+
+  const handleUnpublishArticle = async (art: CmsArticle) => {
+    if (!token) return;
+    if (!window.confirm(`Unpublish "${art.title}"? This will remove it from the live public blog and move it to "To Upload".`)) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/admin/cms/articles/${art.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          status: 'draft',
+          queueStatus: 'draft_ready',
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to unpublish article');
+      }
+      adminCache.invalidatePrefix('/api/admin/cms');
+      await fetchArticles(true);
+    } catch (err: any) {
+      alert(`Unpublish error: ${err.message}`);
+    }
+  };
+
+  const handleAutoFillSeo = () => {
+    if (!title.trim()) {
+      alert('Please enter an Article Title first before auto-filling SEO fields.');
+      return;
+    }
+    const filled = autoFillArticleSeo({
+      title,
+      body,
+      category,
+      cluster,
+      authorName: authorName || admin?.name || 'YAAD Editorial Team',
+      coverImageUrl,
+      coverImageAlt,
+      existingSlugs: Array.from(currentSlugsSet),
+      focusKeyword,
+    });
+
+    setFocusKeyword(filled.focusKeyword);
+    setSeoTitle(filled.seoTitle);
+    setSeoDescription(filled.seoDescription);
+    setQuickAnswer(filled.quickAnswer);
+    if (!excerpt.trim()) setExcerpt(filled.excerpt);
+    if (!cluster.trim()) setCluster(filled.cluster);
+    if (!slug.trim()) setSlug(filled.slug);
+    if (!canonicalUrl.trim()) setCanonicalUrl(filled.canonicalUrl);
+    if (!ogImageUrl.trim()) setOgImageUrl(filled.ogImageUrl);
+    if (!coverImageAlt.trim()) setCoverImageAlt(filled.coverImageAlt);
+    if (!keyTakeawaysText.trim()) setKeyTakeawaysText(filled.keyTakeaways.join('\n'));
+    if (!hashtagsInput.trim()) setHashtagsInput(filled.hashtags.join(', '));
+    if (!relatedSlugsInput.trim()) setRelatedSlugsInput(filled.relatedSlugs.join(', '));
+    if (faqsList.length === 0 || (faqsList.length === 1 && !faqsList[0].q && !faqsList[0].a)) {
+      setFaqsList(filled.faqs);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Banner / Actions Header */}
@@ -1003,17 +1160,33 @@ export const AdminCmsPage: React.FC = () => {
         <div className="flex items-center gap-2 pt-2 border-t border-white/10 overflow-x-auto">
           <button
             type="button"
-            onClick={() => setActiveTab('library')}
+            onClick={() => setActiveTab('published')}
             className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              activeTab === 'library'
+              activeTab === 'published'
                 ? 'bg-white text-emerald-950 shadow-sm'
                 : 'bg-white/10 text-emerald-100 hover:bg-white/15'
             }`}
           >
-            <Layers className="w-3.5 h-3.5" />
-            <span>Article Library</span>
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-black/10">
-              {articles.length}
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+            <span>Uploaded / Published</span>
+            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-100 text-emerald-900 font-black">
+              {publishedArticles.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('to_upload')}
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'to_upload'
+                ? 'bg-white text-emerald-950 shadow-sm'
+                : 'bg-white/10 text-emerald-100 hover:bg-white/15'
+            }`}
+          >
+            <Upload className="w-3.5 h-3.5 text-amber-500" />
+            <span>To Upload</span>
+            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-400 text-amber-950 font-black">
+              {toUploadArticles.length}
             </span>
           </button>
 
@@ -1162,86 +1335,76 @@ export const AdminCmsPage: React.FC = () => {
       )}
 
       {/* ============================================================== */}
-      {/* TAB 1: ARTICLE LIBRARY                                         */}
+      {/* SECTION 1: UPLOADED / PUBLISHED ARTICLES                       */}
       {/* ============================================================== */}
-      {activeTab === 'library' && (
+      {activeTab === 'published' && (
         <div className="space-y-6">
-          {/* Filters Bar */}
-          <div className="bg-white border border-neutral-200/90 rounded-2xl p-4 flex flex-col sm:flex-row gap-3 items-center justify-between shadow-xs">
+          {/* Header & Search Bar */}
+          <div className="bg-white border border-neutral-200/90 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row gap-3 items-center justify-between shadow-xs">
             <div className="relative w-full sm:w-80">
               <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search guides, recipes or tags..."
+                placeholder="Search live articles by title, tag, or cluster..."
                 className="w-full pl-9 pr-3 py-2 rounded-xl border border-neutral-200 text-xs focus:outline-none focus:border-[#003527]"
               />
             </div>
 
             <div className="flex items-center gap-2 w-full sm:w-auto">
-              <Filter className="w-4 h-4 text-neutral-400" />
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as any)}
-                className="px-3 py-2 rounded-xl border border-neutral-200 text-xs bg-white text-neutral-700 focus:outline-none focus:border-[#003527]"
+              <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">
+                {publishedArticles.length} Live in App &amp; Blog
+              </span>
+              <button
+                type="button"
+                onClick={openCreateModal}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#003527] text-white font-bold text-xs hover:bg-[#00281e] cursor-pointer shadow-xs"
               >
-                <option value="all">All Statuses ({total})</option>
-                <option value="published">Published (Live in App)</option>
-                <option value="draft">Drafts / Queued</option>
-              </select>
+                <Plus className="w-4 h-4" />
+                <span>New Article</span>
+              </button>
             </div>
           </div>
 
-          {/* Article Cards Grid */}
+          {/* Published Articles Grid */}
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 animate-pulse">
-              {[1, 2, 3, 4, 5, 6].map((idx) => (
+              {[1, 2, 3].map((idx) => (
                 <div key={idx} className="bg-white border border-neutral-200/90 rounded-2xl p-5 space-y-4 shadow-xs">
-                  <div className="flex items-center justify-between">
-                    <div className="h-3.5 bg-neutral-200 rounded-md w-28" />
-                    <div className="h-4 bg-neutral-200 rounded-full w-14" />
-                  </div>
-                  <div className="h-5 bg-neutral-200 rounded-md w-4/5" />
-                  <div className="space-y-2">
-                    <div className="h-3.5 bg-neutral-100 rounded-md w-full" />
-                    <div className="h-3.5 bg-neutral-100 rounded-md w-3/4" />
-                  </div>
-                  <div className="pt-3 border-t border-neutral-100 flex items-center justify-between">
-                    <div className="h-3.5 bg-neutral-100 rounded w-20" />
-                    <div className="h-6 bg-neutral-200 rounded-lg w-16" />
-                  </div>
+                  <div className="h-4 bg-neutral-200 rounded-md w-3/4" />
+                  <div className="h-24 bg-neutral-100 rounded-xl w-full" />
                 </div>
               ))}
             </div>
-          ) : articles.length === 0 ? (
+          ) : filteredPublishedArticles.length === 0 ? (
             <div className="bg-white border border-neutral-200/90 rounded-2xl p-12 text-center space-y-4 shadow-xs">
               <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center mx-auto">
-                <BookOpen className="w-7 h-7" />
+                <CheckCircle2 className="w-7 h-7" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-neutral-900">Zero Articles Found</h3>
+                <h3 className="text-base font-bold text-neutral-900">No Published Articles Found</h3>
                 <p className="text-xs text-neutral-500 max-w-md mx-auto mt-1">
-                  No grocery guides match your criteria. Click below to compose and publish your first article.
+                  {search ? 'No live articles match your search filter.' : 'Go to the "To Upload" tab to publish drafts or write a new article.'}
                 </p>
               </div>
               <button
                 type="button"
-                onClick={openCreateModal}
+                onClick={() => setActiveTab('to_upload')}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#003527] text-white font-bold text-xs hover:bg-[#00281e] cursor-pointer"
               >
-                <Plus className="w-4 h-4" />
-                <span>Create First Article</span>
+                <Upload className="w-4 h-4" />
+                <span>View Articles To Upload</span>
               </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {articles.map((art) => (
+              {filteredPublishedArticles.map((art) => (
                 <div
                   key={art.id}
                   className="bg-white border border-neutral-200/90 rounded-2xl overflow-hidden hover:border-[#003527]/40 hover:shadow-md transition-all flex flex-col justify-between group"
                 >
-                  {/* Short Link Bar at top of Card */}
+                  {/* Public Link Bar */}
                   <div className="px-3.5 py-2 bg-neutral-50/90 border-b border-neutral-100 flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5 text-neutral-600 truncate font-mono text-[10.5px]">
                       <LinkIcon className="w-3 h-3 text-neutral-400 shrink-0" />
@@ -1270,10 +1433,10 @@ export const AdminCmsPage: React.FC = () => {
                         href={`/blog/${art.slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 text-[10px] font-bold text-[#003527] cursor-pointer shadow-2xs"
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-600 text-white hover:bg-emerald-700 text-[10px] font-bold cursor-pointer shadow-2xs"
                         title="Open live article page"
                       >
-                        <span>View</span>
+                        <span>View Live</span>
                         <ExternalLink className="w-2.5 h-2.5" />
                       </a>
                     </div>
@@ -1291,14 +1454,8 @@ export const AdminCmsPage: React.FC = () => {
                         }}
                       />
                       <div className="absolute top-2.5 right-2.5 flex items-center gap-1">
-                        <span
-                          className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-xs ${
-                            art.status === 'published'
-                              ? 'bg-emerald-600 text-white'
-                              : 'bg-amber-500 text-white'
-                          }`}
-                        >
-                          {art.status === 'published' ? 'Live in App' : 'Draft'}
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-xs bg-emerald-600 text-white">
+                          Live in App
                         </span>
                       </div>
                       <div className="absolute bottom-2.5 left-2.5">
@@ -1308,23 +1465,27 @@ export const AdminCmsPage: React.FC = () => {
                       </div>
                     </div>
                   ) : (
-                    <div className="h-28 w-full bg-gradient-to-br from-emerald-900 to-[#003527] p-3 flex flex-col justify-between text-white relative">
-                      <span className="text-[10px] font-bold uppercase tracking-wider self-start bg-white/20 px-2 py-0.5 rounded">
-                        {art.category}
-                      </span>
-                      <span
-                        className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full absolute top-3 right-3 ${
-                          art.status === 'published' ? 'bg-emerald-500 text-white' : 'bg-amber-400 text-neutral-900'
-                        }`}
-                      >
-                        {art.status === 'published' ? 'Live in App' : 'Draft'}
-                      </span>
+                    <div className="h-32 w-full bg-gradient-to-br from-[#003527] to-[#002219] p-3.5 flex flex-col justify-between text-white relative">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded">
+                          {art.category}
+                        </span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500 text-white">
+                          Live in App
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-[#FCBC1F] text-[#003527] font-black text-xs flex items-center justify-center">
+                          YAAD
+                        </div>
+                        <span className="text-[11px] text-emerald-100 font-medium">YAAD Official Cover</span>
+                      </div>
                     </div>
                   )}
 
                   {/* Card Body */}
                   <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
-                    <div className="space-y-2">
+                    <div className="space-y-1.5">
                       <h4 className="font-bold text-neutral-900 text-sm leading-snug line-clamp-2">
                         {art.title}
                       </h4>
@@ -1345,40 +1506,32 @@ export const AdminCmsPage: React.FC = () => {
                         </span>
                       </div>
 
-                      {art.queueStatus && (
-                        <div className="flex items-center gap-2 text-[10px]">
-                          <span className="font-bold text-neutral-400 uppercase">Queue:</span>
-                          <span
-                            className={`px-2 py-0.5 rounded-full font-bold uppercase ${
-                              art.queueStatus === 'published'
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : art.queueStatus === 'scheduled'
-                                ? 'bg-blue-100 text-blue-800'
-                                : art.queueStatus === 'needs_review'
-                                ? 'bg-red-100 text-red-800'
-                                : 'bg-neutral-100 text-neutral-700'
-                            }`}
-                          >
-                            {art.queueStatus}
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="inline-flex items-center gap-1 text-neutral-600">
+                          <Eye className="w-3 h-3 text-neutral-400" />
+                          <span>{art.viewsCount || 0} views</span>
+                        </span>
+                        {art.cluster && (
+                          <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 text-[10px] font-semibold">
+                            {art.cluster}
                           </span>
-                          {art.publishDate && <span>📅 {art.publishDate}</span>}
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
 
-                    {/* Card Actions & Comments Count */}
-                    <div className="flex items-center justify-between pt-2 border-t border-neutral-100">
+                    {/* Actions: View Live, Edit, Unpublish, Delete */}
+                    <div className="flex items-center justify-between pt-2 border-t border-neutral-100 gap-1.5">
                       <button
                         type="button"
                         onClick={() => openCommentsModal(art)}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-bold cursor-pointer transition-colors"
-                        title="View and reply to reader comments"
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-bold cursor-pointer transition-colors"
+                        title="View reader comments"
                       >
                         <MessageSquare className="w-3 h-3 text-emerald-700" />
                         <span>{art.commentsCount ?? art.comments?.length ?? 0}</span>
                       </button>
 
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1">
                         <button
                           type="button"
                           onClick={() => openEditModal(art)}
@@ -1389,8 +1542,16 @@ export const AdminCmsPage: React.FC = () => {
                         </button>
                         <button
                           type="button"
+                          onClick={() => handleUnpublishArticle(art)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 text-xs font-bold cursor-pointer"
+                          title="Unpublish article back to To Upload"
+                        >
+                          <span>Unpublish</span>
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => handleDelete(art.id, art.title)}
-                          className="inline-flex items-center p-1 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 text-xs cursor-pointer"
+                          className="inline-flex items-center p-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 text-xs cursor-pointer"
                           title="Delete article"
                         >
                           <Trash2 className="w-3 h-3" />
@@ -1400,6 +1561,223 @@ export const AdminCmsPage: React.FC = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* SECTION 2: TO UPLOAD (Drafts, Ideas, Scheduled, Needs Review)  */}
+      {/* ============================================================== */}
+      {activeTab === 'to_upload' && (
+        <div className="space-y-6">
+          {/* Header & Sub-filters */}
+          <div className="bg-white border border-neutral-200/90 rounded-2xl p-4 sm:p-5 space-y-4 shadow-xs">
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+              <div>
+                <h3 className="text-base font-bold text-neutral-900 flex items-center gap-2">
+                  <Upload className="w-4 h-4 text-[#003527]" />
+                  <span>Articles To Upload ({toUploadArticles.length})</span>
+                </h3>
+                <p className="text-xs text-neutral-500 mt-0.5">
+                  Click <strong>Upload</strong> on any article to run the 11-rule SEO gate and publish instantly to the public blog and mobile app.
+                </p>
+              </div>
+
+              <div className="relative w-full sm:w-72">
+                <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search to upload list..."
+                  className="w-full pl-9 pr-3 py-2 rounded-xl border border-neutral-200 text-xs focus:outline-none focus:border-[#003527]"
+                />
+              </div>
+            </div>
+
+            {/* Sub-filter Pills */}
+            <div className="flex items-center gap-2 overflow-x-auto pt-1 border-t border-neutral-100">
+              {(
+                [
+                  { id: 'all', label: 'All Pending', count: toUploadArticles.length },
+                  { id: 'draft_ready', label: 'Draft Ready', count: toUploadArticles.filter((a) => a.queueStatus === 'draft_ready').length },
+                  { id: 'scheduled', label: 'Scheduled', count: toUploadArticles.filter((a) => a.queueStatus === 'scheduled').length },
+                  { id: 'needs_review', label: 'Needs Review', count: toUploadArticles.filter((a) => a.queueStatus === 'needs_review').length },
+                  { id: 'idea', label: 'Idea Bank', count: toUploadArticles.filter((a) => a.queueStatus === 'idea' || !a.queueStatus).length },
+                ] as const
+              ).map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => setToUploadSubFilter(f.id as any)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                    toUploadSubFilter === f.id
+                      ? 'bg-[#003527] text-white shadow-xs'
+                      : 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700'
+                  }`}
+                >
+                  <span>{f.label}</span>
+                  <span
+                    className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                      toUploadSubFilter === f.id ? 'bg-white/20 text-white' : 'bg-neutral-200 text-neutral-600'
+                    }`}
+                  >
+                    {f.count}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* List of Articles To Upload */}
+          {isLoading ? (
+            <div className="bg-white border border-neutral-200/90 rounded-2xl p-8 space-y-4 animate-pulse">
+              {[1, 2, 3, 4].map((idx) => (
+                <div key={idx} className="h-16 bg-neutral-100 rounded-xl w-full" />
+              ))}
+            </div>
+          ) : filteredToUploadArticles.length === 0 ? (
+            <div className="bg-white border border-neutral-200/90 rounded-2xl p-12 text-center space-y-3 shadow-xs">
+              <Upload className="w-10 h-10 text-neutral-300 mx-auto" />
+              <p className="text-sm font-bold text-neutral-700">No articles match this sub-filter</p>
+              <p className="text-xs text-neutral-400 max-w-md mx-auto">
+                Check other sub-filters or import ideas from the 256-idea bank.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {filteredToUploadArticles.map((art) => {
+                const gate = validateArticleSeoGate(art, currentSlugsSet);
+                const hasErrors = rowGateErrors[art.id] && rowGateErrors[art.id].length > 0;
+                const isUploading = uploadingArticleId === art.id;
+
+                return (
+                  <div
+                    key={art.id}
+                    className="bg-white border border-neutral-200/90 hover:border-[#003527]/30 rounded-2xl p-4 sm:p-5 shadow-xs transition-all space-y-3"
+                  >
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                      {/* Left: Metadata & Title */}
+                      <div className="space-y-1.5 flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-[10px] font-mono font-bold bg-neutral-100 text-neutral-600 px-2 py-0.5 rounded">
+                            #{art.priority ?? 100}
+                          </span>
+                          <span
+                            className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
+                              art.queueStatus === 'draft_ready'
+                                ? 'bg-purple-100 text-purple-800'
+                                : art.queueStatus === 'scheduled'
+                                ? 'bg-blue-100 text-blue-800'
+                                : art.queueStatus === 'needs_review'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-neutral-100 text-neutral-700'
+                            }`}
+                          >
+                            {art.queueStatus || 'idea'}
+                          </span>
+                          {art.cluster && (
+                            <span className="text-[10px] font-semibold bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded">
+                              {art.cluster}
+                            </span>
+                          )}
+                          <span className="text-[10px] text-neutral-400">
+                            {art.wordCount || (art.body ? art.body.trim().split(/\s+/).filter(Boolean).length : 0)} words
+                          </span>
+
+                          {/* Gate Status Pill */}
+                          <span
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              gate.passed
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-amber-100 text-amber-900'
+                            }`}
+                          >
+                            {gate.passed ? '✓ Gate: Ready' : `! Gate: Incomplete (${gate.errors.length} missing)`}
+                          </span>
+                        </div>
+
+                        <h4 className="font-bold text-neutral-900 text-sm sm:text-base leading-snug">
+                          {art.title}
+                        </h4>
+                        {art.excerpt && (
+                          <p className="text-xs text-neutral-500 line-clamp-1">{art.excerpt}</p>
+                        )}
+                      </div>
+
+                      {/* Right: Actions (Upload Button on EVERY article row!) */}
+                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                        <button
+                          type="button"
+                          onClick={() => handleUploadSingleArticle(art)}
+                          disabled={isUploading}
+                          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs cursor-pointer disabled:opacity-50 transition-all active:scale-95"
+                          title="Run 11-rule SEO gate and publish immediately to blog & app"
+                        >
+                          {isUploading ? (
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Upload className="w-3.5 h-3.5" />
+                          )}
+                          <span>{isUploading ? 'Uploading...' : 'Upload'}</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(art)}
+                          className="px-3 py-2 rounded-xl border border-neutral-200 text-neutral-700 hover:bg-neutral-50 text-xs font-bold cursor-pointer"
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(art.id, art.title)}
+                          className="p-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 text-xs cursor-pointer"
+                          title="Delete article"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Inline Gate Blocked Reasons Panel (Zero silent failures) */}
+                    {hasErrors && (
+                      <div className="mt-2 p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 space-y-1.5 animate-in fade-in duration-150">
+                        <div className="flex items-center justify-between font-bold text-red-950">
+                          <span className="flex items-center gap-1.5">
+                            <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+                            <span>Publishing Gate Blocked ({rowGateErrors[art.id].length} issues to resolve before upload):</span>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setRowGateErrors((prev) => ({ ...prev, [art.id]: [] }))}
+                            className="text-[10px] text-red-600 hover:underline cursor-pointer font-semibold"
+                          >
+                            Dismiss
+                          </button>
+                        </div>
+                        <ul className="list-disc list-inside space-y-0.5 text-[11px] text-red-900/90 pl-1">
+                          {rowGateErrors[art.id].map((err, i) => (
+                            <li key={i}>{err}</li>
+                          ))}
+                        </ul>
+                        <div className="pt-1">
+                          <button
+                            type="button"
+                            onClick={() => openEditModal(art)}
+                            className="inline-flex items-center gap-1 text-[11px] font-bold text-[#003527] hover:underline cursor-pointer"
+                          >
+                            <span>Open editor to complete SEO &amp; body content</span>
+                            <ChevronRight className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -2075,12 +2453,12 @@ export const AdminCmsPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Cover Image URL & Upload from Computer */}
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="font-bold text-neutral-700 flex items-center gap-1.5">
-                    <ImageIcon className="w-3.5 h-3.5 text-neutral-500" />
-                    <span>Cover Image (URL or Upload)</span>
+              {/* Cover Image URL & Upload from Computer (R3) */}
+              <div className="p-3.5 rounded-2xl bg-neutral-50/70 border border-neutral-200/80 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="font-bold text-neutral-800 flex items-center gap-1.5 text-xs">
+                    <ImageIcon className="w-3.5 h-3.5 text-emerald-700" />
+                    <span>Cover Image &amp; Visual Branding (R3)</span>
                   </label>
                   <button
                     type="button"
@@ -2094,7 +2472,7 @@ export const AdminCmsPage: React.FC = () => {
 
                 {/* Cloudinary Step-by-Step Helper Banner & Credentials */}
                 {showCloudinaryGuide && (
-                  <div className="mb-3 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-950 space-y-3 text-[11.5px] leading-relaxed">
+                  <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-950 space-y-3 text-[11.5px] leading-relaxed">
                     <p className="font-bold text-emerald-900 flex items-center justify-between">
                       <span>Cloudinary 25GB فری سیٹ اپ اور کریڈینشلز:</span>
                       {cloudName.trim() && (
@@ -2145,51 +2523,142 @@ export const AdminCmsPage: React.FC = () => {
                   <input
                     type="text"
                     value={coverImageUrl}
-                    onChange={(e) => setCoverImageUrl(e.target.value)}
+                    onChange={(e) => {
+                      setCoverImageUrl(e.target.value);
+                      if (e.target.value && (!ogImageUrl || ogImageUrl === coverImageUrl)) {
+                        setOgImageUrl(e.target.value);
+                      }
+                    }}
                     placeholder="Paste image URL (Unsplash, Cloudinary, etc.)"
-                    className="flex-1 px-3 py-2 rounded-xl border border-neutral-200 text-neutral-700 focus:outline-none focus:border-[#003527]"
+                    className="flex-1 px-3 py-2 rounded-xl border border-neutral-200 text-neutral-700 focus:outline-none focus:border-[#003527] bg-white text-xs"
                   />
                   <input
                     type="file"
                     ref={fileInputRef}
                     onChange={handleImageFileSelect}
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/webp"
                     className="hidden"
                   />
                   <button
                     type="button"
                     disabled={isUploadingToCloudinary}
                     onClick={() => fileInputRef.current?.click()}
-                    className="px-3 py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-bold text-xs cursor-pointer inline-flex items-center gap-1.5 shrink-0 disabled:opacity-50"
+                    className="px-3.5 py-2 rounded-xl bg-[#003527] hover:bg-[#00281e] text-white font-bold text-xs cursor-pointer inline-flex items-center gap-1.5 shrink-0 disabled:opacity-50 transition-colors shadow-2xs"
                   >
                     {isUploadingToCloudinary ? (
-                      <RefreshCw className="w-3.5 h-3.5 animate-spin text-emerald-700" />
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#FCBC1F]" />
                     ) : (
                       <Upload className="w-3.5 h-3.5" />
                     )}
-                    <span>{isUploadingToCloudinary ? 'Uploading to Cloudinary...' : 'Upload Image'}</span>
+                    <span>{isUploadingToCloudinary ? 'Uploading...' : coverImageUrl ? 'Upload New' : 'Upload Image (≤5MB)'}</span>
                   </button>
                 </div>
 
-                {coverImageUrl && (
-                  <div className="mt-2.5 flex items-center gap-3">
-                    <div className="h-20 w-36 rounded-xl overflow-hidden border border-neutral-200 bg-neutral-50 shadow-2xs">
-                      <img
-                        src={coverImageUrl}
-                        alt="Preview"
-                        className="w-full h-full object-cover"
-                        onError={(e) => ((e.target as HTMLElement).style.display = 'none')}
+                {/* Live Preview + Actions (Replace, Remove, Alt Text) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  {/* Left: 16:9 Live Preview Box */}
+                  <div>
+                    <div className="text-[11px] font-bold text-neutral-600 mb-1 flex items-center justify-between">
+                      <span>Live Cover Preview</span>
+                      <span className="text-[10px] font-mono text-neutral-400">16:9 Aspect Ratio</span>
+                    </div>
+
+                    <div className="relative aspect-video rounded-xl overflow-hidden border border-neutral-200 bg-neutral-900 shadow-2xs flex items-center justify-center">
+                      {coverImageUrl ? (
+                        <img
+                          src={coverImageUrl}
+                          alt={coverImageAlt || title || 'Article cover'}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLElement).style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        /* YAAD Branded Default Cover */
+                        <div className="w-full h-full bg-[#003527] flex flex-col items-center justify-center p-3 text-center relative overflow-hidden select-none">
+                          <div className="absolute -right-6 -bottom-6 w-24 h-24 rounded-full bg-white/5 pointer-events-none" />
+                          <div className="absolute -left-6 -top-6 w-20 h-20 rounded-full bg-[#FCBC1F]/10 pointer-events-none" />
+                          <img
+                            src="/logo.png"
+                            alt="YAAD"
+                            className="h-9 w-auto object-contain brightness-0 invert drop-shadow-md mb-1.5 relative z-10"
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = 'none';
+                            }}
+                          />
+                          <span className="text-[11px] font-black text-[#FCBC1F] tracking-wide relative z-10 line-clamp-1">
+                            {title || 'YAAD Grocery Guide'}
+                          </span>
+                          <span className="text-[9px] text-white/70 relative z-10 mt-0.5">
+                            YAAD Official Default Cover
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Action buttons when cover image exists */}
+                    {coverImageUrl ? (
+                      <div className="flex items-center gap-2 mt-2">
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="px-2.5 py-1 rounded-lg bg-neutral-200 hover:bg-neutral-300 text-neutral-800 text-[11px] font-bold cursor-pointer inline-flex items-center gap-1 transition-colors"
+                        >
+                          <RefreshCw className="w-3 h-3" />
+                          <span>Replace Image</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCoverImageUrl('');
+                            if (fileInputRef.current) fileInputRef.current.value = '';
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 text-[11px] font-bold cursor-pointer inline-flex items-center gap-1 transition-colors"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          <span>Remove</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-[10px] text-amber-700 bg-amber-50 p-1.5 rounded-lg border border-amber-200 mt-2 leading-relaxed">
+                        ⚠️ <strong>No cover image set.</strong> The official YAAD-branded cover above will show publicly, but the publishing gate warns until a custom photo + alt text are set.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Right: Alt Text & Guidelines */}
+                  <div className="flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="font-bold text-neutral-700 text-xs">
+                          Cover Image Alt Text {coverImageUrl ? <span className="text-red-500">*</span> : null}
+                        </label>
+                        <span className={`text-[10px] font-mono font-bold ${coverImageAlt.length > 125 ? 'text-amber-600' : 'text-neutral-500'}`}>
+                          {coverImageAlt.length} chars (Target: 15–125)
+                        </span>
+                      </div>
+                      <textarea
+                        rows={3}
+                        value={coverImageAlt}
+                        onChange={(e) => setCoverImageAlt(e.target.value)}
+                        placeholder="e.g. Modern Pakistani kitchen with stainless steel pantry jars, basmati rice, and spices"
+                        className="w-full px-3 py-2 rounded-xl border border-neutral-200 bg-white text-neutral-800 text-xs focus:outline-none focus:border-[#003527]"
                       />
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setCoverImageUrl('')}
-                      className="text-xs text-red-600 hover:underline cursor-pointer"
-                    >
-                      Remove Image
-                    </button>
+
+                    <div className="bg-white p-2.5 rounded-xl border border-neutral-200/80 text-[10.5px] text-neutral-600 space-y-1 mt-2">
+                      <div className="font-bold text-neutral-700 flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        <span>Publishing Gate Image Rules:</span>
+                      </div>
+                      <p className="text-[10px] leading-relaxed text-neutral-500">
+                        • Formats: JPG, PNG, WebP (≤ 5MB)<br />
+                        • Descriptive alt text without &quot;image of&quot; or keyword stuffing<br />
+                        • Updates OG / Twitter preview card automatically
+                      </p>
+                    </div>
                   </div>
-                )}
+                </div>
               </div>
 
               {/* Excerpt */}
@@ -2452,9 +2921,20 @@ export const AdminCmsPage: React.FC = () => {
                     <Sparkles className="w-4 h-4 text-emerald-700" />
                     <span>On-Page SEO &amp; Publishing Gate Specification</span>
                   </div>
-                  <span className={`text-[10.5px] font-bold px-2 py-0.5 rounded-full ${seoChecklist.passed ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'}`}>
-                    {seoChecklist.passed ? '✓ Ready for Publishing Gate' : `! ${seoChecklist.errors.length} Gate Checks Pending`}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleAutoFillSeo}
+                      className="px-2.5 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-[11px] inline-flex items-center gap-1 shadow-2xs cursor-pointer transition-all active:scale-95"
+                      title="Auto-fill all missing SEO fields from title and body content"
+                    >
+                      <Sparkles className="w-3 h-3 text-[#FCBC1F]" />
+                      <span>Auto-fill SEO</span>
+                    </button>
+                    <span className={`text-[10.5px] font-bold px-2 py-0.5 rounded-full ${seoChecklist.passed ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900'}`}>
+                      {seoChecklist.passed ? '✓ Ready for Publishing Gate' : `! ${seoChecklist.errors.length} Gate Checks Pending`}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Focus Keyword & Pillar Cluster */}

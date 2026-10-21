@@ -65,6 +65,21 @@ async function runRbacTests() {
   }
   console.log('✅ PASSED: Content Editor role properly restricted to catalog and CMS publishing');
 
+  // Content Writer checks
+  if (!adminStore.hasPermission('content_writer', 'content.publish')) {
+    throw new Error('content_writer must have content.publish');
+  }
+  if (adminStore.hasPermission('content_writer', 'catalog.edit')) {
+    throw new Error('content_writer must NOT have catalog.edit');
+  }
+  if (adminStore.hasPermission('content_writer', 'users.suspend')) {
+    throw new Error('content_writer must NOT have users.suspend');
+  }
+  if (adminStore.hasPermission('content_writer', 'settings.edit')) {
+    throw new Error('content_writer must NOT have settings.edit');
+  }
+  console.log('✅ PASSED: Content Writer role properly configured with full CMS publishing authority');
+
   // Analyst checks
   if (!adminStore.hasPermission('analyst', 'reports.view')) {
     throw new Error('analyst must have reports.view');

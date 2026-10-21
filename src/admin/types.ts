@@ -1,4 +1,4 @@
-export type AdminRole = 'super_admin' | 'support_agent' | 'content_editor' | 'analyst';
+export type AdminRole = 'super_admin' | 'support_agent' | 'content_editor' | 'content_writer' | 'analyst';
 
 export type AdminStatus = 'active' | 'suspended';
 
@@ -79,9 +79,15 @@ export const ROLE_LABELS: Record<AdminRole, { title: string; badgeClass: string;
     badgeClass: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
     description: 'In-app editorial content, FAQs, banners, and catalog editing.',
   },
+  content_writer: {
+    title: 'Content Writer',
+    badgeClass: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+    description: 'Full CMS authority: view, create, edit, auto-fill, schedule, import, and publish articles.',
+  },
   analyst: {
     title: 'Analyst',
     badgeClass: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
     description: 'Read-only access to metrics, cohort retention, and reporting.',
   },
 };
+

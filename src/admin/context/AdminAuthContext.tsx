@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { AdminUser, AdminSessionInfo } from '../types';
 import { safeFetchJson } from '../utils/apiClient';
+import { adminCache } from '../utils/adminCache';
 
 interface LoginStep1Result {
   requires2faVerify?: boolean;
@@ -172,6 +173,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
 
     if (data.token && data.admin) {
+      adminCache.invalidate();
       setToken(data.token);
       setAdmin(data.admin);
       localStorage.setItem(TOKEN_STORAGE_KEY, data.token);
@@ -193,6 +195,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       return { success: false, error: res.error || 'Invalid 2FA code.' };
     }
 
+    adminCache.invalidate();
     setToken(res.data.token);
     setAdmin(res.data.admin);
     localStorage.setItem(TOKEN_STORAGE_KEY, res.data.token);
@@ -246,6 +249,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const activeToken = localStorage.getItem(TOKEN_STORAGE_KEY);
     // Immediately clear local authentication state to prevent cascading 401 fetches
     localStorage.removeItem(TOKEN_STORAGE_KEY);
+    adminCache.invalidate();
     setToken(null);
     setAdmin(null);
     setSession(null);

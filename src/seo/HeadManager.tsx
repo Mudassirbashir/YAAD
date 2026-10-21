@@ -276,10 +276,12 @@ export const HeadManager: React.FC = () => {
       email: SITE_CONFIG.supportEmail,
       founder: authorPersonSchema,
       sameAs: [
-        'https://www.tiktok.com/@yaadapp',
-        'https://www.facebook.com/yaadapp',
-        'https://www.instagram.com/yaadapp',
-        'https://www.linkedin.com/company/yaadapp',
+        'https://www.instagram.com/yaadapppk/',
+        'https://www.facebook.com/yaadapppk/',
+        'https://www.youtube.com/@yaadapppk',
+        'https://x.com/yaadapppk',
+        'https://www.linkedin.com/in/yaadapppk/',
+        'https://www.tiktok.com/@yaadapppk',
       ],
     };
 

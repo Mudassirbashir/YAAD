@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   ArrowLeft,
   ArrowRight,
@@ -81,8 +81,11 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
   const [openFaqIds, setOpenFaqIds] = useState<Set<string>>(new Set(['what-is-yaad', 'offline-how', 'language-switch']));
   const [expandedBlogPostId, setExpandedBlogPostId] = useState<string | null>(null);
 
-  // Dynamic CMS articles state & comments state
+  // Dynamic CMS articles state, search & category filters
   const [cmsArticles, setCmsArticles] = useState<any[]>([]);
+  const [cmsFetchFailed, setCmsFetchFailed] = useState(false);
+  const [blogSearchQuery, setBlogSearchQuery] = useState('');
+  const [selectedBlogCategory, setSelectedBlogCategory] = useState<string>('all');
   const [commentInputs, setCommentInputs] = useState<Record<string, { name: string; email: string; content: string }>>({});
   const [isSubmittingComment, setIsSubmittingComment] = useState<Record<string, boolean>>({});
   const [commentSuccessMsg, setCommentSuccessMsg] = useState<Record<string, string>>({});
@@ -90,17 +93,55 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
   useEffect(() => {
     let isMounted = true;
     fetch('/api/blog/articles')
-      .then((res) => (res.ok ? res.json() : null))
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
       .then((data) => {
         if (isMounted && data?.articles) {
           setCmsArticles(data.articles);
+          setCmsFetchFailed(false);
         }
       })
-      .catch((err) => console.error('Failed to fetch CMS articles:', err));
+      .catch((err) => {
+        console.error('Failed to fetch CMS articles:', err);
+        if (isMounted) setCmsFetchFailed(true);
+      });
     return () => {
       isMounted = false;
     };
   }, []);
+
+  const blogCategories = useMemo(() => {
+    const cats = new Set<string>();
+    cmsArticles.forEach((a) => {
+      const c = a.category || a.cluster;
+      if (c && typeof c === 'string') cats.add(c.trim());
+    });
+    return ['all', ...Array.from(cats)];
+  }, [cmsArticles]);
+
+  const filteredBlogArticles = useMemo(() => {
+    let list = [...cmsArticles];
+    // Sort newest published first
+    list.sort((a, b) => (b.publishedAt || b.createdAt || 0) - (a.publishedAt || a.createdAt || 0));
+
+    if (selectedBlogCategory !== 'all') {
+      list = list.filter((a) => (a.category || a.cluster) === selectedBlogCategory);
+    }
+    if (blogSearchQuery.trim()) {
+      const q = blogSearchQuery.toLowerCase().trim();
+      list = list.filter((a) =>
+        (a.title && a.title.toLowerCase().includes(q)) ||
+        (a.excerpt && a.excerpt.toLowerCase().includes(q)) ||
+        (a.focusKeyword && a.focusKeyword.toLowerCase().includes(q)) ||
+        (Array.isArray(a.tags) && a.tags.some((t: string) => t.toLowerCase().includes(q))) ||
+        (a.category && a.category.toLowerCase().includes(q)) ||
+        (a.cluster && a.cluster.toLowerCase().includes(q))
+      );
+    }
+    return list;
+  }, [cmsArticles, selectedBlogCategory, blogSearchQuery]);
 
   const handlePostComment = async (articleId: string) => {
     const input = commentInputs[articleId] || { name: '', email: '', content: '' };
@@ -1418,10 +1459,76 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
               </div>
             </div>
 
+            {/* Search Bar & Category Filter Bar */}
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+                <div className="relative flex-1">
+                  <Search className="w-4 h-4 text-[#556960] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={blogSearchQuery}
+                    onChange={(e) => setBlogSearchQuery(e.target.value)}
+                    placeholder="Search guides by title, category, or keyword (e.g. rashan, daal, budget)..."
+                    className="w-full pl-10 pr-9 py-2.5 rounded-2xl border border-[#e5e1d8] bg-white text-xs text-[#1c2826] focus:outline-none focus:border-[#005039] shadow-2xs"
+                  />
+                  {blogSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setBlogSearchQuery('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#556960] hover:text-[#1c2826] p-1 cursor-pointer"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                <div className="text-xs font-semibold text-[#556960] px-1 sm:px-0 flex items-center justify-between sm:justify-end gap-2">
+                  <span>
+                    Showing <strong>{filteredBlogArticles.length}</strong> {filteredBlogArticles.length === 1 ? 'guide' : 'guides'}
+                  </span>
+                  {(blogSearchQuery || selectedBlogCategory !== 'all') && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBlogSearchQuery('');
+                        setSelectedBlogCategory('all');
+                      }}
+                      className="text-[#005039] hover:underline font-bold text-xs cursor-pointer ml-1"
+                    >
+                      Clear filters
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Category Pills */}
+              {blogCategories.length > 2 && (
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                  {blogCategories.map((cat) => {
+                    const isSelected = selectedBlogCategory === cat;
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => setSelectedBlogCategory(cat)}
+                        className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                          isSelected
+                            ? 'bg-[#003527] text-white shadow-2xs'
+                            : 'bg-white border border-[#e5e1d8] text-[#4a5c53] hover:border-[#003527]/40 hover:text-[#003527]'
+                        }`}
+                      >
+                        {cat === 'all' ? 'All Guides' : cat}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
             {/* Articles Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Dynamic Published CMS Articles */}
-              {cmsArticles.map((art) => {
+              {filteredBlogArticles.map((art) => {
                 const isExpanded = expandedBlogPostId === art.id || expandedBlogPostId === art.slug;
                 return (
                   <article
@@ -1433,17 +1540,31 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                         : 'border-[#e5e1d8] hover:border-[#005039]/30'
                     }`}
                   >
-                    {/* Cover Image */}
-                    {art.coverImageUrl && (
-                      <div className="w-full h-44 sm:h-56 rounded-2xl overflow-hidden bg-neutral-100">
+                    {/* Cover Image or Branded Default */}
+                    {art.coverImageUrl ? (
+                      <div className="w-full h-44 sm:h-56 rounded-2xl overflow-hidden bg-neutral-100 relative">
                         <img
                           src={art.coverImageUrl}
-                          alt={art.title}
+                          alt={art.coverImageAlt || art.title}
                           className="w-full h-full object-cover"
                           onError={(e) => {
                             (e.target as HTMLElement).style.display = 'none';
+                            const fb = (e.target as HTMLElement).parentElement?.querySelector('.branded-card-fallback') as HTMLElement;
+                            if (fb) fb.style.display = 'flex';
                           }}
                         />
+                        <div className="branded-card-fallback hidden w-full h-full bg-gradient-to-br from-[#003527] to-[#0a4d38] items-center justify-center p-4">
+                          <img src="/logo.png" alt="YAAD" className="w-12 h-12 object-contain" />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="w-full h-44 sm:h-56 rounded-2xl overflow-hidden bg-gradient-to-br from-[#003527] to-[#0a4d38] flex items-center justify-center p-4 relative shadow-inner">
+                        <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-xs flex items-center justify-center p-2 border border-white/20">
+                          <img src="/logo.png" alt="YAAD" className="w-full h-full object-contain" />
+                        </div>
+                        <span className="absolute bottom-3 right-3 px-2 py-0.5 rounded-full bg-white/20 text-white text-[10px] font-bold">
+                          YAAD Guide
+                        </span>
                       </div>
                     )}
 
@@ -1753,7 +1874,30 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                 );
               })}
 
-              {BLOG_POSTS.map((post) => {
+              {filteredBlogArticles.length === 0 && cmsArticles.length > 0 && (
+                <div className="col-span-1 md:col-span-2 p-10 rounded-3xl bg-white border border-[#e5e1d8] text-center space-y-3 shadow-2xs">
+                  <div className="w-12 h-12 rounded-2xl bg-[#005039]/10 text-[#005039] flex items-center justify-center mx-auto">
+                    <Search className="w-6 h-6" />
+                  </div>
+                  <h4 className="font-bold text-base text-[#1c2826]">No guides match your search</h4>
+                  <p className="text-xs text-[#556960] max-w-sm mx-auto">
+                    We could not find any guides matching "{blogSearchQuery}". Try another keyword or browse all categories.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setBlogSearchQuery('');
+                      setSelectedBlogCategory('all');
+                    }}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#005039] text-white text-xs font-bold hover:bg-[#003d2b] transition-all cursor-pointer"
+                  >
+                    <span>View All Guides</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Static Fallback ONLY if CMS network fetch fails and 0 articles loaded */}
+              {cmsArticles.length === 0 && cmsFetchFailed && BLOG_POSTS.map((post) => {
                 const title = getLocalizedText(post.title);
                 const summary = getLocalizedText(post.summary);
                 const category = getLocalizedText(post.category);

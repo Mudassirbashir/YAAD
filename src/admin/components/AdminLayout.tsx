@@ -48,6 +48,10 @@ export const ROLE_PERMITTED_ROUTES: Record<AdminRole, string[]> = {
     '/admin/catalog',
     '/admin/cms',
   ],
+  content_writer: [
+    '/admin',
+    '/admin/cms',
+  ],
   support_agent: [
     '/admin',
     '/admin/tickets',
