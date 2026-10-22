@@ -1,9 +1,16 @@
+process.env.NODE_ENV = 'test';
 import assert from 'assert';
+import fs from 'fs';
+import path from 'path';
 import { adminStore } from '../server/admin/store.ts';
 import { validateArticleSeoGate } from '../server/admin/seoValidator.ts';
 import { buildSitemapXml } from '../scripts/generate-sitemap.mjs';
+import { app, resolvePublishedArticle } from '../server.ts';
 
 console.log('=== Running SEO Articles & Publishing CMS Test Suite ===\n');
+
+const sitemapPath = path.join(process.cwd(), 'public', 'sitemap.xml');
+const originalSitemap = fs.existsSync(sitemapPath) ? fs.readFileSync(sitemapPath, 'utf-8') : null;
 
 let passedTests = 0;
 
@@ -273,8 +280,10 @@ await runTest('Async import bank tracks persistedCount and totalInSystemAfter wi
     },
   ];
 
-  // Snapshot initial CMS articles state before test to avoid mutating production data
+  // Snapshot initial CMS articles state and sitemap before test to avoid mutating production data
   const originalArticlesSnapshot = JSON.parse(JSON.stringify(adminStore.getCmsArticles()));
+  const sitemapPath = path.join(process.cwd(), 'public', 'sitemap.xml');
+  const originalSitemap = fs.existsSync(sitemapPath) ? fs.readFileSync(sitemapPath, 'utf-8') : null;
 
   try {
     // Dry-run
@@ -312,7 +321,65 @@ await runTest('Async import bank tracks persistedCount and totalInSystemAfter wi
     // Clean up test items and restore pristine database state
     adminStore['db'].cmsArticles = originalArticlesSnapshot;
     adminStore['save']();
+    if (originalSitemap !== null) {
+      fs.writeFileSync(sitemapPath, originalSitemap, 'utf-8');
+    }
   }
 });
+
+// -------------------------------------------------------------
+// Test 6: Draft articles cannot leak through public routes (?preview=true or direct)
+// -------------------------------------------------------------
+await runTest('Draft articles return 404 through public single-article and comments routes', async () => {
+  const originalArticlesSnapshot = JSON.parse(JSON.stringify(adminStore.getCmsArticles()));
+  const server = app.listen(0);
+  const port = (server.address() as any).port;
+  const baseUrl = `http://127.0.0.1:${port}`;
+
+  try {
+    // 1. Direct fetch for draft article -> must be 404
+    const draftRes = await fetch(`${baseUrl}/api/blog/articles/best-grocery-list-apps-for-busy-families`);
+    assert.strictEqual(draftRes.status, 404, 'Draft article must return 404 Not Found');
+
+    // 2. Draft article with ?preview=true -> must be 404 (no unauthenticated bypass)
+    const previewRes = await fetch(`${baseUrl}/api/blog/articles/best-grocery-list-apps-for-busy-families?preview=true`);
+    assert.strictEqual(previewRes.status, 404, 'Draft article with ?preview=true must return 404 Not Found');
+
+    // 3. Draft article comments GET -> must be 404
+    const draftCommentsGet = await fetch(`${baseUrl}/api/blog/articles/best-grocery-list-apps-for-busy-families/comments`);
+    assert.strictEqual(draftCommentsGet.status, 404, 'Draft article comments GET must return 404');
+
+    // 4. Draft article comments POST -> must be 404
+    const draftCommentsPost = await fetch(`${baseUrl}/api/blog/articles/best-grocery-list-apps-for-busy-families/comments`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Tester', content: 'Test comment' }),
+    });
+    assert.strictEqual(draftCommentsPost.status, 404, 'Draft article comments POST must return 404');
+
+    // 5. Published article -> must be 200 OK
+    const pubRes = await fetch(`${baseUrl}/api/blog/articles/monthly-rashan-list-pakistani-family`);
+    assert.strictEqual(pubRes.status, 200, 'Published article must return 200 OK');
+    const pubJson = await pubRes.json();
+    assert.strictEqual(pubJson.success, true, 'Published article success must be true');
+    assert.strictEqual(pubJson.article?.slug, 'monthly-rashan-list-pakistani-family', 'Correct article slug returned');
+
+    // 6. Direct unit check on resolvePublishedArticle
+    const resolvedDraft = await resolvePublishedArticle('best-grocery-list-apps-for-busy-families');
+    assert.strictEqual(resolvedDraft, null, 'resolvePublishedArticle must return null for draft');
+
+    const resolvedPub = await resolvePublishedArticle('monthly-rashan-list-pakistani-family');
+    assert.ok(resolvedPub !== null, 'resolvePublishedArticle must resolve published article');
+    assert.strictEqual(resolvedPub?.article.status, 'published', 'Resolved status must be published');
+  } finally {
+    server.close();
+    adminStore['db'].cmsArticles = originalArticlesSnapshot;
+    adminStore['save']();
+  }
+});
+
+if (originalSitemap !== null) {
+  fs.writeFileSync(sitemapPath, originalSitemap, 'utf-8');
+}
 
 console.log(`\nAll ${passedTests} SEO Articles CMS tests passed with 100% success!`);

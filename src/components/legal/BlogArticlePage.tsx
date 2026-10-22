@@ -96,6 +96,11 @@ export const BlogArticlePage: React.FC<BlogArticlePageProps> = ({
 
   useEffect(() => {
     if (initialArticle && initialArticle.slug === slug) {
+      if (initialArticle.status && initialArticle.status !== 'published') {
+        setError('Article not found');
+        setIsLoading(false);
+        return;
+      }
       setArticle(initialArticle);
       setIsLoading(false);
       return;
@@ -114,6 +119,10 @@ export const BlogArticlePage: React.FC<BlogArticlePageProps> = ({
       })
       .then((data) => {
         if (isMounted && data.article) {
+          if (data.article.status && data.article.status !== 'published') {
+            setError('Article not found');
+            return;
+          }
           setArticle(data.article);
         }
       })

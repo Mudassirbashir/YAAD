@@ -154,42 +154,72 @@ app.get(['/api/blog/articles', '/api/cms/articles', '/api/articles', '/api/publi
   }
 });
 
-// Single Public Article by ID or Slug
+export async function resolvePublishedArticle(idOrSlug: string): Promise<{ article: any; fallback?: boolean } | null> {
+  const cleanId = (idOrSlug || '').trim();
+  if (!cleanId) return null;
+
+  const authArticle = await getAuthoritativeCmsArticleBySlugOrId(cleanId);
+  if (authArticle) {
+    if (authArticle.status === 'published') {
+      return { article: authArticle };
+    }
+    // Article exists in authoritative database but is unpublished (draft)
+    return null;
+  }
+
+  // Fallback to local store for resilience only if Supabase returned null/unreachable
+  const local = adminStore.getCmsArticleBySlug(cleanId) || (adminStore.getPublicCmsArticles().find(a => a.id === cleanId));
+  if (local && local.status === 'published') {
+    return { article: local, fallback: true };
+  }
+
+  return null;
+}
+
+// Single Public Article by ID or Slug (Published articles only)
 app.get(['/api/blog/articles/:id', '/api/articles/:id'], async (req, res) => {
   try {
-    const id = req.params.id;
-    const authArticle = await getAuthoritativeCmsArticleBySlugOrId(id);
-    if (authArticle && (authArticle.status === 'published' || req.query.preview === 'true')) {
-      return res.status(200).json({ success: true, article: authArticle });
+    const resolved = await resolvePublishedArticle(req.params.id);
+    if (!resolved) {
+      return res.status(404).json({ error: 'Article not found' });
     }
-
-    const article = adminStore.getCmsArticleBySlug(id) || (adminStore.getPublicCmsArticles().find(a => a.id === id));
-    if (!article) return res.status(404).json({ error: 'Article not found' });
-    return res.status(200).json({ success: true, article, fallback: true });
+    return res.status(200).json({
+      success: true,
+      article: resolved.article,
+      ...(resolved.fallback ? { fallback: true } : {}),
+    });
   } catch (err: any) {
     console.error('[Blog Article API Error]:', err);
     return res.status(500).json({ error: 'Failed to retrieve article', details: err?.message });
   }
 });
 
-// Public Article Comments: Get Comments
-app.get(['/api/blog/articles/:id/comments', '/api/articles/:id/comments'], (req, res) => {
+// Public Article Comments: Get Comments (Published articles only)
+app.get(['/api/blog/articles/:id/comments', '/api/articles/:id/comments'], async (req, res) => {
   try {
-    const comments = adminStore.getArticleComments(req.params.id);
+    const resolved = await resolvePublishedArticle(req.params.id);
+    if (!resolved) {
+      return res.status(404).json({ error: 'Article not found' });
+    }
+    const comments = adminStore.getArticleComments(resolved.article.id || req.params.id);
     return res.status(200).json({ success: true, comments });
   } catch (err: any) {
     return res.status(500).json({ error: 'Failed to retrieve comments', details: err?.message });
   }
 });
 
-// Public Article Comments: Post Comment (No login required)
-app.post(['/api/blog/articles/:id/comments', '/api/articles/:id/comments'], (req, res) => {
+// Public Article Comments: Post Comment (Published articles only)
+app.post(['/api/blog/articles/:id/comments', '/api/articles/:id/comments'], async (req, res) => {
   try {
+    const resolved = await resolvePublishedArticle(req.params.id);
+    if (!resolved) {
+      return res.status(404).json({ error: 'Article not found' });
+    }
     const { name, content, email } = req.body;
     if (!content || !content.trim()) {
       return res.status(400).json({ error: 'Comment content cannot be empty' });
     }
-    const comment = adminStore.addArticleComment(req.params.id, {
+    const comment = adminStore.addArticleComment(resolved.article.id || req.params.id, {
       name: name || 'Reader',
       content,
       email,
@@ -1879,7 +1909,9 @@ const isServerlessRuntime = Boolean(
   process.env.VERCEL ||
   process.env.AWS_LAMBDA_FUNCTION_NAME ||
   process.env.LAMBDA_TASK_ROOT ||
-  process.env.VERCEL_ENV
+  process.env.VERCEL_ENV ||
+  process.env.NODE_ENV === 'test' ||
+  process.argv.some(arg => arg.includes('test'))
 );
 
 if (!isServerlessRuntime) {
