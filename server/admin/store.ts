@@ -2705,16 +2705,28 @@ class AdminStore {
     if (!this.db.cmsArticles) this.db.cmsArticles = [];
     const now = Date.now();
 
-    // Auto-generate slug from title or provided slug
-    const rawSlug = (articleData.slug && articleData.slug.trim().length > 0)
-      ? articleData.slug
-      : (articleData.title || 'post');
-    const cleanSlug = rawSlug
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '') || 'post';
-
     const targetId = articleData.id;
+    const existing = targetId ? this.db.cmsArticles.find((a) => a.id === targetId) : undefined;
+
+    // Determine clean slug: preserve existing if not explicitly provided
+    let cleanSlug: string;
+    if (articleData.slug && articleData.slug.trim().length > 0) {
+      cleanSlug = articleData.slug
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '') || 'post';
+    } else if (existing && existing.slug) {
+      cleanSlug = existing.slug;
+    } else {
+      const rawSlug = (articleData.title && articleData.title.trim().length > 0)
+        ? articleData.title
+        : 'post';
+      cleanSlug = rawSlug
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '') || 'post';
+    }
+
     // Reject duplicate slugs
     const duplicate = this.db.cmsArticles.find((a) => a.slug === cleanSlug && a.id !== targetId);
     if (duplicate) {

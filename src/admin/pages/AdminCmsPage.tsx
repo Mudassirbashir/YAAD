@@ -1020,6 +1020,7 @@ export const AdminCmsPage: React.FC = () => {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
+          slug: art.slug,
           status: 'published',
           queueStatus: 'published',
           publishedAt: Date.now(),
@@ -1054,6 +1055,7 @@ export const AdminCmsPage: React.FC = () => {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
+          slug: art.slug,
           status: 'draft',
           queueStatus: 'draft_ready',
         }),
