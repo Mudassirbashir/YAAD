@@ -455,6 +455,32 @@ export async function getAllSharedAdmins(): Promise<AdminUser[] | null> {
 }
 
 /**
+ * Deletes an admin user by email or ID from Supabase
+ */
+export async function deleteSharedAdminUser(emailOrId: string): Promise<boolean> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase || isTableMissingInSupabase('admin_users')) return false;
+
+  try {
+    const clean = emailOrId.toLowerCase().trim();
+    const { error } = await supabase
+      .from('admin_users')
+      .delete()
+      .or(`email.eq.${clean},id.eq.${emailOrId}`);
+
+    if (error) {
+      if (isSchemaCacheMissingTableError(error)) {
+        markTableMissingInSupabase('admin_users');
+      }
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Persists an admin invitation to Supabase
  */
 export async function persistSharedInvite(invite: AdminInvite): Promise<void> {

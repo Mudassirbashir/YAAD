@@ -60,23 +60,47 @@ export function buildSitemapXml(publishedArticles = []) {
   return lines.join('\n');
 }
 
-export function generateSitemapFile(customArticles) {
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+dotenv.config();
+
+export async function fetchPublishedArticlesForSitemap() {
+  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error(
+      '[generate-sitemap] Build failed: Supabase credentials (SUPABASE_URL / VITE_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY / VITE_SUPABASE_ANON_KEY) are missing in build environment. Supabase is required as the single source of truth for sitemap generation.'
+    );
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
+  const { data, error } = await supabase
+    .from('cms_articles')
+    .select('slug, updated_at, created_at, status, queue_status')
+    .eq('status', 'published');
+
+  if (error) {
+    throw new Error(`[generate-sitemap] Build failed: Unable to fetch published articles from Supabase cms_articles: ${error.message}`);
+  }
+
+  return (data || []).map((row) => ({
+    slug: row.slug,
+    updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : Date.now(),
+    createdAt: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
+    status: row.status,
+    queueStatus: row.queue_status,
+  }));
+}
+
+export async function generateSitemapFile(customArticles) {
   let articles = customArticles;
   if (!articles) {
-    try {
-      const dataFilePath = path.join(process.cwd(), 'data', 'admin_data.json');
-      if (fs.existsSync(dataFilePath)) {
-        const raw = fs.readFileSync(dataFilePath, 'utf8');
-        const parsed = JSON.parse(raw);
-        articles = (parsed.cmsArticles || []).filter(
-          (a) => a.status === 'published' && a.queueStatus !== 'needs_review' && a.queueStatus !== 'idea'
-        );
-      } else {
-        articles = [];
-      }
-    } catch {
-      articles = [];
-    }
+    console.log('[generate-sitemap] Fetching published articles from Supabase as single source of truth...');
+    articles = await fetchPublishedArticlesForSitemap();
   }
 
   const xml = buildSitemapXml(articles);
@@ -88,11 +112,14 @@ export function generateSitemapFile(customArticles) {
     fs.writeFileSync(distPath, xml, 'utf8');
   }
 
-  console.log(`[generate-sitemap] Wrote sitemap.xml with 10 static URLs and ${articles.length} published articles.`);
+  console.log(`[generate-sitemap] Wrote sitemap.xml with 10 static URLs and ${articles.length} published articles from Supabase.`);
   return xml;
 }
 
 // If executed directly as script
 if (process.argv[1] && process.argv[1].endsWith('generate-sitemap.mjs')) {
-  generateSitemapFile();
+  generateSitemapFile().catch((err) => {
+    console.error('[generate-sitemap] FATAL BUILD ERROR:', err.message);
+    process.exit(1);
+  });
 }

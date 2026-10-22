@@ -30,6 +30,9 @@ import {
   saveSharedTempToken,
   validateSharedTempToken,
   deleteSharedTempToken,
+  persistSharedCmsArticlesBatch,
+  deleteSharedAdminUser,
+  getAuthoritativeCms,
 } from './supabaseAdmin';
 
 export const adminRouter = Router();
@@ -1741,6 +1744,58 @@ adminRouter.delete('/cms/articles/:id', requireAdminAuth, requirePermission('con
     res.status(200).json({ success: true });
   } catch (err: any) {
     res.status(500).json({ error: 'Failed to delete article', details: err.message });
+  }
+});
+
+adminRouter.post('/cms/articles/reconcile-all', requireAdminAuth, requirePermission('content.publish'), async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const allArticles = adminStore.getCmsArticles();
+    console.log(`[CMS Reconcile-All] Starting Supabase synchronization for ${allArticles.length} articles...`);
+
+    // 1. Delete test account ayesha.writer@yaad.app from Supabase admin_users if present
+    await deleteSharedAdminUser('ayesha.writer@yaad.app');
+
+    // 2. Persist all articles to Supabase
+    const result = await persistSharedCmsArticlesBatch(allArticles);
+
+    // 3. Query Supabase to verify true counts
+    const authoritative = await getAuthoritativeCms({ status: 'all' });
+    const authPublished = await getAuthoritativeCms({ status: 'published' });
+    const authDraft = await getAuthoritativeCms({ status: 'draft' });
+
+    adminStore.writeAuditLog({
+      action: 'cms_articles_reconciled',
+      adminId: req.admin?.id,
+      adminEmail: req.admin?.email,
+      targetType: 'cms_article',
+      metadata: {
+        totalArticles: allArticles.length,
+        persistedCount: result.persistedCount,
+        errorsCount: result.errors.length,
+        supabaseTotal: authoritative?.total,
+        supabasePublished: authPublished?.total,
+        supabaseDraft: authDraft?.total,
+      },
+    });
+
+    return res.status(200).json({
+      success: result.errors.length === 0,
+      total: allArticles.length,
+      persistedCount: result.persistedCount,
+      errors: result.errors,
+      supabase: {
+        total: authoritative?.total,
+        published: authPublished?.total,
+        draft: authDraft?.total,
+      },
+    });
+  } catch (err: any) {
+    console.error('[CMS Reconcile-All] Exception:', err);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to reconcile articles to Supabase',
+      details: err.message,
+    });
   }
 });
 

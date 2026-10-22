@@ -8,7 +8,7 @@ A complete monthly rashan list for a Pakistani family of four to five covers eig
 ## Why Every Pakistani Household Needs a Monthly Rashan List
 Managing kitchen expenses in Pakistan starts with a structured monthly rashan list. Without a clear plan, families often make repeated emergency runs to the local kiryana store. You go to buy cooking oil and end up buying biscuits, snacks, and soda. Small impulse purchases quietly inflate your household grocery spending by thousands of rupees each month.
 
-Picture this scene that happens in almost every Pakistani home. Cooking oil finishes on the exact evening guests arrive for dinner. Someone rushes to the corner store, pays retail rates, and forgets to ask for the receipt. When you keep a single organized list in YAAD, every family member can add items the exact moment a jar runs low. YAAD syncs across devices, so whoever visits the store has the complete list ready in their pocket.
+Picture this scene that happens in almost every Pakistani home. Cooking oil finishes on the exact evening guests arrive for dinner. Someone rushes to the corner store, pays retail rates, and forgets to ask for the receipt. When you keep a single organized list in YAAD, every family member can know what is needed before shopping. YAAD helps you keep shopping needs in one place, so whoever visits the store has the complete list ready in their pocket.
 
 [CTA]
 
@@ -85,7 +85,7 @@ const proofArticle = {
   keyTakeaways: [
     'Eight essential pantry groups cover your full month of dry kitchen staples.',
     'Buy dry staples once a month in bulk; purchase sabzi, doodh, and eggs weekly.',
-    'One shared family list prevents duplicate purchases and missed essentials.',
+    'One organized family list prevents duplicate purchases and missed essentials.',
     'Keep items sorted by category to avoid wandering back and forth across aisles.'
   ],
   faqs: [
@@ -102,8 +102,8 @@ const proofArticle = {
       a: 'No. Fresh items like vegetables, fruit, fresh milk, and poultry spoil rapidly. Purchase dry pantry staples in monthly bulk, and keep vegetables on a separate weekly shopping list.'
     },
     {
-      q: 'Can I share my rashan list with my family?',
-      a: 'Yes. With YAAD, you can create a shared list so family members can add missing items from home while you shop in the market.'
+      q: 'Can family members check the rashan list on their phone?',
+      a: 'Yes. With YAAD, you can save your family rashan list so anyone heading to the market has the complete checklist ready.'
     }
   ],
   hashtags: ['rashan', 'monthlygrocery', 'pakistanigrocery', 'yaadapp'],

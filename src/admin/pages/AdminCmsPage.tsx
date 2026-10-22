@@ -43,6 +43,7 @@ import { useAdminAuth } from '../context/AdminAuthContext';
 import { adminCache } from '../utils/adminCache';
 import { validateArticleSeoGate } from '../../../server/admin/seoValidator';
 import { autoFillArticleSeo } from '../../seo/autoFiller';
+import { PRODUCTION_APP_URL } from '../../config/siteConfig';
 
 interface SocialLinks {
   facebook?: string;
@@ -2399,7 +2400,16 @@ export const AdminCmsPage: React.FC = () => {
                   <div>
                     <div className="flex items-center justify-between mb-1">
                       <label className="font-bold text-neutral-700">Editable Short Link Slug</label>
-                      <span className="text-[10px] text-emerald-700 font-mono">yaad.app/blog#{slug || 'slug'}</span>
+                      <span className="text-[10px] text-emerald-700 font-mono">
+                        <a
+                          href={`${PRODUCTION_APP_URL}/blog/${slug || 'slug'}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="hover:underline"
+                        >
+                          {`${PRODUCTION_APP_URL}/blog/${slug || 'slug'}`}
+                        </a>
+                      </span>
                     </div>
                     <input
                       type="text"

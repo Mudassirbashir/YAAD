@@ -111,17 +111,43 @@ app.post(['/api/support/tickets', '/api/tickets'], (req, res) => {
   }
 });
 
-// Public Blog Articles API (synced with Admin CMS & Supabase)
+// Public Blog Articles API (authoritative from Supabase)
 app.get(['/api/blog/articles', '/api/cms/articles', '/api/articles', '/api/public/cms/articles'], async (req, res) => {
   try {
     const authCms = await getAuthoritativeCms({ status: 'published' });
+    const localArticles = adminStore.getPublicCmsArticles();
+
     if (authCms && Array.isArray(authCms.articles)) {
-      return res.status(200).json({ success: true, articles: authCms.articles, total: authCms.total });
+      // If Supabase holds published articles, return authoritative result
+      if (authCms.articles.length > 0) {
+        return res.status(200).json({ success: true, articles: authCms.articles, total: authCms.total });
+      }
+
+      // If Supabase returned 0 rows but local store holds published articles, Supabase is out-of-sync
+      if (localArticles.length > 0) {
+        console.warn(`[Blog API Out-Of-Sync] Supabase returned 0 published articles while ${localArticles.length} exist locally. Returning local resilience fallback.`);
+        return res.status(200).json({ success: true, articles: localArticles, total: localArticles.length, fallback: true });
+      }
+
+      // Both sources have 0 published articles
+      return res.status(200).json({ success: true, articles: [], total: 0 });
     }
 
-    console.warn('[Blog API Fallback] Supabase cms_articles returned null, falling back to local memory articles.');
-    const articles = adminStore.getPublicCmsArticles();
-    return res.status(200).json({ success: true, articles, fallback: true });
+    // getAuthoritativeCms returned null (Supabase error / unreachable / missing table)
+    console.error('[Blog API Error]: getAuthoritativeCms returned null (Supabase unreachable or misconfigured).');
+    if (localArticles.length > 0) {
+      return res.status(200).json({
+        success: true,
+        articles: localArticles,
+        total: localArticles.length,
+        fallback: true,
+      });
+    }
+
+    return res.status(500).json({
+      error: 'Failed to retrieve blog articles from authoritative database',
+      details: 'Authoritative data source is unreachable or unconfigured',
+    });
   } catch (err: any) {
     console.error('[Blog API Error]:', err);
     return res.status(500).json({ error: 'Failed to retrieve blog articles', details: err?.message });

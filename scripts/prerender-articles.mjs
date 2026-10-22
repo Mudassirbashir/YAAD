@@ -174,7 +174,73 @@ export function renderArticleHtml(templateHtml, article) {
   return modified;
 }
 
-export function prerenderAllArticles() {
+import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
+dotenv.config();
+
+export async function fetchPublishedArticlesFromSupabase() {
+  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error(
+      '[prerender] Build failed: Supabase credentials (SUPABASE_URL / VITE_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY / VITE_SUPABASE_ANON_KEY) are missing in build environment. Supabase is required as the single source of truth for published CMS articles.'
+    );
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
+  const { data, error } = await supabase
+    .from('cms_articles')
+    .select('*')
+    .eq('status', 'published')
+    .order('published_at', { ascending: false, nullsFirst: false });
+
+  if (error) {
+    throw new Error(`[prerender] Build failed: Unable to fetch published articles from Supabase cms_articles: ${error.message}`);
+  }
+
+  return (data || []).map((row) => ({
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    titleUr: row.title_ur,
+    titleRomanUrdu: row.title_roman_urdu,
+    excerpt: row.excerpt,
+    body: row.body,
+    coverImageUrl: row.cover_image_url,
+    coverImageAlt: row.cover_image_alt,
+    authorName: row.author_name,
+    category: row.category,
+    tags: row.tags,
+    status: row.status,
+    publishedAt: row.published_at ? new Date(row.published_at).getTime() : undefined,
+    readTimeMinutes: row.read_time_minutes,
+    viewsCount: row.views_count,
+    seoTitle: row.seo_title,
+    seoDescription: row.seo_description,
+    ogImageUrl: row.og_image_url,
+    canonicalUrl: row.canonical_url,
+    focusKeyword: row.focus_keyword,
+    searchIntent: row.search_intent,
+    cluster: row.cluster,
+    quickAnswer: row.quick_answer,
+    keyTakeaways: row.key_takeaways,
+    faqs: row.faqs,
+    hashtags: row.hashtags,
+    relatedSlugs: row.related_slugs,
+    queueStatus: row.queue_status,
+    publishDate: row.publish_date,
+    priority: row.priority,
+    wordCount: row.word_count,
+    createdAt: row.created_at ? new Date(row.created_at).getTime() : Date.now(),
+    updatedAt: row.updated_at ? new Date(row.updated_at).getTime() : Date.now(),
+  }));
+}
+
+export async function prerenderAllArticles() {
   const rootDir = process.cwd();
   const distDir = path.join(rootDir, 'dist');
   const distIndexPath = path.join(distDir, 'index.html');
@@ -186,20 +252,11 @@ export function prerenderAllArticles() {
   }
 
   const templateHtml = fs.readFileSync(templatePath, 'utf8');
-  const adminDataPath = path.join(rootDir, 'data', 'admin_data.json');
-  let articles = [];
 
-  if (fs.existsSync(adminDataPath)) {
-    try {
-      const data = JSON.parse(fs.readFileSync(adminDataPath, 'utf8'));
-      articles = data.cmsArticles || [];
-    } catch (err) {
-      console.error('[prerender] Failed to parse admin_data.json:', err.message);
-    }
-  }
-
-  const published = articles.filter((a) => a.status === 'published');
-  console.log(`[prerender] Found ${published.length} published article(s) to prerender.`);
+  // Fetch strictly from Supabase - FAILS LOUDLY if unreachable
+  console.log('[prerender] Fetching published articles from Supabase as single source of truth...');
+  const published = await fetchPublishedArticlesFromSupabase();
+  console.log(`[prerender] Found ${published.length} published article(s) in Supabase to prerender.`);
 
   let prerenderedCount = 0;
   for (const art of published) {
@@ -223,4 +280,9 @@ export function prerenderAllArticles() {
 }
 
 // Execute if called directly from CLI
-prerenderAllArticles();
+if (process.argv[1] && process.argv[1].endsWith('prerender-articles.mjs')) {
+  prerenderAllArticles().catch((err) => {
+    console.error('[prerender] FATAL BUILD ERROR:', err.message);
+    process.exit(1);
+  });
+}

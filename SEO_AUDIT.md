@@ -55,13 +55,13 @@ To satisfy the ironclad directive: **"Do NOT expose private user data through SE
 
 | Route Path | Type | Indexability | Canonical Target | Reason & Protection Mechanism |
 | :--- | :--- | :--- | :--- | :--- |
-| `/` | Public Landing / Auth | **index, follow** | `https://yaad.app/` | Brand front door, value proposition, sign-in access. |
-| `/about` | Public Editorial | **index, follow** | `https://yaad.app/about` | Brand story, bilingual mission, Pakistani grocery intelligence. |
-| `/help` | Public Knowledge Hub | **index, follow** | `https://yaad.app/help` | FAQ, troubleshooting, usage guide (Rich FAQPage schema). |
-| `/terms` | Public Legal | **index, follow** | `https://yaad.app/terms` | Terms of Service, user agreement, fair usage. |
-| `/privacy` | Public Legal | **index, follow** | `https://yaad.app/privacy` | Privacy policy, zero data sales, offline encryption statement. |
-| `/legal` | Public Legal | **index, follow** | `https://yaad.app/legal` | Legal notices, trademark attribution, company disclosures. |
-| `/auth`, `/login`, `/signup` | Auth Gates | **noindex, follow** | `https://yaad.app/` | Utility authentication screens; consolidates equity to `/`. |
+| `/` | Public Landing / Auth | **index, follow** | `https://yaadapppk.vercel.app/` | Brand front door, value proposition, sign-in access. |
+| `/about` | Public Editorial | **index, follow** | `https://yaadapppk.vercel.app/about` | Brand story, bilingual mission, Pakistani grocery intelligence. |
+| `/help` | Public Knowledge Hub | **index, follow** | `https://yaadapppk.vercel.app/help` | FAQ, troubleshooting, usage guide (Rich FAQPage schema). |
+| `/terms` | Public Legal | **index, follow** | `https://yaadapppk.vercel.app/terms` | Terms of Service, user agreement, fair usage. |
+| `/privacy` | Public Legal | **index, follow** | `https://yaadapppk.vercel.app/privacy` | Privacy policy, zero data sales, offline encryption statement. |
+| `/legal` | Public Legal | **index, follow** | `https://yaadapppk.vercel.app/legal` | Legal notices, trademark attribution, company disclosures. |
+| `/auth`, `/login`, `/signup` | Auth Gates | **noindex, follow** | `https://yaadapppk.vercel.app/` | Utility authentication screens; consolidates equity to `/`. |
 | `/reset-password` | Auth Utility | **noindex, nofollow** | None | Temporary password recovery token; must NEVER be indexed. |
 | `/home` | Private App View | **noindex, nofollow** | None | User dashboard displaying personal shopping lists. |
 | `/create`, `/create/items` | Private App View | **noindex, nofollow** | None | Private list builder interface. |
@@ -82,7 +82,7 @@ To satisfy the ironclad directive: **"Do NOT expose private user data through SE
 YAAD is built with React 19 + Vite. Search engines like Googlebot execute JavaScript, but social crawlers (WhatsApp, Facebook, Twitterbot, LinkedIn) and AI answer engines (Perplexity, BingBot, GPTBot) frequently rely on the initial HTTP response payload.
 
 **The Current Bottleneck:**
-When any bot requests `https://yaad.app/about` or `https://yaad.app/help`, the Express server currently returns the generic static `index.html` containing:
+When any bot requests `https://yaadapppk.vercel.app/about` or `https://yaadapppk.vercel.app/help`, the Express server currently returns the generic static `index.html` containing:
 ```html
 <title>YAAD</title>
 <meta name="description" content="YAAD is a smart shopping list application..." />

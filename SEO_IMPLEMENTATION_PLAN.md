@@ -48,7 +48,7 @@ The implementation is structured into 6 sequential phases to ensure maximum tech
 
 ### Component 1: `src/config/siteConfig.ts`
 Establishes a single configurable object containing:
-- `productionUrl`: Configurable via `import.meta.env.VITE_SITE_URL` with default fallback to `https://yaad.app` (and development fallback).
+- `productionUrl`: Configurable via `import.meta.env.VITE_SITE_URL` with default fallback to `https://yaadapppk.vercel.app` (and development fallback).
 - `siteName`: `"YAAD"`
 - `siteNameUrdu`: `"یاد"`
 - `titleTemplate`: `"%s • YAAD"`

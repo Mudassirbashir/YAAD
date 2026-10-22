@@ -7,6 +7,7 @@ export interface SeoGateCheckResult {
     quickAnswerWords: number;
     seoTitleLength: number;
     seoDescriptionLength: number;
+    excerptLength: number;
     keywordInTitle: boolean;
     keywordInFirst100Words: boolean;
     keywordInH2: boolean;
@@ -28,6 +29,13 @@ export const BANNED_AI_PATTERNS: Array<{ pattern: RegExp; name: string; maxAllow
   { pattern: /^whether you('re| are) a\b/im, name: "Whether you're a X opening" },
   { pattern: /\bmoreover\b/gi, name: 'moreover (repeated)', maxAllowed: 1 },
   { pattern: /\bfurthermore\b/gi, name: 'furthermore (repeated)', maxAllowed: 1 },
+  // Product Truth violations: unverified claims about YAAD features, sync, or metrics
+  { pattern: /\b(offline\s+sync|shared\s+lists?)\b/i, name: 'unverified sync or shared list phrase' },
+  { pattern: /\byaad\b[^\.\n]*\b(offline\s+sync|shared\s+lists?|cloud\s+sync|real-?time\s+sync|live\s+sync)\b/i, name: 'YAAD unverified sync/sharing claim' },
+  { pattern: /\byaad\b[^\.\n]*\b(voice\s+control|voice\s+command|voice\s+assistant|voice-?activated)\b/i, name: 'YAAD unverified voice feature claim' },
+  { pattern: /\byaad\b[^\.\n]*\b(recipe\s+extract(ion)?|ai\s+recipe|auto(matic)?\s+recipe)\b/i, name: 'YAAD unverified recipe extraction claim' },
+  { pattern: /\byaad\b[^\.\n]*\b(#1|number\s+one|best\s+app\s+in\s+pakistan|highest\s+rated)\b/i, name: 'YAAD unverified superlative claim' },
+  { pattern: /\byaad\b[^\.\n]*\b(\d+([,\.]\d+)?\s*(k|m|\+)?\s*(active\s+)?users|\d+\s*stars?|rated\s+4\.\d)\b/i, name: 'YAAD unverified user count or rating claim' },
 ];
 
 export function validateArticleSeoGate(
@@ -36,6 +44,7 @@ export function validateArticleSeoGate(
     slug?: string;
     body?: string;
     quickAnswer?: string;
+    excerpt?: string;
     seoTitle?: string;
     seoDescription?: string;
     focusKeyword?: string;
@@ -164,7 +173,7 @@ export function validateArticleSeoGate(
 
   // 11. Banned AI phrase scan
   const bannedPhrasesFound: string[] = [];
-  const fullText = `${title}\n${quickAnswer}\n${body}`;
+  const fullText = `${title}\n${seoDescription}\n${article.excerpt || ''}\n${quickAnswer}\n${body}`;
 
   for (const item of BANNED_AI_PATTERNS) {
     const matches = fullText.match(item.pattern);
@@ -177,6 +186,15 @@ export function validateArticleSeoGate(
     }
   }
 
+  // 12. Excerpt / summary must be non-empty and 140-160 chars
+  const excerpt = (article.excerpt || '').trim();
+  const excerptLength = excerpt.length;
+  if (!excerpt) {
+    errors.push('Article excerpt (summary) is required.');
+  } else if (excerptLength < 140 || excerptLength > 160) {
+    errors.push(`Article excerpt must be between 140 and 160 characters (currently ${excerptLength} chars).`);
+  }
+
   return {
     passed: errors.length === 0,
     errors,
@@ -186,6 +204,7 @@ export function validateArticleSeoGate(
       quickAnswerWords,
       seoTitleLength,
       seoDescriptionLength,
+      excerptLength,
       keywordInTitle,
       keywordInFirst100Words,
       keywordInH2,

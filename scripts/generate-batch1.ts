@@ -11,6 +11,7 @@ interface BatchArticleDraft {
   searchIntent: 'informational' | 'list' | 'comparison' | 'template';
   seoTitle: string;
   seoDescription: string;
+  excerpt: string;
   quickAnswer: string;
   keyTakeaways: string[];
   coverImageUrl: string;
@@ -32,8 +33,9 @@ const BATCH_1_ARTICLES: BatchArticleDraft[] = [
     cluster: 'Grocery List Core',
     searchIntent: 'comparison',
     seoTitle: 'Best Grocery List Apps for Busy Families (2026 Guide)',
-    seoDescription: 'Looking for the best grocery list apps for busy families? Compare top tools with offline sync, shared lists, and quick check-off to cut grocery trip time.',
-    quickAnswer: 'The best grocery list apps for busy families streamline household restocking through instant item check-offs, automated aisle categorization, and offline access that works inside basement grocery stores. Top solutions eliminate forgotten kitchen staples, prevent duplicate purchases between spouses, and help families finish weekly shopping runs in roughly half the usual time.',
+    seoDescription: 'Looking for the best grocery list apps for busy families? Compare simple shopping tools with clear categories and quick check-off to cut grocery trip time.',
+    excerpt: 'Discover the best grocery list apps for busy families. Compare simple tools with clear categories, offline access, and fast check-offs for quicker shopping.',
+    quickAnswer: 'The best grocery list apps for busy families streamline household restocking through instant item check-offs, automated aisle categorization, and offline access that works inside basement grocery stores. Top solutions eliminate forgotten kitchen staples, prevent duplicate purchases, and help families finish weekly shopping runs in roughly half the usual time.',
     keyTakeaways: [
       'Automated category sorting prevents backtracking across crowded supermarket aisles',
       'True offline functionality ensures lists remain usable in basements with zero mobile signal',
@@ -54,8 +56,8 @@ const BATCH_1_ARTICLES: BatchArticleDraft[] = [
         a: 'Reliable offline operation is vital. Many Pakistani grocery stores and hypermarkets have thick walls or basement levels where cellular coverage drops completely, making cloud-only apps unusable at checkout.'
       },
       {
-        q: 'Can both husband and wife edit the same grocery list?',
-        a: 'Yes, modern family grocery tools support shared household lists so either partner can add missing items or check off staples during an evening stop.'
+        q: 'Can family members check their grocery list on their phone?',
+        a: 'Yes, keeping a dedicated grocery list on your phone lets anyone heading to the store view what needs to be bought before and during shopping.'
       },
       {
         q: 'Does YAAD support Pakistani grocery measurements like pao and darjan?',
@@ -77,7 +79,7 @@ When evaluating shopping tools for your household, look for these foundational c
 - **Offline accessibility:** The app must open and allow checking off items even when mobile data drops to zero in large superstores.
 - **Clear unit selection:** Support for local Pakistani quantities like darjan for bananas, pao for zeera, and kilograms for rice.
 
-## Core Features Every Family Needs: Sync, Offline Mode, and Speed
+## Core Features Every Family Needs: Offline Access, Fast Check-Off, and Speed
 
 Grocery shopping in Pakistan often takes you into locations where mobile signals are notoriously weak. Walking into hypermarket basements or dense local markets frequently leaves your phone showing zero bars. If your shopping app relies on an active internet connection to load your list or check off items, you end up stranded.
 
@@ -95,7 +97,7 @@ Many households start by using default phone notepads or chat messages to track 
 | **One-Tap Check-Off** | Often clumsy checkboxes | Strikethrough or typing required | Instant clean check-off |
 | **Pakistani Units** | Manual typing (pao, darjan) | Unstructured text | Built-in local quantity support |
 | **Offline Reliability** | Varies by app cache | Unreliable without active data | 100% offline-first functionality |
-| **Household Sharing** | Complex folder permissions | Gets buried under memes and chat | Clean dedicated grocery space |
+| **Shopping Focus** | Cluttered notes | Mixed with personal chats | Dedicated shopping checklist |
 
 ## Solving the Missing Ingredient Problem in Pakistani Kitchens
 
@@ -103,7 +105,7 @@ How often have you returned from the market only to hear: *"Did you get the lehs
 
 Pakistani recipes require dozens of complementary ingredients. Cooking a simple chicken salan requires onions, tomatoes, ginger, garlic, dahi, and half a dozen whole spices. Missing even one item disrupts the entire dinner preparation.
 
-By maintaining your list in YAAD, every family member can log needs the minute they notice low containers. When you reach the vegetable market, all produce items sit grouped together. You purchase your sabzi in one go, cross the street to the kiryana shop for daal chana and cooking oil, and finish your trip without backtracking.
+By keeping your list in YAAD, you can record items the minute you notice low containers. YAAD helps you keep shopping needs in one place. When you reach the vegetable market, all produce items sit grouped together. You purchase your sabzi in one go, cross the street to the kiryana shop for daal chana and cooking oil, and finish your trip without backtracking.
 
 ## Practical Grocery Routine for Working Parents
 
@@ -128,11 +130,12 @@ Adopting the right shopping list companion transforms grocery day from a chaotic
     searchIntent: 'comparison',
     seoTitle: 'Digital vs Paper Grocery Lists: Which Works Better?',
     seoDescription: 'Compare digital vs paper grocery lists to see which saves more money and shopping time. Discover why Pakistani families are switching to smart grocery apps.',
-    quickAnswer: 'Comparing digital vs paper grocery lists reveals that digital apps save more time and prevent costly forgotten staples. While paper lists offer tactile familiarity, mobile lists provide automated aisle grouping, instant spousal syncing, offline storage, and zero risk of leaving your shopping note on the kitchen counter.',
+    excerpt: 'Compare digital vs paper grocery lists for everyday shopping. Discover how mobile checklists save money, prevent missed items, and streamline market trips.',
+    quickAnswer: 'Comparing digital vs paper grocery lists reveals that digital apps save more time and prevent costly forgotten staples. While paper lists offer tactile familiarity, mobile lists provide automated aisle grouping, simple checklist tracking, offline storage, and zero risk of leaving your shopping note on the kitchen counter.',
     keyTakeaways: [
       'Paper lists are frequently forgotten at home or damaged inside damp shopping bags',
       'Digital apps automatically group items by category, cutting shopping transit time by up to 40%',
-      'Spouses can update shared mobile lists in real time rather than calling back and forth',
+      'Family members can record needs on their phone before heading out rather than calling back and forth',
       'Smart grocery lists retain past staples so you do not have to write the same 30 items monthly'
     ],
     coverImageUrl: 'https://images.unsplash.com/photo-1588854337236-6889d631faa8?auto=format&fit=crop&w=1200&q=80',
@@ -169,7 +172,7 @@ Handwritten notes present several hidden drawbacks that become obvious once you 
 
 First, paper notes lack organization. You write down eggs because you noticed the carton was empty, then write down red chilli powder ten minutes later, and finish with tomatoes. At the market, your eyes must jump frantically up and down the page. You end up walking back and forth between the kiryana stall and the vegetable vendor multiple times.
 
-Second, paper lists are fragile. In crowded sabzi mandis, moisture from sprayed greens or damp checkout counters easily smudges ink or tears the paper. Worse still, paper lists cannot be updated remotely. If your spouse remembers that the baby needs formula while you are already at the store, they must call or message you separately, fragmenting your shopping focus.
+Second, paper lists are fragile. In crowded sabzi mandis, moisture from sprayed greens or damp checkout counters easily smudges ink or tears the paper. Worse still, paper lists are easily misplaced. If an item is remembered after leaving home, shoppers must juggle phone messages while managing a physical paper slip, fragmenting shopping focus.
 
 ## How Digital vs Paper Grocery Lists Compare on Convenience and Time
 
@@ -189,7 +192,7 @@ YAAD takes this digital convenience a step further by tailoring item names and c
 | **Risk of Leaving Behind** | High (frequently left on counter) | Zero (stored securely on phone) |
 | **Aisle Sorting** | Random chronological order | Automatic category grouping |
 | **Moisture / Damage Risk** | Easily torn, smudged, or lost | Protected on digital screen |
-| **Shared Coordination** | Impossible without physical pass | Instant shared updates |
+| **List Availability** | Left at home easily | Always accessible in your pocket |
 | **Time Spent in Store** | High (backtracking between aisles) | Up to 40% faster navigation |
 | **Offline Reliability** | Works anywhere | 100% offline access in YAAD |
 
@@ -224,6 +227,7 @@ Making the leap from paper to digital shopping eliminates forgotten essentials, 
     searchIntent: 'list',
     seoTitle: 'How to Stop Forgetting Items on Your Grocery List',
     seoDescription: 'Learn how to stop forgetting items on your grocery list with proven pantry inventory habits, category sorting, and instant mobile capture for every store run.',
+    excerpt: 'Stop forgetting grocery items at the store with practical kitchen routines. Learn how categorized lists and habit triggers keep your pantry fully stocked.',
     quickAnswer: 'To stop forgetting items on your grocery list, capture depleted staples the instant you use them, conduct a two-minute pre-trip pantry audit, and group items by store department. Relying on memory or disorganized notes guarantees omissions, while structured digital lists ensure complete household restocking on every store run.',
     keyTakeaways: [
       'Log empty containers immediately rather than relying on memory before leaving the house',
@@ -322,6 +326,7 @@ With structured habits and YAAD in hand, you will never have to face an incomple
     searchIntent: 'list',
     seoTitle: 'Can a Smart Shopping List Save You Time at Store?',
     seoDescription: 'Can a smart shopping list save you time at the store? See how category sorting, rapid check-offs, and organized pantry staples cut grocery trips by 40 percent.',
+    excerpt: 'Find out how a smart shopping list saves time at the store. Grouping groceries by aisle and tapping items off quickly cuts shopping trip duration in half.',
     quickAnswer: 'Yes, a smart shopping list save you time at the store by grouping items into logical supermarket departments, eliminating aisle backtracking, and preventing forgotten essentials. Shoppers using organized digital lists spend up to forty percent less time in crowded markets while avoiding impulse buys and second trips.',
     keyTakeaways: [
       'Eliminating aisle backtracking saves 15-25 minutes per standard supermarket trip',
@@ -419,6 +424,7 @@ By trading disorganized notes for YAAD's smart category management, you reclaim 
     searchIntent: 'comparison',
     seoTitle: 'Best Grocery List App for Meal Planning (2026 Guide)',
     seoDescription: 'Finding the best grocery list app for meal planning? Discover how Pakistani families link weekly recipes, daal roti staples, and grocery lists without waste.',
+    excerpt: 'Explore the best grocery list app approach for meal planning. Connect weekly Pakistani recipes, pantry staples, and shopping lists without food wastage.',
     quickAnswer: 'The best grocery list app for meal planning bridges weekly dinner menus with practical grocery purchasing, organizing recipe ingredients by store category while preventing food waste. A dedicated tool allows families to convert meals like chicken karahi, daal chawal, and sabzi into precise quantities of flour, pulses, and spices.',
     keyTakeaways: [
       'Linking weekly dinner plans directly to grocery lists cuts household food waste significantly',
@@ -521,6 +527,7 @@ By adopting a structured menu routine and managing your purchases through YAAD, 
     searchIntent: 'list',
     seoTitle: 'How to Organize Grocery List by Store Layout (2026)',
     seoDescription: 'Learn how to organize your grocery list by store layout to finish shopping in half the time. Group produce, grains, and dairy logically for a faster checkout.',
+    excerpt: 'Learn how to organize your grocery list by store layout for faster checkouts. Group produce, grains, and dairy logically so you never backtrack aisles.',
     quickAnswer: 'To organize your grocery list by store layout, arrange items in the sequential order of physical supermarket aisles: produce first, dry pantry grains second, household goods third, and refrigerated dairy last. This logical flow eliminates repetitive backtracking, protects delicate food from crushing, and speeds up shopping trips.',
     keyTakeaways: [
       'Arranging lists by aisle order cuts shopping transit time by 30 to 45 percent',
@@ -621,6 +628,7 @@ Adopting an aisle-by-aisle shopping strategy protects your food, saves your phys
     searchIntent: 'list',
     seoTitle: 'Best Free Grocery List Apps That Actually Work (2026)',
     seoDescription: 'Looking for the best free grocery list apps without paywalls? Compare reliable shopping tools that work offline and keep household grocery runs simple.',
+    excerpt: 'Compare the best free grocery list apps that work without paywalls or intrusive ads. Keep household shopping organized with reliable offline-first tools.',
     quickAnswer: 'The best free grocery list apps provide clean item organization, one-tap check-offs, and dependable offline reliability without locking core features behind expensive monthly subscriptions. Quality free tools eliminate intrusive popup ads while keeping family shopping checklists organized across all your everyday pantry and market runs.',
     keyTakeaways: [
       'Free grocery tools should never gate basic checklist creation behind paywalls',
@@ -639,7 +647,7 @@ Adopting an aisle-by-aisle shopping strategy protects your food, saves your phys
     faqs: [
       {
         q: 'Are completely free grocery list apps safe to use?',
-        a: 'Reputable free grocery apps that store data locally or sync securely through verified cloud infrastructure are very safe, requiring minimal permissions.'
+        a: 'Reputable free grocery apps that store data locally on your device are very safe, requiring minimal permissions.'
       },
       {
         q: 'Why do so many free shopping list apps have annoying video ads?',
@@ -723,6 +731,7 @@ Choosing a clean, free grocery companion eliminates unnecessary digital costs wh
     searchIntent: 'comparison',
     seoTitle: 'Grocery List App vs Google Keep: Which to Use? (2026)',
     seoDescription: 'Comparing a grocery list app vs Google Keep for household shopping? Discover which option offers better category sorting, offline speed, and grocery management.',
+    excerpt: 'Compare dedicated grocery list apps with Google Keep for shopping. Discover why automatic categorization and local units make grocery trips faster.',
     quickAnswer: 'Comparing a dedicated grocery list app vs Google Keep shows that while Keep is excellent for quick text notes, a purpose-built grocery app provides automatic aisle categorization, local quantity units, and rapid cart check-offs that cut store time by up to forty percent without manual reordering.',
     keyTakeaways: [
       'Google Keep requires manual reordering to avoid walking back and forth in supermarkets',
@@ -818,6 +827,7 @@ While Google Keep will always remain an excellent tool for general notes, delega
     searchIntent: 'list',
     seoTitle: 'How to Extract Recipes Into Shopping List (2026)',
     seoDescription: 'Learn how to extract recipes into your shopping list quickly. Turn weekend biryani and salan ingredient lists into organized groceries without duplicates.',
+    excerpt: 'Learn how to turn recipe ingredients into an organized grocery list. Group biryani and salan staples by department to avoid duplicates and save shopping time.',
     quickAnswer: 'To extract recipes into your shopping list efficiently, break dishes down into foundational pantry staples, fresh mandi produce, and specialty proteins. Grouping recipe ingredients by store department prevents duplicate purchases and ensures all spices and aromatics are on hand before you start cooking.',
     keyTakeaways: [
       'Deconstructing dishes into departmental categories prevents messy, redundant grocery notes',
@@ -902,7 +912,7 @@ When you input these items into YAAD, notice how the application automatically g
 
 ## How YAAD Streamlines Adding Meal Ingredients to Your Master List
 
-Instead of wrestling with clunky note pads or trying to read recipe screenshots in store aisles, YAAD provides a dedicated, uncluttered environment.
+While generic apps promise automatic AI recipe parsers that frequently misinterpret Pakistani masala ingredients and local units, the dependable method is simple manual breakdown into YAAD: YAAD helps you keep shopping needs in one place. Instead of wrestling with clunky note pads or trying to read recipe screenshots in store aisles, YAAD provides a dedicated, uncluttered environment.
 
 You enter the recipe items quickly, specify local quantities like pao or kilograms, and watch the app route them into their natural shopping categories. Because YAAD operates completely offline, you can open your recipe checklist in any market basement with zero lag.
 
@@ -920,6 +930,7 @@ Once you check off your items, they strike through cleanly, ensuring an empty ch
     searchIntent: 'list',
     seoTitle: 'Voice-Activated Grocery Lists: Worth It? (2026 Guide)',
     seoDescription: 'Are voice-activated grocery lists worth using while cooking? We review accuracy with Urdu-English ingredients, kitchen noise, and fast tap-to-add mobile apps.',
+    excerpt: 'Are voice-activated grocery lists worth using while cooking? Compare voice assistant limitations with fast tap entry and categorized grocery checklists.',
     quickAnswer: 'Voice-activated grocery lists sound convenient for hands-free cooking, but they struggle with bilingual Urdu-English terms, noisy kitchen fans, and local units like pao or darjan. For everyday household shopping, clean mobile checklists with rapid tap entry provide superior speed, accuracy, and aisle organization.',
     keyTakeaways: [
       'Voice assistants frequently misunderstand South Asian ingredients like daal mash, zeera, or atta',
@@ -1065,6 +1076,7 @@ async function main() {
       searchIntent: draft.searchIntent,
       seoTitle: draft.seoTitle,
       seoDescription: draft.seoDescription,
+      excerpt: draft.excerpt,
       canonicalUrl: `/blog/${draft.slug}`,
       quickAnswer: draft.quickAnswer,
       keyTakeaways: draft.keyTakeaways,
@@ -1077,8 +1089,10 @@ async function main() {
       body: draft.body,
       wordCount,
       readTimeMinutes,
-      status: 'draft', // R6: Do NOT auto-publish batches; publishing happens via Upload button
-      queueStatus: 'draft_ready', // R6: Set to draft_ready
+      status: 'draft',
+      queueStatus: 'draft_ready',
+      publishDate: undefined,
+      publishedAt: undefined,
       priority: i + 1,
       sourceSet: 'bank',
       authorName: 'YAAD Editorial Team',
@@ -1098,6 +1112,7 @@ async function main() {
       quickAnswerWords: gate.stats.quickAnswerWords,
       seoTitleLength: gate.stats.seoTitleLength,
       seoDescriptionLength: gate.stats.seoDescriptionLength,
+      excerptLength: gate.stats.excerptLength,
       gatePassed: gate.passed,
       errors: gate.errors,
       warnings: gate.warnings,
@@ -1118,6 +1133,7 @@ async function main() {
     console.log(`    Quick Answer: ${res.quickAnswerWords} words (Requirement: 40–60)`);
     console.log(`    SEO Title: ${res.seoTitleLength} chars (Requirement: ≤60)`);
     console.log(`    SEO Description: ${res.seoDescriptionLength} chars (Requirement: 140–160)`);
+    console.log(`    Excerpt: ${res.excerptLength} chars (Rule #12: 140–160)`);
     if (res.errors.length > 0) {
       console.log(`    Errors: ${res.errors.join('; ')}`);
     }

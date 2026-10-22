@@ -196,10 +196,35 @@ async function main() {
   assert.strictEqual(finalToUpload.length, 256, 'To Upload count restored to 256');
   console.log('✅ Step 9 Verified: Unpublish successfully removes from published and restores to To Upload\n');
 
+  // STEP 10: Clean up test account per acceptance test safety rules
+  console.log('--- Step 10: Test Account Cleanup & Audit Log Recording ---');
+  const writerIdx = adminStore['db'].admins.findIndex((u) => u.email === writerEmail);
+  if (writerIdx >= 0) {
+    adminStore['db'].admins.splice(writerIdx, 1);
+    adminStore['save']();
+    console.log(`Deleted temporary test account "${writerEmail}" from admin store.`);
+  }
+
+  adminStore.writeAuditLog({
+    action: 'admin_account_deleted',
+    adminId: 'super_admin_mudassir',
+    adminEmail: 'mudassirbashir530@gmail.com',
+    targetType: 'admin_user',
+    targetId: writerEmail,
+    ip: '127.0.0.1',
+    metadata: {
+      note: 'Temporary test account ayesha.writer@yaad.app removed on 2026-10-22 per audit cleanup requirement F4. Only owner account remains active.',
+    },
+  });
+
+  const remainingAdmins = adminStore.getAllAdmins();
+  assert.strictEqual(remainingAdmins.length, 1, 'Only owner admin account must remain');
+  assert.strictEqual(remainingAdmins[0].email, 'mudassirbashir530@gmail.com', 'Remaining admin must be owner');
+  console.log('✅ Step 10 Verified: Test account cleanly removed. Only owner admin remains.\n');
+
   console.log('======================================================');
-  console.log('🎉 ALL 9 CONTENT WRITER ACCEPTANCE TEST STEPS PASSED!');
-  console.log('   Content Writer Account created: ayesha.writer@yaad.app');
-  console.log('   (Account left intact for owner inspection)');
+  console.log('🎉 ALL 10 CONTENT WRITER ACCEPTANCE TEST STEPS PASSED!');
+  console.log('   Test account ayesha.writer@yaad.app cleanly removed.');
   console.log('======================================================\n');
 }
 

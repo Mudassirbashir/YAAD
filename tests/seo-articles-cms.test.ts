@@ -161,6 +161,7 @@ A detailed explanation of idempotency in SEO systems. Idempotency test article f
     quickAnswer: 'A complete test quick answer explaining the primary concept of idempotency within forty to sixty words as required by the SEO ranking guidelines and schema standards for Pakistani households. This comprehensive summary answers the primary search intent directly so readers and search engine crawlers immediately find the exact information.',
     seoTitle: 'Idempotency Test Article (2026 Checklist)',
     seoDescription: 'Complete guide to idempotency test article for seo in modern web applications. Verified features and clean publishing routines for Pakistani shoppers.',
+    excerpt: 'Complete guide to idempotency test article for seo in modern web applications. Verified features and clean publishing routines for Pakistani shoppers.',
     focusKeyword: 'idempotency test article for seo',
     coverImageUrl: '/cover.png',
     coverImageAlt: 'Descriptive cover image alt text for idempotency test article',
@@ -272,44 +273,45 @@ await runTest('Async import bank tracks persistedCount and totalInSystemAfter wi
     },
   ];
 
-  // Dry-run
-  const dryRes = await adminStore.importIdeaBankAsync(testBatchAsync, true);
-  assert.strictEqual(dryRes.dryRun, true, 'Dry run flag must be true');
-  assert.strictEqual(dryRes.imported, 2, 'Must report 2 unique ideas');
-  assert.strictEqual(dryRes.persistedCount, 0, 'Dry run persistedCount must be 0');
-  assert.strictEqual(dryRes.success, true, 'Dry run success must be true');
+  // Snapshot initial CMS articles state before test to avoid mutating production data
+  const originalArticlesSnapshot = JSON.parse(JSON.stringify(adminStore.getCmsArticles()));
 
-  // Live import
-  const liveRes = await adminStore.importIdeaBankAsync(testBatchAsync, false);
-  assert.strictEqual(liveRes.dryRun, false, 'Live run flag must be false');
-  assert.strictEqual(liveRes.imported, 2, 'Live run must import 2 unique ideas');
-  assert.ok(typeof liveRes.persistedCount === 'number', 'persistedCount must be a number');
-  assert.ok(typeof liveRes.totalInSystemAfter === 'number', 'totalInSystemAfter must be a number');
-  assert.strictEqual(liveRes.skippedDuplicates, 0, 'First live run must have 0 duplicates');
+  try {
+    // Dry-run
+    const dryRes = await adminStore.importIdeaBankAsync(testBatchAsync, true);
+    assert.strictEqual(dryRes.dryRun, true, 'Dry run flag must be true');
+    assert.strictEqual(dryRes.imported, 2, 'Must report 2 unique ideas');
+    assert.strictEqual(dryRes.persistedCount, 0, 'Dry run persistedCount must be 0');
+    assert.strictEqual(dryRes.success, true, 'Dry run success must be true');
 
-  // Re-run for idempotency and deduplication
-  const repeatRes = await adminStore.importIdeaBankAsync(testBatchAsync, false);
-  assert.strictEqual(repeatRes.imported, 0, 'Second run must import 0 new items');
-  assert.strictEqual(repeatRes.skippedDuplicates, 2, 'Second run must skip both as duplicates');
+    // Live import
+    const liveRes = await adminStore.importIdeaBankAsync(testBatchAsync, false);
+    assert.strictEqual(liveRes.dryRun, false, 'Live run flag must be false');
+    assert.strictEqual(liveRes.imported, 2, 'Live run must import 2 unique ideas');
+    assert.ok(typeof liveRes.persistedCount === 'number', 'persistedCount must be a number');
+    assert.ok(typeof liveRes.totalInSystemAfter === 'number', 'totalInSystemAfter must be a number');
+    assert.strictEqual(liveRes.skippedDuplicates, 0, 'First live run must have 0 duplicates');
 
-  // Test autoScheduleQueueAsync
-  const schedRes = await adminStore.autoScheduleQueueAsync({ articlesPerDay: 1 });
-  assert.ok(typeof schedRes.scheduledCount === 'number', 'scheduledCount must be number');
-  assert.ok(Array.isArray(schedRes.scheduledDates), 'scheduledDates must be array');
+    // Re-run for idempotency and deduplication
+    const repeatRes = await adminStore.importIdeaBankAsync(testBatchAsync, false);
+    assert.strictEqual(repeatRes.imported, 0, 'Second run must import 0 new items');
+    assert.strictEqual(repeatRes.skippedDuplicates, 2, 'Second run must skip both as duplicates');
 
-  // Test publishTodayArticlesAsync
-  const todayStr = new Date().toISOString().split('T')[0];
-  const pubRes = await adminStore.publishTodayArticlesAsync({ targetDate: todayStr, limit: 1 });
-  assert.ok(typeof pubRes.totalAttempted === 'number', 'totalAttempted must be number');
-  assert.ok(Array.isArray(pubRes.published), 'published must be array');
-  assert.ok(Array.isArray(pubRes.blocked), 'blocked must be array');
+    // Test autoScheduleQueueAsync
+    const schedRes = await adminStore.autoScheduleQueueAsync({ articlesPerDay: 1 });
+    assert.ok(typeof schedRes.scheduledCount === 'number', 'scheduledCount must be number');
+    assert.ok(Array.isArray(schedRes.scheduledDates), 'scheduledDates must be array');
 
-  // Clean up
-  const allArts = adminStore.getCmsArticles();
-  for (const art of allArts) {
-    if (art.title.startsWith('Async Persistence Test Recipe')) {
-      adminStore.deleteCmsArticle(art.id);
-    }
+    // Test publishTodayArticlesAsync
+    const todayStr = new Date().toISOString().split('T')[0];
+    const pubRes = await adminStore.publishTodayArticlesAsync({ targetDate: todayStr, limit: 1 });
+    assert.ok(typeof pubRes.totalAttempted === 'number', 'totalAttempted must be number');
+    assert.ok(Array.isArray(pubRes.published), 'published must be array');
+    assert.ok(Array.isArray(pubRes.blocked), 'blocked must be array');
+  } finally {
+    // Clean up test items and restore pristine database state
+    adminStore['db'].cmsArticles = originalArticlesSnapshot;
+    adminStore['save']();
   }
 });
 

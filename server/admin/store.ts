@@ -2701,7 +2701,7 @@ class AdminStore {
     return this.db.cmsArticles.find((a) => a.id === id);
   }
 
-  public saveCmsArticle(articleData: Partial<CmsArticle>, author: string): CmsArticle {
+  public saveCmsArticle(articleData: Partial<CmsArticle>, author: string, syncSupabase: boolean = true): CmsArticle {
     if (!this.db.cmsArticles) this.db.cmsArticles = [];
     const now = Date.now();
 
@@ -2736,6 +2736,21 @@ class AdminStore {
         const effectiveWordCount = effectiveBody.trim().split(/\s+/).filter(Boolean).length;
         const effectiveReadTime = Math.max(1, Math.ceil(effectiveWordCount / 200));
 
+        const nextStatus = articleData.status || existing.status || 'draft';
+        let nextPublishedAt: number | undefined;
+        if (nextStatus === 'published') {
+          nextPublishedAt = articleData.publishedAt ?? (existing.status === 'published' ? existing.publishedAt : now);
+        } else {
+          // If unpublishing or in draft, publishedAt is cleared unless explicitly provided
+          nextPublishedAt = articleData.publishedAt !== undefined ? articleData.publishedAt : undefined;
+        }
+
+        const nextQueueStatus = articleData.queueStatus || (nextStatus === 'published' ? 'published' : (existing.queueStatus === 'published' ? 'draft_ready' : (existing.queueStatus || 'draft_ready')));
+
+        const nextPublishDate = articleData.publishDate !== undefined
+          ? (articleData.publishDate || undefined)
+          : (nextStatus === 'published' ? undefined : existing.publishDate);
+
         const updated: CmsArticle = {
           ...existing,
           ...articleData,
@@ -2746,8 +2761,8 @@ class AdminStore {
           socialLinks: articleData.socialLinks || existing.socialLinks,
           comments: existing.comments || [],
           commentsCount: existing.commentsCount || (existing.comments?.length || 0),
-          status: articleData.status || existing.status || 'draft',
-          publishedAt: articleData.status === 'published' && !existing.publishedAt ? now : (articleData.publishedAt ?? existing.publishedAt),
+          status: nextStatus,
+          publishedAt: nextPublishedAt,
           scheduledFor: articleData.scheduledFor !== undefined ? articleData.scheduledFor : existing.scheduledFor,
           readTimeMinutes: effectiveReadTime,
           wordCount: effectiveWordCount,
@@ -2765,8 +2780,8 @@ class AdminStore {
           faqs: articleData.faqs || existing.faqs || [],
           hashtags: articleData.hashtags || existing.hashtags || [],
           relatedSlugs: articleData.relatedSlugs || existing.relatedSlugs || [],
-          queueStatus: articleData.queueStatus || existing.queueStatus || (articleData.status === 'published' ? 'published' : 'draft_ready'),
-          publishDate: articleData.publishDate || existing.publishDate,
+          queueStatus: nextQueueStatus,
+          publishDate: nextPublishDate,
           priority: articleData.priority !== undefined ? articleData.priority : (existing.priority ?? 0),
           sourceSet: articleData.sourceSet !== undefined ? articleData.sourceSet : (existing.sourceSet || ''),
           needsReviewReasons: articleData.needsReviewReasons || existing.needsReviewReasons || [],
@@ -2784,11 +2799,13 @@ class AdminStore {
         };
         this.db.cmsArticles[idx] = updated;
         this.save();
-        persistSharedCmsArticle(updated).then((r) => {
-          if (!r.success) console.warn('[CMS] Supabase article update warning:', r.error);
-        }).catch((err) => {
-          console.error('[CMS] Supabase article update exception:', err);
-        });
+        if (syncSupabase) {
+          persistSharedCmsArticle(updated).then((r) => {
+            if (!r.success) console.warn('[CMS] Supabase article update warning:', r.error);
+          }).catch((err) => {
+            console.error('[CMS] Supabase article update exception:', err);
+          });
+        }
         return updated;
       }
     }
@@ -2845,18 +2862,24 @@ class AdminStore {
 
     this.db.cmsArticles.unshift(newArticle);
     this.save();
-    persistSharedCmsArticle(newArticle).then((r) => {
-      if (!r.success) console.warn('[CMS] Supabase article create warning:', r.error);
-    }).catch((err) => {
-      console.error('[CMS] Supabase article create exception:', err);
-    });
+    if (syncSupabase) {
+      persistSharedCmsArticle(newArticle).then((r) => {
+        if (!r.success) console.warn('[CMS] Supabase article create warning:', r.error);
+      }).catch((err) => {
+        console.error('[CMS] Supabase article create exception:', err);
+      });
+    }
     return newArticle;
   }
 
   public async saveCmsArticleAsync(articleData: Partial<CmsArticle>, author: string): Promise<CmsArticle> {
-    const article = this.saveCmsArticle(articleData, author);
+    const previousSnapshot = this.db.cmsArticles ? JSON.parse(JSON.stringify(this.db.cmsArticles)) : [];
+    const article = this.saveCmsArticle(articleData, author, false);
     const result = await persistSharedCmsArticle(article);
     if (!result.success) {
+      // Revert in-memory and local store state upon database failure
+      this.db.cmsArticles = previousSnapshot;
+      this.save();
       throw new Error(result.error || 'Failed to persist article to Supabase database');
     }
     return article;
