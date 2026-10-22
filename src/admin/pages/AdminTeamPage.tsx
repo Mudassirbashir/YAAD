@@ -514,7 +514,7 @@ Barah-e-karam 24 ghante ke andar is link ko open karke apna secure password aur 
         return;
       }
 
-      toast.success('Invite Revoked', `Invitation for ${revokeInviteTarget.email} was invalidated.`);
+      toast.success('Invite Removed', `Invitation for ${revokeInviteTarget.email} was removed.`);
       setRevokeInviteTarget(null);
       adminCache.invalidatePrefix('/api/admin/invites');
       adminCache.invalidatePrefix('/api/admin/dashboard/stats');
@@ -525,6 +525,31 @@ Barah-e-karam 24 ghante ke andar is link ko open karke apna secure password aur 
       toast.error('Network Error', err.message);
     } finally {
       setIsRevoking(false);
+    }
+  };
+
+  const [resendingInviteId, setResendingInviteId] = useState<string | null>(null);
+
+  const handleResendInvite = async (inv: AdminInvite) => {
+    if (!token) return;
+    setResendingInviteId(inv.id);
+    try {
+      const res = await fetch(`/api/admin/invites/${inv.id}/resend`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error('Failed to Resend', data.error || 'Could not resend invite.');
+        return;
+      }
+      toast.success('Invitation Resent', `A fresh 24h invitation token was issued for ${inv.email}.`);
+      adminCache.invalidatePrefix('/api/admin/invites');
+      fetchInvites(true);
+    } catch (err: any) {
+      toast.error('Network Error', err.message);
+    } finally {
+      setResendingInviteId(null);
     }
   };
 
@@ -615,7 +640,7 @@ Barah-e-karam 24 ghante ke andar is link ko open karke apna secure password aur 
               : 'text-neutral-500 hover:text-neutral-900'
           }`}
         >
-          Staff Directory ({totalStaff})
+          Staff Directory ({isLoadingStaff && totalStaff === 0 ? '…' : totalStaff})
         </button>
 
         {isSuperAdmin && (
@@ -629,7 +654,7 @@ Barah-e-karam 24 ghante ke andar is link ko open karke apna secure password aur 
             }`}
           >
             Pending Invitations (
-            {invites.filter((i) => i.status === 'pending').length}
+            {isLoadingInvites && invites.length === 0 ? '…' : invites.filter((i) => i.status === 'pending').length}
             )
           </button>
         )}
@@ -658,11 +683,7 @@ Barah-e-karam 24 ghante ke andar is link ko open karke apna secure password aur 
                 : 'text-neutral-500 hover:text-neutral-900'
             }`}
           >
-            Access Requests (
-            <span className={requests.filter((r) => r.status === 'pending').length > 0 ? 'text-amber-600 font-black' : ''}>
-              {requests.filter((r) => r.status === 'pending').length}
-            </span>
-            )
+            Access Requests ({isLoadingRequests && requests.length === 0 ? '…' : requests.length})
           </button>
         )}
       </div>
@@ -766,7 +787,7 @@ Barah-e-karam 24 ghante ke andar is link ko open karke apna secure password aur 
                   </thead>
                   <tbody className="divide-y divide-neutral-100">
                     {staff.map((member) => {
-                      const isSelf = member.id === admin?.id;
+                      const isSelf = member.id === admin?.id || (Boolean(member.email) && Boolean(admin?.email) && member.email.toLowerCase().trim() === admin.email.toLowerCase().trim());
                       const roleConfig = ROLE_LABELS[member.role];
                       return (
                         <tr key={member.id} className="hover:bg-neutral-50/70 transition-colors">
@@ -822,7 +843,7 @@ Barah-e-karam 24 ghante ke andar is link ko open karke apna secure password aur 
                           </td>
 
                           <td className="py-3.5 px-4 font-mono text-[11px] text-neutral-500">
-                            {member.lastLoginAt ? new Date(member.lastLoginAt).toLocaleDateString() : 'Never'}
+                            {member.lastLoginAt ? new Date(member.lastLoginAt).toLocaleString() : 'Never'}
                           </td>
 
                           {isSuperAdmin && (
@@ -948,6 +969,42 @@ Barah-e-karam 24 ghante ke andar is link ko open karke apna secure password aur 
                                   onClick={() => setRevokeInviteTarget(inv)}
                                   className="p-1 rounded-lg hover:bg-rose-50 text-rose-600 cursor-pointer transition-colors"
                                   title="Revoke invite"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            )}
+
+                            {inv.status === 'pending' && isExpired && (
+                              <div className="flex items-center justify-end gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => handleResendInvite(inv)}
+                                  disabled={resendingInviteId === inv.id}
+                                  className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-[#003527] text-xs font-bold cursor-pointer transition-colors flex items-center gap-1 border border-emerald-200"
+                                  title="Resend invitation (issues fresh 24h token)"
+                                >
+                                  <RefreshCw className={`w-3.5 h-3.5 ${resendingInviteId === inv.id ? 'animate-spin' : ''}`} />
+                                  <span>Resend</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setRevokeInviteTarget(inv)}
+                                  className="p-1 rounded-lg hover:bg-rose-50 text-rose-600 cursor-pointer transition-colors"
+                                  title="Delete expired invitation"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            )}
+
+                            {inv.status === 'revoked' && (
+                              <div className="flex items-center justify-end gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setRevokeInviteTarget(inv)}
+                                  className="p-1 rounded-lg hover:bg-rose-50 text-rose-600 cursor-pointer transition-colors"
+                                  title="Delete revoked invitation"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>

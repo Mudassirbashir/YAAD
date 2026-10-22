@@ -21,6 +21,7 @@ import { useAdminAuth } from '../context/AdminAuthContext';
 import { useAdminToast } from '../components/AdminToasts';
 import { useAdminRealtime } from '../hooks/useAdminRealtime';
 import { adminCache } from '../utils/adminCache';
+import { AdminConfirmModal } from '../components/AdminConfirmModal';
 
 export interface AuthoritativeList {
   id: string;
@@ -47,9 +48,37 @@ export interface AuthoritativeList {
   }>;
 }
 
+export const formatListTitle = (l: AuthoritativeList) => {
+  const cleanTitle = (l.title || '').trim();
+  if (cleanTitle) return cleanTitle;
+  const firstItem = l.items?.[0]?.name?.trim();
+  const count = l.itemsCount ?? l.items?.length ?? 0;
+  if (firstItem) {
+    return `Untitled list — ${firstItem}${count > 1 ? ` (+${count - 1} more)` : ''}`;
+  }
+  return `Untitled list — ${count} item${count === 1 ? '' : 's'}`;
+};
+
 export const AdminListModerationPage: React.FC = () => {
   const { token, logout } = useAdminAuth();
   const toast = useAdminToast();
+
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    itemName: string;
+    consequence: string;
+    confirmButtonText?: string;
+    isDestructive?: boolean;
+    isLoading?: boolean;
+    onConfirm: () => Promise<void>;
+  }>({
+    isOpen: false,
+    title: '',
+    itemName: '',
+    consequence: '',
+    onConfirm: async () => {},
+  });
 
   const [searchQuery, setSearchQuery] = useState('');
   const [completionFilter, setCompletionFilter] = useState<'all' | 'completed' | 'active'>('all');
@@ -219,36 +248,43 @@ export const AdminListModerationPage: React.FC = () => {
     }
   };
 
-  const handleDeleteList = async (listId: string, listTitle: string) => {
+  const handleDeleteList = (listId: string, listTitle: string) => {
     if (!token) return;
-    if (
-      !window.confirm(
-        `Are you sure you want to permanently delete the list "${listTitle || 'Untitled'}"? This action cannot be undone.`
-      )
-    ) {
-      return;
-    }
-    setActionInProgress(`delete_${listId}`);
-    try {
-      const res = await fetch(`/api/admin/lists/${listId}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'Failed to delete shopping list');
-      }
-      toast.success('List Deleted', 'Shopping list removed from system.');
-      setLists((prev) => prev.filter((l) => l.id !== listId));
-      setTotal((t) => Math.max(0, t - 1));
-      adminCache.invalidatePrefix('/api/admin/lists');
-    } catch (err: any) {
-      toast.error('Delete Failed', err.message);
-    } finally {
-      setActionInProgress(null);
-    }
+    const displayName = listTitle?.trim() || 'Untitled List';
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Shopping List',
+      itemName: displayName,
+      consequence: 'This will permanently remove this shopping list and all of its items from the database. This action cannot be undone.',
+      confirmButtonText: 'Permanently Delete',
+      isDestructive: true,
+      onConfirm: async () => {
+        setConfirmModal((prev) => ({ ...prev, isLoading: true }));
+        setActionInProgress(`delete_${listId}`);
+        try {
+          const res = await fetch(`/api/admin/lists/${listId}`, {
+            method: 'DELETE',
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error || 'Failed to delete shopping list');
+          }
+          toast.success('List Deleted', 'Shopping list removed from system.');
+          setLists((prev) => prev.filter((l) => l.id !== listId));
+          setTotal((t) => Math.max(0, t - 1));
+          adminCache.invalidatePrefix('/api/admin/lists');
+          setConfirmModal((prev) => ({ ...prev, isOpen: false, isLoading: false }));
+        } catch (err: any) {
+          setConfirmModal((prev) => ({ ...prev, isLoading: false }));
+          toast.error('Delete Failed', err.message);
+        } finally {
+          setActionInProgress(null);
+        }
+      },
+    });
   };
 
   const toggleExpand = (listId: string) => {
@@ -378,7 +414,7 @@ export const AdminListModerationPage: React.FC = () => {
                   >
                     <div className="space-y-1.5">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-bold text-neutral-900 text-sm">{l.title || 'Untitled Shopping List'}</span>
+                        <span className="font-bold text-neutral-900 text-sm">{formatListTitle(l)}</span>
                         <span
                           className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
                             l.isCompleted
@@ -592,6 +628,18 @@ export const AdminListModerationPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      <AdminConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        itemName={confirmModal.itemName}
+        consequence={confirmModal.consequence}
+        confirmButtonText={confirmModal.confirmButtonText}
+        isDestructive={confirmModal.isDestructive}
+        isLoading={confirmModal.isLoading}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 };

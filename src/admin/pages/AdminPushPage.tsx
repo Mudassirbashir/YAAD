@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { adminCache } from '../utils/adminCache';
+import { AdminTableSkeleton } from '../components/AdminSkeleton';
 
 interface PushCampaign {
   id: string;
@@ -279,7 +280,7 @@ export const AdminPushPage: React.FC = () => {
           <h2 className="text-xl sm:text-2xl font-black text-[#003527] tracking-tight font-['Manrope'] flex items-center gap-2">
             <span>Push Notifications &amp; Alerts</span>
             <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
-              {campaigns.length} Broadcasts
+              {isLoading && campaigns.length === 0 ? '…' : `${campaigns.length} Broadcasts`}
             </span>
           </h2>
           <p className="text-xs sm:text-sm text-neutral-500 mt-1">
@@ -367,7 +368,9 @@ export const AdminPushPage: React.FC = () => {
       </div>
 
       {/* Campaigns List */}
-      {campaigns.length === 0 ? (
+      {isLoading && campaigns.length === 0 ? (
+        <AdminTableSkeleton rows={3} columns={3} />
+      ) : campaigns.length === 0 ? (
         <div className="bg-white border border-neutral-200/90 rounded-2xl p-12 text-center space-y-4 shadow-xs">
           <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center mx-auto">
             <Bell className="w-7 h-7" />

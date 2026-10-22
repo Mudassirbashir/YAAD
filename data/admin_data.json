@@ -10,7 +10,7 @@
       "status": "active",
       "failedAttempts": 0,
       "createdAt": 1791123839719,
-      "updatedAt": 1791459007561,
+      "updatedAt": 1792670547467,
       "deletedAt": null,
       "recoveryCodes": [
         {
@@ -504,6 +504,31 @@
     }
   ],
   "auditLogs": [
+    {
+      "id": "audit_caf5b2b6-e723-4d1e-900a-df8f9287ccda",
+      "timestamp": 1792670700677,
+      "action": "source_of_truth_verification",
+      "targetType": "system_security",
+      "metadata": {
+        "testSuite": "admin-supabase-truth-qa"
+      }
+    },
+    {
+      "id": "audit_918b8905-1cd0-4303-a492-029c00be33ce",
+      "timestamp": 1792670547451,
+      "action": "admin_account_locked",
+      "adminId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "adminEmail": "mudassirbashir530@gmail.com",
+      "targetType": "admin_security",
+      "targetId": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
+      "ip": "192.168.1.100",
+      "metadata": {
+        "consecutiveFailures": 5,
+        "lockoutDurationMs": 900000,
+        "lockoutExpiresAt": 1792671447436,
+        "superAdminsNotified": true
+      }
+    },
     {
       "id": "audit_cleanup_1792652597308",
       "timestamp": 1792652597308,
@@ -1697,6 +1722,16 @@
   ],
   "securityAlerts": [
     {
+      "id": "alert_ada7ff4d-bc6b-4d2f-a2d8-ce268539be2c",
+      "timestamp": 1792670547451,
+      "type": "account_lockout",
+      "title": "Security Alert: Account Temporarily Locked",
+      "message": "Admin account \"mudassirbashir530@gmail.com\" has been locked for 15 minutes due to 5 consecutive failed password attempts.",
+      "targetEmail": "mudassirbashir530@gmail.com",
+      "ip": "192.168.1.100",
+      "dismissed": true
+    },
+    {
       "id": "alert_99c8d4fe-dfc0-4e7b-976c-23223b0428b3",
       "timestamp": 1791459007565,
       "type": "unauthorized_attempt",
@@ -1806,7 +1841,8 @@
       "enabled": false,
       "message": "YAAD system is undergoing scheduled cloud maintenance.",
       "bannerType": "info"
-    }
+    },
+    "systemSecret": "yaad_sec_c940b5f14e7a83d7a8e8b2f901cb4d88e63a890937b2d28f74a01c385b"
   },
   "permissionMatrix": {
     "users.view": {
@@ -1875,7 +1911,284 @@
   },
   "appUsers": [],
   "moderationLists": [],
-  "catalogProducts": [],
+  "catalogProducts": [
+    {
+      "id": "cat_potato",
+      "nameEn": "Potato (Aloo)",
+      "nameUr": "آلو",
+      "category": "Fresh Vegetables & Sabzi",
+      "subcategory": "Staples",
+      "unit": "kg",
+      "pricePkr": 80,
+      "isActive": true,
+      "createdAt": 1792670700650,
+      "updatedAt": 1792670700650
+    },
+    {
+      "id": "cat_onion",
+      "nameEn": "Onion (Pyaaz)",
+      "nameUr": "پیاز",
+      "category": "Fresh Vegetables & Sabzi",
+      "subcategory": "Staples",
+      "unit": "kg",
+      "pricePkr": 160,
+      "isActive": true,
+      "createdAt": 1792670700650,
+      "updatedAt": 1792670700650
+    },
+    {
+      "id": "cat_tomato",
+      "nameEn": "Tomato (Tamatar)",
+      "nameUr": "ٹماٹر",
+      "category": "Fresh Vegetables & Sabzi",
+      "subcategory": "Staples",
+      "unit": "kg",
+      "pricePkr": 120,
+      "isActive": true,
+      "createdAt": 1792670700650,
+      "updatedAt": 1792670700650
+    },
+    {
+      "id": "cat_garlic",
+      "nameEn": "Garlic (Lehsun)",
+      "nameUr": "لہسن",
+      "category": "Fresh Vegetables & Sabzi",
+      "subcategory": "Aromatics",
+      "unit": "g",
+      "pricePkr": 250,
+      "isActive": true,
+      "createdAt": 1792670700650,
+      "updatedAt": 1792670700650
+    },
+    {
+      "id": "cat_ginger",
+      "nameEn": "Ginger (Adrak)",
+      "nameUr": "ادرک",
+      "category": "Fresh Vegetables & Sabzi",
+      "subcategory": "Aromatics",
+      "unit": "g",
+      "pricePkr": 300,
+      "isActive": true,
+      "createdAt": 1792670700650,
+      "updatedAt": 1792670700650
+    },
+    {
+      "id": "cat_green_chilli",
+      "nameEn": "Green Chilli (Hari Mirch)",
+      "nameUr": "ہری مرچ",
+      "category": "Fresh Vegetables & Sabzi",
+      "subcategory": "Aromatics",
+      "unit": "g",
+      "pricePkr": 100,
+      "isActive": true,
+      "createdAt": 1792670700650,
+      "updatedAt": 1792670700650
+    },
+    {
+      "id": "cat_coriander",
+      "nameEn": "Fresh Coriander (Dhania)",
+      "nameUr": "ہرا دھنیا",
+      "category": "Fresh Vegetables & Sabzi",
+      "subcategory": "Herbs",
+      "unit": "bunch",
+      "pricePkr": 40,
+      "isActive": true,
+      "createdAt": 1792670700650,
+      "updatedAt": 1792670700650
+    },
+    {
+      "id": "cat_mint",
+      "nameEn": "Fresh Mint (Podina)",
+      "nameUr": "پودینہ",
+      "category": "Fresh Vegetables & Sabzi",
+      "subcategory": "Herbs",
+      "unit": "bunch",
+      "pricePkr": 30,
+      "isActive": true,
+      "createdAt": 1792670700650,
+      "updatedAt": 1792670700650
+    },
+    {
+      "id": "cat_atta",
+      "nameEn": "Chakki Whole Wheat Atta",
+      "nameUr": "چکی آٹا",
+      "category": "Atta, Rice & Grains",
+      "subcategory": "Flour",
+      "unit": "kg",
+      "pricePkr": 650,
+      "isActive": true,
+      "createdAt": 1792670700650,
+      "updatedAt": 1792670700650
+    },
+    {
+      "id": "cat_basmati_rice",
+      "nameEn": "Kainat Basmati Rice",
+      "nameUr": "باسمتی چاول",
+      "category": "Atta, Rice & Grains",
+      "subcategory": "Rice",
+      "unit": "kg",
+      "pricePkr": 380,
+      "isActive": true,
+      "createdAt": 1792670700650,
+      "updatedAt": 1792670700650
+    },
+    {
+      "id": "cat_daal_chana",
+      "nameEn": "Daal Chana (Yellow Gram)",
+      "nameUr": "دال چنا",
+      "category": "Pulses & Daal",
+      "subcategory": "Lentils",
+      "unit": "kg",
+      "pricePkr": 280,
+      "isActive": true,
+      "createdAt": 1792670700650,
+      "updatedAt": 1792670700650
+    },
+    {
+      "id": "cat_daal_masoor",
+      "nameEn": "Daal Masoor (Red Lentils)",
+      "nameUr": "دال مسور",
+      "category": "Pulses & Daal",
+      "subcategory": "Lentils",
+      "unit": "kg",
+      "pricePkr": 310,
+      "isActive": true,
+      "createdAt": 1792670700650,
+      "updatedAt": 1792670700650
+    },
+    {
+      "id": "cat_daal_moong",
+      "nameEn": "Daal Moong (Yellow Moong)",
+      "nameUr": "دال مونگ",
+      "category": "Pulses & Daal",
+      "subcategory": "Lentils",
+      "unit": "kg",
+      "pricePkr": 330,
+      "isActive": true,
+      "createdAt": 1792670700650,
+      "updatedAt": 1792670700650
+    },
+    {
+      "id": "cat_haldi",
+      "nameEn": "Turmeric Powder (Haldi)",
+      "nameUr": "ہلدی پاؤڈر",
+      "category": "Spices & Masalay",
+      "subcategory": "Ground Spices",
+      "unit": "g",
+      "pricePkr": 150,
+      "isActive": true,
+      "createdAt": 1792670700650,
+      "updatedAt": 1792670700650
+    },
+    {
+      "id": "cat_lal_mirch",
+      "nameEn": "Red Chilli Powder (Lal Mirch)",
+      "nameUr": "لال مرچ پاؤڈر",
+      "category": "Spices & Masalay",
+      "subcategory": "Ground Spices",
+      "unit": "g",
+      "pricePkr": 200,
+      "isActive": true,
+      "createdAt": 1792670700650,
+      "updatedAt": 1792670700650
+    },
+    {
+      "id": "cat_zeera",
+      "nameEn": "White Cumin Seeds (Zeera)",
+      "nameUr": "سفید زیرہ",
+      "category": "Spices & Masalay",
+      "subcategory": "Whole Spices",
+      "unit": "g",
+      "pricePkr": 220,
+      "isActive": true,
+      "createdAt": 1792670700650,
+      "updatedAt": 1792670700650
+    },
+    {
+      "id": "cat_shan_biryani",
+      "nameEn": "Shan Bombay Biryani Masala",
+      "nameUr": "شان بمبئی بریانی مصالحہ",
+      "category": "Spices & Masalay",
+      "subcategory": "Recipe Mixes",
+      "unit": "pack",
+      "pricePkr": 140,
+      "isActive": true,
+      "createdAt": 1792670700650,
+      "updatedAt": 1792670700650
+    },
+    {
+      "id": "cat_milk_pak",
+      "nameEn": "Nestle MilkPak Full Cream Milk",
+      "nameUr": "ملک پیک دودھ",
+      "category": "Dairy & Eggs",
+      "subcategory": "UHT Milk",
+      "unit": "litre",
+      "pricePkr": 290,
+      "isActive": true,
+      "createdAt": 1792670700650,
+      "updatedAt": 1792670700650
+    },
+    {
+      "id": "cat_eggs",
+      "nameEn": "Farm Fresh Eggs (Anda)",
+      "nameUr": "فارمی انڈے",
+      "category": "Dairy & Eggs",
+      "subcategory": "Eggs",
+      "unit": "dozen",
+      "pricePkr": 340,
+      "isActive": true,
+      "createdAt": 1792670700650,
+      "updatedAt": 1792670700650
+    },
+    {
+      "id": "cat_oil_dalda",
+      "nameEn": "Dalda Cooking Oil Pouch",
+      "nameUr": "ڈالڈا کوکنگ آئل",
+      "category": "Cooking Oils & Ghee",
+      "subcategory": "Oil",
+      "unit": "litre",
+      "pricePkr": 520,
+      "isActive": true,
+      "createdAt": 1792670700650,
+      "updatedAt": 1792670700650
+    },
+    {
+      "id": "cat_tapal_tea",
+      "nameEn": "Tapal Danedar Black Tea",
+      "nameUr": "ٹپال دانے دار چائے",
+      "category": "Tea & Beverages",
+      "subcategory": "Black Tea",
+      "unit": "pack",
+      "pricePkr": 460,
+      "isActive": true,
+      "createdAt": 1792670700650,
+      "updatedAt": 1792670700650
+    },
+    {
+      "id": "cat_surf_excel",
+      "nameEn": "Surf Excel Detergent Powder",
+      "nameUr": "سرف ایکسل",
+      "category": "Household & Cleaning",
+      "subcategory": "Laundry",
+      "unit": "kg",
+      "pricePkr": 480,
+      "isActive": true,
+      "createdAt": 1792670700650,
+      "updatedAt": 1792670700650
+    },
+    {
+      "id": "cat_vim_bar",
+      "nameEn": "Vim Dishwashing Bar",
+      "nameUr": "وِم برتن دھونے کا صابن",
+      "category": "Household & Cleaning",
+      "subcategory": "Dishwashing",
+      "unit": "piece",
+      "pricePkr": 60,
+      "isActive": true,
+      "createdAt": 1792670700650,
+      "updatedAt": 1792670700650
+    }
+  ],
   "catalogCategories": [
     {
       "id": "vegetables",
@@ -14558,46 +14871,7 @@
       "category": "deals"
     }
   ],
-  "supportTickets": [
-    {
-      "id": "tkt_c0c7f94d-da1a-4c37-8819-47cc35a44e71",
-      "ticketNumber": "TKT-00001",
-      "userId": "guest",
-      "userName": "Ahmed Shopper",
-      "userEmail": "ahmed.shopper@example.com",
-      "userPhone": "03129876543",
-      "subject": "Question about Mandi Rate Accuracy",
-      "description": "Are tomato prices updated daily at 7 AM?",
-      "category": "general",
-      "priority": "normal",
-      "status": "resolved",
-      "messages": [
-        {
-          "id": "msg_9ef9f70f-563c-4228-bbd3-023ad3636650",
-          "sender": "user",
-          "senderName": "Ahmed Shopper",
-          "text": "Are tomato prices updated daily at 7 AM?",
-          "timestamp": 1791458958777
-        },
-        {
-          "id": "msg_633b2ca6-7d00-4578-bc3a-3a22e27cdf49",
-          "sender": "staff",
-          "senderName": "Mudassir Bashir",
-          "text": "Yes! Rates are synced directly from the wholesale market every morning at 7:00 AM.",
-          "timestamp": 1791458958784
-        }
-      ],
-      "internalNotes": [],
-      "createdAt": 1791458958777,
-      "updatedAt": 1791458958784,
-      "resolvedAt": 1791458958783,
-      "assignedTo": {
-        "id": "admin_e3988361-cf13-44ff-bed1-eed53fc1e66a",
-        "name": "Mudassir Bashir",
-        "email": "mudassirbashir530@gmail.com"
-      }
-    }
-  ],
+  "supportTickets": [],
   "cannedReplies": [],
   "accessRequests": [
     {
@@ -14607,7 +14881,9 @@
       "phone": "03001234567",
       "requestedRole": "content_editor",
       "reason": "Need content publishing access",
-      "status": "pending",
+      "status": "rejected",
+      "reviewedBy": "Mudassir Bashir",
+      "reviewedAt": 1791557500000,
       "createdAt": 1791557486896
     },
     {

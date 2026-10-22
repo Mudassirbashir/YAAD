@@ -34,9 +34,24 @@ export const AdminAuditLogPage: React.FC = () => {
   const [logs, setLogs] = useState<AuditLogEntry[]>(initialCached?.logs || []);
   const [total, setTotal] = useState(initialCached?.total || 0);
   const [isLoading, setIsLoading] = useState(!initialCached);
+  const [distinctActions, setDistinctActions] = useState<string[]>([]);
 
   // Inspector modal state
   const [inspectEntry, setInspectEntry] = useState<AuditLogEntry | null>(null);
+
+  useEffect(() => {
+    if (!token) return;
+    fetch('/api/admin/audit-logs/actions', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.actions && Array.isArray(data.actions)) {
+          setDistinctActions((prev) => Array.from(new Set([...prev, ...data.actions])).sort());
+        }
+      })
+      .catch(() => null);
+  }, [token]);
 
   const fetchLogs = useCallback(async (force = false) => {
     if (!token) return;
@@ -77,6 +92,9 @@ export const AdminAuditLogPage: React.FC = () => {
             if (fresh) {
               setLogs(fresh.logs || []);
               setTotal(fresh.total || 0);
+              if (fresh.actions && Array.isArray(fresh.actions)) {
+                setDistinctActions((prev) => Array.from(new Set([...prev, ...fresh.actions])).sort());
+              }
             }
           },
         }
@@ -85,6 +103,9 @@ export const AdminAuditLogPage: React.FC = () => {
       if (data) {
         setLogs(data.logs || []);
         setTotal(data.total || 0);
+        if (data.actions && Array.isArray(data.actions)) {
+          setDistinctActions((prev) => Array.from(new Set([...prev, ...data.actions])).sort());
+        }
       }
     } catch (err: any) {
       console.error('Error fetching audit logs:', err);
@@ -184,15 +205,12 @@ export const AdminAuditLogPage: React.FC = () => {
             }}
             className="bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs text-neutral-700 outline-none focus:border-[#003527]"
           >
-            <option value="">All Actions</option>
-            <option value="admin_login_success">admin_login_success</option>
-            <option value="admin_login_failed">admin_login_failed</option>
-            <option value="admin_2fa_enabled">admin_2fa_enabled</option>
-            <option value="admin_invited">admin_invited</option>
-            <option value="admin_invite_accepted">admin_invite_accepted</option>
-            <option value="admin_suspended">admin_suspended</option>
-            <option value="admin_reactivated">admin_reactivated</option>
-            <option value="admin_password_reset_completed">admin_password_reset_completed</option>
+            <option value="">All Actions {distinctActions.length > 0 ? `(${distinctActions.length})` : ''}</option>
+            {distinctActions.map((act) => (
+              <option key={act} value={act}>
+                {act}
+              </option>
+            ))}
           </select>
         </div>
       </div>

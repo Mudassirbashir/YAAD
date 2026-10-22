@@ -33,6 +33,7 @@ import {
   persistSharedCmsArticlesBatch,
   deleteSharedAdminUser,
   getAuthoritativeCms,
+  persistAuthoritativeCatalogProduct,
 } from './supabaseAdmin';
 
 export const adminRouter = Router();
@@ -339,6 +340,7 @@ adminRouter.post('/auth/login', rateLimit(10, 60 * 1000), async (req: Request, r
 
     // Success!
     adminStore.resetFailedAttempts(admin.id);
+    adminStore.recordSuccessfulLogin(admin.id);
     const session = adminStore.createSession(admin, clientIp, userAgent);
 
     adminStore.writeAuditLog({
@@ -488,6 +490,7 @@ adminRouter.post('/auth/verify-2fa', rateLimit(10, 60 * 1000), async (req: Reque
   // Successful 2FA verification!
   deleteSharedTempToken(tempToken).catch(() => null);
   adminStore.resetFailedAttempts(admin.id);
+  adminStore.recordSuccessfulLogin(admin.id);
   const session = adminStore.createSession(admin.id, clientIp, userAgent);
 
   adminStore.writeAuditLog({
@@ -626,6 +629,7 @@ adminRouter.post('/auth/confirm-2fa', async (req: Request, res: Response) => {
   });
 
   // Issue active session
+  adminStore.recordSuccessfulLogin(admin.id);
   const session = adminStore.createSession(admin.id, clientIp, userAgent);
   const isSecure = req.secure || req.headers['x-forwarded-proto'] === 'https';
   res.setHeader(
@@ -897,6 +901,49 @@ adminRouter.post(
   }
 );
 
+adminRouter.delete(
+  '/team/:id',
+  requireAdminAuth,
+  requireRoles('super_admin'),
+  async (req: AdminAuthRequest, res: Response) => {
+    try {
+      const targetId = req.params.id;
+      const clientIp = getClientIp(req);
+
+      const targetAdmin = await adminStore.findAdminByIdAsync(targetId);
+      if (!targetAdmin) {
+        return res.status(404).json({ error: 'Admin user not found.' });
+      }
+
+      if (
+        targetId === req.admin!.id ||
+        (targetAdmin.email && req.admin!.email && targetAdmin.email.toLowerCase() === req.admin!.email.toLowerCase())
+      ) {
+        return res.status(400).json({ error: 'You cannot delete your own admin account.' });
+      }
+
+      const deleted = await adminStore.deleteAdminAsync(targetId);
+      if (!deleted) {
+        return res.status(500).json({ error: 'Failed to delete admin account.' });
+      }
+
+      adminStore.writeAuditLog({
+        action: 'ADMIN_ACCOUNT_DELETED',
+        adminId: req.admin!.id,
+        adminEmail: req.admin!.email,
+        targetType: 'admin_user',
+        targetId,
+        ip: clientIp,
+        metadata: { targetEmail: targetAdmin.email, targetRole: targetAdmin.role },
+      });
+
+      res.status(200).json({ success: true, message: `Admin account ${targetAdmin.email} deleted.` });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || 'Failed to delete admin account.' });
+    }
+  }
+);
+
 // -----------------------------------------------------------------------------
 // 10. Admin Invitations (Super Admin Only)
 // -----------------------------------------------------------------------------
@@ -970,14 +1017,17 @@ adminRouter.delete(
     const inviteId = req.params.id;
     const clientIp = getClientIp(req);
 
-    const success = adminStore.revokeInvite(inviteId);
-    if (!success) {
-      res.status(404).json({ error: 'Pending invite not found.' });
-      return;
+    const deleted = adminStore.deleteInvite(inviteId);
+    if (!deleted) {
+      const revoked = adminStore.revokeInvite(inviteId);
+      if (!revoked) {
+        res.status(404).json({ error: 'Invite not found.' });
+        return;
+      }
     }
 
     adminStore.writeAuditLog({
-      action: 'admin_invite_revoked',
+      action: 'admin_invite_deleted',
       adminId: req.admin!.id,
       adminEmail: req.admin!.email,
       targetType: 'admin_invite',
@@ -985,7 +1035,41 @@ adminRouter.delete(
       ip: clientIp,
     });
 
-    res.status(200).json({ message: 'Invite revoked.' });
+    res.status(200).json({ success: true, message: 'Invite removed.' });
+  }
+);
+
+adminRouter.post(
+  '/invites/:id/resend',
+  requireAdminAuth,
+  requireRoles('super_admin'),
+  (req: AdminAuthRequest, res: Response) => {
+    const inviteId = req.params.id;
+    const clientIp = getClientIp(req);
+
+    const invite = adminStore.resendInvite(inviteId, req.admin ? { id: req.admin.id, email: req.admin.email, name: req.admin.name } : undefined);
+    if (!invite) {
+      res.status(404).json({ error: 'Invite not found.' });
+      return;
+    }
+
+    adminStore.writeAuditLog({
+      action: 'admin_invite_resent',
+      adminId: req.admin!.id,
+      adminEmail: req.admin!.email,
+      targetType: 'admin_invite',
+      targetId: invite.id,
+      afterValue: { email: invite.email, role: invite.role, expiresAt: invite.expiresAt },
+      ip: clientIp,
+    });
+
+    const inviteUrl = `/admin/accept-invite?token=${invite.token}`;
+    res.status(200).json({
+      success: true,
+      message: `Invite resent successfully for ${invite.email}.`,
+      invite,
+      inviteUrl,
+    });
   }
 );
 
@@ -1049,6 +1133,7 @@ adminRouter.post('/invites/accept', async (req: Request, res: Response) => {
   const recoveryCodes = generateRecoveryCodes(10);
   adminStore.setRecoveryCodes(newAdmin.id, recoveryCodes);
 
+  adminStore.recordSuccessfulLogin(newAdmin.id);
   const session = adminStore.createSession(newAdmin.id, clientIp, userAgent);
 
   adminStore.writeAuditLog({
@@ -1108,9 +1193,14 @@ adminRouter.post(
 // -----------------------------------------------------------------------------
 // 11b. Unified Admin Notifications Center (All Staff with RBAC filtering)
 // -----------------------------------------------------------------------------
-adminRouter.get('/notifications', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
-  const result = adminStore.getAdminNotifications(req.admin);
-  res.status(200).json(result);
+adminRouter.get('/notifications', requireAdminAuth, async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const result = await adminStore.getAdminNotificationsAsync(req.admin);
+    res.status(200).json(result);
+  } catch (err: any) {
+    const fallback = adminStore.getAdminNotifications(req.admin);
+    res.status(200).json(fallback);
+  }
 });
 
 adminRouter.post('/notifications/:id/dismiss', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
@@ -1191,6 +1281,20 @@ adminRouter.all(['/signup', '/register', '/auth/signup', '/auth/register'], (req
 // 14. Audit Logs Viewer (Super Admin Only)
 // -----------------------------------------------------------------------------
 adminRouter.get(
+  '/audit-logs/actions',
+  requireAdminAuth,
+  requireRoles('super_admin'),
+  async (req: AdminAuthRequest, res: Response) => {
+    try {
+      const actions = await adminStore.getDistinctAuditActionsAsync();
+      res.status(200).json({ actions });
+    } catch (err: any) {
+      res.status(500).json({ error: 'Failed to retrieve audit actions', details: err.message });
+    }
+  }
+);
+
+adminRouter.get(
   '/audit-logs',
   requireAdminAuth,
   requireRoles('super_admin'),
@@ -1209,9 +1313,12 @@ adminRouter.get(
       offset,
     });
 
+    const actions = await adminStore.getDistinctAuditActionsAsync();
+
     res.status(200).json({
       logs,
       total,
+      actions,
       page: p,
       limit: l,
       totalPages: Math.ceil(total / l),
@@ -1435,30 +1542,84 @@ adminRouter.get('/catalog/products', requireAdminAuth, async (req: AdminAuthRequ
   }
 });
 
-adminRouter.post('/catalog/products', requireAdminAuth, requirePermission('catalog.edit'), (req: AdminAuthRequest, res: Response) => {
+adminRouter.post('/catalog/products', requireAdminAuth, requirePermission('catalog.edit'), async (req: AdminAuthRequest, res: Response) => {
   try {
-    const { name, nameUr, category, defaultUnit } = req.body;
+    const { name, nameUr, category, defaultUnit, pricePkr, isEssential } = req.body;
     if (!name || !category) {
       return res.status(400).json({ error: 'Name and category are required' });
     }
     const product = adminStore.saveCatalogProduct({
-      nameEn: name,
-      nameUr: nameUr || '',
+      nameEn: name.trim(),
+      nameUr: nameUr !== undefined ? nameUr.trim() : '',
       category,
       unit: defaultUnit || 'kg',
       subcategory: 'Grocery',
+      pricePkr: pricePkr !== undefined && pricePkr !== '' ? Number(pricePkr) : undefined,
+      isEssential: Boolean(isEssential),
     });
+    await persistAuthoritativeCatalogProduct(product);
     adminStore.writeAuditLog({
       action: 'catalog_item_added',
       adminId: req.admin?.id,
       adminEmail: req.admin?.email,
       targetType: 'catalog_item',
       targetId: product.id,
-      afterValue: { name: product.nameEn, category: product.category },
+      afterValue: { name: product.nameEn, category: product.category, pricePkr: product.pricePkr, isEssential: product.isEssential },
     });
     res.status(201).json({ success: true, product });
   } catch (err: any) {
     res.status(500).json({ error: 'Failed to add catalog item', details: err.message });
+  }
+});
+
+adminRouter.put('/catalog/products/:id', requireAdminAuth, requirePermission('catalog.edit'), async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { name, nameUr, category, defaultUnit, pricePkr, isEssential } = req.body;
+    if (!name || !category) {
+      return res.status(400).json({ error: 'Name and category are required' });
+    }
+    const product = adminStore.saveCatalogProduct({
+      id,
+      nameEn: name.trim(),
+      nameUr: nameUr !== undefined ? nameUr.trim() : '',
+      category,
+      unit: defaultUnit || 'kg',
+      pricePkr: pricePkr !== undefined && pricePkr !== '' ? Number(pricePkr) : undefined,
+      isEssential: Boolean(isEssential),
+    });
+    await persistAuthoritativeCatalogProduct(product);
+    adminStore.writeAuditLog({
+      action: 'catalog_item_updated',
+      adminId: req.admin?.id,
+      adminEmail: req.admin?.email,
+      targetType: 'catalog_item',
+      targetId: id,
+      afterValue: { name: product.nameEn, category: product.category, pricePkr: product.pricePkr, isEssential: product.isEssential },
+    });
+    res.status(200).json({ success: true, product });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to update catalog product', details: err.message });
+  }
+});
+
+adminRouter.delete('/catalog/products/:id', requireAdminAuth, requirePermission('catalog.edit'), async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const { id } = req.params;
+    const ok = await adminStore.deleteCatalogProductAsync(id);
+    if (!ok) {
+      return res.status(404).json({ error: 'Catalog item not found' });
+    }
+    adminStore.writeAuditLog({
+      action: 'catalog_item_deleted',
+      adminId: req.admin?.id,
+      adminEmail: req.admin?.email,
+      targetType: 'catalog_item',
+      targetId: id,
+    });
+    res.status(200).json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to delete catalog product', details: err.message });
   }
 });
 
@@ -2104,11 +2265,9 @@ adminRouter.get('/auth/login', (req: Request, res: Response) => {
   if (acceptsHtml) {
     return res.redirect('/admin/login');
   }
-  return res.status(200).json({
-    status: 'active',
-    endpoint: '/api/admin/auth/login',
-    method: 'POST',
-    message: 'YAAD Staff Authentication Portal. Submit email and credentials via POST to authenticate.',
+  return res.status(405).json({
+    error: 'Method Not Allowed: GET is not supported for /api/admin/auth/login. Please submit email via POST.',
+    code: 'METHOD_NOT_ALLOWED',
     loginUrl: '/admin/login',
   });
 });

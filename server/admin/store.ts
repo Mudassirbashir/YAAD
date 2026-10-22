@@ -35,6 +35,10 @@ import {
   persistSharedCmsArticle,
   persistSharedCmsArticlesBatch,
   deleteSharedCmsArticleFromDb,
+  persistAuthoritativeCatalogProduct,
+  deleteAuthoritativeCatalogProduct,
+  deleteSharedAdminUser,
+  getAuthoritativeAnalytics,
 } from './supabaseAdmin';
 import { validateArticleSeoGate } from './seoValidator';
 // @ts-ignore
@@ -247,6 +251,8 @@ export interface CatalogProduct {
   brand?: string;
   unit: string;
   pricePkr?: number;
+  isEssential?: boolean;
+  aliases?: string[];
   barcode?: string;
   imageUrl?: string;
   isActive: boolean;
@@ -772,6 +778,8 @@ function getInitialCategories(): CatalogCategory[] {
     { id: 'oils', nameEn: 'Cooking Oils & Ghee', nameUr: 'کوکنگ آئل اور گھی', icon: 'droplet', itemCount: 1 },
     { id: 'beverages', nameEn: 'Tea & Beverages', nameUr: 'چائے اور مشروبات', icon: 'coffee', itemCount: 1 },
     { id: 'household', nameEn: 'Household & Cleaning', nameUr: 'گھریلو اشیاء', icon: 'sparkles', itemCount: 2 },
+    { id: 'snacks', nameEn: 'Snacks & Biscuits', nameUr: 'سنیکس اور بسکٹ', icon: 'cookie', itemCount: 0 },
+    { id: 'meat', nameEn: 'Meat & Poultry', nameUr: 'گوشت اور مرغی', icon: 'drumstick', itemCount: 0 },
   ];
 }
 
@@ -1084,7 +1092,7 @@ class AdminStore {
           permissionMatrix: parsed.permissionMatrix || getDefaultPermissionMatrix(),
           appUsers: Array.isArray(parsed.appUsers) ? parsed.appUsers : [],
           moderationLists: Array.isArray(parsed.moderationLists) ? parsed.moderationLists : [],
-          catalogProducts: Array.isArray(parsed.catalogProducts) ? parsed.catalogProducts : [],
+          catalogProducts: Array.isArray(parsed.catalogProducts) && parsed.catalogProducts.length > 0 ? parsed.catalogProducts : getInitialCatalogProducts(),
           catalogCategories: Array.isArray(parsed.catalogCategories) && parsed.catalogCategories.length > 0 ? parsed.catalogCategories : getInitialCategories(),
           cmsArticles: Array.isArray(parsed.cmsArticles) && parsed.cmsArticles.length > 0 ? parsed.cmsArticles : getInitialCmsArticles(),
           pushCampaigns: Array.isArray(parsed.pushCampaigns) ? parsed.pushCampaigns : getInitialPushCampaigns(),
@@ -1357,6 +1365,43 @@ class AdminStore {
     return this.getAuditLogs(options);
   }
 
+  public async getDistinctAuditActionsAsync(): Promise<string[]> {
+    const actions = new Set<string>();
+    (this.db.auditLogs || []).forEach((l) => {
+      if (l.action) actions.add(l.action);
+    });
+    try {
+      const shared = await getSharedAuditLogsFromDb({ limit: 200 });
+      (shared?.logs || []).forEach((l) => {
+        if (l.action) actions.add(l.action);
+      });
+    } catch {}
+    [
+      'admin_login_success',
+      'admin_login_failed',
+      'admin_2fa_enabled',
+      'admin_invited',
+      'admin_invite_accepted',
+      'admin_invite_revoked',
+      'admin_invite_resent',
+      'admin_suspended',
+      'admin_reactivated',
+      'admin_password_reset_completed',
+      'CMS_ARTICLE_CREATED',
+      'CMS_ARTICLE_UPDATED',
+      'CMS_ARTICLE_DELETED',
+      'CMS_ARTICLE_PUBLISHED',
+      'CATALOG_PRODUCT_CREATED',
+      'CATALOG_PRODUCT_UPDATED',
+      'CATALOG_PRODUCT_DELETED',
+      'PUSH_BROADCAST_SENT',
+      'LIST_MODERATION_DELETED',
+      'ALLOWLIST_UPDATED',
+      'ADMIN_ACCOUNT_DELETED',
+    ].forEach((a) => actions.add(a));
+    return Array.from(actions).sort();
+  }
+
   // --- Admin User Operations ---
   public findAdminByEmail(email: string): AdminUser | undefined {
     return this.db.admins.find((a) => a.email.toLowerCase() === email.trim().toLowerCase() && !a.deletedAt);
@@ -1401,22 +1446,51 @@ class AdminStore {
   }
 
   public getAllAdmins(): AdminUser[] {
-    return this.db.admins.filter((a) => !a.deletedAt);
+    const seen = new Set<string>();
+    const list: AdminUser[] = [];
+    for (const a of this.db.admins) {
+      if (a.deletedAt) continue;
+      const em = (a.email || '').toLowerCase().trim();
+      if (!seen.has(em)) {
+        seen.add(em);
+        list.push(a);
+      }
+    }
+    return list;
   }
 
   public async getAllAdminsAsync(): Promise<AdminUser[]> {
     const sharedList = await getAllSharedAdmins();
     if (sharedList && sharedList.length > 0) {
       for (const item of sharedList) {
-        const idx = this.db.admins.findIndex((a) => a.id === item.id);
+        const itemEmail = (item.email || '').toLowerCase().trim();
+        const idx = this.db.admins.findIndex(
+          (a) => a.id === item.id || (a.email && a.email.toLowerCase().trim() === itemEmail)
+        );
         if (idx >= 0) {
-          this.db.admins[idx] = item;
+          this.db.admins[idx] = {
+            ...item,
+            id: this.db.admins[idx].id,
+            totpSecret: this.db.admins[idx].totpSecret || item.totpSecret,
+            lastLoginAt: item.lastLoginAt || this.db.admins[idx].lastLoginAt,
+          };
         } else {
           this.db.admins.push(item);
         }
       }
     }
     return this.getAllAdmins();
+  }
+
+  public async deleteAdminAsync(adminId: string): Promise<boolean> {
+    const idx = this.db.admins.findIndex((a) => a.id === adminId);
+    if (idx !== -1) {
+      const removed = this.db.admins.splice(idx, 1)[0];
+      this.save();
+      await deleteSharedAdminUser(removed.email || adminId);
+      return true;
+    }
+    return await deleteSharedAdminUser(adminId);
   }
 
   public verifyPassword(admin: AdminUser, passwordAttempt: string): boolean {
@@ -1678,6 +1752,24 @@ class AdminStore {
     };
   }
 
+  public async getAdminNotificationsAsync(admin?: AdminUser): Promise<{ notifications: AdminNotification[]; unreadCount: number }> {
+    try {
+      const authReqs = await this.getAccessRequestsAsync();
+      if (authReqs && Array.isArray(authReqs)) {
+        this.db.accessRequests = authReqs;
+      }
+    } catch {}
+
+    try {
+      const authTickets = await this.getSupportTicketsAsync();
+      if (authTickets && Array.isArray(authTickets)) {
+        this.db.supportTickets = authTickets;
+      }
+    } catch {}
+
+    return this.getAdminNotifications(admin);
+  }
+
   public dismissNotification(notificationId: string): boolean {
     if (!this.db.dismissedNotificationIds) {
       this.db.dismissedNotificationIds = [];
@@ -1853,6 +1945,55 @@ class AdminStore {
     }
     this.save();
     return true;
+  }
+
+  public findInviteById(inviteId: string): AdminInvite | undefined {
+    return this.db.invites.find((i) => i.id === inviteId);
+  }
+
+  public deleteInvite(inviteId: string): boolean {
+    const idx = this.db.invites.findIndex((i) => i.id === inviteId);
+    if (idx !== -1) {
+      const inv = this.db.invites[idx];
+      this.db.invites.splice(idx, 1);
+      this.save();
+      deleteSharedInvite(inv.token).catch(() => null);
+      return true;
+    }
+    return false;
+  }
+
+  public resendInvite(inviteId: string, actorAdmin?: { id: string; email: string; name: string }): AdminInvite | null {
+    const inv = this.db.invites.find((i) => i.id === inviteId);
+    if (!inv) return null;
+
+    const createdAt = Date.now();
+    const expiresAt = createdAt + 24 * 60 * 60 * 1000;
+    const token = createSignedInviteToken({
+      id: inv.id,
+      email: inv.email,
+      name: inv.name,
+      role: inv.role,
+      invitedBy: actorAdmin ? { id: actorAdmin.id, email: actorAdmin.email, name: actorAdmin.name } : inv.invitedBy,
+      createdAt,
+      expiresAt,
+    });
+
+    inv.token = token;
+    inv.createdAt = createdAt;
+    inv.expiresAt = expiresAt;
+    inv.status = 'pending';
+    if (actorAdmin) {
+      inv.invitedBy = { id: actorAdmin.id, email: actorAdmin.email, name: actorAdmin.name };
+    }
+
+    if (this.db.settings && (this.db.settings as any).revokedInviteIds) {
+      (this.db.settings as any).revokedInviteIds = (this.db.settings as any).revokedInviteIds.filter((id: string) => id !== inviteId);
+    }
+
+    this.save();
+    persistSharedInvite(inv).catch(() => null);
+    return inv;
   }
 
   public acceptInvite(inviteOrToken: AdminInvite | string, passwordPlain: string, totpSecret?: string): AdminUser {
@@ -2562,11 +2703,29 @@ class AdminStore {
   public getCatalogProducts(options?: { category?: string; search?: string; limit?: number; offset?: number }): { products: CatalogProduct[]; total: number } {
     let list = this.db.catalogProducts || [];
     if (options?.category && options.category !== 'all') {
-      list = list.filter((p) => p.category === options.category);
+      const targetCat = options.category.toLowerCase().trim();
+      list = list.filter((p) => {
+        const pCat = (p.category || '').toLowerCase().trim();
+        return (
+          pCat === targetCat ||
+          pCat.includes(targetCat) ||
+          targetCat.includes(pCat) ||
+          (targetCat.includes('vegetable') && (pCat.includes('vegetable') || pCat.includes('sabzi'))) ||
+          (targetCat.includes('atta') && (pCat.includes('atta') || pCat.includes('grain') || pCat.includes('rice'))) ||
+          (targetCat.includes('pulse') && (pCat.includes('pulse') || pCat.includes('daal'))) ||
+          (targetCat.includes('spice') && (pCat.includes('spice') || pCat.includes('masala'))) ||
+          (targetCat.includes('dairy') && (pCat.includes('dairy') || pCat.includes('milk') || pCat.includes('egg'))) ||
+          (targetCat.includes('oil') && (pCat.includes('oil') || pCat.includes('ghee'))) ||
+          (targetCat.includes('tea') && (pCat.includes('tea') || pCat.includes('beverage'))) ||
+          (targetCat.includes('house') && (pCat.includes('house') || pCat.includes('clean'))) ||
+          (targetCat.includes('snack') && (pCat.includes('snack') || pCat.includes('biscuit'))) ||
+          (targetCat.includes('meat') && (pCat.includes('meat') || pCat.includes('poultry')))
+        );
+      });
     }
     if (options?.search) {
       const q = options.search.toLowerCase().trim();
-      list = list.filter((p) => p.nameEn.toLowerCase().includes(q) || p.nameUr.includes(q) || (p.brand && p.brand.toLowerCase().includes(q)));
+      list = list.filter((p) => p.nameEn.toLowerCase().includes(q) || (p.nameUr && p.nameUr.includes(q)) || (p.brand && p.brand.toLowerCase().includes(q)));
     }
     const total = list.length;
     const offset = options?.offset || 0;
@@ -2575,21 +2734,28 @@ class AdminStore {
   }
 
   public async getCatalogProductsAsync(options?: { category?: string; search?: string; limit?: number; offset?: number }): Promise<{ items: any[]; categories: any[]; total: number }> {
+    const canonicalCategories = this.getCatalogCategories().map((c) => c.nameEn);
     const authResult = await getAuthoritativeCatalog(options);
     if (authResult && authResult.items && authResult.items.length > 0) {
-      return authResult;
+      return {
+        items: authResult.items,
+        categories: canonicalCategories,
+        total: authResult.total,
+      };
     }
     const local = this.getCatalogProducts(options);
     return {
       items: local.products.map((p) => ({
         id: p.id,
         name: p.nameEn,
-        nameUr: p.nameUr,
+        nameUr: p.nameUr || '',
         category: p.category,
         defaultUnit: p.unit,
-        isEssential: true,
+        isEssential: Boolean(p.isEssential),
+        pricePkr: p.pricePkr,
+        aliases: p.aliases || [],
       })),
-      categories: this.getCatalogCategories().map((c) => c.nameEn),
+      categories: canonicalCategories,
       total: local.total,
     };
   }
@@ -2601,21 +2767,32 @@ class AdminStore {
     if (product.id) {
       const idx = this.db.catalogProducts.findIndex((p) => p.id === product.id);
       if (idx !== -1) {
-        this.db.catalogProducts[idx] = { ...this.db.catalogProducts[idx], ...product, updatedAt: now } as CatalogProduct;
+        this.db.catalogProducts[idx] = {
+          ...this.db.catalogProducts[idx],
+          nameEn: product.nameEn !== undefined ? product.nameEn : this.db.catalogProducts[idx].nameEn,
+          nameUr: product.nameUr !== undefined ? product.nameUr : this.db.catalogProducts[idx].nameUr,
+          category: product.category || this.db.catalogProducts[idx].category,
+          subcategory: product.subcategory || this.db.catalogProducts[idx].subcategory || 'General',
+          unit: product.unit || this.db.catalogProducts[idx].unit,
+          pricePkr: product.pricePkr !== undefined ? product.pricePkr : this.db.catalogProducts[idx].pricePkr,
+          isEssential: product.isEssential !== undefined ? Boolean(product.isEssential) : Boolean(this.db.catalogProducts[idx].isEssential),
+          updatedAt: now,
+        } as CatalogProduct;
         this.save();
         return this.db.catalogProducts[idx];
       }
     }
 
     const newProd: CatalogProduct = {
-      id: 'prod_' + crypto.randomUUID(),
+      id: product.id || 'prod_' + crypto.randomUUID(),
       nameEn: product.nameEn || 'Untitled Product',
-      nameUr: product.nameUr || product.nameEn || '',
-      category: product.category || 'other',
+      nameUr: product.nameUr !== undefined ? product.nameUr : '',
+      category: product.category || 'Fresh Vegetables & Sabzi',
       subcategory: product.subcategory || 'General',
       brand: product.brand || '',
       unit: product.unit || 'kg',
-      pricePkr: product.pricePkr || 0,
+      pricePkr: product.pricePkr !== undefined ? product.pricePkr : 0,
+      isEssential: product.isEssential !== undefined ? Boolean(product.isEssential) : false,
       barcode: product.barcode || '',
       imageUrl: product.imageUrl || '',
       isActive: product.isActive !== false,
@@ -2630,12 +2807,18 @@ class AdminStore {
   public deleteCatalogProduct(id: string): boolean {
     if (!this.db.catalogProducts) return false;
     const initialLen = this.db.catalogProducts.length;
-    this.db.catalogProducts = this.db.catalogProducts.filter((p) => p.id !== id);
+    this.db.catalogProducts = this.db.catalogProducts.filter((p) => p.id !== id && p.nameEn !== id);
     if (this.db.catalogProducts.length !== initialLen) {
       this.save();
       return true;
     }
     return false;
+  }
+
+  public async deleteCatalogProductAsync(id: string): Promise<boolean> {
+    const localDeleted = this.deleteCatalogProduct(id);
+    const dbDeleted = await deleteAuthoritativeCatalogProduct(id);
+    return localDeleted || dbDeleted;
   }
 
   public getCatalogCategories(): CatalogCategory[] {
@@ -2674,7 +2857,30 @@ class AdminStore {
   public async getCmsArticlesAsync(options?: { status?: 'draft' | 'published' | 'all'; search?: string }): Promise<{ articles: any[]; total: number }> {
     const authCms = await getAuthoritativeCms(options);
     if (authCms) {
-      return authCms;
+      const commentsMap = new Map<string, any[]>();
+      const commentsCountMap = new Map<string, number>();
+      for (const a of this.db.cmsArticles || []) {
+        if (a.id) {
+          commentsMap.set(a.id, a.comments || []);
+          commentsCountMap.set(a.id, a.commentsCount ?? a.comments?.length ?? 0);
+        }
+        if (a.slug) {
+          commentsMap.set(a.slug, a.comments || []);
+          commentsCountMap.set(a.slug, a.commentsCount ?? a.comments?.length ?? 0);
+        }
+      }
+      const articles = authCms.articles.map((art) => {
+        const localComments = commentsMap.get(art.id) || commentsMap.get(art.slug) || [];
+        const localCount = commentsCountMap.get(art.id) ?? commentsCountMap.get(art.slug) ?? localComments.length;
+        const finalComments = art.comments && art.comments.length > 0 ? art.comments : localComments;
+        const finalCount = art.commentsCount && art.commentsCount > 0 ? art.commentsCount : (finalComments.length || localCount);
+        return {
+          ...art,
+          comments: finalComments,
+          commentsCount: finalCount,
+        };
+      });
+      return { articles, total: authCms.total };
     }
     const local = this.getCmsArticles(options);
     return { articles: local, total: local.length };
@@ -2914,11 +3120,17 @@ class AdminStore {
   }
 
   public async deleteCmsArticleAsync(id: string): Promise<boolean> {
-    const ok = this.deleteCmsArticle(id);
-    if (ok) {
-      await deleteSharedCmsArticleFromDb(id);
+    let localDeleted = false;
+    if (this.db.cmsArticles) {
+      const len = this.db.cmsArticles.length;
+      this.db.cmsArticles = this.db.cmsArticles.filter((a) => a.id !== id && a.slug !== id);
+      if (this.db.cmsArticles.length !== len) {
+        localDeleted = true;
+        this.save();
+      }
     }
-    return ok;
+    const dbDeleted = await deleteSharedCmsArticleFromDb(id);
+    return localDeleted || dbDeleted;
   }
 
   public addArticleComment(articleId: string, commentData: { name: string; content: string; email?: string }): CmsComment {
@@ -3752,6 +3964,10 @@ class AdminStore {
   }
 
   public async getAnalyticsReportAsync(dateRange: '7d' | '30d' | '90d' = '30d') {
+    const authReport = await getAuthoritativeAnalytics(dateRange);
+    if (authReport) {
+      return authReport;
+    }
     const base = this.getAnalyticsReport(dateRange);
     const authMetrics = await getAuthoritativeAppMetrics();
     if (authMetrics) {

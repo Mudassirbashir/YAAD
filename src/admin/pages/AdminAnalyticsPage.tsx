@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { adminCache } from '../utils/adminCache';
+import { AdminCardSkeleton } from '../components/AdminSkeleton';
 
 interface TimeSeriesPoint {
   label: string;
@@ -137,59 +138,65 @@ export const AdminAnalyticsPage: React.FC = () => {
 
       {/* Metric KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white border border-neutral-200/90 rounded-2xl p-5 shadow-xs space-y-1">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-neutral-500">
-              Shopper Accounts
-            </span>
-            <Users className="w-4 h-4 text-[#003527]" />
-          </div>
-          <div className="text-2xl font-black text-[#003527] font-mono">
-            {totalShoppers}
-          </div>
-          <p className="text-[11px] text-neutral-400">Total registered shoppers</p>
-        </div>
+        {isLoading && !report ? (
+          <AdminCardSkeleton count={4} />
+        ) : (
+          <>
+            <div className="bg-white border border-neutral-200/90 rounded-2xl p-5 shadow-xs space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-neutral-500">
+                  Shopper Accounts
+                </span>
+                <Users className="w-4 h-4 text-[#003527]" />
+              </div>
+              <div className="text-2xl font-black text-[#003527] font-mono">
+                {totalShoppers}
+              </div>
+              <p className="text-[11px] text-neutral-400">Total registered shoppers</p>
+            </div>
 
-        <div className="bg-white border border-neutral-200/90 rounded-2xl p-5 shadow-xs space-y-1">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-neutral-500">
-              Active Shoppers
-            </span>
-            <TrendingUp className="w-4 h-4 text-emerald-600" />
-          </div>
-          <div className="text-2xl font-black text-emerald-700 font-mono">
-            {activeShoppers}
-          </div>
-          <p className="text-[11px] text-neutral-400">Active in selected {range}</p>
-        </div>
+            <div className="bg-white border border-neutral-200/90 rounded-2xl p-5 shadow-xs space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-neutral-500">
+                  Active Shoppers
+                </span>
+                <TrendingUp className="w-4 h-4 text-emerald-600" />
+              </div>
+              <div className="text-2xl font-black text-emerald-700 font-mono">
+                {activeShoppers}
+              </div>
+              <p className="text-[11px] text-neutral-400">Active in selected {range}</p>
+            </div>
 
-        <div className="bg-white border border-neutral-200/90 rounded-2xl p-5 shadow-xs space-y-1">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-neutral-500">
-              Lists Created
-            </span>
-            <ShoppingBag className="w-4 h-4 text-sky-700" />
-          </div>
-          <div className="text-2xl font-black text-sky-800 font-mono">
-            {totalShoppingLists}
-          </div>
-          <p className="text-[11px] text-neutral-400">Parchis authored in app</p>
-        </div>
+            <div className="bg-white border border-neutral-200/90 rounded-2xl p-5 shadow-xs space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-neutral-500">
+                  Lists Created
+                </span>
+                <ShoppingBag className="w-4 h-4 text-sky-700" />
+              </div>
+              <div className="text-2xl font-black text-sky-800 font-mono">
+                {totalShoppingLists}
+              </div>
+              <p className="text-[11px] text-neutral-400">Parchis authored in app</p>
+            </div>
 
-        <div className="bg-white border border-neutral-200/90 rounded-2xl p-5 shadow-xs space-y-1">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-neutral-500">
-              List Completion Rate
-            </span>
-            <CheckCircle2 className="w-4 h-4 text-amber-600" />
-          </div>
-          <div className="text-2xl font-black text-amber-700 font-mono">
-            {completionRate}%
-          </div>
-          <p className="text-[11px] text-neutral-400">
-            {completedShoppingLists} completed shopping lists (parchis)
-          </p>
-        </div>
+            <div className="bg-white border border-neutral-200/90 rounded-2xl p-5 shadow-xs space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-neutral-500">
+                  List Completion Rate
+                </span>
+                <CheckCircle2 className="w-4 h-4 text-amber-600" />
+              </div>
+              <div className="text-2xl font-black text-amber-700 font-mono">
+                {completionRate}%
+              </div>
+              <p className="text-[11px] text-neutral-400">
+                {completedShoppingLists} completed shopping lists (parchis)
+              </p>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Visual Charts Grid */}
@@ -213,7 +220,11 @@ export const AdminAnalyticsPage: React.FC = () => {
             )}
           </div>
 
-          {listsTimeSeries.length > 0 ? (
+          {isLoading && !report ? (
+            <div className="h-52 flex items-center justify-center">
+              <div className="w-full h-36 bg-neutral-100 rounded-xl animate-pulse" />
+            </div>
+          ) : listsTimeSeries.length > 0 ? (
             <div className="h-52 flex items-end gap-1.5 pt-6 pb-2 px-2 border-b border-neutral-100">
               {listsTimeSeries.map((point, idx) => {
                 const heightPercent = Math.max(8, Math.round((point.value / maxListCount) * 100));
@@ -260,7 +271,13 @@ export const AdminAnalyticsPage: React.FC = () => {
           </div>
 
           <div className="space-y-3">
-            {topCategories.length === 0 ? (
+            {isLoading && !report ? (
+              <div className="space-y-3 animate-pulse">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="h-6 bg-neutral-100 rounded-lg" />
+                ))}
+              </div>
+            ) : topCategories.length === 0 ? (
               <div className="py-8 text-center text-xs text-neutral-400">
                 No category data recorded yet in database.
               </div>

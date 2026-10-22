@@ -885,7 +885,8 @@ export async function getAuthoritativeAppMetrics(): Promise<AuthoritativeDashboa
       })(),
     ]);
 
-    const totalUsers = usersCountRes.count ?? 0;
+    const authoritativeUsers = await getAuthoritativeAppUsers({ limit: 1 });
+    const totalUsers = authoritativeUsers?.total ?? usersCountRes.count ?? 0;
     const activeUsers30d = activeUsers30dRes.count ?? 0;
     const activeUsers7d = activeUsers7dRes.count ?? 0;
     const totalLists = listsCountRes.count ?? 0;
@@ -951,65 +952,39 @@ export async function getAuthoritativeAppUsers(options?: {
   if (!supabase) return null;
 
   try {
-    let query = supabase
-      .from('profiles')
-      .select('*', { count: 'exact' })
-      .order('created_at', { ascending: false });
+    const [profilesRes, authDataRes, verifiedMapRes, suspendedMapRes] = await Promise.all([
+      supabase.from('profiles').select('*').order('created_at', { ascending: false }),
+      (async () => {
+        try {
+          if ((supabase as any).auth?.admin?.listUsers) {
+            const { data } = await (supabase as any).auth.admin.listUsers();
+            return data?.users || [];
+          }
+        } catch {}
+        return [];
+      })(),
+      getAuthoritativeSetting<Record<string, boolean>>('yaad_verified_users'),
+      getAuthoritativeSetting<Record<string, { suspended: boolean; reason?: string }>>('yaad_suspended_users'),
+    ]);
 
-    if (options?.search) {
-      const q = options.search.trim();
-      query = query.or(`full_name.ilike.%${q}%,email.ilike.%${q}%,phone_number.ilike.%${q}%`);
-    }
-
-    const offset = options?.offset || 0;
-    const limit = options?.limit || 25;
-    query = query.range(offset, offset + limit - 1);
-
-    const { data: profiles, count, error } = await query;
-    if (error) {
-      if (isSchemaCacheMissingTableError(error)) {
+    if (profilesRes.error) {
+      if (isSchemaCacheMissingTableError(profilesRes.error)) {
         markTableMissingInSupabase('profiles');
       }
       return null;
     }
 
-    if (!profiles || profiles.length === 0) {
-      return { users: [], total: count ?? 0 };
-    }
-
-    // Fetch actual shopping list counts per user
-    const userIds = profiles.map((p: any) => p.id);
-    const { data: userLists } = await supabase
-      .from('shopping_lists')
-      .select('id, user_id, is_completed')
-      .in('user_id', userIds);
-
-    const listCountsByUser = new Map<string, { total: number; completed: number }>();
-    (userLists || []).forEach((l: any) => {
-      const current = listCountsByUser.get(l.user_id) || { total: 0, completed: 0 };
-      current.total += 1;
-      if (l.is_completed) current.completed += 1;
-      listCountsByUser.set(l.user_id, current);
+    const profiles = profilesRes.data || [];
+    const authUsers = Array.isArray(authDataRes) ? authDataRes : [];
+    const authUsersMap = new Map<string, any>();
+    authUsers.forEach((au: any) => {
+      authUsersMap.set(au.id, au);
     });
 
-    const verifiedMap = (await getAuthoritativeSetting<Record<string, boolean>>('yaad_verified_users')) || {};
-    const suspendedMap = (await getAuthoritativeSetting<Record<string, { suspended: boolean; reason?: string }>>('yaad_suspended_users')) || {};
+    const verifiedMap = verifiedMapRes || {};
+    const suspendedMap = suspendedMapRes || {};
 
-    // Retrieve auth users from Supabase Auth admin if available to guarantee email & Google OAuth accounts appear
-    const authUsersMap = new Map<string, any>();
-    try {
-      if ((supabase as any).auth?.admin?.listUsers) {
-        const { data: authData } = await (supabase as any).auth.admin.listUsers();
-        if (authData?.users && Array.isArray(authData.users)) {
-          authData.users.forEach((au: any) => {
-            authUsersMap.set(au.id, au);
-          });
-        }
-      }
-    } catch {}
-
-    const users: AuthoritativeAppUser[] = profiles.map((p: any) => {
-      const counts = listCountsByUser.get(p.id) || { total: 0, completed: 0 };
+    const candidateUsers: AuthoritativeAppUser[] = profiles.map((p: any) => {
       const createdAt = p.created_at ? new Date(p.created_at).getTime() : Date.now();
       const updatedAt = p.updated_at ? new Date(p.updated_at).getTime() : createdAt;
       const au = authUsersMap.get(p.id);
@@ -1028,9 +1003,9 @@ export async function getAuthoritativeAppUsers(options?: {
         lastActiveAt: au?.last_sign_in_at ? new Date(au.last_sign_in_at).getTime() : updatedAt,
         status: isSuspended ? 'suspended' : 'active',
         suspendReason: suspendReason || undefined,
-        listsCount: counts.total,
-        completedTripsCount: counts.completed,
-        isVerified: Boolean(p.is_verified || au?.user_metadata?.is_verified || (verifiedMap && verifiedMap[p.id])),
+        listsCount: 0,
+        completedTripsCount: 0,
+        isVerified: Boolean(p.is_verified || au?.user_metadata?.is_verified || verifiedMap[p.id]),
       };
     });
 
@@ -1038,7 +1013,7 @@ export async function getAuthoritativeAppUsers(options?: {
     authUsersMap.forEach((au, id) => {
       if (!profiles.some((p: any) => p.id === id)) {
         const isSusp = Boolean(suspendedMap[id]?.suspended);
-        users.push({
+        candidateUsers.push({
           id,
           name: au.user_metadata?.full_name || au.user_metadata?.name || 'Shopper',
           email: au.email || undefined,
@@ -1049,14 +1024,60 @@ export async function getAuthoritativeAppUsers(options?: {
           lastActiveAt: au.last_sign_in_at ? new Date(au.last_sign_in_at).getTime() : Date.now(),
           status: isSusp ? 'suspended' : 'active',
           suspendReason: suspendedMap[id]?.reason || undefined,
-          listsCount: listCountsByUser.get(id)?.total || 0,
-          completedTripsCount: listCountsByUser.get(id)?.completed || 0,
+          listsCount: 0,
+          completedTripsCount: 0,
           isVerified: Boolean(au.user_metadata?.is_verified || verifiedMap[id]),
         });
       }
     });
 
-    return { users, total: Math.max(count ?? 0, users.length) };
+    // Filter by status if specified
+    let filtered = candidateUsers;
+    if (options?.status && options.status !== 'all') {
+      filtered = filtered.filter((u) => u.status === options.status);
+    }
+
+    // Filter by search query if specified (case-insensitive across name, email, phone)
+    if (options?.search && options.search.trim()) {
+      const q = options.search.trim().toLowerCase();
+      filtered = filtered.filter(
+        (u) =>
+          (u.name && u.name.toLowerCase().includes(q)) ||
+          (u.email && u.email.toLowerCase().includes(q)) ||
+          (u.phone && u.phone.toLowerCase().includes(q))
+      );
+    }
+
+    const total = filtered.length;
+    const offset = options?.offset || 0;
+    const limit = options?.limit || 25;
+    const pagedUsers = filtered.slice(offset, offset + limit);
+
+    if (pagedUsers.length > 0) {
+      const userIds = pagedUsers.map((u) => u.id);
+      const { data: userLists } = await supabase
+        .from('shopping_lists')
+        .select('id, user_id, is_completed')
+        .in('user_id', userIds);
+
+      const listCountsByUser = new Map<string, { total: number; completed: number }>();
+      (userLists || []).forEach((l: any) => {
+        const current = listCountsByUser.get(l.user_id) || { total: 0, completed: 0 };
+        current.total += 1;
+        if (l.is_completed) current.completed += 1;
+        listCountsByUser.set(l.user_id, current);
+      });
+
+      pagedUsers.forEach((u) => {
+        const c = listCountsByUser.get(u.id);
+        if (c) {
+          u.listsCount = c.total;
+          u.completedTripsCount = c.completed;
+        }
+      });
+    }
+
+    return { users: pagedUsers, total };
   } catch {
     return null;
   }
@@ -1157,12 +1178,23 @@ export async function getAuthoritativeShoppingLists(options?: {
       const userInfo = userMap.get(l.user_id) || { name: 'App User' };
       const items = itemsByList.get(l.id) || (Array.isArray(l.items) ? l.items : []);
 
+      const rawTitle = (l.title || '').trim();
+      let derivedTitle = rawTitle;
+      if (!derivedTitle) {
+        const firstItem = items[0]?.name?.trim();
+        if (firstItem) {
+          derivedTitle = `Untitled list — ${firstItem}${items.length > 1 ? ` (+${items.length - 1} more)` : ''}`;
+        } else {
+          derivedTitle = `Untitled list — ${items.length} item${items.length === 1 ? '' : 's'}`;
+        }
+      }
+
       return {
         id: l.id,
         userId: l.user_id,
         userName: userInfo.name,
         userEmail: userInfo.email,
-        title: l.title || 'Untitled List',
+        title: derivedTitle,
         isCompleted: Boolean(l.is_completed),
         itemsCount: items.length,
         createdAt: l.created_at ? new Date(l.created_at).getTime() : Date.now(),
@@ -1185,12 +1217,18 @@ export async function getAuthoritativeShoppingLists(options?: {
 
 export interface AuthoritativeCatalogItem {
   id: string;
-  canonicalName: string;
-  englishName: string;
-  urduName: string;
+  name: string;
+  canonicalName?: string;
+  englishName?: string;
+  urduName?: string;
+  nameUr?: string;
   categoryId: string;
+  category: string;
   categoryName?: string;
   defaultUnit: string;
+  aliases?: string[];
+  isEssential?: boolean;
+  pricePkr?: number;
   emoji?: string;
   active: boolean;
   createdAt: number;
@@ -1198,6 +1236,7 @@ export interface AuthoritativeCatalogItem {
 
 export async function getAuthoritativeCatalog(options?: {
   search?: string;
+  category?: string;
   categoryId?: string;
   limit?: number;
   offset?: number;
@@ -1227,9 +1266,38 @@ export async function getAuthoritativeCatalog(options?: {
       .select('*', { count: 'exact' })
       .order('canonical_name', { ascending: true });
 
-    if (options?.categoryId && options.categoryId !== 'all') {
-      query = query.eq('category_id', options.categoryId);
+    const catFilter = (options?.category || options?.categoryId || '').toLowerCase().trim();
+    if (catFilter && catFilter !== 'all') {
+      const matchingCat = categories.find((c) =>
+        c.id.toLowerCase() === catFilter ||
+        c.nameEn.toLowerCase() === catFilter ||
+        c.nameUr === catFilter ||
+        (catFilter.includes('vegetable') && c.id === 'vegetables') ||
+        (catFilter.includes('sabzi') && c.id === 'vegetables') ||
+        (catFilter.includes('atta') && (c.id === 'grocery' || c.id === 'grains')) ||
+        (catFilter.includes('grain') && (c.id === 'grocery' || c.id === 'grains')) ||
+        (catFilter.includes('rice') && (c.id === 'grocery' || c.id === 'grains')) ||
+        (catFilter.includes('pulse') && (c.id === 'grocery' || c.id === 'pulses')) ||
+        (catFilter.includes('daal') && (c.id === 'grocery' || c.id === 'pulses')) ||
+        (catFilter.includes('spice') && c.id === 'spices') ||
+        (catFilter.includes('masala') && c.id === 'spices') ||
+        (catFilter.includes('dairy') && c.id === 'dairy') ||
+        (catFilter.includes('milk') && c.id === 'dairy') ||
+        (catFilter.includes('egg') && (c.id === 'dairy' || c.id === 'eggs')) ||
+        (catFilter.includes('oil') && (c.id === 'grocery' || c.id === 'oils')) ||
+        (catFilter.includes('tea') && (c.id === 'beverages' || c.id === 'drinks')) ||
+        (catFilter.includes('household') && (c.id === 'household' || c.id === 'cleaning')) ||
+        (catFilter.includes('cleaning') && (c.id === 'household' || c.id === 'cleaning')) ||
+        (catFilter.includes('snack') && (c.id === 'snacks' || c.id === 'bakery')) ||
+        (catFilter.includes('meat') && c.id === 'meat')
+      );
+      if (matchingCat) {
+        query = query.eq('category_id', matchingCat.id);
+      } else {
+        query = query.or(`category_id.eq.${catFilter},category_id.ilike.%${catFilter}%`);
+      }
     }
+
     if (options?.search) {
       const q = options.search.trim();
       query = query.or(`canonical_name.ilike.%${q}%,english_name.ilike.%${q}%,urdu_name.ilike.%${q}%`);
@@ -1251,12 +1319,18 @@ export async function getAuthoritativeCatalog(options?: {
 
     const items: AuthoritativeCatalogItem[] = (itemsData || []).map((it: any) => ({
       id: it.id,
+      name: it.english_name || it.canonical_name,
       canonicalName: it.canonical_name,
       englishName: it.english_name,
-      urduName: it.urdu_name,
+      urduName: it.urdu_name || '',
+      nameUr: it.urdu_name || '',
       categoryId: it.category_id,
+      category: catNameMap.get(it.category_id) || it.category_id,
       categoryName: catNameMap.get(it.category_id) || it.category_id,
       defaultUnit: it.default_unit || 'kg',
+      aliases: it.roman_urdu_names || [],
+      isEssential: Boolean(it.is_essential ?? false),
+      pricePkr: it.price_pkr ?? undefined,
       emoji: it.emoji || undefined,
       active: it.active !== false,
       createdAt: it.created_at ? new Date(it.created_at).getTime() : Date.now(),
@@ -1265,6 +1339,75 @@ export async function getAuthoritativeCatalog(options?: {
     return { items, categories, total: count ?? items.length };
   } catch {
     return null;
+  }
+}
+
+export async function persistAuthoritativeCatalogProduct(product: {
+  id?: string;
+  nameEn: string;
+  nameUr?: string;
+  category: string;
+  unit?: string;
+  pricePkr?: number;
+  isEssential?: boolean;
+}): Promise<boolean> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase || isTableMissingInSupabase('items')) return false;
+
+  try {
+    const row = {
+      id: product.id || 'item_' + crypto.randomUUID(),
+      canonical_name: product.nameEn,
+      english_name: product.nameEn,
+      urdu_name: product.nameUr || '',
+      category_id: product.category.toLowerCase().replace(/[^a-z0-9]+/g, '_'),
+      default_unit: product.unit || 'kg',
+      active: true,
+      updated_at: new Date().toISOString(),
+    };
+    const { error } = await supabase.from('items').upsert(row);
+    if (error) {
+      console.warn('[SupabaseAdmin] items upsert error:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn('[SupabaseAdmin] items upsert exception:', err);
+    return false;
+  }
+}
+
+export async function deleteAuthoritativeCatalogProduct(id: string): Promise<boolean> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase || isTableMissingInSupabase('items')) return false;
+
+  try {
+    const clean = id.trim();
+    // Try delete by id
+    const { error: errId, count: countId } = await supabase
+      .from('items')
+      .delete({ count: 'exact' })
+      .eq('id', clean);
+    if (!errId && (countId ?? 0) > 0) return true;
+
+    // Try delete by canonical_name
+    const { error: errName, count: countName } = await supabase
+      .from('items')
+      .delete({ count: 'exact' })
+      .eq('canonical_name', clean);
+    if (!errName && (countName ?? 0) > 0) return true;
+
+    // Try delete by english_name
+    const { error: errEn, count: countEn } = await supabase
+      .from('items')
+      .delete({ count: 'exact' })
+      .eq('english_name', clean);
+    if (!errEn && (countEn ?? 0) > 0) return true;
+
+    return !errId && !errName && !errEn;
+  } catch (err) {
+    console.warn('[SupabaseAdmin] items delete exception:', err);
+    return false;
   }
 }
 
@@ -1565,17 +1708,34 @@ export async function persistSharedCmsArticlesBatch(articles: any[]): Promise<{
   return { persistedCount, errors };
 }
 
-export async function deleteSharedCmsArticleFromDb(id: string): Promise<boolean> {
+export async function deleteSharedCmsArticleFromDb(idOrSlug: string): Promise<boolean> {
   const supabase = getSupabaseAdmin();
   if (!supabase || isTableMissingInSupabase('cms_articles')) return false;
 
   try {
-    const { error } = await supabase.from('cms_articles').delete().eq('id', id);
-    if (error) {
-      return false;
-    }
-    return true;
-  } catch {
+    const clean = idOrSlug.trim();
+    // 1. Try deleting by id
+    const { error: errId, count: countId } = await supabase
+      .from('cms_articles')
+      .delete({ count: 'exact' })
+      .eq('id', clean);
+    if (!errId && (countId ?? 0) > 0) return true;
+
+    // 2. Try deleting by slug
+    const { error: errSlug, count: countSlug } = await supabase
+      .from('cms_articles')
+      .delete({ count: 'exact' })
+      .eq('slug', clean);
+    if (!errSlug && (countSlug ?? 0) > 0) return true;
+
+    // If both succeeded without error (even if count is 0 in some rls views), return true
+    if (!errId && !errSlug) return true;
+
+    if (errId) console.warn('[SupabaseAdmin] deleteSharedCmsArticleFromDb id error:', errId.message);
+    if (errSlug) console.warn('[SupabaseAdmin] deleteSharedCmsArticleFromDb slug error:', errSlug.message);
+    return false;
+  } catch (err) {
+    console.warn('[SupabaseAdmin] deleteSharedCmsArticleFromDb exception:', err);
     return false;
   }
 }
@@ -1711,6 +1871,167 @@ export async function setAuthoritativeAppUserStatus(
   } catch (err) {
     console.warn('[SupabaseAdmin] Error updating user suspension:', err);
     return false;
+  }
+}
+
+/**
+ * -----------------------------------------------------------------------------
+ * AUTHORITATIVE USAGE ANALYTICS (PHASE 1 & ISSUES A2, A3, A4)
+ * -----------------------------------------------------------------------------
+ */
+
+export interface AuthoritativeAnalyticsReport {
+  range: '7d' | '30d' | '90d';
+  metrics: {
+    totalShoppers: number;
+    activeShoppers: number;
+    totalShoppingLists: number;
+    completedShoppingLists: number;
+    completionRate: number;
+  };
+  kpis: {
+    totalUsers: { value: number; delta: string };
+    activeUsersMAU: { value: number; delta: string };
+    activeUsersDAU: { value: number; delta: string };
+    listsCreated: { value: number; delta: string };
+    completionRate: { value: string; delta: string };
+  };
+  timeSeries: {
+    signups: Array<{ label: string; value: number }>;
+    activeUsers: Array<{ label: string; value: number }>;
+    lists: Array<{ label: string; value: number }>;
+  };
+  topCategories: Array<{ category: string; count: number }>;
+  summary: string;
+}
+
+const CANONICAL_ANALYTICS_CATEGORY_MAP: Record<string, string> = {
+  vegetables: 'Fresh Vegetables & Sabzi',
+  dairy: 'Dairy & Eggs',
+  eggs: 'Dairy & Eggs',
+  pulses: 'Atta, Rice & Grains',
+  rice: 'Atta, Rice & Grains',
+  grains: 'Atta, Rice & Grains',
+  spices: 'Spices & Masalay',
+  cooking_essentials: 'Spices & Masalay',
+  oils: 'Cooking Oils & Ghee',
+  cleaning: 'Household & Cleaning',
+  household: 'Household & Cleaning',
+  kitchen: 'Household & Cleaning',
+  poultry: 'Meat & Poultry',
+  meat: 'Meat & Poultry',
+  seafood: 'Meat & Poultry',
+  bakery: 'Snacks & Biscuits',
+  snacks: 'Snacks & Biscuits',
+  beverages: 'Beverages & Tea',
+  fruits: 'Fresh Vegetables & Sabzi',
+  personal_care: 'Personal Care & Hygiene',
+};
+
+export async function getAuthoritativeAnalytics(
+  dateRange: '7d' | '30d' | '90d' = '30d'
+): Promise<AuthoritativeAnalyticsReport | null> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return null;
+
+  try {
+    const [usersResult, listsResult, itemsResult] = await Promise.all([
+      getAuthoritativeAppUsers({ limit: 100 }),
+      supabase.from('shopping_lists').select('id, user_id, is_completed, created_at, updated_at'),
+      supabase.from('shopping_items').select('id, list_id, category, created_at'),
+    ]);
+
+    const users = usersResult?.users || [];
+    const totalUsers = usersResult?.total ?? users.length;
+    const allLists = listsResult.data || [];
+    const allItems = itemsResult.data || [];
+
+    const totalLists = allLists.length;
+    const completedLists = allLists.filter((l: any) => l.is_completed).length;
+    const completionRate = totalLists > 0 ? Math.round((completedLists / totalLists) * 100) : 0;
+
+    const days = dateRange === '7d' ? 7 : dateRange === '90d' ? 90 : 30;
+    const now = Date.now();
+    const oneDay = 24 * 60 * 60 * 1000;
+    const windowStart = now - days * oneDay;
+
+    // Filter lists belonging to the window
+    const windowLists = allLists.filter((l: any) => {
+      const ts = new Date(l.created_at || l.updated_at).getTime();
+      return ts >= windowStart;
+    });
+
+    // Active shoppers: distinct shoppers with ≥1 list in the requested window
+    // Monotonicity: windowStart(90d) <= windowStart(30d) <= windowStart(7d) -> 90d >= 30d >= 7d
+    const activeShoppersSet = new Set<string>();
+    windowLists.forEach((l: any) => {
+      if (l.user_id) activeShoppersSet.add(l.user_id);
+    });
+    const activeShoppers = activeShoppersSet.size;
+
+    // Daily activity time series for lists, signups, and active users
+    const listsTimeSeries: Array<{ label: string; value: number }> = [];
+    const signupsTimeSeries: Array<{ label: string; value: number }> = [];
+    const activeUsersTimeSeries: Array<{ label: string; value: number }> = [];
+
+    for (let i = days - 1; i >= 0; i--) {
+      const dayStart = now - (i + 1) * oneDay;
+      const dayEnd = now - i * oneDay;
+      const dayDate = new Date(dayEnd);
+      const label = `${dayDate.getDate()} ${dayDate.toLocaleString('default', { month: 'short' })}`;
+
+      const daySignups = users.filter((u) => u.signupDate >= dayStart && u.signupDate < dayEnd).length;
+      const dayActive = users.filter((u) => u.lastActiveAt >= dayStart && u.lastActiveAt < dayEnd).length;
+      const dayLists = allLists.filter((l: any) => {
+        const ts = new Date(l.created_at || l.updated_at).getTime();
+        return ts >= dayStart && ts < dayEnd;
+      }).length;
+
+      signupsTimeSeries.push({ label, value: daySignups });
+      activeUsersTimeSeries.push({ label, value: dayActive });
+      listsTimeSeries.push({ label, value: dayLists });
+    }
+
+    // Top categories aggregated from real shopping items
+    const catCounts = new Map<string, number>();
+    allItems.forEach((it: any) => {
+      const raw = String(it.category || 'other').toLowerCase().trim();
+      const canonical = CANONICAL_ANALYTICS_CATEGORY_MAP[raw] || 'Pantry & General';
+      catCounts.set(canonical, (catCounts.get(canonical) || 0) + 1);
+    });
+
+    const topCategories = Array.from(catCounts.entries())
+      .map(([category, count]) => ({ category, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    return {
+      range: dateRange,
+      metrics: {
+        totalShoppers: totalUsers,
+        activeShoppers,
+        totalShoppingLists: totalLists,
+        completedShoppingLists: completedLists,
+        completionRate,
+      },
+      kpis: {
+        totalUsers: { value: totalUsers, delta: 'Authoritative database count' },
+        activeUsersMAU: { value: activeShoppers, delta: `Verified ${dateRange} activity` },
+        activeUsersDAU: { value: activeShoppers, delta: `Active in ${dateRange}` },
+        listsCreated: { value: totalLists, delta: 'Total lists in database' },
+        completionRate: { value: `${completionRate}%`, delta: 'Completed list ratio' },
+      },
+      timeSeries: {
+        signups: signupsTimeSeries,
+        activeUsers: activeUsersTimeSeries,
+        lists: listsTimeSeries,
+      },
+      topCategories,
+      summary: `Database reflects ${totalUsers} registered shoppers, ${activeShoppers} active in ${dateRange}, and ${totalLists} total shopping lists.`,
+    };
+  } catch (err) {
+    console.warn('[SupabaseAdmin] getAuthoritativeAnalytics error:', err);
+    return null;
   }
 }
 

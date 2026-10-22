@@ -40,6 +40,8 @@ import {
   CheckCircle,
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
+import { useAdminToast } from '../components/AdminToasts';
+import { AdminConfirmModal } from '../components/AdminConfirmModal';
 import { adminCache } from '../utils/adminCache';
 import { validateArticleSeoGate } from '../../../server/admin/seoValidator';
 import { autoFillArticleSeo } from '../../seo/autoFiller';
@@ -201,11 +203,36 @@ export function compressImageFile(file: File, maxWidth = 1200, quality = 0.78): 
 
 export const AdminCmsPage: React.FC = () => {
   const { token, admin } = useAdminAuth();
+  const toast = useAdminToast();
   const [articles, setArticles] = useState<CmsArticle[]>([]);
   const [total, setTotal] = useState(0);
+  const [globalCounts, setGlobalCounts] = useState<{
+    total: number;
+    publishedCount: number;
+    toUploadCount: number;
+    queueCount: number;
+  } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all');
+
+  // Confirmation Modal State (replaces window.confirm)
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    itemName: string;
+    consequence: string;
+    confirmButtonText?: string;
+    isDestructive?: boolean;
+    isLoading?: boolean;
+    onConfirm: () => Promise<void>;
+  }>({
+    isOpen: false,
+    title: '',
+    itemName: '',
+    consequence: '',
+    onConfirm: async () => {},
+  });
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -247,8 +274,12 @@ export const AdminCmsPage: React.FC = () => {
 
   // Cloudinary Guide & Direct Upload State
   const [showCloudinaryGuide, setShowCloudinaryGuide] = useState(false);
-  const [cloudName, setCloudName] = useState(() => localStorage.getItem('yaad_cloudinary_cloud_name') || '');
-  const [uploadPreset, setUploadPreset] = useState(() => localStorage.getItem('yaad_cloudinary_upload_preset') || 'yaad_preset');
+  const [cloudName, setCloudName] = useState(
+    () => localStorage.getItem('yaad_cloudinary_cloud_name') || ((import.meta as any).env?.VITE_CLOUDINARY_CLOUD_NAME as string) || 'rvhmsppk'
+  );
+  const [uploadPreset, setUploadPreset] = useState(
+    () => localStorage.getItem('yaad_cloudinary_upload_preset') || ((import.meta as any).env?.VITE_CLOUDINARY_UPLOAD_PRESET as string) || 'yaad_preset'
+  );
   const [isUploadingToCloudinary, setIsUploadingToCloudinary] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -319,11 +350,7 @@ export const AdminCmsPage: React.FC = () => {
     async (forceRefresh: boolean = false) => {
       if (!token) return;
       setIsLoading(true);
-      const params = new URLSearchParams();
-      if (search.trim()) params.set('search', search.trim());
-      if (statusFilter !== 'all') params.set('status', statusFilter);
-
-      const url = `/api/admin/cms/articles?${params.toString()}`;
+      const url = `/api/admin/cms/articles`;
       const headers = { Authorization: `Bearer ${token}` };
 
       try {
@@ -331,17 +358,35 @@ export const AdminCmsPage: React.FC = () => {
           url,
           headers,
           (fresh) => {
-            if (fresh) {
-              setArticles(fresh.articles || []);
-              setTotal(fresh.total || 0);
+            if (fresh && fresh.articles) {
+              setArticles(fresh.articles);
+              setTotal(fresh.total || fresh.articles.length);
+              const pub = fresh.articles.filter((a) => a.status === 'published' || a.queueStatus === 'published').length;
+              const tou = fresh.articles.filter((a) => a.status !== 'published' && a.queueStatus !== 'published').length;
+              const q = fresh.articles.filter((a) => a.queueStatus === 'scheduled' || a.queueStatus === 'draft_ready').length;
+              setGlobalCounts({
+                total: fresh.total || fresh.articles.length,
+                publishedCount: pub,
+                toUploadCount: tou,
+                queueCount: q,
+              });
             }
           },
           forceRefresh
         );
 
-        if (data) {
-          setArticles(data.articles || []);
-          setTotal(data.total || 0);
+        if (data && data.articles) {
+          setArticles(data.articles);
+          setTotal(data.total || data.articles.length);
+          const pub = data.articles.filter((a) => a.status === 'published' || a.queueStatus === 'published').length;
+          const tou = data.articles.filter((a) => a.status !== 'published' && a.queueStatus !== 'published').length;
+          const q = data.articles.filter((a) => a.queueStatus === 'scheduled' || a.queueStatus === 'draft_ready').length;
+          setGlobalCounts({
+            total: data.total || data.articles.length,
+            publishedCount: pub,
+            toUploadCount: tou,
+            queueCount: q,
+          });
         }
       } catch (err) {
         console.error('[AdminCmsPage] Failed to fetch articles:', err);
@@ -349,7 +394,7 @@ export const AdminCmsPage: React.FC = () => {
         setIsLoading(false);
       }
     },
-    [token, search, statusFilter]
+    [token]
   );
 
   useEffect(() => {
@@ -504,8 +549,9 @@ export const AdminCmsPage: React.FC = () => {
       setPublishReport(data);
       adminCache.invalidatePrefix('/api/admin/cms');
       await fetchArticles(true);
+      toast.success('Auto-Publish Complete', 'Today’s batch of scheduled articles was evaluated and published.');
     } catch (err: any) {
-      alert(`Auto-publish error: ${err.message}`);
+      toast.error('Auto-Publish Error', err.message || 'Auto-publishing failed');
     } finally {
       setIsAutoPublishing(false);
     }
@@ -527,11 +573,14 @@ export const AdminCmsPage: React.FC = () => {
       if (!res.ok) {
         throw new Error(data.error || 'Auto-scheduling failed');
       }
-      alert(`Auto-scheduled ${data.scheduledCount} articles across ${data.datesCount || data.scheduledDates?.length || 0} publishing days.`);
+      toast.success(
+        'Queue Auto-Scheduled',
+        `Auto-scheduled ${data.scheduledCount} articles across ${data.datesCount || data.scheduledDates?.length || 0} publishing days.`
+      );
       adminCache.invalidatePrefix('/api/admin/cms');
       await fetchArticles(true);
     } catch (err: any) {
-      alert(`Schedule error: ${err.message}`);
+      toast.error('Schedule Error', err.message || 'Auto-scheduling failed');
     } finally {
       setIsSchedulingQueue(false);
     }
@@ -649,12 +698,12 @@ export const AdminCmsPage: React.FC = () => {
 
     const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
     if (!validTypes.includes(file.type)) {
-      alert('Please select a valid JPG, PNG, or WebP image file.');
+      toast.warning('Invalid Format', 'Please select a valid JPG, PNG, or WebP image file.');
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      alert('Image size exceeds 5MB limit. Please choose a photo under 5MB.');
+      toast.warning('File Too Large', 'Image size exceeds 5MB limit. Please choose a photo under 5MB.');
       return;
     }
 
@@ -686,12 +735,13 @@ export const AdminCmsPage: React.FC = () => {
           if (!coverImageAlt.trim() && title.trim()) {
             setCoverImageAlt(`${title.trim()} guide cover photo`);
           }
+          toast.success('Image Uploaded', 'Article cover image uploaded to Cloudinary successfully.');
           setIsUploadingToCloudinary(false);
           return;
         }
       } catch (err: any) {
         console.warn('Cloudinary upload warning:', err.message);
-        alert(`Cloudinary notice: ${err.message}. Using direct local image preview.`);
+        toast.info('Cloudinary Notice', `${err.message}. Using compressed local preview.`);
       } finally {
         setIsUploadingToCloudinary(false);
       }
@@ -808,7 +858,16 @@ export const AdminCmsPage: React.FC = () => {
         throw new Error(data?.error || data?.message || `Failed to save article (${res.status}).`);
       }
 
-      setSuccessMsg(editingArticle ? 'Article updated successfully!' : 'New article published successfully and is live in the app!');
+      if (editingArticle) {
+        setSuccessMsg('Article updated successfully!');
+        toast.success('Article Updated', `"${title}" has been updated.`);
+      } else if (status === 'draft') {
+        setSuccessMsg('Draft saved to To Upload queue.');
+        toast.success('Draft Saved', 'Draft saved to To Upload queue.');
+      } else {
+        setSuccessMsg('Article published.');
+        toast.success('Article Published', `"${title}" is published and live.`);
+      }
       adminCache.invalidatePrefix('/api/admin/cms');
       await fetchArticles(true);
       setTimeout(() => {
@@ -817,30 +876,45 @@ export const AdminCmsPage: React.FC = () => {
       }, 1200);
     } catch (err: any) {
       setErrorMsg(err.message || 'An unexpected error occurred.');
+      toast.error('Save Failed', err.message || 'Failed to save article.');
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleDelete = async (id: string, artTitle: string) => {
-    if (!window.confirm(`Are you sure you want to permanently delete "${artTitle}"?`)) {
-      return;
-    }
-
-    try {
-      const res = await fetch(`/api/admin/cms/articles/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) {
-        const d = await res.json();
-        throw new Error(d.error || 'Failed to delete article');
-      }
-      adminCache.invalidatePrefix('/api/admin/cms');
-      fetchArticles(true);
-    } catch (err: any) {
-      alert(`Error: ${err.message}`);
-    }
+  const triggerDeleteArticle = (art: { id: string; title: string }) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Article',
+      itemName: art.title,
+      consequence: 'This will permanently remove this article from Supabase and the publishing queue. This action cannot be undone.',
+      confirmButtonText: 'Permanently Delete',
+      isDestructive: true,
+      onConfirm: async () => {
+        try {
+          setConfirmModal((prev) => ({ ...prev, isLoading: true }));
+          const res = await fetch(`/api/admin/cms/articles/${art.id}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (!res.ok) {
+            const d = await res.json().catch(() => ({}));
+            throw new Error(d.error || 'Failed to delete article');
+          }
+          adminCache.invalidatePrefix('/api/admin/cms');
+          await fetchArticles(true);
+          toast.success('Article Deleted', `"${art.title}" was permanently removed.`);
+          if (isModalOpen && editingArticle?.id === art.id) {
+            setIsModalOpen(false);
+            setEditingArticle(null);
+          }
+          setConfirmModal((prev) => ({ ...prev, isOpen: false, isLoading: false }));
+        } catch (err: any) {
+          setConfirmModal((prev) => ({ ...prev, isLoading: false }));
+          toast.error('Delete Failed', err.message || 'Failed to delete article');
+        }
+      },
+    });
   };
 
   // Open Comments Modal
@@ -892,40 +966,54 @@ export const AdminCmsPage: React.FC = () => {
           )
         );
         setReplyInputs((prev) => ({ ...prev, [commentId]: '' }));
+        toast.success('Reply Posted', 'Your reply has been saved.');
       } else {
-        const err = await res.json();
-        alert(`Failed to reply: ${err.error || 'Unknown error'}`);
+        const err = await res.json().catch(() => ({}));
+        toast.error('Reply Error', err.error || 'Failed to post reply.');
       }
     } catch (err: any) {
-      alert(`Error replying: ${err.message}`);
+      toast.error('Reply Error', err.message || 'Failed to post reply.');
     } finally {
       setSubmittingReplyId(null);
     }
   };
 
-  const handleDeleteComment = async (commentId: string) => {
+  const handleDeleteComment = (commentId: string) => {
     if (!commentsModalArticle) return;
-    if (!window.confirm('Delete this comment permanently?')) return;
-
-    try {
-      const res = await fetch(`/api/admin/cms/articles/${commentsModalArticle.id}/comments/${commentId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        setArticleComments((prev) => prev.filter((c) => c.id !== commentId));
-        // Also update local articles list commentsCount
-        setArticles((prev) =>
-          prev.map((a) =>
-            a.id === commentsModalArticle.id
-              ? { ...a, commentsCount: Math.max(0, (a.commentsCount || 1) - 1) }
-              : a
-          )
-        );
-      }
-    } catch (err: any) {
-      alert(`Failed to delete comment: ${err.message}`);
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Comment',
+      itemName: 'Reader Comment',
+      consequence: 'This comment will be permanently removed from this article.',
+      confirmButtonText: 'Delete Comment',
+      isDestructive: true,
+      onConfirm: async () => {
+        try {
+          setConfirmModal((prev) => ({ ...prev, isLoading: true }));
+          const res = await fetch(`/api/admin/cms/articles/${commentsModalArticle.id}/comments/${commentId}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error || 'Failed to delete comment');
+          }
+          setArticleComments((prev) => prev.filter((c) => c.id !== commentId));
+          setArticles((prev) =>
+            prev.map((a) =>
+              a.id === commentsModalArticle.id
+                ? { ...a, commentsCount: Math.max(0, (a.commentsCount || 1) - 1) }
+                : a
+            )
+          );
+          toast.success('Comment Deleted', 'Reader comment was permanently removed.');
+          setConfirmModal((prev) => ({ ...prev, isOpen: false, isLoading: false }));
+        } catch (err: any) {
+          setConfirmModal((prev) => ({ ...prev, isLoading: false }));
+          toast.error('Error', err.message || 'Failed to delete comment.');
+        }
+      },
+    });
   };
 
   const currentSlugsSet = useMemo(() => new Set(articles.map((a) => a.slug)), [articles]);
@@ -1034,46 +1122,58 @@ export const AdminCmsPage: React.FC = () => {
 
       adminCache.invalidatePrefix('/api/admin/cms');
       await fetchArticles(true);
-      alert(`Successfully uploaded & published "${art.title}"! It is now live on the public blog and inside the app.`);
+      toast.success('Article Published', `"${art.title}" is now live on the public blog and in the app!`);
     } catch (err: any) {
       setRowGateErrors((prev) => ({ ...prev, [art.id]: [err.message || 'Upload failed'] }));
+      toast.error('Upload Failed', err.message || 'Upload failed');
     } finally {
       setUploadingArticleId(null);
     }
   };
 
-  const handleUnpublishArticle = async (art: CmsArticle) => {
+  const handleUnpublishArticle = (art: CmsArticle) => {
     if (!token) return;
-    if (!window.confirm(`Unpublish "${art.title}"? This will remove it from the live public blog and move it to "To Upload".`)) {
-      return;
-    }
-    try {
-      const res = await fetch(`/api/admin/cms/articles/${art.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          slug: art.slug,
-          status: 'draft',
-          queueStatus: 'draft_ready',
-        }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to unpublish article');
-      }
-      adminCache.invalidatePrefix('/api/admin/cms');
-      await fetchArticles(true);
-    } catch (err: any) {
-      alert(`Unpublish error: ${err.message}`);
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: 'Unpublish Article',
+      itemName: art.title,
+      consequence: 'This will remove it from the live public blog and move it back to the "To Upload" queue.',
+      confirmButtonText: 'Unpublish Article',
+      isDestructive: false,
+      onConfirm: async () => {
+        try {
+          setConfirmModal((prev) => ({ ...prev, isLoading: true }));
+          const res = await fetch(`/api/admin/cms/articles/${art.id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              slug: art.slug,
+              status: 'draft',
+              queueStatus: 'draft_ready',
+            }),
+          });
+          if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            throw new Error(data.error || 'Failed to unpublish article');
+          }
+          adminCache.invalidatePrefix('/api/admin/cms');
+          await fetchArticles(true);
+          toast.success('Article Unpublished', `"${art.title}" moved to To Upload queue.`);
+          setConfirmModal((prev) => ({ ...prev, isOpen: false, isLoading: false }));
+        } catch (err: any) {
+          setConfirmModal((prev) => ({ ...prev, isLoading: false }));
+          toast.error('Unpublish Error', err.message || 'Failed to unpublish article');
+        }
+      },
+    });
   };
 
   const handleAutoFillSeo = () => {
     if (!title.trim()) {
-      alert('Please enter an Article Title first before auto-filling SEO fields.');
+      toast.warning('Title Required', 'Please enter an Article Title first before auto-filling SEO fields.');
       return;
     }
     const filled = autoFillArticleSeo({
@@ -1117,7 +1217,11 @@ export const AdminCmsPage: React.FC = () => {
                 SEO Content Pipeline
               </span>
               <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-white/90">
-                {total} Articles in System
+                {isLoading && !globalCounts ? (
+                  <span className="inline-block w-14 h-3 bg-white/20 animate-pulse rounded" />
+                ) : (
+                  `${globalCounts?.total ?? (total || articles.length)} Articles in System`
+                )}
               </span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-black tracking-tight font-['Manrope']">
@@ -1173,7 +1277,7 @@ export const AdminCmsPage: React.FC = () => {
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
             <span>Uploaded / Published</span>
             <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-100 text-emerald-900 font-black">
-              {publishedArticles.length}
+              {isLoading && !globalCounts ? '…' : (globalCounts?.publishedCount ?? publishedArticles.length)}
             </span>
           </button>
 
@@ -1189,7 +1293,7 @@ export const AdminCmsPage: React.FC = () => {
             <Upload className="w-3.5 h-3.5 text-amber-500" />
             <span>To Upload</span>
             <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-400 text-amber-950 font-black">
-              {toUploadArticles.length}
+              {isLoading && !globalCounts ? '…' : (globalCounts?.toUploadCount ?? toUploadArticles.length)}
             </span>
           </button>
 
@@ -1205,7 +1309,7 @@ export const AdminCmsPage: React.FC = () => {
             <CalendarClock className="w-3.5 h-3.5" />
             <span>Publishing Queue</span>
             <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-700/40 text-emerald-200">
-              {articles.filter((a) => a.queueStatus === 'scheduled' || a.queueStatus === 'draft_ready').length}
+              {isLoading && !globalCounts ? '…' : (globalCounts?.queueCount ?? articles.filter((a) => a.queueStatus === 'scheduled' || a.queueStatus === 'draft_ready').length)}
             </span>
           </button>
 
@@ -1553,7 +1657,7 @@ export const AdminCmsPage: React.FC = () => {
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleDelete(art.id, art.title)}
+                          onClick={() => triggerDeleteArticle(art)}
                           className="inline-flex items-center p-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 text-xs cursor-pointer"
                           title="Delete article"
                         >
@@ -1736,7 +1840,7 @@ export const AdminCmsPage: React.FC = () => {
 
                         <button
                           type="button"
-                          onClick={() => handleDelete(art.id, art.title)}
+                          onClick={() => triggerDeleteArticle(art)}
                           className="p-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 text-xs cursor-pointer"
                           title="Delete article"
                         >
@@ -1996,6 +2100,14 @@ export const AdminCmsPage: React.FC = () => {
                               className="px-2.5 py-1 rounded-lg border border-neutral-200 text-neutral-700 hover:bg-neutral-100 text-xs font-bold cursor-pointer"
                             >
                               Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => triggerDeleteArticle(art)}
+                              className="p-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 text-xs cursor-pointer"
+                              title="Delete article"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </div>
@@ -2546,10 +2658,12 @@ export const AdminCmsPage: React.FC = () => {
                   />
                   <input
                     type="file"
+                    id="cms-cover-image-input"
+                    data-testid="cms-cover-image-input"
                     ref={fileInputRef}
                     onChange={handleImageFileSelect}
                     accept="image/jpeg,image/png,image/webp"
-                    className="hidden"
+                    className="sr-only"
                   />
                   <button
                     type="button"
@@ -3299,27 +3413,54 @@ export const AdminCmsPage: React.FC = () => {
               </div>
 
               {/* Form Action Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-100">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border border-neutral-200 text-neutral-700 font-bold hover:bg-neutral-50 cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSaving}
-                  className="px-5 py-2.5 rounded-xl bg-[#003527] text-white font-bold hover:bg-[#00281e] cursor-pointer shadow-md disabled:opacity-50 inline-flex items-center gap-2"
-                >
-                  {isSaving && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
-                  <span>{editingArticle ? 'Save Changes' : 'Publish Article'}</span>
-                </button>
+              <div className="flex items-center justify-between gap-3 pt-4 border-t border-neutral-100">
+                {editingArticle ? (
+                  <button
+                    type="button"
+                    onClick={() => triggerDeleteArticle(editingArticle)}
+                    className="px-4 py-2.5 rounded-xl border border-red-200 text-red-600 font-bold hover:bg-red-50 cursor-pointer inline-flex items-center gap-1.5 text-xs"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete Article</span>
+                  </button>
+                ) : (
+                  <div />
+                )}
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="px-4 py-2.5 rounded-xl border border-neutral-200 text-neutral-700 font-bold hover:bg-neutral-50 cursor-pointer text-xs"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSaving}
+                    className="px-5 py-2.5 rounded-xl bg-[#003527] text-white font-bold hover:bg-[#00281e] cursor-pointer shadow-md disabled:opacity-50 inline-flex items-center gap-2 text-xs"
+                  >
+                    {isSaving && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                    <span>{editingArticle ? 'Save Changes' : status === 'draft' ? 'Save Draft' : 'Publish Article'}</span>
+                  </button>
+                </div>
               </div>
             </form>
           </div>
         </div>
       )}
+
+      {/* Confirmation Modal (Zero window.confirm) */}
+      <AdminConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        itemName={confirmModal.itemName}
+        consequence={confirmModal.consequence}
+        confirmButtonText={confirmModal.confirmButtonText}
+        isDestructive={confirmModal.isDestructive}
+        isLoading={confirmModal.isLoading}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+      />
     </div>
   );
 };

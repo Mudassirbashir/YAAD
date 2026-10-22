@@ -12,8 +12,12 @@ import {
   CheckCircle2,
   AlertCircle,
   Coins,
+  Edit,
+  Trash2,
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
+import { useAdminToast } from '../components/AdminToasts';
+import { AdminConfirmModal } from '../components/AdminConfirmModal';
 import { adminCache } from '../utils/adminCache';
 
 export interface CatalogItem {
@@ -43,7 +47,8 @@ const DEFAULT_CATEGORIES = [
 const COMMON_UNITS = ['kg', 'g', 'dozen', 'litre', 'ml', 'pack', 'bunch', 'piece', 'box'];
 
 export const AdminCatalogPage: React.FC = () => {
-  const { token, logout } = useAdminAuth();
+  const { token } = useAdminAuth();
+  const toast = useAdminToast();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -55,16 +60,21 @@ export const AdminCatalogPage: React.FC = () => {
   const initialCached = adminCache.getStale<any>(cacheKey);
 
   const [items, setItems] = useState<CatalogItem[]>(initialCached?.items || []);
-  const [categories, setCategories] = useState<string[]>(initialCached?.categories || DEFAULT_CATEGORIES);
+  const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
   const [total, setTotal] = useState(initialCached?.total || 0);
   const [isLoading, setIsLoading] = useState(!initialCached);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Add Item Modal
+  // Add / Edit Item Modal
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<CatalogItem | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
   const [modalSuccess, setModalSuccess] = useState<string | null>(null);
+
+  // Delete Confirm Modal
+  const [itemToDelete, setItemToDelete] = useState<CatalogItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Form Fields
   const [nameEn, setNameEn] = useState('');
@@ -100,7 +110,7 @@ export const AdminCatalogPage: React.FC = () => {
 
           if (!res.ok) {
             if (res.status === 401 || res.status === 403) {
-              return { items: [], categories: [], total: 0, totalPages: 1 };
+              return { items: [], categories: DEFAULT_CATEGORIES, total: 0, totalPages: 1 };
             }
             const errData = await res.json().catch(() => ({}));
             throw new Error(errData.error || `HTTP ${res.status}: Failed to load catalog`);
@@ -113,7 +123,8 @@ export const AdminCatalogPage: React.FC = () => {
             if (freshData) {
               setItems(freshData.items || []);
               if (freshData.categories && freshData.categories.length > 0) {
-                setCategories(freshData.categories);
+                const merged = Array.from(new Set([...DEFAULT_CATEGORIES, ...freshData.categories]));
+                setCategories(merged);
               }
               setTotal(freshData.total || 0);
               setTotalPages(freshData.totalPages || 1);
@@ -125,7 +136,8 @@ export const AdminCatalogPage: React.FC = () => {
       if (data) {
         setItems(data.items || []);
         if (data.categories && data.categories.length > 0) {
-          setCategories(data.categories);
+          const merged = Array.from(new Set([...DEFAULT_CATEGORIES, ...data.categories]));
+          setCategories(merged);
         }
         setTotal(data.total || 0);
         setTotalPages(data.totalPages || 1);
@@ -142,12 +154,26 @@ export const AdminCatalogPage: React.FC = () => {
   }, [fetchCatalog]);
 
   const handleOpenAddModal = () => {
+    setEditingItem(null);
     setNameEn('');
     setNameUr('');
-    setItemCategory(categories[0] || DEFAULT_CATEGORIES[0]);
+    setItemCategory(DEFAULT_CATEGORIES[0]);
     setDefaultUnit('kg');
     setPricePkr('');
     setIsEssential(false);
+    setModalError(null);
+    setModalSuccess(null);
+    setIsAddModalOpen(true);
+  };
+
+  const handleOpenEditModal = (item: CatalogItem) => {
+    setEditingItem(item);
+    setNameEn(item.name);
+    setNameUr(item.nameUr || '');
+    setItemCategory(item.category || DEFAULT_CATEGORIES[0]);
+    setDefaultUnit(item.defaultUnit || 'kg');
+    setPricePkr(item.pricePkr !== undefined && item.pricePkr !== null ? String(item.pricePkr) : '');
+    setIsEssential(Boolean(item.isEssential));
     setModalError(null);
     setModalSuccess(null);
     setIsAddModalOpen(true);
@@ -166,16 +192,22 @@ export const AdminCatalogPage: React.FC = () => {
     const payload = {
       name: nameEn.trim(),
       nameEn: nameEn.trim(),
-      nameUr: nameUr.trim() || undefined,
+      nameUr: nameUr.trim(), // Respect empty string if untouched (C1)
       category: itemCategory,
+      defaultUnit,
       unit: defaultUnit,
-      pricePkr: pricePkr ? Number(pricePkr) : undefined,
-      isEssential,
+      pricePkr: pricePkr.trim() ? Number(pricePkr) : undefined,
+      isEssential: Boolean(isEssential), // Explicit boolean from checkbox (C1)
     };
 
     try {
-      const res = await fetch('/api/admin/catalog/products', {
-        method: 'POST',
+      const url = editingItem
+        ? `/api/admin/catalog/products/${editingItem.id}`
+        : '/api/admin/catalog/products';
+      const method = editingItem ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
@@ -185,21 +217,45 @@ export const AdminCatalogPage: React.FC = () => {
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to add item to catalog.');
+        throw new Error(data.error || `Failed to ${editingItem ? 'update' : 'add'} item to catalog.`);
       }
 
-      setModalSuccess(`"${nameEn}" added to grocery catalog successfully!`);
       adminCache.invalidatePrefix('/api/admin/catalog');
       await fetchCatalog(true);
-
-      setTimeout(() => {
-        setIsAddModalOpen(false);
-        setModalSuccess(null);
-      }, 1200);
+      toast.success(
+        editingItem ? 'Item Updated' : 'Item Added',
+        `"${nameEn}" saved to catalog successfully.`
+      );
+      setIsAddModalOpen(false);
+      setEditingItem(null);
     } catch (err: any) {
-      setModalError(err.message || 'Failed to add item.');
+      setModalError(err.message || 'Failed to save item.');
+      toast.error('Error', err.message || 'Failed to save item.');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!itemToDelete) return;
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/catalog/products/${itemToDelete.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to delete catalog item');
+      }
+      adminCache.invalidatePrefix('/api/admin/catalog');
+      await fetchCatalog(true);
+      toast.success('Item Deleted', `"${itemToDelete.name}" was permanently removed.`);
+      setItemToDelete(null);
+    } catch (err: any) {
+      toast.error('Delete Failed', err.message || 'Could not delete item.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -339,6 +395,7 @@ export const AdminCatalogPage: React.FC = () => {
                   <th className="py-3.5 px-4">Default Unit</th>
                   <th className="py-3.5 px-4">Price (Est.)</th>
                   <th className="py-3.5 px-4">Essential</th>
+                  <th className="py-3.5 px-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-100">
@@ -372,6 +429,26 @@ export const AdminCatalogPage: React.FC = () => {
                       ) : (
                         <span className="text-neutral-400 text-[11px]">-</span>
                       )}
+                    </td>
+                    <td className="py-3.5 px-4 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditModal(item)}
+                          className="p-1.5 rounded-lg border border-neutral-200 text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 cursor-pointer transition-colors"
+                          title="Edit product"
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setItemToDelete(item)}
+                          className="p-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 cursor-pointer transition-colors"
+                          title="Delete product"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -420,10 +497,12 @@ export const AdminCatalogPage: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-bold text-neutral-900 text-sm sm:text-base">
-                    Add Pakistani Grocery Item
+                    {editingItem ? 'Edit Grocery Item' : 'Add Pakistani Grocery Item'}
                   </h3>
                   <p className="text-[11px] text-neutral-500">
-                    Add standard household item to auto-suggest and catalog database.
+                    {editingItem
+                      ? 'Update item details, Urdu translation, category, price and staple status.'
+                      : 'Add standard household item to auto-suggest and catalog database.'}
                   </p>
                 </div>
               </div>
@@ -560,8 +639,8 @@ export const AdminCatalogPage: React.FC = () => {
                     </>
                   ) : (
                     <>
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Add to Catalog</span>
+                      <Check className="w-3.5 h-3.5" />
+                      <span>{editingItem ? 'Save Changes' : 'Add to Catalog'}</span>
                     </>
                   )}
                 </button>
@@ -570,6 +649,19 @@ export const AdminCatalogPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Explicit Confirm Delete Modal */}
+      <AdminConfirmModal
+        isOpen={Boolean(itemToDelete)}
+        title="Delete Catalog Item"
+        itemName={itemToDelete?.name || ''}
+        consequence="This item will be permanently removed from the master grocery catalog. Existing saved lists referencing this item will retain their plain text name."
+        confirmButtonText="Delete Product"
+        isDestructive={true}
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onClose={() => setItemToDelete(null)}
+      />
     </div>
   );
 };
