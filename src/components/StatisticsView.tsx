@@ -89,7 +89,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
     let totalItemsPlanned = 0;
     let totalItemsPurchased = 0;
     const categoryCounts: Record<string, number> = {};
-    const itemFrequencyMap: Record<string, { count: number; name: string; category: string }> = {};
+    const itemFrequencyMap: Record<string, { count: number; name: string; category: string; imageUrl?: string }> = {};
 
     // 7-day activity tracking (Mon-Sun: index 0 to 6)
     // 0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri, 5=Sat, 6=Sun
@@ -147,7 +147,10 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
               count: 0,
               name: item.name || item.canonicalName || itemName,
               category: cat,
+              imageUrl: item.imageUrl,
             };
+          } else if (!itemFrequencyMap[itemName].imageUrl && item.imageUrl) {
+            itemFrequencyMap[itemName].imageUrl = item.imageUrl;
           }
           itemFrequencyMap[itemName].count += 1;
         }
@@ -283,7 +286,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
     <div
       id="statistics_screen_container"
       dir={isRTL ? 'rtl' : 'ltr'}
-      className="min-h-screen bg-surface-container-lowest text-on-surface font-['Plus_Jakarta_Sans'] pb-[calc(env(safe-area-inset-bottom,0px)+104px)] selection:bg-[#0F3D2E]/10"
+      className="min-h-screen bg-surface-container-lowest text-on-surface font-display pb-[calc(env(safe-area-inset-bottom,0px)+104px)] selection:bg-[#0F3D2E]/10"
     >
       {/* ==================================================================== */}
       {/* 1. HEADER                                                            */}
@@ -310,12 +313,12 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
             <div>
               <h1
                 className={`text-xl font-bold text-on-surface tracking-tight leading-tight ${
-                  language === 'ur' ? 'font-urdu text-2xl' : "font-['Manrope']"
+                  language === 'ur' ? 'font-urdu text-2xl' : "font-body"
                 }`}
               >
                 {t('statistics.title')}
               </h1>
-              <p className="text-xs text-outline font-medium font-['Manrope']">
+              <p className="text-xs text-outline font-medium font-body">
                 {t('statistics.subtitle')}
               </p>
             </div>
@@ -341,13 +344,13 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
           <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 rounded-2xl p-4 flex items-center justify-between gap-3 text-rose-800 dark:text-rose-200 animate-fade-in">
             <div className="flex items-center gap-3">
               <AlertCircle className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0" />
-              <p className="text-xs sm:text-sm font-medium font-['Manrope']">{error}</p>
+              <p className="text-xs sm:text-sm font-medium font-body">{error}</p>
             </div>
             {onRetry && (
               <button
                 type="button"
                 onClick={onRetry}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-100 hover:bg-rose-200 dark:bg-rose-900/50 dark:hover:bg-rose-900/80 text-rose-900 dark:text-rose-100 text-xs font-semibold font-['Manrope'] transition-colors shrink-0 active:scale-95"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-100 hover:bg-rose-200 dark:bg-rose-900/50 dark:hover:bg-rose-900/80 text-rose-900 dark:text-rose-100 text-xs font-semibold font-body transition-colors shrink-0 active:scale-95"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
                 <span>Retry</span>
@@ -416,12 +419,12 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
             <div className="space-y-2 max-w-md">
               <h2
                 className={`text-lg sm:text-xl font-bold text-on-surface ${
-                  language === 'ur' ? 'font-urdu text-xl sm:text-2xl' : "font-['Manrope']"
+                  language === 'ur' ? 'font-urdu text-xl sm:text-2xl' : "font-body"
                 }`}
               >
                 {t('statistics.emptyTitle')}
               </h2>
-              <p className="text-sm text-outline leading-relaxed font-['Manrope']">
+              <p className="text-sm text-outline leading-relaxed font-body">
                 {t('statistics.emptySubtitle')}
               </p>
             </div>
@@ -457,14 +460,14 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                   </div>
                   <h2
                     className={`text-base font-bold text-on-surface tracking-tight ${
-                      language === 'ur' ? 'font-urdu text-lg' : "font-['Manrope']"
+                      language === 'ur' ? 'font-urdu text-lg' : "font-body"
                     }`}
                   >
                     {t('statistics.overview')}
                   </h2>
                 </div>
 
-                <span className="text-xs font-semibold text-outline font-['Manrope']">
+                <span className="text-xs font-semibold text-outline font-body">
                   {analytics.totalLists} {analytics.totalLists === 1 ? 'list' : 'lists'}
                 </span>
               </div>
@@ -477,7 +480,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                   className="bg-white rounded-2xl p-4 sm:p-4.5 border border-surface-dim/70 shadow-xs flex flex-col justify-between transition-all hover:border-[#0F3D2E]/20"
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-semibold text-outline font-['Manrope']">
+                    <span className="text-xs font-semibold text-outline font-body">
                       {t('statistics.completedLists')}
                     </span>
                     <div className="w-7 h-7 rounded-xl bg-emerald-50 text-[#0F3D2E] flex items-center justify-center shrink-0">
@@ -485,10 +488,10 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                     </div>
                   </div>
                   <div>
-                    <div className="text-2xl sm:text-3xl font-extrabold text-[#0F3D2E] font-['Plus_Jakarta_Sans'] leading-none">
+                    <div className="text-2xl sm:text-3xl font-extrabold text-[#0F3D2E] font-display leading-none">
                       {analytics.completedListsCount}
                     </div>
-                    <div className="text-[0.6875rem] text-outline font-medium font-['Manrope'] mt-1">
+                    <div className="text-[0.6875rem] text-outline font-medium font-body mt-1">
                       {analytics.totalLists > 0
                         ? `${Math.round((analytics.completedListsCount / analytics.totalLists) * 100)}% of lists`
                         : '—'}
@@ -502,7 +505,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                   className="bg-white rounded-2xl p-4 sm:p-4.5 border border-surface-dim/70 shadow-xs flex flex-col justify-between transition-all hover:border-[#0F3D2E]/20"
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-semibold text-outline font-['Manrope']">
+                    <span className="text-xs font-semibold text-outline font-body">
                       {t('statistics.activeLists')}
                     </span>
                     <div className="w-7 h-7 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0">
@@ -510,10 +513,10 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                     </div>
                   </div>
                   <div>
-                    <div className="text-2xl sm:text-3xl font-extrabold text-on-surface font-['Plus_Jakarta_Sans'] leading-none">
+                    <div className="text-2xl sm:text-3xl font-extrabold text-on-surface font-display leading-none">
                       {analytics.activeListsCount}
                     </div>
-                    <div className="text-[0.6875rem] text-outline font-medium font-['Manrope'] mt-1">
+                    <div className="text-[0.6875rem] text-outline font-medium font-body mt-1">
                       {analytics.activeListsCount > 0 ? 'Ready to shop' : 'All caught up'}
                     </div>
                   </div>
@@ -525,7 +528,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                   className="bg-white rounded-2xl p-4 sm:p-4.5 border border-surface-dim/70 shadow-xs flex flex-col justify-between transition-all hover:border-[#0F3D2E]/20"
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-semibold text-outline font-['Manrope']">
+                    <span className="text-xs font-semibold text-outline font-body">
                       {t('statistics.itemsPurchased')}
                     </span>
                     <div className="w-7 h-7 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center shrink-0">
@@ -533,10 +536,10 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                     </div>
                   </div>
                   <div>
-                    <div className="text-2xl sm:text-3xl font-extrabold text-on-surface font-['Plus_Jakarta_Sans'] leading-none">
+                    <div className="text-2xl sm:text-3xl font-extrabold text-on-surface font-display leading-none">
                       {analytics.totalItemsPurchased}
                     </div>
-                    <div className="text-[0.6875rem] text-outline font-medium font-['Manrope'] mt-1">
+                    <div className="text-[0.6875rem] text-outline font-medium font-body mt-1">
                       {analytics.totalItemsPlanned > 0
                         ? `${analytics.totalItemsPurchased} of ${analytics.totalItemsPlanned} planned items purchased`
                         : '—'}
@@ -550,7 +553,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                   className="bg-white rounded-2xl p-4 sm:p-4.5 border border-surface-dim/70 shadow-xs flex flex-col justify-between transition-all hover:border-[#0F3D2E]/20"
                 >
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-semibold text-outline font-['Manrope']">
+                    <span className="text-xs font-semibold text-outline font-body">
                       {t('statistics.completionRate')}
                     </span>
                     <div className="w-7 h-7 rounded-xl bg-emerald-50 text-[#0F3D2E] flex items-center justify-center shrink-0">
@@ -558,7 +561,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                     </div>
                   </div>
                   <div>
-                    <div className="text-2xl sm:text-3xl font-extrabold text-[#0F3D2E] font-['Plus_Jakarta_Sans'] leading-none">
+                    <div className="text-2xl sm:text-3xl font-extrabold text-[#0F3D2E] font-display leading-none">
                       {analytics.completionRate}%
                     </div>
                     <div className="w-full bg-surface-container rounded-full h-1.5 mt-2 overflow-hidden">
@@ -588,18 +591,18 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                 </div>
                 <div className="space-y-1 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-[0.6875rem] font-bold uppercase tracking-wider text-[#0F3D2E]/80 font-['Manrope']">
+                    <span className="text-[0.6875rem] font-bold uppercase tracking-wider text-[#0F3D2E]/80 font-body">
                       {t('statistics.smartInsightsTitle')}
                     </span>
                   </div>
                   <h3
                     className={`text-sm sm:text-base font-bold text-emerald-950 ${
-                      language === 'ur' ? 'font-urdu text-base sm:text-lg' : "font-['Manrope']"
+                      language === 'ur' ? 'font-urdu text-base sm:text-lg' : "font-body"
                     }`}
                   >
                     {smartInsight.title}
                   </h3>
-                  <p className="text-xs sm:text-sm text-emerald-900/80 leading-relaxed font-['Manrope']">
+                  <p className="text-xs sm:text-sm text-emerald-900/80 leading-relaxed font-body">
                     {smartInsight.description}
                   </p>
                 </div>
@@ -622,18 +625,18 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                   <div className="space-y-0.5">
                     <h3
                       className={`text-base font-bold text-on-surface ${
-                        language === 'ur' ? 'font-urdu text-lg' : "font-['Manrope']"
+                        language === 'ur' ? 'font-urdu text-lg' : "font-body"
                       }`}
                     >
                       {t('statistics.activityTitle')}
                     </h3>
-                    <p className="text-xs text-outline font-medium font-['Manrope']">
+                    <p className="text-xs text-outline font-medium font-body">
                       {t('statistics.activitySubtitle')}
                     </p>
                   </div>
 
                   {analytics.hasActivity && (
-                    <span className="text-xs font-bold text-[#0F3D2E] bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100/80 font-['Manrope']">
+                    <span className="text-xs font-bold text-[#0F3D2E] bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100/80 font-body">
                       {t('statistics.mostActiveDay', {
                         day: t(`statistics.${analytics.peakDayKey}`) || analytics.peakDayKey,
                       })}
@@ -686,7 +689,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
 
                           {/* Day Label */}
                           <span
-                            className={`text-[0.6875rem] font-['Manrope'] mt-2 transition-colors ${
+                            className={`text-[0.6875rem] font-body mt-2 transition-colors ${
                               isPeak || isSelected
                                 ? 'font-bold text-[#0F3D2E]'
                                 : 'font-medium text-outline'
@@ -700,7 +703,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                   </div>
                 </div>
 
-                <div className="text-[0.6875rem] text-outline font-medium font-['Manrope'] pt-2 border-t border-surface-dim/50 flex items-center justify-between">
+                <div className="text-[0.6875rem] text-outline font-medium font-body pt-2 border-t border-surface-dim/50 flex items-center justify-between">
                   <span>{t('statistics.activityHint')}</span>
                   <span className="inline-flex items-center gap-1 text-[#0F3D2E] font-semibold">
                     <Clock className="w-3 h-3" />
@@ -721,12 +724,12 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                   <div className="space-y-0.5">
                     <h3
                       className={`text-base font-bold text-on-surface ${
-                        language === 'ur' ? 'font-urdu text-lg' : "font-['Manrope']"
+                        language === 'ur' ? 'font-urdu text-lg' : "font-body"
                       }`}
                     >
                       {t('statistics.topCategoriesTitle')}
                     </h3>
-                    <p className="text-xs text-outline font-medium font-['Manrope']">
+                    <p className="text-xs text-outline font-medium font-body">
                       {t('statistics.topCategoriesSubtitle')}
                     </p>
                   </div>
@@ -742,7 +745,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
 
                       return (
                         <div key={cat.id} className="space-y-1.5">
-                          <div className="flex items-center justify-between text-xs font-['Manrope']">
+                          <div className="flex items-center justify-between text-xs font-body">
                             <div className="flex items-center gap-2">
                               <div className="w-6 h-6 rounded-lg bg-emerald-50 text-[#0F3D2E] flex items-center justify-center shrink-0">
                                 <CategoryIcon categoryId={cat.id} className="w-3.5 h-3.5 stroke-[2.2]" />
@@ -772,13 +775,13 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                       );
                     })
                   ) : (
-                    <div className="py-8 text-center text-xs text-outline font-['Manrope']">
+                    <div className="py-8 text-center text-xs text-outline font-body">
                       {t('statistics.noData')}
                     </div>
                   )}
                 </div>
 
-                <div className="text-[0.6875rem] text-outline font-medium font-['Manrope'] pt-2 border-t border-surface-dim/50">
+                <div className="text-[0.6875rem] text-outline font-medium font-body pt-2 border-t border-surface-dim/50">
                   {analytics.topCategory
                     ? `Top focus: ${getCategoryLabel(analytics.topCategory)}`
                     : t('statistics.noData')}
@@ -799,10 +802,10 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
               >
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <h3 className="text-base font-bold text-on-surface font-['Manrope']">
+                    <h3 className="text-base font-bold text-on-surface font-body">
                       Top Household Staples
                     </h3>
-                    <p className="text-xs text-outline font-medium font-['Manrope']">
+                    <p className="text-xs text-outline font-medium font-body">
                       Most frequently added items across your shopping lists
                     </p>
                   </div>
@@ -819,14 +822,15 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                         canonicalName={staple.name}
                         displayName={staple.name}
                         categoryId={staple.category}
+                        imageUrl={staple.imageUrl}
                         size={40}
                         className="w-10 h-10 rounded-xl shrink-0"
                       />
                       <div className="flex-1 min-w-0">
-                        <span className="font-['Manrope'] font-bold text-sm text-on-surface block truncate capitalize">
+                        <span className="font-body font-bold text-sm text-on-surface block truncate capitalize">
                           {staple.name}
                         </span>
-                        <span className="text-xs text-outline font-['Manrope'] truncate block">
+                        <span className="text-xs text-outline font-body truncate block">
                           {getCategoryLabel(staple.category)}
                         </span>
                       </div>
@@ -857,13 +861,13 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                     </div>
                     <h2
                       className={`text-base font-bold text-on-surface tracking-tight ${
-                        language === 'ur' ? 'font-urdu text-lg' : "font-['Manrope']"
+                        language === 'ur' ? 'font-urdu text-lg' : "font-body"
                       }`}
                     >
                       {t('statistics.recentTripsTitle')}
                     </h2>
                   </div>
-                  <span className="text-xs text-outline font-medium font-['Manrope']">
+                  <span className="text-xs text-outline font-medium font-body">
                     {t('statistics.recentTripsSubtitle')}
                   </span>
                 </div>
@@ -899,10 +903,10 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                           </div>
 
                           <div className="min-w-0 space-y-0.5">
-                            <h4 className="text-sm font-bold text-on-surface font-['Manrope'] truncate group-hover:text-[#0F3D2E] transition-colors">
+                            <h4 className="text-sm font-bold text-on-surface font-body truncate group-hover:text-[#0F3D2E] transition-colors">
                               {list.title}
                             </h4>
-                            <p className="text-xs text-outline font-['Manrope'] flex items-center gap-1.5">
+                            <p className="text-xs text-outline font-body flex items-center gap-1.5">
                               <span>{formatTripDate(list.createdAt || list.createdTimestamp || list.completedAt)}</span>
                               <span>•</span>
                               <span>

@@ -347,6 +347,8 @@ export interface ShoppingList {
   userId?: string;
   householdId?: string | null;
   household_id?: string | null;
+  shareToken?: string | null;
+  shareEnabled?: boolean;
   isSynced?: boolean;
 }
 
@@ -396,6 +398,7 @@ export type ScreenType =
   | 'legal'
   | 'blog'
   | 'blog_article'
+  | 'shared_list'
   | 'rashan_list'
   | 'not_found';
 
@@ -430,6 +433,7 @@ export interface FrequentlyBoughtItem {
   category: CategoryId | string;
   purchaseCount: number;
   lastPurchasedAt: string;
+  imageUrl?: string;
 }
 
 /**

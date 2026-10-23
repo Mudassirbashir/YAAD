@@ -7,6 +7,7 @@ import {
   Eye,
   Check,
   Camera,
+  Share2,
 } from 'lucide-react';
 import { ShoppingList } from '../types';
 import { useLanguage } from '../context/LanguageContext';
@@ -22,6 +23,7 @@ export interface ShoppingListCardProps {
   onMarkComplete?: (list: ShoppingList) => void;
   onDeleteList?: (listId: string) => void;
   onReuseList?: (list: ShoppingList) => void;
+  onShareList?: (list: ShoppingList) => void;
   isOnline?: boolean;
   variant?: 'history' | 'home';
   selectable?: boolean;
@@ -35,6 +37,7 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
   onSelectList,
   onDeleteList,
   onReuseList,
+  onShareList,
   selectable = false,
   selected = false,
   onToggleSelect,
@@ -89,6 +92,7 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
   const totalItems = (list.items || []).length;
   const completedItems = (list.items || []).filter((i) => i.completed).length;
   const photoCount = (list.items || []).filter((i) => i.imageUrl).length;
+  const firstItemWithPhoto = (list.items || []).find((i) => Boolean(i.imageUrl));
   const isAllDone = list.isCompleted || (totalItems > 0 && completedItems === totalItems);
   const percentComplete = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
 
@@ -190,12 +194,12 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
             <div className="flex flex-col min-w-0 flex-1 -mt-0.5">
               <BidiText
                 as="h3"
-                className="font-['Plus_Jakarta_Sans'] text-[0.9375rem] sm:text-base font-bold text-on-surface group-hover:text-primary transition-colors truncate leading-tight"
+                className="font-display text-[0.9375rem] sm:text-base font-bold text-on-surface group-hover:text-primary transition-colors truncate leading-tight"
               >
                 {list.title}
               </BidiText>
               {timeAgoStr && (
-                <span className="text-[0.6875rem] sm:text-xs font-medium text-outline font-['Manrope'] mt-0.5 truncate">
+                <span className="text-[0.6875rem] sm:text-xs font-medium text-outline font-body mt-0.5 truncate">
                   {timeAgoStr}
                 </span>
               )}
@@ -227,7 +231,7 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1, transition: { duration: 0.16, ease: [0.32, 0.72, 0, 1] } }}
                   exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.14, ease: [0.36, 0, 0.66, 0] } }}
-                  className="absolute right-0 rtl:right-auto rtl:left-0 top-8 z-[60] w-44 bg-white dark:bg-surface-container-lowest rounded-2xl shadow-xl border border-surface-dim/80 py-1.5 popover-menu text-xs font-['Manrope'] font-semibold text-on-surface"
+                  className="absolute right-0 rtl:right-auto rtl:left-0 top-8 z-[60] w-44 bg-white dark:bg-surface-container-lowest rounded-2xl shadow-xl border border-surface-dim/80 py-1.5 popover-menu text-xs font-body font-semibold text-on-surface"
                 >
                   {/* 1. View Details (Open Details) */}
                   <button
@@ -244,6 +248,24 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
                     <Eye className="w-3.5 h-3.5 text-primary" />
                     <span>{t('viewDetails') || 'View Details'}</span>
                   </button>
+
+                  {/* Share List */}
+                  {onShareList && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsMenuOpen(false);
+                        triggerHaptic(8);
+                        onShareList(list);
+                      }}
+                      className="w-full px-3.5 py-2 text-left rtl:text-right flex items-center gap-2 hover:bg-surface-container transition-colors cursor-pointer"
+                    >
+                      <Share2 className="w-3.5 h-3.5 text-outline" />
+                      <span>{t('shareList') || 'Share List'}</span>
+                    </button>
+                  )}
 
                   {/* 2. Reuse as New List */}
                   {onReuseList && (
@@ -289,18 +311,30 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
               </span>
             )}
             {photoCount > 0 && (
-              <span
-                className="text-[0.65625rem] font-semibold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-md flex items-center gap-1"
-                title={`${photoCount} item photo${photoCount === 1 ? '' : 's'} attached`}
-              >
-                <Camera className="w-3 h-3 text-primary shrink-0" />
-                <span>{photoCount} {photoCount === 1 ? 'photo' : 'photos'}</span>
-              </span>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {firstItemWithPhoto?.imageUrl && (
+                  <img
+                    src={firstItemWithPhoto.imageUrl}
+                    alt={firstItemWithPhoto.name || 'Item photo'}
+                    className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg object-cover border border-primary/20 shadow-2xs shrink-0"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLElement).style.display = 'none';
+                    }}
+                  />
+                )}
+                <span
+                  className="text-[0.65625rem] font-semibold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-md flex items-center gap-1"
+                  title={`${photoCount} item photo${photoCount === 1 ? '' : 's'} attached`}
+                >
+                  <Camera className="w-3 h-3 text-primary shrink-0" />
+                  <span>{`${photoCount} ${photoCount === 1 ? 'photo' : 'photos'}`}</span>
+                </span>
+              </div>
             )}
           </div>
 
           {/* Item count clearly positioned on bottom-right side */}
-          <div className="text-[0.6875rem] sm:text-xs font-bold text-on-surface-variant font-['Manrope'] bg-surface-container/70 border border-surface-dim/60 px-2 py-0.5 rounded-md shrink-0">
+          <div className="text-[0.6875rem] sm:text-xs font-bold text-on-surface-variant font-body bg-surface-container/70 border border-surface-dim/60 px-2 py-0.5 rounded-md shrink-0">
             {totalItems} {totalItems === 1 ? 'item' : 'items'}
           </div>
         </div>
@@ -331,10 +365,10 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
               </div>
 
               <div className="text-center space-y-1">
-                <h3 className="font-['Plus_Jakarta_Sans'] text-lg font-bold text-on-surface">
+                <h3 className="font-display text-lg font-bold text-on-surface">
                   {t('history.deleteConfirmTitle') || 'Delete this shopping list?'}
                 </h3>
-                <p className="font-['Manrope'] text-xs sm:text-sm text-outline leading-relaxed">
+                <p className="font-body text-xs sm:text-sm text-outline leading-relaxed">
                   {t('history.deleteConfirmDesc', { title: list.title }) ||
                     `"${list.title}" and its ${totalItems} associated items will be removed.`}
                 </p>
@@ -347,14 +381,14 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
                     e.stopPropagation();
                     setShowDeleteConfirm(false);
                   }}
-                  className="h-11 rounded-full bg-surface-container text-on-surface font-['Manrope'] text-xs sm:text-sm font-semibold hover:bg-surface-container-high transition-colors cursor-pointer"
+                  className="h-11 rounded-full bg-surface-container text-on-surface font-body text-xs sm:text-sm font-semibold hover:bg-surface-container-high transition-colors cursor-pointer"
                 >
                   {t('cancel') || 'Cancel'}
                 </button>
                 <button
                   type="button"
                   onClick={handleConfirmDelete}
-                  className="h-11 rounded-full bg-rose-600 text-white font-['Manrope'] text-xs sm:text-sm font-semibold hover:bg-rose-700 transition-colors shadow-xs active:scale-95 cursor-pointer"
+                  className="h-11 rounded-full bg-rose-600 text-white font-body text-xs sm:text-sm font-semibold hover:bg-rose-700 transition-colors shadow-xs active:scale-95 cursor-pointer"
                 >
                   {t('delete') || 'Delete'}
                 </button>

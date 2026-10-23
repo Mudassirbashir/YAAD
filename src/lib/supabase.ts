@@ -8,6 +8,7 @@ import { defaultItemCatalog } from './recognition/catalog';
 import { getAuthRedirectUrl } from '../config/siteConfig';
 import {
   getOfflineLists,
+  getOfflineListById,
   saveOfflineList,
   saveOfflineListsBatch,
   deleteOfflineList,
@@ -200,6 +201,65 @@ export function parseNumericQuantity(raw: unknown): number | null {
     }
   }
   return null;
+}
+
+/**
+ * Pure row builder for child shopping_items rows.
+ * Shared across save, completion, and offline-sync persistence paths.
+ */
+export function buildShoppingItemRow(
+  item: ShoppingItem,
+  listId: string,
+  userId: string
+) {
+  const numericQty = parseNumericQuantity(item.quantity);
+  let unitValue = item.unit || item.note || null;
+  if (numericQty === null && item.quantity && typeof item.quantity === 'string' && item.quantity.trim()) {
+    unitValue = unitValue ? `${item.quantity.trim()} ${unitValue}` : item.quantity.trim();
+  }
+
+  return {
+    id: ensureValidUUID(item.id),
+    list_id: ensureValidUUID(listId),
+    user_id: item.userId || userId,
+    item_name: item.name,
+    category: item.categoryId || item.category || 'other',
+    quantity: numericQty,
+    unit: unitValue,
+    is_completed: Boolean(item.completed),
+    updated_at: new Date().toISOString(),
+    image_url: item.imageUrl || null,
+  };
+}
+
+/**
+ * Pure row builder for shopping_history records.
+ * Uses deterministic UUID to ensure repeated calls are idempotent.
+ */
+export function buildShoppingHistoryRow(
+  item: ShoppingItem,
+  ctx: { listId: string; sessionId: string; userId: string; purchasedAt: string }
+) {
+  const numericQty = parseNumericQuantity(item.quantity);
+  let unitValue = item.unit || item.note || null;
+  if (numericQty === null && item.quantity && typeof item.quantity === 'string' && item.quantity.trim()) {
+    unitValue = unitValue ? `${item.quantity.trim()} ${unitValue}` : item.quantity.trim();
+  }
+
+  const deterministicId = generateDeterministicUUID(`${ctx.listId}_${ctx.sessionId}_${item.id}`);
+
+  return {
+    id: deterministicId,
+    user_id: ctx.userId,
+    item_name: item.name.trim(),
+    canonical_name: item.canonicalName || item.name.trim(),
+    quantity: numericQty,
+    unit: unitValue,
+    purchased_at: ctx.purchasedAt,
+    source_list_id: ensureValidUUID(ctx.listId),
+    created_at: ctx.purchasedAt,
+    image_url: item.imageUrl || null,
+  };
 }
 
 /**
@@ -439,6 +499,8 @@ export async function updateProfile(
 
     let upsertResult = await resilientUpsert('profiles', profileUpsertPayload, { onConflict: 'id' });
     let upsertData: any = upsertResult.data;
+    let persistenceSuccess = !upsertResult.error && Boolean(upsertData);
+    let lastPersistenceError: Error | null = upsertResult.error;
 
     // Direct UPDATE safeguard (in case database RLS requires direct UPDATE rather than UPSERT)
     try {
@@ -462,23 +524,42 @@ export async function updateProfile(
 
       if (!directErr && directData && directData.length > 0) {
         upsertData = directData;
+        persistenceSuccess = true;
+        lastPersistenceError = null;
       } else if (directErr && (directErr.message?.includes('phone_number') || directErr.code === 'PGRST204')) {
         // Retry direct update with 'phone' column alias if table uses 'phone'
         delete directUpdatePayload.phone_number;
         if (mergedProfile.phone_number !== undefined && mergedProfile.phone_number !== null) {
           directUpdatePayload.phone = mergedProfile.phone_number;
         }
-        const { data: retryData } = await supabase
+        const { data: retryData, error: retryErr } = await supabase
           .from('profiles')
           .update(directUpdatePayload)
           .eq('id', verifiedUserId)
           .select();
         if (retryData && retryData.length > 0) {
           upsertData = retryData;
+          persistenceSuccess = true;
+          lastPersistenceError = null;
+        } else if (retryErr) {
+          lastPersistenceError = new Error(retryErr.message);
         }
+      } else if (directErr) {
+        lastPersistenceError = new Error(directErr.message);
       }
-    } catch (directEx) {
+    } catch (directEx: any) {
       console.warn('Notice on direct profile update check:', directEx);
+      if (!persistenceSuccess) {
+        lastPersistenceError = directEx instanceof Error ? directEx : new Error(String(directEx));
+      }
+    }
+
+    // If online and profile was not successfully persisted to Supabase, return real error
+    if (!persistenceSuccess && lastPersistenceError) {
+      if (isNetworkOrOfflineError(lastPersistenceError)) {
+        return { data: mergedProfile, error: null };
+      }
+      return { data: null, error: lastPersistenceError };
     }
 
     // Broadcast profile update across active devices
@@ -575,7 +656,7 @@ export async function updateProfile(
     }
     const message = err instanceof Error ? err.message : 'Failed to update profile';
     console.warn('Exception during updateProfile:', message);
-    return { data: mergedProfile, error: null };
+    return { data: null, error: err instanceof Error ? err : new Error(message) };
   }
 }
 
@@ -766,6 +847,8 @@ export async function loadUserShoppingLists(
         isCompleted,
         icon: row.icon || 'shopping_basket',
         items: finalItems,
+        shareToken: row.share_token || null,
+        shareEnabled: Boolean(row.share_enabled),
         isSynced: true,
       };
     });
@@ -979,25 +1062,7 @@ async function executeInternalSaveUserShoppingList(
             .delete()
             .eq('list_id', safeListId);
         } else {
-          const itemRows = list.items.map((item) => {
-            const numericQty = parseNumericQuantity(item.quantity);
-            let unitValue = item.unit || item.note || null;
-            if (numericQty === null && item.quantity && typeof item.quantity === 'string' && item.quantity.trim()) {
-              unitValue = unitValue ? `${item.quantity.trim()} ${unitValue}` : item.quantity.trim();
-            }
-
-            return {
-              id: ensureValidUUID(item.id),
-              list_id: safeListId,
-              user_id: verifiedUserId,
-              item_name: item.name,
-              category: item.categoryId || item.category || 'other',
-              quantity: numericQty,
-              unit: unitValue,
-              is_completed: Boolean(item.completed),
-              updated_at: new Date().toISOString(),
-            };
-          });
+          const itemRows = list.items.map((item) => buildShoppingItemRow(item, safeListId, verifiedUserId));
 
           const currentItemIds = itemRows.map((r) => r.id);
 
@@ -1588,7 +1653,7 @@ export async function getFrequentlyBoughtItems(
       return { items: [], error: null };
     }
 
-    const countMap = new Map<string, { count: number; lastPurchasedAt: string; category: string; id: string }>();
+    const countMap = new Map<string, { count: number; lastPurchasedAt: string; category: string; id: string; imageUrl?: string }>();
     (data || []).forEach((row) => {
       const name = (row.item_name || '').trim();
       if (!name) return;
@@ -1598,6 +1663,9 @@ export async function getFrequentlyBoughtItems(
         existing.count += 1;
         if (new Date(row.purchased_at).getTime() > new Date(existing.lastPurchasedAt).getTime()) {
           existing.lastPurchasedAt = row.purchased_at;
+          if (row.image_url) existing.imageUrl = row.image_url;
+        } else if (!existing.imageUrl && row.image_url) {
+          existing.imageUrl = row.image_url;
         }
       } else {
         countMap.set(key, {
@@ -1605,6 +1673,7 @@ export async function getFrequentlyBoughtItems(
           count: 1,
           lastPurchasedAt: row.purchased_at || new Date().toISOString(),
           category: 'other',
+          imageUrl: row.image_url || undefined,
         });
       }
     });
@@ -1616,6 +1685,7 @@ export async function getFrequentlyBoughtItems(
       category: val.category,
       purchaseCount: val.count,
       lastPurchasedAt: val.lastPurchasedAt,
+      imageUrl: val.imageUrl,
     }));
 
     mapped.sort((a, b) => b.purchaseCount - a.purchaseCount);
@@ -1647,28 +1717,14 @@ export async function recordCompletedShoppingTrip(
   const purchaseTimeIso = list.completedAt || new Date().toISOString();
 
   try {
-    const historyRows = completedItems.map((it) => {
-      const numericQty = parseNumericQuantity(it.quantity);
-      let unitValue = it.unit || it.note || null;
-      if (numericQty === null && it.quantity && typeof it.quantity === 'string' && it.quantity.trim()) {
-        unitValue = unitValue ? `${it.quantity.trim()} ${unitValue}` : it.quantity.trim();
-      }
-
-      // Stable deterministic UUID prevents duplicate rows if called repeatedly
-      const deterministicId = generateDeterministicUUID(`${list.id}_${stableSessionId}_${it.id}`);
-
-      return {
-        id: deterministicId,
-        user_id: verifiedUserId,
-        item_name: it.name.trim(),
-        canonical_name: it.canonicalName || it.name.trim(),
-        quantity: numericQty,
-        unit: unitValue,
-        purchased_at: purchaseTimeIso,
-        source_list_id: ensureValidUUID(list.id),
-        created_at: purchaseTimeIso,
-      };
-    });
+    const historyRows = completedItems.map((it) =>
+      buildShoppingHistoryRow(it, {
+        listId: list.id,
+        sessionId: stableSessionId,
+        userId: verifiedUserId,
+        purchasedAt: purchaseTimeIso,
+      })
+    );
 
     // Idempotent upsert on primary key 'id' completely prevents duplicates
     const { error } = await supabase
@@ -1805,25 +1861,7 @@ export async function persistCompletedShoppingSession(
 
     // 3. Persist child public.shopping_items with completed states
     if (completedList.items && completedList.items.length > 0) {
-      const itemRows = completedList.items.map((item) => {
-        const numericQty = parseNumericQuantity(item.quantity);
-        let unitValue = item.unit || item.note || null;
-        if (numericQty === null && item.quantity && typeof item.quantity === 'string' && item.quantity.trim()) {
-          unitValue = unitValue ? `${item.quantity.trim()} ${unitValue}` : item.quantity.trim();
-        }
-
-        return {
-          id: ensureValidUUID(item.id),
-          list_id: safeListId,
-          user_id: item.userId || verifiedUserId,
-          item_name: item.name,
-          category: item.categoryId || item.category || 'other',
-          quantity: numericQty,
-          unit: unitValue,
-          is_completed: Boolean(item.completed),
-          updated_at: new Date().toISOString(),
-        };
-      });
+      const itemRows = completedList.items.map((item) => buildShoppingItemRow(item, safeListId, verifiedUserId));
 
       const { error: itemsErr } = await supabase
         .from('shopping_items')
@@ -2135,25 +2173,7 @@ export async function syncPendingOfflineChanges(
                 .eq('list_id', list.id);
 
               if (list.items.length > 0) {
-                const itemRows = list.items.map((it: ShoppingItem) => {
-                  const numericQty = parseNumericQuantity(it.quantity);
-                  let unitValue = it.unit || it.note || null;
-                  if (numericQty === null && it.quantity && typeof it.quantity === 'string' && it.quantity.trim()) {
-                    unitValue = unitValue ? `${it.quantity.trim()} ${unitValue}` : it.quantity.trim();
-                  }
-
-                  return {
-                    id: ensureValidUUID(it.id),
-                    list_id: list.id,
-                    user_id: verifiedUserId,
-                    item_name: it.name,
-                    category: it.categoryId || it.category || 'other',
-                    quantity: numericQty,
-                    unit: unitValue,
-                    is_completed: Boolean(it.completed),
-                    updated_at: new Date().toISOString(),
-                  };
-                });
+                const itemRows = list.items.map((it: ShoppingItem) => buildShoppingItemRow(it, list.id, verifiedUserId));
                 await supabase.from('shopping_items').upsert(itemRows, { onConflict: 'id' });
               }
             }
@@ -2808,6 +2828,7 @@ export async function fetchSingleShoppingList(
             completed: Boolean(r.is_completed ?? r.is_checked),
             rawInput: r.raw_input || r.item_name,
             note: r.note || undefined,
+            imageUrl: r.image_url || r.imageUrl || undefined,
             isRecognized: Boolean(r.is_recognized || recognized),
             createdAt: r.created_at ? new Date(r.created_at).getTime() : undefined,
           };
@@ -2831,6 +2852,8 @@ export async function fetchSingleShoppingList(
       isCompleted,
       icon: row.icon || 'shopping_basket',
       items,
+      shareToken: row.share_token || null,
+      shareEnabled: Boolean(row.share_enabled),
       isSynced: true,
     };
 
@@ -2838,6 +2861,183 @@ export async function fetchSingleShoppingList(
   } catch (e: any) {
     if (cached) return { list: cached, error: null };
     return { list: null, error: new Error(e?.message || 'Error fetching list') };
+  }
+}
+
+export interface SharedListPayload {
+  title: string;
+  icon?: string;
+  isCompleted?: boolean;
+  completedAt?: string | null;
+  items: Array<{
+    name: string;
+    quantity?: number | string | null;
+    unit?: string | null;
+    isCompleted?: boolean;
+    imageUrl?: string | null;
+  }>;
+}
+
+/**
+ * Enables or disables public token sharing for a shopping list.
+ * When enabling, if the list does not yet have a share_token, generates one with crypto.randomUUID().
+ * Returns { data, error }.
+ */
+export async function setListSharing(
+  userId: string,
+  listId: string,
+  enabled: boolean
+): Promise<{ data: { shareToken: string | null; shareEnabled: boolean } | null; error: Error | null }> {
+  if (!supabase) return { data: null, error: new Error('Supabase client not initialized') };
+
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    return { data: null, error: new Error('Network unavailable. Connect to the internet to share this list.') };
+  }
+
+  const verifiedUserId = (await getVerifiedUserId(userId)) || userId;
+  const safeListId = ensureValidUUID(listId);
+
+  try {
+    let tokenToUse: string | null = null;
+
+    if (enabled) {
+      // First check if a token already exists on the list
+      const { data: existingList, error: checkErr } = await supabase
+        .from('shopping_lists')
+        .select('share_token')
+        .eq('id', safeListId)
+        .eq('user_id', verifiedUserId)
+        .single();
+
+      if (checkErr && !isNetworkOrOfflineError(checkErr)) {
+        console.warn('Notice checking existing share_token:', checkErr.message);
+      }
+
+      tokenToUse = existingList?.share_token || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : generateUUID());
+    }
+
+    const updatePayload: Record<string, any> = {
+      share_enabled: enabled,
+      updated_at: new Date().toISOString(),
+    };
+    if (enabled && tokenToUse) {
+      updatePayload.share_token = tokenToUse;
+    }
+
+    const { data, error } = await supabase
+      .from('shopping_lists')
+      .update(updatePayload)
+      .eq('id', safeListId)
+      .eq('user_id', verifiedUserId)
+      .select('share_token, share_enabled')
+      .single();
+
+    if (error) {
+      return { data: null, error: new Error(error.message) };
+    }
+
+    const finalToken = data?.share_token || tokenToUse;
+    const finalEnabled = Boolean(data?.share_enabled ?? enabled);
+
+    // Update local cache
+    const cached = await getOfflineListById(verifiedUserId, safeListId);
+    if (cached) {
+      await saveOfflineList(verifiedUserId, {
+        ...cached,
+        shareToken: finalToken,
+        shareEnabled: finalEnabled,
+      });
+    }
+
+    return {
+      data: {
+        shareToken: finalToken,
+        shareEnabled: finalEnabled,
+      },
+      error: null,
+    };
+  } catch (err: any) {
+    return { data: null, error: err instanceof Error ? err : new Error(String(err)) };
+  }
+}
+
+/**
+ * Regenerates the public share token for a shopping list.
+ * The old token link is immediately invalidated, and sharing remains enabled with the new token.
+ */
+export async function regenerateListShareToken(
+  userId: string,
+  listId: string
+): Promise<{ data: { shareToken: string; shareEnabled: boolean } | null; error: Error | null }> {
+  if (!supabase) return { data: null, error: new Error('Supabase client not initialized') };
+
+  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    return { data: null, error: new Error('Network unavailable. Connect to the internet to regenerate share link.') };
+  }
+
+  const verifiedUserId = (await getVerifiedUserId(userId)) || userId;
+  const safeListId = ensureValidUUID(listId);
+  const newToken = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : generateUUID();
+
+  try {
+    const { data, error } = await supabase
+      .from('shopping_lists')
+      .update({
+        share_token: newToken,
+        share_enabled: true,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', safeListId)
+      .eq('user_id', verifiedUserId)
+      .select('share_token, share_enabled')
+      .single();
+
+    if (error) {
+      return { data: null, error: new Error(error.message) };
+    }
+
+    // Update local cache
+    const cached = await getOfflineListById(verifiedUserId, safeListId);
+    if (cached) {
+      await saveOfflineList(verifiedUserId, {
+        ...cached,
+        shareToken: newToken,
+        shareEnabled: true,
+      });
+    }
+
+    return {
+      data: {
+        shareToken: newToken,
+        shareEnabled: true,
+      },
+      error: null,
+    };
+  } catch (err: any) {
+    return { data: null, error: err instanceof Error ? err : new Error(String(err)) };
+  }
+}
+
+/**
+ * Public function to fetch a read-only token-shared shopping list via Supabase RPC.
+ * Returns null if token is unknown, sharing is disabled, or list is missing.
+ */
+export async function fetchSharedList(token: string): Promise<SharedListPayload | null> {
+  if (!supabase || !token || !token.trim()) return null;
+
+  try {
+    const { data, error } = await supabase.rpc('get_shared_list', { p_token: token.trim() });
+    if (error) {
+      console.warn('Notice from get_shared_list RPC:', error.message);
+      return null;
+    }
+    if (!data || typeof data !== 'object') {
+      return null;
+    }
+    return data as SharedListPayload;
+  } catch (err) {
+    console.warn('Exception calling get_shared_list RPC:', err);
+    return null;
   }
 }
 
