@@ -88,6 +88,7 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
 
   const totalItems = (list.items || []).length;
   const completedItems = (list.items || []).filter((i) => i.completed).length;
+  const photoCount = (list.items || []).filter((i) => i.imageUrl).length;
   const isAllDone = list.isCompleted || (totalItems > 0 && completedItems === totalItems);
   const percentComplete = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
 

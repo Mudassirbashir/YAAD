@@ -11,7 +11,8 @@ interface AdminConfirmModalProps {
   isDestructive?: boolean;
   isLoading?: boolean;
   onConfirm: () => void | Promise<void>;
-  onClose: () => void;
+  onClose?: () => void;
+  onCancel?: () => void;
 }
 
 export const AdminConfirmModal: React.FC<AdminConfirmModalProps> = ({
@@ -25,10 +26,16 @@ export const AdminConfirmModal: React.FC<AdminConfirmModalProps> = ({
   isLoading = false,
   onConfirm,
   onClose,
+  onCancel,
 }) => {
   const [typedInput, setTypedInput] = useState('');
 
   if (!isOpen) return null;
+
+  const handleDismiss = () => {
+    onCancel?.();
+    onClose?.();
+  };
 
   const isRequirementMet = !confirmWord || typedInput.trim().toLowerCase() === confirmWord.toLowerCase();
 
@@ -43,7 +50,7 @@ export const AdminConfirmModal: React.FC<AdminConfirmModalProps> = ({
       <div className="bg-white border border-neutral-200 rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl space-y-5 text-neutral-900 relative">
         <button
           type="button"
-          onClick={onClose}
+          onClick={handleDismiss}
           disabled={isLoading}
           className="absolute top-5 right-5 text-neutral-400 hover:text-neutral-700 transition-colors p-1.5 rounded-lg hover:bg-neutral-100 disabled:opacity-50 cursor-pointer"
         >
@@ -94,7 +101,7 @@ export const AdminConfirmModal: React.FC<AdminConfirmModalProps> = ({
         <div className="flex items-center gap-3 pt-2">
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleDismiss}
             disabled={isLoading}
             className="flex-1 py-2.5 px-4 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 text-sm font-semibold transition-all disabled:opacity-50 cursor-pointer"
           >
