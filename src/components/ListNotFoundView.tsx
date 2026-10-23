@@ -29,7 +29,7 @@ export const ListNotFoundView: React.FC<ListNotFoundViewProps> = ({
     <div
       id="list_access_error_screen"
       dir={isRTL ? 'rtl' : 'ltr'}
-      className="min-h-screen bg-surface-container-lowest text-on-surface font-['Plus_Jakarta_Sans'] flex flex-col justify-between"
+      className="min-h-screen bg-surface-container-lowest text-on-surface font-display flex flex-col justify-between"
     >
       <header className="px-4 sm:px-6 py-4 border-b border-surface-dim/60">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
@@ -53,7 +53,7 @@ export const ListNotFoundView: React.FC<ListNotFoundViewProps> = ({
           <ShieldAlert className="w-8 h-8 sm:w-10 sm:h-10" />
         </div>
 
-        <h1 className="text-xl sm:text-2xl font-extrabold font-['Manrope'] text-on-surface tracking-tight mb-2">
+        <h1 className="text-xl sm:text-2xl font-extrabold font-body text-on-surface tracking-tight mb-2">
           {title}
         </h1>
 

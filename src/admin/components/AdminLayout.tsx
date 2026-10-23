@@ -154,7 +154,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 sm:gap-2">
-                <span className="font-extrabold text-[#003527] text-sm sm:text-base tracking-tight font-['Manrope'] truncate">
+                <span className="font-extrabold text-[#003527] text-sm sm:text-base tracking-tight font-body truncate">
                   YAAD Admin
                 </span>
                 <span className="hidden sm:inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-[#003527] border border-emerald-200 shrink-0">
@@ -381,7 +381,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             {(title || subtitle) && (
               <div className="border-b border-neutral-200/80 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  {title && <h1 className="text-xl sm:text-2xl font-extrabold text-[#003527] tracking-tight font-['Manrope']">{title}</h1>}
+                  {title && <h1 className="text-xl sm:text-2xl font-extrabold text-[#003527] tracking-tight font-body">{title}</h1>}
                   {subtitle && <p className="text-xs sm:text-sm text-neutral-500 mt-1">{subtitle}</p>}
                 </div>
               </div>
@@ -395,7 +395,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                   <Lock className="w-8 h-8" />
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-xl font-black text-neutral-900 font-['Manrope']">Module Access Restricted</h3>
+                  <h3 className="text-xl font-black text-neutral-900 font-body">Module Access Restricted</h3>
                   <p className="text-xs sm:text-sm text-neutral-500 leading-relaxed">
                     Your assigned role (<strong>{roleMeta?.title || userRole}</strong>) does not have permission to access this module.
                     If you require access, please contact your Super Administrator.

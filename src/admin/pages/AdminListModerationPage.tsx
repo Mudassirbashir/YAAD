@@ -303,7 +303,7 @@ export const AdminListModerationPage: React.FC = () => {
               </span>
               <span className="text-xs text-neutral-500">Live Grocery Lists &amp; Parchis</span>
             </div>
-            <h2 className="text-2xl font-black text-[#003527] tracking-tight font-['Manrope']">
+            <h2 className="text-2xl font-black text-[#003527] tracking-tight font-body">
               Shopping Lists (Parchis)
             </h2>
             <p className="text-xs sm:text-sm text-neutral-600 max-w-2xl">

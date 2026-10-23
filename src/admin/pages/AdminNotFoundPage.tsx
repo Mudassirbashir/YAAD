@@ -34,7 +34,7 @@ export const AdminNotFoundPage: React.FC<AdminNotFoundPageProps> = ({
           <span className="font-mono text-xs uppercase tracking-widest text-[#003527] font-bold bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
             {isRegistrationAttempt ? 'Access Restricted' : 'HTTP 404 • Not Found'}
           </span>
-          <h1 className="text-2xl font-black text-[#003527] tracking-tight font-['Manrope'] pt-2">
+          <h1 className="text-2xl font-black text-[#003527] tracking-tight font-body pt-2">
             {isRegistrationAttempt
               ? 'Registration Closed'
               : isSetupDisabled

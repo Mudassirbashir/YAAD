@@ -142,7 +142,7 @@ export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) =>
           <button
             id="onboarding_skip_btn"
             onClick={() => onComplete(false)}
-            className="text-on-surface-variant font-['Manrope'] text-xs sm:text-sm font-bold px-3.5 py-1.5 rounded-full hover:bg-surface-container-low transition-colors active:scale-95"
+            className="text-on-surface-variant font-body text-xs sm:text-sm font-bold px-3.5 py-1.5 rounded-full hover:bg-surface-container-low transition-colors active:scale-95"
           >
             {t('onboarding.skip')}
           </button>
@@ -190,10 +190,10 @@ export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) =>
 
             {/* Step Content Typography */}
             <div className="max-w-[360px] space-y-2 px-2">
-              <h2 className="font-['Plus_Jakarta_Sans'] text-2xl sm:text-3xl font-extrabold text-primary tracking-tight leading-snug">
+              <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-primary tracking-tight leading-snug">
                 {t(currentStep.titleKey)}
               </h2>
-              <p className="font-['Manrope'] text-sm sm:text-base text-on-surface-variant leading-relaxed">
+              <p className="font-body text-sm sm:text-base text-on-surface-variant leading-relaxed">
                 {t(currentStep.subtitleKey)}
               </p>
             </div>
@@ -249,7 +249,7 @@ export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) =>
               transition={{ type: 'spring', stiffness: 420, damping: 26 }}
               id="onboarding_next_btn"
               onClick={handleNext}
-              className="w-full h-12 sm:h-13 rounded-full bg-primary text-on-primary font-['Manrope'] text-base font-bold flex items-center justify-center gap-2 shadow-[0px_8px_20px_rgba(0,30,21,0.12)] hover:bg-primary-container transition-colors cursor-pointer"
+              className="w-full h-12 sm:h-13 rounded-full bg-primary text-on-primary font-body text-base font-bold flex items-center justify-center gap-2 shadow-[0px_8px_20px_rgba(0,30,21,0.12)] hover:bg-primary-container transition-colors cursor-pointer"
             >
               <span>{t('onboarding.next')}</span>
               {isRTL ? <ArrowLeft className="w-4 h-4 stroke-[2.5]" /> : <ArrowRight className="w-4 h-4 stroke-[2.5]" />}
@@ -261,7 +261,7 @@ export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) =>
               transition={{ type: 'spring', stiffness: 420, damping: 26 }}
               id="onboarding_get_started_btn"
               onClick={() => onComplete(false)}
-              className="w-full h-12 sm:h-13 rounded-full bg-primary text-on-primary font-['Manrope'] text-base font-bold flex items-center justify-center gap-2 shadow-[0px_8px_20px_rgba(0,30,21,0.12)] hover:bg-primary-container transition-colors cursor-pointer"
+              className="w-full h-12 sm:h-13 rounded-full bg-primary text-on-primary font-body text-base font-bold flex items-center justify-center gap-2 shadow-[0px_8px_20px_rgba(0,30,21,0.12)] hover:bg-primary-container transition-colors cursor-pointer"
             >
               <span>{t('onboarding.getStarted')}</span>
               <Check className="w-4 h-4 stroke-[2.5]" />

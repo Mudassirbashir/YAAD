@@ -93,13 +93,13 @@ export const PhoneNumberReminderModal: React.FC<PhoneNumberReminderModalProps> =
                 <div className="flex flex-col min-w-0">
                   <h3
                     id="phone_reminder_title"
-                    className="font-['Plus_Jakarta_Sans'] font-bold text-xs sm:text-sm text-on-surface tracking-tight"
+                    className="font-display font-bold text-xs sm:text-sm text-on-surface tracking-tight"
                   >
                     Add Phone Number
                   </h3>
                   <p
                     id="phone_reminder_desc"
-                    className="font-['Manrope'] text-[11px] sm:text-xs text-outline leading-snug mt-0.5"
+                    className="font-body text-[11px] sm:text-xs text-outline leading-snug mt-0.5"
                   >
                     Add your phone number to keep your lists safe.
                   </p>
@@ -112,7 +112,7 @@ export const PhoneNumberReminderModal: React.FC<PhoneNumberReminderModalProps> =
                   id="phone_reminder_not_now_btn"
                   type="button"
                   onClick={onDismiss}
-                  className="px-3 py-1.5 rounded-full text-xs font-semibold font-['Manrope'] text-outline hover:text-on-surface hover:bg-surface-container transition-colors cursor-pointer"
+                  className="px-3 py-1.5 rounded-full text-xs font-semibold font-body text-outline hover:text-on-surface hover:bg-surface-container transition-colors cursor-pointer"
                 >
                   Not now
                 </button>
@@ -121,7 +121,7 @@ export const PhoneNumberReminderModal: React.FC<PhoneNumberReminderModalProps> =
                   id="phone_reminder_add_btn"
                   type="button"
                   onClick={handleOpenForm}
-                  className="h-8 px-3.5 rounded-full bg-primary hover:bg-primary-container text-on-primary text-xs font-bold font-['Manrope'] shadow-xs active:scale-[0.98] transition-all flex items-center gap-1 cursor-pointer"
+                  className="h-8 px-3.5 rounded-full bg-primary hover:bg-primary-container text-on-primary text-xs font-bold font-body shadow-xs active:scale-[0.98] transition-all flex items-center gap-1 cursor-pointer"
                 >
                   <span>Add Number</span>
                   {isRTL ? (

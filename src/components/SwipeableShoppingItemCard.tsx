@@ -74,7 +74,7 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
       >
         <motion.div
           style={{ scale: completeScale }}
-          className="flex items-center gap-2 font-['Manrope']"
+          className="flex items-center gap-2 font-body"
         >
           <CelebrationCheckbox isChecked={true} size={26} />
           <span className="text-xs font-bold tracking-wider text-emerald-100 uppercase">
@@ -91,7 +91,7 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
       >
         <motion.div
           style={{ scale: deleteScale }}
-          className="flex items-center gap-2 font-['Manrope']"
+          className="flex items-center gap-2 font-body"
         >
           <span className="text-xs font-bold tracking-wider text-rose-100 uppercase">
             Delete
@@ -196,7 +196,7 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
             <div className="flex items-center gap-1.5 flex-wrap" dir="auto">
               <BidiText
                 as="span"
-                className={`font-['Plus_Jakarta_Sans'] text-sm sm:text-base font-bold leading-tight tracking-tight transition-all duration-200 truncate ${
+                className={`font-display text-sm sm:text-base font-bold leading-tight tracking-tight transition-all duration-200 truncate ${
                   isChecked
                     ? 'line-through text-outline opacity-60 decoration-emerald-600/70 dark:decoration-emerald-400/70 decoration-2'
                     : 'text-primary'
@@ -212,7 +212,7 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
                 </span>
               )}
               {item.canonicalName && isUrdu && formatItemTitle(item.canonicalName.replace(/_/g, ' ')).toLowerCase() !== item.name.toLowerCase() && (
-                <span className="font-['Manrope'] text-xs text-on-surface-variant font-medium shrink-0">
+                <span className="font-body text-xs text-on-surface-variant font-medium shrink-0">
                   ({formatItemTitle(item.canonicalName.replace(/_/g, ' '))})
                 </span>
               )}
@@ -227,7 +227,7 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
                   onEditQuantity(item);
                 }}
                 onPointerDown={(e) => e.stopPropagation()}
-                className="text-xs font-['Manrope'] font-medium text-primary/80 hover:text-primary transition-colors flex items-center gap-1 cursor-pointer w-fit text-start"
+                className="text-xs font-body font-medium text-primary/80 hover:text-primary transition-colors flex items-center gap-1 cursor-pointer w-fit text-start"
                 title="Tap to change quantity"
               >
                 <span className="bg-surface-container px-2 py-0.5 rounded-md border border-surface-dim/60 font-semibold text-[11px]">
@@ -250,7 +250,7 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
 
             {/* Line 3: Category (below quantity) */}
             <div
-              className="flex items-center gap-1 text-[11px] font-['Manrope'] text-on-surface-variant"
+              className="flex items-center gap-1 text-[11px] font-body text-on-surface-variant"
               onClick={(e) => e.stopPropagation()}
               onPointerDown={(e) => e.stopPropagation()}
             >

@@ -176,7 +176,7 @@ export const AdminSettingsPage: React.FC = () => {
               </span>
               <span className="text-xs text-neutral-500">Security &amp; Policy Matrix</span>
             </div>
-            <h2 className="text-2xl font-black text-[#003527] tracking-tight font-['Manrope']">
+            <h2 className="text-2xl font-black text-[#003527] tracking-tight font-body">
               System Settings &amp; Governance
             </h2>
             <p className="text-xs sm:text-sm text-neutral-600 max-w-2xl">

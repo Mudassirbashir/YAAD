@@ -273,7 +273,7 @@ export const AdminCatalogPage: React.FC = () => {
                 {total} Items Active
               </span>
             </div>
-            <h2 className="text-2xl font-black text-[#003527] tracking-tight font-['Manrope']">
+            <h2 className="text-2xl font-black text-[#003527] tracking-tight font-body">
               Grocery Item Catalog
             </h2>
             <p className="text-xs sm:text-sm text-neutral-600 max-w-2xl">

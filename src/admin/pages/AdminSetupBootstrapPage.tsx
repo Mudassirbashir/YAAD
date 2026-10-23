@@ -192,7 +192,7 @@ export const AdminSetupBootstrapPage: React.FC<AdminSetupBootstrapPageProps> = (
         <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-white border border-emerald-900/10 shadow-md p-2 mb-1">
           <img src="/logo.png" alt="YAAD Logo" className="w-full h-full object-contain" />
         </div>
-        <h1 className="text-2xl font-black text-[#003527] tracking-tight font-['Manrope']">
+        <h1 className="text-2xl font-black text-[#003527] tracking-tight font-body">
           First Super Admin Bootstrap
         </h1>
         <p className="text-xs text-neutral-500">

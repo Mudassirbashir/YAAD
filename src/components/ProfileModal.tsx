@@ -128,7 +128,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
         {/* Status Message */}
         {statusMsg && (
           <div
-            className={`p-2.5 rounded-2xl text-xs font-['Manrope'] flex items-center justify-center gap-1.5 ${
+            className={`p-2.5 rounded-2xl text-xs font-body flex items-center justify-center gap-1.5 ${
               statusMsg.type === 'success'
                 ? 'bg-secondary-fixed/40 text-primary font-bold'
                 : 'bg-error-container/30 text-error'
@@ -165,7 +165,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="flex-1 h-10 rounded-full bg-primary text-on-primary font-['Manrope'] text-xs font-bold shadow-sm hover:bg-primary-container disabled:opacity-60 transition-all flex items-center justify-center gap-1"
+                  className="flex-1 h-10 rounded-full bg-primary text-on-primary font-body text-xs font-bold shadow-sm hover:bg-primary-container disabled:opacity-60 transition-all flex items-center justify-center gap-1"
                 >
                   <Check className="w-3.5 h-3.5" />
                   <span>{isSaving ? 'Saving...' : 'Save Changes'}</span>
@@ -176,7 +176,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                     setIsEditing(false);
                     setStatusMsg(null);
                   }}
-                  className="px-4 h-10 rounded-full bg-surface-container text-on-surface font-['Manrope'] text-xs font-semibold hover:bg-surface-container-high transition-colors"
+                  className="px-4 h-10 rounded-full bg-surface-container text-on-surface font-body text-xs font-semibold hover:bg-surface-container-high transition-colors"
                 >
                   Cancel
                 </button>
@@ -185,7 +185,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
           ) : (
             <div>
               <div className="flex items-center justify-center gap-1.5">
-                <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-primary text-xl">
+                <h3 className="font-display font-bold text-primary text-xl">
                   {displayName}
                 </h3>
                 <button
@@ -196,24 +196,24 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                   <Edit2 className="w-3.5 h-3.5" />
                 </button>
               </div>
-              <p className="font-['Manrope'] text-xs text-on-surface-variant mt-0.5">
+              <p className="font-body text-xs text-on-surface-variant mt-0.5">
                 {displayEmail}
               </p>
             </div>
           )
         ) : (
           <div>
-            <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-primary text-xl">
+            <h3 className="font-display font-bold text-primary text-xl">
               Guest User
             </h3>
-            <p className="font-['Manrope'] text-xs text-on-surface-variant mt-0.5">
+            <p className="font-body text-xs text-on-surface-variant mt-0.5">
               Sign in to sync your shopping lists across devices.
             </p>
           </div>
         )}
 
         {/* Persistence Status */}
-        <div className="py-2.5 px-4 bg-surface-container-low rounded-2xl border border-surface-dim text-xs font-['Manrope'] text-on-surface-variant flex items-center justify-around">
+        <div className="py-2.5 px-4 bg-surface-container-low rounded-2xl border border-surface-dim text-xs font-body text-on-surface-variant flex items-center justify-around">
           <div>
             <span className="font-bold text-primary block text-sm">
               {user ? 'Cloud' : 'Local'}
@@ -237,7 +237,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 await signOut();
                 onClose();
               }}
-              className="w-full h-11 rounded-full bg-surface-container text-error font-['Manrope'] text-xs font-bold hover:bg-error-container/30 transition-colors flex items-center justify-center gap-1.5"
+              className="w-full h-11 rounded-full bg-surface-container text-error font-body text-xs font-bold hover:bg-error-container/30 transition-colors flex items-center justify-center gap-1.5"
             >
               <LogOut className="w-4 h-4" />
               <span>{t('settings.signOut')}</span>
@@ -248,7 +248,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 onClose();
                 if (onOpenAuth) onOpenAuth('signin');
               }}
-              className="w-full h-11 rounded-full bg-primary text-on-primary font-['Manrope'] text-xs font-bold shadow-sm hover:bg-primary-container transition-colors flex items-center justify-center gap-1.5"
+              className="w-full h-11 rounded-full bg-primary text-on-primary font-body text-xs font-bold shadow-sm hover:bg-primary-container transition-colors flex items-center justify-center gap-1.5"
             >
               <LogIn className="w-4 h-4" />
               <span>Sign In / Create Account</span>
@@ -257,7 +257,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
 
           <button
             onClick={onClose}
-            className="w-full h-10 rounded-full text-on-surface-variant font-['Manrope'] text-xs font-semibold hover:bg-surface-container-low transition-colors"
+            className="w-full h-10 rounded-full text-on-surface-variant font-body text-xs font-semibold hover:bg-surface-container-low transition-colors"
           >
             {t('cancel')}
           </button>

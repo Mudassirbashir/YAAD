@@ -743,7 +743,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
               >
                 <BidiText
                   as="h2"
-                  className="font-['Plus_Jakarta_Sans'] text-sm sm:text-base font-bold text-primary truncate text-center max-w-[130px] xs:max-w-[170px] sm:max-w-xs"
+                  className="font-display text-sm sm:text-base font-bold text-primary truncate text-center max-w-[130px] xs:max-w-[170px] sm:max-w-xs"
                 >
                   {currentTitle}
                 </BidiText>
@@ -778,7 +778,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
             {/* Input Card */}
             <div className="bg-surface-container-lowest p-4 sm:p-5 rounded-3xl border border-surface-dim shadow-2xs space-y-4">
               <div className="flex justify-between items-center">
-                <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-primary text-xl">
+                <h3 className="font-display font-bold text-primary text-xl">
                   {t('addItems.title') || 'Add Items'}
                 </h3>
               </div>
@@ -814,7 +814,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                         }
                       }}
                       placeholder={t('addItems.inputPlaceholder') || 'Add item (e.g. Milk, Apples)...'}
-                      className="w-full h-12 bg-surface-container-low rounded-full ps-11 pe-24 text-sm sm:text-base text-on-surface font-['Manrope'] border border-outline-variant/60 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
+                      className="w-full h-12 bg-surface-container-low rounded-full ps-11 pe-24 text-sm sm:text-base text-on-surface font-body border border-outline-variant/60 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
                     />
 
                     {/* Clear Button */}
@@ -858,7 +858,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                 </div>
 
                 {inputError && (
-                  <p className="text-xs text-error font-['Manrope'] flex items-center gap-1">
+                  <p className="text-xs text-error font-body flex items-center gap-1">
                     <AlertCircle className="w-4 h-4 shrink-0" />
                     <span>{inputError}</span>
                   </p>
@@ -868,7 +868,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                 {inputVal.trim().length > 0 && (
                   <div className="space-y-2 pt-1 animate-fade-in">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-['Manrope'] font-bold text-outline uppercase tracking-wider block">
+                      <span className="text-[11px] font-body font-bold text-outline uppercase tracking-wider block">
                         {searchSuggestions.length > 0
                           ? 'Catalog Matches'
                           : 'Custom Item'}
@@ -898,7 +898,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                             />
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-1.5 truncate">
-                                <span className="font-['Manrope'] font-bold text-sm text-primary truncate">
+                                <span className="font-body font-bold text-sm text-primary truncate">
                                   {sug.displayName}
                                 </span>
                                 {sug.item.urdu_name && (
@@ -907,7 +907,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                                   </span>
                                 )}
                               </div>
-                              <div className="flex items-center gap-1.5 text-xs text-on-surface-variant font-['Manrope']">
+                              <div className="flex items-center gap-1.5 text-xs text-on-surface-variant font-body">
                                 <CategoryIcon
                                   categoryId={sug.categoryId}
                                   className="w-3 h-3 text-primary/70 shrink-0"
@@ -939,10 +939,10 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                           <Package className="w-5 h-5" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <span className="font-['Manrope'] font-bold text-sm text-primary block truncate">
+                          <span className="font-body font-bold text-sm text-primary block truncate">
                             Add: "{inputVal.trim()}"
                           </span>
-                          <span className="text-xs text-on-surface-variant font-['Manrope']">
+                          <span className="text-xs text-on-surface-variant font-body">
                             Custom Item • Tap to add
                           </span>
                         </div>
@@ -963,7 +963,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                       type="button"
                       onClick={handleTriggerSuggestionsAnalysis}
                       disabled={isAnalyzingSuggestions}
-                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-['Manrope'] font-bold text-primary bg-primary/10 hover:bg-primary/15 active:scale-95 transition-all border border-primary/20 shadow-2xs cursor-pointer group"
+                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-body font-bold text-primary bg-primary/10 hover:bg-primary/15 active:scale-95 transition-all border border-primary/20 shadow-2xs cursor-pointer group"
                     >
                       <Sparkles
                         className={`w-3.5 h-3.5 text-primary ${
@@ -979,7 +979,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                       </span>
                     </button>
                     {showSuggestions && !isAnalyzingSuggestions && (
-                      <span className="text-[11px] font-['Manrope'] text-on-surface-variant font-medium">
+                      <span className="text-[11px] font-body text-on-surface-variant font-medium">
                         {activeUnaddedSuggestions.length} {language === 'ur' ? 'تجاویز دستیاب' : 'suggestions'}
                       </span>
                     )}
@@ -992,7 +992,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                         <Sparkles className="w-4 h-4 text-primary animate-pulse" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs font-bold text-primary font-['Manrope']">
+                        <p className="text-xs font-bold text-primary font-body">
                           {language === 'ur' ? 'لسٹ کا AI تجزیہ کیا جا رہا ہے...' : 'Analyzing list context & essentials...'}
                         </p>
                         <p className="text-[10px] text-on-surface-variant">
@@ -1006,7 +1006,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                   {showSuggestions && !isAnalyzingSuggestions && (activeUnaddedSuggestions.length > 0 || addedSuggestions.length > 0) && (
                     <div className="space-y-2 animate-slide-in-from-top">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-['Manrope'] font-bold text-primary flex items-center gap-2">
+                        <span className="text-xs font-body font-bold text-primary flex items-center gap-2">
                           <span>
                             {language === 'ur'
                               ? `لسٹ "${currentTitle || 'خریداری'}" کے لیے تجویز کردہ:`
@@ -1028,7 +1028,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                                 handleUnifiedAddItem(sug.name);
                               }
                             }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-['Manrope'] font-semibold transition-all active:scale-95 cursor-pointer shadow-2xs bg-surface-container hover:bg-surface-container-high text-on-surface border border-surface-dim/80 hover:border-primary/50"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-body font-semibold transition-all active:scale-95 cursor-pointer shadow-2xs bg-surface-container hover:bg-surface-container-high text-on-surface border border-surface-dim/80 hover:border-primary/50"
                             title={sug.reason}
                           >
                             <Plus className="w-3.5 h-3.5 text-primary/70" />
@@ -1040,7 +1040,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                         {addedSuggestions.map((sug) => (
                           <div
                             key={sug.name}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-['Manrope'] font-medium bg-surface-container-low text-on-surface-variant/70 border border-surface-dim/60 select-none opacity-60 cursor-default"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-body font-medium bg-surface-container-low text-on-surface-variant/70 border border-surface-dim/60 select-none opacity-60 cursor-default"
                             title="Already in list"
                           >
                             <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" strokeWidth={2.5} />
@@ -1059,7 +1059,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
               {/* Category Quick Filter / Selector Chips */}
               <div className="space-y-2 pt-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-['Manrope'] font-bold text-outline uppercase tracking-wider block">
+                  <span className="text-xs font-body font-bold text-outline uppercase tracking-wider block">
                     {userManuallySelectedCategory
                       ? 'Selected Category (Manual)'
                       : 'Categories'}
@@ -1068,7 +1068,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                     <button
                       type="button"
                       onClick={() => setUserManuallySelectedCategory(false)}
-                      className="text-[11px] font-['Manrope'] text-primary hover:underline cursor-pointer"
+                      className="text-[11px] font-body text-primary hover:underline cursor-pointer"
                     >
                       Reset Auto-detect
                     </button>
@@ -1086,7 +1086,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                           setSelectedCategory(cat.id);
                           setUserManuallySelectedCategory(true);
                         }}
-                        className={`px-3 py-1.5 rounded-full text-xs font-['Manrope'] font-semibold flex items-center gap-1.5 transition-all shrink-0 cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-full text-xs font-body font-semibold flex items-center gap-1.5 transition-all shrink-0 cursor-pointer ${
                           isSelected
                             ? 'bg-primary text-on-primary shadow-2xs'
                             : 'bg-surface-container hover:bg-surface-container-high text-on-surface-variant border border-surface-dim/70'
@@ -1113,7 +1113,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
             <div className="bg-surface-container-lowest p-4 sm:p-5 rounded-3xl border border-surface-dim shadow-2xs space-y-4">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 min-w-0">
-                  <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-primary text-sm sm:text-base whitespace-nowrap">
+                  <h3 className="font-display font-bold text-primary text-sm sm:text-base whitespace-nowrap">
                     {t('addItems.listItemsHeaderClean') || 'List Items'}
                   </h3>
                 </div>
@@ -1122,7 +1122,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                   onClick={handleStartShoppingWithAnimation}
                   onMouseEnter={() => setCartHoverTrigger((c) => c + 1)}
                   disabled={items.length === 0 || isBottomCartDriving}
-                  className="px-3.5 py-2 sm:px-4 sm:py-2 rounded-full bg-primary text-on-primary font-['Manrope'] text-xs sm:text-sm font-bold flex items-center gap-2 hover:bg-primary-container disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-xs active:scale-95 cursor-pointer group whitespace-nowrap shrink-0 overflow-hidden"
+                  className="px-3.5 py-2 sm:px-4 sm:py-2 rounded-full bg-primary text-on-primary font-body text-xs sm:text-sm font-bold flex items-center gap-2 hover:bg-primary-container disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-xs active:scale-95 cursor-pointer group whitespace-nowrap shrink-0 overflow-hidden"
                 >
                   <span className="whitespace-nowrap">{t('addItems.startShoppingBtn') || 'Start Shopping'}</span>
                   <div
@@ -1144,7 +1144,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
               {/* Transient Feedback Banner */}
               {feedbackToast && (
                 <div
-                  className={`p-2.5 rounded-xl text-xs font-['Manrope'] font-semibold flex items-center gap-2 animate-slide-in-from-top ${
+                  className={`p-2.5 rounded-xl text-xs font-body font-semibold flex items-center gap-2 animate-slide-in-from-top ${
                     feedbackToast.type === 'remove'
                       ? 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20'
                       : feedbackToast.type === 'merge'
@@ -1163,10 +1163,10 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                   <div className="w-12 h-12 rounded-2xl bg-surface-container flex items-center justify-center text-outline mb-2">
                     <ShoppingCart className="w-6 h-6 opacity-60" />
                   </div>
-                  <p className="font-['Manrope'] font-bold text-sm text-primary">
+                  <p className="font-body font-bold text-sm text-primary">
                     No items added yet
                   </p>
-                  <p className="font-['Manrope'] text-xs text-on-surface-variant max-w-xs mt-1">
+                  <p className="font-body text-xs text-on-surface-variant max-w-xs mt-1">
                     Tap any of the suggested essentials on the left or type in the search bar above.
                   </p>
                 </div>
@@ -1203,7 +1203,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                           />
                           <div className="min-w-0 flex-1 flex flex-col gap-0.5">
                             {/* Line 1: Item Name */}
-                            <span className="font-['Plus_Jakarta_Sans'] font-bold text-sm text-primary truncate block">
+                            <span className="font-display font-bold text-sm text-primary truncate block">
                               {item.name}
                             </span>
 
@@ -1214,7 +1214,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                                 e.stopPropagation();
                                 setEditingItem(item);
                               }}
-                              className="text-xs font-['Manrope'] font-medium text-primary/80 hover:text-primary transition-colors flex items-center gap-1 cursor-pointer w-fit text-start"
+                              className="text-xs font-body font-medium text-primary/80 hover:text-primary transition-colors flex items-center gap-1 cursor-pointer w-fit text-start"
                               title="Tap to change quantity"
                             >
                               <span className="bg-surface-container px-2 py-0.5 rounded-md border border-surface-dim/60 font-semibold text-[11px]">
@@ -1225,7 +1225,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                             </button>
 
                             {/* Line 3: Category (below quantity) */}
-                            <div className="flex items-center gap-1 text-[11px] font-['Manrope'] text-on-surface-variant">
+                            <div className="flex items-center gap-1 text-[11px] font-body text-on-surface-variant">
                               <CategoryIcon
                                 categoryId={itemCatId}
                                 className="w-3 h-3 text-primary/60 shrink-0"
@@ -1353,7 +1353,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
           onClick={handleStartShoppingWithAnimation}
           onMouseEnter={() => setCartHoverTrigger((c) => c + 1)}
           disabled={items.length === 0 || isBottomCartDriving}
-          className={`relative overflow-hidden w-full h-14 rounded-2xl font-['Manrope'] text-base font-bold shadow-md disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] transition-all flex items-center justify-center gap-3 cursor-pointer group ${
+          className={`relative overflow-hidden w-full h-14 rounded-2xl font-body text-base font-bold shadow-md disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] transition-all flex items-center justify-center gap-3 cursor-pointer group ${
             isBottomCartDriving
               ? 'bg-[#00422f] text-emerald-100 shadow-emerald-950/40'
               : 'bg-primary text-on-primary hover:bg-primary-container'

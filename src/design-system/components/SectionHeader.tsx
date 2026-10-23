@@ -16,11 +16,11 @@ export const SectionHeader: React.FC<SectionHeaderProps> = ({
   return (
     <div className={`flex items-start justify-between gap-3 mb-3 ${className}`}>
       <div className="flex flex-col min-w-0">
-        <h2 className="font-['Plus_Jakarta_Sans'] text-base sm:text-lg font-bold text-on-surface tracking-tight leading-snug">
+        <h2 className="font-display text-base sm:text-lg font-bold text-on-surface tracking-tight leading-snug">
           {title}
         </h2>
         {description && (
-          <p className="font-['Manrope'] text-xs sm:text-sm text-outline mt-0.5 leading-normal">
+          <p className="font-body text-xs sm:text-sm text-outline mt-0.5 leading-normal">
             {description}
           </p>
         )}

@@ -204,10 +204,10 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
             <Loader2 className="w-6 h-6 animate-spin" />
           </div>
           <div className="space-y-1">
-            <h2 className="text-lg font-bold font-['Plus_Jakarta_Sans'] text-on-surface">
+            <h2 className="text-lg font-bold font-display text-on-surface">
               Verifying Recovery Session
             </h2>
-            <p className="text-xs text-on-surface-variant font-['Manrope']">
+            <p className="text-xs text-on-surface-variant font-body">
               Please wait while YAAD securely verifies your password reset link...
             </p>
           </div>
@@ -236,7 +236,7 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
             <h1
               id="reset_password_title"
               className={`text-2xl font-bold text-on-surface tracking-tight ${
-                language === 'ur' ? 'font-urdu text-2xl' : "font-['Plus_Jakarta_Sans']"
+                language === 'ur' ? 'font-urdu text-2xl' : "font-display"
               }`}
             >
               {isExpiredOrInvalidLink
@@ -245,7 +245,7 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
             </h1>
             <p
               className={`text-xs text-on-surface-variant max-w-xs leading-relaxed ${
-                language === 'ur' ? 'font-urdu' : "font-['Manrope']"
+                language === 'ur' ? 'font-urdu' : "font-body"
               }`}
             >
               {isExpiredOrInvalidLink
@@ -267,7 +267,7 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
         </div>
 
         {/* Security Warning Notice */}
-        <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-start gap-2.5 text-xs text-amber-900 dark:text-amber-200 font-['Manrope']">
+        <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-start gap-2.5 text-xs text-amber-900 dark:text-amber-200 font-body">
           <ShieldCheck className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
           <p className="leading-snug">
             {isExpiredOrInvalidLink
@@ -278,7 +278,7 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
 
         {/* Offline Status Warning */}
         {typeof navigator !== 'undefined' && !navigator.onLine && (
-          <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center gap-2 text-xs text-amber-800 dark:text-amber-200 font-['Manrope']">
+          <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center gap-2 text-xs text-amber-800 dark:text-amber-200 font-body">
             <WifiOff className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
             <span>You're offline. Reconnect to complete your password update.</span>
           </div>
@@ -289,7 +289,7 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
           <div
             id="reset_password_error_alert"
             role="alert"
-            className="p-3.5 bg-error-container/80 border border-error/20 text-on-error-container rounded-2xl flex items-start gap-2.5 text-xs font-['Manrope'] animate-fade-in"
+            className="p-3.5 bg-error-container/80 border border-error/20 text-on-error-container rounded-2xl flex items-start gap-2.5 text-xs font-body animate-fade-in"
           >
             <AlertCircle className="w-4 h-4 text-error shrink-0 mt-0.5" />
             <div className="space-y-1">
@@ -309,14 +309,14 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
               <CheckCircle2 className="w-7 h-7" />
             </div>
             <div className="space-y-1.5">
-              <h2 className="font-['Plus_Jakarta_Sans'] font-extrabold text-lg text-primary">
+              <h2 className="font-display font-extrabold text-lg text-primary">
                 {t('settings.passwordUpdated') || 'Password Updated Successfully'}
               </h2>
-              <p className="font-['Manrope'] text-xs text-on-surface-variant leading-relaxed">
+              <p className="font-body text-xs text-on-surface-variant leading-relaxed">
                 Your password has been changed. Preparing your YAAD dashboard...
               </p>
             </div>
-            <div className="flex items-center justify-center gap-2 text-xs font-semibold text-primary font-['Manrope'] pt-2">
+            <div className="flex items-center justify-center gap-2 text-xs font-semibold text-primary font-body pt-2">
               <Loader2 className="w-4 h-4 animate-spin" />
               <span>Entering YAAD...</span>
             </div>
@@ -330,7 +330,7 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
                 <div className="space-y-1.5">
                   <label
                     htmlFor="reset_inline_email_input"
-                    className="text-xs font-bold text-on-surface-variant block font-['Manrope']"
+                    className="text-xs font-bold text-on-surface-variant block font-body"
                   >
                     Email Address
                   </label>
@@ -343,21 +343,21 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
                       onChange={(e) => setInlineEmail(e.target.value)}
                       placeholder="name@example.com"
                       disabled={isSendingResetEmail}
-                      className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-4 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope'] disabled:opacity-60"
+                      className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-4 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-body disabled:opacity-60"
                       required
                     />
                   </div>
                 </div>
 
                 {resetEmailSuccess && (
-                  <div className="p-3 bg-primary-fixed/20 border border-primary/20 text-primary rounded-2xl text-xs font-['Manrope'] flex items-start gap-2">
+                  <div className="p-3 bg-primary-fixed/20 border border-primary/20 text-primary rounded-2xl text-xs font-body flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
                     <span>{resetEmailSuccess}</span>
                   </div>
                 )}
 
                 {resetEmailError && (
-                  <div className="p-3 bg-error-container/80 border border-error/20 text-on-error-container rounded-2xl text-xs font-['Manrope'] flex items-start gap-2">
+                  <div className="p-3 bg-error-container/80 border border-error/20 text-on-error-container rounded-2xl text-xs font-body flex items-start gap-2">
                     <AlertCircle className="w-4 h-4 text-error shrink-0 mt-0.5" />
                     <span>{resetEmailError}</span>
                   </div>
@@ -368,7 +368,7 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
                     id="reset_send_new_link_submit_btn"
                     type="submit"
                     disabled={isSendingResetEmail || !inlineEmail.trim()}
-                    className="w-full h-12 rounded-full bg-primary text-on-primary font-['Manrope'] text-sm font-bold shadow-md hover:bg-primary/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full h-12 rounded-full bg-primary text-on-primary font-body text-sm font-bold shadow-md hover:bg-primary/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer"
                   >
                     {isSendingResetEmail ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -384,7 +384,7 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
                     type="button"
                     onClick={() => setShowInlineRequestForm(false)}
                     disabled={isSendingResetEmail}
-                    className="w-full h-10 rounded-2xl text-xs font-['Manrope'] font-semibold text-outline hover:text-on-surface transition-colors cursor-pointer"
+                    className="w-full h-10 rounded-2xl text-xs font-body font-semibold text-outline hover:text-on-surface transition-colors cursor-pointer"
                   >
                     Back to options
                   </button>
@@ -397,7 +397,7 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
                   type="button"
                   onClick={() => setShowInlineRequestForm(true)}
                   disabled={isLoading}
-                  className="w-full h-12 rounded-full bg-primary text-on-primary font-['Manrope'] text-sm font-bold shadow-md hover:bg-primary/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full h-12 rounded-full bg-primary text-on-primary font-body text-sm font-bold shadow-md hover:bg-primary/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <RefreshCw className="w-4 h-4" />
                   <span>{t('settings.requestNewLink') || 'Request New Link'}</span>
@@ -408,7 +408,7 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
                   type="button"
                   onClick={handleCancelAndSignOut}
                   disabled={isLoading}
-                  className="w-full h-10 rounded-2xl text-xs font-['Manrope'] font-semibold text-outline hover:text-on-surface flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  className="w-full h-10 rounded-2xl text-xs font-body font-semibold text-outline hover:text-on-surface flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                   <span>Return to Sign In</span>
@@ -424,7 +424,7 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
               <div className="flex justify-between items-center">
                 <label
                   htmlFor="reset_input_new_password"
-                  className="text-xs font-bold text-on-surface-variant block font-['Manrope']"
+                  className="text-xs font-bold text-on-surface-variant block font-body"
                 >
                   {t('settings.newPassword') || 'New Password'}
                 </label>
@@ -443,7 +443,7 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="At least 6 characters"
                   disabled={isLoading}
-                  className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-11 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-['Manrope'] disabled:opacity-60"
+                  className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-11 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-body disabled:opacity-60"
                   autoComplete="new-password"
                   required
                 />
@@ -463,7 +463,7 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="reset_input_confirm_password"
-                className="text-xs font-bold text-on-surface-variant block font-['Manrope']"
+                className="text-xs font-bold text-on-surface-variant block font-body"
               >
                 {t('settings.confirmPassword') || 'Confirm Password'}
               </label>
@@ -476,7 +476,7 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Re-enter your new password"
                   disabled={isLoading}
-                  className={`w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-11 border focus:ring-2 outline-none transition-all placeholder:text-outline font-['Manrope'] disabled:opacity-60 ${
+                  className={`w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-11 border focus:ring-2 outline-none transition-all placeholder:text-outline font-body disabled:opacity-60 ${
                     confirmPassword && !passwordsMatch
                       ? 'border-error/60 focus:border-error focus:ring-error/20'
                       : 'border-outline-variant focus:border-primary focus:ring-primary/20'
@@ -497,7 +497,7 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
             </div>
 
             {/* Live Requirements Checklist */}
-            <div className="p-3 bg-surface-container/60 rounded-2xl border border-surface-dim space-y-2 text-xs font-['Manrope']">
+            <div className="p-3 bg-surface-container/60 rounded-2xl border border-surface-dim space-y-2 text-xs font-body">
               <div className="font-semibold text-on-surface-variant text-[11px] uppercase tracking-wider">
                 Password Requirements
               </div>
@@ -546,7 +546,7 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
               id="reset_password_submit_btn"
               type="submit"
               disabled={isLoading || !isValid}
-              className="w-full h-12 rounded-full bg-primary text-on-primary font-['Manrope'] text-sm font-bold shadow-md hover:bg-primary/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2 active:scale-[0.99] mt-2 cursor-pointer"
+              className="w-full h-12 rounded-full bg-primary text-on-primary font-body text-sm font-bold shadow-md hover:bg-primary/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2 active:scale-[0.99] mt-2 cursor-pointer"
             >
               {isLoading ? (
                 <>
@@ -567,7 +567,7 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
               type="button"
               onClick={handleCancelAndSignOut}
               disabled={isLoading}
-              className="w-full h-10 rounded-2xl text-xs font-['Manrope'] font-semibold text-outline hover:text-error flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              className="w-full h-10 rounded-2xl text-xs font-body font-semibold text-outline hover:text-error flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span>Cancel & Sign Out</span>

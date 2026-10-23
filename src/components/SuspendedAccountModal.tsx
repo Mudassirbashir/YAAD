@@ -27,7 +27,7 @@ export const SuspendedAccountModal: React.FC<SuspendedAccountModalProps> = ({
 
         {/* Headings */}
         <div className="space-y-1.5">
-          <h2 className="text-xl sm:text-2xl font-black text-on-surface font-['Plus_Jakarta_Sans'] tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-black text-on-surface font-display tracking-tight">
             Account Suspended
           </h2>
           <p className="text-sm font-urdu font-bold text-red-600 dark:text-red-400">
@@ -37,7 +37,7 @@ export const SuspendedAccountModal: React.FC<SuspendedAccountModalProps> = ({
 
         {/* Informational Notice */}
         <div className="bg-surface-container-low rounded-2xl p-4 border border-surface-dim/80 text-start space-y-2">
-          <p className="text-xs text-outline font-['Manrope'] leading-relaxed">
+          <p className="text-xs text-outline font-body leading-relaxed">
             Your access to YAAD grocery lists and synced features has been temporarily suspended by YAAD administration.
           </p>
           <div className="pt-2 border-t border-surface-dim/60">

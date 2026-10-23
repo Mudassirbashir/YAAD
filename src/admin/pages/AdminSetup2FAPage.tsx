@@ -126,7 +126,7 @@ export const AdminSetup2FAPage: React.FC<AdminSetup2FAPageProps> = ({
           <img src="/logo.png" alt="YAAD" className="w-10 h-10 object-contain" />
         </div>
         <div>
-          <h1 className="text-2xl font-black text-[#003527] tracking-tight font-['Manrope']">
+          <h1 className="text-2xl font-black text-[#003527] tracking-tight font-body">
             {recoveryCodes ? 'Save Emergency Recovery Codes' : 'Configure Mandatory 2FA'}
           </h1>
           <p className="text-xs text-neutral-500 mt-1">

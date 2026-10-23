@@ -31,9 +31,9 @@ function runAuditVerification() {
   console.log('\n--- 2. Critical Rendering Path & Font Optimization ---');
   assert(!indexHtml.includes('src="/vendor/lottie.min.js"'), 'Lottie is removed from render-blocking index.html script tag');
   assert(!indexHtml.includes('Material+Symbols+Outlined'), 'Unused Material Symbols Outlined font stylesheet is removed');
-  assert(indexHtml.includes('rel="preload" as="style"') && indexHtml.includes('family=Plus+Jakarta+Sans'), 'Plus Jakarta Sans preloaded asynchronously');
-  assert(indexHtml.includes('media="print" onload="this.media=\'all\'"'), 'Google Fonts non-blocking print-to-all switch present');
-  assert(indexHtml.includes('<noscript>'), 'Noscript font fallback present for no-JS environments');
+  assert(indexHtml.includes('rel="stylesheet"') && indexHtml.includes('family=Plus+Jakarta+Sans'), 'Plus Jakarta Sans stylesheet loaded');
+  assert(!indexHtml.includes('media="print" onload="this.media=\'all\'"'), 'Print-to-all swap removed to prevent font flash');
+  assert(!indexHtml.includes('<noscript>'), 'Noscript font fallback removed in favor of single stylesheet link');
   assert(indexHtml.includes('Noto+Nastaliq+Urdu'), 'Urdu typography font coverage preserved');
 
   // 3. Deferred Lottie Loading Helper (Phase 2A)

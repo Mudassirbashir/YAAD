@@ -21,7 +21,7 @@ export const NotFoundView: React.FC<NotFoundViewProps> = ({
     <div
       id="not_found_screen"
       dir={isRTL ? 'rtl' : 'ltr'}
-      className="min-h-screen bg-surface-container-lowest text-on-surface font-['Plus_Jakarta_Sans'] flex flex-col justify-between"
+      className="min-h-screen bg-surface-container-lowest text-on-surface font-display flex flex-col justify-between"
     >
       {/* Top minimal header */}
       <header className="px-4 sm:px-6 py-4 border-b border-surface-dim/60">
@@ -48,7 +48,7 @@ export const NotFoundView: React.FC<NotFoundViewProps> = ({
           <Compass className="w-10 h-10 sm:w-12 sm:h-12 animate-pulse" />
         </div>
 
-        <h1 className="text-2xl sm:text-3xl font-extrabold font-['Manrope'] text-on-surface tracking-tight mb-2">
+        <h1 className="text-2xl sm:text-3xl font-extrabold font-body text-on-surface tracking-tight mb-2">
           {t('errors.pageNotFound') || 'Page Not Found'}
         </h1>
 

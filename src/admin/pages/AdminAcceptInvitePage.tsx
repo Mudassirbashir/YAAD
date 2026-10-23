@@ -208,7 +208,7 @@ export const AdminAcceptInvitePage: React.FC<AdminAcceptInvitePageProps> = ({
           <img src="/logo.png" alt="YAAD" className="w-10 h-10 object-contain" />
         </div>
         <div>
-          <h1 className="text-2xl font-black text-[#003527] tracking-tight font-['Manrope']">
+          <h1 className="text-2xl font-black text-[#003527] tracking-tight font-body">
             {recoveryCodes ? 'Save Emergency Recovery Codes' : 'Accept Staff Invitation'}
           </h1>
           <p className="text-xs text-neutral-500 mt-1">

@@ -59,10 +59,10 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({
             <ListChecks className="w-4 h-4 stroke-[2.2]" />
           </div>
           <div className="flex flex-col min-w-0">
-            <span className="text-xs sm:text-[13px] font-bold text-on-surface font-['Plus_Jakarta_Sans'] truncate leading-tight group-hover:text-primary transition-colors">
+            <span className="text-xs sm:text-[13px] font-bold text-on-surface font-display truncate leading-tight group-hover:text-primary transition-colors">
               {t('home.quickActions.recentLists')}
             </span>
-            <span className="text-[9.5px] sm:text-[10px] font-medium text-outline font-['Manrope'] truncate mt-0.5">
+            <span className="text-[9.5px] sm:text-[10px] font-medium text-outline font-body truncate mt-0.5">
               {recentListsSubtitle}
             </span>
           </div>
@@ -79,10 +79,10 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({
             <Bookmark className="w-4 h-4 stroke-[2.2]" />
           </div>
           <div className="flex flex-col min-w-0">
-            <span className="text-xs sm:text-[13px] font-bold text-on-surface font-['Plus_Jakarta_Sans'] truncate leading-tight group-hover:text-primary transition-colors">
+            <span className="text-xs sm:text-[13px] font-bold text-on-surface font-display truncate leading-tight group-hover:text-primary transition-colors">
               {t('home.quickActions.favorites')}
             </span>
-            <span className="text-[9.5px] sm:text-[10px] font-medium text-outline font-['Manrope'] truncate mt-0.5">
+            <span className="text-[9.5px] sm:text-[10px] font-medium text-outline font-body truncate mt-0.5">
               {t('home.staplesCatalog') || 'Staples Catalog'}
             </span>
           </div>
@@ -99,10 +99,10 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({
             <LayoutGrid className="w-4 h-4 stroke-[2.2]" />
           </div>
           <div className="flex flex-col min-w-0">
-            <span className="text-xs sm:text-[13px] font-bold text-on-surface font-['Plus_Jakarta_Sans'] truncate leading-tight group-hover:text-primary transition-colors">
+            <span className="text-xs sm:text-[13px] font-bold text-on-surface font-display truncate leading-tight group-hover:text-primary transition-colors">
               {t('home.quickActions.categories')}
             </span>
-            <span className="text-[9.5px] sm:text-[10px] font-medium text-outline font-['Manrope'] truncate mt-0.5">
+            <span className="text-[9.5px] sm:text-[10px] font-medium text-outline font-body truncate mt-0.5">
               {t('home.browseAll') || 'Browse All'}
             </span>
           </div>
@@ -119,10 +119,10 @@ export const QuickActionsGrid: React.FC<QuickActionsGridProps> = ({
             <BarChart3 className="w-4 h-4 stroke-[2.2]" />
           </div>
           <div className="flex flex-col min-w-0">
-            <span className="text-xs sm:text-[13px] font-bold text-on-surface font-['Plus_Jakarta_Sans'] truncate leading-tight group-hover:text-primary transition-colors">
+            <span className="text-xs sm:text-[13px] font-bold text-on-surface font-display truncate leading-tight group-hover:text-primary transition-colors">
               {t('home.quickActions.statistics')}
             </span>
-            <span className="text-[9.5px] sm:text-[10px] font-medium text-outline font-['Manrope'] truncate mt-0.5">
+            <span className="text-[9.5px] sm:text-[10px] font-medium text-outline font-body truncate mt-0.5">
               {stats.totalLists > 0 && stats.totalItems > 0
                 ? `${stats.completionRate}% completed`
                 : t('home.insights') || 'Insights'}

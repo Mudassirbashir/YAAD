@@ -105,7 +105,7 @@ export const PreferencesSection: React.FC<PreferencesSectionProps> = ({
           </div>
           <h2
             className={`text-base sm:text-lg font-bold text-on-surface tracking-tight leading-tight ${
-              language === 'ur' ? 'font-urdu text-lg sm:text-xl' : "font-['Manrope']"
+              language === 'ur' ? 'font-urdu text-lg sm:text-xl' : "font-body"
             }`}
           >
             {t('settings.preferencesTitle') || (language === 'ur' ? 'ترجیحات' : 'Preferences')}
@@ -126,7 +126,7 @@ export const PreferencesSection: React.FC<PreferencesSectionProps> = ({
                 <Languages className="w-5 h-5 stroke-[2]" />
               </div>
               <div>
-                <h3 className="text-sm sm:text-base font-bold text-on-surface font-['Manrope']">
+                <h3 className="text-sm sm:text-base font-bold text-on-surface font-body">
                   {t('settings.language') || (language === 'ur' ? 'زبان کا انتخاب' : 'Language')}
                 </h3>
                 <p className="text-xs text-outline">
@@ -156,7 +156,7 @@ export const PreferencesSection: React.FC<PreferencesSectionProps> = ({
                   <Globe2 className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">
-                  <div className="font-bold text-sm text-on-surface font-['Manrope']">
+                  <div className="font-bold text-sm text-on-surface font-body">
                     {t('settings.languageEn') || 'English'}
                   </div>
                   <div className="text-[11px] text-outline truncate">
@@ -187,7 +187,7 @@ export const PreferencesSection: React.FC<PreferencesSectionProps> = ({
                   <BookOpen className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">
-                  <div className="font-bold text-sm text-on-surface font-['Manrope']">
+                  <div className="font-bold text-sm text-on-surface font-body">
                     {t('settings.languageRomanUrdu') || 'Roman Urdu'}
                   </div>
                   <div className="text-[11px] text-outline truncate">
@@ -246,7 +246,7 @@ export const PreferencesSection: React.FC<PreferencesSectionProps> = ({
               )}
             </div>
             <div className="min-w-0">
-              <h3 className="text-sm sm:text-base font-bold text-on-surface font-['Manrope'] truncate">
+              <h3 className="text-sm sm:text-base font-bold text-on-surface font-body truncate">
                 {t('settings.soundEffects') || (language === 'ur' ? 'صوتی اثرات (Sound)' : 'Sound Effects')}
               </h3>
               <p className="text-xs text-outline line-clamp-2">
@@ -295,7 +295,7 @@ export const PreferencesSection: React.FC<PreferencesSectionProps> = ({
               </div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm sm:text-base font-bold text-on-surface font-['Manrope'] truncate">
+                  <h3 className="text-sm sm:text-base font-bold text-on-surface font-body truncate">
                     {language === 'ur' ? 'پش نوٹیفکیشنز (Push Notifications)' : 'Push Notifications'}
                   </h3>
                   {pushEnabled && permissionState === 'granted' && (

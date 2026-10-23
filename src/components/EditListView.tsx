@@ -208,11 +208,11 @@ export const EditListView: React.FC<EditListViewProps> = ({
             dir="auto"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full bg-transparent border-b-2 border-primary focus:border-primary-container outline-none py-1 text-2xl sm:text-3xl font-extrabold font-['Plus_Jakarta_Sans'] text-primary transition-colors tracking-tight"
+            className="w-full bg-transparent border-b-2 border-primary focus:border-primary-container outline-none py-1 text-2xl sm:text-3xl font-extrabold font-display text-primary transition-colors tracking-tight"
             placeholder={t('editList.namePlaceholder')}
             type="text"
           />
-          <p className="text-on-surface-variant font-['Manrope'] text-xs sm:text-sm mt-1">
+          <p className="text-on-surface-variant font-body text-xs sm:text-sm mt-1">
             {t('editList.editingCount', { count: items.length })}
           </p>
         </div>
@@ -220,7 +220,7 @@ export const EditListView: React.FC<EditListViewProps> = ({
         {/* Transient Feedback Banner */}
         {feedbackToast && (
           <div
-            className={`p-2.5 rounded-xl text-xs font-['Manrope'] font-semibold flex items-center gap-2 animate-slide-in-from-top ${
+            className={`p-2.5 rounded-xl text-xs font-body font-semibold flex items-center gap-2 animate-slide-in-from-top ${
               feedbackToast.type === 'remove'
                 ? 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20'
                 : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20'
@@ -279,7 +279,7 @@ export const EditListView: React.FC<EditListViewProps> = ({
                   showFeedbackToast(`Added ${newShoppingItems.length} items to list`, 'add');
                 }
               }}
-              className="w-full h-[54px] ps-5 pe-14 rounded-full border-none bg-transparent focus:ring-2 focus:ring-primary/20 text-base text-on-surface placeholder:text-outline font-['Manrope'] outline-none"
+              className="w-full h-[54px] ps-5 pe-14 rounded-full border-none bg-transparent focus:ring-2 focus:ring-primary/20 text-base text-on-surface placeholder:text-outline font-body outline-none"
               placeholder={t('editList.inputPlaceholder')}
               type="text"
             />
@@ -300,7 +300,7 @@ export const EditListView: React.FC<EditListViewProps> = ({
                 key={cat.id}
                 type="button"
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`px-3.5 py-1.5 rounded-full font-['Manrope'] text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 cursor-pointer ${
+                className={`px-3.5 py-1.5 rounded-full font-body text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 cursor-pointer ${
                   selectedCategory === cat.id
                     ? 'bg-primary text-on-primary shadow-xs'
                     : 'bg-surface-container-lowest border border-surface-container-high text-primary hover:bg-surface-container-low'
@@ -316,7 +316,7 @@ export const EditListView: React.FC<EditListViewProps> = ({
         {/* List Items Container with Unified 3-Tier Card Design */}
         <div className="space-y-4">
           {categoryIds.length === 0 ? (
-            <div className="p-8 text-center text-outline font-['Manrope'] text-sm bg-surface-container-lowest rounded-3xl border border-surface-container-high/60">
+            <div className="p-8 text-center text-outline font-body text-sm bg-surface-container-lowest rounded-3xl border border-surface-container-high/60">
               {t('editList.emptyList')}
             </div>
           ) : (
@@ -330,7 +330,7 @@ export const EditListView: React.FC<EditListViewProps> = ({
                   className="bg-surface-container-lowest rounded-3xl p-4 sm:p-5 shadow-[0px_4px_20px_rgba(0,30,21,0.03)] border border-surface-container-high/60 flex flex-col gap-3"
                 >
                   <div className="flex justify-between items-center pb-1 border-b border-surface-container-high/40">
-                    <h3 className="font-['Manrope'] text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
+                    <h3 className="font-body text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
                       <CategoryIcon categoryId={catId} className="w-4 h-4 text-primary/70" />
                       <span>{getCategoryName(catId)}</span>
                     </h3>
@@ -364,7 +364,7 @@ export const EditListView: React.FC<EditListViewProps> = ({
                               <div className="flex items-center gap-1.5 truncate" dir="auto">
                                 <BidiText
                                   as="span"
-                                  className="font-['Plus_Jakarta_Sans'] font-bold text-sm text-primary truncate block"
+                                  className="font-display font-bold text-sm text-primary truncate block"
                                 >
                                   {item.name}
                                 </BidiText>
@@ -382,7 +382,7 @@ export const EditListView: React.FC<EditListViewProps> = ({
                                   e.stopPropagation();
                                   setEditingItem(item);
                                 }}
-                                className="text-xs font-['Manrope'] font-medium text-primary/80 hover:text-primary transition-colors flex items-center gap-1 cursor-pointer w-fit text-start"
+                                className="text-xs font-body font-medium text-primary/80 hover:text-primary transition-colors flex items-center gap-1 cursor-pointer w-fit text-start"
                                 title="Tap to change quantity"
                               >
                                 <span className="bg-surface-container px-2 py-0.5 rounded-md border border-surface-dim/60 font-semibold text-[11px]">
@@ -394,7 +394,7 @@ export const EditListView: React.FC<EditListViewProps> = ({
 
                               {/* Line 3: Category (below quantity) */}
                               <div
-                                className="flex items-center gap-1 text-[11px] font-['Manrope'] text-on-surface-variant"
+                                className="flex items-center gap-1 text-[11px] font-body text-on-surface-variant"
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 <CategoryIcon
@@ -453,7 +453,7 @@ export const EditListView: React.FC<EditListViewProps> = ({
                 type="button"
                 id="edit_list_delete_btn"
                 onClick={() => setShowDeleteConfirm(true)}
-                className="rounded-full bg-transparent text-rose-700 dark:text-rose-400 font-['Manrope'] text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 hover:bg-rose-50 dark:hover:bg-rose-950/30 px-5 py-2.5 transition-colors active:scale-95 cursor-pointer border border-rose-200 dark:border-rose-900/50"
+                className="rounded-full bg-transparent text-rose-700 dark:text-rose-400 font-body text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 hover:bg-rose-50 dark:hover:bg-rose-950/30 px-5 py-2.5 transition-colors active:scale-95 cursor-pointer border border-rose-200 dark:border-rose-900/50"
               >
                 <Trash2 className="w-4 h-4" />
                 <span>{t('delete') || 'Delete List'}</span>
@@ -485,10 +485,10 @@ export const EditListView: React.FC<EditListViewProps> = ({
                   <Trash2 className="w-5 h-5" />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-base text-on-surface truncate">
+                  <h3 className="font-display font-bold text-base text-on-surface truncate">
                     {t('delete') || 'Delete List'}
                   </h3>
-                  <p className="text-xs text-outline font-['Manrope'] truncate">
+                  <p className="text-xs text-outline font-body truncate">
                     {list.title}
                   </p>
                 </div>
@@ -502,7 +502,7 @@ export const EditListView: React.FC<EditListViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowDeleteConfirm(false)}
-                  className="h-11 rounded-full bg-surface-container text-on-surface font-['Manrope'] text-xs sm:text-sm font-semibold hover:bg-surface-container-high transition-colors cursor-pointer"
+                  className="h-11 rounded-full bg-surface-container text-on-surface font-body text-xs sm:text-sm font-semibold hover:bg-surface-container-high transition-colors cursor-pointer"
                 >
                   {t('cancel')}
                 </button>
@@ -513,7 +513,7 @@ export const EditListView: React.FC<EditListViewProps> = ({
                     setShowDeleteConfirm(false);
                     onDeleteList?.(list.id);
                   }}
-                  className="h-11 rounded-full bg-rose-600 text-white font-['Manrope'] text-xs sm:text-sm font-semibold hover:bg-rose-700 transition-colors shadow-xs active:scale-95 cursor-pointer"
+                  className="h-11 rounded-full bg-rose-600 text-white font-body text-xs sm:text-sm font-semibold hover:bg-rose-700 transition-colors shadow-xs active:scale-95 cursor-pointer"
                 >
                   {t('delete')}
                 </button>
@@ -536,7 +536,7 @@ export const EditListView: React.FC<EditListViewProps> = ({
         <button
           onClick={handleSave}
           disabled={isSaving}
-          className="pointer-events-auto bg-primary text-on-primary font-['Manrope'] font-bold rounded-full h-[56px] px-8 w-full max-w-md shadow-[0px_8px_24px_rgba(0,30,21,0.2)] hover:bg-primary-container active:scale-[0.98] transition-[transform,background-color,box-shadow] duration-150 ease-out active:duration-75 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75"
+          className="pointer-events-auto bg-primary text-on-primary font-body font-bold rounded-full h-[56px] px-8 w-full max-w-md shadow-[0px_8px_24px_rgba(0,30,21,0.2)] hover:bg-primary-container active:scale-[0.98] transition-[transform,background-color,box-shadow] duration-150 ease-out active:duration-75 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75"
         >
           <span>{isSaving ? (language === 'ur' ? 'محفوظ کیا جا رہا ہے...' : 'Saving...') : t('editList.saveChanges')}</span>
           <Check className="w-5 h-5 stroke-[2.5]" />

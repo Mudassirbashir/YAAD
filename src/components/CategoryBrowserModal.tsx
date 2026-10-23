@@ -149,10 +149,10 @@ export const CategoryBrowserModal: React.FC<CategoryBrowserModalProps> = ({
               <Grid className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-on-surface font-['Plus_Jakarta_Sans'] leading-tight">
+              <h3 className="text-lg font-bold text-on-surface font-display leading-tight">
                 {t('home.categoriesModal.title')}
               </h3>
-              <p className="text-xs text-outline font-['Manrope']">
+              <p className="text-xs text-outline font-body">
                 {activeListTitle 
                   ? t('recommendations.addToListPrompt', { title: activeListTitle }) 
                   : t('home.categoriesModal.subtitle')}
@@ -176,7 +176,7 @@ export const CategoryBrowserModal: React.FC<CategoryBrowserModalProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t('home.categoriesModal.searchPlaceholder')}
-            className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-surface-container-lowest border border-surface-dim text-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary transition-all font-['Manrope']"
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-surface-container-lowest border border-surface-dim text-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary transition-all font-body"
           />
         </div>
 
@@ -229,10 +229,10 @@ export const CategoryBrowserModal: React.FC<CategoryBrowserModalProps> = ({
                     size={42}
                   />
                   <div className="min-w-0">
-                    <div className="text-xs font-semibold text-on-surface font-['Plus_Jakarta_Sans'] truncate">
+                    <div className="text-xs font-semibold text-on-surface font-display truncate">
                       {localizedName}
                     </div>
-                    <div className="text-[11px] text-outline font-['Manrope']">
+                    <div className="text-[11px] text-outline font-body">
                       1 {item.default_unit || 'piece'}
                     </div>
                   </div>

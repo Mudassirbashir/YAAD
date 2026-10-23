@@ -63,10 +63,10 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
             </div>
 
             <div className="space-y-2">
-              <h1 className="font-['Plus_Jakarta_Sans'] font-bold text-xl text-on-surface">
+              <h1 className="font-display font-bold text-xl text-on-surface">
                 Something went wrong
               </h1>
-              <p className="font-['Manrope'] text-xs text-on-surface-variant leading-relaxed">
+              <p className="font-body text-xs text-on-surface-variant leading-relaxed">
                 Do not worry, your data is safe. Please reload the app or go to the home screen.
               </p>
             </div>
@@ -82,7 +82,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                 id="error_boundary_reload_btn"
                 type="button"
                 onClick={this.handleReload}
-                className="flex-1 h-11 rounded-full bg-primary text-on-primary font-['Manrope'] text-xs font-bold flex items-center justify-center gap-2 shadow-xs hover:bg-primary/90 transition-all active:scale-[0.98]"
+                className="flex-1 h-11 rounded-full bg-primary text-on-primary font-body text-xs font-bold flex items-center justify-center gap-2 shadow-xs hover:bg-primary/90 transition-all active:scale-[0.98]"
               >
                 <RotateCcw className="w-4 h-4" />
                 <span>Reload App</span>
@@ -91,7 +91,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                 id="error_boundary_home_btn"
                 type="button"
                 onClick={this.handleGoHome}
-                className="flex-1 h-11 rounded-full bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface font-['Manrope'] text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                className="flex-1 h-11 rounded-full bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface font-body text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
               >
                 <Home className="w-4 h-4" />
                 <span>Go to Home</span>

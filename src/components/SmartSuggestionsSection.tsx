@@ -177,14 +177,14 @@ export const SmartSuggestionsSection: React.FC<SmartSuggestionsSectionProps> = (
               <Sparkles className="w-4 h-4" />
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="font-['Plus_Jakarta_Sans'] font-bold text-sm text-primary leading-tight truncate">
+              <span className="font-display font-bold text-sm text-primary leading-tight truncate">
                 {language === 'ur'
                   ? 'اسمارٹ تجاویز'
                   : language === 'roman-urdu'
                   ? 'Smart Suggestions'
                   : t('recommendations.smartSuggestionsTitle') || 'Smart Suggestions'}
               </span>
-              <span className="font-['Manrope'] text-[11px] text-on-surface-variant truncate">
+              <span className="font-body text-[11px] text-on-surface-variant truncate">
                 {isAnalyzing
                   ? language === 'ur'
                     ? 'لسٹ کا تجزیہ ہو رہا ہے...'
@@ -221,7 +221,7 @@ export const SmartSuggestionsSection: React.FC<SmartSuggestionsSectionProps> = (
           {/* Header bar */}
           <div className="flex items-center justify-between px-1">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="flex items-center gap-1 font-['Plus_Jakarta_Sans'] text-xs font-bold text-primary tracking-tight">
+              <span className="flex items-center gap-1 font-display text-xs font-bold text-primary tracking-tight">
                 <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
                 <span>
                   {language === 'ur'
@@ -243,7 +243,7 @@ export const SmartSuggestionsSection: React.FC<SmartSuggestionsSectionProps> = (
               <button
                 type="button"
                 onClick={() => setIsExpanded(false)}
-                className="text-[0.6875rem] font-['Manrope'] text-outline hover:text-primary font-semibold flex items-center gap-0.5 cursor-pointer"
+                className="text-[0.6875rem] font-body text-outline hover:text-primary font-semibold flex items-center gap-0.5 cursor-pointer"
               >
                 <span>{language === 'ur' ? 'چھپائیں' : 'Hide'}</span>
                 <ChevronUp className="w-3.5 h-3.5" />
@@ -299,7 +299,7 @@ export const SmartSuggestionsSection: React.FC<SmartSuggestionsSectionProps> = (
 
                   {/* Middle row: Name & suggested quantity */}
                   <div className="flex flex-col min-w-0">
-                    <BidiText className="font-['Plus_Jakarta_Sans'] text-xs font-bold text-on-surface truncate leading-tight">
+                    <BidiText className="font-display text-xs font-bold text-on-surface truncate leading-tight">
                       {displayName}
                     </BidiText>
 
@@ -311,7 +311,7 @@ export const SmartSuggestionsSection: React.FC<SmartSuggestionsSectionProps> = (
                           className="text-[10px] font-semibold text-outline"
                         />
                       )}
-                      <span className="text-[10px] text-outline/80 font-['Manrope'] truncate">
+                      <span className="text-[10px] text-outline/80 font-body truncate">
                         • {getCategoryName(candidate.category)}
                       </span>
                     </div>
@@ -382,10 +382,10 @@ export const SmartSuggestionsSection: React.FC<SmartSuggestionsSectionProps> = (
                   <Sparkles className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="font-['Plus_Jakarta_Sans'] font-bold text-sm text-primary">
+                  <h4 className="font-display font-bold text-sm text-primary">
                     {showExplanationModal.displayName}
                   </h4>
-                  <span className="text-[0.6875rem] text-outline font-['Manrope']">
+                  <span className="text-[0.6875rem] text-outline font-body">
                     {showExplanationModal.explanation.displayReason}
                   </span>
                 </div>
@@ -400,7 +400,7 @@ export const SmartSuggestionsSection: React.FC<SmartSuggestionsSectionProps> = (
               </button>
             </div>
 
-            <div className="space-y-2 text-xs font-['Manrope'] bg-surface-container-lowest p-3 rounded-2xl border border-surface-container-high/60">
+            <div className="space-y-2 text-xs font-body bg-surface-container-lowest p-3 rounded-2xl border border-surface-container-high/60">
               <div className="flex justify-between items-center py-0.5">
                 <span className="text-outline">Total Recommendation Score:</span>
                 <span className="font-bold text-primary font-mono">
@@ -452,7 +452,7 @@ export const SmartSuggestionsSection: React.FC<SmartSuggestionsSectionProps> = (
                 setShowExplanationModal(null);
               }}
               style={{ backgroundColor: circleBg }}
-              className="w-full py-2.5 rounded-xl text-white font-['Manrope'] text-xs font-bold hover:opacity-90 transition-opacity cursor-pointer"
+              className="w-full py-2.5 rounded-xl text-white font-body text-xs font-bold hover:opacity-90 transition-opacity cursor-pointer"
             >
               {t('recommendations.addToList') || 'Add to List'}
             </button>

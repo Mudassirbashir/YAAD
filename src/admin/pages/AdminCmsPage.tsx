@@ -1224,7 +1224,7 @@ export const AdminCmsPage: React.FC = () => {
                 )}
               </span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black tracking-tight font-['Manrope']">
+            <h2 className="text-2xl sm:text-3xl font-black tracking-tight font-body">
               In-App Articles &amp; SEO Auto-Upload
             </h2>
             <p className="text-xs sm:text-sm text-emerald-100/80 leading-relaxed">

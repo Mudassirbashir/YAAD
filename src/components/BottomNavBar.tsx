@@ -172,7 +172,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               size={22}
               className="transition-transform duration-150"
             />
-            <span className="text-[0.6875rem] sm:text-xs font-['Manrope'] font-bold whitespace-nowrap leading-none">
+            <span className="text-[0.6875rem] sm:text-xs font-body font-bold whitespace-nowrap leading-none">
               {t('nav.home') || 'Home'}
             </span>
           </button>
@@ -203,7 +203,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
                 <Plus className="w-7 h-7 sm:w-8 sm:h-8 stroke-[2.6]" />
               </motion.div>
             </motion.button>
-            <span className="text-[0.625rem] sm:text-[0.6875rem] font-['Manrope'] font-bold text-on-surface mt-1">
+            <span className="text-[0.625rem] sm:text-[0.6875rem] font-body font-bold text-on-surface mt-1">
               {t('nav.create') || 'Create'}
             </span>
           </div>
@@ -243,7 +243,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               size={22}
               className="transition-transform duration-150"
             />
-            <span className="text-[0.6875rem] sm:text-xs font-['Manrope'] font-bold whitespace-nowrap leading-none">
+            <span className="text-[0.6875rem] sm:text-xs font-body font-bold whitespace-nowrap leading-none">
               {t('nav.history') || t('history.title') || 'History'}
             </span>
           </button>

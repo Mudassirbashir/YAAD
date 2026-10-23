@@ -82,7 +82,7 @@ export const SecuritySection: React.FC<SecuritySectionProps> = ({
           </div>
           <h2
             className={`text-base sm:text-lg font-bold text-on-surface tracking-tight leading-tight ${
-              language === 'ur' ? 'font-urdu text-lg sm:text-xl' : "font-['Manrope']"
+              language === 'ur' ? 'font-urdu text-lg sm:text-xl' : "font-body"
             }`}
           >
             {t('settings.securityTitle') || (language === 'ur' ? 'سیکیورٹی اور سائن آؤٹ' : 'Security & Sign Out')}
@@ -103,7 +103,7 @@ export const SecuritySection: React.FC<SecuritySectionProps> = ({
                 <KeyRound className="w-5 h-5 stroke-[2.2]" />
               </div>
               <div className="min-w-0">
-                <h3 className="text-sm sm:text-base font-bold text-on-surface font-['Manrope'] truncate">
+                <h3 className="text-sm sm:text-base font-bold text-on-surface font-body truncate">
                   {t('settings.changePassword') || (language === 'ur' ? 'پاس ورڈ تبدیل کریں' : 'Change Password')}
                 </h3>
                 <p className="text-xs text-outline line-clamp-1">
@@ -159,7 +159,7 @@ export const SecuritySection: React.FC<SecuritySectionProps> = ({
               <div className="space-y-1">
                 <label
                   htmlFor="settings_current_password"
-                  className="text-xs font-bold text-on-surface-variant flex items-center gap-1.5 font-['Manrope']"
+                  className="text-xs font-bold text-on-surface-variant flex items-center gap-1.5 font-body"
                 >
                   <LockKeyhole className="w-3.5 h-3.5 text-outline" />
                   <span>{t('settings.currentPassword') || (language === 'ur' ? 'موجودہ پاس ورڈ' : 'Current Password')}</span>
@@ -225,7 +225,7 @@ export const SecuritySection: React.FC<SecuritySectionProps> = ({
                 <div className="flex justify-between items-center">
                   <label
                     htmlFor="settings_new_password"
-                    className="text-xs font-bold text-on-surface-variant flex items-center gap-1.5 font-['Manrope']"
+                    className="text-xs font-bold text-on-surface-variant flex items-center gap-1.5 font-body"
                   >
                     <LockKeyhole className="w-3.5 h-3.5 text-outline" />
                     <span>{t('settings.newPassword') || (language === 'ur' ? 'نیا پاس ورڈ' : 'New Password')}</span>
@@ -282,7 +282,7 @@ export const SecuritySection: React.FC<SecuritySectionProps> = ({
               <div className="space-y-1">
                 <label
                   htmlFor="settings_confirm_password"
-                  className="text-xs font-bold text-on-surface-variant flex items-center gap-1.5 font-['Manrope']"
+                  className="text-xs font-bold text-on-surface-variant flex items-center gap-1.5 font-body"
                 >
                   <LockKeyhole className="w-3.5 h-3.5 text-outline" />
                   <span>{t('settings.confirmPassword') || (language === 'ur' ? 'نئے پاس ورڈ کی تصدیق' : 'Confirm Password')}</span>
@@ -373,7 +373,7 @@ export const SecuritySection: React.FC<SecuritySectionProps> = ({
               <LogOut className="w-5 h-5 stroke-[2.2]" />
             </div>
             <div className="min-w-0 flex-1">
-              <h3 className="text-sm sm:text-base font-bold text-on-surface truncate font-['Manrope']">
+              <h3 className="text-sm sm:text-base font-bold text-on-surface truncate font-body">
                 {t('settings.signOut') || (language === 'ur' ? 'اکاؤنٹ سے لاگ آؤٹ' : 'Sign Out')}
               </h3>
               <p className="text-xs text-outline truncate">

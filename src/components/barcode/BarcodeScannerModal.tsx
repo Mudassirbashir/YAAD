@@ -418,7 +418,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-surface-container-high/40 bg-surface-container-low/50">
           <div className="flex items-center gap-2">
-            <h2 className="font-['Plus_Jakarta_Sans'] font-bold text-base sm:text-lg text-primary">
+            <h2 className="font-display font-bold text-base sm:text-lg text-primary">
               {barcodeCopy.scanTitle || (isUrdu ? 'بارکوڈ اسکینر' : 'Scan Barcode')}
             </h2>
             <span className="px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase rounded-full bg-emerald-600 text-white shadow-2xs">
@@ -506,7 +506,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                 )}
               </div>
 
-              <p className="mt-4 text-xs sm:text-sm text-center text-on-surface-variant font-['Manrope']">
+              <p className="mt-4 text-xs sm:text-sm text-center text-on-surface-variant font-body">
                 {barcodeCopy.scanSubtitle || (isUrdu ? 'پیک شدہ پروڈکٹ کے بارکوڈ پر کیمرہ فوکس کریں' : 'Point your camera at a packaged product barcode')}
               </p>
 
@@ -531,7 +531,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
           {view === 'searching' && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <RefreshCw className="w-10 h-10 text-primary animate-spin mb-4" />
-              <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-base text-primary mb-1">
+              <h3 className="font-display font-bold text-base text-primary mb-1">
                 {barcodeCopy.searching || (isUrdu ? 'پروڈکٹ تلاش ہو رہی ہے...' : 'Searching for product...')}
               </h3>
               <p className="text-xs text-on-surface-variant font-mono">
@@ -629,7 +629,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                       </span>
                     )}
                   </div>
-                  <div className="font-['Plus_Jakarta_Sans'] font-bold text-base text-primary truncate">
+                  <div className="font-display font-bold text-base text-primary truncate">
                     {reviewName || (barcodeCopy.notFound || (isUrdu ? 'نامعلوم پروڈکٹ' : 'Unknown Product'))}
                   </div>
                   {(reviewBrand || reviewPackageSize) && (
@@ -803,7 +803,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
               </div>
 
               <div className="space-y-1.5 max-w-sm">
-                <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-lg text-primary">
+                <h3 className="font-display font-bold text-lg text-primary">
                   {isUrdu ? 'کوئی پروڈکٹ نہیں ملی' : 'No Product Found'}
                 </h3>
                 {scannedCode && (

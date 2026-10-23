@@ -349,7 +349,7 @@ export const PWAUpdateNotification: React.FC<PWAUpdateNotificationProps> = ({
               {/* Product Badge */}
               <span
                 id="yaad_update_badge"
-                className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold tracking-wider uppercase bg-primary/10 dark:bg-primary-fixed/15 text-primary dark:text-primary-fixed font-['Plus_Jakarta_Sans'] shrink-0"
+                className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold tracking-wider uppercase bg-primary/10 dark:bg-primary-fixed/15 text-primary dark:text-primary-fixed font-display shrink-0"
               >
                 {badgeText}
               </span>
@@ -373,13 +373,13 @@ export const PWAUpdateNotification: React.FC<PWAUpdateNotificationProps> = ({
           <div className="mt-2.5 sm:mt-3 relative z-10">
             <h2
               id="yaad_update_card_title"
-              className="text-sm sm:text-base font-bold text-on-surface dark:text-white font-['Plus_Jakarta_Sans'] leading-tight tracking-tight"
+              className="text-sm sm:text-base font-bold text-on-surface dark:text-white font-display leading-tight tracking-tight"
             >
               {titleText}
             </h2>
             <p
               id="yaad_update_card_desc"
-              className="text-xs sm:text-[13px] text-on-surface-variant dark:text-[#a0a8a3] font-['Manrope'] mt-1 leading-relaxed"
+              className="text-xs sm:text-[13px] text-on-surface-variant dark:text-[#a0a8a3] font-body mt-1 leading-relaxed"
             >
               {descText}
             </p>
@@ -425,7 +425,7 @@ export const PWAUpdateNotification: React.FC<PWAUpdateNotificationProps> = ({
           {/* Action Row: Secondary ("Later") & Primary ("Update Now") */}
           <div className="mt-3.5 sm:mt-4 flex items-center justify-between gap-2 relative z-10">
             {/* Subtle desktop keyboard hint */}
-            <span className="hidden lg:inline-block text-[11px] text-on-surface-variant/50 dark:text-white/40 font-['Manrope']">
+            <span className="hidden lg:inline-block text-[11px] text-on-surface-variant/50 dark:text-white/40 font-body">
               {escHint}
             </span>
 

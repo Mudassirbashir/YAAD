@@ -133,17 +133,17 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
           <div className="w-14 h-14 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-2 shadow-inner">
             <Sparkles className="w-7 h-7 text-primary animate-pulse" />
           </div>
-          <h1 className="font-['Plus_Jakarta_Sans'] font-extrabold text-2xl text-primary tracking-tight">
+          <h1 className="font-display font-extrabold text-2xl text-primary tracking-tight">
             {t('profileSetup.title') || 'Welcome to YAAD!'}
           </h1>
-          <p className="font-['Manrope'] text-xs sm:text-sm text-on-surface-variant leading-relaxed">
+          <p className="font-body text-xs sm:text-sm text-on-surface-variant leading-relaxed">
             {t('profileSetup.subtitle') || "Let's personalize your shopping experience in two quick steps."}
           </p>
         </div>
 
         {/* Error Alert */}
         {errorMessage && (
-          <div className="p-3 bg-error-container/30 border border-error/30 rounded-2xl text-xs text-error font-['Manrope'] flex items-center gap-2">
+          <div className="p-3 bg-error-container/30 border border-error/30 rounded-2xl text-xs text-error font-body flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{errorMessage}</span>
           </div>
@@ -181,7 +181,7 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
 
           {/* User Name (Required) */}
           <div className="space-y-1.5">
-            <label className="font-['Manrope'] text-xs font-bold text-on-surface-variant flex items-center gap-1.5">
+            <label className="font-body text-xs font-bold text-on-surface-variant flex items-center gap-1.5">
               <User className="w-3.5 h-3.5 text-primary" />
               <span>{t('profileSetup.nameLabel') || 'Your Full Name'}</span>
               <span className="text-error">*</span>
@@ -196,7 +196,7 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
                   if (errorMessage) setErrorMessage(null);
                 }}
                 placeholder={t('profileSetup.namePlaceholder') || 'e.g. Sara Ahmed'}
-                className="w-full h-12 bg-surface-container text-on-surface font-['Manrope'] text-sm rounded-2xl px-4 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline"
+                className="w-full h-12 bg-surface-container text-on-surface font-body text-sm rounded-2xl px-4 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline"
                 autoFocus
               />
             </div>
@@ -204,7 +204,7 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
 
           {/* Phone Number (Optional) */}
           <div className="space-y-1.5">
-            <label className="font-['Manrope'] text-xs font-bold text-on-surface-variant flex items-center justify-between">
+            <label className="font-body text-xs font-bold text-on-surface-variant flex items-center justify-between">
               <span className="flex items-center gap-1.5">
                 <Smartphone className="w-3.5 h-3.5 text-primary" />
                 <span>{t('settings.phoneNumber') || 'Phone Number'}</span>
@@ -228,7 +228,7 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
 
           {/* Preferred Language (Required) */}
           <div className="space-y-2">
-            <label className="font-['Manrope'] text-xs font-bold text-on-surface-variant flex items-center gap-1.5">
+            <label className="font-body text-xs font-bold text-on-surface-variant flex items-center gap-1.5">
               <Globe className="w-3.5 h-3.5 text-primary" />
               <span>{t('profileSetup.languageLabel') || 'Preferred Language'}</span>
               <span className="text-error">*</span>
@@ -244,7 +244,7 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
                     : 'border-outline-variant bg-surface-container hover:bg-surface-container-high text-on-surface'
                 }`}
               >
-                <span className="block font-['Plus_Jakarta_Sans'] text-xs font-bold">English</span>
+                <span className="block font-display text-xs font-bold">English</span>
                 <span className="text-[10px] text-on-surface-variant">Default</span>
               </button>
 
@@ -257,7 +257,7 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
                     : 'border-outline-variant bg-surface-container hover:bg-surface-container-high text-on-surface'
                 }`}
               >
-                <span className="block font-['Plus_Jakarta_Sans'] text-xs font-bold">Roman Urdu</span>
+                <span className="block font-display text-xs font-bold">Roman Urdu</span>
                 <span className="text-[10px] text-on-surface-variant">Aasan</span>
               </button>
 
@@ -270,7 +270,7 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
                     : 'border-outline-variant bg-surface-container hover:bg-surface-container-high text-on-surface'
                 }`}
               >
-                <span className="block font-['Plus_Jakarta_Sans'] text-xs font-bold">Urdu</span>
+                <span className="block font-display text-xs font-bold">Urdu</span>
                 <span className="text-[10px] text-on-surface-variant">Urdu</span>
               </button>
             </div>
@@ -278,7 +278,7 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
 
           {/* Usage Purpose (Optional) */}
           <div className="space-y-2 pt-1">
-            <label className="font-['Manrope'] text-xs font-bold text-on-surface-variant flex items-center gap-1.5">
+            <label className="font-body text-xs font-bold text-on-surface-variant flex items-center gap-1.5">
               <ShoppingBag className="w-3.5 h-3.5 text-primary" />
               <span>{t('profileSetup.usageLabel') || 'What do you mainly use YAAD for? (Optional)'}</span>
             </label>
@@ -291,7 +291,7 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
                     key={opt.id}
                     type="button"
                     onClick={() => setUsagePurpose(isSelected ? '' : opt.id)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-['Manrope'] transition-all flex items-center gap-1.5 ${
+                    className={`px-3 py-1.5 rounded-full text-xs font-body transition-all flex items-center gap-1.5 ${
                       isSelected
                         ? 'bg-primary text-on-primary font-semibold shadow-xs'
                         : 'bg-surface-container hover:bg-surface-container-high text-on-surface border border-outline-variant/60'
@@ -307,7 +307,7 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
 
           {/* Referral Source (Optional) */}
           <div className="space-y-1.5 pt-1">
-            <label className="font-['Manrope'] text-xs font-bold text-on-surface-variant flex items-center gap-1.5">
+            <label className="font-body text-xs font-bold text-on-surface-variant flex items-center gap-1.5">
               <HelpCircle className="w-3.5 h-3.5 text-primary" />
               <span>{t('profileSetup.referralLabel') || 'How did you hear about YAAD? (Optional)'}</span>
             </label>
@@ -315,7 +315,7 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
             <select
               value={referralSource}
               onChange={(e) => setReferralSource(e.target.value)}
-              className="w-full h-11 bg-surface-container text-on-surface font-['Manrope'] text-xs rounded-2xl px-3.5 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+              className="w-full h-11 bg-surface-container text-on-surface font-body text-xs rounded-2xl px-3.5 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
             >
               <option value="">Select an option (optional)</option>
               {referralOptions.map((opt) => (
@@ -330,7 +330,7 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full h-12 rounded-full bg-primary text-on-primary font-['Manrope'] text-sm font-bold shadow-md hover:bg-primary-container hover:shadow-lg disabled:opacity-50 transition-all flex items-center justify-center gap-2 active:scale-[0.99] mt-4"
+            className="w-full h-12 rounded-full bg-primary text-on-primary font-body text-sm font-bold shadow-md hover:bg-primary-container hover:shadow-lg disabled:opacity-50 transition-all flex items-center justify-center gap-2 active:scale-[0.99] mt-4"
           >
             {isSubmitting ? (
               <>

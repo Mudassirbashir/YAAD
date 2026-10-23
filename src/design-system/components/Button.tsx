@@ -44,7 +44,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     // Base styling: accessibility, focus ring, tactile interaction
     const baseStyles =
-      'inline-flex items-center justify-center font-["Plus_Jakarta_Sans"] font-semibold select-none cursor-pointer transition-[transform,background-color,box-shadow,color] duration-150 ease-out active:duration-75 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none disabled:active:scale-100';
+      'inline-flex items-center justify-center font-display font-semibold select-none cursor-pointer transition-[transform,background-color,box-shadow,color] duration-150 ease-out active:duration-75 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none disabled:active:scale-100';
 
     // Size variants ensuring touch target >= 44px on mobile
     const sizeStyles: Record<ButtonSize, string> = {

@@ -44,7 +44,7 @@ export const SignOutConfirmModal: React.FC<SignOutConfirmModalProps> = ({
           <h3
             id="sign_out_modal_title"
             className={`text-lg sm:text-xl font-extrabold text-on-surface tracking-tight ${
-              language === 'ur' ? 'font-urdu' : "font-['Plus_Jakarta_Sans']"
+              language === 'ur' ? 'font-urdu' : "font-display"
             }`}
           >
             {language === 'ur' ? 'کیا آپ واقعی سائن آؤٹ کرنا چاہتے ہیں؟' : 'Sign Out of Your Account?'}

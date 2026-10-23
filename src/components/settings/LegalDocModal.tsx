@@ -126,7 +126,7 @@ export const LegalDocModal: React.FC<LegalDocModalProps> = ({
             <div className="w-9 h-9 rounded-xl bg-primary-fixed/40 text-primary flex items-center justify-center shrink-0 border border-primary/10 shadow-2xs">
               {getIcon()}
             </div>
-            <h3 className="text-lg font-bold text-on-surface font-['Manrope'] tracking-tight">
+            <h3 className="text-lg font-bold text-on-surface font-body tracking-tight">
               {getTitle()}
             </h3>
           </div>
@@ -234,7 +234,7 @@ export const LegalDocModal: React.FC<LegalDocModalProps> = ({
                 <form onSubmit={handleSubmitTicket} className="space-y-3">
                   {/* Authenticated User Auto-Prefill Card */}
                   {user ? (
-                    <div className="p-3 bg-primary-fixed/20 border border-primary/20 rounded-2xl flex items-center gap-2.5 text-xs font-['Manrope']">
+                    <div className="p-3 bg-primary-fixed/20 border border-primary/20 rounded-2xl flex items-center gap-2.5 text-xs font-body">
                       <div className="w-7 h-7 rounded-xl bg-primary text-white flex items-center justify-center shrink-0">
                         <User className="w-4 h-4" />
                       </div>

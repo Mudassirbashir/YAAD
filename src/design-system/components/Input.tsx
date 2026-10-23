@@ -37,7 +37,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="text-xs sm:text-sm font-['Plus_Jakarta_Sans'] font-semibold text-on-surface"
+            className="text-xs sm:text-sm font-display font-semibold text-on-surface"
           >
             {label}
           </label>
@@ -55,7 +55,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             id={inputId}
             value={value}
             disabled={disabled}
-            className={`w-full min-h-[44px] sm:min-h-[46px] rounded-xl sm:rounded-2xl bg-surface-container-lowest text-on-surface font-['Manrope'] text-sm sm:text-base border transition-all duration-150 placeholder:text-outline/70 focus-visible:outline-none disabled:opacity-50 disabled:bg-surface-container disabled:cursor-not-allowed ${
+            className={`w-full min-h-[44px] sm:min-h-[46px] rounded-xl sm:rounded-2xl bg-surface-container-lowest text-on-surface font-body text-sm sm:text-base border transition-all duration-150 placeholder:text-outline/70 focus-visible:outline-none disabled:opacity-50 disabled:bg-surface-container disabled:cursor-not-allowed ${
               leftIcon ? 'ps-10' : 'ps-3.5 sm:ps-4'
             } ${
               rightSlot || (showClearButton && hasValue) ? 'pe-11' : 'pe-3.5 sm:pe-4'
@@ -86,13 +86,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         </div>
 
         {error && (
-          <p className="text-xs font-['Manrope'] text-error font-medium flex items-center gap-1 mt-0.5 animate-fade-in">
+          <p className="text-xs font-body text-error font-medium flex items-center gap-1 mt-0.5 animate-fade-in">
             <span>{error}</span>
           </p>
         )}
 
         {!error && helperText && (
-          <p className="text-xs font-['Manrope'] text-outline mt-0.5">
+          <p className="text-xs font-body text-outline mt-0.5">
             {helperText}
           </p>
         )}

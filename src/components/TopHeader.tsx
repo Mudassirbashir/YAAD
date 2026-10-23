@@ -244,13 +244,13 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             id="top_header_title"
             className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none px-4 max-w-[62%] sm:max-w-[70%]"
           >
-            <h1 className="text-lg sm:text-xl font-extrabold font-['Plus_Jakarta_Sans'] text-primary tracking-tight truncate flex items-center justify-center">
+            <h1 className="text-lg sm:text-xl font-extrabold font-display text-primary tracking-tight truncate flex items-center justify-center">
               <div
                 id="top_header_wordmark"
                 className="inline-flex items-center gap-2 justify-center select-none"
                 dir="ltr"
               >
-                <span className="font-extrabold text-primary tracking-tight text-lg sm:text-xl font-['Plus_Jakarta_Sans'] leading-none">
+                <span className="font-extrabold text-primary tracking-tight text-lg sm:text-xl font-display leading-none">
                   YAAD
                 </span>
               </div>

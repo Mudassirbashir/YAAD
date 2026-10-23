@@ -184,7 +184,7 @@ export const AdminLoginPage: React.FC<AdminLoginPageProps> = ({
           <img src="/logo.png" alt="YAAD Official Logo" className="w-full h-full object-contain" />
         </div>
         <div>
-          <h1 className="text-2xl font-black text-[#003527] tracking-tight font-['Manrope']">
+          <h1 className="text-2xl font-black text-[#003527] tracking-tight font-body">
             YAAD Admin Portal
           </h1>
           <p className="text-xs text-neutral-500 mt-1">

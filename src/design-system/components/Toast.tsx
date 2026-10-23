@@ -50,7 +50,7 @@ export const Toast: React.FC<ToastProps> = ({
           >
             {icons[type]}
 
-            <span className="font-['Manrope'] text-xs sm:text-sm font-medium leading-snug">
+            <span className="font-body text-xs sm:text-sm font-medium leading-snug">
               {message}
             </span>
 
@@ -62,7 +62,7 @@ export const Toast: React.FC<ToastProps> = ({
                   onAction();
                   onClose();
                 }}
-                className="font-['Plus_Jakarta_Sans'] text-xs font-bold text-primary hover:underline px-1.5 py-0.5 rounded cursor-pointer"
+                className="font-display text-xs font-bold text-primary hover:underline px-1.5 py-0.5 rounded cursor-pointer"
               >
                 {actionLabel}
               </button>

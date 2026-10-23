@@ -58,10 +58,10 @@ export const SplashView: React.FC<SplashViewProps> = ({ onFinish, isRestoringAut
 
         {/* Brand Text Anchor */}
         <div className="flex flex-col items-center gap-1">
-          <h1 className="font-['Plus_Jakarta_Sans'] text-3xl sm:text-4xl font-extrabold text-primary tracking-widest text-center">
+          <h1 className="font-display text-3xl sm:text-4xl font-extrabold text-primary tracking-widest text-center">
             YAAD
           </h1>
-          <p className="text-on-surface-variant font-['Manrope'] text-sm font-medium tracking-wide">
+          <p className="text-on-surface-variant font-body text-sm font-medium tracking-wide">
             Shopping Memory
           </p>
         </div>
@@ -69,12 +69,12 @@ export const SplashView: React.FC<SplashViewProps> = ({ onFinish, isRestoringAut
 
       <div className="absolute bottom-10 flex flex-col items-center gap-2">
         {isRestoringAuth ? (
-          <div className={`flex items-center gap-2 text-xs text-outline font-['Manrope'] ${prefersReducedMotion ? '' : 'animate-pulse'}`}>
+          <div className={`flex items-center gap-2 text-xs text-outline font-body ${prefersReducedMotion ? '' : 'animate-pulse'}`}>
             <span className={`w-2 h-2 rounded-full bg-primary ${prefersReducedMotion ? '' : 'animate-ping'}`} />
             <span>Restoring session...</span>
           </div>
         ) : (
-          <div className="text-xs text-outline font-['Manrope']">
+          <div className="text-xs text-outline font-body">
             Tap anywhere to continue
           </div>
         )}

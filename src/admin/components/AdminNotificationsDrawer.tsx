@@ -231,7 +231,7 @@ export const AdminNotificationsDrawer: React.FC<AdminNotificationsDrawerProps> =
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-extrabold text-[#003527] font-['Manrope']">
+                  <h3 className="text-sm font-extrabold text-[#003527] font-body">
                     Admin Notifications
                   </h3>
                   {unreadCount > 0 && (

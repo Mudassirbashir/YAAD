@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'tokens.dart';
 
 /// Centralized Material 3 Theme for YAAD
@@ -32,6 +33,8 @@ abstract final class YaadTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
+      fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
+      textTheme: GoogleFonts.plusJakartaSansTextTheme(),
       scaffoldBackgroundColor: YaadColors.background,
       appBarTheme: const AppBarTheme(
         backgroundColor: YaadColors.primary,

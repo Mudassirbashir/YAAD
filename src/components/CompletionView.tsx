@@ -184,23 +184,23 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
             </motion.div>
           </div>
 
-          {/* Heading & Subtitle with Newsreader and Manrope Typography */}
+          {/* Heading & Subtitle Typography */}
           <motion.div
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.2, delay: 0.06, ease: [0.32, 0.72, 0, 1] }}
             className="space-y-1 mt-1"
           >
-            <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-300 text-xs font-['Manrope'] font-bold tracking-tight">
+            <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-300 text-xs font-body font-bold tracking-tight">
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span>Shopping Completed</span>
             </div>
 
-            <h1 className="font-['Newsreader'] text-2xl sm:text-3xl font-bold text-primary tracking-tight">
+            <h1 className="font-display text-2xl sm:text-3xl font-bold text-primary tracking-tight">
               {list.title}
             </h1>
 
-            <p className="font-['Manrope'] text-xs sm:text-sm text-on-surface-variant max-w-xs sm:max-w-sm mx-auto">
+            <p className="font-body text-xs sm:text-sm text-on-surface-variant max-w-xs sm:max-w-sm mx-auto">
               All marked items collected. Your trip is saved.
             </p>
           </motion.div>
@@ -231,15 +231,15 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
             whileHover={{ y: -2, transition: { duration: 0.15 } }}
             className="bg-surface-container-lowest rounded-2xl p-3 sm:p-3.5 border border-surface-container-high/80 shadow-2xs hover:shadow-xs flex flex-col justify-between transition-shadow"
           >
-            <div className="flex items-center gap-1.5 text-outline text-[11px] font-['Manrope'] font-semibold">
+            <div className="flex items-center gap-1.5 text-outline text-[11px] font-body font-semibold">
               <ShoppingBag className="w-3.5 h-3.5 text-primary" />
               <span className="truncate">Items</span>
             </div>
             <div className="mt-1.5 flex items-baseline gap-1">
-              <span className="font-['Newsreader'] text-xl sm:text-2xl font-bold text-primary tabular-nums">
+              <span className="font-display text-xl sm:text-2xl font-bold text-primary tabular-nums">
                 {purchasedCount}
               </span>
-              <span className="text-[11px] text-outline font-['Manrope'] font-medium">
+              <span className="text-[11px] text-outline font-body font-medium">
                 /{totalItemsCount}
               </span>
             </div>
@@ -254,12 +254,12 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
             whileHover={{ y: -2, transition: { duration: 0.15 } }}
             className="bg-surface-container-lowest rounded-2xl p-3 sm:p-3.5 border border-surface-container-high/80 shadow-2xs hover:shadow-xs flex flex-col justify-between transition-shadow"
           >
-            <div className="flex items-center gap-1.5 text-outline text-[11px] font-['Manrope'] font-semibold">
+            <div className="flex items-center gap-1.5 text-outline text-[11px] font-body font-semibold">
               <Clock className="w-3.5 h-3.5 text-primary" />
               <span className="truncate">Duration</span>
             </div>
             <div className="mt-1.5">
-              <span className="font-['Newsreader'] text-lg sm:text-xl font-bold text-primary tabular-nums">
+              <span className="font-display text-lg sm:text-xl font-bold text-primary tabular-nums">
                 {tripDurationText}
               </span>
             </div>
@@ -274,12 +274,12 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
             whileHover={{ y: -2, transition: { duration: 0.15 } }}
             className="bg-surface-container-lowest rounded-2xl p-3 sm:p-3.5 border border-surface-container-high/80 shadow-2xs hover:shadow-xs flex flex-col justify-between transition-shadow"
           >
-            <div className="flex items-center gap-1.5 text-outline text-[11px] font-['Manrope'] font-semibold">
+            <div className="flex items-center gap-1.5 text-outline text-[11px] font-body font-semibold">
               <Layers className="w-3.5 h-3.5 text-primary" />
               <span className="truncate">Categories</span>
             </div>
             <div className="mt-1.5">
-              <span className="font-['Newsreader'] text-xl sm:text-2xl font-bold text-primary tabular-nums">
+              <span className="font-display text-xl sm:text-2xl font-bold text-primary tabular-nums">
                 {purchasedCategoryIds.length}
               </span>
             </div>
@@ -296,14 +296,14 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
           >
             <div className="flex items-center justify-between border-b border-surface-dim/60 pb-2.5">
               <div className="flex items-center gap-2">
-                <span className="font-['Manrope'] text-xs font-bold text-primary uppercase tracking-wider">
+                <span className="font-body text-xs font-bold text-primary uppercase tracking-wider">
                   Purchased Items
                 </span>
-                <span className="text-[11px] font-['Manrope'] px-2 py-0.2 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 font-bold border border-emerald-200/60 dark:border-emerald-800/40">
+                <span className="text-[11px] font-body px-2 py-0.2 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 font-bold border border-emerald-200/60 dark:border-emerald-800/40">
                   {purchasedCount}
                 </span>
               </div>
-              <span className="text-[11px] font-['Manrope'] text-outline">
+              <span className="text-[11px] font-body text-outline">
                 {formattedTime}
               </span>
             </div>
@@ -354,7 +354,7 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
                         }`}
                         title={item.imageUrl ? `Click to view photo of ${item.name}` : undefined}
                       />
-                      <BidiText className="font-['Newsreader'] text-sm text-on-surface font-medium truncate">
+                      <BidiText className="font-display text-sm text-on-surface font-medium truncate">
                         {item.name}
                       </BidiText>
                     </div>
@@ -362,7 +362,7 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
                     {formattedQty && (
                       <bdi
                         dir="ltr"
-                        className="font-['Manrope'] tabular-nums text-[11px] font-bold text-primary bg-surface-container-high px-2 py-0.5 rounded-md shrink-0"
+                        className="font-body tabular-nums text-[11px] font-bold text-primary bg-surface-container-high px-2 py-0.5 rounded-md shrink-0"
                       >
                         {formattedQty}
                       </bdi>
@@ -389,7 +389,7 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
             id="completion_return_home_btn"
             type="button"
             onClick={onReturnHome}
-            className="w-full h-[50px] rounded-2xl bg-primary text-on-primary font-['Manrope'] text-sm font-bold shadow-sm hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full h-[50px] rounded-2xl bg-primary text-on-primary font-body text-sm font-bold shadow-sm hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 cursor-pointer"
           >
             <Home className="w-4 h-4" />
             <span>Done • Go Home</span>
@@ -404,7 +404,7 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
               id="completion_start_new_list_btn"
               type="button"
               onClick={handleStartNewList}
-              className="h-[46px] rounded-2xl bg-surface-container hover:bg-surface-container-high text-primary font-['Manrope'] text-xs sm:text-sm font-bold border border-surface-dim/80 transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+              className="h-[46px] rounded-2xl bg-surface-container hover:bg-surface-container-high text-primary font-body text-xs sm:text-sm font-bold border border-surface-dim/80 transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
             >
               <PlusCircle className="w-4 h-4 text-primary" />
               <span>Start New List</span>
@@ -417,7 +417,7 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
               id="completion_review_trip_btn"
               type="button"
               onClick={handleReviewTrip}
-              className="h-[46px] rounded-2xl bg-surface-container-low hover:bg-surface-container text-primary font-['Manrope'] text-xs sm:text-sm font-bold border border-surface-dim/80 transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+              className="h-[46px] rounded-2xl bg-surface-container-low hover:bg-surface-container text-primary font-body text-xs sm:text-sm font-bold border border-surface-dim/80 transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
             >
               <FileEdit className="w-4 h-4 text-primary" />
               <span>Review Trip</span>
@@ -430,7 +430,7 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
               id="completion_view_history_link"
               type="button"
               onClick={onViewHistory}
-              className="inline-flex items-center gap-1.5 text-xs font-['Manrope'] font-semibold text-outline hover:text-primary transition-colors cursor-pointer py-1"
+              className="inline-flex items-center gap-1.5 text-xs font-body font-semibold text-outline hover:text-primary transition-colors cursor-pointer py-1"
             >
               <History className="w-3.5 h-3.5" />
               <span>View in History</span>

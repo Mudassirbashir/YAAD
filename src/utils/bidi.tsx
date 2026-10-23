@@ -76,7 +76,7 @@ export const MixedQuantityBadge: React.FC<MixedItemBadgeProps> = ({
   const text = `${rawQty}${rawUnit}`;
 
   return (
-    <bdi dir="ltr" className={`bidi-isolate font-['Manrope'] tabular-nums ${className}`}>
+    <bdi dir="ltr" className={`bidi-isolate font-body tabular-nums ${className}`}>
       {text}
     </bdi>
   );

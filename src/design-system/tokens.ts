@@ -88,10 +88,10 @@ export function getNestedRadius(outerRadiusPx: number, paddingPx: number): numbe
 
 export const typography = {
   fontFamily: {
-    sans: 'var(--font-sans, "Plus Jakarta Sans", "Manrope", sans-serif)',
-    display: 'var(--font-display, "Plus Jakarta Sans", "Manrope", sans-serif)',
-    body: 'var(--font-body, "Manrope", "Plus Jakarta Sans", sans-serif)',
-    urdu: 'var(--font-urdu, "Noto Nastaliq Urdu", "Noto Sans Arabic", sans-serif)',
+    sans: 'var(--font-sans, "Plus Jakarta Sans", sans-serif)',
+    display: 'var(--font-display, "Plus Jakarta Sans", sans-serif)',
+    body: 'var(--font-body, "Plus Jakarta Sans", sans-serif)',
+    urdu: 'var(--font-urdu, "Noto Nastaliq Urdu", sans-serif)',
   },
   scale: {
     // Large Screen / Page Hero Titles

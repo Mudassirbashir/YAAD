@@ -167,7 +167,7 @@ export const AdminSecurityModal: React.FC<AdminSecurityModalProps> = ({ isOpen, 
             <ShieldCheck className="w-6 h-6 text-emerald-600" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-[#003527] tracking-tight font-['Manrope']">
+            <h3 className="text-lg font-bold text-[#003527] tracking-tight font-body">
               Admin Security &amp; Credentials
             </h3>
             <p className="text-xs text-neutral-500">

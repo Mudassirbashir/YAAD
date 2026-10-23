@@ -113,7 +113,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
       >
         {/* Header */}
         <div className="flex items-center justify-between pb-1 border-b border-surface-dim/50">
-          <h3 className="text-base sm:text-lg font-bold text-on-surface font-['Plus_Jakarta_Sans']">
+          <h3 className="text-base sm:text-lg font-bold text-on-surface font-display">
             {t('settings.changePassword') || (language === 'ur' ? 'پاس ورڈ تبدیل کریں' : 'Change Password')}
           </h3>
           <button
@@ -150,7 +150,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
           <div className="space-y-1">
             <label
               htmlFor="modal_new_pwd_input"
-              className="text-xs font-bold text-on-surface font-['Plus_Jakarta_Sans'] flex items-center gap-1.5"
+              className="text-xs font-bold text-on-surface font-display flex items-center gap-1.5"
             >
               <LockKeyhole className="w-3.5 h-3.5 text-primary" />
               <span>{t('settings.newPassword') || (language === 'ur' ? 'نیا پاس ورڈ' : 'New Password')}</span>
@@ -180,7 +180,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
           <div className="space-y-1">
             <label
               htmlFor="modal_confirm_pwd_input"
-              className="text-xs font-bold text-on-surface font-['Plus_Jakarta_Sans'] flex items-center gap-1.5"
+              className="text-xs font-bold text-on-surface font-display flex items-center gap-1.5"
             >
               <LockKeyhole className="w-3.5 h-3.5 text-primary" />
               <span>{t('settings.confirmPassword') || (language === 'ur' ? 'پاس ورڈ کی تصدیق کریں' : 'Confirm Password')}</span>

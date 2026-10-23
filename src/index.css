@@ -263,12 +263,8 @@ html[data-app-theme="rose"] {
   }
 
   /* Override hardcoded font utilities when in Urdu mode */
-  html[lang="ur"] [class*="font-['Plus_Jakarta_Sans']"],
-  html[lang="ur"] [class*="font-['Manrope']"],
   html[lang="ur"] .font-display,
   html[lang="ur"] .font-body,
-  html[dir="rtl"] [class*="font-['Plus_Jakarta_Sans']"],
-  html[dir="rtl"] [class*="font-['Manrope']"],
   html[dir="rtl"] .font-display,
   html[dir="rtl"] .font-body {
     font-family: "Noto Nastaliq Urdu", sans-serif !important;
@@ -382,13 +378,6 @@ html[data-app-theme="rose"] {
   font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-[class*="font-['Manrope']"] {
-  font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-}
-
-[class*="font-['Plus_Jakarta_Sans']"] {
-  font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-}
 
 .material-symbols-outlined {
   font-family: 'Material Symbols Outlined';

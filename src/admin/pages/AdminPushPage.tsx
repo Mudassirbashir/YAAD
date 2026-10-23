@@ -277,7 +277,7 @@ export const AdminPushPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-black text-[#003527] tracking-tight font-['Manrope'] flex items-center gap-2">
+          <h2 className="text-xl sm:text-2xl font-black text-[#003527] tracking-tight font-body flex items-center gap-2">
             <span>Push Notifications &amp; Alerts</span>
             <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
               {isLoading && campaigns.length === 0 ? '…' : `${campaigns.length} Broadcasts`}

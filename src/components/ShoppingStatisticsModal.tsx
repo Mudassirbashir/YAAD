@@ -86,12 +86,12 @@ export const ShoppingStatisticsModal: React.FC<ShoppingStatisticsModalProps> = (
             <div>
               <h3
                 className={`text-lg font-bold text-on-surface leading-tight ${
-                  language === 'ur' ? 'font-urdu text-xl' : "font-['Plus_Jakarta_Sans']"
+                  language === 'ur' ? 'font-urdu text-xl' : "font-display"
                 }`}
               >
                 {t('statistics.title')}
               </h3>
-              <p className="text-xs text-outline font-medium font-['Manrope']">
+              <p className="text-xs text-outline font-medium font-body">
                 {t('statistics.subtitle')}
               </p>
             </div>
@@ -128,10 +128,10 @@ export const ShoppingStatisticsModal: React.FC<ShoppingStatisticsModalProps> = (
               <ShoppingBag className="w-7 h-7 stroke-[2]" />
             </div>
             <div className="space-y-1">
-              <h4 className="text-base font-bold text-on-surface font-['Manrope']">
+              <h4 className="text-base font-bold text-on-surface font-body">
                 {t('statistics.emptyTitle')}
               </h4>
-              <p className="text-xs text-outline font-['Manrope'] max-w-xs mx-auto leading-relaxed">
+              <p className="text-xs text-outline font-body max-w-xs mx-auto leading-relaxed">
                 {t('statistics.emptySubtitle')}
               </p>
             </div>
@@ -145,10 +145,10 @@ export const ShoppingStatisticsModal: React.FC<ShoppingStatisticsModalProps> = (
                 <ShoppingBag className="w-4 h-4 stroke-[2.2]" />
               </div>
               <div>
-                <div className="text-2xl font-extrabold text-on-surface font-['Plus_Jakarta_Sans']">
+                <div className="text-2xl font-extrabold text-on-surface font-display">
                   {totalLists}
                 </div>
-                <div className="text-xs font-medium text-outline font-['Manrope']">
+                <div className="text-xs font-medium text-outline font-body">
                   {t('statistics.totalLists')}
                 </div>
               </div>
@@ -160,10 +160,10 @@ export const ShoppingStatisticsModal: React.FC<ShoppingStatisticsModalProps> = (
                 <ListChecks className="w-4 h-4 stroke-[2.2]" />
               </div>
               <div>
-                <div className="text-2xl font-extrabold text-on-surface font-['Plus_Jakarta_Sans']">
+                <div className="text-2xl font-extrabold text-on-surface font-display">
                   {activeLists}
                 </div>
-                <div className="text-xs font-medium text-outline font-['Manrope']">
+                <div className="text-xs font-medium text-outline font-body">
                   {t('statistics.activeLists')}
                 </div>
               </div>
@@ -175,10 +175,10 @@ export const ShoppingStatisticsModal: React.FC<ShoppingStatisticsModalProps> = (
                 <CheckCircle2 className="w-4 h-4 stroke-[2.2]" />
               </div>
               <div>
-                <div className="text-2xl font-extrabold text-primary font-['Plus_Jakarta_Sans']">
+                <div className="text-2xl font-extrabold text-primary font-display">
                   {completedTrips}
                 </div>
-                <div className="text-xs font-medium text-outline font-['Manrope']">
+                <div className="text-xs font-medium text-outline font-body">
                   {t('statistics.completedLists')}
                 </div>
               </div>
@@ -190,10 +190,10 @@ export const ShoppingStatisticsModal: React.FC<ShoppingStatisticsModalProps> = (
                 <Sparkles className="w-4 h-4 stroke-[2.2]" />
               </div>
               <div>
-                <div className="text-2xl font-extrabold text-on-surface font-['Plus_Jakarta_Sans']">
+                <div className="text-2xl font-extrabold text-on-surface font-display">
                   {totalPurchasedItems}
                 </div>
-                <div className="text-xs font-medium text-outline font-['Manrope']">
+                <div className="text-xs font-medium text-outline font-body">
                   {t('statistics.itemsPurchased')}
                 </div>
               </div>
@@ -206,7 +206,7 @@ export const ShoppingStatisticsModal: React.FC<ShoppingStatisticsModalProps> = (
           <div className="w-8 h-8 rounded-xl bg-primary text-white flex items-center justify-center shrink-0">
             <ShieldCheck className="w-4 h-4 stroke-[2.2]" />
           </div>
-          <p className="text-xs text-emerald-950 leading-relaxed font-['Manrope']">
+          <p className="text-xs text-emerald-950 leading-relaxed font-body">
             {completionRate}% completion rate. YAAD records and syncs your shopping habits securely.
           </p>
         </div>

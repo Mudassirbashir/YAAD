@@ -58,7 +58,7 @@ export const AppearanceSection: React.FC = () => {
           </div>
           <h2
             className={`text-base sm:text-lg font-bold text-on-surface tracking-tight leading-tight ${
-              language === 'ur' ? 'font-urdu text-lg sm:text-xl' : "font-['Manrope']"
+              language === 'ur' ? 'font-urdu text-lg sm:text-xl' : "font-body"
             }`}
           >
             {t('settings.appearanceTitle') ||
@@ -83,7 +83,7 @@ export const AppearanceSection: React.FC = () => {
         {/* Subtitle / Explainer */}
         <div className="flex items-center justify-between gap-3 pb-1 border-b border-surface-dim/60">
           <div>
-            <h3 className="text-sm sm:text-base font-bold text-on-surface font-['Manrope']">
+            <h3 className="text-sm sm:text-base font-bold text-on-surface font-body">
               {language === 'ur'
                 ? 'پری انسٹالڈ خوبصورت تھیمز'
                 : language === 'roman-urdu'
@@ -130,7 +130,7 @@ export const AppearanceSection: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <div className="font-bold text-sm text-on-surface leading-tight font-['Manrope']">
+                      <div className="font-bold text-sm text-on-surface leading-tight font-body">
                         {getThemeLocalizedName(item)}
                       </div>
                       <div className="text-[10px] text-outline mt-0.5">

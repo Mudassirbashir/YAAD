@@ -119,10 +119,10 @@ export const QuickFavoritesModal: React.FC<QuickFavoritesModalProps> = ({
               <Heart className="w-5 h-5 fill-rose-500" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-on-surface font-['Plus_Jakarta_Sans'] leading-tight">
+              <h3 className="text-lg font-bold text-on-surface font-display leading-tight">
                 {t('home.favoritesModal.title')}
               </h3>
-              <p className="text-xs text-outline font-['Manrope']">
+              <p className="text-xs text-outline font-body">
                 {activeListTitle 
                   ? t('recommendations.addToListPrompt', { title: activeListTitle }) 
                   : t('home.favoritesModal.subtitle')}
@@ -157,10 +157,10 @@ export const QuickFavoritesModal: React.FC<QuickFavoritesModalProps> = ({
                     size={42}
                   />
                   <div className="min-w-0">
-                    <h4 className="text-sm font-semibold text-on-surface font-['Plus_Jakarta_Sans'] truncate">
+                    <h4 className="text-sm font-semibold text-on-surface font-display truncate">
                       {localizedName}
                     </h4>
-                    <span className="text-xs text-outline font-['Manrope']">
+                    <span className="text-xs text-outline font-body">
                       {item.defaultQuantity} {item.defaultUnit}
                     </span>
                   </div>

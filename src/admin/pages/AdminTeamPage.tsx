@@ -606,7 +606,7 @@ Barah-e-karam 24 ghante ke andar is link ko open karke apna secure password aur 
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-black text-[#003527] tracking-tight font-['Manrope']">
+          <h2 className="text-xl sm:text-2xl font-black text-[#003527] tracking-tight font-body">
             Staff &amp; Access Governance
           </h2>
           <p className="text-xs text-neutral-500 mt-1">
@@ -1026,7 +1026,7 @@ Barah-e-karam 24 ghante ke andar is link ko open karke apna secure password aur 
       {activeTab === 'allowlist' && isSuperAdmin && (
         <div className="bg-white border border-neutral-200 rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
           <div>
-            <h3 className="text-base font-bold text-[#003527] tracking-tight flex items-center gap-2 font-['Manrope']">
+            <h3 className="text-base font-bold text-[#003527] tracking-tight flex items-center gap-2 font-body">
               <Globe className="w-5 h-5 text-emerald-600" />
               <span>Email Allowlist &amp; Domain Restrictions</span>
             </h3>
@@ -1256,7 +1256,7 @@ Barah-e-karam 24 ghante ke andar is link ko open karke apna secure password aur 
             </button>
 
             <div>
-              <h3 className="text-lg font-bold text-[#003527] tracking-tight flex items-center gap-2 font-['Manrope']">
+              <h3 className="text-lg font-bold text-[#003527] tracking-tight flex items-center gap-2 font-body">
                 <UserPlus className="w-5 h-5 text-emerald-600" />
                 <span>Invite New Staff Member</span>
               </h3>

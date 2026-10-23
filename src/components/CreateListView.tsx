@@ -168,7 +168,7 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
       <main className="flex-1 w-full max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto px-4 sm:px-6 pt-2.5 pb-20 flex flex-col gap-3">
         {/* Page Title: Create New List placed cleanly inside the page */}
         <div>
-          <h1 className="font-['Plus_Jakarta_Sans'] text-xl sm:text-2xl font-extrabold text-on-surface tracking-tight">
+          <h1 className="font-display text-xl sm:text-2xl font-extrabold text-on-surface tracking-tight">
             {t('createList.title') || 'Create New List'}
           </h1>
         </div>
@@ -194,7 +194,7 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
                 setCustomTitle(e.target.value);
                 if (errorMsg) setErrorMsg('');
               }}
-              className="w-full h-11 sm:h-12 ps-5 pe-14 bg-transparent text-on-surface font-['Manrope'] text-sm sm:text-base outline-none placeholder:text-neutral-400 dark:placeholder:text-neutral-500 rounded-full"
+              className="w-full h-11 sm:h-12 ps-5 pe-14 bg-transparent text-on-surface font-body text-sm sm:text-base outline-none placeholder:text-neutral-400 dark:placeholder:text-neutral-500 rounded-full"
               placeholder={t('createList.customPlaceholder') || 'List Name'}
               aria-label="List Name"
             />
@@ -215,7 +215,7 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
           {errorMsg && (
             <div
               role="alert"
-              className="px-3.5 py-2 rounded-2xl bg-error/10 border border-error/20 text-error font-['Manrope'] text-xs sm:text-sm font-medium flex items-center gap-2 animate-fade-in"
+              className="px-3.5 py-2 rounded-2xl bg-error/10 border border-error/20 text-error font-body text-xs sm:text-sm font-medium flex items-center gap-2 animate-fade-in"
             >
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{errorMsg}</span>
@@ -225,7 +225,7 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
 
         {/* 4. Categories Section Heading */}
         <div className="pt-1">
-          <h2 className="font-['Plus_Jakarta_Sans'] text-sm sm:text-base font-bold text-on-surface text-start px-0.5">
+          <h2 className="font-display text-sm sm:text-base font-bold text-on-surface text-start px-0.5">
             {t('createList.categoriesHeading') || 'Categories'}
           </h2>
         </div>
@@ -261,7 +261,7 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
                     </div>
 
                     {/* Right Hand Side of Icon: Category Name */}
-                    <span className="font-['Plus_Jakarta_Sans'] font-semibold text-sm sm:text-base text-on-surface truncate">
+                    <span className="font-display font-semibold text-sm sm:text-base text-on-surface truncate">
                       {ctx.title}
                     </span>
                   </div>

@@ -31,7 +31,7 @@ export const AppPublicFooter: React.FC<AppPublicFooterProps> = ({
                 className="w-full h-full object-contain"
               />
             </div>
-            <span className="font-extrabold text-base text-[#1c2826] tracking-tight font-['Plus_Jakarta_Sans']">
+            <span className="font-extrabold text-base text-[#1c2826] tracking-tight font-display">
               YAAD
             </span>
           </div>

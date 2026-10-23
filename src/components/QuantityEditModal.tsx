@@ -124,7 +124,7 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
               className="w-11 h-11 rounded-2xl shrink-0 border border-surface-dim"
             />
             <div className="min-w-0">
-              <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-lg text-primary truncate leading-tight">
+              <h3 className="font-display font-bold text-lg text-primary truncate leading-tight">
                 {item.name}
               </h3>
               {item.nameUrdu && (
@@ -151,7 +151,7 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
               <Camera className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <span className="text-xs font-['Manrope'] font-bold text-primary block truncate">
+              <span className="text-xs font-body font-bold text-primary block truncate">
                 {imageUrl ? (isUrdu ? 'تصویر منسلک ہے' : 'Item Photo Attached') : (isUrdu ? 'پروڈکٹ کی تصویر' : 'Product Photo')}
               </span>
               <span className="text-[10px] text-on-surface-variant font-medium block truncate">
@@ -174,7 +174,7 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
             <button
               type="button"
               onClick={() => setIsPhotoModalOpen(true)}
-              className="px-2.5 py-1.5 rounded-xl bg-primary text-on-primary hover:bg-primary-container text-xs font-bold font-['Manrope'] flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs active:scale-95"
+              className="px-2.5 py-1.5 rounded-xl bg-primary text-on-primary hover:bg-primary-container text-xs font-bold font-body flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs active:scale-95"
             >
               <Camera className="w-3.5 h-3.5" />
               <span>{imageUrl ? (isUrdu ? 'تبدیل کریں' : 'Change') : (isUrdu ? 'تصویر لیں' : 'Add Photo')}</span>
@@ -184,7 +184,7 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
 
         {/* Stepper + Manual Input */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-['Manrope'] font-medium text-outline">
+          <label className="text-xs font-body font-medium text-outline">
             {t('quantity') || 'Quantity'}
           </label>
           <div className="flex items-center gap-2">
@@ -204,7 +204,7 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
                 placeholder="e.g. 2, 1.5, 500"
-                className="w-full h-11 px-3 text-center font-['Manrope'] font-bold text-lg text-primary bg-surface-container-low border border-surface-container-high rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                className="w-full h-11 px-3 text-center font-body font-bold text-lg text-primary bg-surface-container-low border border-surface-container-high rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
               />
             </div>
 
@@ -221,7 +221,7 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
 
         {/* Quick Quantity Presets */}
         <div className="flex flex-col gap-1.5">
-          <span className="text-[11px] font-['Manrope'] font-semibold text-outline uppercase tracking-wider">
+          <span className="text-[11px] font-body font-semibold text-outline uppercase tracking-wider">
             Quick Fractions & Numbers
           </span>
           <div className="flex gap-1.5 overflow-x-auto pb-1 no-scrollbar -mx-1 px-1">
@@ -232,7 +232,7 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
                   key={q.val}
                   type="button"
                   onClick={() => setQuantity(q.val)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-['Manrope'] font-bold whitespace-nowrap transition-all shrink-0 active:scale-95 ${
+                  className={`px-3 py-1.5 rounded-full text-xs font-body font-bold whitespace-nowrap transition-all shrink-0 active:scale-95 ${
                     isSelected
                       ? 'bg-primary text-on-primary shadow-xs'
                       : 'bg-surface-container hover:bg-surface-container-high text-on-surface-variant'
@@ -248,7 +248,7 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
         {/* Unit Selector */}
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-['Manrope'] font-semibold text-outline uppercase tracking-wider">
+            <span className="text-[11px] font-body font-semibold text-outline uppercase tracking-wider">
               {t('unit') || 'Unit'}
             </span>
             {unit && (
@@ -269,7 +269,7 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
                   key={u.id}
                   type="button"
                   onClick={() => setUnit(isSelected ? '' : u.id)}
-                  className={`px-2.5 py-1 rounded-xl text-xs font-['Manrope'] font-semibold transition-all flex items-center gap-1 active:scale-95 ${
+                  className={`px-2.5 py-1 rounded-xl text-xs font-body font-semibold transition-all flex items-center gap-1 active:scale-95 ${
                     isSelected
                       ? 'bg-primary text-on-primary shadow-xs'
                       : 'bg-surface-container hover:bg-surface-container-high text-on-surface-variant'
@@ -289,7 +289,7 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
               <button
                 type="button"
                 onClick={handleDelete}
-                className="px-3 py-2 rounded-xl text-xs font-['Manrope'] font-bold text-error bg-error/10 hover:bg-error/20 flex items-center gap-1.5 transition-colors cursor-pointer"
+                className="px-3 py-2 rounded-xl text-xs font-body font-bold text-error bg-error/10 hover:bg-error/20 flex items-center gap-1.5 transition-colors cursor-pointer"
                 title="Delete this item from the list"
               >
                 <Trash2 className="w-3.5 h-3.5" />
@@ -300,7 +300,7 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
               <button
                 type="button"
                 onClick={handleClear}
-                className="px-2.5 py-2 rounded-xl text-xs font-['Manrope'] font-medium text-on-surface-variant hover:bg-surface-container transition-colors cursor-pointer"
+                className="px-2.5 py-2 rounded-xl text-xs font-body font-medium text-on-surface-variant hover:bg-surface-container transition-colors cursor-pointer"
               >
                 <span>Clear Qty</span>
               </button>
@@ -311,14 +311,14 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-3.5 py-2 rounded-xl text-xs font-['Manrope'] font-bold text-on-surface-variant bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer"
+              className="px-3.5 py-2 rounded-xl text-xs font-body font-bold text-on-surface-variant bg-surface-container hover:bg-surface-container-high transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="button"
               onClick={handleSave}
-              className="px-4 py-2 rounded-xl text-xs font-['Manrope'] font-bold text-on-primary bg-primary hover:bg-primary/90 shadow-xs flex items-center gap-1.5 transition-colors active:scale-95 cursor-pointer"
+              className="px-4 py-2 rounded-xl text-xs font-body font-bold text-on-primary bg-primary hover:bg-primary/90 shadow-xs flex items-center gap-1.5 transition-colors active:scale-95 cursor-pointer"
             >
               <Check className="w-4 h-4" />
               <span>Save</span>

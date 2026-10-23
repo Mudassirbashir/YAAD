@@ -199,7 +199,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ onBack }) 
               <ArrowLeft className="w-5 h-5 rtl:rotate-180" />
             </button>
             <div className="flex items-center gap-2">
-              <h1 className="text-base sm:text-lg font-extrabold font-['Plus_Jakarta_Sans'] text-primary tracking-tight">
+              <h1 className="text-base sm:text-lg font-extrabold font-display text-primary tracking-tight">
                 {language === 'ur' ? 'اطلاعات اور نوٹیفکیشنز' : 'Notifications & Alerts'}
               </h1>
               <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
@@ -254,7 +254,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ onBack }) 
             <MessageSquare className="w-4 h-4 stroke-[2.2]" />
           </div>
           <div className="text-xs text-on-surface leading-relaxed">
-            <p className="font-bold text-primary font-['Plus_Jakarta_Sans']">
+            <p className="font-bold text-primary font-display">
               {language === 'ur' ? 'سپر ایڈمن کے ساتھ براہِ راست رابطہ' : 'Direct Interaction with YAAD Super Admin'}
             </p>
             <p className="text-on-surface-variant text-[11px] mt-0.5">
@@ -286,7 +286,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ onBack }) 
                       {getCategoryIcon(notif.category)}
                     </div>
                     <div className="min-w-0">
-                      <h2 className="text-sm sm:text-base font-bold text-on-surface truncate font-['Plus_Jakarta_Sans']">
+                      <h2 className="text-sm sm:text-base font-bold text-on-surface truncate font-display">
                         {title}
                       </h2>
                       {notif.sentAt && (

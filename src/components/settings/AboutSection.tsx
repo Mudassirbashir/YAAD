@@ -49,7 +49,7 @@ export const AboutSection: React.FC<AboutSectionProps> = ({
           </div>
           <h2
             className={`text-base sm:text-lg font-bold text-on-surface tracking-tight leading-tight ${
-              language === 'ur' ? 'font-urdu text-lg sm:text-xl' : "font-['Manrope']"
+              language === 'ur' ? 'font-urdu text-lg sm:text-xl' : "font-body"
             }`}
           >
             {t('settings.aboutTitle') || (language === 'ur' ? 'یاد کے بارے میں' : 'About YAAD')}
@@ -74,7 +74,7 @@ export const AboutSection: React.FC<AboutSectionProps> = ({
               <Sparkles className="w-5 h-5 stroke-[2.2]" />
             </div>
             <div className="min-w-0">
-              <h3 className="text-sm sm:text-base font-bold text-on-surface font-['Manrope'] truncate">
+              <h3 className="text-sm sm:text-base font-bold text-on-surface font-body truncate">
                 {t('settings.aboutYaad') || (language === 'ur' ? 'یاد ایپ کا تعارف' : 'About YAAD')}
               </h3>
               <p className="text-xs text-outline truncate max-w-[240px] sm:max-w-md">
@@ -101,7 +101,7 @@ export const AboutSection: React.FC<AboutSectionProps> = ({
               <Headphones className="w-5 h-5 stroke-[2.2]" />
             </div>
             <div className="min-w-0">
-              <h3 className="text-sm sm:text-base font-bold text-on-surface font-['Manrope'] truncate">
+              <h3 className="text-sm sm:text-base font-bold text-on-surface font-body truncate">
                 {t('settings.helpFeedback') ||
                   t('settings.helpSupport') ||
                   (language === 'ur' ? 'مدد اور رائے' : 'Help & Feedback')}
@@ -130,7 +130,7 @@ export const AboutSection: React.FC<AboutSectionProps> = ({
               <ShieldCheck className="w-5 h-5 stroke-[2.2]" />
             </div>
             <div className="min-w-0">
-              <h3 className="text-sm sm:text-base font-bold text-on-surface font-['Manrope'] truncate">
+              <h3 className="text-sm sm:text-base font-bold text-on-surface font-body truncate">
                 {t('settings.privacyPolicy') || (language === 'ur' ? 'پرائیویسی پالیسی' : 'Privacy Policy')}
               </h3>
               <p className="text-xs text-outline truncate max-w-[240px] sm:max-w-md">
@@ -156,7 +156,7 @@ export const AboutSection: React.FC<AboutSectionProps> = ({
               <ScrollText className="w-5 h-5 stroke-[2.2]" />
             </div>
             <div className="min-w-0">
-              <h3 className="text-sm sm:text-base font-bold text-on-surface font-['Manrope'] truncate">
+              <h3 className="text-sm sm:text-base font-bold text-on-surface font-body truncate">
                 {t('settings.termsOfService') || (language === 'ur' ? 'استعمال کی شرائط' : 'Terms of Service')}
               </h3>
               <p className="text-xs text-outline truncate max-w-[240px] sm:max-w-md">
@@ -180,7 +180,7 @@ export const AboutSection: React.FC<AboutSectionProps> = ({
               <Cpu className="w-5 h-5 stroke-[2]" />
             </div>
             <div className="min-w-0">
-              <h3 className="text-sm sm:text-base font-bold text-on-surface font-['Manrope'] truncate">
+              <h3 className="text-sm sm:text-base font-bold text-on-surface font-body truncate">
                 {t('settings.versionTitle') || (language === 'ur' ? 'ایپ ورژن' : 'Version')}
               </h3>
               <p className="text-xs text-outline truncate max-w-[200px] sm:max-w-xs">
@@ -200,7 +200,7 @@ export const AboutSection: React.FC<AboutSectionProps> = ({
 
       {/* Footer Tagline & Version */}
       <footer className="pt-3 pb-1 text-center space-y-0.5 text-xs text-outline">
-        <p className="font-bold text-on-surface-variant font-['Manrope']">
+        <p className="font-bold text-on-surface-variant font-body">
           {t('settings.footerTagline') || 'Simple Shopping Memory'}
         </p>
         <p className="text-[11px] text-outline/70">

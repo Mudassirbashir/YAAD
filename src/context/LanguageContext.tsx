@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useRef, ReactNode } from 'react';
 import { Language, translations } from '../translations';
 import { CategoryId, CATEGORIES_LIST, CATEGORY_MAP } from '../types';
-import { useAuth } from './AuthContext';
+import { AuthContext } from './AuthContext';
 
 interface LanguageContextType {
   language: Language;
@@ -18,7 +18,10 @@ const LANGUAGE_STORAGE_KEY = 'yaad_user_language';
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { profile, updateUserProfile, user } = useAuth();
+  const auth = useContext(AuthContext);
+  const profile = auth?.profile;
+  const updateUserProfile = auth?.updateUserProfile;
+  const user = auth?.user;
   const prevUserIdRef = useRef<string | null>(null);
   const prevProfileLanguageRef = useRef<string | undefined>(undefined);
   const lastExplicitSelectionTimeRef = useRef<number>(0);

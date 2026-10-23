@@ -160,7 +160,7 @@ export const AdminAuditLogPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-black text-[#003527] tracking-tight font-['Manrope'] flex items-center gap-2">
+          <h2 className="text-xl sm:text-2xl font-black text-[#003527] tracking-tight font-body flex items-center gap-2">
             <History className="w-6 h-6 text-emerald-600" />
             <span>Append-Only Audit Trail</span>
           </h2>

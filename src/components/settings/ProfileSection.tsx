@@ -82,7 +82,7 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
           </div>
           <h2
             className={`text-base sm:text-lg font-bold text-on-surface tracking-tight leading-tight ${
-              language === 'ur' ? 'font-urdu text-lg sm:text-xl' : "font-['Manrope']"
+              language === 'ur' ? 'font-urdu text-lg sm:text-xl' : "font-body"
             }`}
           >
             {t('settings.accountTitle') || (language === 'ur' ? 'پروفائل و اکاؤنٹ' : 'Profile & Account')}
@@ -142,7 +142,7 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
               <div className="flex-1 text-center sm:text-start space-y-1.5 w-full min-w-0">
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                   <div className="flex items-center gap-1.5 truncate max-w-full">
-                    <h3 className="text-lg sm:text-xl font-bold text-on-surface font-['Manrope'] truncate">
+                    <h3 className="text-lg sm:text-xl font-bold text-on-surface font-body truncate">
                       {displayName}
                     </h3>
                     {(profile?.is_verified || (user?.user_metadata as any)?.is_verified) && (
@@ -156,13 +156,13 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
                 </div>
 
                 {/* Email address */}
-                <p className="text-xs sm:text-sm text-outline flex items-center justify-center sm:justify-start gap-1.5 font-['Plus_Jakarta_Sans']">
+                <p className="text-xs sm:text-sm text-outline flex items-center justify-center sm:justify-start gap-1.5 font-display">
                   <Mail className="w-3.5 h-3.5 shrink-0 text-primary" />
                   <span className="truncate max-w-[280px] sm:max-w-xs">{displayEmail}</span>
                 </p>
 
                 {/* Phone number */}
-                <p className="text-xs sm:text-sm text-outline flex items-center justify-center sm:justify-start gap-1.5 font-['Plus_Jakarta_Sans']">
+                <p className="text-xs sm:text-sm text-outline flex items-center justify-center sm:justify-start gap-1.5 font-display">
                   <PhoneCall className="w-3.5 h-3.5 shrink-0 text-primary" />
                   <span className="truncate max-w-[280px] sm:max-w-xs" dir="ltr">
                     {displayPhone
@@ -371,7 +371,7 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
                 className="ring-2 ring-surface-dim shadow-xs"
               />
               <div className="space-y-1">
-                <h3 className="text-base sm:text-lg font-bold text-on-surface font-['Manrope']">
+                <h3 className="text-base sm:text-lg font-bold text-on-surface font-body">
                   {t('settings.guestUser') || (language === 'ur' ? 'مہمان صارف' : 'Guest User')}
                 </h3>
                 <p className="text-xs sm:text-sm text-outline max-w-sm">

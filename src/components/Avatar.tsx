@@ -96,7 +96,7 @@ export const Avatar: React.FC<AvatarProps> = ({
     return (
       <div
         onClick={onClick}
-        className={`rounded-full overflow-hidden flex items-center justify-center font-['Plus_Jakarta_Sans'] font-bold select-none shrink-0 bg-surface-container border border-surface-dim ${
+        className={`rounded-full overflow-hidden flex items-center justify-center font-display font-bold select-none shrink-0 bg-surface-container border border-surface-dim ${
           sizeClasses[size]
         } ${className}`}
         role={onClick ? 'button' : undefined}
@@ -118,7 +118,7 @@ export const Avatar: React.FC<AvatarProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`rounded-full overflow-hidden flex items-center justify-center font-['Plus_Jakarta_Sans'] font-bold select-none shrink-0 bg-primary-container text-on-primary border border-primary/20 ${
+      className={`rounded-full overflow-hidden flex items-center justify-center font-display font-bold select-none shrink-0 bg-primary-container text-on-primary border border-primary/20 ${
         sizeClasses[size]
       } ${className}`}
       role={onClick ? 'button' : undefined}

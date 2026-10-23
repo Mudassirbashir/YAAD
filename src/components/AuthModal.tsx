@@ -239,7 +239,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             animate={{ opacity: 1, scale: 1, transition: { duration: 0.18, ease: [0.32, 0.72, 0, 1] } }}
             exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.16, ease: [0.36, 0, 0.66, 0] } }}
             onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-[28px] sm:rounded-[32px] p-6 sm:p-7 max-w-[430px] w-full shadow-2xl border border-neutral-100 space-y-4 font-['Manrope']"
+            className="bg-white rounded-[28px] sm:rounded-[32px] p-6 sm:p-7 max-w-[430px] w-full shadow-2xl border border-neutral-100 space-y-4 font-body"
           >
         {/* Header with Logo and Close */}
         <div className="flex justify-between items-center pb-1">
@@ -252,7 +252,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               />
             </div>
             <div>
-              <h2 className="font-['Plus_Jakarta_Sans'] text-base font-bold text-neutral-900 tracking-tight leading-none">
+              <h2 className="font-display text-base font-bold text-neutral-900 tracking-tight leading-none">
                 {mode === 'forgot_password'
                   ? 'Reset Password'
                   : mode === 'signup'
@@ -409,7 +409,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </div>
         ) : (
           /* ----------------- SIGN IN / SIGN UP FORM ----------------- */
-          <form onSubmit={handleSubmit} className="space-y-3 font-['Manrope']">
+          <form onSubmit={handleSubmit} className="space-y-3 font-body">
             {mode === 'signup' && (
               <>
                 <div>

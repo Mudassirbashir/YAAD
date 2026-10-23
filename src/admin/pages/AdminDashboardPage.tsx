@@ -307,7 +307,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({ onNaviga
                 <span>Realtime Active</span>
               </span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-black text-[#003527] tracking-tight font-['Manrope'] truncate">
+            <h2 className="text-xl sm:text-2xl font-black text-[#003527] tracking-tight font-body truncate">
               Welcome, {admin?.name || 'Staff Member'}
             </h2>
             <p className="text-xs sm:text-sm text-neutral-600 max-w-2xl leading-relaxed">

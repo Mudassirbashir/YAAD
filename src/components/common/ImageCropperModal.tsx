@@ -234,12 +234,12 @@ export const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
               <Crop className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-on-surface font-['Plus_Jakarta_Sans'] leading-tight">
+              <h3 className="text-base font-bold text-on-surface font-display leading-tight">
                 {language === 'ur'
                   ? 'تصویر ایڈجسٹ اور کراپ کریں'
                   : 'Crop & Adjust Image'}
               </h3>
-              <p className="text-[11px] text-outline font-['Manrope']">
+              <p className="text-[11px] text-outline font-body">
                 {language === 'ur'
                   ? '1:1 تناسب — تصویر کو ڈریگ اور زوم کر کے سیٹ کریں'
                   : '1:1 Ratio • Drag & zoom to position'}
@@ -307,7 +307,7 @@ export const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
 
             {/* Drag hint badge */}
             <div className="absolute bottom-2 inset-x-0 flex justify-center pointer-events-none">
-              <span className="bg-black/60 backdrop-blur-xs text-white/90 text-[10px] px-2.5 py-0.5 rounded-full font-['Manrope'] flex items-center gap-1 shadow-xs">
+              <span className="bg-black/60 backdrop-blur-xs text-white/90 text-[10px] px-2.5 py-0.5 rounded-full font-body flex items-center gap-1 shadow-xs">
                 <Move className="w-2.5 h-2.5" />
                 <span>
                   {language === 'ur'

@@ -559,7 +559,7 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
 
         {/* 7. Bottom Conversion CTA Block */}
         <section className="text-center p-8 sm:p-12 rounded-3xl bg-[#005039] text-white space-y-5 shadow-lg">
-          <div className="w-12 h-12 rounded-2xl bg-white/10 text-white flex items-center justify-center mx-auto text-xl font-extrabold font-['Plus_Jakarta_Sans']">
+          <div className="w-12 h-12 rounded-2xl bg-white/10 text-white flex items-center justify-center mx-auto text-xl font-extrabold font-display">
             Y
           </div>
 

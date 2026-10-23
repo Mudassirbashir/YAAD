@@ -53,11 +53,11 @@ export const NoActiveListModal: React.FC<NoActiveListModalProps> = ({
           <div>
             <h3
               id="no_active_list_modal_title"
-              className="font-['Plus_Jakarta_Sans'] text-base sm:text-lg font-bold text-on-surface"
+              className="font-display text-base sm:text-lg font-bold text-on-surface"
             >
               No Active Shopping List
             </h3>
-            <p className="font-['Manrope'] text-xs text-outline">
+            <p className="font-body text-xs text-outline">
               Choose how you would like to begin shopping
             </p>
           </div>
@@ -66,14 +66,14 @@ export const NoActiveListModal: React.FC<NoActiveListModalProps> = ({
         {/* Selected Item Preview */}
         <div className="p-3.5 rounded-2xl bg-surface-container border border-surface-dim/80 flex items-center justify-between gap-3 my-3">
           <div className="flex flex-col min-w-0">
-            <span className="font-['Plus_Jakarta_Sans'] text-sm font-bold text-on-surface truncate">
+            <span className="font-display text-sm font-bold text-on-surface truncate">
               {item.displayName}
             </span>
-            <span className="font-['Manrope'] text-xs text-outline">
+            <span className="font-body text-xs text-outline">
               {item.quantity} {item.unit}
             </span>
           </div>
-          <span className="px-2.5 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-semibold font-['Manrope'] border border-primary/20 shrink-0">
+          <span className="px-2.5 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-semibold font-body border border-primary/20 shrink-0">
             Essential
           </span>
         </div>
@@ -92,10 +92,10 @@ export const NoActiveListModal: React.FC<NoActiveListModalProps> = ({
                 <Sparkles className="w-4 h-4 text-on-primary" />
               </div>
               <div className="flex flex-col min-w-0">
-                <span className="font-['Plus_Jakarta_Sans'] text-xs sm:text-sm font-bold truncate">
+                <span className="font-display text-xs sm:text-sm font-bold truncate">
                   Add to a new list
                 </span>
-                <span className="font-['Manrope'] text-[11px] text-on-primary/80 truncate">
+                <span className="font-body text-[11px] text-on-primary/80 truncate">
                   Create a list and start shopping immediately
                 </span>
               </div>
@@ -115,10 +115,10 @@ export const NoActiveListModal: React.FC<NoActiveListModalProps> = ({
                 <Plus className="w-4 h-4 text-outline group-hover:text-primary transition-colors" />
               </div>
               <div className="flex flex-col min-w-0">
-                <span className="font-['Plus_Jakarta_Sans'] text-xs sm:text-sm font-bold truncate">
+                <span className="font-display text-xs sm:text-sm font-bold truncate">
                   Create a list first
                 </span>
-                <span className="font-['Manrope'] text-[11px] text-outline truncate">
+                <span className="font-body text-[11px] text-outline truncate">
                   Choose your list name and icon
                 </span>
               </div>

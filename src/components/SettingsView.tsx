@@ -304,7 +304,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {/* SECTION 1: PROFILE & ACCOUNT (Directly at top of settings)         */}
         {/* ------------------------------------------------------------------ */}
         <section id="settings_profile_section" className="flex flex-col gap-2">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-['Plus_Jakarta_Sans']">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-display">
             {t('settings.accountTitle') || (language === 'ur' ? 'اکاؤنٹ' : 'Account')}
           </h2>
 
@@ -336,7 +336,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 {/* Profile Information: Name on top with verified badge, phone below, email below phone */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 min-w-0">
-                    <h3 className="text-base sm:text-lg font-bold text-on-surface font-['Plus_Jakarta_Sans'] truncate">
+                    <h3 className="text-base sm:text-lg font-bold text-on-surface font-display truncate">
                       {displayName}
                     </h3>
                     {isVerified && (
@@ -346,7 +346,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     )}
                   </div>
 
-                  <p className="text-xs text-outline font-['Manrope'] truncate mt-0.5">
+                  <p className="text-xs text-outline font-body truncate mt-0.5">
                     {displayPhone ? (
                       <span dir="ltr" className="font-mono text-on-surface-variant font-medium">
                         {formatPhoneNumber(displayPhone)}
@@ -357,7 +357,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   </p>
 
                   {displayPhone && displayEmail && (
-                    <p className="text-[11px] text-outline/80 font-['Manrope'] truncate">
+                    <p className="text-[11px] text-outline/80 font-body truncate">
                       {displayEmail}
                     </p>
                   )}
@@ -387,10 +387,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     <User className="w-5 h-5 stroke-[2]" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-sm sm:text-base font-bold text-on-surface font-['Plus_Jakarta_Sans']">
+                    <h3 className="text-sm sm:text-base font-bold text-on-surface font-display">
                       {t('settings.guestUser') || (language === 'ur' ? 'مہمان صارف' : 'Guest Account')}
                     </h3>
-                    <p className="text-xs text-outline font-['Manrope'] truncate">
+                    <p className="text-xs text-outline font-body truncate">
                       {language === 'ur'
                         ? 'پرچیاں کلاؤڈ پر محفوظ کرنے کے لیے لاگ ان کریں'
                         : 'Sign in to sync your lists across devices'}
@@ -414,7 +414,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {/* SECTION 2: PERFORMANCE (Language only, smooth & rounded)          */}
         {/* ------------------------------------------------------------------ */}
         <section id="settings_preferences_section" className="flex flex-col gap-2">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-['Plus_Jakarta_Sans']">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-display">
             {language === 'ur' ? 'کارکردگی و زبان' : 'Performance & Language'}
           </h2>
 
@@ -424,10 +424,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <Globe2 className="w-4.5 h-4.5 stroke-[2.2]" />
               </div>
               <div className="min-w-0 flex-1">
-                <h3 className="text-sm font-bold text-on-surface font-['Plus_Jakarta_Sans']">
+                <h3 className="text-sm font-bold text-on-surface font-display">
                   {t('settings.language') || (language === 'ur' ? 'زبان منتخب کریں' : 'Display Language')}
                 </h3>
-                <p className="text-xs text-outline font-['Manrope']">
+                <p className="text-xs text-outline font-body">
                   {t('settings.languageSubtitle') ||
                     (language === 'ur'
                       ? 'اردو، رومن اردو یا انگریزی میں استعمال کریں'
@@ -443,7 +443,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 id="lang_select_en"
                 type="button"
                 onClick={() => handleSelectLanguage('en')}
-                className={`min-h-[42px] py-2 px-1 sm:px-2 rounded-xl text-[11.5px] sm:text-xs font-bold font-['Plus_Jakarta_Sans'] transition-all flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
+                className={`min-h-[42px] py-2 px-1 sm:px-2 rounded-xl text-[11.5px] sm:text-xs font-bold font-display transition-all flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
                   language === 'en'
                     ? 'bg-surface-container-lowest text-primary shadow-xs ring-1 ring-black/5'
                     : 'text-outline hover:text-on-surface'
@@ -458,7 +458,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 id="lang_select_roman_urdu"
                 type="button"
                 onClick={() => handleSelectLanguage('roman-urdu')}
-                className={`min-h-[42px] py-2 px-1 sm:px-2 rounded-xl text-[11.5px] sm:text-xs font-bold font-['Plus_Jakarta_Sans'] transition-all flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
+                className={`min-h-[42px] py-2 px-1 sm:px-2 rounded-xl text-[11.5px] sm:text-xs font-bold font-display transition-all flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
                   language === 'roman-urdu'
                     ? 'bg-surface-container-lowest text-primary shadow-xs ring-1 ring-black/5'
                     : 'text-outline hover:text-on-surface'
@@ -490,7 +490,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {/* SECTION 3: APPEARANCE & THEMES (Simplified Names + Custom Palettes) */}
         {/* ------------------------------------------------------------------ */}
         <section id="settings_appearance_section" className="flex flex-col gap-2">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-['Plus_Jakarta_Sans']">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-display">
             {t('settings.appearanceTitle') || (language === 'ur' ? 'تھیم اور رنگ' : 'Appearance & Theme')}
           </h2>
 
@@ -500,10 +500,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <Palette className="w-4.5 h-4.5 stroke-[2.2]" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-on-surface font-['Plus_Jakarta_Sans']">
+                <h3 className="text-sm font-bold text-on-surface font-display">
                   {language === 'ur' ? 'ایپ تھیم' : 'App Theme'}
                 </h3>
-                <p className="text-xs text-outline font-['Manrope']">
+                <p className="text-xs text-outline font-body">
                   {language === 'ur'
                     ? 'اپنی پسند کی آسان تھیم یا کسٹم رنگ منتخب کریں'
                     : 'Select a clean pre-set theme or customize your own'}
@@ -548,7 +548,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                           style={{ backgroundColor: item.accent }}
                         />
                       </div>
-                      <span className="text-xs font-bold font-['Plus_Jakarta_Sans'] text-on-surface truncate">
+                      <span className="text-xs font-bold font-display text-on-surface truncate">
                         {localizedName}
                       </span>
                     </div>
@@ -566,7 +566,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             {/* Custom Theme Card with 4 Distinct Palettes */}
             <div className="pt-2 border-t border-surface-dim/60 space-y-2.5">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-on-surface font-['Plus_Jakarta_Sans']">
+                <span className="text-xs font-bold text-on-surface font-display">
                   {language === 'ur' ? 'کسٹم تھیم (Custom Theme)' : 'Custom Theme Palettes'}
                 </span>
                 {theme === 'custom' && (
@@ -626,7 +626,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {/* ------------------------------------------------------------------ */}
         {user && (
           <section id="settings_security_section" className="flex flex-col gap-2">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-['Plus_Jakarta_Sans']">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-display">
               {t('settings.securityTitle') || (language === 'ur' ? 'سیکیورٹی' : 'Security')}
             </h2>
 
@@ -636,10 +636,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   <LockKeyhole className="w-4.5 h-4.5 stroke-[2.2]" />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-sm font-bold text-on-surface font-['Plus_Jakarta_Sans']">
+                  <h3 className="text-sm font-bold text-on-surface font-display">
                     {t('settings.changePassword') || (language === 'ur' ? 'پاس ورڈ تبدیل کریں' : 'Change Password')}
                   </h3>
-                  <p className="text-xs text-outline font-['Manrope'] truncate">
+                  <p className="text-xs text-outline font-body truncate">
                     {language === 'ur'
                       ? 'اپنے یاد اکاؤنٹ کا نیا پاس ورڈ سیٹ کریں'
                       : 'Update your account login password'}
@@ -666,7 +666,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {/* SECTION 5: ABOUT & SUPPORT (Only About YAAD & Customer Support Desk) */}
         {/* ------------------------------------------------------------------ */}
         <section id="settings_about_section" className="flex flex-col gap-2">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-['Plus_Jakarta_Sans']">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-display">
             {t('settings.aboutTitle') || (language === 'ur' ? 'معلومات و سپورٹ' : 'About & Support')}
           </h2>
 
@@ -688,13 +688,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   <Headphones className="w-4.5 h-4.5 stroke-[2.2]" />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-sm font-bold text-on-surface font-['Plus_Jakarta_Sans'] flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-on-surface font-display flex items-center gap-2">
                     <span>{language === 'ur' ? 'کسٹمر سپورٹ ڈیسک' : 'Customer Support Desk'}</span>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
                       {language === 'ur' ? 'براہ راست رابطہ' : 'Direct Help'}
                     </span>
                   </h3>
-                  <p className="text-xs text-outline font-['Manrope'] truncate">
+                  <p className="text-xs text-outline font-body truncate">
                     {language === 'ur'
                       ? 'ایڈمن سپورٹ ٹیم سے فوری مدد یا شکایت درج کریں'
                       : 'Contact staff or report an issue directly'}
@@ -716,10 +716,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   <Sparkles className="w-4.5 h-4.5 stroke-[2.2]" />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-sm font-bold text-on-surface font-['Plus_Jakarta_Sans']">
+                  <h3 className="text-sm font-bold text-on-surface font-display">
                     {t('settings.aboutYaad') || (language === 'ur' ? 'یاد کے بارے میں' : 'About YAAD')}
                   </h3>
-                  <p className="text-xs text-outline font-['Manrope'] truncate">
+                  <p className="text-xs text-outline font-body truncate">
                     {t('settings.aboutYaadDesc') ||
                       (language === 'ur'
                         ? 'آسان اور تیز خریداری اسسٹنٹ'
@@ -744,7 +744,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 triggerHaptic(10);
                 setShowSignOutModal(true);
               }}
-              className="w-full sm:w-auto sm:min-w-[220px] py-2.5 px-6 rounded-xl border border-rose-200/80 bg-rose-50/80 hover:bg-rose-100/90 text-rose-700 font-bold font-['Plus_Jakarta_Sans'] text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs active:scale-95"
+              className="w-full sm:w-auto sm:min-w-[220px] py-2.5 px-6 rounded-xl border border-rose-200/80 bg-rose-50/80 hover:bg-rose-100/90 text-rose-700 font-bold font-display text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs active:scale-95"
             >
               <LogOut className="w-4 h-4 stroke-[2.2]" />
               <span>{t('auth.signOut') || (language === 'ur' ? 'اکاؤنٹ سے لاگ آؤٹ' : 'Sign Out')}</span>
@@ -770,7 +770,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </button>
             )}
 
-            <p className="text-[11px] text-outline/60 font-['Manrope'] text-center">
+            <p className="text-[11px] text-outline/60 font-body text-center">
               YAAD • {language === 'ur' ? 'یاد — شاپنگ میموری اسسٹنٹ' : 'Simple Shopping Memory'}
             </p>
           </div>
@@ -841,7 +841,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         <div
           role="status"
           aria-live="polite"
-          className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-[#00422f] text-emerald-100 px-4 py-2.5 rounded-2xl shadow-xl flex items-center gap-2.5 border border-emerald-400/30 animate-slide-in-from-bottom text-xs font-['Manrope'] font-semibold"
+          className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-[#00422f] text-emerald-100 px-4 py-2.5 rounded-2xl shadow-xl flex items-center gap-2.5 border border-emerald-400/30 animate-slide-in-from-bottom text-xs font-body font-semibold"
         >
           <Check className="w-4 h-4 text-emerald-400 stroke-[3]" />
           <span>{avatarToast}</span>

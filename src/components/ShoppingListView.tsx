@@ -786,7 +786,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
           <div className="flex items-center gap-1">
             <button
               onClick={() => onEditList(list)}
-              className="font-['Manrope'] text-sm font-bold text-primary hover:bg-surface-container-low px-3 py-1.5 rounded-full transition-colors active:scale-95 flex items-center gap-1 cursor-pointer"
+              className="font-body text-sm font-bold text-primary hover:bg-surface-container-low px-3 py-1.5 rounded-full transition-colors active:scale-95 flex items-center gap-1 cursor-pointer"
             >
               <Edit3 className="w-3.5 h-3.5" />
               <span>{t('shoppingList.editList')}</span>
@@ -810,10 +810,10 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
       <main className="flex-1 px-4 sm:px-6 md:px-8 pt-4 flex flex-col gap-5">
         {/* Header & Summary - Clean & Minimal as requested */}
         <div className="flex justify-between items-center pb-0.5">
-          <h1 className="font-['Plus_Jakarta_Sans'] text-2xl sm:text-3xl font-extrabold text-primary tracking-tight truncate pr-2">
+          <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-primary tracking-tight truncate pr-2">
             {list.title}
           </h1>
-          <span className="font-['Manrope'] text-sm text-on-surface-variant font-semibold shrink-0 bg-surface-container-low px-3 py-1 rounded-full border border-surface-dim">
+          <span className="font-body text-sm text-on-surface-variant font-semibold shrink-0 bg-surface-container-low px-3 py-1 rounded-full border border-surface-dim">
             {t('home.itemsCount', { count: totalItems })}
           </span>
         </div>
@@ -821,7 +821,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
         {/* Transient Feedback Banner */}
         {feedbackToast && (
           <div
-            className={`p-2.5 rounded-xl text-xs font-['Manrope'] font-semibold flex items-center gap-2 animate-slide-in-from-top ${
+            className={`p-2.5 rounded-xl text-xs font-body font-semibold flex items-center gap-2 animate-slide-in-from-top ${
               feedbackToast.type === 'merge'
                 ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20'
                 : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20'
@@ -850,7 +850,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                     processAddItems(pasteText);
                   }
                 }}
-                className="w-full h-[54px] ps-5 pe-14 rounded-full border-none bg-transparent focus:ring-2 focus:ring-primary/20 text-base text-on-surface placeholder:text-outline font-['Manrope'] outline-none"
+                className="w-full h-[54px] ps-5 pe-14 rounded-full border-none bg-transparent focus:ring-2 focus:ring-primary/20 text-base text-on-surface placeholder:text-outline font-body outline-none"
                 placeholder={t('shoppingList.inputPlaceholder')}
                 type="text"
               />
@@ -900,7 +900,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1 truncate">
-                        <span className="font-['Manrope'] font-bold text-xs text-primary truncate">
+                        <span className="font-body font-bold text-xs text-primary truncate">
                           {sug.displayName}
                         </span>
                         {sug.item.urdu_name && (
@@ -909,7 +909,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                           </span>
                         )}
                       </div>
-                      <span className="text-[10px] text-on-surface-variant font-['Manrope'] flex items-center gap-1">
+                      <span className="text-[10px] text-on-surface-variant font-body flex items-center gap-1">
                         <CategoryIcon categoryId={sug.categoryId} className="w-2.5 h-2.5 text-primary/70" />
                         <span>{getCategoryName(sug.categoryId)}</span>
                       </span>
@@ -947,7 +947,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                     className="px-2 py-0.5 rounded-md bg-surface-container text-primary text-[11px] font-bold"
                   />
                 )}
-                <span className="text-[11px] font-['Manrope'] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-md flex items-center gap-1">
+                <span className="text-[11px] font-body font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-md flex items-center gap-1">
                   <Sparkles className="w-3 h-3 text-primary" />
                   <span>{getCategoryName(quickAddParsed.suggestedCategoryId)}</span>
                 </span>
@@ -968,7 +968,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
           <button
             type="button"
             onClick={() => setSelectedCategoryFilter('all')}
-            className={`px-3.5 py-1.5 rounded-full font-['Manrope'] text-xs font-bold whitespace-nowrap flex-shrink-0 transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3.5 py-1.5 rounded-full font-body text-xs font-bold whitespace-nowrap flex-shrink-0 transition-all flex items-center gap-1.5 cursor-pointer ${
               selectedCategoryFilter === 'all'
                 ? 'border border-primary bg-primary text-on-primary shadow-xs'
                 : 'border border-surface-container-high bg-surface-container-lowest text-primary hover:bg-surface-container-low'
@@ -997,7 +997,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                 key={catId}
                 type="button"
                 onClick={() => setSelectedCategoryFilter(catId)}
-                className={`px-3.5 py-1.5 rounded-full font-['Manrope'] text-xs font-bold whitespace-nowrap flex-shrink-0 transition-all flex items-center gap-1.5 cursor-pointer ${
+                className={`px-3.5 py-1.5 rounded-full font-body text-xs font-bold whitespace-nowrap flex-shrink-0 transition-all flex items-center gap-1.5 cursor-pointer ${
                   isSelected
                     ? 'border border-primary bg-primary text-on-primary shadow-xs'
                     : isAllCatDone
@@ -1034,7 +1034,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
               transition={{ type: 'spring', stiffness: 500, damping: 38 }}
               className="overflow-hidden origin-top"
             >
-              <div className="flex items-center justify-between gap-3 px-3.5 py-2 rounded-2xl bg-surface-container-low border border-surface-dim/80 text-on-surface-variant text-xs font-['Manrope'] shadow-2xs">
+              <div className="flex items-center justify-between gap-3 px-3.5 py-2 rounded-2xl bg-surface-container-low border border-surface-dim/80 text-on-surface-variant text-xs font-body shadow-2xs">
                 <div className="flex items-center gap-2 min-w-0 flex-1">
                   <span className="inline-flex items-center gap-1 font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-md border border-rose-200/60 dark:border-rose-800/40 text-[11px] shrink-0">
                     <span>←</span>
@@ -1068,10 +1068,10 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
               <ShoppingBag className="w-7 h-7 stroke-[2]" />
             </div>
             <div className="space-y-1 max-w-sm">
-              <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-on-surface text-base sm:text-lg">
+              <h3 className="font-display font-bold text-on-surface text-base sm:text-lg">
                 {t('shoppingList.emptyTitle') || 'No items in this list yet'}
               </h3>
-              <p className="font-['Manrope'] text-xs sm:text-sm text-outline">
+              <p className="font-body text-xs sm:text-sm text-outline">
                 {t('shoppingList.emptySubtitle') || 'Type an item name above to start building your shopping list.'}
               </p>
             </div>
@@ -1094,7 +1094,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                   className="bg-surface-container-lowest rounded-3xl p-4 sm:p-5 shadow-[0px_4px_20px_rgba(0,30,21,0.03)] border border-surface-container-high/60 w-full min-h-[110px] shrink-0 flex flex-col justify-between"
                 >
                   <div>
-                    <h2 className="font-['Manrope'] text-sm font-bold text-primary mb-3.5 tracking-wide flex items-center justify-between">
+                    <h2 className="font-body text-sm font-bold text-primary mb-3.5 tracking-wide flex items-center justify-between">
                       <span className="flex items-center gap-2">
                         <CategoryIcon categoryId={catId} className="w-4 h-4 text-primary/80" />
                         <span>{getCategoryName(catId)}</span>
@@ -1153,7 +1153,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                           <button
                             type="button"
                             onClick={() => setSelectedCategoryFilter('all')}
-                            className="text-xs font-['Manrope'] font-bold text-outline hover:text-primary transition-colors flex items-center gap-1 cursor-pointer"
+                            className="text-xs font-body font-bold text-outline hover:text-primary transition-colors flex items-center gap-1 cursor-pointer"
                           >
                             <span>View All Categories</span>
                           </button>
@@ -1161,7 +1161,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                             <button
                               type="button"
                               onClick={() => setSelectedCategoryFilter(nextCategoryId)}
-                              className="px-3.5 py-1.5 rounded-full bg-primary text-on-primary hover:bg-primary-container font-['Manrope'] text-xs font-bold flex items-center gap-1.5 shadow-2xs active:scale-95 transition-all cursor-pointer"
+                              className="px-3.5 py-1.5 rounded-full bg-primary text-on-primary hover:bg-primary-container font-body text-xs font-bold flex items-center gap-1.5 shadow-2xs active:scale-95 transition-all cursor-pointer"
                             >
                               <span>Next: {getCategoryName(nextCategoryId)}</span>
                               <ArrowRight className="w-3.5 h-3.5" />
@@ -1169,7 +1169,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                           )}
                         </>
                       ) : (
-                        <div className="w-full flex items-center justify-between text-[0.6875rem] font-['Manrope'] text-outline font-medium">
+                        <div className="w-full flex items-center justify-between text-[0.6875rem] font-body text-outline font-medium">
                           <span>
                             {isCategoryComplete
                               ? '✓ All items in this category bought'
@@ -1194,7 +1194,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
 
         {/* Error banner if database persistence failed */}
         {(completionError || itemSyncError) && (
-          <div className="p-3.5 bg-red-50 border border-red-200 rounded-2xl flex items-center justify-between gap-3 text-red-700 text-xs font-['Manrope'] mb-2">
+          <div className="p-3.5 bg-red-50 border border-red-200 rounded-2xl flex items-center justify-between gap-3 text-red-700 text-xs font-body mb-2">
             <div className="flex items-center gap-2 min-w-0">
               <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
               <span className="font-medium">{completionError || itemSyncError}</span>
@@ -1219,7 +1219,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
               id="finish_shopping_trip_btn"
               onClick={() => !isCompletingTrip && onCompleteTrip(list)}
               disabled={isCompletingTrip}
-              className={`w-full h-[52px] rounded-full bg-primary text-on-primary font-['Manrope'] text-sm font-bold shadow-sm transition-all flex items-center justify-center gap-2 ${
+              className={`w-full h-[52px] rounded-full bg-primary text-on-primary font-body text-sm font-bold shadow-sm transition-all flex items-center justify-center gap-2 ${
                 isCompletingTrip
                   ? 'opacity-70 cursor-wait'
                   : 'hover:bg-primary-container active:scale-95 cursor-pointer'
@@ -1267,12 +1267,12 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                 )}
               </span>
               <div className="flex flex-col min-w-0">
-                <span className="text-xs sm:text-sm font-['Plus_Jakarta_Sans'] font-bold truncate">
+                <span className="text-xs sm:text-sm font-display font-bold truncate">
                   {undoToast.type === 'deleted'
                     ? `Deleted "${undoToast.item.name}"`
                     : `Marked "${undoToast.item.name}"`}
                 </span>
-                <span className="text-[11px] font-['Manrope'] text-white/70">
+                <span className="text-[11px] font-body text-white/70">
                   Tap Undo to restore (10s)
                 </span>
               </div>
@@ -1331,10 +1331,10 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                   <Trash2 className="w-5 h-5" />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-base text-on-surface truncate">
+                  <h3 className="font-display font-bold text-base text-on-surface truncate">
                     {t('delete') || 'Delete List'}
                   </h3>
-                  <p className="text-xs text-outline font-['Manrope'] truncate">
+                  <p className="text-xs text-outline font-body truncate">
                     {list.title}
                   </p>
                 </div>
@@ -1348,7 +1348,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowDeleteConfirm(false)}
-                  className="h-11 rounded-full bg-surface-container text-on-surface font-['Manrope'] text-xs sm:text-sm font-semibold hover:bg-surface-container-high transition-colors cursor-pointer"
+                  className="h-11 rounded-full bg-surface-container text-on-surface font-body text-xs sm:text-sm font-semibold hover:bg-surface-container-high transition-colors cursor-pointer"
                 >
                   {t('cancel')}
                 </button>
@@ -1359,7 +1359,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                     setShowDeleteConfirm(false);
                     onDeleteList?.(list.id);
                   }}
-                  className="h-11 rounded-full bg-rose-600 text-white font-['Manrope'] text-xs sm:text-sm font-semibold hover:bg-rose-700 transition-colors shadow-xs active:scale-95 cursor-pointer"
+                  className="h-11 rounded-full bg-rose-600 text-white font-body text-xs sm:text-sm font-semibold hover:bg-rose-700 transition-colors shadow-xs active:scale-95 cursor-pointer"
                 >
                   {t('delete')}
                 </button>

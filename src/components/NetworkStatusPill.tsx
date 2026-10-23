@@ -54,7 +54,7 @@ export const NetworkStatusPill: React.FC<NetworkStatusPillProps> = ({
               <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
             </span>
             <WifiOff className="w-3.5 h-3.5 text-amber-300" />
-            <span className="font-['Manrope']">
+            <span className="font-body">
               {language === 'ur' ? 'آف لائن • دوبارہ کوشش کریں' : 'Offline • Tap to retry'}
             </span>
             {pendingCount > 0 && (
@@ -75,7 +75,7 @@ export const NetworkStatusPill: React.FC<NetworkStatusPillProps> = ({
             className="pointer-events-auto flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/80 text-white backdrop-blur-xl shadow-[0_4px_16px_rgba(0,30,21,0.25)] border border-white/15 text-xs font-medium"
           >
             <RefreshCw className="w-3.5 h-3.5 text-primary-fixed animate-spin" />
-            <span className="font-['Manrope']">
+            <span className="font-body">
               Back online • Syncing...
             </span>
           </motion.div>
@@ -90,7 +90,7 @@ export const NetworkStatusPill: React.FC<NetworkStatusPillProps> = ({
             className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-900/80 text-white backdrop-blur-xl shadow-[0_4px_16px_rgba(0,0,0,0.15)] border border-emerald-500/30 text-xs font-medium"
           >
             <Check className="w-3.5 h-3.5 text-emerald-300 stroke-[2.5]" />
-            <span className="font-['Manrope'] text-emerald-100">
+            <span className="font-body text-emerald-100">
               Saved
             </span>
           </motion.div>
@@ -107,7 +107,7 @@ export const NetworkStatusPill: React.FC<NetworkStatusPillProps> = ({
             className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container-high/80 text-on-surface backdrop-blur-xl shadow-[0_4px_14px_rgba(0,0,0,0.08)] border border-surface-dim text-xs font-medium hover:bg-surface-container-highest active:scale-95 transition-all"
           >
             <Cloud className="w-3.5 h-3.5 text-primary" />
-            <span className="font-['Manrope']">
+            <span className="font-body">
               {pendingCount} pending sync
             </span>
             <RefreshCw className="w-3 h-3 text-on-surface-variant ml-0.5" />

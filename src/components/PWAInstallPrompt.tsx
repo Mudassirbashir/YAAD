@@ -39,10 +39,10 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ mode = 'bann
               <Smartphone className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-on-surface font-['Plus_Jakarta_Sans']">
+              <h4 className="text-sm font-bold text-on-surface font-display">
                 'Install App'
               </h4>
-              <p className="text-xs text-on-surface-variant font-['Manrope']">
+              <p className="text-xs text-on-surface-variant font-body">
                 {isInstalled
                   ? 'YAAD is installed and ready'
                   : 'Add to your phone to use offline'}
@@ -81,7 +81,7 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ mode = 'bann
                 className="bg-surface-container-lowest border border-surface-dim rounded-2xl p-6 max-w-sm w-full shadow-xl"
               >
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-bold text-base text-primary font-['Plus_Jakarta_Sans']">
+                  <h3 className="font-bold text-base text-primary font-display">
                     'Install on iPhone / iPad'
                   </h3>
                   <button
@@ -92,7 +92,7 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ mode = 'bann
                   </button>
                 </div>
 
-                <div className="space-y-3 text-xs text-on-surface font-['Manrope']">
+                <div className="space-y-3 text-xs text-on-surface font-body">
                   <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-surface-container-low">
                     <Share className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                     <span>
@@ -139,10 +139,10 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ mode = 'bann
                 />
               </div>
               <div className="min-w-0">
-                <h4 className="text-xs sm:text-sm font-bold font-['Plus_Jakarta_Sans'] leading-tight truncate">
+                <h4 className="text-xs sm:text-sm font-bold font-display leading-tight truncate">
                   'Install YAAD App'
                 </h4>
-                <p className="text-[11px] text-white/80 font-['Manrope'] leading-tight mt-0.5 truncate">
+                <p className="text-[11px] text-white/80 font-body leading-tight mt-0.5 truncate">
                   {'Add to home screen for faster, offline access'}
                 </p>
               </div>
@@ -188,7 +188,7 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ mode = 'bann
               <div className="flex justify-between items-center mb-4">
                 <div className="flex items-center gap-2">
                   <Smartphone className="w-5 h-5 text-primary" />
-                  <h3 className="font-bold text-base text-primary font-['Plus_Jakarta_Sans']">
+                  <h3 className="font-bold text-base text-primary font-display">
                     'Install on iPhone / iPad'
                   </h3>
                 </div>
@@ -200,7 +200,7 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ mode = 'bann
                 </button>
               </div>
 
-              <div className="space-y-3 text-xs text-on-surface font-['Manrope']">
+              <div className="space-y-3 text-xs text-on-surface font-body">
                 <div className="flex items-start gap-2.5 p-3 rounded-xl bg-surface-container-low">
                   <Share className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                   <span>

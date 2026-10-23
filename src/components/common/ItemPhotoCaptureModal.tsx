@@ -261,10 +261,10 @@ export const ItemPhotoCaptureModal: React.FC<ItemPhotoCaptureModalProps> = ({
               <Camera className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-sm sm:text-base font-bold text-on-surface font-['Plus_Jakarta_Sans'] line-clamp-1">
+              <h3 className="text-sm sm:text-base font-bold text-on-surface font-display line-clamp-1">
                 {isUrdu ? `${itemName} کی تصویر` : `Photo for ${itemName}`}
               </h3>
-              <p className="text-[0.6875rem] text-on-surface-variant font-['Manrope']">
+              <p className="text-[0.6875rem] text-on-surface-variant font-body">
                 {isUrdu ? 'تیز رفتار کیپچر یا گیلری سے منتخب کریں' : 'Instant camera capture or pick from gallery'}
               </p>
             </div>
@@ -347,7 +347,7 @@ export const ItemPhotoCaptureModal: React.FC<ItemPhotoCaptureModalProps> = ({
                 type="button"
                 onClick={handleRetake}
                 disabled={isUploading}
-                className="flex-1 h-12 rounded-2xl bg-surface-container hover:bg-surface-container-high border border-surface-dim font-['Manrope'] text-xs font-bold text-on-surface transition-all active:scale-[0.98] cursor-pointer"
+                className="flex-1 h-12 rounded-2xl bg-surface-container hover:bg-surface-container-high border border-surface-dim font-body text-xs font-bold text-on-surface transition-all active:scale-[0.98] cursor-pointer"
               >
                 {isUrdu ? 'دوبارہ لیں (Retake)' : 'Retake'}
               </button>
@@ -356,7 +356,7 @@ export const ItemPhotoCaptureModal: React.FC<ItemPhotoCaptureModalProps> = ({
                 type="button"
                 onClick={handleConfirmSave}
                 disabled={isUploading}
-                className="flex-2 h-12 rounded-2xl bg-primary text-on-primary hover:bg-primary-container font-['Manrope'] text-xs font-bold transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                className="flex-2 h-12 rounded-2xl bg-primary text-on-primary hover:bg-primary-container font-body text-xs font-bold transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 {isUploading ? (
                   <>

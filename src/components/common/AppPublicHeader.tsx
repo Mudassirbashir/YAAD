@@ -128,7 +128,7 @@ export const AppPublicHeader: React.FC<AppPublicHeaderProps> = ({
           <button
             type="button"
             onClick={handleLogoClick}
-            className="text-base sm:text-lg font-black tracking-tight text-[#005039] font-['Plus_Jakarta_Sans'] hover:opacity-85 transition-opacity cursor-pointer select-none"
+            className="text-base sm:text-lg font-black tracking-tight text-[#005039] font-display hover:opacity-85 transition-opacity cursor-pointer select-none"
           >
             {title}
           </button>

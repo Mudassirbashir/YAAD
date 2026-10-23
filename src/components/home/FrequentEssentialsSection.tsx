@@ -153,7 +153,7 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
       {/* Section Header */}
       <div className="flex items-center justify-between px-0.5">
         <div className="flex items-center gap-2">
-          <h3 className="font-['Plus_Jakarta_Sans'] text-xl sm:text-2xl font-black text-on-surface tracking-tight">
+          <h3 className="font-display text-xl sm:text-2xl font-black text-on-surface tracking-tight">
             {hasPersonalized
               ? t('home.essentials.personalizedTitle') || 'Frequently Bought'
               : t('home.essentials.title') || 'Frequent Essentials'}
@@ -242,7 +242,7 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
 
                 {/* Top Right Corner: Packaging Quantity Badge (e.g. "1 kg", "1 dozen") */}
                 <div className="absolute top-1.5 right-1.5 z-10 pointer-events-none">
-                  <span className="px-2 py-0.5 rounded-md text-[0.625rem] sm:text-[0.65625rem] font-bold bg-black/70 backdrop-blur-md text-white border border-white/20 shadow-xs font-['Manrope']">
+                  <span className="px-2 py-0.5 rounded-md text-[0.625rem] sm:text-[0.65625rem] font-bold bg-black/70 backdrop-blur-md text-white border border-white/20 shadow-xs font-body">
                     {item.quantity} {item.unit}
                   </span>
                 </div>
@@ -260,7 +260,7 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
 
               {/* 2. Item Details: English Name | Urdu Name wrapping cleanly without truncation */}
               <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 min-w-0 px-0.5 pt-0.5">
-                <span className="font-['Plus_Jakarta_Sans'] text-sm sm:text-[0.9375rem] font-bold text-on-surface leading-snug group-hover:text-primary transition-colors">
+                <span className="font-display text-sm sm:text-[0.9375rem] font-bold text-on-surface leading-snug group-hover:text-primary transition-colors">
                   {item.displayName}
                 </span>
                 {urduName && (

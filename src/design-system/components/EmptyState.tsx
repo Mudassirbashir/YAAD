@@ -32,11 +32,11 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         {icon}
       </div>
 
-      <h3 className="font-['Plus_Jakarta_Sans'] text-base sm:text-lg font-bold text-on-surface tracking-tight max-w-sm">
+      <h3 className="font-display text-base sm:text-lg font-bold text-on-surface tracking-tight max-w-sm">
         {title}
       </h3>
 
-      <p className="font-['Manrope'] text-xs sm:text-sm text-outline mt-1.5 max-w-xs sm:max-w-md leading-relaxed">
+      <p className="font-body text-xs sm:text-sm text-outline mt-1.5 max-w-xs sm:max-w-md leading-relaxed">
         {description}
       </p>
 

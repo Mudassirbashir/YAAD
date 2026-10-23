@@ -89,12 +89,12 @@ export const RecommendationsSection: React.FC<RecommendationsSectionProps> = ({
             <Sparkles className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="text-base sm:text-lg font-bold text-on-surface leading-tight font-['Plus_Jakarta_Sans']">
+            <h2 className="text-base sm:text-lg font-bold text-on-surface leading-tight font-display">
               {isColdStart
                 ? t('recommendations.coldStartTitle')
                 : t('recommendations.title')}
             </h2>
-            <p className="text-xs text-outline leading-none mt-0.5 font-['Manrope']">
+            <p className="text-xs text-outline leading-none mt-0.5 font-body">
               {isColdStart
                 ? t('recommendations.coldStartSubtitle')
                 : t('recommendations.subtitle')}

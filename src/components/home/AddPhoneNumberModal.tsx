@@ -204,11 +204,11 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
             <div className="flex flex-col min-w-0">
               <h2
                 id="add_phone_modal_title"
-                className="font-['Plus_Jakarta_Sans'] text-base sm:text-lg font-bold text-on-surface tracking-tight leading-tight truncate"
+                className="font-display text-base sm:text-lg font-bold text-on-surface tracking-tight leading-tight truncate"
               >
                 Add Your Phone Number
               </h2>
-              <p className="font-['Manrope'] text-xs text-outline mt-0.5 leading-snug">
+              <p className="font-body text-xs text-outline mt-0.5 leading-snug">
                 Add your phone number to keep your lists safe.
               </p>
             </div>
@@ -234,10 +234,10 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
               <div className="w-14 h-14 rounded-full bg-emerald-50 text-emerald-800 flex items-center justify-center mb-3.5 border border-emerald-200/80 shadow-xs">
                 <CheckCircle2 className="w-8 h-8 stroke-[2.4]" />
               </div>
-              <h3 className="font-['Plus_Jakarta_Sans'] text-lg font-bold text-on-surface">
+              <h3 className="font-display text-lg font-bold text-on-surface">
                 Phone number added!
               </h3>
-              <p className="font-['Manrope'] text-xs sm:text-sm text-outline mt-1 max-w-xs leading-relaxed">
+              <p className="font-body text-xs sm:text-sm text-outline mt-1 max-w-xs leading-relaxed">
                 Your phone number has been saved.
               </p>
               {fullFormattedInternational && (
@@ -250,7 +250,7 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
             /* Searchable Country Selector View */
             <div className="flex flex-col gap-3 animate-fade-in">
               <div className="flex items-center justify-between gap-2">
-                <span className="font-['Plus_Jakarta_Sans'] text-sm font-bold text-on-surface">
+                <span className="font-display text-sm font-bold text-on-surface">
                   'Select Country'
                 </span>
                 <button
@@ -272,14 +272,14 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
                   value={countrySearchQuery}
                   onChange={(e) => setCountrySearchQuery(e.target.value)}
                   placeholder="Search country or code (e.g. Pakistan, +92)..."
-                  className="w-full h-11 ps-9 pe-3 rounded-xl bg-surface-container border border-surface-dim text-xs font-['Manrope'] text-on-surface placeholder:text-outline/60 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                  className="w-full h-11 ps-9 pe-3 rounded-xl bg-surface-container border border-surface-dim text-xs font-body text-on-surface placeholder:text-outline/60 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
                 />
               </div>
 
               {/* Country List */}
               <div className="flex flex-col gap-1 max-h-56 sm:max-h-64 overflow-y-auto divide-y divide-surface-dim/40 pe-1">
                 {filteredCountries.length === 0 ? (
-                  <div className="py-6 text-center font-['Manrope'] text-xs text-outline">
+                  <div className="py-6 text-center font-body text-xs text-outline">
                     No matching countries found
                   </div>
                 ) : (
@@ -301,7 +301,7 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
                             {c.flag}
                           </span>
                           <div className="flex flex-col min-w-0">
-                            <span className="font-['Manrope'] text-xs font-semibold truncate">
+                            <span className="font-body text-xs font-semibold truncate">
                               {language === 'ur' ? c.nameUrdu : c.name}
                             </span>
                             <span className="text-[10px] text-outline font-normal">
@@ -329,7 +329,7 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
               {errorMessage && (
                 <div
                   id="phone_error_message"
-                  className="p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-xl text-xs font-['Manrope'] text-red-700 dark:text-red-300 flex items-start gap-2 animate-fade-in"
+                  className="p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-xl text-xs font-body text-red-700 dark:text-red-300 flex items-start gap-2 animate-fade-in"
                 >
                   <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                   <span>{errorMessage}</span>
@@ -340,7 +340,7 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
               <div className="flex flex-col gap-1.5">
                 <label
                   htmlFor="local_phone_input"
-                  className="text-xs font-bold font-['Manrope'] text-on-surface"
+                  className="text-xs font-bold font-body text-on-surface"
                 >
                   'Phone Number'
                 </label>
@@ -374,13 +374,13 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
                       onChange={handleInputChange}
                       placeholder={selectedCountry.placeholder}
                       disabled={isSubmitting}
-                      className="w-full h-11 px-3.5 rounded-xl bg-surface-container border border-surface-dim text-sm font-['Manrope'] font-medium text-on-surface placeholder:text-outline/50 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                      className="w-full h-11 px-3.5 rounded-xl bg-surface-container border border-surface-dim text-sm font-body font-medium text-on-surface placeholder:text-outline/50 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
                     />
                   </div>
                 </div>
 
                 {/* Helper and Live Preview */}
-                <div className="flex items-center justify-between text-[11px] font-['Manrope'] text-outline px-1 mt-0.5">
+                <div className="flex items-center justify-between text-[11px] font-body text-outline px-1 mt-0.5">
                   <span>
                     {`e.g. ${selectedCountry.example}`}
                   </span>
@@ -408,7 +408,7 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
                   type="submit"
                   id="save_phone_number_btn"
                   disabled={isSubmitting || !localNumber}
-                  className="h-11 min-h-[44px] px-5 rounded-full bg-primary hover:bg-primary-container active:scale-95 text-on-primary text-xs font-bold font-['Manrope'] transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="h-11 min-h-[44px] px-5 rounded-full bg-primary hover:bg-primary-container active:scale-95 text-on-primary text-xs font-bold font-body transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? (
                     <>

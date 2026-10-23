@@ -68,7 +68,7 @@ export const AdminConfirmModal: React.FC<AdminConfirmModalProps> = ({
             {isDestructive ? <ShieldAlert className="w-6 h-6" /> : <AlertTriangle className="w-6 h-6" />}
           </div>
           <div>
-            <h3 className="text-lg font-bold text-neutral-900 tracking-tight font-['Manrope']">{title}</h3>
+            <h3 className="text-lg font-bold text-neutral-900 tracking-tight font-body">{title}</h3>
             <p className="text-xs text-neutral-500">Explicit confirmation required</p>
           </div>
         </div>

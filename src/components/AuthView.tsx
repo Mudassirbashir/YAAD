@@ -504,7 +504,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#F7FAF5] flex flex-col justify-between items-center px-4 py-6 sm:py-10 text-neutral-900 font-['Manrope'] selection:bg-[#003527] selection:text-white">
+    <div className="min-h-screen bg-[#F7FAF5] flex flex-col justify-between items-center px-4 py-6 sm:py-10 text-neutral-900 font-body selection:bg-[#003527] selection:text-white">
       {/* Centered Application Card Frame */}
       <div className="w-full max-w-[440px] mx-auto flex flex-col justify-between flex-1 bg-white sm:rounded-3xl sm:border sm:border-neutral-200/80 sm:shadow-sm px-5 py-6 sm:px-8 sm:py-9">
 
@@ -533,7 +533,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
               height={32}
               className="w-8 h-8 object-contain"
             />
-            <span className="font-['Plus_Jakarta_Sans'] font-extrabold text-lg tracking-tight text-[#003527]">
+            <span className="font-display font-extrabold text-lg tracking-tight text-[#003527]">
               YAAD
             </span>
           </div>
@@ -570,7 +570,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
           <div className="flex-1 flex flex-col justify-center">
             {/* Header */}
             <div className="mb-6">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 font-['Plus_Jakarta_Sans'] tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 font-display tracking-tight">
                 Welcome Back
               </h1>
               <p className="text-neutral-500 text-xs sm:text-sm mt-1.5 font-normal leading-relaxed">
@@ -583,7 +583,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
               type="button"
               onClick={handleGoogleSignIn}
               disabled={isAnyLoading}
-              className="w-full h-12 rounded-full border border-neutral-300/90 bg-white hover:bg-neutral-50 text-neutral-800 text-sm font-semibold font-['Manrope'] shadow-2xs flex items-center justify-center gap-3 transition-all active:scale-[0.99] cursor-pointer disabled:opacity-60 mb-5"
+              className="w-full h-12 rounded-full border border-neutral-300/90 bg-white hover:bg-neutral-50 text-neutral-800 text-sm font-semibold font-body shadow-2xs flex items-center justify-center gap-3 transition-all active:scale-[0.99] cursor-pointer disabled:opacity-60 mb-5"
             >
               {googleLoading ? (
                 <Loader2 className="w-5 h-5 animate-spin text-neutral-600" />
@@ -596,7 +596,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
             {/* Divider */}
             <div className="relative flex items-center justify-center mb-5">
               <div className="border-t border-neutral-200 w-full" />
-              <span className="bg-white px-3 text-xs font-['Manrope'] text-neutral-400 font-medium">
+              <span className="bg-white px-3 text-xs font-body text-neutral-400 font-medium">
                 or
               </span>
               <div className="border-t border-neutral-200 w-full" />
@@ -677,7 +677,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
               <button
                 type="submit"
                 disabled={isAnyLoading}
-                className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-['Manrope'] text-sm font-bold shadow-sm hover:shadow-md active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 mt-2"
+                className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-sm hover:shadow-md active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 mt-2"
               >
                 {loading ? (
                   <Loader2 className="w-5 h-5 animate-spin text-white" />
@@ -712,7 +712,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
           <div className="flex-1 flex flex-col justify-center">
             {/* Header */}
             <div className="mb-5">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 font-['Plus_Jakarta_Sans'] tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 font-display tracking-tight">
                 Create your account
               </h1>
               <p className="text-neutral-500 text-xs sm:text-sm mt-1.5 font-normal leading-relaxed">
@@ -725,7 +725,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
               type="button"
               onClick={handleGoogleSignIn}
               disabled={isAnyLoading}
-              className="w-full h-12 rounded-full border border-neutral-300/90 bg-white hover:bg-neutral-50 text-neutral-800 text-sm font-semibold font-['Manrope'] shadow-2xs flex items-center justify-center gap-3 transition-all active:scale-[0.99] cursor-pointer disabled:opacity-60 mb-5"
+              className="w-full h-12 rounded-full border border-neutral-300/90 bg-white hover:bg-neutral-50 text-neutral-800 text-sm font-semibold font-body shadow-2xs flex items-center justify-center gap-3 transition-all active:scale-[0.99] cursor-pointer disabled:opacity-60 mb-5"
             >
               {googleLoading ? (
                 <Loader2 className="w-5 h-5 animate-spin text-neutral-600" />
@@ -738,7 +738,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
             {/* Divider */}
             <div className="relative flex items-center justify-center mb-4">
               <div className="border-t border-neutral-200 w-full" />
-              <span className="bg-white px-3 text-xs font-['Manrope'] text-neutral-400 font-medium">
+              <span className="bg-white px-3 text-xs font-body text-neutral-400 font-medium">
                 or
               </span>
               <div className="border-t border-neutral-200 w-full" />
@@ -838,7 +838,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                     )}
                   </button>
                 </div>
-                <p className="text-[11px] text-neutral-500 mt-1 font-['Manrope']">
+                <p className="text-[11px] text-neutral-500 mt-1 font-body">
                   Must be at least 6 characters.
                 </p>
               </div>
@@ -879,7 +879,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
               {/* Terms & Privacy Agreement */}
               <div className="pt-1">
-                <label className="flex items-start gap-2.5 cursor-pointer select-none text-xs text-neutral-600 font-['Manrope']">
+                <label className="flex items-start gap-2.5 cursor-pointer select-none text-xs text-neutral-600 font-body">
                   <input
                     id="signup_terms_checkbox"
                     type="checkbox"
@@ -914,7 +914,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
               <button
                 type="submit"
                 disabled={!agreedToTerms || isAnyLoading}
-                className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-['Manrope'] text-sm font-bold shadow-sm hover:shadow-md active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed mt-3"
+                className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-sm hover:shadow-md active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed mt-3"
               >
                 {loading ? (
                   <Loader2 className="w-5 h-5 animate-spin text-white" />
@@ -1005,7 +1005,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 contentVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
               }`}
             >
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 font-['Plus_Jakarta_Sans'] tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 font-display tracking-tight">
                 {needsEmailConfirmation ? 'Account Created!' : 'Successful!'}
               </h2>
               <p className="text-neutral-500 text-xs sm:text-sm mt-2 max-w-xs mx-auto leading-relaxed">
@@ -1033,7 +1033,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                     setPassword('');
                     setNeedsEmailConfirmation(false);
                   }}
-                  className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-['Manrope'] text-sm font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <span>Go to Sign In</span>
                 </button>
@@ -1041,7 +1041,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 <button
                   type="button"
                   onClick={handleBrowseHome}
-                  className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-['Manrope'] text-sm font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <span>Browse Home</span>
                 </button>
@@ -1057,7 +1057,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
           <div className="flex-1 flex flex-col justify-center">
             {/* Header */}
             <div className="mb-6">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 font-['Plus_Jakarta_Sans'] tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 font-display tracking-tight">
                 Forgot Password
               </h1>
               <p className="text-neutral-500 text-xs sm:text-sm mt-1.5 font-normal leading-relaxed">
@@ -1090,7 +1090,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
               <button
                 type="submit"
                 disabled={isAnyLoading}
-                className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-['Manrope'] text-sm font-bold shadow-sm hover:shadow-md active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 mt-3"
+                className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-sm hover:shadow-md active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 mt-3"
               >
                 {loading ? (
                   <Loader2 className="w-5 h-5 animate-spin text-white" />
@@ -1125,7 +1125,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
           <div className="flex-1 flex flex-col justify-center">
             {/* Header */}
             <div className="mb-6">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 font-['Plus_Jakarta_Sans'] tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 font-display tracking-tight">
                 Set New Password
               </h1>
               <p className="text-neutral-500 text-xs sm:text-sm mt-1.5 font-normal leading-relaxed">
@@ -1205,7 +1205,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
               <button
                 type="submit"
                 disabled={isAnyLoading}
-                className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-['Manrope'] text-sm font-bold shadow-sm hover:shadow-md active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 mt-3"
+                className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-sm hover:shadow-md active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 mt-3"
               >
                 {loading ? (
                   <Loader2 className="w-5 h-5 animate-spin text-white" />

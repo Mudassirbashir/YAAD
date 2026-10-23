@@ -55,7 +55,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
 
             {title && (
               <div className="flex items-center justify-between pb-3 mb-2 border-b border-surface-dim/50 shrink-0">
-                <h3 className="font-['Plus_Jakarta_Sans'] text-base sm:text-lg font-bold text-on-surface">
+                <h3 className="font-display text-base sm:text-lg font-bold text-on-surface">
                   {title}
                 </h3>
                 <button

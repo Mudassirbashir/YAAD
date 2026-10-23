@@ -106,10 +106,10 @@ export const PhoneNumberNotification: React.FC<PhoneNumberNotificationProps> = (
             <Phone className="w-4 h-4 sm:w-4.5 sm:h-4.5 stroke-[2.2]" />
           </div>
           <div className="flex flex-col min-w-0">
-            <span className="font-['Plus_Jakarta_Sans'] text-xs sm:text-sm font-bold text-on-surface">
+            <span className="font-display text-xs sm:text-sm font-bold text-on-surface">
               Add Phone Number
             </span>
-            <span className="font-['Manrope'] text-[11px] sm:text-xs text-outline leading-snug mt-0.5">
+            <span className="font-body text-[11px] sm:text-xs text-outline leading-snug mt-0.5">
               Add your phone number to keep your account safe.
             </span>
           </div>
@@ -129,7 +129,7 @@ export const PhoneNumberNotification: React.FC<PhoneNumberNotificationProps> = (
             type="button"
             id="home_phone_notice_add_btn"
             onClick={handleOpenModal}
-            className="h-8 px-3.5 rounded-full bg-primary hover:bg-primary-container active:scale-95 text-on-primary text-xs font-bold font-['Manrope'] transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer"
+            className="h-8 px-3.5 rounded-full bg-primary hover:bg-primary-container active:scale-95 text-on-primary text-xs font-bold font-body transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer"
           >
             <Phone className="w-3.5 h-3.5 stroke-[2.2]" />
             <span>Add Phone Number</span>
