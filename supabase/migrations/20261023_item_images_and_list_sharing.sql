@@ -18,6 +18,8 @@ ALTER TABLE public.shopping_lists ADD COLUMN IF NOT EXISTS share_token  TEXT UNI
 ALTER TABLE public.shopping_lists ADD COLUMN IF NOT EXISTS share_enabled BOOLEAN NOT NULL DEFAULT FALSE;
 
 -- 3. SECURITY DEFINER FUNCTION FOR TOKEN-BASED SHARING
+-- Reads items from public.shopping_items only (there is no JSON items column on shopping_lists).
+-- Corrected version matches the live database as of 2026-10-23.
 CREATE OR REPLACE FUNCTION public.get_shared_list(p_token TEXT)
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -42,14 +44,6 @@ BEGIN
             ) ORDER BY i.created_at)
        FROM public.shopping_items i
        WHERE i.list_id = l.id),
-      (SELECT jsonb_agg(jsonb_build_object(
-              'name',        elem ->> 'name',
-              'quantity',    elem ->> 'quantity',
-              'unit',        elem ->> 'unit',
-              'isCompleted', COALESCE((elem ->> 'completed')::boolean, FALSE),
-              'imageUrl',    elem ->> 'imageUrl'
-            ))
-       FROM jsonb_array_elements(COALESCE(l.items, '[]'::jsonb)) AS elem),
       '[]'::jsonb)
   )
   INTO result
