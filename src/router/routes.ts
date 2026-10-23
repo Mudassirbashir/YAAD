@@ -30,6 +30,7 @@ export type AppRouteId =
   | 'legal'
   | 'blog'
   | 'blog_article'
+  | 'shared_list'
   | 'rashan_list'
   | 'not_found';
 
@@ -64,6 +65,7 @@ export function isProtectedRoute(routeId: AppRouteId): boolean {
     case 'legal':
     case 'blog':
     case 'blog_article':
+    case 'shared_list':
     case 'rashan_list':
     case 'auth':
     case 'reset_password':
@@ -400,6 +402,19 @@ export function parseRoute(rawPathname: string): ParsedRoute {
     };
   }
 
+  // 9c. Public Token-Shared Shopping List (/share/<token>)
+  const shareMatch = norm.match(/^\/share\/([^/]+)$/);
+  if (shareMatch) {
+    const token = shareMatch[1];
+    return {
+      routeId: 'shared_list',
+      pathname: norm,
+      params: { token },
+      isProtected: false,
+      canonicalPath: `/share/${token}`,
+    };
+  }
+
   // 10. Dedicated Public Editorial & Rashan Guide
   if (norm === '/rashan-list' || norm === '/rashan' || norm === '/rashan-ki-list' || norm === '/monthly-rashan') {
     return {
@@ -477,6 +492,8 @@ export function buildCanonicalPath(
       return '/blog';
     case 'blog_article':
       return params?.slug ? `/blog/${params.slug}` : '/blog';
+    case 'shared_list':
+      return params?.token ? `/share/${params.token}` : '/';
     case 'features':
       return '/features';
     case 'how_it_works':

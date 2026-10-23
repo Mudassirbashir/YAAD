@@ -59,6 +59,7 @@ import { SuspendedAccountModal } from './components/SuspendedAccountModal';
 const LegalPageView = React.lazy(() => import('./components/legal/LegalPageView').then((m) => ({ default: m.LegalPageView })));
 const BlogArticlePage = React.lazy(() => import('./components/legal/BlogArticlePage').then((m) => ({ default: m.BlogArticlePage })));
 const RashanListPage = React.lazy(() => import('./components/rashan/RashanListPage').then((m) => ({ default: m.RashanListPage })));
+const SharedListView = React.lazy(() => import('./components/SharedListView').then((m) => ({ default: m.SharedListView })));
 const AdminApp = React.lazy(() => import('./admin/AdminApp').then((m) => ({ default: m.AdminApp })));
 
 const STORAGE_ONBOARDED_KEY = 'yaad_has_onboarded_v2';
@@ -158,9 +159,10 @@ function AppContent() {
       return 'landing';
     }
 
-    // Public rashan and legal pages render immediately without splash delay
+    // Public rashan, blog, shared list, and legal pages render immediately without splash delay
     if (route.routeId === 'rashan_list') return 'rashan_list';
     if (route.routeId === 'blog_article') return 'blog_article';
+    if (route.routeId === 'shared_list') return 'shared_list';
     if (LEGAL_SCREENS.includes(route.routeId as ScreenType)) return route.routeId as ScreenType;
 
     if (!hasSplashFinished) return 'splash';
@@ -1330,7 +1332,7 @@ function AppContent() {
     !isPasswordResetRequiredActive;
 
   // Seamless launch & session restoration: show branded splash until session resolves
-  if ((!hasSplashFinished || isAuthLoading) && currentScreen !== 'landing' && currentScreen !== 'rashan_list' && !LEGAL_SCREENS.includes(currentScreen)) {
+  if ((!hasSplashFinished || isAuthLoading) && currentScreen !== 'landing' && currentScreen !== 'rashan_list' && currentScreen !== 'shared_list' && !LEGAL_SCREENS.includes(currentScreen)) {
     return <SplashView onFinish={handleSplashFinish} isRestoringAuth={isAuthLoading && !user} />;
   }
 
@@ -1385,6 +1387,15 @@ function AppContent() {
                   slug={route.params?.slug}
                   onBack={() => navigate('/blog')}
                   onNavigate={(path) => navigate(path)}
+                />
+              );
+            }
+
+            if (currentScreen === 'shared_list') {
+              return (
+                <SharedListView
+                  token={route.params?.token || ''}
+                  onOpenApp={() => navigate(user ? '/home' : '/')}
                 />
               );
             }

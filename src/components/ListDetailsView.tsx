@@ -15,12 +15,14 @@ import {
   ShoppingBag,
   ShieldCheck,
   Database,
+  Share2,
 } from 'lucide-react';
 import { ShoppingList, CategoryId } from '../types';
 import { TopHeader } from './TopHeader';
 import { CategoryIcon } from './CategoryIcon';
 import { ItemVisualIcon } from './ItemVisualIcon';
 import { ItemImageLightboxModal } from './common/ItemImageLightboxModal';
+import { ShareListModal } from './ShareListModal';
 import { useLanguage } from '../context/LanguageContext';
 import { triggerHaptic } from '../lib/sound';
 import { BidiText } from '../utils/bidi';
@@ -53,12 +55,18 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
   onOpenProfile,
 }) => {
   const { t, getCategoryName } = useLanguage();
+  const [currentList, setCurrentList] = useState<ShoppingList>(list);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedLightboxItem, setSelectedLightboxItem] = useState<{
     imageUrl: string;
     itemName: string;
     categoryName?: string;
   } | null>(null);
+
+  useEffect(() => {
+    setCurrentList(list);
+  }, [list]);
 
   // Close modal when pressing Escape key
   useEffect(() => {
@@ -72,24 +80,24 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showDeleteConfirm]);
 
-  const totalItems = (list.items || []).length;
-  const completedItemsCount = (list.items || []).filter((i) => i.completed).length;
-  const isAllCompleted = list.isCompleted || (totalItems > 0 && completedItemsCount === totalItems);
+  const totalItems = (currentList.items || []).length;
+  const completedItemsCount = (currentList.items || []).filter((i) => i.completed).length;
+  const isAllCompleted = currentList.isCompleted || (totalItems > 0 && completedItemsCount === totalItems);
 
   // Group items by categoryId
   const categoryIds: CategoryId[] = useMemo(() => {
     return Array.from(
-      new Set(list.items.map((i) => (i.categoryId || 'other') as CategoryId))
+      new Set((currentList.items || []).map((i) => (i.categoryId || 'other') as CategoryId))
     );
-  }, [list.items]);
+  }, [currentList.items]);
 
   // Date and time formatting
   const sessionTimes = useMemo(() => {
     return formatSessionDateTime(
-      list.createdTimestamp || list.createdAt,
-      list.completedTimestamp || list.completedAt
+      currentList.createdTimestamp || currentList.createdAt,
+      currentList.completedTimestamp || currentList.completedAt
     );
-  }, [list.createdTimestamp, list.createdAt, list.completedTimestamp, list.completedAt]);
+  }, [currentList.createdTimestamp, currentList.createdAt, currentList.completedTimestamp, currentList.completedAt]);
 
   const percentComplete = totalItems > 0 ? Math.round((completedItemsCount / totalItems) * 100) : 0;
 
@@ -104,9 +112,19 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
         rightAction={
           <div className="flex items-center gap-1.5">
             <button
+              id="list_details_share_btn"
               type="button"
-              onClick={() => onEditList(list)}
-              className="font-['Manrope'] text-xs sm:text-sm font-bold text-primary hover:bg-emerald-50 px-3 py-1.5 rounded-full transition-colors active:scale-95 flex items-center gap-1 cursor-pointer"
+              onClick={() => setIsShareModalOpen(true)}
+              className="font-body text-xs sm:text-sm font-bold text-on-surface-variant hover:text-primary hover:bg-emerald-50 dark:hover:bg-emerald-950/40 px-3 py-1.5 rounded-full transition-colors active:scale-95 flex items-center gap-1 cursor-pointer"
+              title="Share List"
+            >
+              <Share2 className="w-3.5 h-3.5" />
+              <span>{t('shareList') || 'Share'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => onEditList(currentList)}
+              className="font-body text-xs sm:text-sm font-bold text-primary hover:bg-emerald-50 px-3 py-1.5 rounded-full transition-colors active:scale-95 flex items-center gap-1 cursor-pointer"
             >
               <Edit3 className="w-3.5 h-3.5" />
               <span>{t('edit')}</span>
@@ -134,12 +152,12 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
                 className="shadow-2xs"
               />
               <div className="flex flex-col">
-                <span className="font-['Manrope'] text-[11px] font-extrabold uppercase tracking-widest text-primary/80">
+                <span className="font-body text-[11px] font-extrabold uppercase tracking-widest text-primary/80">
                   {t('history.sessionLabel')}
                 </span>
                 <BidiText
                   as="h1"
-                  className="font-['Plus_Jakarta_Sans'] text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight"
+                  className="font-display text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight"
                 >
                   {list.title}
                 </BidiText>
@@ -170,10 +188,10 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
                 <Calendar className="w-4 h-4" />
               </div>
               <div className="flex flex-col">
-                <span className="text-[10.5px] font-extrabold font-['Manrope'] uppercase tracking-wider text-outline">
+                <span className="text-[10.5px] font-extrabold font-body uppercase tracking-wider text-outline">
                   {t('history.dateLabel')}
                 </span>
-                <span className="font-['Manrope'] text-xs sm:text-sm font-bold text-on-surface">
+                <span className="font-body text-xs sm:text-sm font-bold text-on-surface">
                   {sessionTimes.fullDate}
                 </span>
               </div>
@@ -185,10 +203,10 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
                 <Clock className="w-4 h-4" />
               </div>
               <div className="flex flex-col">
-                <span className="text-[10.5px] font-extrabold font-['Manrope'] uppercase tracking-wider text-outline">
+                <span className="text-[10.5px] font-extrabold font-body uppercase tracking-wider text-outline">
                   {t('history.timeLabel')}
                 </span>
-                <span className="font-['Manrope'] text-xs sm:text-sm font-bold text-on-surface">
+                <span className="font-body text-xs sm:text-sm font-bold text-on-surface">
                   {sessionTimes.time || t('history.exactTimeLogged') || 'Exact time logged'}
                 </span>
               </div>
@@ -200,10 +218,10 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
                 <ShieldCheck className="w-4 h-4" />
               </div>
               <div className="flex flex-col">
-                <span className="text-[10.5px] font-extrabold font-['Manrope'] uppercase tracking-wider text-outline">
+                <span className="text-[10.5px] font-extrabold font-body uppercase tracking-wider text-outline">
                   {t('history.statusLabel')}
                 </span>
-                <span className="font-['Manrope'] text-xs sm:text-sm font-bold text-on-surface">
+                <span className="font-body text-xs sm:text-sm font-bold text-on-surface">
                   {isAllCompleted
                     ? sessionTimes.completionTime
                       ? t('history.completedAt', { time: sessionTimes.completionTime })
@@ -216,7 +234,7 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
 
           {/* Progress / Items Summary */}
           <div className="flex flex-col gap-1.5 pt-1">
-            <div className="flex justify-between items-center text-xs font-['Manrope']">
+            <div className="flex justify-between items-center text-xs font-body">
               <span className="font-bold text-on-surface">
                 {t('history.itemsPurchased', {
                   completed: completedItemsCount,
@@ -234,7 +252,7 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
           </div>
 
           {/* Historical integrity indicator */}
-          <div className="flex items-center gap-2 text-[11px] font-['Manrope'] text-outline border-t border-surface-dim/60 pt-3">
+          <div className="flex items-center gap-2 text-[11px] font-body text-outline border-t border-surface-dim/60 pt-3">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
             <span>
               {t('history.recordsPreservedNotice') ||
@@ -246,10 +264,10 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
         {/* ASSOCIATED ITEMS SECTION */}
         <section aria-label={t('history.itemsTitle')} className="flex flex-col gap-4">
           <div className="flex items-center justify-between px-1">
-            <h2 className="font-['Plus_Jakarta_Sans'] text-lg sm:text-xl font-bold text-on-surface">
+            <h2 className="font-display text-lg sm:text-xl font-bold text-on-surface">
               {t('history.itemsTitle')}
             </h2>
-            <span className="font-['Manrope'] text-xs font-semibold text-outline">
+            <span className="font-body text-xs font-semibold text-outline">
               {t('history.itemsCount', { count: totalItems })}
             </span>
           </div>
@@ -269,11 +287,11 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
                 >
                   {/* Category Header */}
                   <div className="px-4 py-2.5 bg-surface-container-low/60 border-b border-surface-dim/60 flex items-center justify-between">
-                    <span className="font-['Manrope'] text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
+                    <span className="font-body text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
                       <CategoryIcon categoryId={catId} className="w-4 h-4 text-primary" />
                       <span>{getCategoryName(catId)}</span>
                     </span>
-                    <span className="font-['Manrope'] text-[11px] font-semibold text-outline">
+                    <span className="font-body text-[11px] font-semibold text-outline">
                       {categoryCompleted}/{categoryItems.length}
                     </span>
                   </div>
@@ -347,7 +365,7 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
                               <div className="flex items-center gap-2 flex-wrap" dir="auto">
                                 <BidiText
                                   as="span"
-                                  className={`font-['Manrope'] text-sm sm:text-base font-semibold truncate ${
+                                  className={`font-body text-sm sm:text-base font-semibold truncate ${
                                     item.completed
                                       ? 'line-through text-outline'
                                       : 'text-on-surface'
@@ -358,7 +376,7 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
                               </div>
 
                               {/* Associated metadata: Category, created time, status */}
-                              <div className="flex items-center gap-2 text-[11px] font-['Manrope'] text-outline mt-0.5 flex-wrap">
+                              <div className="flex items-center gap-2 text-[11px] font-body text-outline mt-0.5 flex-wrap">
                                 <span className="inline-flex items-center gap-1">
                                   <Tag className="w-3 h-3 text-outline/70" />
                                   <span>{getCategoryName(item.categoryId || 'other')}</span>
@@ -387,7 +405,7 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
                           {formattedQty && (
                             <bdi
                               dir="ltr"
-                              className="font-['Manrope'] tabular-nums text-xs font-bold text-on-surface bg-surface-container px-2.5 py-1 rounded-lg shrink-0 border border-surface-dim/60 shadow-2xs"
+                              className="font-body tabular-nums text-xs font-bold text-on-surface bg-surface-container px-2.5 py-1 rounded-lg shrink-0 border border-surface-dim/60 shadow-2xs"
                             >
                               {formattedQty}
                             </bdi>
@@ -409,7 +427,7 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
             type="button"
             id="history_delete_btn"
             onClick={() => setShowDeleteConfirm(true)}
-            className="w-full sm:w-auto sm:me-auto min-h-[46px] rounded-full bg-transparent text-rose-700 font-['Manrope'] text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 hover:bg-rose-50 px-4 transition-colors active:scale-95 cursor-pointer"
+            className="w-full sm:w-auto sm:me-auto min-h-[46px] rounded-full bg-transparent text-rose-700 font-body text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 hover:bg-rose-50 px-4 transition-colors active:scale-95 cursor-pointer"
           >
             <Trash2 className="w-4 h-4" />
             <span>{t('history.deleteHistory')}</span>
@@ -420,7 +438,7 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
             type="button"
             id="history_reuse_list_btn"
             onClick={() => onReuseList(list)}
-            className="w-full sm:w-auto sm:min-w-[170px] min-h-[50px] px-5 rounded-full bg-emerald-50 text-primary border border-emerald-200/80 hover:bg-emerald-100/70 font-['Manrope'] text-sm sm:text-base font-bold flex items-center justify-center gap-2 transition-all shadow-2xs active:scale-[0.98] cursor-pointer"
+            className="w-full sm:w-auto sm:min-w-[170px] min-h-[50px] px-5 rounded-full bg-emerald-50 text-primary border border-emerald-200/80 hover:bg-emerald-100/70 font-body text-sm sm:text-base font-bold flex items-center justify-center gap-2 transition-all shadow-2xs active:scale-[0.98] cursor-pointer"
           >
             <RotateCcw className="w-4 h-4 text-primary" />
             <span>{t('history.reuseList')}</span>
@@ -432,7 +450,7 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
               type="button"
               id="history_mark_complete_btn"
               onClick={() => onMarkComplete(list)}
-              className="w-full sm:w-auto sm:min-w-[170px] min-h-[50px] px-5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-['Manrope'] text-sm sm:text-base font-bold flex items-center justify-center gap-2 shadow-xs active:scale-[0.98] transition-all cursor-pointer"
+              className="w-full sm:w-auto sm:min-w-[170px] min-h-[50px] px-5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-body text-sm sm:text-base font-bold flex items-center justify-center gap-2 shadow-xs active:scale-[0.98] transition-all cursor-pointer"
             >
               <CheckCircle2 className="w-4 h-4" />
               <span>Mark Complete</span>
@@ -445,7 +463,7 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
               type="button"
               id="history_continue_shopping_btn"
               onClick={() => onContinueShopping(list)}
-              className="w-full sm:w-auto sm:min-w-[190px] min-h-[50px] px-6 rounded-full bg-primary hover:bg-primary/90 text-white font-['Manrope'] text-sm sm:text-base font-bold flex items-center justify-center gap-2 shadow-xs active:scale-[0.98] transition-all cursor-pointer"
+              className="w-full sm:w-auto sm:min-w-[190px] min-h-[50px] px-6 rounded-full bg-primary hover:bg-primary/90 text-white font-body text-sm sm:text-base font-bold flex items-center justify-center gap-2 shadow-xs active:scale-[0.98] transition-all cursor-pointer"
             >
               <ShoppingCart className="w-4 h-4" />
               <span>{t('history.continueShopping')}</span>
@@ -476,10 +494,10 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
               </div>
 
               <div className="text-center space-y-1">
-                <h3 className="font-['Plus_Jakarta_Sans'] text-lg font-bold text-on-surface">
+                <h3 className="font-display text-lg font-bold text-on-surface">
                   {t('history.deleteConfirmTitle')}
                 </h3>
-                <p className="font-['Manrope'] text-xs sm:text-sm text-outline leading-relaxed">
+                <p className="font-body text-xs sm:text-sm text-outline leading-relaxed">
                   {t('history.deleteConfirmDesc', { title: list.title })}
                 </p>
               </div>
@@ -488,7 +506,7 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowDeleteConfirm(false)}
-                  className="h-11 rounded-full bg-surface-container text-on-surface font-['Manrope'] text-xs sm:text-sm font-semibold hover:bg-surface-container-high transition-colors"
+                  className="h-11 rounded-full bg-surface-container text-on-surface font-body text-xs sm:text-sm font-semibold hover:bg-surface-container-high transition-colors"
                 >
                   {t('cancel')}
                 </button>
@@ -498,7 +516,7 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
                     setShowDeleteConfirm(false);
                     onDeleteList(list.id);
                   }}
-                  className="h-11 rounded-full bg-rose-600 text-white font-['Manrope'] text-xs sm:text-sm font-semibold hover:bg-rose-700 transition-colors shadow-xs active:scale-95"
+                  className="h-11 rounded-full bg-rose-600 text-white font-body text-xs sm:text-sm font-semibold hover:bg-rose-700 transition-colors shadow-xs active:scale-95"
                 >
                   {t('delete')}
                 </button>
@@ -515,6 +533,14 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
         imageUrl={selectedLightboxItem?.imageUrl}
         itemName={selectedLightboxItem?.itemName}
         categoryName={selectedLightboxItem?.categoryName}
+      />
+
+      {/* Share List Modal */}
+      <ShareListModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        list={currentList}
+        onListUpdated={(updated) => setCurrentList(updated)}
       />
     </div>
   );

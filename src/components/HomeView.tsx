@@ -17,6 +17,7 @@ import { QuickActionsGrid } from './home/QuickActionsGrid';
 import { FrequentEssentialsSection } from './home/FrequentEssentialsSection';
 import { HomeListsSection } from './home/HomeListsSection';
 import { NoActiveListModal } from './home/NoActiveListModal';
+import { ShareListModal } from './ShareListModal';
 
 interface HomeViewProps {
   lists: ShoppingList[];
@@ -68,6 +69,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
   const [isFavoritesModalOpen, setIsFavoritesModalOpen] = useState(false);
   const [isCategoryBrowserOpen, setIsCategoryBrowserOpen] = useState(false);
+  const [sharingList, setSharingList] = useState<ShoppingList | null>(null);
 
   // Frequent essential item awaiting target list choice if no active list exists
   const [pendingEssentialItem, setPendingEssentialItem] = useState<EssentialDisplayItem | null>(null);
@@ -222,11 +224,11 @@ export const HomeView: React.FC<HomeViewProps> = ({
         >
           <div className="flex flex-col min-w-0">
             {/* Top: Time greeting slightly increased */}
-            <span className="font-['Manrope'] text-[0.84375rem] sm:text-[0.9375rem] font-semibold text-outline leading-tight">
+            <span className="font-body text-[0.84375rem] sm:text-[0.9375rem] font-semibold text-outline leading-tight">
               {greetingData.timeGreeting}
             </span>
             {/* Middle: User's name prominently enlarged with Verified Badge if granted */}
-            <h1 className="font-['Plus_Jakarta_Sans'] text-3xl sm:text-4xl lg:text-5xl font-black text-on-surface tracking-tight leading-tight truncate mt-0.5 flex items-center gap-2">
+            <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-black text-on-surface tracking-tight leading-tight truncate mt-0.5 flex items-center gap-2">
               <span className="truncate">{greetingData.userName}</span>
               {(profile?.is_verified || (user?.user_metadata as any)?.is_verified || (user?.id && typeof window !== 'undefined' && localStorage.getItem('yaad_verified_' + user.id) === 'true')) && (
                 <span className="inline-flex shrink-0 items-center self-center align-middle">
@@ -235,7 +237,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
               )}
             </h1>
             {/* Bottom: Let's make a list in solid proper black */}
-            <p className="font-['Manrope'] text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100 mt-0.5">
+            <p className="font-body text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100 mt-0.5">
               {t('home.letsMakeAList') || "Let's make a list"}
             </p>
           </div>
@@ -284,7 +286,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
               <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-white/15 flex items-center justify-center shrink-0 border border-white/20 shadow-2xs group-hover:bg-white/25 transition-all">
                 <Plus className="w-6 h-6 sm:w-7 sm:h-7 text-white stroke-[2.4] transition-transform duration-300 group-hover:rotate-90" />
               </div>
-              <h2 className="font-['Plus_Jakarta_Sans'] text-lg sm:text-2xl font-black tracking-tight text-white leading-tight">
+              <h2 className="font-display text-lg sm:text-2xl font-black tracking-tight text-white leading-tight">
                 {t('home.createListTitle')}
               </h2>
             </div>
@@ -337,10 +339,18 @@ export const HomeView: React.FC<HomeViewProps> = ({
           onReuseList={onReuseList}
           onOpenHistory={onOpenHistory}
           onDeleteList={onDeleteList}
+          onShareList={(listToShare) => setSharingList(listToShare)}
         />
       </main>
 
       {/* MODALS */}
+      {/* Share List Modal */}
+      <ShareListModal
+        isOpen={Boolean(sharingList)}
+        list={sharingList}
+        onClose={() => setSharingList(null)}
+      />
+
       {/* 1. Statistics Modal */}
       <ShoppingStatisticsModal
         isOpen={isStatsModalOpen}
@@ -399,11 +409,11 @@ export const HomeView: React.FC<HomeViewProps> = ({
               <Check className="w-4 h-4 stroke-[2.5]" />
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="font-['Plus_Jakarta_Sans'] text-xs font-bold text-on-surface truncate">
+              <span className="font-display text-xs font-bold text-on-surface truncate">
                 {t('home.addedToListToast') || 'Added to list'}:{' '}
                 <span className="text-primary">{addedItemToast.message}</span>
               </span>
-              <span className="font-['Manrope'] text-[11px] text-outline truncate">
+              <span className="font-body text-[11px] text-outline truncate">
                 {addedItemToast.listTitle}
               </span>
             </div>
@@ -417,7 +427,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 onSelectList(addedItemToast.targetList);
                 setAddedItemToast(null);
               }}
-              className="h-7 px-3 rounded-full bg-primary text-on-primary text-[11px] font-bold font-['Manrope'] flex items-center gap-1 active:scale-95 transition-transform cursor-pointer shadow-xs"
+              className="h-7 px-3 rounded-full bg-primary text-on-primary text-[11px] font-bold font-body flex items-center gap-1 active:scale-95 transition-transform cursor-pointer shadow-xs"
             >
               <span>{t('home.shopNow') || 'Shop Now'}</span>
               <ArrowRight className="w-3 h-3 stroke-[2.5]" />

@@ -39,6 +39,8 @@ CREATE TABLE IF NOT EXISTS public.shopping_lists (
   icon TEXT DEFAULT 'shopping_basket',
   is_completed BOOLEAN DEFAULT FALSE NOT NULL,
   completed_at TIMESTAMPTZ,
+  share_token TEXT UNIQUE,
+  share_enabled BOOLEAN DEFAULT FALSE NOT NULL,
   items JSONB DEFAULT '[]'::jsonb,
   created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL

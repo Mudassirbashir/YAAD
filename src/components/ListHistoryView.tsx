@@ -23,6 +23,7 @@ import { TopHeader } from './TopHeader';
 import { useLanguage } from '../context/LanguageContext';
 import { getFriendlyErrorMessage } from '../utils/errorFormatting';
 import { ShoppingListCard } from './ShoppingListCard';
+import { ShareListModal } from './ShareListModal';
 import { triggerHaptic } from '../lib/sound';
 
 export interface ListHistoryViewProps {
@@ -67,6 +68,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
   const { t } = useLanguage();
   const [filterTab, setFilterTab] = useState<HistoryFilterTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [shareModalList, setShareModalList] = useState<ShoppingList | null>(null);
   const [deletedListToast, setDeletedListToast] = useState<{ list: ShoppingList; timeoutId: any } | null>(null);
 
   // Bulk selection mode state
@@ -245,7 +247,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
         {/* Header Title and Subtitle with Manage Toggle Button */}
         <div className="flex flex-col gap-1">
           <div className="flex items-center justify-between gap-3">
-            <h1 className="font-['Plus_Jakarta_Sans'] text-3xl sm:text-4xl font-black text-on-surface tracking-tight">
+            <h1 className="font-display text-3xl sm:text-4xl font-black text-on-surface tracking-tight">
               {t('history.title')}
             </h1>
 
@@ -261,7 +263,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
                       return !prev;
                     });
                   }}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-['Manrope'] font-bold border transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs ${
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-body font-bold border transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs ${
                     isSelectionMode
                       ? 'bg-neutral-900 text-white border-neutral-900 shadow-xs'
                       : 'bg-white text-on-surface border-surface-dim hover:border-primary/50'
@@ -273,7 +275,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
               </div>
             )}
           </div>
-          <p className="font-['Manrope'] text-xs sm:text-sm text-outline mt-0.5">
+          <p className="font-body text-xs sm:text-sm text-outline mt-0.5">
             Track your past shopping trips and easily reorder your favorite items.
           </p>
         </div>
@@ -300,7 +302,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
                   </>
                 )}
               </button>
-              <span className="text-xs font-bold text-on-surface font-['Manrope']">
+              <span className="text-xs font-bold text-on-surface font-body">
                 {selectedIds.size} of {lists.length} selected
               </span>
             </div>
@@ -339,7 +341,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
 
         {/* Offline cached notice banner if offline */}
         {!isOnline && (
-          <div className="p-3 bg-amber-50/80 border border-amber-200/80 rounded-2xl text-xs font-['Manrope'] text-amber-900 flex items-center gap-2 shadow-2xs">
+          <div className="p-3 bg-amber-50/80 border border-amber-200/80 rounded-2xl text-xs font-body text-amber-900 flex items-center gap-2 shadow-2xs">
             <WifiOff className="w-4 h-4 text-amber-700 shrink-0" />
             <div className="flex-1">
               <span className="font-bold">{t('history.cachedNotice')}</span>
@@ -353,7 +355,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
 
         {/* Error State Banner */}
         {friendlyError && (
-          <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl text-xs font-['Manrope'] text-rose-800 flex items-center justify-between gap-3 shadow-2xs">
+          <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl text-xs font-body text-rose-800 flex items-center justify-between gap-3 shadow-2xs">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
               <span>{friendlyError}</span>
@@ -383,7 +385,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t('history.searchPlaceholder')}
-                className="w-full h-11 pl-10 pr-4 bg-white border border-surface-dim/80 rounded-xl text-xs sm:text-sm font-['Manrope'] text-on-surface placeholder:text-outline/70 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-2xs transition-all"
+                className="w-full h-11 pl-10 pr-4 bg-white border border-surface-dim/80 rounded-xl text-xs sm:text-sm font-body text-on-surface placeholder:text-outline/70 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-2xs transition-all"
               />
               {searchQuery && (
                 <button
@@ -405,7 +407,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
                   triggerHaptic(6);
                   setFilterTab('all');
                 }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-['Manrope'] font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-body font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                   filterTab === 'all'
                     ? 'bg-white text-primary shadow-xs'
                     : 'text-outline hover:text-on-surface'
@@ -424,7 +426,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
                   triggerHaptic(6);
                   setFilterTab('completed');
                 }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-['Manrope'] font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-body font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                   filterTab === 'completed'
                     ? 'bg-white text-emerald-800 shadow-xs'
                     : 'text-outline hover:text-on-surface'
@@ -443,7 +445,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
                   triggerHaptic(6);
                   setFilterTab('active');
                 }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-['Manrope'] font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-body font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                   filterTab === 'active'
                     ? 'bg-white text-amber-900 shadow-xs'
                     : 'text-outline hover:text-on-surface'
@@ -482,10 +484,10 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
             <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mb-4">
               <ClipboardList className="w-8 h-8 text-primary stroke-[2.2]" />
             </div>
-            <h3 className="font-['Plus_Jakarta_Sans'] font-bold text-on-surface text-lg sm:text-xl">
+            <h3 className="font-display font-bold text-on-surface text-lg sm:text-xl">
               {t('history.emptyTitle')}
             </h3>
-            <p className="font-['Manrope'] text-xs sm:text-sm text-outline mt-1.5 mb-6 max-w-sm leading-relaxed">
+            <p className="font-body text-xs sm:text-sm text-outline mt-1.5 mb-6 max-w-sm leading-relaxed">
               {t('history.emptySubtitle')}
             </p>
             <button
@@ -495,7 +497,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
                 triggerHaptic(14);
                 onCreateNewList();
               }}
-              className="bg-primary hover:bg-primary/90 text-white font-['Manrope'] text-sm sm:text-base font-bold px-7 py-3.5 rounded-full shadow-md transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
+              className="bg-primary hover:bg-primary/90 text-white font-body text-sm sm:text-base font-bold px-7 py-3.5 rounded-full shadow-md transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
             >
               <Plus className="w-5 h-5 stroke-[2.4]" />
               <span>{t('history.createListBtn')}</span>
@@ -505,10 +507,10 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
           /* No search results */
           <div className="p-8 bg-white rounded-2xl border border-surface-dim/70 text-center shadow-xs flex flex-col items-center">
             <Search className="w-8 h-8 text-outline mb-2 opacity-50" />
-            <p className="font-['Plus_Jakarta_Sans'] font-bold text-on-surface text-sm">
+            <p className="font-display font-bold text-on-surface text-sm">
               {t('history.noSearchResults')}
             </p>
-            <p className="font-['Manrope'] text-xs text-outline mt-1 max-w-xs">
+            <p className="font-body text-xs text-outline mt-1 max-w-xs">
               Try searching for a different list title or item name, or create a brand new list.
             </p>
             <div className="flex items-center gap-2.5 mt-4">
@@ -547,6 +549,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
                 onMarkComplete={onMarkComplete}
                 onDeleteList={handleDelete}
                 onReuseList={onReuseList}
+                onShareList={(l) => setShareModalList(l)}
                 isOnline={isOnline}
                 variant="history"
                 selectable={isSelectionMode}
@@ -575,10 +578,10 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
               <Trash2 className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="font-['Plus_Jakarta_Sans'] text-lg font-extrabold text-neutral-900 dark:text-white">
+              <h3 className="font-display text-lg font-extrabold text-neutral-900 dark:text-white">
                 Delete {selectedIds.size} shopping list{selectedIds.size > 1 ? 's' : ''}?
               </h3>
-              <p className="font-['Manrope'] text-xs sm:text-sm text-neutral-500 mt-1 leading-relaxed">
+              <p className="font-body text-xs sm:text-sm text-neutral-500 mt-1 leading-relaxed">
                 These selected shopping lists and their items will be permanently removed. This action cannot be undone.
               </p>
             </div>
@@ -622,10 +625,10 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
               <Trash2 className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="font-['Plus_Jakarta_Sans'] text-lg font-extrabold text-neutral-900 dark:text-white">
+              <h3 className="font-display text-lg font-extrabold text-neutral-900 dark:text-white">
                 Clear all shopping history?
               </h3>
-              <p className="font-['Manrope'] text-xs sm:text-sm text-neutral-500 mt-1 leading-relaxed">
+              <p className="font-body text-xs sm:text-sm text-neutral-500 mt-1 leading-relaxed">
                 All {lists.length} shopping lists will be permanently deleted from your account. This action cannot be undone.
               </p>
             </div>
@@ -655,7 +658,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
 
       {/* Floating Undo Toast on Deletion */}
       {deletedListToast && (
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-on-surface text-surface px-4 py-2.5 rounded-2xl shadow-xl flex items-center gap-3 border border-white/10 animate-slide-up text-xs font-['Manrope']">
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-on-surface text-surface px-4 py-2.5 rounded-2xl shadow-xl flex items-center gap-3 border border-white/10 animate-slide-up text-xs font-body">
           <span>Shopping list deleted</span>
           {onReuseList && (
             <button
@@ -674,6 +677,13 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
           )}
         </div>
       )}
+
+      {/* Share List Modal */}
+      <ShareListModal
+        isOpen={Boolean(shareModalList)}
+        list={shareModalList}
+        onClose={() => setShareModalList(null)}
+      />
     </div>
   );
 };

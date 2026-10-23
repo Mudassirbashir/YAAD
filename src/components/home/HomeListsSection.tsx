@@ -23,6 +23,7 @@ interface HomeListsSectionProps {
   onOpenHistory?: () => void;
   onDeleteList?: (listId: string) => void;
   onReuseList?: (list: ShoppingList) => void;
+  onShareList?: (list: ShoppingList) => void;
   isOnline?: boolean;
 }
 
@@ -38,6 +39,7 @@ export const HomeListsSection: React.FC<HomeListsSectionProps> = ({
   onOpenHistory,
   onDeleteList,
   onReuseList,
+  onShareList,
   isOnline = true,
 }) => {
   const { t, language } = useLanguage();
@@ -50,7 +52,7 @@ export const HomeListsSection: React.FC<HomeListsSectionProps> = ({
     >
       {/* Section Header */}
       <div className="flex items-center justify-between px-0.5">
-        <h3 className="font-['Plus_Jakarta_Sans'] text-base sm:text-lg font-bold text-on-surface">
+        <h3 className="font-display text-base sm:text-lg font-bold text-on-surface">
           {t('home.yourListsTitle') || 'Your Lists'}
         </h3>
         {lists.length > 0 && onOpenHistory && (
@@ -67,7 +69,7 @@ export const HomeListsSection: React.FC<HomeListsSectionProps> = ({
 
       {/* Network / General Error Notice */}
       {error && !isNetworkOrOfflineError(error) && (
-        <div className="p-3.5 bg-error-container/30 border border-error/20 rounded-2xl text-xs font-['Manrope'] text-error flex items-center justify-between gap-2">
+        <div className="p-3.5 bg-error-container/30 border border-error/20 rounded-2xl text-xs font-body text-error flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
@@ -115,10 +117,10 @@ export const HomeListsSection: React.FC<HomeListsSectionProps> = ({
               <ShoppingBag className="w-5 h-5 stroke-[2.2]" />
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="font-['Plus_Jakarta_Sans'] text-sm sm:text-base font-bold text-on-surface truncate group-hover:text-primary transition-colors">
+              <span className="font-display text-sm sm:text-base font-bold text-on-surface truncate group-hover:text-primary transition-colors">
                 {t('home.createFirstList') || 'Create your first shopping list'}
               </span>
-              <span className="font-['Manrope'] text-[11px] text-outline truncate">
+              <span className="font-body text-[11px] text-outline truncate">
                 {t('home.noListsDesc') || 'Tap to start organizing what to buy'}
               </span>
             </div>
@@ -150,6 +152,7 @@ export const HomeListsSection: React.FC<HomeListsSectionProps> = ({
               onMarkComplete={onMarkComplete}
               onDeleteList={onDeleteList}
               onReuseList={onReuseList}
+              onShareList={onShareList}
               isOnline={isOnline}
               variant="home"
             />
