@@ -219,6 +219,8 @@ export interface MasterCatalogItem {
   updated_at: string;
   emoji?: string;
   default_unit?: string;
+  imageUrl?: string;
+  cloudinaryPublicId?: string;
 
   // CamelCase accessors for backward compatibility
   canonicalName?: string;

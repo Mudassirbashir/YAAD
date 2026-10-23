@@ -14,6 +14,8 @@ import { ItemImageLightboxModal } from './common/ItemImageLightboxModal';
 import { ListIcon } from './ListIcon';
 import { useLanguage } from '../context/LanguageContext';
 import { BidiText } from '../utils/bidi';
+import { supabaseCatalog } from '../lib/catalog/supabaseCatalog';
+import { resolveVisual } from '../lib/catalog/visualResolver';
 
 export interface SharedListViewProps {
   token: string;
@@ -50,6 +52,13 @@ export const SharedListView: React.FC<SharedListViewProps> = ({ token, onOpenApp
         robotsMeta.setAttribute('content', previousContent);
       }
     };
+  }, []);
+
+  // Initialize public catalog service so signed-out users resolve catalog images
+  useEffect(() => {
+    supabaseCatalog.initialize().catch((err) => {
+      console.debug('Public catalog initialization note:', err);
+    });
   }, []);
 
   // Fetch list on mount or token change
@@ -239,7 +248,11 @@ export const SharedListView: React.FC<SharedListViewProps> = ({ token, onOpenApp
               ) : (
                 list.items.map((item, idx) => {
                   const isBought = Boolean(item.isCompleted);
-                  const hasPhoto = Boolean(item.imageUrl);
+                  const visual = resolveVisual({
+                    name: item.name,
+                    imageUrl: item.imageUrl || undefined,
+                  });
+                  const hasPhoto = Boolean(visual.url);
 
                   return (
                     <article
@@ -253,14 +266,14 @@ export const SharedListView: React.FC<SharedListViewProps> = ({ token, onOpenApp
                         <div className="relative shrink-0">
                           <ItemVisualIcon
                             name={item.name}
-                            imageUrl={item.imageUrl || undefined}
+                            imageUrl={visual.url}
                             size={40}
-                            className="rounded-xl shadow-2xs"
+                            className={`rounded-xl shadow-2xs ${hasPhoto ? 'cursor-pointer hover:scale-105 active:scale-95 transition-transform' : ''}`}
                             onClick={
-                              hasPhoto && item.imageUrl
+                              hasPhoto && visual.url
                                 ? () =>
                                     setSelectedPhoto({
-                                      imageUrl: item.imageUrl!,
+                                      imageUrl: visual.largeUrl || visual.url!,
                                       itemName: item.name,
                                     })
                                 : undefined

@@ -45,6 +45,22 @@ function setStoredItem(key: string, value: string): void {
 export const OFFICIAL_CLOUDINARY_CLOUD_NAME = 'rvhmsppk';
 export const OFFICIAL_CLOUDINARY_UPLOAD_PRESET = 'yaad_preset';
 
+/**
+ * Builds Cloudinary delivery URL for admin-managed master catalog item images.
+ * Library standard: c_pad,b_white creates a uniform square canvas with white background padding,
+ * f_auto,q_auto delivers automatic modern format (WebP/AVIF) and quality optimization in KBs.
+ */
+export function buildCatalogImageUrl(publicId: string, variant: 'icon' | 'large'): string {
+  if (!publicId) return '';
+  const cleanId = publicId.replace(/^\/+/, '');
+  const cloud = OFFICIAL_CLOUDINARY_CLOUD_NAME;
+  const transform =
+    variant === 'icon'
+      ? 'c_pad,b_white,w_96,h_96,f_auto,q_auto'
+      : 'c_pad,b_white,w_600,h_600,f_auto,q_auto';
+  return `https://res.cloudinary.com/${cloud}/image/upload/${transform}/${cleanId}`;
+}
+
 export function getCloudinaryConfig(): CloudinaryConfig {
   const envCloudName = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_CLOUDINARY_CLOUD_NAME) || '';
   const envUploadPreset = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET) || OFFICIAL_CLOUDINARY_UPLOAD_PRESET;

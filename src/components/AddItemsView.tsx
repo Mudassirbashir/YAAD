@@ -39,6 +39,7 @@ import { useRecommendations, RecommendationCandidate } from '../lib/recommendati
 import { recordSearchQuery } from '../lib/recommendations/searchHistory';
 import { getSuggestionsForContext } from '../lib/recommendations/shoppingContexts';
 import { triggerHaptic } from '../lib/sound';
+import { resolveVisual } from '../lib/catalog/visualResolver';
 
 export interface AddItemsViewProps {
   listTitle: string;
@@ -881,6 +882,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {searchSuggestions.map((sug) => {
                         const inListMatch = findItemInList(sug.item.canonical_name);
+                        const visual = resolveVisual(sug.item);
                         return (
                           <button
                             key={sug.item.id}
@@ -893,6 +895,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                               canonicalName={sug.item.canonical_name}
                               displayName={sug.displayName}
                               categoryId={sug.categoryId}
+                              imageUrl={visual.url}
                               size={40}
                               className="w-10 h-10 rounded-xl shrink-0 group-hover:scale-105 transition-transform"
                             />
@@ -1179,29 +1182,32 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                         key={item.id}
                         className="flex items-center justify-between p-2.5 sm:p-3 rounded-2xl bg-surface-container-low hover:bg-surface-container border border-surface-dim/70 transition-all gap-3"
                       >
-                        <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <ItemVisualIcon
-                            name={item.name}
-                            canonicalName={item.canonicalName}
-                            displayName={item.name}
-                            categoryId={itemCatId}
-                            imageUrl={item.imageUrl}
-                            size={36}
-                            onClick={
-                              item.imageUrl
-                                ? () => {
-                                    setLightboxItem({
-                                      imageUrl: item.imageUrl!,
-                                      itemName: item.name,
-                                      categoryName: getCategoryName(itemCatId),
-                                    });
-                                  }
-                                : undefined
-                            }
-                            title={item.imageUrl ? `Click to view full photo of ${item.name}` : undefined}
-                            className="w-9 h-9 rounded-xl shrink-0 cursor-pointer hover:scale-105 transition-transform"
-                          />
-                          <div className="min-w-0 flex-1 flex flex-col gap-0.5">
+                        {(() => {
+                          const visual = resolveVisual(item);
+                          return (
+                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                              <ItemVisualIcon
+                                name={item.name}
+                                canonicalName={item.canonicalName}
+                                displayName={item.name}
+                                categoryId={itemCatId}
+                                imageUrl={visual.url}
+                                size={36}
+                                onClick={
+                                  visual.url
+                                    ? () => {
+                                        setLightboxItem({
+                                          imageUrl: visual.largeUrl || visual.url!,
+                                          itemName: item.name,
+                                          categoryName: getCategoryName(itemCatId),
+                                        });
+                                      }
+                                    : undefined
+                                }
+                                title={visual.url ? `Click to view full photo of ${item.name}` : undefined}
+                                className="w-9 h-9 rounded-xl shrink-0 cursor-pointer hover:scale-105 transition-transform"
+                              />
+                              <div className="min-w-0 flex-1 flex flex-col gap-0.5">
                             {/* Line 1: Item Name */}
                             <span className="font-display font-bold text-sm text-primary truncate block">
                               {item.name}
@@ -1253,6 +1259,8 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                             </div>
                           </div>
                         </div>
+                      );
+                    })()}
 
                         {/* Actions: Photo and Delete Buttons */}
                         <div className="flex items-center gap-1 shrink-0">

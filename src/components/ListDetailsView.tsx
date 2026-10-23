@@ -23,6 +23,7 @@ import { CategoryIcon } from './CategoryIcon';
 import { ItemVisualIcon } from './ItemVisualIcon';
 import { ItemImageLightboxModal } from './common/ItemImageLightboxModal';
 import { ShareListModal } from './ShareListModal';
+import { resolveVisual } from '../lib/catalog/visualResolver';
 import { useLanguage } from '../context/LanguageContext';
 import { triggerHaptic } from '../lib/sound';
 import { BidiText } from '../utils/bidi';
@@ -331,34 +332,39 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
                             )}
 
                             {/* Item Visual Asset */}
-                            <ItemVisualIcon
-                              name={item.name}
-                              canonicalName={item.canonicalName || item.canonical_name}
-                              displayName={item.name}
-                              categoryId={item.categoryId}
-                              imageUrl={item.imageUrl}
-                              onClick={
-                                item.imageUrl
-                                  ? () => {
-                                      triggerHaptic(10);
-                                      setSelectedLightboxItem({
-                                        imageUrl: item.imageUrl!,
-                                        itemName: item.name,
-                                        categoryName: getCategoryName(item.categoryId || 'other'),
-                                      });
-                                    }
-                                  : undefined
-                              }
-                              size={36}
-                              className={`w-9 h-9 rounded-xl shrink-0 transition-all ${
-                                item.completed ? 'opacity-60' : 'opacity-100'
-                              } ${
-                                item.imageUrl
-                                  ? 'cursor-pointer hover:opacity-100 hover:scale-105 active:scale-95 shadow-2xs'
-                                  : ''
-                              }`}
-                              title={item.imageUrl ? `Click to view photo of ${item.name}` : undefined}
-                            />
+                            {(() => {
+                              const visual = resolveVisual(item);
+                              return (
+                                <ItemVisualIcon
+                                  name={item.name}
+                                  canonicalName={item.canonicalName || item.canonical_name}
+                                  displayName={item.name}
+                                  categoryId={item.categoryId}
+                                  imageUrl={visual.url}
+                                  onClick={
+                                    visual.url
+                                      ? () => {
+                                          triggerHaptic(10);
+                                          setSelectedLightboxItem({
+                                            imageUrl: visual.largeUrl || visual.url!,
+                                            itemName: item.name,
+                                            categoryName: getCategoryName(item.categoryId || 'other'),
+                                          });
+                                        }
+                                      : undefined
+                                  }
+                                  size={36}
+                                  className={`w-9 h-9 rounded-xl shrink-0 transition-all ${
+                                    item.completed ? 'opacity-60' : 'opacity-100'
+                                  } ${
+                                    visual.url
+                                      ? 'cursor-pointer hover:opacity-100 hover:scale-105 active:scale-95 shadow-2xs'
+                                      : ''
+                                  }`}
+                                  title={visual.url ? `Click to view photo of ${item.name}` : undefined}
+                                />
+                              );
+                            })()}
 
                             {/* Item Name & Details */}
                             <div className="flex flex-col min-w-0 flex-1">

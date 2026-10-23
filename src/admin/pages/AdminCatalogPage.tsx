@@ -14,11 +14,15 @@ import {
   Coins,
   Edit,
   Trash2,
+  UploadCloud,
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { useAdminToast } from '../components/AdminToasts';
 import { AdminConfirmModal } from '../components/AdminConfirmModal';
 import { adminCache } from '../utils/adminCache';
+import { AdminItemImageModal } from '../components/AdminItemImageModal';
+import { AdminBulkImageImportModal } from '../components/AdminBulkImageImportModal';
+import { buildCatalogImageUrl } from '../../utils/cloudinary';
 
 export interface CatalogItem {
   id: string;
@@ -29,6 +33,9 @@ export interface CatalogItem {
   aliases?: string[];
   isEssential?: boolean;
   pricePkr?: number;
+  imageUrl?: string;
+  cloudinaryPublicId?: string;
+  emoji?: string;
 }
 
 const DEFAULT_CATEGORIES = [
@@ -75,6 +82,10 @@ export const AdminCatalogPage: React.FC = () => {
   // Delete Confirm Modal
   const [itemToDelete, setItemToDelete] = useState<CatalogItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Catalog Image Modal States (Workstream B3 & D2)
+  const [selectedImageItem, setSelectedImageItem] = useState<CatalogItem | null>(null);
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
 
   // Form Fields
   const [nameEn, setNameEn] = useState('');
@@ -198,6 +209,8 @@ export const AdminCatalogPage: React.FC = () => {
       unit: defaultUnit,
       pricePkr: pricePkr.trim() ? Number(pricePkr) : undefined,
       isEssential: Boolean(isEssential), // Explicit boolean from checkbox (C1)
+      imageUrl: editingItem?.imageUrl,
+      cloudinaryPublicId: editingItem?.cloudinaryPublicId,
     };
 
     try {
@@ -290,6 +303,14 @@ export const AdminCatalogPage: React.FC = () => {
             >
               <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
               <span className="hidden sm:inline">Refresh</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsBulkImportOpen(true)}
+              className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-2xl border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-700 font-bold text-xs transition-colors shrink-0 cursor-pointer shadow-2xs"
+            >
+              <UploadCloud className="w-4 h-4 text-neutral-500" />
+              <span>Bulk Import Images</span>
             </button>
             <button
               type="button"
@@ -389,6 +410,7 @@ export const AdminCatalogPage: React.FC = () => {
             <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="bg-neutral-50/80 border-b border-neutral-200/80 text-neutral-500 font-bold uppercase text-[10px] tracking-wider">
+                  <th className="py-3.5 px-4">Image</th>
                   <th className="py-3.5 px-4">Item Name</th>
                   <th className="py-3.5 px-4">Urdu / Aliases</th>
                   <th className="py-3.5 px-4">Category</th>
@@ -401,6 +423,41 @@ export const AdminCatalogPage: React.FC = () => {
               <tbody className="divide-y divide-neutral-100">
                 {items.map((item) => (
                   <tr key={item.id} className="hover:bg-neutral-50/50 transition-colors">
+                    <td className="py-3.5 px-4">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedImageItem(item)}
+                        className="group flex items-center gap-2 p-1 rounded-xl hover:bg-neutral-100 transition-all cursor-pointer text-left"
+                        title="Manage catalog image"
+                      >
+                        {item.cloudinaryPublicId || item.imageUrl ? (
+                          <img
+                            src={
+                              item.cloudinaryPublicId
+                                ? buildCatalogImageUrl(item.cloudinaryPublicId, 'icon')
+                                : item.imageUrl
+                            }
+                            alt={item.name}
+                            className="w-10 h-10 rounded-lg object-contain bg-white border border-neutral-200 shadow-2xs group-hover:scale-105 transition-transform"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLElement).style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-neutral-100 border border-dashed border-neutral-300 flex items-center justify-center text-base text-neutral-500 group-hover:border-primary/50 group-hover:bg-primary/5 transition-all">
+                            {item.emoji || '📦'}
+                          </div>
+                        )}
+                        <div className="hidden sm:block">
+                          <span className="text-[10px] font-bold text-primary group-hover:underline block">
+                            {item.cloudinaryPublicId || item.imageUrl ? 'Replace' : 'Upload'}
+                          </span>
+                          <span className="text-[9px] text-neutral-400">
+                            {item.cloudinaryPublicId ? 'In Library' : 'No image'}
+                          </span>
+                        </div>
+                      </button>
+                    </td>
                     <td className="py-3.5 px-4 font-bold text-neutral-900">{item.name}</td>
                     <td className="py-3.5 px-4 text-neutral-600">
                       {item.nameUr && <span className="font-urdu text-sm mr-2">{item.nameUr}</span>}
@@ -661,6 +718,31 @@ export const AdminCatalogPage: React.FC = () => {
         isLoading={isDeleting}
         onConfirm={handleConfirmDelete}
         onClose={() => setItemToDelete(null)}
+      />
+
+      {/* Catalog Item Image Editor Modal (Workstream B3) */}
+      <AdminItemImageModal
+        isOpen={Boolean(selectedImageItem)}
+        item={selectedImageItem}
+        token={token}
+        onClose={() => setSelectedImageItem(null)}
+        onImageUpdated={(updated) => {
+          setItems((prev) => prev.map((it) => (it.id === updated.id ? updated : it)));
+          setSelectedImageItem(updated);
+          adminCache.invalidatePrefix('/api/admin/catalog');
+        }}
+      />
+
+      {/* Bulk Image Import Modal (Workstream D2) */}
+      <AdminBulkImageImportModal
+        isOpen={isBulkImportOpen}
+        catalogItems={items}
+        token={token}
+        onClose={() => setIsBulkImportOpen(false)}
+        onImportComplete={() => {
+          adminCache.invalidatePrefix('/api/admin/catalog');
+          fetchCatalog(true);
+        }}
       />
     </div>
   );

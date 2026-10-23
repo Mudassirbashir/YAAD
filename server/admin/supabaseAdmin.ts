@@ -1230,6 +1230,8 @@ export interface AuthoritativeCatalogItem {
   isEssential?: boolean;
   pricePkr?: number;
   emoji?: string;
+  imageUrl?: string;
+  cloudinaryPublicId?: string;
   active: boolean;
   createdAt: number;
 }
@@ -1332,6 +1334,8 @@ export async function getAuthoritativeCatalog(options?: {
       isEssential: Boolean(it.is_essential ?? false),
       pricePkr: it.price_pkr ?? undefined,
       emoji: it.emoji || undefined,
+      imageUrl: it.image_url || undefined,
+      cloudinaryPublicId: it.cloudinary_public_id || undefined,
       active: it.active !== false,
       createdAt: it.created_at ? new Date(it.created_at).getTime() : Date.now(),
     }));
@@ -1350,12 +1354,14 @@ export async function persistAuthoritativeCatalogProduct(product: {
   unit?: string;
   pricePkr?: number;
   isEssential?: boolean;
+  imageUrl?: string;
+  cloudinaryPublicId?: string;
 }): Promise<boolean> {
   const supabase = getSupabaseAdmin();
   if (!supabase || isTableMissingInSupabase('items')) return false;
 
   try {
-    const row = {
+    const row: any = {
       id: product.id || 'item_' + crypto.randomUUID(),
       canonical_name: product.nameEn,
       english_name: product.nameEn,
@@ -1365,6 +1371,12 @@ export async function persistAuthoritativeCatalogProduct(product: {
       active: true,
       updated_at: new Date().toISOString(),
     };
+    if (product.imageUrl !== undefined) {
+      row.image_url = product.imageUrl || null;
+    }
+    if (product.cloudinaryPublicId !== undefined) {
+      row.cloudinary_public_id = product.cloudinaryPublicId || null;
+    }
     const { error } = await supabase.from('items').upsert(row);
     if (error) {
       console.warn('[SupabaseAdmin] items upsert error:', error.message);

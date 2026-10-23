@@ -35,6 +35,12 @@ import {
   getAuthoritativeCms,
   persistAuthoritativeCatalogProduct,
 } from './supabaseAdmin';
+import {
+  getCloudinaryAdminConfig,
+  cloudinaryUploadImage,
+  cloudinaryDestroy,
+  cloudinaryResource,
+} from './cloudinaryAdmin';
 
 export const adminRouter = Router();
  
@@ -1544,7 +1550,7 @@ adminRouter.get('/catalog/products', requireAdminAuth, async (req: AdminAuthRequ
 
 adminRouter.post('/catalog/products', requireAdminAuth, requirePermission('catalog.edit'), async (req: AdminAuthRequest, res: Response) => {
   try {
-    const { name, nameUr, category, defaultUnit, pricePkr, isEssential } = req.body;
+    const { name, nameUr, category, defaultUnit, pricePkr, isEssential, imageUrl, cloudinaryPublicId } = req.body;
     if (!name || !category) {
       return res.status(400).json({ error: 'Name and category are required' });
     }
@@ -1556,6 +1562,8 @@ adminRouter.post('/catalog/products', requireAdminAuth, requirePermission('catal
       subcategory: 'Grocery',
       pricePkr: pricePkr !== undefined && pricePkr !== '' ? Number(pricePkr) : undefined,
       isEssential: Boolean(isEssential),
+      imageUrl: imageUrl !== undefined ? imageUrl : undefined,
+      cloudinaryPublicId: cloudinaryPublicId !== undefined ? cloudinaryPublicId : undefined,
     });
     await persistAuthoritativeCatalogProduct(product);
     adminStore.writeAuditLog({
@@ -1575,7 +1583,7 @@ adminRouter.post('/catalog/products', requireAdminAuth, requirePermission('catal
 adminRouter.put('/catalog/products/:id', requireAdminAuth, requirePermission('catalog.edit'), async (req: AdminAuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, nameUr, category, defaultUnit, pricePkr, isEssential } = req.body;
+    const { name, nameUr, category, defaultUnit, pricePkr, isEssential, imageUrl, cloudinaryPublicId } = req.body;
     if (!name || !category) {
       return res.status(400).json({ error: 'Name and category are required' });
     }
@@ -1587,6 +1595,8 @@ adminRouter.put('/catalog/products/:id', requireAdminAuth, requirePermission('ca
       unit: defaultUnit || 'kg',
       pricePkr: pricePkr !== undefined && pricePkr !== '' ? Number(pricePkr) : undefined,
       isEssential: Boolean(isEssential),
+      imageUrl: imageUrl !== undefined ? imageUrl : undefined,
+      cloudinaryPublicId: cloudinaryPublicId !== undefined ? cloudinaryPublicId : undefined,
     });
     await persistAuthoritativeCatalogProduct(product);
     adminStore.writeAuditLog({
@@ -1620,6 +1630,178 @@ adminRouter.delete('/catalog/products/:id', requireAdminAuth, requirePermission(
     res.status(200).json({ success: true });
   } catch (err: any) {
     res.status(500).json({ error: 'Failed to delete catalog product', details: err.message });
+  }
+});
+
+// -----------------------------------------------------------------------------
+// Catalog Product Image Management (Cloudinary Signed Storage & Sync Check)
+// -----------------------------------------------------------------------------
+
+adminRouter.post('/catalog/products/:id/image', requireAdminAuth, requirePermission('catalog.edit'), async (req: AdminAuthRequest, res: Response) => {
+  const config = getCloudinaryAdminConfig();
+  if (!config) {
+    return res.status(503).json({ error: 'Cloudinary admin credentials not configured' });
+  }
+
+  try {
+    const { id } = req.params;
+    const { fileDataUri } = req.body;
+    if (!fileDataUri || typeof fileDataUri !== 'string') {
+      return res.status(400).json({ error: 'fileDataUri is required' });
+    }
+
+    // 1. Load product (authoritative first, local fallback)
+    const catalogResult = await adminStore.getCatalogProductsAsync();
+    const existing = catalogResult.items.find((p: any) => p.id === id || p.name === id);
+    if (!existing) {
+      return res.status(404).json({ error: 'Catalog product not found' });
+    }
+
+    const publicId = `yaad-catalog/${id}`;
+    const isReplacement = Boolean(existing.cloudinaryPublicId || existing.imageUrl);
+
+    // 2. Signed upload to Cloudinary with overwrite
+    // Stable public id ensures re-upload overwrites in place without orphaning old assets
+    const uploadRes = await cloudinaryUploadImage(fileDataUri, { publicId });
+
+    // 3. Persist imageUrl and cloudinaryPublicId via store + authoritative layer
+    const updated = adminStore.saveCatalogProduct({
+      id: existing.id,
+      nameEn: existing.name || existing.nameEn,
+      nameUr: existing.nameUr || existing.urduName || '',
+      category: existing.category,
+      unit: existing.defaultUnit || existing.unit || 'kg',
+      pricePkr: existing.pricePkr,
+      isEssential: existing.isEssential,
+      imageUrl: uploadRes.secureUrl,
+      cloudinaryPublicId: uploadRes.publicId,
+    });
+
+    await persistAuthoritativeCatalogProduct(updated);
+
+    // 4. Audit log
+    adminStore.writeAuditLog({
+      action: isReplacement ? 'catalog_image_replaced' : 'catalog_image_uploaded',
+      adminId: req.admin?.id,
+      adminEmail: req.admin?.email,
+      targetType: 'catalog_item',
+      targetId: id,
+      afterValue: {
+        imageUrl: uploadRes.secureUrl,
+        cloudinaryPublicId: uploadRes.publicId,
+        format: uploadRes.format,
+        bytes: uploadRes.bytes,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      imageUrl: uploadRes.secureUrl,
+      cloudinaryPublicId: uploadRes.publicId,
+      cloudinary: {
+        format: uploadRes.format,
+        width: uploadRes.width,
+        height: uploadRes.height,
+        bytes: uploadRes.bytes,
+      },
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to upload catalog image' });
+  }
+});
+
+adminRouter.delete('/catalog/products/:id/image', requireAdminAuth, requirePermission('catalog.edit'), async (req: AdminAuthRequest, res: Response) => {
+  const config = getCloudinaryAdminConfig();
+  if (!config) {
+    return res.status(503).json({ error: 'Cloudinary admin credentials not configured' });
+  }
+
+  try {
+    const { id } = req.params;
+    const catalogResult = await adminStore.getCatalogProductsAsync();
+    const existing = catalogResult.items.find((p: any) => p.id === id || p.name === id);
+    if (!existing) {
+      return res.status(404).json({ error: 'Catalog product not found' });
+    }
+
+    const publicId = existing.cloudinaryPublicId || `yaad-catalog/${id}`;
+
+    // 1. Destroy on Cloudinary first
+    await cloudinaryDestroy(publicId);
+
+    // 2. Only after destroy succeeds, clear in store + authoritative layer
+    const updated = adminStore.saveCatalogProduct({
+      id: existing.id,
+      nameEn: existing.name || existing.nameEn,
+      nameUr: existing.nameUr || existing.urduName || '',
+      category: existing.category,
+      unit: existing.defaultUnit || existing.unit || 'kg',
+      pricePkr: existing.pricePkr,
+      isEssential: existing.isEssential,
+      imageUrl: '',
+      cloudinaryPublicId: '',
+    });
+
+    await persistAuthoritativeCatalogProduct(updated);
+
+    // 3. Audit log
+    adminStore.writeAuditLog({
+      action: 'catalog_image_removed',
+      adminId: req.admin?.id,
+      adminEmail: req.admin?.email,
+      targetType: 'catalog_item',
+      targetId: id,
+    });
+
+    res.status(200).json({ success: true });
+  } catch (err: any) {
+    // Failure leaves stored fields unchanged
+    res.status(500).json({ error: err.message || 'Failed to remove catalog image' });
+  }
+});
+
+adminRouter.get('/catalog/products/:id/image/status', requireAdminAuth, requirePermission('catalog.edit'), async (req: AdminAuthRequest, res: Response) => {
+  const config = getCloudinaryAdminConfig();
+  if (!config) {
+    return res.status(503).json({ error: 'Cloudinary admin credentials not configured' });
+  }
+
+  try {
+    const { id } = req.params;
+    const catalogResult = await adminStore.getCatalogProductsAsync();
+    const existing = catalogResult.items.find((p: any) => p.id === id || p.name === id);
+    if (!existing) {
+      return res.status(404).json({ error: 'Catalog product not found' });
+    }
+
+    const hasStoredImage = Boolean(existing.imageUrl || existing.cloudinaryPublicId);
+    const stored = hasStoredImage
+      ? {
+          imageUrl: existing.imageUrl || '',
+          cloudinaryPublicId: existing.cloudinaryPublicId || `yaad-catalog/${id}`,
+        }
+      : null;
+
+    if (!stored || !stored.cloudinaryPublicId) {
+      return res.status(200).json({
+        stored: null,
+        cloudinaryExists: false,
+        cloudinary: null,
+        inSync: false,
+      });
+    }
+
+    const assetDetails = await cloudinaryResource(stored.cloudinaryPublicId);
+    const cloudinaryExists = Boolean(assetDetails);
+
+    res.status(200).json({
+      stored,
+      cloudinaryExists,
+      cloudinary: assetDetails,
+      inSync: Boolean(stored && cloudinaryExists),
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to check image status' });
   }
 });
 

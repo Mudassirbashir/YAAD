@@ -25,6 +25,7 @@ import { ShoppingList, CategoryId } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { CategoryIcon } from './CategoryIcon';
 import { ItemVisualIcon } from './ItemVisualIcon';
+import { resolveVisual } from '../lib/catalog/visualResolver';
 
 interface StatisticsViewProps {
   lists: ShoppingList[];
@@ -812,20 +813,26 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                  {analytics.topStaples.map((staple) => (
-                    <div
-                      key={staple.name}
-                      className="flex items-center gap-3 p-3 rounded-2xl bg-surface-container-low/70 border border-surface-dim/60"
-                    >
-                      <ItemVisualIcon
-                        name={staple.name}
-                        canonicalName={staple.name}
-                        displayName={staple.name}
-                        categoryId={staple.category}
-                        imageUrl={staple.imageUrl}
-                        size={40}
-                        className="w-10 h-10 rounded-xl shrink-0"
-                      />
+                  {analytics.topStaples.map((staple) => {
+                    const visual = resolveVisual({
+                      name: staple.name,
+                      category: staple.category,
+                      imageUrl: staple.imageUrl,
+                    });
+                    return (
+                      <div
+                        key={staple.name}
+                        className="flex items-center gap-3 p-3 rounded-2xl bg-surface-container-low/70 border border-surface-dim/60"
+                      >
+                        <ItemVisualIcon
+                          name={staple.name}
+                          canonicalName={staple.name}
+                          displayName={staple.name}
+                          categoryId={staple.category}
+                          imageUrl={visual.url}
+                          size={40}
+                          className="w-10 h-10 rounded-xl shrink-0"
+                        />
                       <div className="flex-1 min-w-0">
                         <span className="font-body font-bold text-sm text-on-surface block truncate capitalize">
                           {staple.name}
@@ -838,8 +845,9 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                         {staple.count}×
                       </span>
                     </div>
-                  ))}
-                </div>
+                  );
+                })}
+              </div>
               </motion.section>
             )}
 

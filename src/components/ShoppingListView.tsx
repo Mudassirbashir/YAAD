@@ -25,6 +25,7 @@ import { QuantityEditModal } from './QuantityEditModal';
 import { SmartSuggestionsSection } from './SmartSuggestionsSection';
 import { SwipeableShoppingItemCard } from './SwipeableShoppingItemCard';
 import { ItemImageLightboxModal } from './common/ItemImageLightboxModal';
+import { resolveVisual } from '../lib/catalog/visualResolver';
 
 interface ShoppingListViewProps {
   list: ShoppingList;
@@ -883,22 +884,25 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
           {searchSuggestions.length > 0 && newItemText.trim().length > 0 && (
             <div className="space-y-1.5 pt-1 animate-fade-in">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                {searchSuggestions.map((sug) => (
-                  <button
-                    key={sug.item.id}
-                    type="button"
-                    onClick={() => handleSelectSuggestion(sug)}
-                    className="flex items-center gap-2.5 p-2 rounded-2xl bg-surface-container-low hover:bg-surface-container border border-surface-container-high/60 transition-all text-start group active:scale-[0.99] cursor-pointer"
-                  >
-                    <ItemVisualIcon
-                      name={sug.displayName}
-                      canonicalName={sug.item.canonical_name}
-                      displayName={sug.displayName}
-                      categoryId={sug.categoryId}
-                      size={32}
-                      className="w-8 h-8 rounded-lg shrink-0 group-hover:scale-105 transition-transform"
-                    />
-                    <div className="flex-1 min-w-0">
+                {searchSuggestions.map((sug) => {
+                  const visual = resolveVisual(sug.item);
+                  return (
+                    <button
+                      key={sug.item.id}
+                      type="button"
+                      onClick={() => handleSelectSuggestion(sug)}
+                      className="flex items-center gap-2.5 p-2 rounded-2xl bg-surface-container-low hover:bg-surface-container border border-surface-container-high/60 transition-all text-start group active:scale-[0.99] cursor-pointer"
+                    >
+                      <ItemVisualIcon
+                        name={sug.displayName}
+                        canonicalName={sug.item.canonical_name}
+                        displayName={sug.displayName}
+                        categoryId={sug.categoryId}
+                        imageUrl={visual.url}
+                        size={32}
+                        className="w-8 h-8 rounded-lg shrink-0 group-hover:scale-105 transition-transform"
+                      />
+                      <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1 truncate">
                         <span className="font-body font-bold text-xs text-primary truncate">
                           {sug.displayName}
@@ -918,7 +922,8 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                       <Plus className="w-3.5 h-3.5" />
                     </span>
                   </button>
-                ))}
+                );
+              })}
               </div>
             </div>
           )}
@@ -1130,10 +1135,12 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                             onCategoryChange={handleItemCategoryChange}
                             getCategoryName={getCategoryName}
                             isUrdu={isUrdu}
-                            onOpenImage={(it) => {
-                              if (it.imageUrl) {
+                            onOpenImage={(it, visualUrl) => {
+                              const resolved = resolveVisual(it, 'large');
+                              const targetUrl = visualUrl || resolved.largeUrl || resolved.url || it.imageUrl;
+                              if (targetUrl) {
                                 setLightboxItem({
-                                  imageUrl: it.imageUrl,
+                                  imageUrl: targetUrl,
                                   itemName: it.name,
                                   categoryName: getCategoryName(normalizeCategoryId(it.categoryId)),
                                 });

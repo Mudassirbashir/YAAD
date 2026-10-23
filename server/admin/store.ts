@@ -255,6 +255,7 @@ export interface CatalogProduct {
   aliases?: string[];
   barcode?: string;
   imageUrl?: string;
+  cloudinaryPublicId?: string;
   isActive: boolean;
   createdAt: number;
   updatedAt: number;
@@ -2754,6 +2755,8 @@ class AdminStore {
         isEssential: Boolean(p.isEssential),
         pricePkr: p.pricePkr,
         aliases: p.aliases || [],
+        imageUrl: p.imageUrl,
+        cloudinaryPublicId: p.cloudinaryPublicId,
       })),
       categories: canonicalCategories,
       total: local.total,
@@ -2776,6 +2779,8 @@ class AdminStore {
           unit: product.unit || this.db.catalogProducts[idx].unit,
           pricePkr: product.pricePkr !== undefined ? product.pricePkr : this.db.catalogProducts[idx].pricePkr,
           isEssential: product.isEssential !== undefined ? Boolean(product.isEssential) : Boolean(this.db.catalogProducts[idx].isEssential),
+          imageUrl: product.imageUrl !== undefined ? product.imageUrl : this.db.catalogProducts[idx].imageUrl,
+          cloudinaryPublicId: product.cloudinaryPublicId !== undefined ? product.cloudinaryPublicId : this.db.catalogProducts[idx].cloudinaryPublicId,
           updatedAt: now,
         } as CatalogProduct;
         this.save();
@@ -2795,6 +2800,7 @@ class AdminStore {
       isEssential: product.isEssential !== undefined ? Boolean(product.isEssential) : false,
       barcode: product.barcode || '',
       imageUrl: product.imageUrl || '',
+      cloudinaryPublicId: product.cloudinaryPublicId || undefined,
       isActive: product.isActive !== false,
       createdAt: now,
       updatedAt: now,

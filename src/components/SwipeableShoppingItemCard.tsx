@@ -7,6 +7,7 @@ import { CategoryIcon } from './CategoryIcon';
 import { BidiText } from '../utils/bidi';
 import { CelebrationCheckbox } from './CelebrationCheckbox';
 import { formatItemTitle } from '../lib/recognition/normalizer';
+import { resolveVisual } from '../lib/catalog/visualResolver';
 
 interface SwipeableShoppingItemCardProps {
   item: ShoppingItem;
@@ -19,7 +20,7 @@ interface SwipeableShoppingItemCardProps {
   onCategoryChange: (itemId: string, categoryId: CategoryId) => void;
   getCategoryName: (id: CategoryId) => string;
   isUrdu: boolean;
-  onOpenImage?: (item: ShoppingItem) => void;
+  onOpenImage?: (item: ShoppingItem, imageUrl?: string) => void;
 }
 
 export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps> = ({
@@ -165,30 +166,35 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
         {/* Left Side: Item Logo / Visual Icon + 3-line details (Name, Quantity, Category) */}
         <div className="flex items-center gap-3 min-w-0 flex-1">
           {/* Item Visual Icon */}
-          <ItemVisualIcon
-            name={item.name}
-            canonicalName={item.canonicalName || item.canonical_name}
-            displayName={item.name}
-            categoryId={itemCatId}
-            imageUrl={item.imageUrl}
-            size={36}
-            onClick={
-              item.imageUrl
-                ? (e) => {
-                    e.stopPropagation();
-                    onOpenImage?.(item);
-                  }
-                : undefined
-            }
-            title={item.imageUrl ? `Click to view photo of ${item.name}` : undefined}
-            className={`w-9 h-9 rounded-xl shrink-0 transition-all duration-200 ${
-              isChecked
-                ? 'opacity-50 grayscale-[35%] scale-95'
-                : justCompletedLocally
-                ? 'scale-105'
-                : 'opacity-100'
-            }`}
-          />
+          {(() => {
+            const visual = resolveVisual(item);
+            return (
+              <ItemVisualIcon
+                name={item.name}
+                canonicalName={item.canonicalName || item.canonical_name}
+                displayName={item.name}
+                categoryId={itemCatId}
+                imageUrl={visual.url}
+                size={36}
+                onClick={
+                  visual.url
+                    ? (e) => {
+                        e.stopPropagation();
+                        onOpenImage?.(item, visual.largeUrl || visual.url);
+                      }
+                    : undefined
+                }
+                title={visual.url ? `Click to view photo of ${item.name}` : undefined}
+                className={`w-9 h-9 rounded-xl shrink-0 transition-all duration-200 ${
+                  isChecked
+                    ? 'opacity-50 grayscale-[35%] scale-95'
+                    : justCompletedLocally
+                    ? 'scale-105'
+                    : 'opacity-100'
+                }`}
+              />
+            );
+          })()}
 
           {/* 3-Tier Info: Name -> Quantity -> Category */}
           <div className="min-w-0 flex-1 flex flex-col gap-0.5">

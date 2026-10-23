@@ -15,6 +15,7 @@ import { BidiText } from '../utils/bidi';
 import { ListIcon } from './ListIcon';
 import { formatRelativeTimeAgo } from '../utils/dateFormatting';
 import { triggerHaptic } from '../lib/sound';
+import { resolveVisual } from '../lib/catalog/visualResolver';
 
 export interface ShoppingListCardProps {
   list: ShoppingList;
@@ -93,6 +94,8 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
   const completedItems = (list.items || []).filter((i) => i.completed).length;
   const photoCount = (list.items || []).filter((i) => i.imageUrl).length;
   const firstItemWithPhoto = (list.items || []).find((i) => Boolean(i.imageUrl));
+  const firstItem = (list.items || [])[0];
+  const firstItemCatalogVisual = (!firstItemWithPhoto && firstItem) ? resolveVisual(firstItem, 'icon') : undefined;
   const isAllDone = list.isCompleted || (totalItems > 0 && completedItems === totalItems);
   const percentComplete = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
 
@@ -310,7 +313,7 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
                 {percentComplete}% bought
               </span>
             )}
-            {photoCount > 0 && (
+            {photoCount > 0 ? (
               <div className="flex items-center gap-1.5 shrink-0">
                 {firstItemWithPhoto?.imageUrl && (
                   <img
@@ -330,7 +333,18 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
                   <span>{`${photoCount} ${photoCount === 1 ? 'photo' : 'photos'}`}</span>
                 </span>
               </div>
-            )}
+            ) : firstItemCatalogVisual?.url ? (
+              <div className="flex items-center gap-1.5 shrink-0">
+                <img
+                  src={firstItemCatalogVisual.url}
+                  alt={firstItem?.name || 'Catalog thumbnail'}
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg object-contain bg-white border border-surface-container-high/60 shadow-2xs shrink-0 p-0.5"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLElement).style.display = 'none';
+                  }}
+                />
+              </div>
+            ) : null}
           </div>
 
           {/* Item count clearly positioned on bottom-right side */}
