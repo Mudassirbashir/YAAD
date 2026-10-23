@@ -420,7 +420,7 @@ export const PAKISTANI_GROCERY_ITEMS: CanonicalItem[] = [
     defaultUnit: 'dozen',
     aliases: [
       'egg', 'eggs', 'eg', 'egs', 'eggss',
-      'anda', 'anday', 'ande', 'andey', 'aanda', 'aande', 'aanday',
+      'anda', 'anday', 'ande', 'andey', 'enday', 'ende', 'endey', 'undey', 'aanda', 'aande', 'aanday',
       'desi anday', 'farm anday', 'desi anda', 'white eggs', 'brown eggs',
       'انڈہ', 'انڈے', 'انڈا', 'دیسی انڈے',
     ],

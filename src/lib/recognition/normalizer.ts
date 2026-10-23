@@ -108,6 +108,12 @@ export function normalizePhonetic(input: string): string {
     w = w.replace(/rhh+$/g, 'rh');
     w = w.replace(/hh+$/g, 'h');
 
+    // Roman Urdu initial vowel harmonization:
+    // Leading 'e' before consonant represents Alif/Ain transliteration (e.g. enday -> anday, elaichi -> ilaichi, edrak -> adrak)
+    if (/^e[bcdfghjklmnpqrstvwxyz]/i.test(w) && !/^(energy|extra|electric|eco|eno)/i.test(w)) {
+      w = 'a' + w.slice(1);
+    }
+
     // Roman Urdu vowel cluster harmonizations:
     // 'oo', 'uu', 'ou' -> 'u' (e.g. aloo -> alu, doodh -> dudh)
     w = w.replace(/oo|uu|ou/g, 'u');
@@ -115,6 +121,10 @@ export function normalizePhonetic(input: string): string {
     w = w.replace(/ee|ea|ei|ie|ey/g, 'i');
     // 'aa' -> 'a' (e.g. aalu -> alu, pyaaz -> pyaz, tamatar -> tamatar)
     w = w.replace(/aa/g, 'a');
+
+    // Roman Urdu single vowel alternations (cheni -> chini, khera -> khira)
+    w = w.replace(/cheni/g, 'chini');
+    w = w.replace(/khera/g, 'khira');
 
     // Trailing Urdu Bari Ye vowel sounds: 'ay', 'ey', 'ai' -> 'a' (e.g. anday -> anda, kheeray -> kheera)
     w = w.replace(/(ay|ey|ai)$/g, 'a');

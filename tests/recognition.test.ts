@@ -111,4 +111,21 @@ assert(learnedResults.length > 0, `Learned alias 'kheera desi' returns results`)
 assert(learnedResults[0].isUserLearned === true, `Learned result has isUserLearned: true`);
 assert(learnedResults[0].displayName === 'Cucumber', `Learned result displayName is 'Cucumber'`);
 
+// Roman Urdu Vowel Harmonization & "enday" test
+console.log('\n--- 4. Roman Urdu Vowel Harmonization ("enday" / "undey" / "anday") ---');
+const eggQueries = ['enday', 'undey', 'anday', 'ande'];
+for (const q of eggQueries) {
+  const eggResults = defaultCatalogSearchEngine.search(q, 1);
+  assert(eggResults.length > 0, `Search for Roman Urdu egg query '${q}' must return results`);
+  assert(
+    eggResults[0].displayName.toLowerCase().includes('egg') || eggResults[0].item.id === 'eggs_farm',
+    `Search for '${q}' returns Eggs (got '${eggResults[0].displayName}')`
+  );
+  const recognized = recognizeItem(q);
+  assert(
+    recognized.isRecognized && (recognized.canonicalName.toLowerCase().includes('egg') || recognized.nameUrdu.includes('انڈے')),
+    `Recognition for '${q}' identifies egg (got '${recognized.canonicalName}')`
+  );
+}
+
 console.log('\n🎉 ALL RECOGNITION & CATALOG TESTS PASSED SUCCESSFULLY!\n');

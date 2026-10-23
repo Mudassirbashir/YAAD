@@ -68,10 +68,18 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
     prevUserIdRef.current = currentUserId;
 
     if (isNewLogin) {
-      // User just authenticated (sign in or sign up) -> default language is English or existing profile language
-      const targetLang = profile?.language || 'en';
-      prevProfileLanguageRef.current = targetLang;
-      setLanguageState(targetLang);
+      // User authenticated or session hydrated.
+      // Priority 1: Explicit remote profile language if already set
+      // Priority 2: Existing explicit selection in localStorage
+      // Priority 3: Default 'en'
+      const saved = typeof localStorage !== 'undefined' ? (localStorage.getItem(LANGUAGE_STORAGE_KEY) as Language | null) : null;
+      const validSaved = saved === 'en' || saved === 'roman-urdu' || saved === 'ur' ? saved : null;
+      const targetLang = profile?.language || validSaved || 'en';
+
+      prevProfileLanguageRef.current = profile?.language || targetLang;
+      if (targetLang !== language) {
+        setLanguageState(targetLang);
+      }
       if (typeof localStorage !== 'undefined') {
         localStorage.setItem(LANGUAGE_STORAGE_KEY, targetLang);
       }

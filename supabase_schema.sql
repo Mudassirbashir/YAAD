@@ -54,10 +54,25 @@ CREATE TABLE IF NOT EXISTS public.shopping_items (
   quantity TEXT,
   unit TEXT,
   raw_input TEXT,
+  image_url TEXT,
   is_completed BOOLEAN DEFAULT FALSE NOT NULL,
   sort_order INT DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 3b. SHOPPING_HISTORY TABLE (Purchased Items & Completed Trips Archive)
+CREATE TABLE IF NOT EXISTS public.shopping_history (
+  id TEXT PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  item_name TEXT NOT NULL,
+  canonical_name TEXT,
+  quantity NUMERIC,
+  unit TEXT,
+  image_url TEXT,
+  source_list_id TEXT,
+  purchased_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 -- 4. FREQUENTLY_BOUGHT_ITEMS TABLE (Aggregated User History)

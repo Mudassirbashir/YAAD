@@ -309,6 +309,8 @@ class CatalogSearchEngine {
         if ((c1 === 'f' && c2 === 'p') || (c1 === 'p' && c2 === 'f')) return true;
         if ((c1 === 's' && c2 === 'c') || (c1 === 'c' && c2 === 's')) return true;
         if ((c1 === 'j' && c2 === 'z') || (c1 === 'z' && c2 === 'j')) return true;
+        // In Roman Urdu transliterations, all vowels at start represent Urdu Alif/Ain (e.g. a/e/i/u/o)
+        if (/^[aeiou]/.test(c1) && /^[aeiou]/.test(c2)) return true;
         // Longer words can permit slight variance
         return s1.length >= 7 && s2.length >= 7;
       };
@@ -319,9 +321,21 @@ class CatalogSearchEngine {
 
         let bestScore = 0;
         const normCanonical = normalizeBaseText(item.canonical_name);
+        const normEnglish = normalizeBaseText(item.english_name);
 
         if (Math.abs(normCanonical.length - norm.length) <= 3 && isStartCompatible(norm, normCanonical)) {
           bestScore = Math.max(bestScore, stringSimilarity(norm, normCanonical));
+        }
+
+        if (normEnglish && Math.abs(normEnglish.length - norm.length) <= 3 && isStartCompatible(norm, normEnglish)) {
+          bestScore = Math.max(bestScore, stringSimilarity(norm, normEnglish));
+        }
+
+        for (const roman of item.roman_urdu_names || []) {
+          const nr = normalizeBaseText(roman);
+          if (Math.abs(nr.length - norm.length) <= 3 && isStartCompatible(norm, nr)) {
+            bestScore = Math.max(bestScore, stringSimilarity(norm, nr));
+          }
         }
 
         for (const alias of item.aliases || []) {

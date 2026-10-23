@@ -699,10 +699,18 @@ export async function loadUserShoppingLists(
 
       let finalItems: ShoppingItem[] = relationalItems;
       if (relationalItems.length > 0 && fallbackItems.length > 0) {
+        const matchedFallbackIds = new Set<string>();
+        const matchedFallbackNames = new Set<string>();
+
         finalItems = relationalItems.map((rItem) => {
-          const fItem = fallbackItems.find((f) => f.id === rItem.id);
+          const fItem = fallbackItems.find(
+            (f) => f.id === rItem.id || (f.name && rItem.name && f.name.trim().toLowerCase() === rItem.name.trim().toLowerCase())
+          );
           if (!fItem) return rItem;
+          matchedFallbackIds.add(fItem.id);
+          if (fItem.name) matchedFallbackNames.add(fItem.name.trim().toLowerCase());
           return {
+            ...fItem,
             ...rItem,
             canonicalName: rItem.canonicalName || fItem.canonicalName,
             nameUrdu: rItem.nameUrdu || fItem.nameUrdu,
@@ -712,10 +720,19 @@ export async function loadUserShoppingLists(
             barcode: rItem.barcode || fItem.barcode,
             brand: rItem.brand || fItem.brand,
             packageSize: rItem.packageSize || fItem.packageSize,
-            imageUrl: rItem.imageUrl || fItem.imageUrl,
+            imageUrl: fItem.imageUrl || rItem.imageUrl,
+            completed: Boolean(rItem.completed ?? fItem.completed),
             createdAt: rItem.createdAt || (fItem.createdAt ?? (fItem.created_at ? new Date(fItem.created_at).getTime() : undefined)),
           };
         });
+
+        // Retain any items from fallbackItems (e.g. newly added offline or pre-sync) not found in relational rows
+        const unmatchedFallbackItems = fallbackItems.filter(
+          (f) => !matchedFallbackIds.has(f.id) && (!f.name || !matchedFallbackNames.has(f.name.trim().toLowerCase()))
+        );
+        if (unmatchedFallbackItems.length > 0) {
+          finalItems = [...finalItems, ...unmatchedFallbackItems];
+        }
       } else if (relationalItems.length === 0) {
         finalItems = fallbackItems;
       }
@@ -765,12 +782,33 @@ export async function loadUserShoppingLists(
     const activeRemoteLists = remoteLists.filter((rl) => !pendingDeleteListIds.has(rl.id));
 
     const mergedLists: ShoppingList[] = activeRemoteLists.map((remoteList) => {
+      const localVersion = cachedOfflineLists.find((cl) => cl.id === remoteList.id);
+
+      // Preserve rich client assets (like attached imageUrl, custom brand) from local IndexedDB if remote relational row omitted them
+      let enrichedItems = remoteList.items;
+      if (localVersion && localVersion.items && localVersion.items.length > 0) {
+        enrichedItems = remoteList.items.map((rItem) => {
+          const lItem = localVersion.items.find(
+            (li) => li.id === rItem.id || (li.name && rItem.name && li.name.trim().toLowerCase() === rItem.name.trim().toLowerCase())
+          );
+          if (!lItem) return rItem;
+          return {
+            ...lItem,
+            ...rItem,
+            imageUrl: rItem.imageUrl || lItem.imageUrl,
+            emoji: rItem.emoji || lItem.emoji,
+            canonicalName: rItem.canonicalName || lItem.canonicalName,
+            brand: rItem.brand || lItem.brand,
+            packageSize: rItem.packageSize || lItem.packageSize,
+          };
+        });
+      }
+
       if (pendingSaveListIds.has(remoteList.id)) {
-        const localVersion = cachedOfflineLists.find((cl) => cl.id === remoteList.id);
         if (localVersion) {
           // Merge local modifications with remote so local edits are preserved without losing remote additions
           const localItemIds = new Set(localVersion.items.map((i) => i.id));
-          const nonConflictingRemoteItems = remoteList.items.filter((ri) => !localItemIds.has(ri.id));
+          const nonConflictingRemoteItems = enrichedItems.filter((ri) => !localItemIds.has(ri.id));
           return {
             ...localVersion,
             items: [...localVersion.items, ...nonConflictingRemoteItems],
@@ -778,7 +816,10 @@ export async function loadUserShoppingLists(
           };
         }
       }
-      return remoteList;
+      return {
+        ...remoteList,
+        items: enrichedItems,
+      };
     });
 
     // Include local lists that have not been explicitly deleted:

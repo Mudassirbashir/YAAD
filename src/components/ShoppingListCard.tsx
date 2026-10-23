@@ -6,6 +6,7 @@ import {
   RotateCcw,
   Eye,
   Check,
+  Camera,
 } from 'lucide-react';
 import { ShoppingList } from '../types';
 import { useLanguage } from '../context/LanguageContext';
@@ -280,10 +281,19 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
 
         {/* BOTTOM ROW: Shifted up automatically with compact card height */}
         <div className="flex items-center justify-between mt-auto pt-2 w-full">
-          <div>
+          <div className="flex items-center gap-1.5 flex-wrap">
             {!isAllDone && totalItems > 0 && (
               <span className="text-[0.65625rem] font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200/60 px-2 py-0.5 rounded-md">
                 {percentComplete}% bought
+              </span>
+            )}
+            {photoCount > 0 && (
+              <span
+                className="text-[0.65625rem] font-semibold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-md flex items-center gap-1"
+                title={`${photoCount} item photo${photoCount === 1 ? '' : 's'} attached`}
+              >
+                <Camera className="w-3 h-3 text-primary shrink-0" />
+                <span>{photoCount} {photoCount === 1 ? 'photo' : 'photos'}</span>
               </span>
             )}
           </div>
