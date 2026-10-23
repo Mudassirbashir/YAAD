@@ -42,11 +42,13 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
   const [isUseInitials, setIsUseInitials] = useState<boolean>(!initialParsed.isEmoji && !initialParsed.isImageUrl);
   const [customPhotoUrl, setCustomPhotoUrl] = useState<string | null>(initialParsed.isImageUrl ? currentAvatarUrl || null : null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState<boolean>(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
   // Sync state whenever modal opens or currentAvatarUrl changes
   useEffect(() => {
     if (isOpen) {
+      setUploadError(null);
       const parsed = parseAvatarValue(currentAvatarUrl);
       if (parsed.isImageUrl && currentAvatarUrl) {
         setCustomPhotoUrl(currentAvatarUrl);
@@ -145,21 +147,19 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
     }
 
     setIsUploadingPhoto(true);
+    setUploadError(null);
     try {
       const uploadResult = await uploadImage(file, `avatar_${Date.now()}.jpg`);
-      setCustomPhotoUrl(uploadResult.url);
-      setIsUseInitials(false);
+      if (uploadResult.source === 'cloudinary' && uploadResult.url) {
+        setCustomPhotoUrl(uploadResult.url);
+        setIsUseInitials(false);
+        setUploadError(null);
+      } else {
+        setUploadError(uploadResult.error || 'Failed to upload photo to cloud');
+      }
     } catch (err: unknown) {
       console.warn('Avatar photo upload notice:', err);
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const dUrl = ev.target?.result as string;
-        if (dUrl) {
-          setCustomPhotoUrl(dUrl);
-          setIsUseInitials(false);
-        }
-      };
-      reader.readAsDataURL(file);
+      setUploadError(err instanceof Error ? err.message : 'Failed to upload photo');
     } finally {
       setIsUploadingPhoto(false);
       e.target.value = '';
@@ -170,7 +170,9 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
     setIsSaving(true);
     try {
       if (customPhotoUrl) {
-        await onSave(customPhotoUrl);
+        if (!customPhotoUrl.startsWith('data:')) {
+          await onSave(customPhotoUrl);
+        }
       } else if (isUseInitials) {
         await onSave(null);
       } else {
@@ -224,11 +226,11 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
             <div>
               <h2
                 id="avatar_picker_modal_title"
-                className="text-base sm:text-lg font-bold text-on-surface font-['Plus_Jakarta_Sans'] leading-tight"
+                className="text-base sm:text-lg font-bold text-on-surface font-display leading-tight"
               >
                 {t('settings.avatarPickerTitle') || 'Choose Avatar'}
               </h2>
-              <p className="text-xs text-outline font-['Manrope']">
+              <p className="text-xs text-outline font-body">
                 {t('settings.avatarPickerSubtitle') || 'Select a custom emoji and background style'}
               </p>
             </div>
@@ -327,6 +329,13 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
             </div>
           </div>
 
+          {/* Upload Error Alert */}
+          {uploadError && (
+            <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200/60 dark:border-rose-900/40 rounded-xl text-xs text-rose-700 dark:text-rose-400 font-medium">
+              {uploadError}
+            </div>
+          )}
+
           {/* Hidden File Picker Input */}
           <input
             ref={fileInputRef}
@@ -339,7 +348,7 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
           {/* 2. Background Color Palettes */}
           <div className="space-y-2">
             <div className="flex items-center justify-between px-0.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-outline font-['Manrope']">
+              <label className="text-xs font-bold uppercase tracking-wider text-outline font-body">
                 {t('settings.avatarBgColorTitle') || 'Background Color'}
               </label>
             </div>
@@ -374,7 +383,7 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
           {/* 3. Category Selector & Search */}
           <div className="space-y-3">
             <div className="flex items-center justify-between px-0.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-outline font-['Manrope']">
+              <label className="text-xs font-bold uppercase tracking-wider text-outline font-body">
                 {t('settings.avatarCategoriesTitle') || 'Emoji Category'}
               </label>
             </div>
@@ -414,7 +423,7 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t('settings.avatarSearchPlaceholder') || 'Search emojis...'}
-                className="w-full h-9 bg-surface-container rounded-xl pl-9 pr-8 rtl:pl-8 rtl:pr-9 text-xs font-['Manrope'] text-on-surface placeholder:text-outline border border-surface-dim focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition-all"
+                className="w-full h-9 bg-surface-container rounded-xl pl-9 pr-8 rtl:pl-8 rtl:pr-9 text-xs font-body text-on-surface placeholder:text-outline border border-surface-dim focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition-all"
               />
               {searchQuery && (
                 <button

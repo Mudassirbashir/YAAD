@@ -136,7 +136,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
     try {
       const uploadResult = await uploadImage(croppedBlob, `avatar_${Date.now()}.jpg`);
-      if (uploadResult.url) {
+      if (uploadResult.source === 'cloudinary' && uploadResult.url) {
         setAvatarUrl(uploadResult.url);
         setPendingCroppedBlob(null);
         setPhotoSuccessMsg(
@@ -145,9 +145,22 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
             : 'Photo saved to cloud!'
         );
         triggerHaptic(15);
+      } else {
+        // Upload failed or fell back to data URL - treat as failed
+        setAvatarUrl(initialAvatarUrl || null);
+        setPendingCroppedBlob(null);
+        setPhotoSuccessMsg(null);
+        setErrorMessage(
+          uploadResult.error ||
+            (language === 'ur' ? 'تصویر اپ لوڈ کرنے میں ناکامی ہوئی' : 'Failed to upload photo to cloud')
+        );
       }
     } catch (err: any) {
       console.warn('Background upload note:', err);
+      setAvatarUrl(initialAvatarUrl || null);
+      setPendingCroppedBlob(null);
+      setPhotoSuccessMsg(null);
+      setErrorMessage(err?.message || (language === 'ur' ? 'تصویر اپ لوڈ کرنے میں ناکامی ہوئی' : 'Failed to upload photo'));
     } finally {
       setIsUploadingPhoto(false);
     }
@@ -198,16 +211,36 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
       setIsUploadingPhoto(true);
       try {
         const uploadResult = await uploadImage(pendingCroppedBlob, `avatar_${Date.now()}.jpg`);
-        if (uploadResult.url) {
+        if (uploadResult.source === 'cloudinary' && uploadResult.url) {
           finalAvatarUrl = uploadResult.url;
           setAvatarUrl(uploadResult.url);
           setPendingCroppedBlob(null);
+        } else {
+          setIsUploadingPhoto(false);
+          setIsSaving(false);
+          setAvatarUrl(initialAvatarUrl || null);
+          setPendingCroppedBlob(null);
+          setErrorMessage(
+            uploadResult.error ||
+              (language === 'ur' ? 'تصویر اپ لوڈ کرنے میں ناکامی ہوئی' : 'Failed to upload photo to cloud')
+          );
+          return;
         }
       } catch (uploadErr: any) {
-        console.warn('Image upload notice:', uploadErr);
+        setIsUploadingPhoto(false);
+        setIsSaving(false);
+        setAvatarUrl(initialAvatarUrl || null);
+        setPendingCroppedBlob(null);
+        setErrorMessage(uploadErr?.message || 'Failed to upload photo');
+        return;
       } finally {
         setIsUploadingPhoto(false);
       }
+    }
+
+    // Safety guard: never save a data URL as avatar_url
+    if (finalAvatarUrl && finalAvatarUrl.startsWith('data:')) {
+      finalAvatarUrl = initialAvatarUrl || null;
     }
 
     const cleanPhoneVal = trimmedPhone ? cleanPhoneNumber(trimmedPhone) : null;
@@ -242,7 +275,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
         >
           {/* Header */}
           <div className="flex items-center justify-between pb-1 border-b border-surface-dim/50">
-            <h3 className="text-base sm:text-lg font-bold text-on-surface font-['Plus_Jakarta_Sans']">
+            <h3 className="text-base sm:text-lg font-bold text-on-surface font-display">
               {language === 'ur' ? 'پروفائل میں ترمیم کریں' : 'Edit Profile'}
             </h3>
             <button
@@ -270,7 +303,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
             {/* ------------------------------------------------------------- */}
             <div className="bg-surface-container-low/80 rounded-2xl p-3.5 border border-surface-dim/70 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-on-surface font-['Plus_Jakarta_Sans'] flex items-center gap-1.5">
+                <span className="text-xs font-bold text-on-surface font-display flex items-center gap-1.5">
                   <Camera className="w-3.5 h-3.5 text-primary" />
                   <span>
                     {language === 'ur'
@@ -278,7 +311,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                       : 'Upload Profile Picture'}
                   </span>
                 </span>
-                <span className="text-[10px] font-medium text-primary font-['Manrope'] bg-primary/10 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-medium text-primary font-body bg-primary/10 px-2 py-0.5 rounded-full">
                   1:1 Square
                 </span>
               </div>
@@ -336,7 +369,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                     )}
                   </div>
 
-                  <p className="text-[10.5px] text-outline font-['Manrope'] leading-tight">
+                  <p className="text-[10.5px] text-outline font-body leading-tight">
                     {language === 'ur'
                       ? 'تصویر منتخب کر کے 1:1 تناسب میں کراپ اور ایڈجسٹ کریں'
                       : 'Select and adjust image in 1:1 square crop'}
@@ -373,7 +406,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="edit_modal_name_input"
-                className="text-xs font-bold text-on-surface font-['Plus_Jakarta_Sans'] flex items-center gap-1.5"
+                className="text-xs font-bold text-on-surface font-display flex items-center gap-1.5"
               >
                 <User className="w-3.5 h-3.5 text-primary" />
                 <span>{t('settings.name') || (language === 'ur' ? 'مکمل نام' : 'Full Name')}</span>
@@ -385,7 +418,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 onChange={(e) => setName(e.target.value)}
                 placeholder={t('settings.namePlaceholder') || 'Enter your name'}
                 disabled={isSaving}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-surface border border-surface-dim/75 text-on-surface focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-['Manrope']"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-surface border border-surface-dim/75 text-on-surface focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-body"
                 required
               />
             </div>
@@ -394,7 +427,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor="edit_modal_phone_input"
-                className="text-xs font-bold text-on-surface font-['Plus_Jakarta_Sans'] flex items-center gap-1.5"
+                className="text-xs font-bold text-on-surface font-display flex items-center gap-1.5"
               >
                 <Smartphone className="w-3.5 h-3.5 text-primary" />
                 <span>{t('settings.phone') || (language === 'ur' ? 'فون نمبر' : 'Phone Number')}</span>
@@ -419,7 +452,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
               {phoneError ? (
                 <p className="text-[11px] text-error font-medium">{phoneError}</p>
               ) : (
-                <p className="text-[10px] text-outline font-['Manrope']">
+                <p className="text-[10px] text-outline font-body">
                   {language === 'ur'
                     ? 'پاکستانی نمبر (+92) درج کریں'
                     : 'Format: +92 300 1234567'}

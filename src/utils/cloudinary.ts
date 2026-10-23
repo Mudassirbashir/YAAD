@@ -179,6 +179,8 @@ export async function uploadImage(
     targets.push({ cloud: OFFICIAL_CLOUDINARY_CLOUD_NAME, preset: OFFICIAL_CLOUDINARY_UPLOAD_PRESET });
   }
 
+  let lastError: string | undefined;
+
   for (const target of targets) {
     if (!target.cloud) continue;
 
@@ -203,10 +205,12 @@ export async function uploadImage(
           source: 'cloudinary',
         };
       } else {
-        console.warn(`Cloudinary (${target.cloud}) FormData upload response:`, data.error?.message || response.statusText);
+        lastError = data.error?.message || response.statusText || `Cloudinary HTTP ${response.status}`;
+        console.warn(`Cloudinary (${target.cloud}) FormData upload response:`, lastError);
       }
     } catch (err: any) {
-      console.warn(`Cloudinary (${target.cloud}) FormData network attempt failed:`, err?.message);
+      lastError = err?.message || 'Network error during upload';
+      console.warn(`Cloudinary (${target.cloud}) FormData network attempt failed:`, lastError);
     }
 
     // B. Direct JSON Base64 upload fallback (avoids mobile multipart boundary quirks)
@@ -231,10 +235,12 @@ export async function uploadImage(
           source: 'cloudinary',
         };
       } else {
-        console.warn(`Cloudinary (${target.cloud}) JSON upload response:`, jsonData.error?.message || jsonRes.statusText);
+        lastError = jsonData.error?.message || jsonRes.statusText || `Cloudinary HTTP ${jsonRes.status}`;
+        console.warn(`Cloudinary (${target.cloud}) JSON upload response:`, lastError);
       }
     } catch (jsonErr: any) {
-      console.warn(`Cloudinary (${target.cloud}) JSON attempt failed:`, jsonErr?.message);
+      lastError = jsonErr?.message || 'Network error during upload';
+      console.warn(`Cloudinary (${target.cloud}) JSON attempt failed:`, lastError);
     }
   }
 
@@ -243,7 +249,7 @@ export async function uploadImage(
   return {
     url: fallbackDataUrl,
     source: 'compressed_data_url',
-    error: 'Uploaded with optimized local storage',
+    error: lastError || 'Cloud upload failed. Please check your internet connection or upload settings.',
   };
 }
 
