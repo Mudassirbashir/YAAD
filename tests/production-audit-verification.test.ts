@@ -137,6 +137,8 @@ function runAuditVerification() {
   assert(headerKeys.includes('Content-Security-Policy'), 'CSP header configured in vercel.json');
   const cspHeader = (globalHeaders?.headers || []).find((h: any) => h.key === 'Content-Security-Policy');
   assert(Boolean(cspHeader) && !cspHeader.value.includes('unsafe-eval'), 'CSP strictly forbids "unsafe-eval"');
+  assert(cspHeader.value.includes('https://api.cloudinary.com'), 'CSP connect-src allows api.cloudinary.com (profile/catalog image uploads)');
+  assert(cspHeader.value.includes('https://res.cloudinary.com'), 'CSP connect-src allows res.cloudinary.com (image delivery)');
   assert(headerKeys.includes('Cross-Origin-Opener-Policy'), 'COOP header configured in vercel.json');
   assert(headerKeys.includes('X-Frame-Options'), 'X-Frame-Options configured in vercel.json');
   assert(headerKeys.includes('X-Content-Type-Options'), 'X-Content-Type-Options configured in vercel.json');
