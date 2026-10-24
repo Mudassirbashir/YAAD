@@ -71,7 +71,6 @@ export async function cloudinaryUploadImage(
 
   const timestamp = Math.floor(Date.now() / 1000);
   const paramsToSign: Record<string, any> = {
-    folder: 'yaad-catalog',
     invalidate: true,
     overwrite: true,
     public_id: options.publicId,

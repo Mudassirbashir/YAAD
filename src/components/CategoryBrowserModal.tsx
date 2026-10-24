@@ -4,7 +4,8 @@ import { X, Search, Plus, Check, Grid, Tag } from 'lucide-react';
 import { CategoryId, CATEGORIES_LIST } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { CategoryIcon } from './CategoryIcon';
-import { EssentialProductVisual } from './EssentialProductVisual';
+import { ItemVisualIcon } from './ItemVisualIcon';
+import { resolveVisual } from '../lib/catalog/visualResolver';
 import { INITIAL_MASTER_CATALOG } from '../lib/catalog/items';
 import { RecommendationCandidate } from '../lib/recommendations';
 
@@ -215,6 +216,7 @@ export const CategoryBrowserModal: React.FC<CategoryBrowserModalProps> = ({
           {filteredItems.map((item) => {
             const isAdded = addedItemNames.has(item.canonical_name);
             const localizedName = getItemDisplayName(item);
+            const visual = resolveVisual(item);
 
             return (
               <div
@@ -222,11 +224,13 @@ export const CategoryBrowserModal: React.FC<CategoryBrowserModalProps> = ({
                 className="flex items-center justify-between p-2.5 rounded-xl bg-surface-container-lowest border border-surface-dim/60 shadow-xs hover:border-primary/25 transition-all"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <EssentialProductVisual
+                  <ItemVisualIcon
+                    name={localizedName}
                     canonicalName={item.canonical_name}
-                    displayName={localizedName}
                     categoryId={item.category_id}
+                    imageUrl={visual.type !== 'emoji' ? visual.url : undefined}
                     size={42}
+                    className="w-[42px] h-[42px] rounded-xl shrink-0"
                   />
                   <div className="min-w-0">
                     <div className="text-xs font-semibold text-on-surface font-display truncate">

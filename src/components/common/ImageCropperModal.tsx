@@ -9,6 +9,7 @@ import {
   Move,
   Crop,
   Loader2,
+  AlertCircle,
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { triggerHaptic } from '../../lib/sound';
@@ -29,6 +30,7 @@ export const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
   const { language, isRTL } = useLanguage();
 
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0); // 0, 90, 180, 270
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -41,6 +43,14 @@ export const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
 
+  // Attach ref and check if image is already complete on element mount
+  const handleImageRef = useCallback((node: HTMLImageElement | null) => {
+    (imgRef as React.MutableRefObject<HTMLImageElement | null>).current = node;
+    if (node && node.complete && node.naturalWidth > 0) {
+      setImageLoaded(true);
+    }
+  }, []);
+
   // Reset transforms whenever a new image is loaded or modal opens
   useEffect(() => {
     if (isOpen && imageSrc) {
@@ -49,6 +59,14 @@ export const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
       setPosition({ x: 0, y: 0 });
       setImageLoaded(false);
       setIsProcessing(false);
+      setLoadError(null);
+      // The <img> may already be complete (data URLs decode instantly and can
+      // finish before React's onLoad is attached) — never strand the Apply
+      // button on a missed load event.
+      const img = imgRef.current;
+      if (img && img.complete && img.naturalWidth > 0) {
+        setImageLoaded(true);
+      }
     }
   }, [isOpen, imageSrc]);
 
@@ -257,6 +275,18 @@ export const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
           </button>
         </div>
 
+        {/* Error message banner if image loading failed */}
+        {loadError && (
+          <div
+            id="cropper_error_message"
+            role="alert"
+            className="p-2.5 rounded-xl bg-error-container/30 border border-error/20 text-xs text-error flex items-center justify-center gap-2"
+          >
+            <AlertCircle className="w-4 h-4 shrink-0 text-error" />
+            <span>{loadError}</span>
+          </div>
+        )}
+
         {/* 1:1 Crop Viewport Box */}
         <div className="flex flex-col items-center justify-center">
           <div
@@ -273,11 +303,22 @@ export const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
           >
             {/* The Image */}
             <img
-              ref={imgRef}
+              ref={handleImageRef}
               src={imageSrc}
               alt="Crop target"
               draggable={false}
-              onLoad={() => setImageLoaded(true)}
+              onLoad={() => {
+                setImageLoaded(true);
+                setLoadError(null);
+              }}
+              onError={() => {
+                setImageLoaded(false);
+                setLoadError(
+                  language === 'ur'
+                    ? 'تصویر لوڈ نہیں ہو سکی۔ براہ کرم دوسری تصویر منتخب کریں۔'
+                    : 'Failed to load image. Please select another image.'
+                );
+              }}
               style={{
                 transform: `translate(${position.x}px, ${position.y}px) rotate(${rotation}deg) scale(${zoom})`,
                 transformOrigin: 'center center',

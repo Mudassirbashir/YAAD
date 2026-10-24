@@ -11,6 +11,9 @@ importers:
       '@google/genai':
         specifier: ^2.4.0
         version: 2.30.0(supports-color@8.1.1)
+      '@rollup/wasm-node':
+        specifier: ^4.65.0
+        version: 4.65.0
       '@sentry/react':
         specifier: ^11.8.0
         version: 11.8.0(react@19.3.1)
@@ -1469,6 +1472,11 @@ packages:
     resolution: {integrity: sha512-IoIgQLpK1DbOcQf1vX+i5oe5LXypsCVb1j/mU6BLAbOGmXH4E+j4kMfgZRwPYUohVBurNyVMgIKVM5dR6xA0kA==}
     cpu: [x64]
     os: [win32]
+
+  '@rollup/wasm-node@4.65.0':
+    resolution: {integrity: sha512-mq/KckZff56GjZvSu8Ubmcg+k87fxQK59oOwpxmnLyn3+8FQmhqhI012kvxzOTLnanCCyzepNRS5gK87T2tYAg==}
+    engines: {node: '>=18.0.0', npm: '>=8.0.0'}
+    hasBin: true
 
   '@sentry/browser-utils@11.8.0':
     resolution: {integrity: sha512-tTqJmnfuJaQy9LyInCWJtJ0L+VnOq+L9+lTMkQH+pptXBAuHfdJyEl2IhGqO4QmsfKyZpHa2GVd3HKpEQsVYeg==}
@@ -4466,6 +4474,13 @@ snapshots:
 
   '@rollup/rollup-win32-x64-msvc@4.64.9':
     optional: true
+
+  '@rollup/wasm-node@4.65.0':
+    dependencies:
+      '@types/estree': 1.0.9
+    optionalDependencies:
+      '@napi-rs/lzma-linux-x64-gnu': 1.5.1
+      fsevents: 2.3.3
 
   '@sentry/browser-utils@11.8.0':
     dependencies:
