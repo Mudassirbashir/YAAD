@@ -462,8 +462,12 @@ export async function updateProfile(
     has_completed_setup: updates.has_completed_setup !== undefined ? updates.has_completed_setup : (existingProfile?.has_completed_setup ?? true),
   };
 
-  // Always save to offline IndexedDB immediately
-  await saveOfflineProfile(verifiedUserId, mergedProfile);
+  // Always save to offline IndexedDB immediately (best effort; must not fail save pipeline)
+  try {
+    await saveOfflineProfile(verifiedUserId, mergedProfile);
+  } catch (cacheErr) {
+    console.warn('Pre-save offline profile cache notice (non-fatal):', cacheErr);
+  }
 
   if (!supabase || (typeof navigator !== 'undefined' && !navigator.onLine)) {
     // Queue offline sync for profile
@@ -541,15 +545,15 @@ export async function updateProfile(
           upsertData = retryData;
           persistenceSuccess = true;
           lastPersistenceError = null;
-        } else if (retryErr) {
+        } else if (retryErr && !lastPersistenceError) {
           lastPersistenceError = new Error(retryErr.message);
         }
-      } else if (directErr) {
+      } else if (directErr && !lastPersistenceError) {
         lastPersistenceError = new Error(directErr.message);
       }
     } catch (directEx: any) {
       console.warn('Notice on direct profile update check:', directEx);
-      if (!persistenceSuccess) {
+      if (!persistenceSuccess && !lastPersistenceError) {
         lastPersistenceError = directEx instanceof Error ? directEx : new Error(String(directEx));
       }
     }
@@ -648,7 +652,11 @@ export async function updateProfile(
       }
     } catch {}
 
-    await saveOfflineProfile(verifiedUserId, finalProfile);
+    try {
+      await saveOfflineProfile(verifiedUserId, finalProfile);
+    } catch (cacheErr) {
+      console.warn('Post-save offline profile cache notice (non-fatal):', cacheErr);
+    }
     return { data: finalProfile, error: null };
   } catch (err: unknown) {
     if (isNetworkOrOfflineError(err)) {

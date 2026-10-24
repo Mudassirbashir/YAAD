@@ -58,6 +58,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
   const [pendingCroppedBlob, setPendingCroppedBlob] = useState<Blob | null>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState<boolean>(false);
   const [photoSuccessMsg, setPhotoSuccessMsg] = useState<string | null>(null);
+  const [photoUploadError, setPhotoUploadError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const prevIsOpenRef = useRef(false);
@@ -74,6 +75,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
       setShowCropper(false);
       setIsUploadingPhoto(false);
       setPhotoSuccessMsg(null);
+      setPhotoUploadError(null);
 
       const timer = setTimeout(() => {
         if (focusPhoneOnOpen) {
@@ -86,6 +88,13 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     }
     prevIsOpenRef.current = isOpen;
   }, [isOpen, initialName, initialPhone, initialAvatarUrl, focusPhoneOnOpen]);
+
+  // Handle late-loading profile data if user has not entered a custom name yet
+  useEffect(() => {
+    if (isOpen && initialName && !name) {
+      setName(initialName);
+    }
+  }, [isOpen, initialName, name]);
 
   if (!isOpen) return null;
 
@@ -123,6 +132,48 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     e.target.value = '';
   };
 
+  // Perform upload to Cloudinary with non-destructive state retention
+  const performPhotoUpload = async (blobToUpload: Blob): Promise<{ success: boolean; url?: string }> => {
+    setIsUploadingPhoto(true);
+    setPhotoSuccessMsg(null);
+    setPhotoUploadError(null);
+    setErrorMessage(null);
+
+    try {
+      const uploadResult = await uploadImage(blobToUpload, `avatar_${Date.now()}.jpg`);
+      if (uploadResult.source === 'cloudinary' && uploadResult.url) {
+        setAvatarUrl(uploadResult.url);
+        setPendingCroppedBlob(null);
+        setPhotoUploadError(null);
+        setPhotoSuccessMsg(
+          language === 'ur'
+            ? 'تصویر کلاؤڈ پر محفوظ ہو گئی ہے!'
+            : 'Photo saved to cloud!'
+        );
+        triggerHaptic(15);
+        return { success: true, url: uploadResult.url };
+      } else {
+        // Upload failed or fell back to data URL: KEEP cropped preview visible!
+        // Never revert avatarUrl to initialAvatarUrl!
+        const errorDetail = uploadResult.error || (language === 'ur' ? 'تصویر اپ لوڈ کرنے میں ناکامی ہوئی' : 'Failed to upload photo to cloud');
+        setPhotoSuccessMsg(null);
+        setPhotoUploadError(errorDetail);
+        setErrorMessage(errorDetail);
+        return { success: false };
+      }
+    } catch (err: any) {
+      console.warn('Background upload note:', err);
+      // Keep cropped preview visible! Never revert to initialAvatarUrl!
+      const errorDetail = err?.message || (language === 'ur' ? 'تصویر اپ لوڈ کرنے میں ناکامی ہوئی' : 'Failed to upload photo');
+      setPhotoSuccessMsg(null);
+      setPhotoUploadError(errorDetail);
+      setErrorMessage(errorDetail);
+      return { success: false };
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
   // Callback from 1:1 Image Cropper Modal (Auto-upload to Cloudinary with live preview)
   const handleCropComplete = async (croppedBlob: Blob, croppedDataUrl: string) => {
     triggerHaptic(10);
@@ -130,40 +181,18 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     setAvatarUrl(croppedDataUrl); // Instant responsive preview
     setShowCropper(false);
     setSelectedRawImage(null);
-    setIsUploadingPhoto(true);
     setPhotoSuccessMsg(null);
+    setPhotoUploadError(null);
     setErrorMessage(null);
 
-    try {
-      const uploadResult = await uploadImage(croppedBlob, `avatar_${Date.now()}.jpg`);
-      if (uploadResult.source === 'cloudinary' && uploadResult.url) {
-        setAvatarUrl(uploadResult.url);
-        setPendingCroppedBlob(null);
-        setPhotoSuccessMsg(
-          language === 'ur'
-            ? 'تصویر کلاؤڈ پر محفوظ ہو گئی ہے!'
-            : 'Photo saved to cloud!'
-        );
-        triggerHaptic(15);
-      } else {
-        // Upload failed or fell back to data URL - treat as failed
-        setAvatarUrl(initialAvatarUrl || null);
-        setPendingCroppedBlob(null);
-        setPhotoSuccessMsg(null);
-        setErrorMessage(
-          uploadResult.error ||
-            (language === 'ur' ? 'تصویر اپ لوڈ کرنے میں ناکامی ہوئی' : 'Failed to upload photo to cloud')
-        );
-      }
-    } catch (err: any) {
-      console.warn('Background upload note:', err);
-      setAvatarUrl(initialAvatarUrl || null);
-      setPendingCroppedBlob(null);
-      setPhotoSuccessMsg(null);
-      setErrorMessage(err?.message || (language === 'ur' ? 'تصویر اپ لوڈ کرنے میں ناکامی ہوئی' : 'Failed to upload photo'));
-    } finally {
-      setIsUploadingPhoto(false);
-    }
+    await performPhotoUpload(croppedBlob);
+  };
+
+  // Retry upload of currently held cropped blob
+  const handleRetryUpload = async () => {
+    if (!pendingCroppedBlob) return;
+    triggerHaptic(8);
+    await performPhotoUpload(pendingCroppedBlob);
   };
 
   // Remove custom photo (reset to default avatar)
@@ -172,6 +201,8 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     setAvatarUrl(null);
     setPendingCroppedBlob(null);
     setPhotoSuccessMsg(null);
+    setPhotoUploadError(null);
+    setErrorMessage(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -206,36 +237,15 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
     let finalAvatarUrl: string | null = avatarUrl;
 
-    // If user cropped a new image and background upload is still pending
+    // If user cropped a new image and background upload has not finished/failed yet
     if (pendingCroppedBlob) {
-      setIsUploadingPhoto(true);
-      try {
-        const uploadResult = await uploadImage(pendingCroppedBlob, `avatar_${Date.now()}.jpg`);
-        if (uploadResult.source === 'cloudinary' && uploadResult.url) {
-          finalAvatarUrl = uploadResult.url;
-          setAvatarUrl(uploadResult.url);
-          setPendingCroppedBlob(null);
-        } else {
-          setIsUploadingPhoto(false);
-          setIsSaving(false);
-          setAvatarUrl(initialAvatarUrl || null);
-          setPendingCroppedBlob(null);
-          setErrorMessage(
-            uploadResult.error ||
-              (language === 'ur' ? 'تصویر اپ لوڈ کرنے میں ناکامی ہوئی' : 'Failed to upload photo to cloud')
-          );
-          return;
-        }
-      } catch (uploadErr: any) {
-        setIsUploadingPhoto(false);
+      const uploadOutcome = await performPhotoUpload(pendingCroppedBlob);
+      if (!uploadOutcome.success || !uploadOutcome.url) {
         setIsSaving(false);
-        setAvatarUrl(initialAvatarUrl || null);
-        setPendingCroppedBlob(null);
-        setErrorMessage(uploadErr?.message || 'Failed to upload photo');
+        // Keep the preview visible and don't wipe pendingCroppedBlob!
         return;
-      } finally {
-        setIsUploadingPhoto(false);
       }
+      finalAvatarUrl = uploadOutcome.url;
     }
 
     // Safety guard: never save a data URL as avatar_url
@@ -379,13 +389,48 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
               {/* Live photo upload & persist indicators */}
               {isUploadingPhoto && (
-                <div className="flex items-center gap-2 p-2 rounded-xl bg-primary/10 text-primary text-xs font-semibold animate-pulse">
+                <div
+                  id="profile_photo_uploading_indicator"
+                  className="flex items-center gap-2 p-2 rounded-xl bg-primary/10 text-primary text-xs font-semibold animate-pulse"
+                >
                   <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
                   <span>{language === 'ur' ? 'تصویر اپلوڈ اور محفوظ ہو رہی ہے...' : 'Uploading & applying profile photo...'}</span>
                 </div>
               )}
-              {photoSuccessMsg && !isUploadingPhoto && (
-                <div className="flex items-center gap-2 p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs font-semibold animate-fade-in">
+              {photoUploadError && !isUploadingPhoto && (
+                <div
+                  id="profile_photo_upload_error_box"
+                  className="flex flex-col gap-1.5 p-2.5 rounded-xl bg-error-container/30 border border-error/25 text-error text-xs animate-fade-in"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0 text-error" />
+                      <span className="font-semibold truncate">
+                        {language === 'ur' ? 'تصویر اپ لوڈ نہیں ہو سکی' : 'Photo upload failed'}
+                      </span>
+                    </div>
+                    {pendingCroppedBlob && (
+                      <button
+                        type="button"
+                        id="retry_photo_upload_btn"
+                        onClick={handleRetryUpload}
+                        disabled={isSaving}
+                        className="px-2.5 py-1 rounded-lg bg-error text-white font-semibold text-[11px] hover:bg-error/90 active:scale-95 transition-all shrink-0 cursor-pointer"
+                      >
+                        {language === 'ur' ? 'دوبارہ کوشش کریں' : 'Retry'}
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-[11px] opacity-90 break-words font-mono">
+                    {photoUploadError}
+                  </p>
+                </div>
+              )}
+              {photoSuccessMsg && !isUploadingPhoto && !photoUploadError && (
+                <div
+                  id="profile_photo_success_indicator"
+                  className="flex items-center gap-2 p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs font-semibold animate-fade-in"
+                >
                   <Sparkles className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                   <span>{photoSuccessMsg}</span>
                 </div>

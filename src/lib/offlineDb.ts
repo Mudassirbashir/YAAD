@@ -95,7 +95,17 @@ export function getOfflineDB(): Promise<IDBDatabase> {
         };
 
         request.onsuccess = () => {
-          resolve(request.result);
+          const db = request.result;
+          db.onversionchange = () => {
+            try {
+              db.close();
+            } catch {}
+            dbPromise = null;
+          };
+          db.onclose = () => {
+            dbPromise = null;
+          };
+          resolve(db);
         };
 
         request.onerror = () => {
@@ -534,17 +544,27 @@ export async function purgeAllUserOfflineData(userId: string): Promise<void> {
 export async function setAppMetadata(key: string, value: any): Promise<void> {
   try {
     const db = await getOfflineDB();
-    return new Promise<void>((resolve, reject) => {
-      const transaction = db.transaction([STORES.METADATA], 'readwrite');
-      const store = transaction.objectStore(STORES.METADATA);
-      const req = store.put({ key, value, updated_at: Date.now() });
-      req.onsuccess = () => resolve();
-      req.onerror = () => reject(req.error);
+    await new Promise<void>((resolve, reject) => {
+      try {
+        const transaction = db.transaction([STORES.METADATA], 'readwrite');
+        const store = transaction.objectStore(STORES.METADATA);
+        const req = store.put({ key, value, updated_at: Date.now() });
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error || new Error('IDB put request error'));
+        transaction.onerror = () => reject(transaction.error || new Error('IDB transaction error'));
+        transaction.onabort = () => reject(transaction.error || new Error('IDB transaction aborted'));
+      } catch (txErr) {
+        dbPromise = null;
+        reject(txErr);
+      }
     });
   } catch (e) {
+    dbPromise = null;
     // Fallback to localStorage if needed
     try {
-      localStorage.setItem(`yaad_meta_${key}`, JSON.stringify(value));
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem(`yaad_meta_${key}`, JSON.stringify(value));
+      }
     } catch {}
   }
 }
@@ -552,19 +572,29 @@ export async function setAppMetadata(key: string, value: any): Promise<void> {
 export async function getAppMetadata<T>(key: string): Promise<T | null> {
   try {
     const db = await getOfflineDB();
-    return new Promise<T | null>((resolve) => {
-      const transaction = db.transaction([STORES.METADATA], 'readonly');
-      const store = transaction.objectStore(STORES.METADATA);
-      const req = store.get(key);
-      req.onsuccess = () => {
-        resolve(req.result?.value ?? null);
-      };
-      req.onerror = () => resolve(null);
+    return await new Promise<T | null>((resolve, reject) => {
+      try {
+        const transaction = db.transaction([STORES.METADATA], 'readonly');
+        const store = transaction.objectStore(STORES.METADATA);
+        const req = store.get(key);
+        req.onsuccess = () => {
+          resolve(req.result?.value ?? null);
+        };
+        req.onerror = () => reject(req.error || new Error('IDB get request error'));
+        transaction.onerror = () => reject(transaction.error || new Error('IDB transaction error'));
+      } catch (txErr) {
+        dbPromise = null;
+        reject(txErr);
+      }
     });
   } catch (e) {
+    dbPromise = null;
     try {
-      const raw = localStorage.getItem(`yaad_meta_${key}`);
-      return raw ? JSON.parse(raw) : null;
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const raw = localStorage.getItem(`yaad_meta_${key}`);
+        return raw ? JSON.parse(raw) : null;
+      }
+      return null;
     } catch {
       return null;
     }
@@ -573,18 +603,26 @@ export async function getAppMetadata<T>(key: string): Promise<T | null> {
 
 export async function saveOfflineProfile(userId: string, profile: any): Promise<void> {
   try {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && window.localStorage) {
       localStorage.setItem(`yaad_offline_profile_${userId}`, JSON.stringify(profile));
     }
-  } catch {}
-  await setAppMetadata(`profile_${userId}`, profile);
+  } catch (lsErr) {
+    console.warn('saveOfflineProfile localStorage notice:', lsErr);
+  }
+  try {
+    await setAppMetadata(`profile_${userId}`, profile);
+  } catch (metaErr) {
+    console.warn('saveOfflineProfile setAppMetadata notice:', metaErr);
+  }
 }
 
 export async function getOfflineProfile<T = any>(userId: string): Promise<T | null> {
-  const fromDb = await getAppMetadata<T>(`profile_${userId}`);
-  if (fromDb) return fromDb;
   try {
-    if (typeof window !== 'undefined') {
+    const fromDb = await getAppMetadata<T>(`profile_${userId}`);
+    if (fromDb) return fromDb;
+  } catch {}
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
       const raw = localStorage.getItem(`yaad_offline_profile_${userId}`);
       if (raw) return JSON.parse(raw);
     }

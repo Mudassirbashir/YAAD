@@ -103,8 +103,8 @@ export default defineConfig(() => {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,json}'],
           cleanupOutdatedCaches: true,
           navigateFallback: '/index.html',
-          // Prevent Service Worker from hijacking API, Auth, or Supabase endpoints
-          navigateFallbackDenylist: [/^\/api\//, /^\/auth\//, /supabase/],
+          // Prevent Service Worker from hijacking API, Auth, Cloudinary, or Supabase endpoints
+          navigateFallbackDenylist: [/^\/api\//, /^\/auth\//, /supabase/, /cloudinary/],
           runtimeCaching: [
             {
               // Cache Google Fonts stylesheets

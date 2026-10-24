@@ -196,6 +196,7 @@ export async function uploadImage(
   }
 
   let lastError: string | undefined;
+  let formDataError: string | undefined;
 
   for (const target of targets) {
     if (!target.cloud) continue;
@@ -214,18 +215,28 @@ export async function uploadImage(
         }
       );
 
-      const data = await response.json();
+      let data: any = {};
+      try {
+        data = await response.json();
+      } catch {
+        data = {};
+      }
+
       if (response.ok && data.secure_url) {
         return {
           url: data.secure_url,
           source: 'cloudinary',
         };
       } else {
-        lastError = data.error?.message || response.statusText || `Cloudinary HTTP ${response.status}`;
+        const errorDetail = data.error?.message || response.statusText || `status ${response.status}`;
+        formDataError = `[FormData HTTP ${response.status}] ${errorDetail}`;
+        lastError = formDataError;
         console.warn(`Cloudinary (${target.cloud}) FormData upload response:`, lastError);
       }
     } catch (err: any) {
-      lastError = err?.message || 'Network error during upload';
+      const rawMsg = err?.message || 'Failed to fetch';
+      formDataError = `[FormData Network] ${rawMsg}`;
+      lastError = formDataError;
       console.warn(`Cloudinary (${target.cloud}) FormData network attempt failed:`, lastError);
     }
 
@@ -244,29 +255,47 @@ export async function uploadImage(
         }
       );
 
-      const jsonData = await jsonRes.json();
+      let jsonData: any = {};
+      try {
+        jsonData = await jsonRes.json();
+      } catch {
+        jsonData = {};
+      }
+
       if (jsonRes.ok && jsonData.secure_url) {
         return {
           url: jsonData.secure_url,
           source: 'cloudinary',
         };
       } else {
-        lastError = jsonData.error?.message || jsonRes.statusText || `Cloudinary HTTP ${jsonRes.status}`;
+        const errorDetail = jsonData.error?.message || jsonRes.statusText || `status ${jsonRes.status}`;
+        const jsonError = `[JSON HTTP ${jsonRes.status}] ${errorDetail}`;
+        lastError = formDataError ? `${jsonError} (after ${formDataError})` : jsonError;
         console.warn(`Cloudinary (${target.cloud}) JSON upload response:`, lastError);
       }
     } catch (jsonErr: any) {
-      lastError = jsonErr?.message || 'Network error during upload';
+      const rawMsg = jsonErr?.message || 'Failed to fetch';
+      const jsonError = `[JSON Network] ${rawMsg}`;
+      lastError = formDataError ? `${jsonError} (after ${formDataError})` : jsonError;
       console.warn(`Cloudinary (${target.cloud}) JSON attempt failed:`, lastError);
     }
   }
 
   // 3. Fallback: Compact Data URL (< 45KB) if network / offline prevents cloud upload
-  const fallbackDataUrl = await compressBlobToDataUrl(uploadBlob, 360, 0.82);
-  return {
-    url: fallbackDataUrl,
-    source: 'compressed_data_url',
-    error: lastError || 'Cloud upload failed. Please check your internet connection or upload settings.',
-  };
+  try {
+    const fallbackDataUrl = await compressBlobToDataUrl(uploadBlob, 360, 0.82);
+    return {
+      url: fallbackDataUrl,
+      source: 'compressed_data_url',
+      error: lastError || '[Upload] Cloud upload failed. Please check your internet connection or upload settings.',
+    };
+  } catch (fallbackErr: any) {
+    return {
+      url: '',
+      source: 'compressed_data_url',
+      error: lastError || `[Upload Fallback] ${fallbackErr?.message || 'Cloud upload failed.'}`,
+    };
+  }
 }
 
 /**
@@ -299,8 +328,8 @@ export function compressBlobToDataUrl(
       if (!ctx) {
         // Fallback to FileReader
         const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = reject;
+        reader.onloadend = () => resolve((reader.result as string) || '');
+        reader.onerror = () => resolve('');
         reader.readAsDataURL(blob);
         return;
       }
@@ -315,8 +344,8 @@ export function compressBlobToDataUrl(
     img.onerror = () => {
       URL.revokeObjectURL(objectUrl);
       const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = reject;
+      reader.onloadend = () => resolve((reader.result as string) || '');
+      reader.onerror = () => resolve('');
       reader.readAsDataURL(blob);
     };
 

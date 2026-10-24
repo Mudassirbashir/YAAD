@@ -788,7 +788,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       <EditProfileModal
         isOpen={showEditProfileModal}
         onClose={() => setShowEditProfileModal(false)}
-        initialName={profile?.full_name || user?.user_metadata?.full_name || ''}
+        initialName={displayName}
         initialPhone={displayPhone || ''}
         initialAvatarUrl={profile?.avatar_url || null}
         focusPhoneOnOpen={focusPhoneInModal}

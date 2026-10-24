@@ -1281,7 +1281,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       };
 
       setProfile(optimisticMerged);
-      await saveOfflineProfile(currentUserId, optimisticMerged);
+      try {
+        await saveOfflineProfile(currentUserId, optimisticMerged);
+      } catch (cacheErr) {
+        console.warn('Optimistic saveOfflineProfile notice (non-fatal):', cacheErr);
+      }
 
       // 2. Keep Supabase Auth user_metadata in sync so auth session restores correctly
       if (supabase && (updates.full_name !== undefined || updates.avatar_url !== undefined || updates.phone_number !== undefined)) {
@@ -1348,7 +1352,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           data.avatar_url = updates.avatar_url;
         }
         setProfile(data);
-        await saveOfflineProfile(currentUserId, data);
+        try {
+          await saveOfflineProfile(currentUserId, data);
+        } catch (cacheErr) {
+          console.warn('Final saveOfflineProfile notice (non-fatal):', cacheErr);
+        }
       }
 
       return { error: null };
