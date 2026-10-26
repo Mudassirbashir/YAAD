@@ -1636,6 +1636,18 @@ adminRouter.delete('/catalog/products/:id', requireAdminAuth, requirePermission(
 // -----------------------------------------------------------------------------
 // Catalog Product Image Management (Cloudinary Signed Storage & Sync Check)
 // -----------------------------------------------------------------------------
+// Lookup helper shared by the image upload / delete / status endpoints.
+// NOTE (2026-10-26 regression): the catalog list endpoint pages at 50 items
+// by default, and the image endpoints used to call getCatalogProductsAsync()
+// with NO options — so they only ever searched the first 50 items ordered by
+// canonical name. Items past position 50 (e.g. veg_potato at #64 of 89)
+// 404'd as "Catalog product not found" even though they exist, while early
+// items (fruit_apple #2, baby_diapers #3) uploaded fine. A lookup must see
+// the whole catalog, so fetch with a limit that covers it.
+export async function findCatalogProductById(id: string): Promise<any | null> {
+  const catalogResult = await adminStore.getCatalogProductsAsync({ limit: 5000 });
+  return catalogResult.items.find((p: any) => p.id === id || p.name === id) || null;
+}
 
 adminRouter.post('/catalog/products/:id/image', requireAdminAuth, requirePermission('catalog.edit'), async (req: AdminAuthRequest, res: Response) => {
   const config = getCloudinaryAdminConfig();
@@ -1651,8 +1663,7 @@ adminRouter.post('/catalog/products/:id/image', requireAdminAuth, requirePermiss
     }
 
     // 1. Load product (authoritative first, local fallback)
-    const catalogResult = await adminStore.getCatalogProductsAsync();
-    const existing = catalogResult.items.find((p: any) => p.id === id || p.name === id);
+    const existing = await findCatalogProductById(id);
     if (!existing) {
       return res.status(404).json({ error: 'Catalog product not found' });
     }
@@ -1718,8 +1729,7 @@ adminRouter.delete('/catalog/products/:id/image', requireAdminAuth, requirePermi
 
   try {
     const { id } = req.params;
-    const catalogResult = await adminStore.getCatalogProductsAsync();
-    const existing = catalogResult.items.find((p: any) => p.id === id || p.name === id);
+    const existing = await findCatalogProductById(id);
     if (!existing) {
       return res.status(404).json({ error: 'Catalog product not found' });
     }
@@ -1768,8 +1778,7 @@ adminRouter.get('/catalog/products/:id/image/status', requireAdminAuth, requireP
 
   try {
     const { id } = req.params;
-    const catalogResult = await adminStore.getCatalogProductsAsync();
-    const existing = catalogResult.items.find((p: any) => p.id === id || p.name === id);
+    const existing = await findCatalogProductById(id);
     if (!existing) {
       return res.status(404).json({ error: 'Catalog product not found' });
     }
