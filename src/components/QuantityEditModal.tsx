@@ -7,6 +7,8 @@ import { useLanguage } from '../context/LanguageContext';
 import { CategoryIcon } from './CategoryIcon';
 import { ItemVisualIcon } from './ItemVisualIcon';
 import { ItemPhotoCaptureModal } from './common/ItemPhotoCaptureModal';
+import { resolveVisual } from '../lib/catalog/visualResolver';
+import { useCatalogVersion } from '../lib/catalog/supabaseCatalog';
 
 export interface QuantityEditModalProps {
   isOpen: boolean;
@@ -51,11 +53,19 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
   onDeleteItem,
 }) => {
   const { t, language } = useLanguage();
+  useCatalogVersion();
   const isUrdu = language === 'ur';
   const [quantity, setQuantity] = useState<string>('');
   const [unit, setUnit] = useState<string>('');
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState<boolean>(false);
+
+  const visual = item
+    ? resolveVisual({
+        ...item,
+        imageUrl: (imageUrl !== null ? imageUrl : item.imageUrl) || undefined,
+      })
+    : { type: 'emoji' as const };
 
   useEffect(() => {
     if (item) {
@@ -119,7 +129,7 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
               canonicalName={item.canonicalName}
               displayName={item.name}
               categoryId={item.categoryId}
-              imageUrl={imageUrl || item.imageUrl}
+              imageUrl={visual.type !== 'emoji' ? visual.url : undefined}
               size={42}
               className="w-11 h-11 rounded-2xl shrink-0 border border-surface-dim"
             />

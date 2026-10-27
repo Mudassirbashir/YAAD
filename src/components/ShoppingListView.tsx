@@ -16,7 +16,7 @@ import { categorizeItemLocally, smartCategorizeItem } from '../lib/categorizer';
 import { parseShoppingItem, parseMultiItemInput } from '../lib/recognition/engine';
 import { detectDuplicateItem, mergeQuantities } from '../lib/recognition';
 import { recordLearnedAlias } from '../lib/recognition/userAliases';
-import { defaultCatalogSearchEngine, CatalogSearchResult } from '../lib/catalog';
+import { defaultCatalogSearchEngine, CatalogSearchResult, useCatalogVersion } from '../lib/catalog';
 import { playCompletionSound, playItemCheckSound, triggerHaptic } from '../lib/sound';
 import { updateShoppingItemCompletionStatus } from '../lib/supabase';
 import { reportItemCompletionFailed } from '../lib/monitoring';
@@ -54,6 +54,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
 }) => {
   const { user } = useAuth();
   const { t, getCategoryName, language } = useLanguage();
+  const catalogVersion = useCatalogVersion();
   const { theme, currentThemeConfig } = useAppTheme();
   const isUrdu = language === 'ur';
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
@@ -233,7 +234,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
     const trimmed = newItemText.trim();
     if (!trimmed) return [];
     return defaultCatalogSearchEngine.search(trimmed, 3);
-  }, [newItemText]);
+  }, [newItemText, catalogVersion]);
 
   const handleSelectSuggestion = (suggestion: CatalogSearchResult) => {
     const canonical = suggestion.item;

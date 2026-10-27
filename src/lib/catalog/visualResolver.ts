@@ -4,6 +4,8 @@ import { buildCatalogImageUrl } from '../../utils/cloudinary';
 export interface VisualItemLike {
   id?: string;
   name?: string;
+  displayName?: string;
+  display_name?: string;
   canonicalName?: string;
   canonical_name?: string;
   english_name?: string;
@@ -92,7 +94,14 @@ export function resolveVisual(
   }
 
   // 3. Catalog lookup via A3 lookup (by id, then canonicalName/name)
-  const lookupKey = item.id || item.canonicalName || item.canonical_name || item.name || item.english_name;
+  const lookupKey =
+    item.id ||
+    item.canonicalName ||
+    item.canonical_name ||
+    item.displayName ||
+    item.display_name ||
+    item.name ||
+    item.english_name;
   if (lookupKey) {
     const catalogMatch = getCatalogImageForItem(lookupKey);
     if (catalogMatch) {
@@ -115,7 +124,12 @@ export function resolveVisual(
   }
 
   // Secondary name fallback if id was used first but didn't match
-  const altName = item.name || item.canonicalName || item.canonical_name;
+  const altName =
+    item.name ||
+    item.displayName ||
+    item.display_name ||
+    item.canonicalName ||
+    item.canonical_name;
   if (altName && altName !== lookupKey) {
     const catalogMatch = getCatalogImageForItem(altName);
     if (catalogMatch) {

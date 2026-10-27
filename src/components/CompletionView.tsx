@@ -22,6 +22,8 @@ import { playCompletionSound, triggerHaptic } from '../lib/sound';
 import { BidiText } from '../utils/bidi';
 import { formatExactDate, formatExactTime } from '../utils/dateFormatting';
 import { YAAD_COMPLETION_CONFIG } from '../lib/completionConfig';
+import { resolveVisual } from '../lib/catalog/visualResolver';
+import { useCatalogVersion } from '../lib/catalog/supabaseCatalog';
 
 interface CompletionViewProps {
   list: ShoppingList;
@@ -43,6 +45,7 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
   onReviewTrip,
 }) => {
   const { t, getCategoryName, language } = useLanguage();
+  useCatalogVersion();
   const isUrdu = language === 'ur';
 
   const [selectedLightboxItem, setSelectedLightboxItem] = useState<{
@@ -328,32 +331,37 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
                         size={20}
                         className="shrink-0"
                       />
-                      <ItemVisualIcon
-                        name={item.name}
-                        canonicalName={item.canonicalName || item.canonical_name}
-                        displayName={item.name}
-                        categoryId={item.categoryId}
-                        imageUrl={item.imageUrl}
-                        onClick={
-                          item.imageUrl
-                            ? () => {
-                                triggerHaptic(10);
-                                setSelectedLightboxItem({
-                                  imageUrl: item.imageUrl!,
-                                  itemName: item.name,
-                                  categoryName: getCategoryName(item.categoryId || 'other'),
-                                });
-                              }
-                            : undefined
-                        }
-                        size={28}
-                        className={`w-7 h-7 rounded-lg shrink-0 opacity-80 ${
-                          item.imageUrl
-                            ? 'cursor-pointer hover:opacity-100 hover:scale-110 active:scale-95 transition-all'
-                            : ''
-                        }`}
-                        title={item.imageUrl ? `Click to view photo of ${item.name}` : undefined}
-                      />
+                      {(() => {
+                        const visual = resolveVisual(item);
+                        return (
+                          <ItemVisualIcon
+                            name={item.name}
+                            canonicalName={item.canonicalName || item.canonical_name}
+                            displayName={item.name}
+                            categoryId={item.categoryId}
+                            imageUrl={visual.type !== 'emoji' ? visual.url : undefined}
+                            onClick={
+                              visual.url
+                                ? () => {
+                                    triggerHaptic(10);
+                                    setSelectedLightboxItem({
+                                      imageUrl: visual.largeUrl || visual.url!,
+                                      itemName: item.name,
+                                      categoryName: getCategoryName(item.categoryId || 'other'),
+                                    });
+                                  }
+                                : undefined
+                            }
+                            size={28}
+                            className={`w-7 h-7 rounded-lg shrink-0 opacity-80 ${
+                              visual.url
+                                ? 'cursor-pointer hover:opacity-100 hover:scale-110 active:scale-95 transition-all'
+                                : ''
+                            }`}
+                            title={visual.url ? `Click to view photo of ${item.name}` : undefined}
+                          />
+                        );
+                      })()}
                       <BidiText className="font-display text-sm text-on-surface font-medium truncate">
                         {item.name}
                       </BidiText>

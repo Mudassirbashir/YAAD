@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from 'react';
 import { supabase } from '../supabase';
 import { MasterCatalogItem, CategoryRecord } from '../../types';
 import { INITIAL_MASTER_CATALOG } from './items';
@@ -116,6 +117,44 @@ class SupabaseCatalogService {
   private isSyncing = false;
   private hasInitialized = false;
   private items: MasterCatalogItem[] = INITIAL_MASTER_CATALOG;
+  private version = 0;
+  private listeners: Set<() => void> = new Set();
+
+  public getVersion(): number {
+    return this.version;
+  }
+
+  public subscribe(listener: () => void): () => void {
+    this.listeners.add(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
+  }
+
+  public notifyListeners(): void {
+    this.version++;
+    for (const listener of this.listeners) {
+      try {
+        listener();
+      } catch (err) {
+        console.error('[Catalog] listener error:', err);
+      }
+    }
+  }
+
+  public setItems(items: MasterCatalogItem[]): void {
+    this.items = items;
+    defaultCatalogSearchEngine.indexItems(items);
+    this.notifyListeners();
+  }
+
+  public resetForTesting(): void {
+    this.hasInitialized = false;
+    this.isSyncing = false;
+    this.items = INITIAL_MASTER_CATALOG;
+    defaultCatalogSearchEngine.indexItems(INITIAL_MASTER_CATALOG);
+    this.notifyListeners();
+  }
 
   /**
    * Initializes the catalog:
@@ -134,6 +173,7 @@ class SupabaseCatalogService {
         if (Array.isArray(cachedItems) && cachedItems.length > 0) {
           this.items = cachedItems;
           defaultCatalogSearchEngine.indexItems(cachedItems);
+          this.notifyListeners();
         }
       }
 
@@ -238,6 +278,7 @@ class SupabaseCatalogService {
       defaultCatalogSearchEngine.indexItems(INITIAL_MASTER_CATALOG);
     } finally {
       this.isSyncing = false;
+      this.notifyListeners();
     }
 
     return false;
@@ -335,4 +376,12 @@ export function getCatalogImageForItem(
   idOrName?: string | null
 ): { imageUrl?: string; cloudinaryPublicId?: string } | undefined {
   return supabaseCatalog.getCatalogImageForItem(idOrName);
+}
+
+export function useCatalogVersion(): number {
+  return useSyncExternalStore(
+    (onStoreChange) => supabaseCatalog.subscribe(onStoreChange),
+    () => supabaseCatalog.getVersion(),
+    () => supabaseCatalog.getVersion()
+  );
 }

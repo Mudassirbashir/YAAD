@@ -32,7 +32,7 @@ import { parseShoppingItem, parseMultiItemInput } from '../lib/recognition/engin
 import { detectDuplicateItem, mergeQuantities } from '../lib/recognition';
 import { saveUserCustomAlias, recordLearnedAlias } from '../lib/recognition/userAliases';
 import { normalizeBaseText } from '../lib/recognition/normalizer';
-import { defaultCatalogSearchEngine, CatalogSearchResult } from '../lib/catalog';
+import { defaultCatalogSearchEngine, CatalogSearchResult, useCatalogVersion } from '../lib/catalog';
 import { generateUUID } from '../lib/uuid';
 import { QuantityEditModal } from './QuantityEditModal';
 import { useRecommendations, RecommendationCandidate } from '../lib/recommendations';
@@ -62,6 +62,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
 }) => {
   const { t, getCategoryName, language } = useLanguage();
   const isUrdu = language === 'ur';
+  const catalogVersion = useCatalogVersion();
   const [items, setItems] = useState<ShoppingItem[]>(initialItems);
   const [currentTitle, setCurrentTitle] = useState<string>(listTitle);
   const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
@@ -257,7 +258,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
     }
 
     return list;
-  }, [recommendations, contextData.items, contextData.contextTitle, items]);
+  }, [recommendations, contextData.items, contextData.contextTitle, items, catalogVersion]);
 
   const activeUnaddedSuggestions = useMemo(() => {
     return unifiedSuggestions.filter((s) => !s.isAlreadyAdded).slice(0, 10);
@@ -286,7 +287,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
         recommendations.map((r) => normalizeBaseText(r.canonicalName))
       ),
     });
-  }, [inputVal, recommendations]);
+  }, [inputVal, recommendations, catalogVersion]);
 
   // Auto-detect category from input if user hasn't manually clicked one
   useEffect(() => {

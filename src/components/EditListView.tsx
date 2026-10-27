@@ -13,6 +13,8 @@ import { generateUUID } from '../lib/uuid';
 import { QuantityEditModal } from './QuantityEditModal';
 import { playItemCheckSound, triggerHaptic } from '../lib/sound';
 import { BidiText } from '../utils/bidi';
+import { resolveVisual } from '../lib/catalog/visualResolver';
+import { useCatalogVersion } from '../lib/catalog/supabaseCatalog';
 
 interface EditListViewProps {
   list: ShoppingList;
@@ -30,6 +32,7 @@ export const EditListView: React.FC<EditListViewProps> = ({
   onDeleteList,
 }) => {
   const { t, getCategoryName, language } = useLanguage();
+  useCatalogVersion();
   const { theme, currentThemeConfig } = useAppTheme();
   const isUrdu = language === 'ur';
 
@@ -349,15 +352,20 @@ export const EditListView: React.FC<EditListViewProps> = ({
                         >
                           {/* Left: Item Logo + 3-Tier Info (Name, Quantity, Category) */}
                           <div className="flex items-center gap-3 min-w-0 flex-1">
-                            <ItemVisualIcon
-                              name={item.name}
-                              canonicalName={item.canonicalName}
-                              displayName={item.name}
-                              categoryId={itemCatId}
-                              imageUrl={item.imageUrl}
-                              size={36}
-                              className="w-9 h-9 rounded-xl shrink-0"
-                            />
+                            {(() => {
+                              const visual = resolveVisual(item);
+                              return (
+                                <ItemVisualIcon
+                                  name={item.name}
+                                  canonicalName={item.canonicalName}
+                                  displayName={item.name}
+                                  categoryId={itemCatId}
+                                  imageUrl={visual.type !== 'emoji' ? visual.url : undefined}
+                                  size={36}
+                                  className="w-9 h-9 rounded-xl shrink-0"
+                                />
+                              );
+                            })()}
 
                             <div className="min-w-0 flex-1 flex flex-col gap-0.5">
                               {/* Line 1: Item Name */}

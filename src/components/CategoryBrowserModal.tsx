@@ -7,6 +7,7 @@ import { CategoryIcon } from './CategoryIcon';
 import { ItemVisualIcon } from './ItemVisualIcon';
 import { resolveVisual } from '../lib/catalog/visualResolver';
 import { INITIAL_MASTER_CATALOG } from '../lib/catalog/items';
+import { supabaseCatalog, useCatalogVersion } from '../lib/catalog/supabaseCatalog';
 import { RecommendationCandidate } from '../lib/recommendations';
 
 interface CategoryBrowserModalProps {
@@ -23,6 +24,7 @@ export const CategoryBrowserModal: React.FC<CategoryBrowserModalProps> = ({
   activeListTitle,
 }) => {
   const { t, language, getCategoryName } = useLanguage();
+  const catalogVersion = useCatalogVersion();
   const [selectedCategory, setSelectedCategory] = useState<CategoryId | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [addedItemNames, setAddedItemNames] = useState<Set<string>>(new Set());
@@ -30,7 +32,8 @@ export const CategoryBrowserModal: React.FC<CategoryBrowserModalProps> = ({
   // Filter items based on category and search query (Hooks must always run unconditionally)
   const filteredItems = useMemo(() => {
     if (!isOpen) return [];
-    let result = INITIAL_MASTER_CATALOG.slice(0, 150); // limit for fast snappy performance
+    const sourceItems = supabaseCatalog.getItems() || INITIAL_MASTER_CATALOG;
+    let result = sourceItems.slice(0, 150); // limit for fast snappy performance
 
     if (selectedCategory !== 'all') {
       result = result.filter((item) => item.category_id === selectedCategory);
@@ -48,7 +51,7 @@ export const CategoryBrowserModal: React.FC<CategoryBrowserModalProps> = ({
     }
 
     return result;
-  }, [isOpen, selectedCategory, searchQuery]);
+  }, [isOpen, selectedCategory, searchQuery, catalogVersion]);
 
   const handleAdd = (item: typeof INITIAL_MASTER_CATALOG[0]) => {
     const candidate: RecommendationCandidate = {

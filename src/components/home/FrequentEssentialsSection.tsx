@@ -9,6 +9,8 @@ import {
 } from '../../lib/recommendations/popularEssentials';
 import { PAKISTANI_GROCERY_ITEMS } from '../../data/pakistaniGroceryData';
 import { playItemAddSound, triggerHaptic } from '../../lib/sound';
+import { resolveVisual } from '../../lib/catalog/visualResolver';
+import { useCatalogVersion } from '../../lib/catalog/supabaseCatalog';
 
 interface FrequentEssentialsSectionProps {
   lists: ShoppingList[];
@@ -17,6 +19,41 @@ interface FrequentEssentialsSectionProps {
   onViewAllCategories: () => void;
 }
 
+export const FrequentEssentialTileVisual: React.FC<{
+  item: EssentialDisplayItem;
+  fallbackEmoji: string;
+}> = ({ item, fallbackEmoji }) => {
+  const [hasImgError, setHasImgError] = useState(false);
+  const visual = resolveVisual({
+    canonicalName: item.canonicalName,
+    canonical_name: item.canonicalName,
+    name: item.displayName,
+    displayName: item.displayName,
+    category: item.category,
+    categoryId: item.category,
+  });
+
+  const showPhoto = !hasImgError && visual.type !== 'emoji' && Boolean(visual.url);
+
+  if (showPhoto) {
+    return (
+      <img
+        src={visual.url}
+        alt={item.displayName}
+        onError={() => setHasImgError(true)}
+        loading="lazy"
+        className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300"
+      />
+    );
+  }
+
+  return (
+    <span className="text-4xl sm:text-[46px] select-none filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.12)] group-hover:scale-115 transition-transform duration-300">
+      {fallbackEmoji}
+    </span>
+  );
+};
+
 export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps> = ({
   lists,
   mostRecentActiveList,
@@ -24,6 +61,7 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
   onViewAllCategories,
 }) => {
   const { t, getCategoryName } = useLanguage();
+  useCatalogVersion();
 
   // Added items micro-feedback tracker: canonicalName -> boolean
   const [addedItemsMap, setAddedItemsMap] = useState<Record<string, boolean>>({});
@@ -234,11 +272,12 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
               }}
               className="rounded-2xl sm:rounded-3xl bg-surface-container-lowest dark:bg-surface-container-low border border-surface-dim/75 shadow-[0_2px_8px_rgba(15,61,46,0.04)] hover:shadow-[0_8px_20px_rgba(15,61,46,0.1)] hover:-translate-y-0.5 transition-all duration-200 p-2.5 sm:p-3 flex flex-col justify-between gap-2 group cursor-pointer relative overflow-hidden"
             >
-              {/* 1. Hyper-realistic, accurate staple emoji showcase stage */}
+              {/* 1. Hyper-realistic, accurate staple visual showcase stage (user photo > catalog image > emoji fallback) */}
               <div className="relative w-full h-22 sm:h-24 rounded-2xl bg-gradient-to-b from-surface-container/60 via-surface-container-low/40 to-surface-container-lowest/80 dark:from-stone-800 dark:via-stone-850 dark:to-stone-900 border border-surface-dim/60 flex items-center justify-center overflow-hidden group-hover:border-primary/30 transition-all">
-                <span className="text-4xl sm:text-[46px] select-none filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.12)] group-hover:scale-115 transition-transform duration-300">
-                  {getEssentialEmoji(item)}
-                </span>
+                <FrequentEssentialTileVisual
+                  item={item}
+                  fallbackEmoji={getEssentialEmoji(item)}
+                />
 
                 {/* Top Right Corner: Packaging Quantity Badge (e.g. "1 kg", "1 dozen") */}
                 <div className="absolute top-1.5 right-1.5 z-10 pointer-events-none">
