@@ -55,6 +55,8 @@ import { LegalPageType } from './components/legal/legalContent';
 import { LandingPageView } from './components/LandingPageView';
 import { HeadManager } from './seo/HeadManager';
 import { SuspendedAccountModal } from './components/SuspendedAccountModal';
+import { MiloHost } from './pet/MiloHost';
+import { triggerMiloEvent } from './pet/useMilo';
 
 const LegalPageView = React.lazy(() => import('./components/legal/LegalPageView').then((m) => ({ default: m.LegalPageView })));
 const BlogArticlePage = React.lazy(() => import('./components/legal/BlogArticlePage').then((m) => ({ default: m.BlogArticlePage })));
@@ -1041,6 +1043,9 @@ function AppContent() {
           });
       }
 
+      // Trigger Milo celebration overlay on list completed
+      triggerMiloEvent('list_completed');
+
       // Transition to completion view
       navigate(`/history/${stableSessionId}`);
     } catch (err: any) {
@@ -1747,6 +1752,9 @@ function AppContent() {
           onCreateClick={handleStartCreateList}
         />
       )}
+
+      {/* Floating Milo Companion Bubble (mini ~64px draggable over all screens) */}
+      <MiloHost variant="mini" />
 
       {/* Smart Phone Number Completion Reminder Modal */}
       <PhoneNumberReminderModal

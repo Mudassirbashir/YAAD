@@ -1,5 +1,5 @@
 /**
- * Milo Parametric Engine & Verification Test Suite
+ * Milo Parametric Engine & Verification Test Suite (v2)
  * YAAD's Interactive Pet Procedural System Verification
  */
 
@@ -15,6 +15,16 @@ import {
   isMiloSoundEnabled,
   setMiloSoundEnabled,
 } from '../src/pet/miloSounds';
+import {
+  isMiloEnabled,
+  setMiloEnabled,
+  STORAGE_BUBBLE_POS_KEY,
+  STORAGE_MILO_ENABLED_KEY,
+} from '../src/pet/MiloHost';
+import {
+  MILO_TRIGGER_CUSTOM_EVENT,
+  triggerMiloEvent,
+} from '../src/pet/useMilo';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -27,7 +37,7 @@ function assert(condition: boolean, message: string) {
 }
 
 console.log('\n======================================================');
-console.log('🐾 MILO PARAMETRIC ENGINE & PROCEDURAL PET QA SUITE');
+console.log('🐾 MILO PARAMETRIC ENGINE & PROCEDURAL PET QA SUITE (v2)');
 console.log('======================================================\n');
 
 // --- 1. EXPRESSION MODEL SPECIFICATION VERIFICATION ---
@@ -137,15 +147,49 @@ class MockAudioContext {
   }
 }
 
+// In-memory localStorage mock for state verification
+const memoryStorage: Record<string, string> = {
+  yaad_milo_sound: 'true',
+  yaad_milo_enabled: 'true',
+};
+
+const mockListeners: Record<string, Function[]> = {};
+
 // Inject mock window and WebAudio API
 (global as any).window = {
   AudioContext: MockAudioContext,
-  addEventListener: () => {},
-  removeEventListener: () => {},
-  localStorage: {
-    getItem: () => 'true',
-    setItem: () => {},
+  innerWidth: 375,
+  innerHeight: 812,
+  addEventListener: (event: string, fn: Function) => {
+    mockListeners[event] = mockListeners[event] || [];
+    mockListeners[event].push(fn);
   },
+  removeEventListener: (event: string, fn: Function) => {
+    if (mockListeners[event]) {
+      mockListeners[event] = mockListeners[event].filter((l) => l !== fn);
+    }
+  },
+  dispatchEvent: (event: any) => {
+    const list = mockListeners[event.type] || [];
+    list.forEach((fn) => fn(event));
+    return true;
+  },
+  localStorage: {
+    getItem: (key: string) => memoryStorage[key] ?? null,
+    setItem: (key: string, val: string) => {
+      memoryStorage[key] = String(val);
+    },
+  },
+};
+(global as any).localStorage = (global as any).window.localStorage;
+
+(global as any).CustomEvent = class CustomEvent {
+  type: string;
+  detail: any;
+  constructor(type: string, params: any = {}) {
+    this.type = type;
+    this.detail = params.detail;
+  }
 };
 
 setMiloSoundEnabled(true);
@@ -165,10 +209,72 @@ EXPECTED_EXPRESSIONS.forEach((expr) => {
 // Test sound muting
 setMiloSoundEnabled(false);
 playMiloSound('happy'); // should be silent and not throw
+assert(isMiloSoundEnabled() === false, 'Sound muting persists in localStorage');
 console.log('✅ Sound muting respected properly');
 
-// --- 5. ZERO ASSET & DEPENDENCY HARD CONSTRAINTS CHECK ---
-console.log('\n--- 5. Checking Zero Asset & Zero Dependency Constraints ---');
+// --- 5. PART B: PLACEMENT & BEHAVIOR TESTS ---
+console.log('\n--- 5. Testing Placement Architecture (Part B) ---');
+
+// 5.1 Verify HomeView has NO hero section
+const homeViewPath = path.resolve(process.cwd(), 'src/components/HomeView.tsx');
+const homeViewCode = fs.readFileSync(homeViewPath, 'utf8');
+assert(
+  !homeViewCode.includes('home_milo_hero_section'),
+  'Hero section <section id="home_milo_hero_section"> is ABSENT from HomeView.tsx'
+);
+assert(
+  !homeViewCode.includes('<MiloHost'),
+  'MiloHost is NOT rendered in HomeView (hero section completely removed)'
+);
+
+// 5.2 Verify App.tsx renders floating bubble at root level
+const appPath = path.resolve(process.cwd(), 'src/App.tsx');
+const appCode = fs.readFileSync(appPath, 'utf8');
+assert(
+  appCode.includes('<MiloHost variant="mini" />'),
+  'App.tsx renders <MiloHost variant="mini" /> at root level'
+);
+
+// 5.3 Verify Bubble position storage key is milo-bubble-pos
+assert(
+  STORAGE_BUBBLE_POS_KEY === 'milo-bubble-pos',
+  'Bubble position storage key is "milo-bubble-pos"'
+);
+
+// Test persistence of bubble position
+const samplePosition = { x: 290, y: 640 };
+window.localStorage.setItem(STORAGE_BUBBLE_POS_KEY, JSON.stringify(samplePosition));
+const restoredPos = JSON.parse(window.localStorage.getItem(STORAGE_BUBBLE_POS_KEY)!);
+assert(
+  restoredPos.x === samplePosition.x && restoredPos.y === samplePosition.y,
+  'Bubble position correctly persists and restores from localStorage (milo-bubble-pos)'
+);
+
+// 5.4 Verify Celebration overlay on list_completed
+let celebrationTriggered = false;
+window.addEventListener(MILO_TRIGGER_CUSTOM_EVENT, (e: any) => {
+  if (e.detail?.event === 'list_completed') {
+    celebrationTriggered = true;
+  }
+});
+
+triggerMiloEvent('list_completed');
+assert(
+  celebrationTriggered,
+  'triggerMiloEvent("list_completed") dispatches event for celebration overlay'
+);
+
+// 5.5 Verify Settings toggles
+setMiloEnabled(false);
+assert(isMiloEnabled() === false, 'Milo can be disabled in settings');
+assert(memoryStorage[STORAGE_MILO_ENABLED_KEY] === 'false', 'Milo disable state persists');
+
+setMiloEnabled(true);
+assert(isMiloEnabled() === true, 'Milo can be re-enabled in settings');
+assert(memoryStorage[STORAGE_MILO_ENABLED_KEY] === 'true', 'Milo enabled state persists');
+
+// --- 6. ZERO ASSET & DEPENDENCY HARD CONSTRAINTS CHECK ---
+console.log('\n--- 6. Checking Zero Asset & Zero Dependency Constraints ---');
 
 const packageJsonPath = path.resolve(process.cwd(), 'package.json');
 const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));

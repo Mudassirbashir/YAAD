@@ -16,7 +16,8 @@ let userGestureBound = false;
 export function isMiloSoundEnabled(): boolean {
   if (typeof window === 'undefined') return false;
   try {
-    return localStorage.getItem(STORAGE_SOUND_KEY) !== 'false';
+    const storage = window.localStorage || localStorage;
+    return storage.getItem(STORAGE_SOUND_KEY) !== 'false';
   } catch {
     return true;
   }
@@ -28,7 +29,8 @@ export function isMiloSoundEnabled(): boolean {
 export function setMiloSoundEnabled(enabled: boolean): void {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(STORAGE_SOUND_KEY, enabled ? 'true' : 'false');
+    const storage = window.localStorage || localStorage;
+    storage.setItem(STORAGE_SOUND_KEY, enabled ? 'true' : 'false');
   } catch {
     // Ignore storage errors in restricted contexts
   }

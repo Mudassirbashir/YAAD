@@ -37,6 +37,8 @@ import { LegalDocModal } from './settings/LegalDocModal';
 import { SupportDeskModal } from './settings/SupportDeskModal';
 import { formatPhoneNumber } from '../utils/phone';
 import { triggerHaptic } from '../lib/sound';
+import { isMiloEnabled, setMiloEnabled } from '../pet/MiloHost';
+import { isMiloSoundEnabled, setMiloSoundEnabled } from '../pet/miloSounds';
 
 interface SettingsViewProps {
   onBack: () => void;
@@ -105,10 +107,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     }
   }, [subSection]);
 
+  // Milo companion active state
+  const [miloActive, setMiloActive] = useState<boolean>(() => isMiloEnabled());
+
+  const handleToggleMilo = () => {
+    triggerHaptic(8);
+    const nextVal = !miloActive;
+    setMiloActive(nextVal);
+    setMiloEnabled(nextVal);
+  };
+
   // Sound preference state
   const [soundEnabled, setSoundEnabled] = useState<boolean>(() => {
     try {
-      return localStorage.getItem('yaad_sound_enabled') !== 'false';
+      return isMiloSoundEnabled();
     } catch {
       return true;
     }
@@ -145,6 +157,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     triggerHaptic(8);
     const nextVal = !soundEnabled;
     setSoundEnabled(nextVal);
+    setMiloSoundEnabled(nextVal);
     try {
       localStorage.setItem('yaad_sound_enabled', String(nextVal));
     } catch {}
@@ -482,6 +495,75 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <span>اردو</span>
                 {language === 'ur' && <Check className="w-3.5 h-3.5 stroke-[2.5] shrink-0" />}
               </button>
+            </div>
+
+            {/* Milo Pet Companion & Sound Feedback Toggles */}
+            <div className="pt-3 border-t border-surface-dim/40 flex flex-col gap-3.5">
+              {/* Milo Companion Toggle */}
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-full bg-amber-400/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-4.5 h-4.5 stroke-[2.2]" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="text-sm font-bold text-on-surface font-display truncate">
+                      {language === 'ur' ? 'مائلو پالتو ساتھی' : 'Milo Pet Companion'}
+                    </h4>
+                    <p className="text-xs text-outline font-body">
+                      {language === 'ur'
+                        ? 'فلوٹنگ اینیمیٹڈ ببل اور جشن کے تاثرات'
+                        : 'Interactive floating pet & celebration moments'}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  id="toggle_milo_companion"
+                  onClick={handleToggleMilo}
+                  className={`w-12 h-6.5 rounded-full transition-colors p-0.5 flex items-center shrink-0 cursor-pointer ${
+                    miloActive ? 'bg-primary justify-end' : 'bg-surface-dim justify-start'
+                  }`}
+                  aria-label={miloActive ? 'Disable Milo' : 'Enable Milo'}
+                >
+                  <span className="w-5.5 h-5.5 rounded-full bg-white shadow-xs block" />
+                </button>
+              </div>
+
+              {/* Sound Effects Toggle */}
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-full bg-surface-container text-primary flex items-center justify-center shrink-0">
+                    {soundEnabled ? (
+                      <Volume2 className="w-4.5 h-4.5 stroke-[2.2]" />
+                    ) : (
+                      <VolumeX className="w-4.5 h-4.5 stroke-[2.2] text-outline" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="text-sm font-bold text-on-surface font-display truncate">
+                      {language === 'ur' ? 'آواز کے اثرات' : 'Sound Effects'}
+                    </h4>
+                    <p className="text-xs text-outline font-body">
+                      {language === 'ur'
+                        ? 'مائلو کی آوازیں اور تصدیقی دھنیں'
+                        : 'Synthesized pet audio & action feedback'}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  id="toggle_sound_effects"
+                  onClick={handleToggleSound}
+                  className={`w-12 h-6.5 rounded-full transition-colors p-0.5 flex items-center shrink-0 cursor-pointer ${
+                    soundEnabled ? 'bg-primary justify-end' : 'bg-surface-dim justify-start'
+                  }`}
+                  aria-label={soundEnabled ? 'Mute sound effects' : 'Enable sound effects'}
+                >
+                  <span className="w-5.5 h-5.5 rounded-full bg-white shadow-xs block" />
+                </button>
+              </div>
             </div>
           </div>
         </section>
