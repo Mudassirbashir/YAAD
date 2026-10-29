@@ -274,8 +274,8 @@ setMiloEnabled(true);
 assert(isMiloEnabled() === true, 'Milo can be re-enabled in settings');
 assert(memoryStorage[STORAGE_MILO_ENABLED_KEY] === 'true', 'Milo enabled state persists');
 
-// --- 6. V3 IMAGE RENDERER & DEPENDENCY CONSTRAINTS CHECK ---
-console.log('\n--- 6. Testing v3 Image Renderer & Bundled WebP Assets ---');
+// --- 6. V4 ANIMATED IMAGE RENDERER & DEPENDENCY CONSTRAINTS CHECK ---
+console.log('\n--- 6. Testing v4 Animated Image Renderer & Bundled WebP Assets ---');
 
 // 6.1 Verify all 12 WebP files exist in public/milo/
 const publicMiloDir = path.resolve(process.cwd(), 'public/milo');

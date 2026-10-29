@@ -1,58 +1,57 @@
-# MILO DESIGN LAWS & ARCHITECTURE (LOCKED — v3)
+# MILO DESIGN LAWS & ARCHITECTURE (LOCKED — v4)
 
 Milo is YAAD's interactive companion pet: a golden-yellow, always-circular, fully-furred creature.
 Lightweight, pre-rendered bundled WebP images with 100% offline bundling, zero runtime network requests,
-and procedural WebAudio acoustic feedback.
+procedural WebAudio acoustic feedback, and smooth animated emotion transitions.
 Modeled after the approved "Soft Pro" reference: a touchable, soft, premium pom-pom plush ball.
 
 ---
 
-## MILO-01: Bundled Assets & Zero Runtime Network (v3 Update)
+## MILO-01: Bundled Assets & Zero Runtime Network
 - **Pre-rendered WebP images**: Milo uses 12 bundled WebP images in `public/milo/` (transparent backgrounds, ~512px source):
   - `idle.webp`, `happy.webp`, `laughing.webp`, `sad.webp`, `alas.webp`, `hurrah.webp`, `excited.webp`, `listening.webp`, `sleepy.webp`, `proud.webp`, `curious.webp`, and `blink.webp`.
 - **Zero runtime network calls**: All assets are served locally by Vite and cached by the PWA service worker for full offline functionality.
-- **MILO-07 "No Assets" Rule Retired**: Officially retired by the owner on 2026-10-29 for Milo only. Pre-rendered WebP assets replace the canvas drawing layer to ensure reference-perfect fluff and facial expression fidelity at both 64px and 240px.
 - **Zero new npm dependencies**: Implemented using React 19 standard `<img>` elements, CSS keyframes, and WebAudio API.
 
 ---
 
-## MILO-02: Geometry & Pom-Pom Visual Identity
+## MILO-02: Geometry & Visual Identity
 - **Always circular**: Milo's silhouette remains an exact circle matching the approved reference.
 - **Look**: Soft golden-yellow pom-pom plush ball with warm, deep brown expressive eyes, subtle eyelid hooding, dual white highlights, and a sweet curved smile.
 - **Rendering Layer (`MiloImage.tsx`)**:
   - Mini floating bubble: 64px.
   - Celebration overlay: 240px.
-  - Two-layer crossfade on expression change (~200ms opacity transition).
 
 ---
 
-## MILO-03: Eyelids & Blink Engine
+## MILO-03: Animated Emotion Transitions (v4 Engine)
+Expression switches feel like a smooth, lively animated video moment rather than a static crossfade (~350ms total):
+- **Outgoing Image (0–120ms)**:
+  - Quick squash: `scaleY 1 → 0.82`, `scaleX 1 → 1.08` over 120ms with `ease-in` while fading to opacity 0.
+- **Mid-Transition Blink Flash (100–200ms)**:
+  - Flashes `blink.webp` for ~100ms bridging the squash and the pop.
+- **Incoming Image (120–350ms)**:
+  - Springy pop-in: `scale 0.88 → 1.06 → 1.0` with a subtle wiggle (`rotate -5° → 5° → 0°`) over 230ms.
+  - Easing: `cubic-bezier(0.34, 1.56, 0.64, 1)` for organic spring overshoot.
+
+---
+
+## MILO-04: Per-Expression Idle Motion Engine (v4 Additive System)
+In addition to the base 4s breathing wobble (`scale 1 → 1.03 → 1`, `rotate -2° → 2°`), distinct emotional states feature unique additive physics:
+- **laughing**: Continuous gentle shake — `rotate(-4° → 4°)` loop (0.6s).
+- **excited**: Small bounce — `translateY(0 → -6% → 0)` loop (0.8s).
+- **sleepy**: Slow deep breathing — `scale(1 → 1.05 → 1)` loop (6s).
+- **sad**: Slow side sway — `rotate(-3° → 3°)` loop (3s).
+- **hurrah**: One celebratory jump — `translateY(0 → -12% → 0)` with spring curve each time hurrah becomes active.
+- **all other expressions**: Base 4s breathing wobble only.
+
+---
+
+## MILO-05: Eyelids & Blink Engine
 - **Eyelids & Blink**:
   - Dedicated `blink.webp` eyelid frame.
   - Idle blink interval: Every 2.5s – 5.0s, briefly swapping to `blink.webp` for ~150ms, then back.
-  - Immediate blink fired on every expression transition to convey organic aliveness.
-
----
-
-## MILO-04: Idle Aliveness ("Breathing")
-- **Idle Motion**: Subtle CSS keyframe breathing — slow scale 1 → 1.03 → 1 plus gentle rotation −2° → 2° on a 4-second continuous loop.
-- **Performance**: Runs smoothly via GPU compositing, zero per-frame CPU canvas recalculation.
-
----
-
-## MILO-05: Expression Model
-Milo is driven by 11 locked emotional states mapped to bundled WebP files:
-- `idle`: Calm resting state, gentle breathing, closed-lip smile.
-- `happy`: Warm greeting, playful energy.
-- `laughing`: Triggered on tap, giggling joyful expression.
-- `sad`: Droopy, sympathetic (used for reminders/forgotten items, never guilt).
-- `alas`: Sighing, gentle tilt.
-- `hurrah`: Celebration, maximum joy and fanfare.
-- `excited`: High energy, wide smile.
-- `listening`: Alert, wide eyes.
-- `sleepy`: Heavy eyelids, resting expression.
-- `proud`: Confident posture.
-- `curious`: Inquisitive round-eyed look.
+  - Mid-transition blink: Automatically triggered during every expression change.
 
 ---
 
@@ -66,22 +65,19 @@ Milo is driven by 11 locked emotional states mapped to bundled WebP files:
 
 ## MILO-07: Accessibility & Calm Mode
 - `prefers-reduced-motion`:
-  - Breathing keyframe animation disabled (`animation: none !important`).
-  - Calm blinking and instant expression transitions preserved.
-- Loop throttled/paused when off-screen or page is hidden.
+  - Disables ALL motion (breathing, shake, bounce, pop, squash, wiggle).
+  - Instant expression swap with calm blinking only (`animation: none !important`).
+- Throttled/paused when off-screen or page is hidden.
 
 ---
 
 ## MILO-08: Placement & Lifecycle (Floating Bubble + Celebration Overlay)
-- **Permanent Hero Section**: REMOVED from the Home screen.
 - **Floating Mini Bubble**:
   - Rendered at app root level (`MiloHost` with `variant="mini"`).
-  - Floats above all screens: Home, list screens, shopping screens, history, settings.
-  - Size: ~64px mini bubble. Small enough to never block content.
-  - Movable: 1:1 instantaneous drag tracking with mouse and touch without transition lag.
-  - Drag Bounds: Clamped so it never covers the bottom navigation bar or clips at viewport edges (`document.documentElement.clientWidth/clientHeight`).
-  - Persistence: Position saved in `localStorage` under key `milo-bubble-pos` and restored on reload.
-  - Touch isolation: Never intercepts scrolls or blocks taps on underlying content except on the bubble itself.
+  - Floats above all screens; size ~64px.
+  - 1:1 instantaneous drag tracking with mouse and touch without transition lag.
+  - Clamped so it never covers the bottom navigation bar or clips at layout viewport edges (`document.documentElement.clientWidth/clientHeight`).
+  - Position saved in `localStorage` under key `milo-bubble-pos` and restored on reload.
 - **Celebration Overlay (List Complete)**:
   - Full-screen celebration overlay triggered on `list_completed`.
   - Large celebration Milo (`variant="celebration"`, 240px) with `hurrah.webp` and sound fanfare.
