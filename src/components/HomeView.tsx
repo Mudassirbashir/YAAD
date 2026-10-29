@@ -18,6 +18,8 @@ import { FrequentEssentialsSection } from './home/FrequentEssentialsSection';
 import { HomeListsSection } from './home/HomeListsSection';
 import { NoActiveListModal } from './home/NoActiveListModal';
 import { ShareListModal } from './ShareListModal';
+import { MiloHost } from '../pet/MiloHost';
+import { triggerMiloEvent } from '../pet/useMilo';
 
 interface HomeViewProps {
   lists: ShoppingList[];
@@ -182,6 +184,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
     const candidate = buildCandidate(item);
     if (onQuickAddRecommendation) {
       onQuickAddRecommendation(candidate, mostRecentActiveList.id, false);
+      triggerMiloEvent('item_added');
     }
 
     const itemLabel = language === 'ur' && item.nameUrdu ? item.nameUrdu : item.displayName;
@@ -254,6 +257,15 @@ export const HomeView: React.FC<HomeViewProps> = ({
               size="md"
             />
           </button>
+        </section>
+
+        {/* 2.5 MILO INTERACTIVE HERO PET */}
+        <section
+          id="home_milo_hero_section"
+          className="w-full flex items-center justify-center py-0.5 sm:py-1.5 select-none"
+          aria-label="Milo Interactive Companion"
+        >
+          <MiloHost variant="hero" />
         </section>
 
         {/* 3. NON-BLOCKING PHONE NUMBER NOTIFICATION (At top of Home if missing) */}
