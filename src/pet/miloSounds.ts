@@ -9,6 +9,7 @@ const STORAGE_SOUND_KEY = 'yaad_milo_sound';
 
 let audioCtx: AudioContext | null = null;
 let userGestureBound = false;
+let hasUserGestured = false;
 
 /**
  * Returns whether Milo sound effects are enabled in user settings.
@@ -41,6 +42,7 @@ export function setMiloSoundEnabled(enabled: boolean): void {
  */
 function getAudioContext(): AudioContext | null {
   if (typeof window === 'undefined') return null;
+  if (!hasUserGestured) return null;
 
   if (!audioCtx) {
     const AudioContextClass =
@@ -71,6 +73,7 @@ export function initAudioContextOnGesture(): void {
   userGestureBound = true;
 
   const unlockAudio = () => {
+    hasUserGestured = true;
     const ctx = getAudioContext();
     if (ctx && ctx.state === 'running') {
       window.removeEventListener('pointerdown', unlockAudio);

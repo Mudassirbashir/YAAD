@@ -1,6 +1,6 @@
 /**
- * Milo Procedural Canvas Engine - v2 Look Match
- * 60fps Parametric Rendering with Soft Pom-Pom Fur Physics, Soulful Eyes, and WebAudio Feedback
+ * Milo Procedural Canvas Engine - v2.1 Visible Fur Pass
+ * 60fps Parametric Rendering with Visible Fur Halo, Ripple Motion, Soulful Eyes, and WebAudio Feedback
  */
 
 import React, { useRef, useEffect, useCallback } from 'react';
@@ -24,6 +24,7 @@ interface FurStrand {
   angle: number;
   baseLengthRatio: number;
   currentBend: number;
+  isGuard: boolean;
 }
 
 interface SurfaceTuft {
@@ -32,36 +33,47 @@ interface SurfaceTuft {
   angle: number;
   lengthRatio: number;
   currentBend: number;
+  isLight: boolean;
+  alpha: number;
 }
 
-// 156 perimeter strands for dense, touchable pom-pom fluff
-const STRAND_COUNT = 156;
+// 140 perimeter strands for clearly visible fur halo at small size (64px) and plush density at 240px
+const STRAND_COUNT = 140;
 const INITIAL_STRANDS: FurStrand[] = Array.from({ length: STRAND_COUNT }, (_, i) => {
   const angle = (i / STRAND_COUNT) * 2 * Math.PI;
-  // Deterministic seed formula based on index for stable, organic fluff
   const pseudoRand = Math.abs(Math.sin((i + 1) * 12.9898) * 43758.5453) % 1;
-  // Short, dense pom-pom tufts (reference match: ~5-10% of radius)
-  const baseLengthRatio = 0.055 + pseudoRand * 0.05;
+  const isGuard = i % 7 === 0;
+  // Natural variation: most strands 12-14%, every ~7th a longer guard hair at 16-18%
+  const baseLengthRatio = isGuard
+    ? 0.16 + pseudoRand * 0.02
+    : 0.12 + pseudoRand * 0.02;
   return {
     angle,
     baseLengthRatio,
     currentBend: 0,
+    isGuard,
   };
 });
 
-// Deterministic surface micro-tufts for plush 3D pom-pom fleece texture
-const TUFT_COUNT = 52;
+// ~120 deterministic surface micro-tufts for visible fleece texture across body face
+const TUFT_COUNT = 120;
 const INITIAL_TUFTS: SurfaceTuft[] = Array.from({ length: TUFT_COUNT }, (_, i) => {
   const seed1 = Math.abs(Math.sin((i + 7) * 31.4159) * 28472.193) % 1;
   const seed2 = Math.abs(Math.sin((i + 13) * 17.291) * 91823.471) % 1;
-  const r = 0.25 + seed1 * 0.65; // keep away from dead-center face
+  const seed3 = Math.abs(Math.sin((i + 23) * 43.117) * 58219.733) % 1;
+  // Denser near the rim (power 0.6 pushes distribution outward), sparser at center
+  const r = 0.28 + Math.pow(seed1, 0.6) * 0.68;
   const theta = seed2 * 2 * Math.PI;
+  const isLight = i % 2 === 0;
+  const alpha = 0.5 + seed3 * 0.38; // 0.5 to 0.88
   return {
     xRatio: Math.cos(theta) * r,
     yRatio: Math.sin(theta) * r,
     angle: theta,
-    lengthRatio: 0.05 + (seed1 * 0.04),
+    lengthRatio: 0.075 + seed3 * 0.04,
     currentBend: 0,
+    isLight,
+    alpha,
   };
 });
 
@@ -314,7 +326,7 @@ export const MiloCanvas: React.FC<MiloCanvasProps> = ({
       const cx = canvasWidth / 2;
       const cy = canvasHeight / 2;
 
-      // Base radius scaled to fit comfortably inside the canvas with fluff
+      // Base radius scaled to fit comfortably with fur halo inside canvas
       const baseR = Math.min(canvasWidth, canvasHeight) * 0.38;
       const breathingR = baseR * (1 + 0.015 * Math.sin(s.t * 2.1));
 
@@ -373,48 +385,50 @@ export const MiloCanvas: React.FC<MiloCanvasProps> = ({
       ctx.arc(0, 0, breathingR, 0, Math.PI * 2);
       ctx.fill();
 
-      // 7. DRAW SURFACE FLEECE TUFTS (Pom-pom touchable fuzziness across the body)
-      const tuftStrokeW = Math.max(1.3, breathingR * 0.026);
+      // 7. DRAW SURFACE FLEECE TUFTS (~120 tufts, visible light/dark fleece texture)
+      const tuftStrokeW = Math.max(1.6, breathingR * 0.034);
       ctx.lineWidth = tuftStrokeW;
       ctx.lineCap = 'round';
 
       for (let i = 0; i < s.tufts.length; i++) {
         const tuft = s.tufts[i];
-        // Skip tufts directly in the eye/mouth zone to keep face expressive
+        // Skip tufts directly in the eye/mouth zone to keep face expressive & readable
         if (
-          Math.abs(tuft.xRatio) < 0.45 &&
-          tuft.yRatio > -0.22 &&
-          tuft.yRatio < 0.32
+          Math.abs(tuft.xRatio) < 0.44 &&
+          tuft.yRatio > -0.20 &&
+          tuft.yRatio < 0.30
         ) {
           continue;
         }
 
         const tx = tuft.xRatio * breathingR;
         const ty = tuft.yRatio * breathingR;
-        const tuftLen = breathingR * tuft.lengthRatio;
+        const tuftLen = Math.max(2.5, breathingR * tuft.lengthRatio);
 
         const radX = Math.cos(tuft.angle);
         const radY = Math.sin(tuft.angle);
         const tanX = -Math.sin(tuft.angle);
         const tanY = Math.cos(tuft.angle);
 
-        const idleSway = Math.sin(s.t * 2.2 + tuft.angle * 4) * 0.25 * effFurEnergy;
+        // Traveling wave + idle sway
+        const wave = Math.sin(tuft.angle * 3 - s.t * 1.2) * (0.28 * effFurEnergy);
+        const idleSway = Math.sin(s.t * 2.2 + tuft.angle * 4) * (0.35 * effFurEnergy) + wave;
         const projected = tanX * s.tiltX + tanY * s.tiltY;
-        const tiltPull = projected * (0.2 + effFurEnergy);
-        const impulse = s.tapImpulse * Math.sin(tuft.angle * 3 + s.t * 5);
+        const tiltPull = projected * (0.22 + effFurEnergy);
+        const impulse = s.tapImpulse * Math.sin(tuft.angle * 3 + s.t * 6);
         const targetBend = idleSway + tiltPull + impulse;
 
         tuft.currentBend += (targetBend - tuft.currentBend) * Math.min(1, dt * 7);
 
-        const tipX = tx + radX * tuftLen + tanX * (tuft.currentBend * tuftLen * 0.5);
-        const tipY = ty + radY * tuftLen + tanY * (tuft.currentBend * tuftLen * 0.5);
-        const cpX = tx + radX * (tuftLen * 0.5) + tanX * (tuft.currentBend * tuftLen * 0.25);
-        const cpY = ty + radY * (tuftLen * 0.5) + tanY * (tuft.currentBend * tuftLen * 0.25);
+        const tipX = tx + radX * tuftLen + tanX * (tuft.currentBend * tuftLen * 0.55);
+        const tipY = ty + radY * tuftLen + tanY * (tuft.currentBend * tuftLen * 0.55);
+        const cpX = tx + radX * (tuftLen * 0.5) + tanX * (tuft.currentBend * tuftLen * 0.28);
+        const cpY = ty + radY * (tuftLen * 0.5) + tanY * (tuft.currentBend * tuftLen * 0.28);
 
-        // Soft golden cream highlight tufts vs warm shadow tufts
-        ctx.strokeStyle = tuft.yRatio < 0.1
-          ? 'rgba(255, 245, 195, 0.42)'
-          : 'rgba(215, 135, 12, 0.26)';
+        // Alternating warm light #ffe9a8 and soft shadow #d98f06 with visible alpha
+        ctx.strokeStyle = tuft.isLight
+          ? `rgba(255, 233, 168, ${tuft.alpha})`
+          : `rgba(217, 143, 6, ${tuft.alpha * 0.85})`;
 
         ctx.beginPath();
         ctx.moveTo(tx, ty);
@@ -422,10 +436,14 @@ export const MiloCanvas: React.FC<MiloCanvasProps> = ({
         ctx.stroke();
       }
 
-      // 8. DRAW PERIMETER FUR STRANDS (156 strands, short, dense, soft pom-pom fluff)
-      const strandStrokeW = Math.max(1.7, breathingR * 0.034);
+      // 8. DRAW PERIMETER FUR STRANDS (~140 strands, 12-18% R, high-contrast root-to-tip halo)
+      // Thicker width (2.0 - 2.8px) with round caps for high legibility at 64px
+      const strandStrokeW = Math.max(2.0, Math.min(2.8, breathingR * 0.05));
       ctx.lineWidth = strandStrokeW;
       ctx.lineCap = 'round';
+
+      // Radial poof impulse on tap/laugh
+      const poofMultiplier = 1 + s.tapImpulse * 0.35;
 
       for (let i = 0; i < s.strands.length; i++) {
         const strand = s.strands[i];
@@ -434,40 +452,43 @@ export const MiloCanvas: React.FC<MiloCanvasProps> = ({
         const tanX = -Math.sin(strand.angle);
         const tanY = Math.cos(strand.angle);
 
-        // Sinusoidal organic sway (fur never freezes at idle)
-        const idleSway = Math.sin(s.t * 2.2 + strand.angle * 4) * 0.28 * effFurEnergy;
+        // Visibly rippling fur motion: traveling wave around perimeter + amplified idle sway (~1.6x)
+        const wave = Math.sin(strand.angle * 3 - s.t * 1.2) * (0.35 * effFurEnergy);
+        const sway = Math.sin(s.t * 2.2 + strand.angle * 4) * (0.45 * effFurEnergy);
+        const idleSway = sway + wave;
 
         // Device tilt / pointer pull
         const projected = tanX * s.tiltX + tanY * s.tiltY;
-        const tiltPull = projected * (0.24 + effFurEnergy);
+        const tiltPull = projected * (0.28 + effFurEnergy);
 
         // Decaying tap impulse
-        const impulse = s.tapImpulse * Math.sin(strand.angle * 3 + s.t * 5);
+        const impulse = s.tapImpulse * Math.sin(strand.angle * 3 + s.t * 6) * 0.6;
         const targetBend = idleSway + tiltPull + impulse;
 
         // Exponential smoothing
         strand.currentBend += (targetBend - strand.currentBend) * Math.min(1, dt * 7);
 
-        // Strand geometry: short pom-pom tuft
-        const strandLen = breathingR * strand.baseLengthRatio;
-        const startX = radX * (breathingR - 1);
-        const startY = radY * (breathingR - 1);
+        // Strand geometry: 12-18% length with poof flare on tap
+        const strandLen = breathingR * strand.baseLengthRatio * poofMultiplier;
+        const startX = radX * (breathingR - 1.5);
+        const startY = radY * (breathingR - 1.5);
 
+        // Outward curl/flare via increased control point deflection
         const tipX =
-          radX * (breathingR + strandLen) + tanX * (strand.currentBend * strandLen * 0.55);
+          radX * (breathingR + strandLen) + tanX * (strand.currentBend * strandLen * 0.75);
         const tipY =
-          radY * (breathingR + strandLen) + tanY * (strand.currentBend * strandLen * 0.55);
+          radY * (breathingR + strandLen) + tanY * (strand.currentBend * strandLen * 0.75);
 
         const cpX =
-          radX * (breathingR + strandLen * 0.5) + tanX * (strand.currentBend * strandLen * 0.25);
+          radX * (breathingR + strandLen * 0.55) + tanX * (strand.currentBend * strandLen * 0.45);
         const cpY =
-          radY * (breathingR + strandLen * 0.5) + tanY * (strand.currentBend * strandLen * 0.25);
+          radY * (breathingR + strandLen * 0.55) + tanY * (strand.currentBend * strandLen * 0.45);
 
-        // Soft warm golden-cream gradient: warm root to soft creamy sunny tip
+        // High-contrast gradient: deep golden root (#e8930c) melting to bright creamy tip (#fff3c4)
         const grad = ctx.createLinearGradient(startX, startY, tipX, tipY);
-        grad.addColorStop(0, '#f5af1f');
-        grad.addColorStop(0.5, '#fedb6e');
-        grad.addColorStop(1, '#fff1b4');
+        grad.addColorStop(0, '#e8930c');
+        grad.addColorStop(0.35, '#fcbc1f');
+        grad.addColorStop(1, '#fff3c4');
 
         ctx.strokeStyle = grad;
         ctx.beginPath();

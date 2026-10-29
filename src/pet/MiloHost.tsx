@@ -51,6 +51,18 @@ export function setMiloEnabled(enabled: boolean): void {
   } catch {}
 }
 
+/**
+ * Helper to obtain layout viewport dimensions (document.documentElement.clientWidth / clientHeight)
+ * to avoid edge clipping across wide desktop displays and mobile visual viewport fluctuations.
+ */
+function getViewportDimensions(): { width: number; height: number } {
+  const docW = typeof document !== 'undefined' && document.documentElement ? document.documentElement.clientWidth : 0;
+  const docH = typeof document !== 'undefined' && document.documentElement ? document.documentElement.clientHeight : 0;
+  const winW = docW || (typeof window !== 'undefined' ? window.innerWidth : 375);
+  const winH = docH || (typeof window !== 'undefined' ? window.innerHeight : 667);
+  return { width: winW, height: winH };
+}
+
 export const MiloHost: React.FC<MiloHostProps> = ({
   variant = 'mini',
   expression: propExpression,
@@ -60,6 +72,9 @@ export const MiloHost: React.FC<MiloHostProps> = ({
 }) => {
   // Global Milo enabled state
   const [enabled, setEnabled] = useState<boolean>(() => isMiloEnabled());
+
+  // Dragging active state (controls 1:1 instantaneous transform without transition lag)
+  const [isDragging, setIsDragging] = useState<boolean>(false);
 
   // Celebration overlay state (triggered on list_completed)
   const [isCelebrationActive, setIsCelebrationActive] = useState<boolean>(
@@ -158,10 +173,10 @@ export const MiloHost: React.FC<MiloHostProps> = ({
   }, [trigger, dismissCelebration]);
 
   // Calculate default position: bottom-right, just above bottom navigation bar
+  // Uses layout viewport (document.documentElement.clientWidth / clientHeight)
   const getDefaultPosition = useCallback((): Position => {
     if (typeof window === 'undefined') return { x: 280, y: 520 };
-    const winW = window.innerWidth;
-    const winH = window.innerHeight;
+    const { width: winW, height: winH } = getViewportDimensions();
     const bubbleSize = 64;
     const bottomNavMargin = 92; // Clear 80px bottom bar + safe area
     return {
@@ -170,11 +185,11 @@ export const MiloHost: React.FC<MiloHostProps> = ({
     };
   }, []);
 
-  // Clamp position so Milo never covers the bottom nav or leaves viewport
+  // Clamp position so Milo never covers the bottom nav or clips at any edge
+  // Uses layout viewport (document.documentElement.clientWidth / clientHeight)
   const clampPosition = useCallback((pos: Position): Position => {
     if (typeof window === 'undefined') return pos;
-    const winW = window.innerWidth;
-    const winH = window.innerHeight;
+    const { width: winW, height: winH } = getViewportDimensions();
     const bubbleSize = 64;
     const bottomNavMargin = 88; // Keep above bottom navigation bar
     const minX = 12;
@@ -203,14 +218,35 @@ export const MiloHost: React.FC<MiloHostProps> = ({
     return getDefaultPosition();
   });
 
-  // Re-clamp position on window resize
+  // Track latest clamped position in ref for lost-capture and pointerup safety
+  const latestBubblePosRef = useRef<Position>(bubblePos);
+  latestBubblePosRef.current = bubblePos;
+
+  // Re-clamp position on window resize AND visualViewport resize
+  // Keeps the bubble safely inside visible area when mobile browser chrome shows/hides
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const handleResize = () => {
-      setBubblePos((prev) => clampPosition(prev));
+      setBubblePos((prev) => {
+        const next = clampPosition(prev);
+        latestBubblePosRef.current = next;
+        return next;
+      });
     };
+
     window.addEventListener('resize', handleResize, { passive: true });
-    return () => window.removeEventListener('resize', handleResize);
+
+    const vv = window.visualViewport;
+    if (vv) {
+      vv.addEventListener('resize', handleResize, { passive: true });
+    }
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (vv) {
+        vv.removeEventListener('resize', handleResize);
+      }
+    };
   }, [clampPosition]);
 
   // Dragging interaction state
@@ -224,13 +260,15 @@ export const MiloHost: React.FC<MiloHostProps> = ({
   const hasMovedSignificantlyRef = useRef(false);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return; // Only primary button
     isDraggingRef.current = true;
+    setIsDragging(true);
     hasMovedSignificantlyRef.current = false;
     dragStartRef.current = {
       pointerX: e.clientX,
       pointerY: e.clientY,
-      startX: bubblePos.x,
-      startY: bubblePos.y,
+      startX: latestBubblePosRef.current.x,
+      startY: latestBubblePosRef.current.y,
     };
     (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
   };
@@ -249,23 +287,37 @@ export const MiloHost: React.FC<MiloHostProps> = ({
       y: dragStartRef.current.startY + dy,
     };
 
-    setBubblePos(clampPosition(unconstrained));
+    const nextPos = clampPosition(unconstrained);
+    latestBubblePosRef.current = nextPos;
+    setBubblePos(nextPos);
   };
 
   const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!isDraggingRef.current) return;
     isDraggingRef.current = false;
+    setIsDragging(false);
     (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
 
     // Persist position to localStorage (key: milo-bubble-pos)
     try {
-      localStorage.setItem(STORAGE_BUBBLE_POS_KEY, JSON.stringify(bubblePos));
+      localStorage.setItem(STORAGE_BUBBLE_POS_KEY, JSON.stringify(latestBubblePosRef.current));
     } catch {}
 
     // Tap without drag -> trigger laughing + giggle
     if (!hasMovedSignificantlyRef.current) {
       handleMiloTap();
     }
+  };
+
+  // Lost-capture safety: ends drag gracefully if browser interrupts pointer capture
+  const handleLostPointerCapture = () => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    setIsDragging(false);
+
+    try {
+      localStorage.setItem(STORAGE_BUBBLE_POS_KEY, JSON.stringify(latestBubblePosRef.current));
+    } catch {}
   };
 
   // If user disabled Milo in settings, hide both bubble and overlay
@@ -335,19 +387,24 @@ export const MiloHost: React.FC<MiloHostProps> = ({
     );
   }
 
-  // 2. FLOATING MINI BUBBLE (~64px, draggable across all screens)
+  // 2. FLOATING MINI BUBBLE (~64px, draggable across all screens, 1:1 instantaneous drag tracking)
   return (
     <div
+      draggable={false}
+      onDragStart={(e) => e.preventDefault()}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
+      onLostPointerCapture={handleLostPointerCapture}
       style={{
         transform: `translate3d(${bubblePos.x}px, ${bubblePos.y}px, 0)`,
         touchAction: 'none',
         width: 64,
         height: 64,
       }}
-      className={`fixed top-0 left-0 z-40 select-none cursor-grab active:cursor-grabbing hover:scale-105 active:scale-95 transition-transform duration-150 drop-shadow-md ${className}`}
+      className={`fixed top-0 left-0 z-40 select-none cursor-grab active:cursor-grabbing hover:scale-105 active:scale-95 drop-shadow-md ${
+        isDragging ? 'transition-none' : 'transition-transform duration-150'
+      } ${className}`}
       aria-label={`Floating Milo Companion (${activeExpression})`}
     >
       <div className="relative w-16 h-16 rounded-full flex items-center justify-center pointer-events-auto">
