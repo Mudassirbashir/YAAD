@@ -9,6 +9,7 @@ import {
   EVENT_EXPRESSION_MAP,
   interpolateMiloParams,
   easeOutCubic,
+  MILO_IMAGE_MAP,
 } from '../src/pet/miloExpressions';
 import {
   playMiloSound,
@@ -273,13 +274,58 @@ setMiloEnabled(true);
 assert(isMiloEnabled() === true, 'Milo can be re-enabled in settings');
 assert(memoryStorage[STORAGE_MILO_ENABLED_KEY] === 'true', 'Milo enabled state persists');
 
-// --- 6. ZERO ASSET & DEPENDENCY HARD CONSTRAINTS CHECK ---
-console.log('\n--- 6. Checking Zero Asset & Zero Dependency Constraints ---');
+// --- 6. V3 IMAGE RENDERER & DEPENDENCY CONSTRAINTS CHECK ---
+console.log('\n--- 6. Testing v3 Image Renderer & Bundled WebP Assets ---');
 
+// 6.1 Verify all 12 WebP files exist in public/milo/
+const publicMiloDir = path.resolve(process.cwd(), 'public/milo');
+assert(fs.existsSync(publicMiloDir), 'public/milo directory exists');
+
+const EXPECTED_WEBP_FILES = [
+  'idle.webp',
+  'happy.webp',
+  'laughing.webp',
+  'sad.webp',
+  'alas.webp',
+  'hurrah.webp',
+  'excited.webp',
+  'listening.webp',
+  'sleepy.webp',
+  'proud.webp',
+  'curious.webp',
+  'blink.webp',
+];
+
+EXPECTED_WEBP_FILES.forEach((filename) => {
+  const filePath = path.join(publicMiloDir, filename);
+  assert(fs.existsSync(filePath), `Bundled WebP asset exists: public/milo/${filename}`);
+  const stat = fs.statSync(filePath);
+  assert(stat.size > 0, `WebP asset is non-empty: public/milo/${filename} (${stat.size} bytes)`);
+});
+
+// 6.2 Verify expression -> filename map complete & includes blink frame
+assert(Boolean(MILO_IMAGE_MAP), 'MILO_IMAGE_MAP is exported');
+EXPECTED_EXPRESSIONS.forEach((expr) => {
+  assert(
+    MILO_IMAGE_MAP[expr] === `/milo/${expr}.webp`,
+    `MILO_IMAGE_MAP maps '${expr}' to '/milo/${expr}.webp'`
+  );
+});
+assert(
+  MILO_IMAGE_MAP.blink === '/milo/blink.webp',
+  'MILO_IMAGE_MAP includes blink frame (/milo/blink.webp)'
+);
+
+// 6.3 Verify MiloImage component exists and MiloCanvas is retired/deleted
+const miloImagePath = path.resolve(process.cwd(), 'src/pet/MiloImage.tsx');
+assert(fs.existsSync(miloImagePath), 'src/pet/MiloImage.tsx exists');
+const miloCanvasPath = path.resolve(process.cwd(), 'src/pet/MiloCanvas.tsx');
+assert(!fs.existsSync(miloCanvasPath), 'src/pet/MiloCanvas.tsx is retired and absent');
+
+// 6.4 Verify package.json dependencies remain locked (zero new packages)
 const packageJsonPath = path.resolve(process.cwd(), 'package.json');
 const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 
-// Verify no new unexpected dependencies were added
 const lockedDeps = [
   '@google/genai',
   '@rollup/wasm-node',
@@ -306,14 +352,14 @@ assert(
   'package.json dependencies contain ZERO new packages'
 );
 
-// Scan src/pet directory to confirm NO image, video, or audio files exist
+// Scan src/pet directory to confirm only code & doc files exist
 const petDir = path.resolve(process.cwd(), 'src/pet');
 const petFiles = fs.readdirSync(petDir);
 const assetExtensions = ['.png', '.jpg', '.jpeg', '.svg', '.webp', '.mp3', '.wav', '.ogg', '.mp4', '.webm'];
 
 petFiles.forEach((file) => {
   const ext = path.extname(file).toLowerCase();
-  assert(!assetExtensions.includes(ext), `No media asset file: ${file}`);
+  assert(!assetExtensions.includes(ext), `src/pet contains no media asset file: ${file}`);
 });
 console.log(`✅ src/pet contains only code & doc files: ${petFiles.join(', ')}`);
 

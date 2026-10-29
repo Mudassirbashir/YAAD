@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { MiloCanvas } from './MiloCanvas';
+import { MiloImage } from './MiloImage';
 import { useMilo, MILO_TRIGGER_CUSTOM_EVENT } from './useMilo';
 import { MiloExpression, MiloTriggerEvent } from './miloExpressions';
 import { X, Volume2, VolumeX } from 'lucide-react';
@@ -361,7 +361,7 @@ export const MiloHost: React.FC<MiloHostProps> = ({
 
           {/* Large celebration Milo */}
           <div className="my-2">
-            <MiloCanvas
+            <MiloImage
               expression="hurrah"
               size={240}
               onTap={handleMiloTap}
@@ -408,7 +408,7 @@ export const MiloHost: React.FC<MiloHostProps> = ({
       aria-label={`Floating Milo Companion (${activeExpression})`}
     >
       <div className="relative w-16 h-16 rounded-full flex items-center justify-center pointer-events-auto">
-        <MiloCanvas
+        <MiloImage
           expression={activeExpression}
           size={64}
         />

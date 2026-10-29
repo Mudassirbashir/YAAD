@@ -95,3 +95,22 @@ export function interpolateMiloParams(
   };
 }
 
+/**
+ * v3 Image Renderer: Milo expression to bundled WebP asset map
+ */
+export const MILO_IMAGE_MAP: Record<MiloExpression | 'blink', string> = {
+  idle: '/milo/idle.webp',
+  happy: '/milo/happy.webp',
+  laughing: '/milo/laughing.webp',
+  sad: '/milo/sad.webp',
+  alas: '/milo/alas.webp',
+  hurrah: '/milo/hurrah.webp',
+  excited: '/milo/excited.webp',
+  listening: '/milo/listening.webp',
+  sleepy: '/milo/sleepy.webp',
+  proud: '/milo/proud.webp',
+  curious: '/milo/curious.webp',
+  blink: '/milo/blink.webp',
+};
+
+
