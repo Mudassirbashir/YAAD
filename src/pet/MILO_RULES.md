@@ -148,16 +148,26 @@ Milo actively reacts with dedicated expressions and WebAudio sounds to key actio
 ---
 
 ## MILO-12: Tick Satisfaction Upgrade & Micro-Reactions (v6)
+- **Clean Tick Choreography (No Per-Tick Confetti Burst)**:
+  - Routine item ticks are clean, tactile, and fast (150–300ms total):
+    1. Press down (0ms): tactile scale `0.95x` (150ms) with zero-latency audio dispatch.
+    2. Checkmark draw (300ms): smooth SVG `stroke-dashoffset` / `pathLength` draw (`cubic-bezier(0.650, 0, 0.450, 1)`).
+    3. Impact pop (0.3s): scale punch `[1, 0.95, 1.12, 1]` with organic spring overshoot (`cubic-bezier(0.34, 1.56, 0.64, 1)`).
+    4. Shockwave ripple: subtle outer glow ring expanding around the checkbox.
+    5. Rising melody (Clear's trick): consecutive ticks within 2000ms advance along the pentatonic scale with anti-fatigue micro-variations.
+    6. Untick sound: softer downward-pitched blip (undo).
+  - **Deliberate Design Law**: **Zero per-tick confetti particles.** Confetti on every routine tick produces visual noise and animation fatigue. The tick interaction is kept focused and satisfying.
+- **List-Complete Milestone Spectacle (Spectacle Reserved Exclusively for Here)**:
+  - Visual spectacle is strictly reserved for completing the whole list.
+  - Full-screen celebration overlay features the 50-particle radial celebratory confetti burst.
+  - Multi-tone rising acoustic chime (`playCompletionSound()`, 400–600ms) with coordinated haptic pulse `[40, 50, 70]`.
+  - Synced to Milo's 240px `hurrah` celebratory jump.
 - **Visible Micro-Reaction Hop on `item_purchased`**:
   - Milo hops vertically: `translateY(0 -> -8% -> 0)` over 400ms (`cubic-bezier(0.25, 1, 0.5, 1)`).
   - Fires an intentional eyelid blink (`blink.webp` flash) + cheerful short chirp sound (`playMiloSound('excited')`).
   - Completely visible even if Milo already idles at `happy`.
   - **Streak Throttle**: Capped to maximum 1 hop per 600ms during fast multi-tick streaks (the per-tick sound still plays).
   - **No-Auto-Move Hard Rule Preserved**: The hop occurs strictly within an inner visual layer; Milo's resting coordinates (`milo-bubble-pos`) never change.
-- **List-Complete Milestone Spectacle**:
-  - Full-screen celebration overlay upgraded with a 50-particle radial celebratory confetti burst.
-  - Multi-tone rising acoustic chime (`playCompletionSound()`, 400–600ms) with coordinated haptic pulse `[40, 50, 70]`.
-  - Synced to Milo's 240px `hurrah` celebratory jump. Spectacle is reserved for list-complete.
 - **Decoupled from Lottie**:
-  - Checkbox SVG draw, scale pop, ripple, and confetti execute independently in SVG/CSS/Motion, completely unblocked by Lottie.
+  - Checkbox SVG draw, scale pop, and ripple execute independently in SVG/CSS/Motion, completely unblocked by Lottie.
   - Untick triggers a softer, downward-pitched reverse blip (`playItemUncheckSound()`).

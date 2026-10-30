@@ -443,6 +443,41 @@ assert(
   'CelebrationCheckbox triggers playItemCheckSound on pointerdown for 0ms latency'
 );
 
+// 7.3.1 Assertion: per-tick confetti burst is COMPLETELY removed from checkbox
+assert(
+  !checkboxCode.includes('confettiParticles'),
+  'CelebrationCheckbox has NO confettiParticles array (per-tick confetti removed)'
+);
+assert(
+  !checkboxCode.includes('starSparks'),
+  'CelebrationCheckbox has NO starSparks array (per-tick star sparks removed)'
+);
+assert(
+  !checkboxCode.includes('celebrate-confetti-dot'),
+  'CelebrationCheckbox does not render celebrate-confetti-dot'
+);
+assert(
+  !checkboxCode.includes('celebrate-star-spark'),
+  'CelebrationCheckbox does not render celebrate-star-spark'
+);
+assert(
+  !checkboxCode.includes('yaad-party-popper-layer'),
+  'CelebrationCheckbox does not render yaad-party-popper-layer'
+);
+assert(
+  checkboxCode.includes('scale: [1, 0.95, 1.12, 1]'),
+  'CelebrationCheckbox preserves impact scale pop [1, 0.95, 1.12, 1]'
+);
+assert(
+  checkboxCode.includes('pathLength: isChecked ? 1 : 0'),
+  'CelebrationCheckbox preserves SVG checkmark draw'
+);
+assert(
+  checkboxCode.includes('yaad-celebrate-ripple'),
+  'CelebrationCheckbox preserves outer glow ripple'
+);
+console.log('✅ Verified: zero per-tick confetti in CelebrationCheckbox; checkmark draw, scale pop, and ripple preserved');
+
 // 7.4 Verify Milo per-tick micro-reaction hop and list-complete spectacle
 const miloHostCode = fs.readFileSync(path.resolve(process.cwd(), 'src/pet/MiloHost.tsx'), 'utf8');
 assert(miloHostCode.includes('milo-tick-hop'), 'MiloHost includes .milo-tick-hop animation class for item_purchased reaction');
