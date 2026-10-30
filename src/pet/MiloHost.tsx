@@ -9,6 +9,8 @@ import { MiloImage } from './MiloImage';
 import { MiloIntro } from './MiloIntro';
 import { useMilo, MILO_TRIGGER_CUSTOM_EVENT } from './useMilo';
 import { MiloExpression, MiloTriggerEvent } from './miloExpressions';
+import { playMiloSound } from './miloSounds';
+import { playCompletionSound, triggerHaptic } from '../lib/sound';
 import { X, Volume2, VolumeX } from 'lucide-react';
 
 export type MiloHostVariant = 'mini' | 'celebration' | 'hero';
@@ -20,6 +22,24 @@ export interface MiloHostProps {
   onDismissCelebration?: () => void;
   className?: string;
 }
+
+
+// 50-particle celebratory confetti burst for list-complete spectacle
+const CELEBRATION_BURST_PARTICLES = Array.from({ length: 50 }, (_, i) => {
+  const angle = (i / 50) * Math.PI * 2 + (Math.sin(i * 1.7) * 0.25);
+  const dist = 80 + ((i * 13) % 90);
+  const colors = ['#10B981', '#F59E0B', '#06B6D4', '#EC4899', '#8B5CF6', '#FBBF24', '#34D399', '#38BDF8'];
+  return {
+    id: i,
+    dx: Math.round(Math.cos(angle) * dist),
+    dy: Math.round(Math.sin(angle) * dist),
+    color: colors[i % colors.length],
+    r: 2.2 + ((i * 7) % 3) * 0.8,
+    rot: Math.round((i * 43) % 360),
+    delay: Number(((i % 10) * 0.015).toFixed(3)),
+    isStar: i % 4 === 0,
+  };
+});
 
 export const STORAGE_BUBBLE_POS_KEY = 'milo-bubble-pos';
 export const STORAGE_MILO_ENABLED_KEY = 'yaad_milo_enabled';
@@ -86,6 +106,25 @@ export const MiloHost: React.FC<MiloHostProps> = ({
   const [isIntroActive, setIsIntroActive] = useState<boolean>(false);
 
   const celebrationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Tick hop micro-reaction on item_purchased (Part E)
+  const [isTickHopping, setIsTickHopping] = useState<boolean>(false);
+  const lastHopTimeRef = useRef<number>(0);
+
+  const handleItemPurchasedTick = useCallback(() => {
+    const now = Date.now();
+    // Throttle hop to max 1 per 600ms, sound plays per tick
+    if (now - lastHopTimeRef.current >= 600) {
+      lastHopTimeRef.current = now;
+      setIsTickHopping(true);
+      setGazeBlinkTrigger((k) => k + 1);
+      setTimeout(() => {
+        setIsTickHopping(false);
+      }, 400);
+    }
+    // Short cheerful chirp sound per tick
+    playMiloSound('excited');
+  }, []);
+
 
   // State machine hook
   const {
@@ -171,6 +210,8 @@ export const MiloHost: React.FC<MiloHostProps> = ({
       if (detail.event === 'list_completed') {
         setIsCelebrationActive(true);
         trigger('list_completed');
+        playCompletionSound();
+        triggerHaptic([40, 50, 70]);
 
         // Auto-dismiss after ~2.5 seconds
         if (celebrationTimerRef.current) {
@@ -185,6 +226,8 @@ export const MiloHost: React.FC<MiloHostProps> = ({
           setIsIntroActive(true);
           trigger('onboarding_complete');
         }
+      } else if (detail.event === 'item_purchased') {
+        handleItemPurchasedTick();
       }
     };
 
@@ -460,6 +503,53 @@ export const MiloHost: React.FC<MiloHostProps> = ({
               {isSoundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
             </button>
 
+            
+            {/* 50-particle celebratory confetti burst layer (List-complete spectacle) */}
+            <svg
+              className="absolute inset-0 w-full h-full pointer-events-none overflow-visible celebrate yaad-party-popper-layer"
+              viewBox="-160 -160 320 320"
+              style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '320px', height: '320px' }}
+              aria-hidden="true"
+            >
+              {CELEBRATION_BURST_PARTICLES.map((p) =>
+                p.isStar ? (
+                  <polygon
+                    key={p.id}
+                    points="0,-4 3,0 0,4 -3,0"
+                    fill={p.color}
+                    className="celebrate-particle"
+                    style={
+                      {
+                        '--dx': `${p.dx}px`,
+                        '--dy': `${p.dy}px`,
+                        '--rot': `${p.rot}deg`,
+                        animationDelay: `${p.delay}s`,
+                        animationDuration: '0.65s',
+                      } as React.CSSProperties
+                    }
+                  />
+                ) : (
+                  <circle
+                    key={p.id}
+                    cx="0"
+                    cy="0"
+                    r={p.r}
+                    fill={p.color}
+                    className="celebrate-particle"
+                    style={
+                      {
+                        '--dx': `${p.dx}px`,
+                        '--dy': `${p.dy}px`,
+                        '--rot': `${p.rot}deg`,
+                        animationDelay: `${p.delay}s`,
+                        animationDuration: '0.65s',
+                      } as React.CSSProperties
+                    }
+                  />
+                )
+              )}
+            </svg>
+
             {/* Large celebration Milo */}
             <div className="my-2">
               <MiloImage
@@ -521,11 +611,18 @@ export const MiloHost: React.FC<MiloHostProps> = ({
             }}
             className="relative w-16 h-16 rounded-full flex items-center justify-center pointer-events-auto"
           >
-            <MiloImage
-              expression={activeExpression}
-              size={64}
-              forceBlinkTrigger={gazeBlinkTrigger}
-            />
+                        {/* Hop wrapper for item_purchased reaction (translateY -8%, 400ms) */}
+            <div
+              className={`w-full h-full flex items-center justify-center ${
+                isTickHopping ? 'milo-tick-hop' : ''
+              }`}
+            >
+              <MiloImage
+                expression={activeExpression}
+                size={64}
+                forceBlinkTrigger={gazeBlinkTrigger}
+              />
+            </div>
           </div>
         </div>
       )}

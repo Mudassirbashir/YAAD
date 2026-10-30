@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { triggerHaptic } from '../lib/sound';
+import { triggerHaptic, playItemCheckSound } from '../lib/sound';
 import { loadLottie } from '../lib/lottieLoader';
 import checkCircleAnimationData from '../assets/check-circle-animation.json';
 
@@ -11,6 +11,7 @@ export interface CelebrationCheckboxProps {
   className?: string;
   onClick?: (e: React.MouseEvent) => void;
   onChange?: (checked: boolean) => void;
+  onPointerDown?: (e: React.PointerEvent) => void;
   ariaLabel?: string;
 }
 
@@ -29,10 +30,12 @@ function getThemedAnimationData() {
 
 /**
  * CelebrationCheckbox
- * Rich custom completion checkbox with authentic Lottie check-circle-empty-hover-pinch animation:
- * - Responsive container with rounded circular geometry
- * - Plays system-outline-4489-check-circle-empty-hover-pinch.json on item completion / purchase
- * - Smoothly transitions to completed checkmark state after animation finishes
+ * Tick Satisfaction Upgrade (v6):
+ * - Immediate tactile press feedback (scale 0.95x over 150ms) with zero-latency pointerdown audio trigger
+ * - Smooth SVG checkmark stroke-dashoffset draw over 300ms (cubic-bezier(0.650, 0, 0.450, 1))
+ * - Impact pop (scale 1.0 -> 1.12 -> 1.0) with spring overshoot (cubic-bezier(0.34, 1.56, 0.64, 1))
+ * - Synchronized radial confetti & shockwave ripple
+ * - Fully uncoupled from Lottie loading: celebration always renders even if Lottie rejects or is delayed
  */
 export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
   isChecked,
@@ -41,15 +44,17 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
   className = '',
   onClick,
   onChange,
+  onPointerDown,
   ariaLabel,
 }) => {
   const prefersReducedMotion = useReducedMotion();
   const isFirstRender = useRef(true);
+  const [isPressed, setIsPressed] = useState(false);
   const [isPlayingCelebration, setIsPlayingCelebration] = useState(false);
   const prevCheckedRef = useRef(isChecked);
   const lottieContainerRef = useRef<HTMLDivElement>(null);
 
-  // Play animation once when item changes from incomplete -> completed
+  // Play animation when item transitions from incomplete -> completed
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
@@ -62,53 +67,64 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
 
     if (!wasChecked && isChecked) {
       if (!prefersReducedMotion) {
-        triggerHaptic([22, 16, 32]);
+        console.debug('[CelebrationCheckbox] Celebration fired', {
+          isChecked,
+          isJustCompleted,
+          isPlayingCelebration: true,
+        });
+        triggerHaptic([24, 18, 30]);
         setIsPlayingCelebration(true);
         const timer = setTimeout(() => {
           setIsPlayingCelebration(false);
-        }, 800);
+        }, 500);
         return () => clearTimeout(timer);
       } else {
+        console.debug('[CelebrationCheckbox] Celebration skipped: prefers-reduced-motion active');
         triggerHaptic(12);
       }
     } else if (!isChecked) {
+      console.debug('[CelebrationCheckbox] Celebration skipped: item unchecked');
       setIsPlayingCelebration(false);
     }
-  }, [isChecked, prefersReducedMotion]);
+  }, [isChecked, isJustCompleted, prefersReducedMotion]);
 
   const shouldCelebrate = (isJustCompleted || isPlayingCelebration) && !prefersReducedMotion;
 
-  // Lottie player lifecycle management
+  // Optional progressive enhancement: Lottie vector circle pinch overlay
   useEffect(() => {
     let anim: any = null;
     let isCancelled = false;
 
     if (shouldCelebrate && lottieContainerRef.current) {
-      loadLottie().then((lottieLib) => {
-        if (isCancelled || !lottieLib || !lottieContainerRef.current) return;
-        try {
-          if (anim) {
-            anim.destroy();
-          }
-          anim = lottieLib.loadAnimation({
-            container: lottieContainerRef.current,
-            renderer: 'svg',
-            loop: false,
-            autoplay: true,
-            animationData: getThemedAnimationData(),
-          });
-
-          anim.setSpeed(1.2);
-
-          anim.addEventListener('complete', () => {
-            if (!isCancelled) {
-              setIsPlayingCelebration(false);
+      loadLottie()
+        .then((lottieLib) => {
+          if (isCancelled || !lottieLib || !lottieContainerRef.current) return;
+          try {
+            if (anim) {
+              anim.destroy();
             }
-          });
-        } catch (err) {
-          console.warn('Lottie player notice:', err);
-        }
-      });
+            anim = lottieLib.loadAnimation({
+              container: lottieContainerRef.current,
+              renderer: 'svg',
+              loop: false,
+              autoplay: true,
+              animationData: getThemedAnimationData(),
+            });
+
+            anim.setSpeed(1.2);
+
+            anim.addEventListener('complete', () => {
+              if (!isCancelled) {
+                setIsPlayingCelebration(false);
+              }
+            });
+          } catch (err) {
+            console.debug('[CelebrationCheckbox] Lottie init skipped/failed:', err);
+          }
+        })
+        .catch((err) => {
+          console.debug('[CelebrationCheckbox] Lottie load rejected:', err);
+        });
     }
 
     return () => {
@@ -119,8 +135,28 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
     };
   }, [shouldCelebrate]);
 
+  const handlePointerDown = (e: React.PointerEvent) => {
+    setIsPressed(true);
+    if (!isChecked) {
+      // Fire tick sound immediately on pointerdown for ~0ms latency
+      playItemCheckSound();
+    }
+    if (onPointerDown) {
+      onPointerDown(e);
+    }
+  };
+
+  const handlePointerUp = () => {
+    setIsPressed(false);
+  };
+
+  const handlePointerLeave = () => {
+    setIsPressed(false);
+  };
+
   const handleClick = (e: React.MouseEvent) => {
-    triggerHaptic(18);
+    setIsPressed(false);
+    triggerHaptic(14);
     if (onClick) {
       onClick(e);
     }
@@ -156,20 +192,31 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
 
   return (
     <motion.label
-      whileTap={{ scale: 0.88 }}
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onPointerLeave={handlePointerLeave}
+      onPointerCancel={handlePointerLeave}
       animate={
-        isChecked
-          ? { scale: [1, 0.88, 1.12, 1] }
+        prefersReducedMotion
+          ? { scale: 1 }
+          : isChecked
+          ? shouldCelebrate
+            ? { scale: [1, 0.95, 1.12, 1] }
+            : { scale: 1 }
+          : isPressed
+          ? { scale: 0.95 }
           : { scale: 1 }
       }
       transition={
         prefersReducedMotion
-          ? { duration: 0.1 }
-          : { duration: 0.34, ease: [0.34, 1.56, 0.64, 1] }
+          ? { duration: 0 }
+          : isPressed
+          ? { duration: 0.15, ease: 'easeOut' }
+          : { duration: 0.3, ease: [0.34, 1.56, 0.64, 1] }
       }
       className={`checkbox-wrapper yaad-checkbox-container container yaad-celebrate-container cursor-pointer select-none ${
         isChecked ? 'is-checked' : ''
-      } ${shouldCelebrate && !prefersReducedMotion ? 'is-celebrating' : ''} ${className}`}
+      } ${shouldCelebrate ? 'is-celebrating' : ''} ${className}`}
       style={{
         width: `${size}px`,
         height: `${size}px`,
@@ -186,16 +233,15 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
         aria-hidden="true"
       />
 
-      {/* Outer celebratory glowing ripple ring */}
-      {shouldCelebrate && !prefersReducedMotion && (
+      {/* Outer celebratory glowing ripple ring synced to impact instant */}
+      {shouldCelebrate && (
         <span className="yaad-celebrate-ripple" aria-hidden="true" />
       )}
 
       {/* Main Vector Checkbox with Background Circle, Stroke, and Smooth Draw Check */}
+      {/* Decoupled from Lottie so it ALWAYS renders and animates immediately */}
       <svg
-        className={`checkbox-svg transition-opacity duration-150 ${
-          shouldCelebrate && !prefersReducedMotion ? 'opacity-0' : 'opacity-100'
-        }`}
+        className="checkbox-svg transition-opacity duration-150 opacity-100"
         style={isChecked ? { filter: 'drop-shadow(0 2px 4px rgba(16, 185, 129, 0.35))' } : undefined}
         viewBox="0 0 35.6 35.6"
         xmlns="http://www.w3.org/2000/svg"
@@ -211,6 +257,7 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
           strokeWidth="3.2"
           strokeLinecap="round"
           strokeLinejoin="round"
+          style={{ transition: 'none' }}
           initial={false}
           animate={{
             pathLength: isChecked ? 1 : 0,
@@ -218,14 +265,14 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
           }}
           transition={
             prefersReducedMotion
-              ? { duration: 0.1 }
-              : { duration: 0.22, ease: [0.16, 1, 0.3, 1] }
+              ? { duration: 0 }
+              : { duration: 0.3, ease: [0.650, 0, 0.450, 1] }
           }
         />
       </svg>
 
-      {/* Authentic Lottie Animated Check Circle (Plays system-outline-4489-check-circle-empty-hover-pinch.json on item completion) */}
-      {shouldCelebrate && !prefersReducedMotion && (
+      {/* Optional Lottie Vector Enhancement Layer */}
+      {shouldCelebrate && (
         <div
           ref={lottieContainerRef}
           className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 w-full h-full overflow-visible scale-110"
@@ -234,7 +281,7 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
       )}
 
       {/* Dynamic Celebration Party Popper Confetti Particle Burst */}
-      {shouldCelebrate && !prefersReducedMotion && (
+      {shouldCelebrate && (
         <svg
           key={isPlayingCelebration ? 'celebrating' : 'idle'}
           width="72"

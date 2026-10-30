@@ -17,7 +17,7 @@ import { parseShoppingItem, parseMultiItemInput } from '../lib/recognition/engin
 import { detectDuplicateItem, mergeQuantities } from '../lib/recognition';
 import { recordLearnedAlias } from '../lib/recognition/userAliases';
 import { defaultCatalogSearchEngine, CatalogSearchResult, useCatalogVersion } from '../lib/catalog';
-import { playCompletionSound, playItemCheckSound, triggerHaptic } from '../lib/sound';
+import { playCompletionSound, playItemCheckSound, playItemUncheckSound, triggerHaptic } from '../lib/sound';
 import { updateShoppingItemCompletionStatus } from '../lib/supabase';
 import { reportItemCompletionFailed } from '../lib/monitoring';
 import { generateUUID } from '../lib/uuid';
@@ -425,6 +425,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
     } else {
       // Un-marking item
       triggerHaptic(20);
+      playItemUncheckSound();
       setUndoToast(null);
     }
 

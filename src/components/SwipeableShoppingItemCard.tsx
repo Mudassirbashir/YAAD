@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { motion, useMotionValue, useTransform } from 'motion/react';
+import { motion, useMotionValue, useTransform, useReducedMotion } from 'motion/react';
 import { Trash2 } from 'lucide-react';
 import { ShoppingItem, CategoryId, CATEGORIES_LIST, normalizeCategoryId } from '../types';
 import { ItemVisualIcon } from './ItemVisualIcon';
@@ -36,6 +36,7 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
   isUrdu,
   onOpenImage,
 }) => {
+  const prefersReducedMotion = useReducedMotion();
   const isDraggingRef = useRef<boolean>(false);
   const dragDistanceRef = useRef<number>(0);
   const x = useMotionValue(0);
@@ -151,10 +152,16 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
             onComplete(item.id);
           }
         }}
-        animate={{
-          scale: 1,
-        }}
-        transition={{ type: 'spring', stiffness: 520, damping: 40 }}
+        animate={
+          justCompletedLocally && !prefersReducedMotion
+            ? { scale: [1, 0.98, 1] }
+            : { scale: 1 }
+        }
+        transition={
+          justCompletedLocally && !prefersReducedMotion
+            ? { duration: 0.25, ease: [0.34, 1.56, 0.64, 1] }
+            : { type: 'spring', stiffness: 520, damping: 40 }
+        }
         className={`relative flex items-center justify-between gap-3 py-2.5 px-3.5 rounded-2xl cursor-pointer select-none transition-[background-color,border-color,box-shadow,opacity] duration-150 ease-out active:duration-75 outline-none w-full min-h-[64px] sm:min-h-[70px] focus-visible:ring-2 focus-visible:ring-primary ${
           isChecked
             ? 'bg-surface-container-low/70 opacity-70 border border-surface-container-high/40'
@@ -200,16 +207,33 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
           <div className="min-w-0 flex-1 flex flex-col gap-0.5">
             {/* Line 1: Item Name */}
             <div className="flex items-center gap-1.5 flex-wrap" dir="auto">
-              <BidiText
-                as="span"
-                className={`font-display text-sm sm:text-base font-bold leading-tight tracking-tight transition-all duration-200 truncate ${
-                  isChecked
-                    ? 'line-through text-outline opacity-60 decoration-emerald-600/70 dark:decoration-emerald-400/70 decoration-2'
-                    : 'text-primary'
-                }`}
-              >
-                {item.name}
-              </BidiText>
+              <span className="relative inline-flex items-center min-w-0 max-w-full">
+                <BidiText
+                  as="span"
+                  className={`font-display text-sm sm:text-base font-bold leading-tight tracking-tight transition-[color,opacity] duration-200 truncate ${
+                    isChecked
+                      ? 'text-outline opacity-60'
+                      : 'text-primary'
+                  }`}
+                >
+                  {item.name}
+                </BidiText>
+                {/* Left-to-right drawn strikethrough (200ms) */}
+                <motion.span
+                  aria-hidden="true"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 h-[2px] bg-emerald-600/80 dark:bg-emerald-400/80 rounded pointer-events-none"
+                  initial={false}
+                  animate={{
+                    width: isChecked ? '100%' : '0%',
+                    opacity: isChecked ? 0.9 : 0,
+                  }}
+                  transition={
+                    prefersReducedMotion
+                      ? { duration: 0 }
+                      : { duration: 0.2, ease: [0.25, 1, 0.5, 1] }
+                  }
+                />
+              </span>
 
               {/* Secondary bilingual translation */}
               {item.nameUrdu && !isUrdu && item.nameUrdu !== item.name && (

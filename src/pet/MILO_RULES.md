@@ -1,9 +1,9 @@
-# MILO DESIGN LAWS & ARCHITECTURE (LOCKED — v5)
+# MILO DESIGN LAWS & ARCHITECTURE (LOCKED — v6)
 
 Milo is YAAD's interactive companion pet: a golden-yellow, always-circular, fully-furred creature.
 Lightweight, pre-rendered bundled WebP images with 100% offline bundling, zero runtime network requests,
 procedural WebAudio acoustic feedback, smooth animated emotion transitions, interactive gaze,
-action reactions, and a dedicated "Meet Milo" intro.
+action reactions, dedicated "Meet Milo" intro, and visible per-tick micro-reaction satisfaction choreography.
 Modeled after the approved "Soft Pro" reference: a touchable, soft, premium pom-pom plush ball.
 
 ---
@@ -144,3 +144,20 @@ Milo actively reacts with dedicated expressions and WebAudio sounds to key actio
 - **Soft, caring friend**: Always supportive, cheerful, and calm.
 - **Simple, warm words**: Communicates with gentle visual and acoustic cues.
 - **Zero Guilt**: Never scolds, never shames, never guilt-trips the user for forgotten items or abandoned lists — only gently reminds.
+
+---
+
+## MILO-12: Tick Satisfaction Upgrade & Micro-Reactions (v6)
+- **Visible Micro-Reaction Hop on `item_purchased`**:
+  - Milo hops vertically: `translateY(0 -> -8% -> 0)` over 400ms (`cubic-bezier(0.25, 1, 0.5, 1)`).
+  - Fires an intentional eyelid blink (`blink.webp` flash) + cheerful short chirp sound (`playMiloSound('excited')`).
+  - Completely visible even if Milo already idles at `happy`.
+  - **Streak Throttle**: Capped to maximum 1 hop per 600ms during fast multi-tick streaks (the per-tick sound still plays).
+  - **No-Auto-Move Hard Rule Preserved**: The hop occurs strictly within an inner visual layer; Milo's resting coordinates (`milo-bubble-pos`) never change.
+- **List-Complete Milestone Spectacle**:
+  - Full-screen celebration overlay upgraded with a 50-particle radial celebratory confetti burst.
+  - Multi-tone rising acoustic chime (`playCompletionSound()`, 400–600ms) with coordinated haptic pulse `[40, 50, 70]`.
+  - Synced to Milo's 240px `hurrah` celebratory jump. Spectacle is reserved for list-complete.
+- **Decoupled from Lottie**:
+  - Checkbox SVG draw, scale pop, ripple, and confetti execute independently in SVG/CSS/Motion, completely unblocked by Lottie.
+  - Untick triggers a softer, downward-pitched reverse blip (`playItemUncheckSound()`).

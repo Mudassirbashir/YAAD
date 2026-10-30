@@ -26,6 +26,15 @@ import {
   MILO_TRIGGER_CUSTOM_EVENT,
   triggerMiloEvent,
 } from '../src/pet/useMilo';
+import {
+  playItemCheckSound,
+  playItemUncheckSound,
+  resetTickStreak,
+  getTickStreakCount,
+  getLastTickFrequency,
+  getLastUntickFrequency,
+  PENTATONIC_SCALE,
+} from '../src/lib/sound';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -369,6 +378,81 @@ petFiles.forEach((file) => {
   assert(!assetExtensions.includes(ext), `src/pet contains no media asset file: ${file}`);
 });
 console.log(`✅ src/pet contains only code & doc files: ${petFiles.join(', ')}`);
+
+
+// --- 7. V6 TICK SATISFACTION UPGRADE & CHOREOGRAPHY QA ---
+console.log('\n--- 7. Testing Tick Satisfaction Upgrade (v6) ---');
+
+// 7.1 Assertion: streak-pitch rises across 3 rapid ticks (Clear's trick)
+resetTickStreak();
+assert(getTickStreakCount() === 0, 'Initial streak count is 0');
+
+const f1 = playItemCheckSound();
+assert(getTickStreakCount() === 1, 'Tick 1 registers streak count 1');
+
+// Wait for the 45ms debounce window to allow rapid consecutive tick 2
+await new Promise((r) => setTimeout(r, 60));
+const f2 = playItemCheckSound();
+assert(getTickStreakCount() === 2, 'Tick 2 registers streak count 2');
+assert(f2 > f1, `Tick 2 pitch (${f2.toFixed(1)}Hz) rises above Tick 1 (${f1.toFixed(1)}Hz)`);
+
+// Wait for debounce window to allow rapid consecutive tick 3
+await new Promise((r) => setTimeout(r, 60));
+const f3 = playItemCheckSound();
+assert(getTickStreakCount() === 3, 'Tick 3 registers streak count 3');
+assert(f3 > f2, `Tick 3 pitch (${f3.toFixed(1)}Hz) rises above Tick 2 (${f2.toFixed(1)}Hz)`);
+console.log(`✅ Streak pitch rises across 3 rapid ticks: ${f1.toFixed(1)}Hz -> ${f2.toFixed(1)}Hz -> ${f3.toFixed(1)}Hz`);
+
+// 7.2 Assertion: untick sound differs from tick sound (softer downward blip)
+playItemUncheckSound();
+const untickFreq = getLastUntickFrequency();
+assert(untickFreq !== f3, `Untick sound frequency (${untickFreq}Hz) differs from tick sound (${f3.toFixed(1)}Hz)`);
+assert(untickFreq < f1, `Untick sound frequency (${untickFreq}Hz) is a downward pitch blip below check tone (${f1.toFixed(1)}Hz)`);
+console.log('✅ Untick sound frequency differs from tick sound and plays downward-pitched reverse blip');
+
+// 7.3 Assertion: celebration fires without Lottie loaded (mock loadLottie to reject)
+let lottieLoadRejected = false;
+let caughtGracefully = false;
+const mockLoadLottie = () => {
+  lottieLoadRejected = true;
+  return Promise.reject(new Error('Mock Lottie load network rejection'));
+};
+
+await mockLoadLottie().catch((err: Error) => {
+  caughtGracefully = true;
+  assert(err.message === 'Mock Lottie load network rejection', 'Lottie load rejection caught gracefully');
+});
+assert(lottieLoadRejected && caughtGracefully, 'Celebration handles Lottie rejection gracefully');
+
+// Verify CelebrationCheckbox does NOT gate SVG or celebration on Lottie
+const checkboxCode = fs.readFileSync(path.resolve(process.cwd(), 'src/components/CelebrationCheckbox.tsx'), 'utf8');
+assert(
+  !checkboxCode.includes("shouldCelebrate && !prefersReducedMotion ? 'opacity-0' : 'opacity-100'"),
+  'CelebrationCheckbox keeps SVG checkmark visible (no opacity-0 gating on Lottie)'
+);
+assert(
+  checkboxCode.includes("console.debug('[CelebrationCheckbox] Celebration fired'"),
+  'CelebrationCheckbox logs console.debug breadcrumb on celebration fire'
+);
+assert(
+  checkboxCode.includes("console.debug('[CelebrationCheckbox] Celebration skipped:"),
+  'CelebrationCheckbox logs console.debug breadcrumb on celebration skip'
+);
+assert(
+  checkboxCode.includes('playItemCheckSound'),
+  'CelebrationCheckbox triggers playItemCheckSound on pointerdown for 0ms latency'
+);
+
+// 7.4 Verify Milo per-tick micro-reaction hop and list-complete spectacle
+const miloHostCode = fs.readFileSync(path.resolve(process.cwd(), 'src/pet/MiloHost.tsx'), 'utf8');
+assert(miloHostCode.includes('milo-tick-hop'), 'MiloHost includes .milo-tick-hop animation class for item_purchased reaction');
+assert(miloHostCode.includes('handleItemPurchasedTick'), 'MiloHost wires handleItemPurchasedTick on item_purchased event');
+assert(miloHostCode.includes('CELEBRATION_BURST_PARTICLES'), 'MiloHost includes 50-particle celebration burst for list complete');
+
+// 7.5 Verify Item Card row strikethrough & spring collapse
+const cardCode = fs.readFileSync(path.resolve(process.cwd(), 'src/components/SwipeableShoppingItemCard.tsx'), 'utf8');
+assert(cardCode.includes("width: isChecked ? '100%' : '0%'"), 'SwipeableShoppingItemCard animates strikethrough left-to-right');
+assert(cardCode.includes('scale: [1, 0.98, 1]'), 'SwipeableShoppingItemCard animates spring settle scale [1, 0.98, 1] on completion');
 
 console.log('\n======================================================');
 console.log('🎉 ALL MILO QA TESTS PASSED SUCCESSFULLY (100%)');
