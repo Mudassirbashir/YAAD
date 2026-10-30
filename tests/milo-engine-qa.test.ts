@@ -89,6 +89,11 @@ assert(EVENT_EXPRESSION_MAP.reminder === 'sad', 'reminder triggers sad (gentle, 
 assert(EVENT_EXPRESSION_MAP.notification === 'curious', 'notification triggers curious');
 assert(EVENT_EXPRESSION_MAP.tap === 'laughing', 'tap triggers laughing');
 assert(EVENT_EXPRESSION_MAP.inactivity === 'idle', 'inactivity triggers idle');
+assert(EVENT_EXPRESSION_MAP.list_created === 'hurrah', 'list_created triggers hurrah');
+assert(EVENT_EXPRESSION_MAP.item_purchased === 'happy', 'item_purchased triggers happy');
+assert(EVENT_EXPRESSION_MAP.settings_saved === 'proud', 'settings_saved triggers proud');
+assert(EVENT_EXPRESSION_MAP.tap_elsewhere === 'curious', 'tap_elsewhere triggers curious');
+assert(EVENT_EXPRESSION_MAP.onboarding_complete === 'happy', 'onboarding_complete triggers happy');
 
 // --- 3. PARAMETRIC INTERPOLATION & EASING VERIFICATION ---
 console.log('\n--- 3. Testing Interpolation & easeOutCubic Easing ---');
@@ -316,9 +321,11 @@ assert(
   'MILO_IMAGE_MAP includes blink frame (/milo/blink.webp)'
 );
 
-// 6.3 Verify MiloImage component exists and MiloCanvas is retired/deleted
+// 6.3 Verify MiloImage & MiloIntro components exist and MiloCanvas is retired/deleted
 const miloImagePath = path.resolve(process.cwd(), 'src/pet/MiloImage.tsx');
 assert(fs.existsSync(miloImagePath), 'src/pet/MiloImage.tsx exists');
+const miloIntroPath = path.resolve(process.cwd(), 'src/pet/MiloIntro.tsx');
+assert(fs.existsSync(miloIntroPath), 'src/pet/MiloIntro.tsx exists');
 const miloCanvasPath = path.resolve(process.cwd(), 'src/pet/MiloCanvas.tsx');
 assert(!fs.existsSync(miloCanvasPath), 'src/pet/MiloCanvas.tsx is retired and absent');
 

@@ -39,6 +39,7 @@ import { formatPhoneNumber } from '../utils/phone';
 import { triggerHaptic } from '../lib/sound';
 import { isMiloEnabled, setMiloEnabled } from '../pet/MiloHost';
 import { isMiloSoundEnabled, setMiloSoundEnabled } from '../pet/miloSounds';
+import { triggerMiloEvent } from '../pet/useMilo';
 
 interface SettingsViewProps {
   onBack: () => void;
@@ -115,6 +116,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     const nextVal = !miloActive;
     setMiloActive(nextVal);
     setMiloEnabled(nextVal);
+    triggerMiloEvent('settings_saved');
   };
 
   // Sound preference state
@@ -158,6 +160,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     const nextVal = !soundEnabled;
     setSoundEnabled(nextVal);
     setMiloSoundEnabled(nextVal);
+    triggerMiloEvent('settings_saved');
     try {
       localStorage.setItem('yaad_sound_enabled', String(nextVal));
     } catch {}
@@ -177,6 +180,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
   const handleTogglePush = async () => {
     triggerHaptic(8);
+    triggerMiloEvent('settings_saved');
     if (!pushEnabled) {
       if (typeof window !== 'undefined' && 'Notification' in window) {
         try {
@@ -200,6 +204,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const handleSelectLanguage = async (newLang: Language) => {
     triggerHaptic(10);
     setLanguage(newLang);
+    triggerMiloEvent('settings_saved');
     if (user) {
       await updateUserProfile({ language: newLang });
     }
@@ -216,6 +221,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       phone_number: phoneNumber,
       ...(avatarUrl !== undefined ? { avatar_url: avatarUrl } : {}),
     });
+    if (!res.error) {
+      triggerMiloEvent('settings_saved');
+    }
     return res;
   };
 
@@ -224,6 +232,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     const res = await updateUserProfile({ avatar_url: avatarValue });
     if (!res.error) {
       triggerHaptic([20, 15, 30]);
+      triggerMiloEvent('settings_saved');
       setAvatarToast(isRTL ? 'پروفائل تصویر کامیابی سے اپڈیٹ ہوگئی!' : 'Profile picture updated successfully!');
       setTimeout(() => setAvatarToast(null), 3500);
     }
@@ -612,6 +621,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     onClick={() => {
                       triggerHaptic(8);
                       setTheme(item.id);
+                      triggerMiloEvent('settings_saved');
                     }}
                     className={`h-12 rounded-2xl border px-3 flex items-center justify-between gap-2 transition-all cursor-pointer text-start active:scale-[0.98] ${
                       isActive
@@ -676,6 +686,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         triggerHaptic(8);
                         setSelectedCustomPalette(cp.id);
                         setTheme('custom');
+                        triggerMiloEvent('settings_saved');
                       }}
                       className={`h-11 rounded-2xl border px-2.5 flex items-center justify-between gap-1.5 transition-all cursor-pointer text-start active:scale-95 ${
                         isCpActive

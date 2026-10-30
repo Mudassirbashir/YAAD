@@ -1,8 +1,9 @@
-# MILO DESIGN LAWS & ARCHITECTURE (LOCKED — v4)
+# MILO DESIGN LAWS & ARCHITECTURE (LOCKED — v5)
 
 Milo is YAAD's interactive companion pet: a golden-yellow, always-circular, fully-furred creature.
 Lightweight, pre-rendered bundled WebP images with 100% offline bundling, zero runtime network requests,
-procedural WebAudio acoustic feedback, and smooth animated emotion transitions.
+procedural WebAudio acoustic feedback, smooth animated emotion transitions, interactive gaze,
+action reactions, and a dedicated "Meet Milo" intro.
 Modeled after the approved "Soft Pro" reference: a touchable, soft, premium pom-pom plush ball.
 
 ---
@@ -20,11 +21,12 @@ Modeled after the approved "Soft Pro" reference: a touchable, soft, premium pom-
 - **Look**: Soft golden-yellow pom-pom plush ball with warm, deep brown expressive eyes, subtle eyelid hooding, dual white highlights, and a sweet curved smile.
 - **Rendering Layer (`MiloImage.tsx`)**:
   - Mini floating bubble: 64px.
+  - "Meet Milo" Intro: 160px.
   - Celebration overlay: 240px.
 
 ---
 
-## MILO-03: Animated Emotion Transitions (v4 Engine)
+## MILO-03: Animated Emotion Transitions (v4/v5 Engine)
 Expression switches feel like a smooth, lively animated video moment rather than a static crossfade (~350ms total):
 - **Outgoing Image (0–120ms)**:
   - Quick squash: `scaleY 1 → 0.82`, `scaleX 1 → 1.08` over 120ms with `ease-in` while fading to opacity 0.
@@ -36,7 +38,7 @@ Expression switches feel like a smooth, lively animated video moment rather than
 
 ---
 
-## MILO-04: Per-Expression Idle Motion Engine (v4 Additive System)
+## MILO-04: Per-Expression Idle Motion Engine
 In addition to the base 4s breathing wobble (`scale 1 → 1.03 → 1`, `rotate -2° → 2°`), distinct emotional states feature unique additive physics:
 - **laughing**: Continuous gentle shake — `rotate(-4° → 4°)` loop (0.6s).
 - **excited**: Small bounce — `translateY(0 → -6% → 0)` loop (0.8s).
@@ -47,45 +49,98 @@ In addition to the base 4s breathing wobble (`scale 1 → 1.03 → 1`, `rotate -
 
 ---
 
-## MILO-05: Eyelids & Blink Engine
-- **Eyelids & Blink**:
-  - Dedicated `blink.webp` eyelid frame.
-  - Idle blink interval: Every 2.5s – 5.0s, briefly swapping to `blink.webp` for ~150ms, then back.
-  - Mid-transition blink: Automatically triggered during every expression change.
+## MILO-05: Real App Action Reactions (v5 System)
+Milo actively reacts with dedicated expressions and WebAudio sounds to key actions across the app:
+1. **New list created (success)** (`list_created`):
+   - Expression: `hurrah` (+ celebration jump).
+   - Sound: `hurrah` fanfare.
+   - Wired in: `App.tsx` list creation flows.
+2. **Item added / marked purchased** (`item_purchased`):
+   - Expression: `happy`.
+   - Sound: `happy` 3-note ascending arpeggio.
+   - Wired in: `ShoppingListView.tsx` (completion check & add item) and `AddItemsView.tsx` (add item).
+3. **Settings saved** (`settings_saved`):
+   - Expression: `proud`.
+   - Sound: `proud` warm harmonic two-note chord.
+   - Wired in: `SettingsView.tsx` (profile save, avatar, language, theme, push, sound, and companion toggles).
+4. **Tap elsewhere in app** (`tap_elsewhere`):
+   - Expression: `curious` (only if currently `idle`; never interrupts active `hurrah`, `laughing`, or celebrations).
+   - Sound: Soft `curious` quizzical blip (throttled to max 1 per 800ms).
+   - Wired in: `MiloHost.tsx` global pointer listener.
+5. **Onboarding / signup completed** (`onboarding_complete`):
+   - Expression: `happy`.
+   - Triggers: "Meet Milo" intro modal (if not seen yet).
+   - Wired in: `App.tsx` onboarding and profile setup completion.
 
 ---
 
-## MILO-06: WebAudio Sound Synthesis
-- Lazy, safe `AudioContext` initializing strictly after the first user gesture (`pointerdown`, `keydown`, `touchstart`).
-- Silent in `idle` state.
-- Pure WebAudio synthesizers (sine / triangle waves, exponential and linear ramps, zero audio files).
+## MILO-06: Interactive Gaze & The No-Auto-Move Hard Rule (v5)
+- **Gaze Directional Lean**:
+  - When the user taps anywhere on screen (outside the Milo bubble), Milo calculates the unit vector toward the tap point.
+  - Applies a temporary CSS transform on an inner wrapper: translates up to 6px toward the tap and rotates up to 6° in the tap direction.
+  - Eased out over ~600ms via `cubic-bezier(0.25, 1, 0.5, 1)`, smoothly returning to rest.
+  - Fires one blink (`blink.webp` flash for ~150ms) simultaneously with the lean.
+- **HARD RULE (NON-NEGOTIABLE)**:
+  - **Milo never changes its resting position on its own.**
+  - No wandering, no auto-follow, no screen drift.
+  - Only the user's manual drag moves Milo.
+  - The gaze lean is strictly a temporary visual tilt on a wrapper div; stored `localStorage` position (`milo-bubble-pos`) is NEVER modified during gaze.
+
+---
+
+## MILO-07: "Meet Milo" Onboarding Intro (v5)
+- **Component**: `src/pet/MiloIntro.tsx`.
+- **Trigger**: Shown when `onboarding_complete` fires AND `localStorage.getItem('milo-intro-seen') !== '1'`.
+- **Design**:
+  - Centered modal dialog matching YAAD design language.
+  - Milo at 160px with `happy` expression, normal blinking, and gentle 4s breathing (calm and authentic).
+  - Heading: `"Hi, I'm Milo!"`.
+  - Subtext: `"Your little shopping buddy. I'll cheer you on."`.
+  - Action button: `"Let's go"`.
+- **Lifecycle**: Dismissing sets `milo-intro-seen = '1'`. Never shows again.
+- **Z-Order**: Positioned above app content (`z-[48]`), underneath the celebration overlay (`z-50`).
+- **Accessibility**: Respects `prefers-reduced-motion` (instant static presentation, no pop keyframes).
+
+---
+
+## MILO-08: WebAudio Sound Synthesis & Idle Signature (v5 Audit)
+- Lazy, safe `AudioContext` initializing strictly after the first user gesture (`hasUserGestured` guard). No startup warnings.
+- **Distinct Recipes per Emotion**:
+  - `happy`: 523 -> 659 -> 784 rising arpeggio (C5-E5-G5).
+  - `laughing`: 700->920->700 dual-bump triangle giggle.
+  - `sad`: 392 -> 330 -> 294 descending step (G4-E4-D4).
+  - `alas`: 300 -> 175 long continuous pitch glide down (sigh).
+  - `hurrah`: 523 -> 659 -> 784 -> 1047 fanfare with octave leap.
+  - `excited`: 659->880 and 880->1174 rapid double-chirp flutter.
+  - `listening`: 880Hz resonant pure bell ping.
+  - `sleepy`: 330 -> 262 slow warm descend.
+  - `proud`: 392Hz + 523Hz simultaneous harmonic major chord.
+  - `curious`: 480 -> 720 soft quizzical upward slide.
+  - `idle` (signature blip): Ultra-soft short low settling blip (~220Hz -> 180Hz, gain 0.035, 0.07s). Played **only** when transitioning INTO idle from another emotion. Never looped or spammed.
 - Respects user sound preference and settings toggle.
 
 ---
 
-## MILO-07: Accessibility & Calm Mode
-- `prefers-reduced-motion`:
-  - Disables ALL motion (breathing, shake, bounce, pop, squash, wiggle).
-  - Instant expression swap with calm blinking only (`animation: none !important`).
-- Throttled/paused when off-screen or page is hidden.
+## MILO-09: Always Alive, Even When Idle / Battery-Friendly Lifecycle
+- Milo stays alive continuously while the app is open (blinking every 2.5–5s, per-expression motions, 10s return-to-idle). No "sleep" or "away" state exists.
+- **Battery Optimization**:
+  - When `document.hidden` (tab backgrounded), idle blink loops and return-to-idle countdowns are paused.
+  - Resumed automatically on `visibilitychange`. This is the only pause permitted.
+- **Offline Reliability**: 100% offline. Zero network requests, zero fetch calls. Works identically in airplane mode.
 
 ---
 
-## MILO-08: Placement & Lifecycle (Floating Bubble + Celebration Overlay)
+## MILO-10: Placement & Drag Bounds
 - **Floating Mini Bubble**:
-  - Rendered at app root level (`MiloHost` with `variant="mini"`).
-  - Floats above all screens; size ~64px.
-  - 1:1 instantaneous drag tracking with mouse and touch without transition lag.
-  - Clamped so it never covers the bottom navigation bar or clips at layout viewport edges (`document.documentElement.clientWidth/clientHeight`).
-  - Position saved in `localStorage` under key `milo-bubble-pos` and restored on reload.
-- **Celebration Overlay (List Complete)**:
-  - Full-screen celebration overlay triggered on `list_completed`.
-  - Large celebration Milo (`variant="celebration"`, 240px) with `hurrah.webp` and sound fanfare.
-  - Auto-dismisses after ~2.5 seconds or on tap.
+  - Size: 64px, draggable anywhere on screen with 1:1 instantaneous pointer tracking.
+  - Bounds: Clamped to layout viewport (`document.documentElement.clientWidth/clientHeight`) and above the bottom nav bar.
+  - Persistence: Position saved in `localStorage` under `milo-bubble-pos`.
+- **Celebration Overlay**:
+  - Triggered on `list_completed` with 240px `hurrah` Milo, fanfare sound, and celebration message. Auto-dismisses after 2.5s or on tap.
 
 ---
 
-## MILO-09: Personality & Tone of Voice
+## MILO-11: Personality & Tone of Voice
 - **Soft, caring friend**: Always supportive, cheerful, and calm.
 - **Simple, warm words**: Communicates with gentle visual and acoustic cues.
 - **Zero Guilt**: Never scolds, never shames, never guilt-trips the user for forgotten items or abandoned lists — only gently reminds.

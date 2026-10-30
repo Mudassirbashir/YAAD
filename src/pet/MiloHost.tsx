@@ -6,6 +6,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MiloImage } from './MiloImage';
+import { MiloIntro } from './MiloIntro';
 import { useMilo, MILO_TRIGGER_CUSTOM_EVENT } from './useMilo';
 import { MiloExpression, MiloTriggerEvent } from './miloExpressions';
 import { X, Volume2, VolumeX } from 'lucide-react';
@@ -81,6 +82,9 @@ export const MiloHost: React.FC<MiloHostProps> = ({
     variant === 'celebration'
   );
 
+  // Meet Milo Onboarding Intro state (Part C)
+  const [isIntroActive, setIsIntroActive] = useState<boolean>(false);
+
   const celebrationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // State machine hook
@@ -93,6 +97,10 @@ export const MiloHost: React.FC<MiloHostProps> = ({
   } = useMilo(variant === 'celebration' ? 'hurrah' : 'happy');
 
   const activeExpression = propExpression || hookExpression;
+
+  // Track active expression in ref for gaze/tap_elsewhere checks without stale state
+  const activeExpressionRef = useRef<MiloExpression>(activeExpression);
+  activeExpressionRef.current = activeExpression;
 
   // Listen for settings visibility toggle
   useEffect(() => {
@@ -143,13 +151,24 @@ export const MiloHost: React.FC<MiloHostProps> = ({
     }
   }, [trigger, onDismissCelebration]);
 
-  // Listen for list_completed event to trigger celebration overlay
+  // Dismiss Meet Milo onboarding intro (Part C)
+  const handleDismissIntro = useCallback(() => {
+    try {
+      localStorage.setItem('milo-intro-seen', '1');
+    } catch {}
+    setIsIntroActive(false);
+    trigger('inactivity');
+  }, [trigger]);
+
+  // Listen for remote events (list_completed -> celebration, onboarding_complete -> intro)
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const handleTrigger = (e: Event) => {
       const detail = (e as CustomEvent<{ event: MiloTriggerEvent }>).detail;
-      if (detail && detail.event === 'list_completed') {
+      if (!detail?.event) return;
+
+      if (detail.event === 'list_completed') {
         setIsCelebrationActive(true);
         trigger('list_completed');
 
@@ -160,6 +179,12 @@ export const MiloHost: React.FC<MiloHostProps> = ({
         celebrationTimerRef.current = setTimeout(() => {
           dismissCelebration();
         }, 2500);
+      } else if (detail.event === 'onboarding_complete') {
+        const introSeen = localStorage.getItem('milo-intro-seen') === '1';
+        if (!introSeen) {
+          setIsIntroActive(true);
+          trigger('onboarding_complete');
+        }
       }
     };
 
@@ -320,99 +345,190 @@ export const MiloHost: React.FC<MiloHostProps> = ({
     } catch {}
   };
 
+  // Gaze interaction state (Part B)
+  const bubbleContainerRef = useRef<HTMLDivElement | null>(null);
+  const [gazeOffset, setGazeOffset] = useState<{ x: number; y: number; rotate: number }>({ x: 0, y: 0, rotate: 0 });
+  const [gazeBlinkTrigger, setGazeBlinkTrigger] = useState<number>(0);
+  const lastGazeTimeRef = useRef<number>(0);
+  const gazeResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Global pointerdown listener for Gaze (Part B) and tap_elsewhere (Part A)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleGlobalPointerDown = (e: PointerEvent) => {
+      // Ignore if user tapped inside the Milo bubble itself
+      if (bubbleContainerRef.current && bubbleContainerRef.current.contains(e.target as Node)) {
+        return;
+      }
+
+      // Ignore if currently dragging, celebration is active, or intro is active
+      if (isDraggingRef.current || isCelebrationActive || isIntroActive) {
+        return;
+      }
+
+      const now = Date.now();
+      // Throttle gaze reactions to max 1 per 800ms
+      if (now - lastGazeTimeRef.current < 800) {
+        return;
+      }
+      lastGazeTimeRef.current = now;
+
+      // Part A: Only flash curious when the current expression is idle;
+      // never interrupt hurrah, laughing, celebration
+      const current = activeExpressionRef.current;
+      if (current === 'idle') {
+        trigger('tap_elsewhere');
+      }
+
+      // Part B: Gaze lean + blink happens on every qualifying tap regardless
+      const currentPos = latestBubblePosRef.current;
+      const bubbleCenterX = currentPos.x + 32;
+      const bubbleCenterY = currentPos.y + 32;
+      const dx = e.clientX - bubbleCenterX;
+      const dy = e.clientY - bubbleCenterY;
+      const dist = Math.hypot(dx, dy);
+
+      if (dist >= 2) {
+        const ux = dx / dist;
+        const uy = dy / dist;
+        const leanX = Math.round(ux * 6 * 10) / 10;
+        const leanY = Math.round(uy * 6 * 10) / 10;
+        const rotateDeg = Math.round(ux * 6 * 10) / 10;
+
+        setGazeOffset({ x: leanX, y: leanY, rotate: rotateDeg });
+        setGazeBlinkTrigger((c) => c + 1);
+
+        if (gazeResetTimerRef.current) clearTimeout(gazeResetTimerRef.current);
+        // Eased out over ~600ms, return to rest
+        gazeResetTimerRef.current = setTimeout(() => {
+          setGazeOffset({ x: 0, y: 0, rotate: 0 });
+        }, 120);
+      }
+    };
+
+    window.addEventListener('pointerdown', handleGlobalPointerDown, { passive: true });
+    return () => {
+      window.removeEventListener('pointerdown', handleGlobalPointerDown);
+      if (gazeResetTimerRef.current) clearTimeout(gazeResetTimerRef.current);
+    };
+  }, [isCelebrationActive, isIntroActive, trigger]);
+
   // If user disabled Milo in settings, hide both bubble and overlay
   if (!enabled) {
     return null;
   }
 
-  // 1. CELEBRATION OVERLAY (List Completed)
-  if (isCelebrationActive || variant === 'celebration') {
-    return (
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Celebration with Milo"
-        onClick={dismissCelebration}
-      >
+  return (
+    <>
+      {/* 1. "Meet Milo" Onboarding Intro (Part C) */}
+      <MiloIntro
+        isOpen={isIntroActive}
+        onDismiss={handleDismissIntro}
+      />
+
+      {/* 2. CELEBRATION OVERLAY (List Completed) */}
+      {(isCelebrationActive || variant === 'celebration') && (
         <div
-          className="relative w-full max-w-sm rounded-3xl bg-surface-container-highest/95 p-6 shadow-2xl border border-white/20 text-center flex flex-col items-center"
-          onClick={(e) => e.stopPropagation()}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Celebration with Milo"
+          onClick={dismissCelebration}
         >
-          {/* Close button */}
-          <button
-            type="button"
-            onClick={dismissCelebration}
-            className="absolute top-4 right-4 p-2 rounded-full bg-surface-container hover:bg-surface-dim text-on-surface-variant transition-all active:scale-95"
-            aria-label="Close celebration"
+          <div
+            className="relative w-full max-w-sm rounded-3xl bg-surface-container-highest/95 p-6 shadow-2xl border border-white/20 text-center flex flex-col items-center"
+            onClick={(e) => e.stopPropagation()}
           >
-            <X className="w-5 h-5" />
-          </button>
+            {/* Close button */}
+            <button
+              type="button"
+              onClick={dismissCelebration}
+              className="absolute top-4 right-4 p-2 rounded-full bg-surface-container hover:bg-surface-dim text-on-surface-variant transition-all active:scale-95"
+              aria-label="Close celebration"
+            >
+              <X className="w-5 h-5" />
+            </button>
 
-          {/* Sound toggle */}
-          <button
-            type="button"
-            onClick={() => setSoundEnabled(!isSoundEnabled)}
-            className="absolute top-4 left-4 p-2 rounded-full bg-surface-container hover:bg-surface-dim text-on-surface-variant transition-all active:scale-95"
-            aria-label={isSoundEnabled ? 'Mute sound' : 'Unmute sound'}
+            {/* Sound toggle */}
+            <button
+              type="button"
+              onClick={() => setSoundEnabled(!isSoundEnabled)}
+              className="absolute top-4 left-4 p-2 rounded-full bg-surface-container hover:bg-surface-dim text-on-surface-variant transition-all active:scale-95"
+              aria-label={isSoundEnabled ? 'Mute sound' : 'Unmute sound'}
+            >
+              {isSoundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+            </button>
+
+            {/* Large celebration Milo */}
+            <div className="my-2">
+              <MiloImage
+                expression="hurrah"
+                size={240}
+                onTap={handleMiloTap}
+              />
+            </div>
+
+            <h2 className="font-display text-2xl font-black text-on-surface tracking-tight mt-2">
+              Hurrah! List Complete!
+            </h2>
+            <p className="font-urdu text-base text-outline font-semibold mt-1">
+              شاباش! لسٹ مکمل ہو گئی ہے
+            </p>
+
+            <button
+              type="button"
+              onClick={dismissCelebration}
+              className="mt-6 w-full py-3.5 px-6 rounded-2xl bg-primary text-on-primary font-bold shadow-md hover:bg-primary/95 active:scale-98 transition-all"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 3. FLOATING MINI BUBBLE (~64px, draggable across all screens, 1:1 instantaneous drag tracking) */}
+      {variant !== 'celebration' && (
+        <div
+          ref={bubbleContainerRef}
+          draggable={false}
+          onDragStart={(e) => e.preventDefault()}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onLostPointerCapture={handleLostPointerCapture}
+          style={{
+            transform: `translate3d(${bubblePos.x}px, ${bubblePos.y}px, 0)`,
+            touchAction: 'none',
+            width: 64,
+            height: 64,
+          }}
+          className={`fixed top-0 left-0 z-40 select-none cursor-grab active:cursor-grabbing hover:scale-105 active:scale-95 drop-shadow-md ${
+            isDragging ? 'transition-none' : 'transition-transform duration-150'
+          } ${className}`}
+          aria-label={`Floating Milo Companion (${activeExpression})`}
+        >
+          {/* Gaze Lean Wrapper (Part B): temporary lean up to 6px / 6deg toward tap, eased out in 600ms */}
+          <div
+            style={{
+              transform: isDragging
+                ? 'none'
+                : `translate3d(${gazeOffset.x}px, ${gazeOffset.y}px, 0) rotate(${gazeOffset.rotate}deg)`,
+              transition: isDragging
+                ? 'none'
+                : 'transform 600ms cubic-bezier(0.25, 1, 0.5, 1)',
+              willChange: 'transform',
+            }}
+            className="relative w-16 h-16 rounded-full flex items-center justify-center pointer-events-auto"
           >
-            {isSoundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
-          </button>
-
-          {/* Large celebration Milo */}
-          <div className="my-2">
             <MiloImage
-              expression="hurrah"
-              size={240}
-              onTap={handleMiloTap}
+              expression={activeExpression}
+              size={64}
+              forceBlinkTrigger={gazeBlinkTrigger}
             />
           </div>
-
-          <h2 className="font-display text-2xl font-black text-on-surface tracking-tight mt-2">
-            Hurrah! List Complete!
-          </h2>
-          <p className="font-urdu text-base text-outline font-semibold mt-1">
-            شاباش! لسٹ مکمل ہو گئی ہے
-          </p>
-
-          <button
-            type="button"
-            onClick={dismissCelebration}
-            className="mt-6 w-full py-3.5 px-6 rounded-2xl bg-primary text-on-primary font-bold shadow-md hover:bg-primary/95 active:scale-98 transition-all"
-          >
-            Done
-          </button>
         </div>
-      </div>
-    );
-  }
-
-  // 2. FLOATING MINI BUBBLE (~64px, draggable across all screens, 1:1 instantaneous drag tracking)
-  return (
-    <div
-      draggable={false}
-      onDragStart={(e) => e.preventDefault()}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onLostPointerCapture={handleLostPointerCapture}
-      style={{
-        transform: `translate3d(${bubblePos.x}px, ${bubblePos.y}px, 0)`,
-        touchAction: 'none',
-        width: 64,
-        height: 64,
-      }}
-      className={`fixed top-0 left-0 z-40 select-none cursor-grab active:cursor-grabbing hover:scale-105 active:scale-95 drop-shadow-md ${
-        isDragging ? 'transition-none' : 'transition-transform duration-150'
-      } ${className}`}
-      aria-label={`Floating Milo Companion (${activeExpression})`}
-    >
-      <div className="relative w-16 h-16 rounded-full flex items-center justify-center pointer-events-auto">
-        <MiloImage
-          expression={activeExpression}
-          size={64}
-        />
-      </div>
-    </div>
+      )}
+    </>
   );
 };

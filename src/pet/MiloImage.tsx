@@ -17,6 +17,7 @@ export interface MiloImageProps {
   size?: number; // 64 mini / 240 celebration
   className?: string;
   onTap?: () => void;
+  forceBlinkTrigger?: number; // External gaze/reaction blink trigger
 }
 
 const ALL_ASSET_KEYS: (MiloExpression | 'blink')[] = [
@@ -53,6 +54,7 @@ export const MiloImage: React.FC<MiloImageProps> = ({
   size = 64,
   className = '',
   onTap,
+  forceBlinkTrigger,
 }) => {
   const [currentExpr, setCurrentExpr] = useState<MiloExpression>(expression);
   const [prevExpr, setPrevExpr] = useState<MiloExpression | null>(null);
@@ -90,6 +92,13 @@ export const MiloImage: React.FC<MiloImageProps> = ({
     }, 150);
   }, []);
 
+  // External blink trigger (e.g. gaze lean reaction)
+  useEffect(() => {
+    if (forceBlinkTrigger && forceBlinkTrigger > 0) {
+      triggerIdleBlink();
+    }
+  }, [forceBlinkTrigger, triggerIdleBlink]);
+
   // Schedule periodic idle blink (every 2.5s - 5.0s)
   const scheduleNextIdleBlink = useCallback(() => {
     if (nextIdleBlinkTimerRef.current) clearTimeout(nextIdleBlinkTimerRef.current);
@@ -100,10 +109,30 @@ export const MiloImage: React.FC<MiloImageProps> = ({
     }, delay);
   }, [triggerIdleBlink]);
 
-  // Periodic blinking loop
+  // Periodic blinking loop with tab background pause (Part E)
   useEffect(() => {
     scheduleNextIdleBlink();
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (nextIdleBlinkTimerRef.current) {
+          clearTimeout(nextIdleBlinkTimerRef.current);
+          nextIdleBlinkTimerRef.current = null;
+        }
+        if (idleBlinkTimeoutRef.current) {
+          clearTimeout(idleBlinkTimeoutRef.current);
+          idleBlinkTimeoutRef.current = null;
+        }
+        setIsIdleBlinking(false);
+      } else {
+        scheduleNextIdleBlink();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       if (idleBlinkTimeoutRef.current) clearTimeout(idleBlinkTimeoutRef.current);
       if (nextIdleBlinkTimerRef.current) clearTimeout(nextIdleBlinkTimerRef.current);
     };

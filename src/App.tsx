@@ -754,6 +754,7 @@ function AppContent() {
   // Handle onboarding completion
   const handleOnboardingComplete = () => {
     localStorage.setItem(STORAGE_ONBOARDED_KEY, 'true');
+    triggerMiloEvent('onboarding_complete');
     const intended = getIntendedDestination();
     if (intended) {
       clearIntendedDestination();
@@ -797,6 +798,7 @@ function AppContent() {
     if (!hasOnboarded) {
       replace('/onboarding');
     } else {
+      triggerMiloEvent('onboarding_complete');
       const intended = getIntendedDestination();
       if (intended) {
         clearIntendedDestination();
@@ -887,6 +889,7 @@ function AppContent() {
     setLists((prev) => [newList, ...prev]);
     setActiveListId(newListId);
     setTempNewListTitle(cleanTitle);
+    triggerMiloEvent('list_created');
     navigate('/create/items');
 
     if (isConfigured) {
@@ -1274,6 +1277,7 @@ function AppContent() {
     };
 
     setLists((prev) => [newList, ...prev]);
+    triggerMiloEvent('list_created');
     if (isConfigured) {
       await saveUserShoppingList(user.id, newList);
     }
@@ -1425,6 +1429,7 @@ function AppContent() {
                   onOpenAppWithList={async (newList) => {
                     if (user) {
                       setLists((prev) => [newList, ...prev]);
+                      triggerMiloEvent('list_created');
                       if (isConfigured) {
                         await saveUserShoppingList(user.id, newList);
                       }

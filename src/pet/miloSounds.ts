@@ -97,7 +97,6 @@ if (typeof window !== 'undefined') {
  */
 export function playMiloSound(expression: MiloExpression): void {
   if (!isMiloSoundEnabled()) return;
-  if (expression === 'idle') return;
 
   const ctx = getAudioContext();
   if (!ctx) return;
@@ -264,26 +263,32 @@ export function playMiloSound(expression: MiloExpression): void {
     }
 
     case 'excited': {
-      // 659->880 quick blip
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(659, now);
-      osc.frequency.exponentialRampToValueAtTime(880, now + 0.09);
+      // Energetic double-chirp flutter (659->880 then 880->1174)
+      const chirps = [
+        { startF: 659, endF: 880, startT: now, dur: 0.06 },
+        { startF: 880, endF: 1174, startT: now + 0.065, dur: 0.07 },
+      ];
+      chirps.forEach(({ startF, endF, startT, dur }) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(startF, startT);
+        osc.frequency.exponentialRampToValueAtTime(endF, startT + dur);
 
-      gain.gain.setValueAtTime(0.001, now);
-      gain.gain.linearRampToValueAtTime(0.8, now + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+        gain.gain.setValueAtTime(0.001, startT);
+        gain.gain.linearRampToValueAtTime(0.7, startT + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.001, startT + dur);
 
-      osc.connect(gain);
-      gain.connect(masterGain);
+        osc.connect(gain);
+        gain.connect(masterGain);
 
-      osc.start(now);
-      osc.stop(now + 0.1);
-      osc.onended = () => {
-        osc.disconnect();
-        gain.disconnect();
-      };
+        osc.start(startT);
+        osc.stop(startT + dur);
+        osc.onended = () => {
+          osc.disconnect();
+          gain.disconnect();
+        };
+      });
       break;
     }
 
@@ -361,22 +366,46 @@ export function playMiloSound(expression: MiloExpression): void {
     }
 
     case 'curious': {
-      // 600->900 quick rise
+      // Soft quizzical upward slide (480->720, gentle gain)
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(600, now);
-      osc.frequency.exponentialRampToValueAtTime(900, now + 0.14);
+      osc.frequency.setValueAtTime(480, now);
+      osc.frequency.exponentialRampToValueAtTime(720, now + 0.12);
 
       gain.gain.setValueAtTime(0.001, now);
-      gain.gain.linearRampToValueAtTime(0.65, now + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+      gain.gain.linearRampToValueAtTime(0.32, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
 
       osc.connect(gain);
       gain.connect(masterGain);
 
       osc.start(now);
-      osc.stop(now + 0.16);
+      osc.stop(now + 0.12);
+      osc.onended = () => {
+        osc.disconnect();
+        gain.disconnect();
+      };
+      break;
+    }
+
+    case 'idle': {
+      // Ultra-soft, short low settling blip (~220Hz -> 180Hz) on return to rest
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(220, now);
+      osc.frequency.exponentialRampToValueAtTime(180, now + 0.07);
+
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.035, now + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+
+      osc.connect(gain);
+      gain.connect(masterGain);
+
+      osc.start(now);
+      osc.stop(now + 0.07);
       osc.onended = () => {
         osc.disconnect();
         gain.disconnect();

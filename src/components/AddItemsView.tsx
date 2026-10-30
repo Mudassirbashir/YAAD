@@ -40,6 +40,7 @@ import { recordSearchQuery } from '../lib/recommendations/searchHistory';
 import { getSuggestionsForContext } from '../lib/recommendations/shoppingContexts';
 import { triggerHaptic } from '../lib/sound';
 import { resolveVisual } from '../lib/catalog/visualResolver';
+import { triggerMiloEvent } from '../pet/useMilo';
 
 export interface AddItemsViewProps {
   listTitle: string;
@@ -163,6 +164,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
   const updateItems = (newItems: ShoppingItem[]) => {
     setItems(newItems);
     onItemsChange?.(newItems);
+    triggerMiloEvent('item_purchased');
   };
 
   const showToast = (message: string, type: 'add' | 'merge' | 'remove' = 'add') => {

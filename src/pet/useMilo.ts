@@ -41,6 +41,7 @@ export function useMilo(initialExpression: MiloExpression = 'happy'): UseMiloRet
   const [expression, setExpressionState] = useState<MiloExpression>(initialExpression);
   const [soundEnabled, setSoundState] = useState<boolean>(() => isMiloSoundEnabled());
 
+  const currentExprRef = useRef<MiloExpression>(initialExpression);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Clear idle timer
@@ -51,19 +52,29 @@ export function useMilo(initialExpression: MiloExpression = 'happy'): UseMiloRet
     }
   }, []);
 
-  // Update expression, play sound, and schedule 10s auto-idle if non-idle
+  // Update expression, play sound (with idle signature blip), and schedule 10s auto-idle if non-idle
   const setExpression = useCallback(
     (nextExpr: MiloExpression) => {
       clearIdleTimer();
+      const prevExpr = currentExprRef.current;
+      currentExprRef.current = nextExpr;
       setExpressionState(nextExpr);
 
-      // Play procedural WebAudio sound
-      playMiloSound(nextExpr);
+      // Play sound: if transitioning into idle from another emotion, play idle blip once
+      if (nextExpr !== 'idle') {
+        playMiloSound(nextExpr);
+      } else if (prevExpr !== 'idle') {
+        playMiloSound('idle');
+      }
 
       // If not already idle, transition to idle after 10s of no interaction
       if (nextExpr !== 'idle') {
         idleTimerRef.current = setTimeout(() => {
-          setExpressionState('idle');
+          if (currentExprRef.current !== 'idle') {
+            currentExprRef.current = 'idle';
+            setExpressionState('idle');
+            playMiloSound('idle');
+          }
         }, 10000);
       }
     },
@@ -90,10 +101,14 @@ export function useMilo(initialExpression: MiloExpression = 'happy'): UseMiloRet
   // Initial mount: app open -> 'happy', 10s -> 'idle'
   useEffect(() => {
     // Initial sound & timer
-    playMiloSound(initialExpression);
     if (initialExpression !== 'idle') {
+      playMiloSound(initialExpression);
       idleTimerRef.current = setTimeout(() => {
-        setExpressionState('idle');
+        if (currentExprRef.current !== 'idle') {
+          currentExprRef.current = 'idle';
+          setExpressionState('idle');
+          playMiloSound('idle');
+        }
       }, 10000);
     }
 
@@ -101,6 +116,33 @@ export function useMilo(initialExpression: MiloExpression = 'happy'): UseMiloRet
       clearIdleTimer();
     };
   }, [initialExpression, clearIdleTimer]);
+
+  // Pause/resume idle timer on tab visibilitychange (Part E)
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        clearIdleTimer();
+      } else {
+        if (currentExprRef.current !== 'idle') {
+          clearIdleTimer();
+          idleTimerRef.current = setTimeout(() => {
+            if (currentExprRef.current !== 'idle') {
+              currentExprRef.current = 'idle';
+              setExpressionState('idle');
+              playMiloSound('idle');
+            }
+          }, 10000);
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [clearIdleTimer]);
 
   // Global event listener for remote triggers
   useEffect(() => {

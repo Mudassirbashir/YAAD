@@ -26,6 +26,7 @@ import { SmartSuggestionsSection } from './SmartSuggestionsSection';
 import { SwipeableShoppingItemCard } from './SwipeableShoppingItemCard';
 import { ItemImageLightboxModal } from './common/ItemImageLightboxModal';
 import { resolveVisual } from '../lib/catalog/visualResolver';
+import { triggerMiloEvent } from '../pet/useMilo';
 
 interface ShoppingListViewProps {
   list: ShoppingList;
@@ -328,6 +329,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
     }
 
     onUpdateList(updatedList);
+    triggerMiloEvent('item_purchased');
     setNewItemText('');
     setSelectedCategoryFilter('all');
     showFeedbackToast(
@@ -382,6 +384,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
     if (nextCompleted) {
       localActionItemIdsRef.current.add(itemId);
       setRecentLocalCompletedId(itemId);
+      triggerMiloEvent('item_purchased');
       setTimeout(() => {
         setRecentLocalCompletedId((prev) => (prev === itemId ? null : prev));
       }, 800);
