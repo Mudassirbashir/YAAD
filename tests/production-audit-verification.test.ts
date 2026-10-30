@@ -140,7 +140,8 @@ function runAuditVerification() {
   assert(cspHeader.value.includes('https://api.cloudinary.com'), 'CSP connect-src allows api.cloudinary.com (profile/catalog image uploads)');
   assert(cspHeader.value.includes('https://res.cloudinary.com'), 'CSP connect-src allows res.cloudinary.com (image delivery)');
   assert(headerKeys.includes('Cross-Origin-Opener-Policy'), 'COOP header configured in vercel.json');
-  assert(headerKeys.includes('X-Frame-Options'), 'X-Frame-Options configured in vercel.json');
+  assert(!headerKeys.includes('X-Frame-Options'), 'X-Frame-Options is omitted in favor of modern CSP frame-ancestors');
+  assert(cspHeader.value.includes("frame-ancestors 'self' chrome-extension:"), "CSP allows framing by 'self' and chrome-extension:");
   assert(headerKeys.includes('X-Content-Type-Options'), 'X-Content-Type-Options configured in vercel.json');
   assert(headerKeys.includes('Referrer-Policy'), 'Referrer-Policy configured in vercel.json');
   assert(headerKeys.includes('Permissions-Policy'), 'Permissions-Policy configured in vercel.json');
