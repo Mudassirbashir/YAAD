@@ -356,6 +356,8 @@ export const AdminCmsPage: React.FC = () => {
     lastRunSlug: string | null;
     lastRunStatus: string | null;
     recentLogs: any[];
+    cronSecretConfigured?: boolean;
+    deployHookConfigured?: boolean;
   } | null>(null);
   const [isTogglingAutoPublish, setIsTogglingAutoPublish] = useState(false);
 
@@ -1337,6 +1339,13 @@ export const AdminCmsPage: React.FC = () => {
                 }`}>
                   {autoPublishStatus?.enabled ? 'Active' : 'Disabled'}
                 </span>
+                {autoPublishStatus?.cronSecretConfigured !== undefined && (
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                    autoPublishStatus.cronSecretConfigured ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'
+                  }`}>
+                    {autoPublishStatus.cronSecretConfigured ? 'Secret Configured' : 'Secret Missing'}
+                  </span>
+                )}
               </div>
               <p className="text-xs text-neutral-500 mt-0.5">
                 Next run: daily 8:00 AM PKT (03:00 UTC) via Vercel Cron

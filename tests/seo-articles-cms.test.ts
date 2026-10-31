@@ -463,8 +463,15 @@ await runTest('Cron auto-publish endpoint rejects unauthorized and executes idem
   const port = (server.address() as any).port;
   const baseUrl = `http://127.0.0.1:${port}`;
   const originalCronSecret = process.env.CRON_SECRET;
+  const originalCronSecretLower = process.env.cron_secret;
 
   try {
+    // 0. Fail-closed: when neither secret is configured, every request gets 401
+    delete process.env.CRON_SECRET;
+    delete process.env.cron_secret;
+    const noSecretRes = await fetch(`${baseUrl}/api/cron/publish-daily`, { method: 'POST', headers: { Authorization: 'Bearer some_token' } });
+    assert.strictEqual(noSecretRes.status, 401, 'Request when no secret is configured must return 401 (fail-closed)');
+
     process.env.CRON_SECRET = 'secret_test_token_yaad_2026';
 
     // 1. Without secret -> 401 Unauthorized
@@ -497,8 +504,16 @@ await runTest('Cron auto-publish endpoint rejects unauthorized and executes idem
       const secondJson = await secondRes.json();
       assert.strictEqual(secondJson.status, 'already_run_today', 'Second run on same day must report already_run_today');
     }
+    // 5. Lowercase cron_secret is also accepted
+    delete process.env.CRON_SECRET;
+    process.env.cron_secret = 'lowercase_secret_token_yaad_2026';
+    const lowerWrongRes = await fetch(`${baseUrl}/api/cron/publish-daily`, { method: 'POST', headers: { Authorization: 'Bearer wrong_token' } });
+    assert.strictEqual(lowerWrongRes.status, 401, 'Request with wrong lowercase secret must return 401');
+    const lowerValidRes = await fetch(`${baseUrl}/api/cron/publish-daily`, { method: 'POST', headers: { Authorization: 'Bearer lowercase_secret_token_yaad_2026' } });
+    assert.strictEqual(lowerValidRes.status, 200, 'Request with valid lowercase secret must return 200');
   } finally {
     process.env.CRON_SECRET = originalCronSecret;
+    if (originalCronSecretLower !== undefined) { process.env.cron_secret = originalCronSecretLower; } else { delete process.env.cron_secret; }
     server.close();
     adminStore['db'].cmsArticles = originalArticlesSnapshot;
     adminStore['save']();

@@ -3144,6 +3144,8 @@ class AdminStore {
       lastRunAt: this.db.settings?.lastAutoPublishAt || null,
       lastRunSlug: this.db.settings?.lastAutoPublishSlug || null,
       lastRunStatus: this.db.settings?.lastAutoPublishStatus || null,
+      cronSecretConfigured: Boolean(process.env.CRON_SECRET || process.env.cron_secret),
+      deployHookConfigured: Boolean(process.env.DEPLOY_HOOK_URL || process.env.deploy_hook_url),
     };
   }
 

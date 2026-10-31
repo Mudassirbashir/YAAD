@@ -72,15 +72,13 @@ app.all('/api/cron/publish-daily', async (req, res) => {
     const bearerMatch = authHeader.match(/^Bearer\s+(.+)$/i);
     const token = bearerMatch ? bearerMatch[1].trim() : '';
 
-    const expectedSecret = process.env.CRON_SECRET;
+    const expectedSecret = process.env.CRON_SECRET || process.env.cron_secret;
     if (expectedSecret) {
       if (!token || token !== expectedSecret) {
         return res.status(401).json({ error: 'Unauthorized: invalid or missing cron secret' });
       }
     } else {
-      if (!token) {
-        return res.status(401).json({ error: 'Unauthorized: missing cron secret header' });
-      }
+      return res.status(401).json({ error: 'Unauthorized: cron secret not configured on server' });
     }
 
     // 2. Check if auto-publish is enabled in settings
@@ -151,8 +149,9 @@ app.all('/api/cron/publish-daily', async (req, res) => {
 
         adminStore.recordAutoPublishRun(updated.slug, 'published');
 
-        if (process.env.DEPLOY_HOOK_URL) {
-          fetch(process.env.DEPLOY_HOOK_URL, { method: 'POST' })
+        const deployHookUrl = process.env.DEPLOY_HOOK_URL || process.env.deploy_hook_url;
+        if (deployHookUrl) {
+          fetch(deployHookUrl, { method: 'POST' })
             .then((r) => console.log('[Cron Auto-Publish] Triggered deploy hook:', r.status))
             .catch((err) => console.error('[Cron Auto-Publish] Failed to trigger deploy hook:', err));
         }
