@@ -378,6 +378,133 @@ await runTest('Draft articles return 404 through public single-article and comme
   }
 });
 
+// -------------------------------------------------------------
+// Test 7: Rule #13 - List Template SEO Gate Validation
+// -------------------------------------------------------------
+await runTest('Rule #13: List template requires >=8 items, >=200w intro, >=3 internal links', async () => {
+  const baseTemplate: any = {
+    slug: 'test-rule-13-validation-sample',
+    title: 'Test Rule Thirteen Grocery Checklist Template',
+    seoTitle: 'Test Rule Thirteen Grocery Checklist Template',
+    seoDescription: 'A valid meta description for testing the list template rule thirteen validation gate in the test suite for Pakistani grocery planning and household budget.',
+    excerpt: 'A valid excerpt describing what shoppers will learn from this grocery checklist template with clear Pakistani kitchen budget tips and guidance.',
+    focusKeyword: 'test rule thirteen',
+    category: 'Grocery Guide',
+    cluster: 'Testing',
+    quickAnswer: 'This quick answer explains the comprehensive testing methodology for the thirteenth rule of the SEO gate in YAAD. It guarantees that copyable shopping templates feature sufficient checklist depth and internal linking before they become fully eligible for the automated daily publication pipeline across Pakistani stores.',
+    keyTakeaways: ['Checklist depth of at least eight items', 'Introductory prose of at least two hundred words', 'Three internal links to related guides'],
+    faqs: [
+      { q: 'What is rule thirteen?', a: 'Rule thirteen enforces checklist depth, intro length, and internal links.' },
+      { q: 'Why is it important?', a: 'It guarantees that all list templates provide genuine, high-quality user utility.' },
+      { q: 'Who validates this?', a: 'The automated SEO gate validates every article before publication.' }
+    ],
+    hashtags: ['TemplateTest', 'GroceryList', 'SEOGate'],
+    relatedSlugs: ['monthly-rashan-list-pakistani-family', 'ramadan-rashan-guide-2026', 'picking-fresh-sabzi-in-pakistan'],
+    coverImageUrl: 'https://example.com/cover.jpg',
+    coverImageAlt: 'Test cover image for template validation',
+    templateKind: 'list_template',
+    listItems: [
+      { name: 'Item 1', qty: '1', unit: 'kg' },
+      { name: 'Item 2', qty: '2', unit: 'kg' },
+      { name: 'Item 3', qty: '3', unit: 'kg' },
+      { name: 'Item 4', qty: '4', unit: 'kg' },
+      { name: 'Item 5', qty: '5', unit: 'kg' },
+      { name: 'Item 6', qty: '6', unit: 'kg' },
+      { name: 'Item 7', qty: '7', unit: 'kg' },
+      { name: 'Item 8', qty: '8', unit: 'kg' },
+    ],
+    body: `This complete test rule thirteen checklist guide helps families organize weekly Pakistani grocery needs systematically. ${new Array(200).fill('details').join(' ')}
+
+## Overview of the Test Rule Thirteen Checklist
+
+${new Array(500).fill('content').join(' ')}
+
+Check our [Monthly Rashan Guide](/blog/monthly-rashan-list-pakistani-family) and our [Ramadan Rashan Guide](/blog/ramadan-rashan-guide-2026) alongside our [Fresh Sabzi Guide](/blog/picking-fresh-sabzi-in-pakistan) for more details.`
+  };
+
+  // 1. Valid list template passes
+  const validCheck = validateArticleSeoGate(baseTemplate);
+  assert.strictEqual(validCheck.passed, true, `Valid list template must pass gate: ${validCheck.errors.join(', ')}`);
+
+  // 2. Fewer than 8 items fails
+  const underItems = {
+    ...baseTemplate,
+    listItems: baseTemplate.listItems.slice(0, 5)
+  };
+  const underItemsCheck = validateArticleSeoGate(underItems);
+  assert.strictEqual(underItemsCheck.passed, false, 'Template with < 8 items must fail');
+  assert.ok(underItemsCheck.errors.some(e => e.includes('at least 8 checklist items')), 'Reports checklist items error');
+
+  // 3. Intro fewer than 200 words fails
+  const shortIntro = {
+    ...baseTemplate,
+    body: `Short intro with only few words.\n\n## Overview of the Test Rule Thirteen Checklist\n\n${new Array(700).fill('content').join(' ')} [Monthly Rashan Guide](/blog/monthly-rashan-list-pakistani-family) [Ramadan Rashan Guide](/blog/ramadan-rashan-guide-2026) [Fresh Sabzi Guide](/blog/picking-fresh-sabzi-in-pakistan)`
+  };
+  const shortIntroCheck = validateArticleSeoGate(shortIntro);
+  assert.strictEqual(shortIntroCheck.passed, false, 'Template with short intro must fail');
+  assert.ok(shortIntroCheck.errors.some(e => e.includes('at least 200 words')), 'Reports intro word count error');
+
+  // 4. Fewer than 3 internal links fails
+  const fewLinks = {
+    ...baseTemplate,
+    body: `This test rule thirteen guide intro provides enough words for testing. ${new Array(200).fill('details').join(' ')}\n\n## Overview of the Test Rule Thirteen Checklist\n\n${new Array(600).fill('content').join(' ')} Only one link: [Monthly Rashan Guide](/blog/monthly-rashan-list-pakistani-family)`
+  };
+  const fewLinksCheck = validateArticleSeoGate(fewLinks);
+  assert.strictEqual(fewLinksCheck.passed, false, 'Template with < 3 internal links must fail');
+  assert.ok(fewLinksCheck.errors.some(e => e.includes('at least 3 internal links')), 'Reports internal links error');
+});
+
+// -------------------------------------------------------------
+// Test 8: Daily Cron Auto-Publish Endpoint (/api/cron/publish-daily)
+// -------------------------------------------------------------
+await runTest('Cron auto-publish endpoint rejects unauthorized and executes idempotently', async () => {
+  const originalArticlesSnapshot = JSON.parse(JSON.stringify(adminStore.getCmsArticles()));
+  const server = app.listen(0);
+  const port = (server.address() as any).port;
+  const baseUrl = `http://127.0.0.1:${port}`;
+  const originalCronSecret = process.env.CRON_SECRET;
+
+  try {
+    process.env.CRON_SECRET = 'secret_test_token_yaad_2026';
+
+    // 1. Without secret -> 401 Unauthorized
+    const unauthRes = await fetch(`${baseUrl}/api/cron/publish-daily`, { method: 'POST' });
+    assert.strictEqual(unauthRes.status, 401, 'Request without secret must return 401');
+
+    // 2. With invalid secret -> 401 Unauthorized
+    const wrongRes = await fetch(`${baseUrl}/api/cron/publish-daily`, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer wrong_token' }
+    });
+    assert.strictEqual(wrongRes.status, 401, 'Request with wrong secret must return 401');
+
+    // 3. With valid secret -> 200 OK
+    const validRes = await fetch(`${baseUrl}/api/cron/publish-daily`, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer secret_test_token_yaad_2026' }
+    });
+    assert.strictEqual(validRes.status, 200, 'Request with valid secret must return 200');
+    const validJson = await validRes.json();
+    assert.ok(validJson.status === 'published' || validJson.status === 'already_run_today' || validJson.status === 'idle');
+
+    // 4. Re-running on same day -> idempotent (already_run_today)
+    if (validJson.status === 'published') {
+      const secondRes = await fetch(`${baseUrl}/api/cron/publish-daily`, {
+        method: 'POST',
+        headers: { Authorization: 'Bearer secret_test_token_yaad_2026' }
+      });
+      assert.strictEqual(secondRes.status, 200);
+      const secondJson = await secondRes.json();
+      assert.strictEqual(secondJson.status, 'already_run_today', 'Second run on same day must report already_run_today');
+    }
+  } finally {
+    process.env.CRON_SECRET = originalCronSecret;
+    server.close();
+    adminStore['db'].cmsArticles = originalArticlesSnapshot;
+    adminStore['save']();
+  }
+});
+
 if (originalSitemap !== null) {
   fs.writeFileSync(sitemapPath, originalSitemap, 'utf-8');
 }

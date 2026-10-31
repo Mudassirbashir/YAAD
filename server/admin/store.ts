@@ -335,6 +335,8 @@ export interface CmsArticle {
   faqs?: { q: string; a: string }[];
   hashtags?: string[];
   relatedSlugs?: string[];
+  templateKind?: 'list_template' | null;
+  listItems?: Array<{ name: string; qty?: string; unit?: string; group?: string }>;
   queueStatus?: 'idea' | 'draft_ready' | 'scheduled' | 'published' | 'needs_review';
   publishDate?: string;
   priority?: number;
@@ -453,6 +455,10 @@ export interface AdminSettings {
   featureFlags?: FeatureFlags;
   maintenanceBanner?: MaintenanceBanner;
   sessionTimeoutMinutes?: number;
+  autoPublishEnabled?: boolean;
+  lastAutoPublishAt?: number;
+  lastAutoPublishSlug?: string;
+  lastAutoPublishStatus?: string;
   systemSecret?: string;
 }
 
@@ -3004,6 +3010,8 @@ class AdminStore {
           faqs: articleData.faqs || existing.faqs || [],
           hashtags: articleData.hashtags || existing.hashtags || [],
           relatedSlugs: articleData.relatedSlugs || existing.relatedSlugs || [],
+          templateKind: articleData.templateKind !== undefined ? articleData.templateKind : (existing.templateKind ?? null),
+          listItems: articleData.listItems !== undefined ? articleData.listItems : (existing.listItems || []),
           queueStatus: nextQueueStatus,
           publishDate: nextPublishDate,
           priority: articleData.priority !== undefined ? articleData.priority : (existing.priority ?? 0),
@@ -3072,6 +3080,8 @@ class AdminStore {
       faqs: articleData.faqs || [],
       hashtags: articleData.hashtags || [],
       relatedSlugs: articleData.relatedSlugs || [],
+      templateKind: articleData.templateKind || null,
+      listItems: articleData.listItems || [],
       queueStatus: articleData.queueStatus || (articleData.status === 'published' ? 'published' : (bodyText.length > 0 ? 'draft_ready' : 'idea')),
       publishDate: articleData.publishDate,
       priority: articleData.priority !== undefined ? articleData.priority : 0,
@@ -3107,6 +3117,34 @@ class AdminStore {
       throw new Error(result.error || 'Failed to persist article to Supabase database');
     }
     return article;
+  }
+
+  public isAutoPublishEnabled(): boolean {
+    return this.db.settings?.autoPublishEnabled !== false;
+  }
+
+  public setAutoPublishEnabled(enabled: boolean): void {
+    if (!this.db.settings) this.db.settings = {};
+    this.db.settings.autoPublishEnabled = enabled;
+    this.save();
+  }
+
+  public recordAutoPublishRun(slug?: string, status?: string): void {
+    if (!this.db.settings) this.db.settings = {};
+    this.db.settings.lastAutoPublishAt = Date.now();
+    if (slug) this.db.settings.lastAutoPublishSlug = slug;
+    if (status) this.db.settings.lastAutoPublishStatus = status;
+    this.save();
+  }
+
+  public getAutoPublishStatus() {
+    return {
+      enabled: this.isAutoPublishEnabled(),
+      nextRun: "daily 8:00 AM PKT (03:00 UTC) via Vercel Cron",
+      lastRunAt: this.db.settings?.lastAutoPublishAt || null,
+      lastRunSlug: this.db.settings?.lastAutoPublishSlug || null,
+      lastRunStatus: this.db.settings?.lastAutoPublishStatus || null,
+    };
   }
 
   public deleteCmsArticle(id: string): boolean {

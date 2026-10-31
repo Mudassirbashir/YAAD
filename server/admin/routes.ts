@@ -2371,6 +2371,39 @@ adminRouter.delete('/cms/articles/:id/comments/:commentId', requireAdminAuth, re
   }
 });
 
+adminRouter.get('/cms/auto-publish', requireAdminAuth, async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const status = adminStore.getAutoPublishStatus();
+    const auditLogsRes = await adminStore.getAuditLogsAsync({ action: 'auto_publish', limit: 7 });
+    res.status(200).json({
+      success: true,
+      ...status,
+      recentLogs: auditLogsRes?.logs || [],
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to retrieve auto-publish status', details: err.message });
+  }
+});
+
+adminRouter.post('/cms/auto-publish/toggle', requireAdminAuth, async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const { enabled } = req.body;
+    if (typeof enabled !== 'boolean') {
+      return res.status(400).json({ error: 'enabled boolean is required' });
+    }
+    adminStore.setAutoPublishEnabled(enabled);
+    adminStore.writeAuditLog({
+      adminId: req.admin?.id,
+      adminEmail: req.admin?.email,
+      action: 'auto_publish_toggle',
+      targetType: 'settings',
+      metadata: { enabled }
+    });
+    res.status(200).json({ success: true, enabled });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to toggle auto-publish', details: err.message });
+  }
+});
 adminRouter.get('/push/campaigns', requireAdminAuth, (req: AdminAuthRequest, res: Response) => {
   res.status(200).json({ campaigns: adminStore.getPushCampaigns() });
 });

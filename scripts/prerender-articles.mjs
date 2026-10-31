@@ -101,6 +101,21 @@ export function renderArticleHtml(templateHtml, article) {
     });
   }
 
+  if (article.templateKind === 'list_template' && Array.isArray(article.listItems) && article.listItems.length > 0) {
+    graph.push({
+      '@type': 'ItemList',
+      '@id': `${baseCanonical}/blog/${article.slug}#itemlist`,
+      name: `${article.title} Checklist`,
+      description: description,
+      numberOfItems: article.listItems.length,
+      itemListElement: article.listItems.map((item, idx) => ({
+        '@type': 'ListItem',
+        position: idx + 1,
+        name: `${item.name}${item.qty ? ` — ${item.qty}${item.unit ? ` ${item.unit}` : ''}` : ''}`,
+      })),
+    });
+  }
+
   const articleJsonLd = `\n  <script type="application/ld+json" id="article-jsonld">${JSON.stringify({
     '@context': 'https://schema.org',
     '@graph': graph,
@@ -118,10 +133,22 @@ export function renderArticleHtml(templateHtml, article) {
     }
   }
 
+  let checklistSsrHtml = '';
+  if (article.templateKind === 'list_template' && Array.isArray(article.listItems) && article.listItems.length > 0) {
+    const itemsHtml = article.listItems.map((it) => {
+      const nameSafe = (it.name || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const qtySafe = (it.qty || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const unitSafe = (it.unit || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      return `<li>${nameSafe}${qtySafe ? ` — ${qtySafe}${unitSafe ? ` ${unitSafe}` : ''}` : ''}</li>`;
+    }).join('');
+    checklistSsrHtml = `<section class="checklist-ssr"><h2>Checklist Items</h2><ul>${itemsHtml}</ul></section>`;
+  }
+
   const articleBodyHtml = `\n    <article id="ssr-article-root" class="sr-only" aria-hidden="true">
       <h1>${titleSafe}</h1>
       ${quickAnswerSafe ? `<p class="quick-answer"><strong>Quick Answer:</strong> ${quickAnswerSafe}</p>` : ''}
       ${firstSectionSafe ? `<p class="first-section">${firstSectionSafe}</p>` : ''}
+      ${checklistSsrHtml}
       <section class="follow-yaad-ssr">
         <p><strong>Follow YAAD:</strong></p>
         <p>

@@ -106,6 +106,8 @@ interface CmsArticle {
   faqs?: { q: string; a: string }[];
   hashtags?: string[];
   relatedSlugs?: string[];
+  templateKind?: 'list_template' | null;
+  listItems?: Array<{ name: string; qty?: string; unit?: string; group?: string }>;
   queueStatus?: 'idea' | 'draft_ready' | 'scheduled' | 'published' | 'needs_review';
   publishDate?: string;
   priority?: number;
@@ -345,6 +347,55 @@ export const AdminCmsPage: React.FC = () => {
   const [publishDate, setPublishDate] = useState('');
   const [priorityNum, setPriorityNum] = useState<number>(100);
   const [queueStatus, setQueueStatus] = useState<'idea' | 'draft_ready' | 'scheduled' | 'published' | 'needs_review'>('draft_ready');
+  const [templateKind, setTemplateKind] = useState<'list_template' | ''>('');
+  const [listItems, setListItems] = useState<Array<{ name: string; qty?: string; unit?: string; group?: string }>>([]);
+  const [autoPublishStatus, setAutoPublishStatus] = useState<{
+    enabled: boolean;
+    nextRun: string;
+    lastRunAt: number | null;
+    lastRunSlug: string | null;
+    lastRunStatus: string | null;
+    recentLogs: any[];
+  } | null>(null);
+  const [isTogglingAutoPublish, setIsTogglingAutoPublish] = useState(false);
+
+
+  const fetchAutoPublishStatus = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await fetch('/api/admin/cms/auto-publish', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAutoPublishStatus(data);
+      }
+    } catch {}
+  }, [token]);
+
+  const handleToggleAutoPublish = async () => {
+    if (!token || !autoPublishStatus || isTogglingAutoPublish) return;
+    setIsTogglingAutoPublish(true);
+    try {
+      const newEnabled = !autoPublishStatus.enabled;
+      const res = await fetch('/api/admin/cms/auto-publish/toggle', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ enabled: newEnabled }),
+      });
+      if (res.ok) {
+        setAutoPublishStatus((prev) => prev ? { ...prev, enabled: newEnabled } : null);
+        fetchAutoPublishStatus();
+      }
+    } catch (e) {
+      console.error('Failed to toggle auto publish', e);
+    } finally {
+      setIsTogglingAutoPublish(false);
+    }
+  };
 
   const fetchArticles = useCallback(
     async (forceRefresh: boolean = false) => {
@@ -399,7 +450,8 @@ export const AdminCmsPage: React.FC = () => {
 
   useEffect(() => {
     fetchArticles();
-  }, [fetchArticles]);
+    fetchAutoPublishStatus();
+  }, [fetchArticles, fetchAutoPublishStatus]);
 
   const copyShortLink = (artSlug: string) => {
     const fullLink = `${window.location.origin}/blog#${artSlug}`;
@@ -455,6 +507,8 @@ export const AdminCmsPage: React.FC = () => {
     setPublishDate('');
     setPriorityNum(100);
     setQueueStatus('draft_ready');
+    setTemplateKind('');
+    setListItems([]);
 
     setErrorMsg(null);
     setSuccessMsg(null);
@@ -510,6 +564,8 @@ export const AdminCmsPage: React.FC = () => {
     setPublishDate(art.publishDate || '');
     setPriorityNum(art.priority !== undefined ? art.priority : 100);
     setQueueStatus(art.queueStatus || (art.status === 'published' ? 'published' : 'draft_ready'));
+    setTemplateKind(art.templateKind === 'list_template' ? 'list_template' : '');
+    setListItems(art.listItems || []);
 
     setErrorMsg(null);
     setSuccessMsg(null);
@@ -821,6 +877,8 @@ export const AdminCmsPage: React.FC = () => {
       publishDate: publishDate || undefined,
       priority: Number(priorityNum) || 100,
       queueStatus,
+      templateKind: templateKind === 'list_template' ? 'list_template' : null,
+      listItems: templateKind === 'list_template' ? listItems : [],
     };
 
     try {
@@ -1262,6 +1320,103 @@ export const AdminCmsPage: React.FC = () => {
             </button>
           </div>
         </div>
+
+
+      {/* Auto-Publish Schedule Card */}
+      <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-xs">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-neutral-100">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-[#003527]/10 text-[#003527] flex items-center justify-center font-bold">
+              <CalendarClock className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-bold text-sm text-neutral-900">Auto-Publish Schedule</h3>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                  autoPublishStatus?.enabled ? 'bg-emerald-100 text-emerald-800' : 'bg-neutral-100 text-neutral-600'
+                }`}>
+                  {autoPublishStatus?.enabled ? 'Active' : 'Disabled'}
+                </span>
+              </div>
+              <p className="text-xs text-neutral-500 mt-0.5">
+                Next run: daily 8:00 AM PKT (03:00 UTC) via Vercel Cron
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-neutral-600 font-medium">
+              Daily 8:00 AM PKT auto-publish:
+            </span>
+            <button
+              type="button"
+              onClick={handleToggleAutoPublish}
+              disabled={isTogglingAutoPublish || !autoPublishStatus}
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                autoPublishStatus?.enabled ? 'bg-emerald-600' : 'bg-neutral-300'
+              }`}
+              title="Toggle daily auto-publish"
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                  autoPublishStatus?.enabled ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+        </div>
+
+        <div className="pt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-neutral-600">
+          <div>
+            Last run:{' '}
+            <strong className="text-neutral-800">
+              {autoPublishStatus?.lastRunAt
+                ? new Date(autoPublishStatus.lastRunAt).toLocaleString('en-PK', { timeZone: 'Asia/Karachi' })
+                : 'Never'}
+            </strong>{' '}
+            — Published:{' '}
+            <strong className="text-neutral-800">
+              {autoPublishStatus?.lastRunSlug || 'None (no draft_ready candidate)'}
+            </strong>
+          </div>
+        </div>
+
+        {autoPublishStatus?.recentLogs && autoPublishStatus.recentLogs.length > 0 && (
+          <div className="mt-4 pt-3 border-t border-neutral-100">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 mb-2">
+              Recent Auto-Publish History (Last 7 Runs)
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="text-neutral-400 border-b border-neutral-100">
+                    <th className="pb-1 font-semibold">Date & Time (PKT)</th>
+                    <th className="pb-1 font-semibold">Target / Slug</th>
+                    <th className="pb-1 font-semibold">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-neutral-50 text-neutral-700">
+                  {autoPublishStatus.recentLogs.map((log: any, idx: number) => (
+                    <tr key={idx} className="hover:bg-neutral-50/50">
+                      <td className="py-1.5 font-mono text-[11px]">
+                        {new Date(log.timestamp).toLocaleString('en-PK', { timeZone: 'Asia/Karachi' })}
+                      </td>
+                      <td className="py-1.5 font-semibold text-neutral-900">
+                        {log.metadata?.slug || log.targetId || '—'}
+                      </td>
+                      <td className="py-1.5">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                          {log.metadata?.status || 'published'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
 
         {/* Tab Navigation */}
         <div className="flex items-center gap-2 pt-2 border-t border-white/10 overflow-x-auto">
@@ -2785,6 +2940,96 @@ export const AdminCmsPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
+              </div>
+
+
+              {/* Template Kind (List Template) */}
+              <div className="p-3.5 rounded-xl border border-neutral-200 bg-neutral-50/70 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="block font-bold text-xs text-neutral-800">Article Type / Template Kind</label>
+                    <p className="text-[11px] text-neutral-500">Select "List Template" to add an interactive copyable checklist</p>
+                  </div>
+                  <select
+                    value={templateKind}
+                    onChange={(e) => setTemplateKind(e.target.value as any)}
+                    className="px-3 py-1.5 rounded-lg border border-neutral-200 bg-white text-xs font-bold text-neutral-800 focus:outline-none focus:border-[#003527]"
+                  >
+                    <option value="">Standard Guide</option>
+                    <option value="list_template">List Template (Copyable Checklist)</option>
+                  </select>
+                </div>
+
+                {templateKind === 'list_template' && (
+                  <div className="pt-2 border-t border-neutral-200 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-neutral-700">
+                        Checklist Items ({listItems.length} items — min 8 required)
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setListItems((prev) => [...prev, { name: '', qty: '', unit: '', group: '' }])}
+                        className="px-2.5 py-1 rounded-lg bg-[#003527] text-white text-[11px] font-bold hover:bg-[#0a4d38] cursor-pointer"
+                      >
+                        + Add Item
+                      </button>
+                    </div>
+
+                    <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                      {listItems.map((item, idx) => (
+                        <div key={idx} className="flex items-center gap-2 p-2 rounded-lg bg-white border border-neutral-200 text-xs">
+                          <input
+                            type="text"
+                            placeholder="Item name *"
+                            value={item.name}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setListItems((prev) => prev.map((it, i) => (i === idx ? { ...it, name: val } : it)));
+                            }}
+                            className="flex-1 px-2 py-1 rounded border border-neutral-200 focus:outline-none focus:border-[#003527]"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Qty (e.g. 5)"
+                            value={item.qty || ''}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setListItems((prev) => prev.map((it, i) => (i === idx ? { ...it, qty: val } : it)));
+                            }}
+                            className="w-20 px-2 py-1 rounded border border-neutral-200 focus:outline-none focus:border-[#003527]"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Unit (kg, L)"
+                            value={item.unit || ''}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setListItems((prev) => prev.map((it, i) => (i === idx ? { ...it, unit: val } : it)));
+                            }}
+                            className="w-20 px-2 py-1 rounded border border-neutral-200 focus:outline-none focus:border-[#003527]"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Group (e.g. Grains)"
+                            value={item.group || ''}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setListItems((prev) => prev.map((it, i) => (i === idx ? { ...it, group: val } : it)));
+                            }}
+                            className="w-28 px-2 py-1 rounded border border-neutral-200 focus:outline-none focus:border-[#003527]"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setListItems((prev) => prev.filter((_, i) => i !== idx))}
+                            className="text-red-500 hover:text-red-700 font-bold px-1"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Excerpt */}

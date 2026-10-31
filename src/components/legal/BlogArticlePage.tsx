@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   ArrowLeft,
   Calendar,
@@ -13,10 +13,20 @@ import {
   ArrowRight,
   ExternalLink,
   BookOpen,
+  CheckSquare,
+  Square,
+  ListChecks,
 } from 'lucide-react';
 import { useAppRouter } from '../../router/RouterContext';
 import { ArticleBodyRenderer, slugifyHeading } from './ArticleBodyRenderer';
 import { FollowYaadBlock } from './FollowYaadBlock';
+
+export interface CmsListItem {
+  name: string;
+  qty?: string;
+  unit?: string;
+  group?: string;
+}
 
 interface CmsArticleDetail {
   id: string;
@@ -43,6 +53,8 @@ interface CmsArticleDetail {
   canonicalUrl?: string;
   focusKeyword?: string;
   searchIntent?: 'informational' | 'list' | 'comparison' | 'template';
+  templateKind?: 'list_template' | null;
+  listItems?: CmsListItem[];
   cluster?: string;
   quickAnswer?: string;
   keyTakeaways?: string[];
@@ -73,6 +85,9 @@ export const BlogArticlePage: React.FC<BlogArticlePageProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(!initialArticle);
   const [error, setError] = useState<string | null>(null);
   const [copiedLink, setCopiedLink] = useState<boolean>(false);
+  const [copiedList, setCopiedList] = useState<boolean>(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [checkedItems, setCheckedItems] = useState<Record<number, boolean>>({});
   const [openFaqIndices, setOpenFaqIndices] = useState<Set<number>>(new Set([0]));
   const [relatedArticles, setRelatedArticles] = useState<Array<{ title: string; slug: string; excerpt?: string; category?: string }>>([]);
 
@@ -151,12 +166,84 @@ export const BlogArticlePage: React.FC<BlogArticlePageProps> = ({
       .catch(() => {});
   }, [slug]);
 
-  // Sync client-side title
+  // Sync client-side title and ItemList JSON-LD
   useEffect(() => {
     if (article) {
       document.title = `${article.seoTitle || article.title} • YAAD`;
+
+      if (article.templateKind === 'list_template' && article.listItems && article.listItems.length > 0) {
+        let script = document.getElementById('template-itemlist-jsonld') as HTMLScriptElement | null;
+        if (!script) {
+          script = document.createElement('script');
+          script.id = 'template-itemlist-jsonld';
+          script.type = 'application/ld+json';
+          document.head.appendChild(script);
+        }
+        script.textContent = JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'ItemList',
+          name: `${article.title} Checklist`,
+          description: article.excerpt || article.title,
+          numberOfItems: article.listItems.length,
+          itemListElement: article.listItems.map((item, idx) => ({
+            '@type': 'ListItem',
+            position: idx + 1,
+            name: `${item.name}${item.qty ? ` — ${item.qty}${item.unit ? ` ${item.unit}` : ''}` : ''}`,
+          })),
+        });
+      }
     }
   }, [article]);
+
+  const handleCopyList = () => {
+    if (!article?.listItems || article.listItems.length === 0) return;
+    const lines = article.listItems.map((item) => {
+      const parts = [item.name];
+      if (item.qty) {
+        parts.push(`— ${item.qty}${item.unit ? ` ${item.unit}` : ''}`);
+      }
+      return parts.join(' ');
+    });
+    try {
+      navigator.clipboard.writeText(lines.join('\n'));
+      setCopiedList(true);
+      setToastMessage('List copied to clipboard!');
+      setTimeout(() => {
+        setCopiedList(false);
+        setToastMessage(null);
+      }, 2500);
+    } catch {}
+  };
+
+  const handleOpenInYaad = () => {
+    handleNav('/create');
+  };
+
+  const toggleItemCheck = (idx) => {
+    setCheckedItems((prev) => ({
+      ...prev,
+      [idx]: !prev[idx],
+    }));
+  };
+
+  const groupedItems = useMemo(() => {
+    if (!article?.listItems) return [];
+    const groups = [];
+    const groupMap = new Map();
+
+    article.listItems.forEach((item, idx) => {
+      const groupName = item.group?.trim() || 'Checklist Items';
+      if (!groupMap.has(groupName)) {
+        groupMap.set(groupName, []);
+      }
+      groupMap.get(groupName).push({ item, globalIdx: idx });
+    });
+
+    groupMap.forEach((items, name) => {
+      groups.push({ name, items });
+    });
+    return groups;
+  }, [article?.listItems]);
 
   const handleCopyLink = () => {
     if (typeof window === 'undefined') return;
@@ -283,10 +370,21 @@ export const BlogArticlePage: React.FC<BlogArticlePageProps> = ({
       {/* Main Content Area */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-8 sm:pt-12">
         {/* Category Label */}
-        <div className="mb-3">
-          <span className="inline-block px-3 py-1 rounded-full bg-[#003527]/10 text-[#003527] text-xs font-extrabold uppercase tracking-wider">
-            {article.cluster || article.category || 'Grocery Guide'}
-          </span>
+        <div className="mb-3 flex items-center gap-2">
+          {article.templateKind === 'list_template' ? (
+            <span className="inline-block px-3 py-1 rounded-full bg-amber-500/15 border border-amber-300 text-amber-900 text-xs font-extrabold uppercase tracking-wider">
+              List Template
+            </span>
+          ) : (
+            <span className="inline-block px-3 py-1 rounded-full bg-[#003527]/10 text-[#003527] text-xs font-extrabold uppercase tracking-wider">
+              {article.cluster || article.category || 'Grocery Guide'}
+            </span>
+          )}
+          {article.templateKind === 'list_template' && (article.cluster || article.category) && (
+            <span className="inline-block px-2.5 py-1 rounded-full bg-[#003527]/5 text-[#51614f] text-[11px] font-bold">
+              {article.cluster || article.category}
+            </span>
+          )}
         </div>
 
         {/* H1 Title: Benefit-led, contains focus keyword */}
@@ -395,6 +493,129 @@ export const BlogArticlePage: React.FC<BlogArticlePageProps> = ({
               ))}
             </ul>
           </div>
+        )}
+
+        {/* Interactive Checklist Card */}
+        {article.templateKind === 'list_template' && article.listItems && article.listItems.length > 0 && (
+          <section className="my-10 p-6 sm:p-8 rounded-3xl bg-white border-2 border-[#003527]/20 shadow-md">
+            {/* Top Action Bar */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#e5dfce]">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#003527] text-[#FCBC1F] flex items-center justify-center font-bold">
+                  <ListChecks className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-black text-[#003527]">
+                    Interactive Shopping Checklist
+                  </h2>
+                  <p className="text-xs text-[#51614f]">
+                    {article.listItems.length} items • Tap any item to check off as you shop
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Buttons (Top) */}
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={handleCopyList}
+                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-[#003527] bg-[#fffdf6] hover:bg-[#003527]/5 text-[#003527] font-bold text-xs sm:text-sm transition-colors cursor-pointer shadow-2xs"
+                >
+                  {copiedList ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                  <span>{copiedList ? 'Copied!' : 'Copy list'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleOpenInYaad}
+                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#003527] hover:bg-[#0a4d38] text-white font-extrabold text-xs sm:text-sm transition-transform active:scale-95 cursor-pointer shadow-sm"
+                >
+                  <ShoppingBag className="w-4 h-4 text-[#FCBC1F]" />
+                  <span>Open in YAAD</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Checklist Groups */}
+            <div className="py-6 space-y-6">
+              {groupedItems.map((grp, gIdx) => (
+                <div key={gIdx} className="space-y-3">
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-[#003527]/80 bg-[#003527]/5 px-3 py-1.5 rounded-lg inline-block">
+                    {grp.name}
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {grp.items.map(({ item, globalIdx }) => {
+                      const isChecked = Boolean(checkedItems[globalIdx]);
+                      return (
+                        <div
+                          key={globalIdx}
+                          onClick={() => toggleItemCheck(globalIdx)}
+                          className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all cursor-pointer select-none ${
+                            isChecked
+                              ? 'bg-[#f4f2ea]/60 border-[#e0dcce] text-neutral-400 opacity-60'
+                              : 'bg-[#faf9f5] border-[#e7e1ce] hover:border-[#003527] text-[#1c2826] shadow-2xs'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span className="shrink-0 text-[#003527]">
+                              {isChecked ? (
+                                <CheckSquare className="w-5 h-5 text-emerald-600" />
+                              ) : (
+                                <Square className="w-5 h-5 text-[#88998d]" />
+                              )}
+                            </span>
+                            <span
+                              className={`text-sm font-semibold truncate ${
+                                isChecked ? 'line-through text-neutral-400' : 'text-[#1c2826]'
+                              }`}
+                            >
+                              {item.name}
+                            </span>
+                          </div>
+                          {(item.qty || item.unit) && (
+                            <span
+                              className={`shrink-0 text-xs px-2.5 py-1 rounded-lg ml-2 font-mono ${
+                                isChecked
+                                  ? 'bg-neutral-200 text-neutral-400 line-through'
+                                  : 'bg-[#003527]/10 text-[#003527] font-bold'
+                              }`}
+                            >
+                              {item.qty}{item.unit ? ` ${item.unit}` : ''}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Bottom Action Bar */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-6 border-t border-[#e5dfce]">
+              <div className="text-xs text-[#51614f] flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>YAAD helps you keep shopping needs in one place.</span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={handleCopyList}
+                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-[#003527] bg-[#fffdf6] hover:bg-[#003527]/5 text-[#003527] font-bold text-xs sm:text-sm transition-colors cursor-pointer shadow-2xs"
+                >
+                  {copiedList ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                  <span>{copiedList ? 'Copied!' : 'Copy list'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleOpenInYaad}
+                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#003527] hover:bg-[#0a4d38] text-white font-extrabold text-xs sm:text-sm transition-transform active:scale-95 cursor-pointer shadow-sm"
+                >
+                  <ShoppingBag className="w-4 h-4 text-[#FCBC1F]" />
+                  <span>Open in YAAD</span>
+                </button>
+              </div>
+            </div>
+          </section>
         )}
 
         {/* Table of Contents */}
@@ -555,6 +776,12 @@ export const BlogArticlePage: React.FC<BlogArticlePageProps> = ({
           </button>
         </section>
       </main>
+      {toastMessage && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-2.5 rounded-2xl bg-[#003527] text-white shadow-xl text-sm font-bold flex items-center gap-2 animate-fade-in pointer-events-none">
+          <Check className="w-4 h-4 text-[#FCBC1F]" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
     </article>
   );
 };

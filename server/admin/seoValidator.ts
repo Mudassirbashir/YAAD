@@ -15,6 +15,10 @@ export interface SeoGateCheckResult {
     hashtagCount: number;
     resolvedRelatedSlugsCount: number;
     bannedPhrasesFound: string[];
+    templateKind?: string | null;
+    listItemsCount?: number;
+    introWordCount?: number;
+    internalLinksCount?: number;
   };
 }
 
@@ -52,6 +56,8 @@ export function validateArticleSeoGate(
     coverImageAlt?: string;
     hashtags?: string[];
     relatedSlugs?: string[];
+    templateKind?: 'list_template' | string | null;
+    listItems?: Array<{ name?: string; qty?: string; unit?: string; group?: string }>;
   },
   existingSlugs: Set<string> = new Set()
 ): SeoGateCheckResult {
@@ -195,6 +201,45 @@ export function validateArticleSeoGate(
     errors.push(`Article excerpt must be between 140 and 160 characters (currently ${excerptLength} chars).`);
   }
 
+  // 13. List Template Gate (Rule #13)
+  let listItemsCount = 0;
+  let introWordCount = 0;
+  let internalLinksCount = 0;
+
+  if (article.templateKind === 'list_template') {
+    const listItems = Array.isArray(article.listItems) ? article.listItems : [];
+    listItemsCount = listItems.length;
+
+    // (a) listItems.length >= 8
+    if (listItemsCount < 8) {
+      errors.push(`List template must have at least 8 checklist items (currently ${listItemsCount}).`);
+    }
+
+    // (b) excerpt non-empty (already checked in rule 12)
+
+    // (c) intro >= 200 words (the text before the first H2 heading ## )
+    const bodyText = article.body || '';
+    const h2Index = bodyText.search(/^##\s+/m);
+    const introText = h2Index !== -1 ? bodyText.slice(0, h2Index).trim() : bodyText.trim();
+    introWordCount = introText ? introText.split(/\s+/).filter(Boolean).length : 0;
+    if (introWordCount < 200) {
+      errors.push(`List template intro must be at least 200 words before the first heading (currently ${introWordCount} words).`);
+    }
+
+    // (d) >= 3 internal links in the body to other YAAD blog pages
+    const internalLinkMatches = bodyText.match(/\[[^\]]+\]\((?:https?:\/\/yaadapppk\.vercel\.app)?\/blog\/[a-z0-9-]+\)/gi) || [];
+    internalLinksCount = internalLinkMatches.length;
+    if (internalLinksCount < 3) {
+      errors.push(`List template body must contain at least 3 internal links to other YAAD blog pages (currently ${internalLinksCount}).`);
+    }
+
+    // (e) every item has a non-empty name
+    const emptyNameItems = listItems.filter((item) => !item.name || !item.name.trim());
+    if (emptyNameItems.length > 0) {
+      errors.push(`Every checklist item in the list template must have a non-empty name (${emptyNameItems.length} item(s) missing name).`);
+    }
+  }
+
   return {
     passed: errors.length === 0,
     errors,
@@ -212,6 +257,10 @@ export function validateArticleSeoGate(
       hashtagCount,
       resolvedRelatedSlugsCount,
       bannedPhrasesFound,
+      templateKind: article.templateKind || null,
+      listItemsCount,
+      introWordCount,
+      internalLinksCount,
     },
   };
 }

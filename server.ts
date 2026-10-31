@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import { GoogleGenAI, Type } from '@google/genai';
 import { adminRouter } from './server/admin/routes';
 import { adminStore } from './server/admin/store';
+import { validateArticleSeoGate } from './server/admin/seoValidator';
 import { getSupabaseAdmin, getAuthoritativeCms, getAuthoritativeCmsArticleBySlugOrId } from './server/admin/supabaseAdmin';
 
 dotenv.config();
@@ -61,6 +62,123 @@ app.get('/admin/setup', (req, res, next) => {
 app.all(['/admin/signup', '/admin/register', '/admin/join'], (req, res) => {
   res.setHeader('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet');
   return res.status(404).type('text/plain').send('404 Not Found - Admin access is invite-only');
+});
+
+// Daily 8 AM PKT (03:00 UTC) Auto-Publish Cron Endpoint
+app.all('/api/cron/publish-daily', async (req, res) => {
+  try {
+    // 1. Secret authentication
+    const authHeader = req.headers['authorization'] || '';
+    const bearerMatch = authHeader.match(/^Bearer\s+(.+)$/i);
+    const token = bearerMatch ? bearerMatch[1].trim() : '';
+
+    const expectedSecret = process.env.CRON_SECRET;
+    if (expectedSecret) {
+      if (!token || token !== expectedSecret) {
+        return res.status(401).json({ error: 'Unauthorized: invalid or missing cron secret' });
+      }
+    } else {
+      if (!token) {
+        return res.status(401).json({ error: 'Unauthorized: missing cron secret header' });
+      }
+    }
+
+    // 2. Check if auto-publish is enabled in settings
+    if (!adminStore.isAutoPublishEnabled()) {
+      return res.status(200).json({ status: 'disabled', reason: 'auto_publish_disabled_in_settings' });
+    }
+
+    // 3. Idempotency: Check if an article was ALREADY published on this UTC calendar day via auto_publish
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const recentAuditLogs = await adminStore.getAuditLogsAsync({ action: 'auto_publish', limit: 20 });
+    const alreadyRunToday = (recentAuditLogs?.logs || []).some((log: any) => {
+      const logDate = new Date(log.timestamp).toISOString().slice(0, 10);
+      return logDate === todayStr && log.metadata?.status === 'published';
+    });
+
+    if (alreadyRunToday) {
+      return res.status(200).json({ status: 'already_run_today', date: todayStr, publishedCount: 0 });
+    }
+
+    // 4. Candidate selection
+    const resArticles = await adminStore.getCmsArticlesAsync({ status: 'all' });
+    const allArticles = resArticles?.articles || adminStore.getCmsArticles();
+    const candidates = allArticles.filter((a: any) => a.status === 'draft' && a.queueStatus === 'draft_ready');
+
+    if (candidates.length === 0) {
+      adminStore.recordAutoPublishRun(undefined, 'idle');
+      return res.status(200).json({ status: 'idle', reason: 'no_draft_ready_articles' });
+    }
+
+    // Sort: priority ASC (lower number = higher priority), then createdAt ASC (oldest first)
+    candidates.sort((a: any, b: any) => {
+      const pA = a.priority ?? 0;
+      const pB = b.priority ?? 0;
+      if (pA !== pB) return pA - pB;
+      return (a.createdAt || 0) - (b.createdAt || 0);
+    });
+
+    // 5. Try up to 3 candidates
+    const maxAttempts = Math.min(candidates.length, 3);
+    for (let i = 0; i < maxAttempts; i++) {
+      const candidate = candidates[i];
+      const gateResult = validateArticleSeoGate(candidate);
+      if (gateResult.passed) {
+        const now = Date.now();
+        const updated = await adminStore.saveCmsArticleAsync({
+          id: candidate.id,
+          status: 'published',
+          queueStatus: 'published',
+          publishedAt: now,
+        }, 'system_cron');
+
+        adminStore.writeAuditLog({
+          adminId: 'system_cron',
+          adminEmail: 'cron@yaadapppk.vercel.app',
+          action: 'auto_publish',
+          targetType: 'cms_article',
+          targetId: updated.id,
+          metadata: {
+            articleId: updated.id,
+            slug: updated.slug,
+            title: updated.title,
+            wordCount: updated.wordCount,
+            listItemsCount: updated.listItems?.length || 0,
+            status: 'published',
+            publishedAt: now,
+          },
+        });
+
+        adminStore.recordAutoPublishRun(updated.slug, 'published');
+
+        if (process.env.DEPLOY_HOOK_URL) {
+          fetch(process.env.DEPLOY_HOOK_URL, { method: 'POST' })
+            .then((r) => console.log('[Cron Auto-Publish] Triggered deploy hook:', r.status))
+            .catch((err) => console.error('[Cron Auto-Publish] Failed to trigger deploy hook:', err));
+        }
+
+        return res.status(200).json({
+          status: 'published',
+          slug: updated.slug,
+          title: updated.title,
+          wordCount: updated.wordCount,
+          listItemsCount: updated.listItems?.length || 0,
+        });
+      } else {
+        await adminStore.saveCmsArticleAsync({
+          id: candidate.id,
+          queueStatus: 'needs_review',
+          needsReviewReasons: gateResult.errors,
+        }, 'system_cron');
+      }
+    }
+
+    adminStore.recordAutoPublishRun(undefined, 'idle');
+    return res.status(200).json({ status: 'idle', reason: 'no_draft_ready_articles' });
+  } catch (err: any) {
+    console.error('[Cron Auto-Publish] Error:', err);
+    return res.status(500).json({ error: 'Internal server error during auto-publish', details: err?.message });
+  }
 });
 
 // Dedicated Staff Admin API routes (Module 1-12)
