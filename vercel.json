@@ -43,7 +43,6 @@
       ]
     },
     {
-      "//": "Allow mobile-simulator preview tooling (iframe embedding in extension context)",
       "source": "/(.*)",
       "headers": [
         { "key": "X-Content-Type-Options", "value": "nosniff" },
