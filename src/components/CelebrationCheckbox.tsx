@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { triggerHaptic, playItemCheckSound } from '../lib/sound';
 import { loadLottie } from '../lib/lottieLoader';
-import checkCircleAnimationData from '../assets/check-circle-animation.json';
 
 export interface CelebrationCheckboxProps {
   isChecked: boolean;
@@ -15,16 +14,26 @@ export interface CelebrationCheckboxProps {
   ariaLabel?: string;
 }
 
-// Dynamically adapt Lottie vector colors to active light/dark theme
-function getThemedAnimationData() {
+let cachedCheckCircleData: any = null;
+
+// Dynamically and lazily load Lottie animation JSON only when celebration runs
+async function getThemedAnimationData() {
+  if (!cachedCheckCircleData) {
+    try {
+      const mod = await import('../assets/check-circle-animation.json');
+      cachedCheckCircleData = mod.default || mod;
+    } catch {
+      return null;
+    }
+  }
   try {
     const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
     const primaryRgb = isDark ? [0.063, 0.725, 0.506] : [0.0, 0.314, 0.224]; // #10B981 or #005039
-    const raw = JSON.stringify(checkCircleAnimationData);
+    const raw = JSON.stringify(cachedCheckCircleData);
     const replaced = raw.split('[0.071,0.075,0.192').join(`[${primaryRgb.join(',')}`);
     return JSON.parse(replaced);
   } catch {
-    return checkCircleAnimationData;
+    return cachedCheckCircleData;
   }
 }
 
@@ -97,9 +106,9 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
     let isCancelled = false;
 
     if (shouldCelebrate && lottieContainerRef.current) {
-      loadLottie()
-        .then((lottieLib) => {
-          if (isCancelled || !lottieLib || !lottieContainerRef.current) return;
+      Promise.all([loadLottie(), getThemedAnimationData()])
+        .then(([lottieLib, animData]) => {
+          if (isCancelled || !lottieLib || !lottieContainerRef.current || !animData) return;
           try {
             if (anim) {
               anim.destroy();
@@ -109,7 +118,7 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
               renderer: 'svg',
               loop: false,
               autoplay: true,
-              animationData: getThemedAnimationData(),
+              animationData: animData,
             });
 
             anim.setSpeed(1.2);

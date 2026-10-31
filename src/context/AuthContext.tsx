@@ -568,12 +568,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         let activeSession: Session | null = null;
         let activeUser: User | null = null;
 
-        // 1. Check Supabase session from local storage / network
+        // 1. Check Supabase session from local storage / network (with 3500ms timeout race)
         try {
-          const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-          if (!sessionError && sessionData?.session?.user) {
-            activeSession = sessionData.session;
-            activeUser = sessionData.session.user;
+          const timeoutPromise = new Promise<{ timedOut: boolean }>((resolve) =>
+            setTimeout(() => resolve({ timedOut: true }), 3500)
+          );
+          const sessionResult = await Promise.race([
+            supabase.auth.getSession(),
+            timeoutPromise,
+          ]);
+
+          if ((sessionResult as any)?.timedOut) {
+            console.warn('Notice: Supabase getSession timed out after 3500ms; proceeding with offline cache / guest mode.');
+          } else {
+            const { data: sessionData, error: sessionError } = sessionResult as { data: any; error: any };
+            if (!sessionError && sessionData?.session?.user) {
+              activeSession = sessionData.session;
+              activeUser = sessionData.session.user;
+            }
           }
         } catch (sessErr) {
           console.warn('Notice retrieving initial Supabase session:', sessErr);

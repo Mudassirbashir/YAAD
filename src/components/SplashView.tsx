@@ -9,6 +9,16 @@ interface SplashViewProps {
 
 export const SplashView: React.FC<SplashViewProps> = ({ onFinish, isRestoringAuth = false }) => {
   const prefersReducedMotion = useReducedMotion();
+  const [canManualDismiss, setCanManualDismiss] = React.useState<boolean>(false);
+
+  // 2-second grace period: allow manual dismissal if auth restoration takes longer than 2s
+  useEffect(() => {
+    const graceTimer = setTimeout(() => {
+      setCanManualDismiss(true);
+    }, 2000);
+    return () => clearTimeout(graceTimer);
+  }, []);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       if (!isRestoringAuth) {
@@ -30,7 +40,8 @@ export const SplashView: React.FC<SplashViewProps> = ({ onFinish, isRestoringAut
   }, [isRestoringAuth, onFinish]);
 
   const handleManualDismiss = () => {
-    if (!isRestoringAuth) {
+    // Dismiss if auth is resolved OR if 2s grace period has elapsed
+    if (!isRestoringAuth || canManualDismiss) {
       onFinish();
     }
   };
@@ -68,7 +79,7 @@ export const SplashView: React.FC<SplashViewProps> = ({ onFinish, isRestoringAut
       </div>
 
       <div className="absolute bottom-10 flex flex-col items-center gap-2">
-        {isRestoringAuth ? (
+        {isRestoringAuth && !canManualDismiss ? (
           <div className={`flex items-center gap-2 text-xs text-outline font-body ${prefersReducedMotion ? '' : 'animate-pulse'}`}>
             <span className={`w-2 h-2 rounded-full bg-primary ${prefersReducedMotion ? '' : 'animate-ping'}`} />
             <span>Restoring session...</span>

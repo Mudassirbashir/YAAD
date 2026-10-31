@@ -39,6 +39,24 @@ export interface CrossDeviceSyncCallbacks {
 // Active channels cache
 const activeSyncChannels = new Map<string, any>();
 
+// Track timestamps of local client writes to suppress own Postgres Changes echoes
+let lastLocalWriteAt = 0;
+
+/**
+ * Record that a local client write (mutation) has occurred.
+ * Suppresses self-sync echo refetches from Postgres Changes within a 1500ms window.
+ */
+export function noteLocalMutation(): void {
+  lastLocalWriteAt = Date.now();
+}
+
+/**
+ * Get timestamp of the last local write
+ */
+export function getLastLocalWriteTime(): number {
+  return lastLocalWriteAt;
+}
+
 /**
  * Broadcast an event to other active devices logged into the same user account
  */
@@ -140,6 +158,10 @@ export function subscribeToCrossDeviceSync(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'shopping_lists', filter: `user_id=eq.${userId}` },
       () => {
+        // Skip self-sync echoes if write occurred locally within the last 1500ms
+        if (Date.now() - lastLocalWriteAt < 1500) {
+          return;
+        }
         triggerDebouncedSync();
       }
     )
@@ -148,6 +170,10 @@ export function subscribeToCrossDeviceSync(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'shopping_items', filter: `user_id=eq.${userId}` },
       () => {
+        // Skip self-sync echoes if write occurred locally within the last 1500ms
+        if (Date.now() - lastLocalWriteAt < 1500) {
+          return;
+        }
         triggerDebouncedSync();
       }
     )

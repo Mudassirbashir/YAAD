@@ -3,7 +3,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { UserProfile, ShoppingList, ShoppingItem, CategoryId, FrequentlyBoughtItem } from '../types';
 import { cleanPhoneNumber } from '../utils/phone';
 import { generateUUID, isValidUUID, generateDeterministicUUID } from './uuid';
-import { broadcastCrossDeviceSync } from './realtimeSync';
+import { broadcastCrossDeviceSync, noteLocalMutation } from './realtimeSync';
 import { defaultItemCatalog } from './recognition/catalog';
 import { getAuthRedirectUrl } from '../config/siteConfig';
 import {
@@ -295,6 +295,9 @@ export async function resilientUpsert(
   payload: Record<string, unknown>,
   options?: { onConflict?: string }
 ): Promise<{ data: any; error: Error | null; isOffline?: boolean }> {
+  if (table === 'shopping_lists' || table === 'shopping_items') {
+    noteLocalMutation();
+  }
   if (!supabase) return { data: null, error: new Error('Supabase client not initialized') };
 
   if (typeof navigator !== 'undefined' && !navigator.onLine) {
@@ -953,6 +956,7 @@ export async function saveUserShoppingList(
   userId: string,
   list: ShoppingList
 ): Promise<{ success: boolean; error: Error | null; isOffline?: boolean }> {
+  noteLocalMutation();
   const safeListId = list.id || generateUUID();
   const prevQueue = listSaveQueues.get(safeListId) || Promise.resolve({ success: true, error: null });
 
@@ -1074,17 +1078,19 @@ async function executeInternalSaveUserShoppingList(
 
           const currentItemIds = itemRows.map((r) => r.id);
 
-          // Delete rows that were removed from the list (RLS verifies list access)
-          await supabase
-            .from('shopping_items')
-            .delete()
-            .eq('list_id', safeListId)
-            .not('id', 'in', `(${currentItemIds.join(',')})`);
-
-          // Upsert current items using onConflict on primary key 'id'
+          // Atomic safety (Fix 3): Upsert all current items FIRST before removing orphans
           const { error: upsertErr } = await supabase
             .from('shopping_items')
             .upsert(itemRows, { onConflict: 'id' });
+
+          if (!upsertErr && currentItemIds.length > 0) {
+            // Safely delete only orphaned rows whose ID is no longer in the list
+            await supabase
+              .from('shopping_items')
+              .delete()
+              .eq('list_id', safeListId)
+              .not('id', 'in', `(${currentItemIds.join(',')})`);
+          }
 
           if (upsertErr) {
             console.warn('Note upserting shopping_items:', upsertErr.message);
@@ -1172,6 +1178,7 @@ export async function updateShoppingItemCompletionStatus(
   isCompleted: boolean,
   updatedList: ShoppingList
 ): Promise<{ success: boolean; error: Error | null; isOffline?: boolean }> {
+  noteLocalMutation();
   const verifiedUserId = ensureValidUUID(userId);
   const safeListId = ensureValidUUID(listId);
   const safeItemId = ensureValidUUID(itemId);
@@ -1394,6 +1401,7 @@ export async function deleteUserShoppingList(
   userId: string,
   listId: string
 ): Promise<{ success: boolean; error: Error | null; isOffline?: boolean }> {
+  noteLocalMutation();
   const verifiedUserId = (await getVerifiedUserId(userId)) || userId;
   if (!verifiedUserId) {
     return { success: false, error: new Error('Authentication required to delete list') };
@@ -1495,6 +1503,7 @@ export async function deleteMultipleUserShoppingLists(
   userId: string,
   listIds: string[]
 ): Promise<{ success: boolean; error: Error | null; isOffline?: boolean }> {
+  noteLocalMutation();
   const verifiedUserId = (await getVerifiedUserId(userId)) || userId;
   if (!verifiedUserId || listIds.length === 0) {
     return { success: true, error: null };
@@ -1592,6 +1601,7 @@ export async function deleteMultipleUserShoppingLists(
 export async function clearAllUserShoppingLists(
   userId: string
 ): Promise<{ success: boolean; error: Error | null }> {
+  noteLocalMutation();
   const verifiedUserId = (await getVerifiedUserId(userId)) || userId;
   if (!verifiedUserId) {
     return { success: false, error: new Error('Authentication required to clear shopping lists') };
@@ -1762,6 +1772,7 @@ export async function persistCompletedShoppingSession(
   list: ShoppingList,
   completionSessionId?: string
 ): Promise<{ success: boolean; error: Error | null; isOffline?: boolean }> {
+  noteLocalMutation();
   const verifiedUserId = (await getVerifiedUserId(userId)) || userId;
   if (!verifiedUserId) {
     return { success: false, error: new Error('User authentication required') };
@@ -2174,15 +2185,28 @@ export async function syncPendingOfflineChanges(
           }
 
           if (!listErr) {
+            noteLocalMutation();
             if (list.items) {
-              await supabase
-                .from('shopping_items')
-                .delete()
-                .eq('list_id', list.id);
-
               if (list.items.length > 0) {
                 const itemRows = list.items.map((it: ShoppingItem) => buildShoppingItemRow(it, list.id, verifiedUserId));
-                await supabase.from('shopping_items').upsert(itemRows, { onConflict: 'id' });
+                // 1. Upsert all current items FIRST (atomic safety: items exist before orphan cleanup)
+                const { error: upsertErr } = await supabase.from('shopping_items').upsert(itemRows, { onConflict: 'id' });
+
+                // 2. Safely delete only orphaned rows whose ID is no longer in current items
+                const currentItemIds = itemRows.map((r) => r.id);
+                if (!upsertErr && currentItemIds.length > 0) {
+                  await supabase
+                    .from('shopping_items')
+                    .delete()
+                    .eq('list_id', list.id)
+                    .not('id', 'in', `(${currentItemIds.join(',')})`);
+                }
+              } else {
+                // List is explicitly empty, safe to remove items
+                await supabase
+                  .from('shopping_items')
+                  .delete()
+                  .eq('list_id', list.id);
               }
             }
 

@@ -51,7 +51,7 @@ import { Loader2 } from 'lucide-react';
 import { recommendationService, RecommendationCandidate } from './lib/recommendations';
 import { detectDuplicateItem, mergeQuantities } from './lib/recognition';
 import { getFriendlyErrorMessage } from './utils/errorFormatting';
-import { LegalPageType } from './components/legal/legalContent';
+import type { LegalPageType } from './components/legal/legalContent';
 import { LandingPageView } from './components/LandingPageView';
 import { HeadManager } from './seo/HeadManager';
 import { SuspendedAccountModal } from './components/SuspendedAccountModal';

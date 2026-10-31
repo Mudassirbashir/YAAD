@@ -27,6 +27,7 @@ import { SwipeableShoppingItemCard } from './SwipeableShoppingItemCard';
 import { ItemImageLightboxModal } from './common/ItemImageLightboxModal';
 import { resolveVisual } from '../lib/catalog/visualResolver';
 import { triggerMiloEvent } from '../pet/useMilo';
+import { noteLocalMutation } from '../lib/realtimeSync';
 
 interface ShoppingListViewProps {
   list: ShoppingList;
@@ -71,6 +72,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
   } | null>(null);
 
   const handleAddScannedItem = (scannedItem: ShoppingItem) => {
+    noteLocalMutation();
     const existingIndex = list.items.findIndex(
       (it) =>
         (scannedItem.barcode && it.barcode === scannedItem.barcode) ||
@@ -379,6 +381,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
     // Lock item against concurrent duplicate requests
     inFlightItemIdsRef.current.add(itemId);
     lastActionTimeRef.current.set(itemId, now);
+    noteLocalMutation();
 
     // Track local completion origin to prevent animation replay on passive incoming realtime sync
     if (nextCompleted) {
@@ -473,6 +476,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
 
   const handleUndoAction = () => {
     if (!undoToast) return;
+    noteLocalMutation();
     if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
     const { item, type, index } = undoToast;
     setUndoToast(null);

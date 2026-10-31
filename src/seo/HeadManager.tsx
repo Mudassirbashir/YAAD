@@ -3,9 +3,6 @@ import { useAppRouter } from '../router/RouterContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { SITE_CONFIG, getBaseSiteUrl, getAbsoluteCanonicalUrl } from '../config/siteConfig';
-import { FAQS } from '../components/legal/legalContent';
-import { RASHAN_FAQS } from '../components/rashan/rashanData';
-import { BLOG_POSTS } from '../components/legal/blogArticlesData';
 
 /**
  * Helper to get or create a tag in <head>
@@ -348,16 +345,6 @@ export const HeadManager: React.FC = () => {
         ],
       };
     } else if (pageKey === 'help') {
-      // FAQPage Schema using genuine visible FAQs
-      const faqEntities = FAQS.map((faq) => ({
-        '@type': 'Question',
-        name: faq.question[currentLangKey] || faq.question.en,
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: faq.answer[currentLangKey] || faq.answer.en,
-        },
-      }));
-
       structuredData = {
         '@context': 'https://schema.org',
         '@graph': [
@@ -381,11 +368,6 @@ export const HeadManager: React.FC = () => {
             ],
           },
           {
-            '@type': 'FAQPage',
-            '@id': `${absoluteCanonical}#faq`,
-            mainEntity: faqEntities,
-          },
-          {
             '@type': 'WebPage',
             '@id': `${absoluteCanonical}#webpage`,
             name: pageTitle,
@@ -393,9 +375,6 @@ export const HeadManager: React.FC = () => {
             url: absoluteCanonical,
             breadcrumb: {
               '@id': `${absoluteCanonical}#breadcrumb`,
-            },
-            mainEntity: {
-              '@id': `${absoluteCanonical}#faq`,
             },
             isPartOf: {
               '@type': 'WebSite',
@@ -410,16 +389,31 @@ export const HeadManager: React.FC = () => {
           },
         ],
       };
-    } else if (pageKey === 'rashanList') {
-      const faqEntities = RASHAN_FAQS.map((faq) => ({
-        '@type': 'Question',
-        name: faq.question[currentLangKey] || faq.question.en,
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: faq.answer[currentLangKey] || faq.answer.en,
-        },
-      }));
 
+      // Dynamically load FAQ data without bloating initial bundle
+      import('../components/legal/legalContent').then(({ FAQS }) => {
+        const faqEntities = FAQS.map((faq) => ({
+          '@type': 'Question',
+          name: faq.question[currentLangKey] || faq.question.en,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: faq.answer[currentLangKey] || faq.answer.en,
+          },
+        }));
+        const enriched = {
+          ...structuredData,
+          '@graph': [
+            ...structuredData['@graph'],
+            {
+              '@type': 'FAQPage',
+              '@id': `${absoluteCanonical}#faq`,
+              mainEntity: faqEntities,
+            },
+          ],
+        };
+        setJsonLdScript('schema-org-data', enriched);
+      }).catch(() => {});
+    } else if (pageKey === 'rashanList') {
       structuredData = {
         '@context': 'https://schema.org',
         '@graph': [
@@ -443,11 +437,6 @@ export const HeadManager: React.FC = () => {
             ],
           },
           {
-            '@type': 'FAQPage',
-            '@id': `${absoluteCanonical}#faq`,
-            mainEntity: faqEntities,
-          },
-          {
             '@type': 'ItemPage',
             '@id': `${absoluteCanonical}#itempage`,
             name: pageTitle,
@@ -469,31 +458,31 @@ export const HeadManager: React.FC = () => {
           },
         ],
       };
-    } else if (pageKey === 'blog') {
-      const blogPostingEntities = BLOG_POSTS.map((post) => ({
-        '@type': 'BlogPosting',
-        '@id': `${baseUrl}/blog#${post.id}`,
-        headline: post.title.en,
-        name: post.title.en,
-        description: post.summary.en,
-        articleBody: post.directAnswer?.en || post.summary.en,
-        url: `${baseUrl}/blog#${post.id}`,
-        datePublished: '2026-10-01',
-        inLanguage: language === 'ur' ? 'ur' : 'en',
-        author: {
-          '@type': 'Organization',
-          name: 'YAAD Editorial Team',
-          url: `${baseUrl}/about`,
-        },
-        publisher: {
-          '@id': `${baseUrl}/#organization`,
-        },
-        mainEntityOfPage: {
-          '@type': 'WebPage',
-          '@id': `${absoluteCanonical}#webpage`,
-        },
-      }));
 
+      // Dynamically load Rashan FAQs without bloating initial bundle
+      import('../components/rashan/rashanData').then(({ RASHAN_FAQS }) => {
+        const faqEntities = RASHAN_FAQS.map((faq) => ({
+          '@type': 'Question',
+          name: faq.question[currentLangKey] || faq.question.en,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: faq.answer[currentLangKey] || faq.answer.en,
+          },
+        }));
+        const enriched = {
+          ...structuredData,
+          '@graph': [
+            ...structuredData['@graph'],
+            {
+              '@type': 'FAQPage',
+              '@id': `${absoluteCanonical}#faq`,
+              mainEntity: faqEntities,
+            },
+          ],
+        };
+        setJsonLdScript('schema-org-data', enriched);
+      }).catch(() => {});
+    } else if (pageKey === 'blog') {
       structuredData = {
         '@context': 'https://schema.org',
         '@graph': [
@@ -525,7 +514,6 @@ export const HeadManager: React.FC = () => {
             publisher: {
               '@id': `${baseUrl}/#organization`,
             },
-            blogPost: blogPostingEntities,
           },
           {
             '@type': 'WebPage',
@@ -552,6 +540,52 @@ export const HeadManager: React.FC = () => {
           },
         ],
       };
+
+      // Dynamically load blog articles without bloating initial bundle
+      import('../components/legal/blogArticlesData').then(({ BLOG_POSTS }) => {
+        const blogPostingEntities = BLOG_POSTS.map((post) => ({
+          '@type': 'BlogPosting',
+          '@id': `${baseUrl}/blog#${post.id}`,
+          headline: post.title.en,
+          name: post.title.en,
+          description: post.summary.en,
+          articleBody: post.directAnswer?.en || post.summary.en,
+          url: `${baseUrl}/blog#${post.id}`,
+          datePublished: '2026-10-01',
+          inLanguage: language === 'ur' ? 'ur' : 'en',
+          author: {
+            '@type': 'Organization',
+            name: 'YAAD Editorial Team',
+            url: `${baseUrl}/about`,
+          },
+          publisher: {
+            '@id': `${baseUrl}/#organization`,
+          },
+          mainEntityOfPage: {
+            '@type': 'WebPage',
+            '@id': `${absoluteCanonical}#webpage`,
+          },
+        }));
+
+        const enriched = {
+          ...structuredData,
+          '@graph': [
+            ...structuredData['@graph'].filter(node => node['@type'] !== 'Blog'),
+            {
+              '@type': 'Blog',
+              '@id': `${absoluteCanonical}#blog`,
+              name: 'YAAD Editorial & Shopping Guides',
+              description: 'Practical grocery and household shopping knowledge, cognitive memory insights, and list organization guides.',
+              url: absoluteCanonical,
+              publisher: {
+                '@id': `${baseUrl}/#organization`,
+              },
+              blogPost: blogPostingEntities,
+            },
+          ],
+        };
+        setJsonLdScript('schema-org-data', enriched);
+      }).catch(() => {});
     } else if (pageKey === 'about') {
       structuredData = {
         '@context': 'https://schema.org',
