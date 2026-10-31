@@ -273,17 +273,17 @@ export const MiloImage: React.FC<MiloImageProps> = ({
         }
 
         /* 3. Per-Expression Idle Motions (additive on top of breathing wobble) */
-        /* Laughing: continuous gentle shake (0.6s) */
+        /* Laughing: continuous softened gentle shake (0.8s ease-in-out, -3deg to 3deg) */
         @keyframes milo-shake {
           0%, 100% {
-            transform: rotate(-4deg);
+            transform: rotate(-3deg);
           }
           50% {
-            transform: rotate(4deg);
+            transform: rotate(3deg);
           }
         }
         .milo-motion-laughing {
-          animation: milo-shake 0.6s ease-in-out infinite;
+          animation: milo-shake 0.8s ease-in-out infinite;
           transform-origin: center center;
           will-change: transform;
         }
@@ -404,15 +404,17 @@ export const MiloImage: React.FC<MiloImageProps> = ({
             }`}
           />
 
-          {/* Blink Overlay: briefly snaps on top for ~100ms (mid-transition) or ~150ms (idle blink) */}
-          {showBlink && (
-            <img
-              src={blinkSrc}
-              alt="Milo blinking"
-              draggable={false}
-              className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none rounded-full z-20"
-            />
-          )}
+          {/* Blink Overlay: ~80ms opacity crossfade both ways, instant swap under reduced motion */}
+          <img
+            src={blinkSrc}
+            alt="Milo blinking"
+            draggable={false}
+            className="absolute inset-0 w-full h-full object-contain pointer-events-none select-none rounded-full z-20"
+            style={{
+              opacity: showBlink ? 1 : 0,
+              transition: reducedMotion ? 'none' : 'opacity 80ms ease-in-out',
+            }}
+          />
         </div>
       </div>
     </div>

@@ -963,6 +963,20 @@ function AppContent() {
     navigate(`/lists/${targetId}`);
   };
 
+  // Pending lists for Milo companion reminder (Part C: incomplete lists with created timestamp)
+  const getPendingLists = useCallback(() => {
+    return lists
+      .filter((l) => !l.isCompleted && !l.completed)
+      .map((l) => {
+        const ts = l.createdTimestamp || (l.createdAt ? new Date(l.createdAt).getTime() : 0);
+        return {
+          id: l.id,
+          name: l.title || 'Untitled',
+          createdAt: ts,
+        };
+      });
+  }, [lists]);
+
   const handleOpenListDetails = (listOrId: ShoppingList | string) => {
     if (!user) {
       const targetId = typeof listOrId === 'string' ? listOrId : listOrId.id;
@@ -1115,6 +1129,7 @@ function AppContent() {
       navigate('/history');
     }
 
+    triggerMiloEvent('list_deleted');
     await deleteUserShoppingList(user.id, listId);
   };
 
@@ -1125,6 +1140,7 @@ function AppContent() {
     if (activeListId && idSet.has(activeListId)) {
       setActiveListId(null);
     }
+    triggerMiloEvent('list_deleted');
     await deleteMultipleUserShoppingLists(user.id, listIds);
   };
 
@@ -1759,7 +1775,11 @@ function AppContent() {
       )}
 
       {/* Floating Milo Companion Bubble (mini ~64px draggable over all screens) */}
-      <MiloHost variant="mini" />
+      <MiloHost
+        variant="mini"
+        getPendingLists={getPendingLists}
+        onOpenList={handleOpenListInShoppingMode}
+      />
 
       {/* Smart Phone Number Completion Reminder Modal */}
       <PhoneNumberReminderModal

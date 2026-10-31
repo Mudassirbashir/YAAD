@@ -29,6 +29,14 @@ export function triggerMiloEvent(event: MiloTriggerEvent): void {
   );
 }
 
+/**
+ * Returns Milo's default greeting based on local hour.
+ * App opened at night (23:00–06:00 local) greets with 'sleepy'; otherwise 'happy'.
+ */
+export function getDefaultGreeting(hour: number = new Date().getHours()): MiloExpression {
+  return (hour >= 23 || hour < 6) ? 'sleepy' : 'happy';
+}
+
 export interface UseMiloReturn {
   expression: MiloExpression;
   trigger: (event: MiloTriggerEvent) => void;
@@ -37,11 +45,12 @@ export interface UseMiloReturn {
   setSoundEnabled: (enabled: boolean) => void;
 }
 
-export function useMilo(initialExpression: MiloExpression = 'happy'): UseMiloReturn {
-  const [expression, setExpressionState] = useState<MiloExpression>(initialExpression);
+export function useMilo(initialExpression?: MiloExpression): UseMiloReturn {
+  const defaultInitial = initialExpression ?? getDefaultGreeting();
+  const [expression, setExpressionState] = useState<MiloExpression>(defaultInitial);
   const [soundEnabled, setSoundState] = useState<boolean>(() => isMiloSoundEnabled());
 
-  const currentExprRef = useRef<MiloExpression>(initialExpression);
+  const currentExprRef = useRef<MiloExpression>(defaultInitial);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Clear idle timer
@@ -52,7 +61,7 @@ export function useMilo(initialExpression: MiloExpression = 'happy'): UseMiloRet
     }
   }, []);
 
-  // Update expression, play sound (with idle signature blip), and schedule 10s auto-idle if non-idle
+  // Update expression, play sound (with idle signature blip), and schedule auto-idle (2s for sad, 10s for others)
   const setExpression = useCallback(
     (nextExpr: MiloExpression) => {
       clearIdleTimer();
@@ -67,15 +76,16 @@ export function useMilo(initialExpression: MiloExpression = 'happy'): UseMiloRet
         playMiloSound('idle');
       }
 
-      // If not already idle, transition to idle after 10s of no interaction
+      // If not already idle, transition to idle after inactivity (2s for sad, 10s for other emotions)
       if (nextExpr !== 'idle') {
+        const timeoutMs = nextExpr === 'sad' ? 2000 : 10000;
         idleTimerRef.current = setTimeout(() => {
           if (currentExprRef.current !== 'idle') {
             currentExprRef.current = 'idle';
             setExpressionState('idle');
             playMiloSound('idle');
           }
-        }, 10000);
+        }, timeoutMs);
       }
     },
     [clearIdleTimer]
@@ -84,7 +94,10 @@ export function useMilo(initialExpression: MiloExpression = 'happy'): UseMiloRet
   // Event trigger dispatcher
   const trigger = useCallback(
     (event: MiloTriggerEvent) => {
-      const nextExpr = EVENT_EXPRESSION_MAP[event];
+      let nextExpr: MiloExpression = EVENT_EXPRESSION_MAP[event];
+      if (event === 'app_open') {
+        nextExpr = getDefaultGreeting();
+      }
       if (nextExpr) {
         setExpression(nextExpr);
       }
@@ -98,24 +111,25 @@ export function useMilo(initialExpression: MiloExpression = 'happy'): UseMiloRet
     setSoundState(enabled);
   }, []);
 
-  // Initial mount: app open -> 'happy', 10s -> 'idle'
+  // Initial mount: app open -> default greeting, auto-idle after timer
   useEffect(() => {
     // Initial sound & timer
-    if (initialExpression !== 'idle') {
-      playMiloSound(initialExpression);
+    if (defaultInitial !== 'idle') {
+      playMiloSound(defaultInitial);
+      const timeoutMs = defaultInitial === 'sad' ? 2000 : 10000;
       idleTimerRef.current = setTimeout(() => {
         if (currentExprRef.current !== 'idle') {
           currentExprRef.current = 'idle';
           setExpressionState('idle');
           playMiloSound('idle');
         }
-      }, 10000);
+      }, timeoutMs);
     }
 
     return () => {
       clearIdleTimer();
     };
-  }, [initialExpression, clearIdleTimer]);
+  }, [defaultInitial, clearIdleTimer]);
 
   // Pause/resume idle timer on tab visibilitychange (Part E)
   useEffect(() => {
@@ -127,13 +141,14 @@ export function useMilo(initialExpression: MiloExpression = 'happy'): UseMiloRet
       } else {
         if (currentExprRef.current !== 'idle') {
           clearIdleTimer();
+          const timeoutMs = currentExprRef.current === 'sad' ? 2000 : 10000;
           idleTimerRef.current = setTimeout(() => {
             if (currentExprRef.current !== 'idle') {
               currentExprRef.current = 'idle';
               setExpressionState('idle');
               playMiloSound('idle');
             }
-          }, 10000);
+          }, timeoutMs);
         }
       }
     };

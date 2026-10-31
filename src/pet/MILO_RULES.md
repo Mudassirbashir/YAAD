@@ -1,9 +1,10 @@
-# MILO DESIGN LAWS & ARCHITECTURE (LOCKED — v6)
+# MILO DESIGN LAWS & ARCHITECTURE (LOCKED — v7)
 
 Milo is YAAD's interactive companion pet: a golden-yellow, always-circular, fully-furred creature.
 Lightweight, pre-rendered bundled WebP images with 100% offline bundling, zero runtime network requests,
 procedural WebAudio acoustic feedback, smooth animated emotion transitions, interactive gaze,
-action reactions, dedicated "Meet Milo" intro, and visible per-tick micro-reaction satisfaction choreography.
+action reactions, dedicated "Meet Milo" intro, visible per-tick micro-reaction satisfaction choreography,
+and gentle pending-list re-engagement reminders.
 Modeled after the approved "Soft Pro" reference: a touchable, soft, premium pom-pom plush ball.
 
 ---
@@ -26,7 +27,7 @@ Modeled after the approved "Soft Pro" reference: a touchable, soft, premium pom-
 
 ---
 
-## MILO-03: Animated Emotion Transitions (v4/v5 Engine)
+## MILO-03: Animated Emotion Transitions & Buttery Blink Crossfade (v7)
 Expression switches feel like a smooth, lively animated video moment rather than a static crossfade (~350ms total):
 - **Outgoing Image (0–120ms)**:
   - Quick squash: `scaleY 1 → 0.82`, `scaleX 1 → 1.08` over 120ms with `ease-in` while fading to opacity 0.
@@ -35,46 +36,45 @@ Expression switches feel like a smooth, lively animated video moment rather than
 - **Incoming Image (120–350ms)**:
   - Springy pop-in: `scale 0.88 → 1.06 → 1.0` with a subtle wiggle (`rotate -5° → 5° → 0°`) over 230ms.
   - Easing: `cubic-bezier(0.34, 1.56, 0.64, 1)` for organic spring overshoot.
+- **Buttery Blink Crossfade**:
+  - `blink.webp` eyelid overlay applies an organic ~80ms opacity crossfade in and out (`transition: opacity 80ms ease-in-out`).
+  - Completely eliminates harsh frame snapping for both periodic idle blinks and mid-transition blinks.
+  - Under `prefers-reduced-motion`, instantly swaps (`transition: none`) without animation.
 
 ---
 
-## MILO-04: Per-Expression Idle Motion Engine
+## MILO-04: Per-Expression Idle Motion Engine (v7)
 In addition to the base 4s breathing wobble (`scale 1 → 1.03 → 1`, `rotate -2° → 2°`), distinct emotional states feature unique additive physics:
-- **laughing**: Continuous gentle shake — `rotate(-4° → 4°)` loop (0.6s).
+- **laughing**: Continuous softened gentle shake — `rotate(-3° → 3°)` loop (0.8s ease-in-out) — buttery and calm.
 - **excited**: Small bounce — `translateY(0 → -6% → 0)` loop (0.8s).
 - **sleepy**: Slow deep breathing — `scale(1 → 1.05 → 1)` loop (6s).
-- **sad**: Slow side sway — `rotate(-3° → 3°)` loop (3s).
+- **sad**: Slow side sway — `rotate(-3° → 3°)` loop (3s). Automatically returns to `idle` after 2s.
 - **hurrah**: One celebratory jump — `translateY(0 → -12% → 0)` with spring curve each time hurrah becomes active.
 - **all other expressions**: Base 4s breathing wobble only.
 
 ---
 
-## MILO-05: Real App Action Reactions (v5 System)
-Milo actively reacts with dedicated expressions and WebAudio sounds to key actions across the app:
-1. **New list created (success)** (`list_created`):
-   - Expression: `hurrah` (+ celebration jump).
-   - Sound: `hurrah` fanfare.
-   - Wired in: `App.tsx` list creation flows.
-2. **Item added / marked purchased** (`item_purchased`):
-   - Expression: `happy`.
-   - Sound: `happy` 3-note ascending arpeggio.
-   - Wired in: `ShoppingListView.tsx` (completion check & add item) and `AddItemsView.tsx` (add item).
-3. **Settings saved** (`settings_saved`):
-   - Expression: `proud`.
-   - Sound: `proud` warm harmonic two-note chord.
-   - Wired in: `SettingsView.tsx` (profile save, avatar, language, theme, push, sound, and companion toggles).
-4. **Tap elsewhere in app** (`tap_elsewhere`):
-   - Expression: `curious` (only if currently `idle`; never interrupts active `hurrah`, `laughing`, or celebrations).
-   - Sound: Soft `curious` quizzical blip (throttled to max 1 per 800ms).
-   - Wired in: `MiloHost.tsx` global pointer listener.
-5. **Onboarding / signup completed** (`onboarding_complete`):
-   - Expression: `happy`.
-   - Triggers: "Meet Milo" intro modal (if not seen yet).
-   - Wired in: `App.tsx` onboarding and profile setup completion.
+## MILO-05: Complete 12-Emotion Mapping (v7)
+Every single one of Milo's 12 expressions maps to an authentic, verified moment in the YAAD lifecycle:
+
+| Emotion | App Moment | Trigger / Behavior |
+| :--- | :--- | :--- |
+| `idle` | Resting state | Gentle 4s breathing wobble |
+| `happy` | Daytime greeting / items | App open daytime (06:00–23:00); item purchased micro-reaction; onboarding complete |
+| `laughing` | Direct Milo interaction | Tapping Milo bubble triggers softened giggle shake |
+| `excited` | Adding content | Item added to list (`item_added`); list created (`list_created`) |
+| `hurrah` | List completed | Full-screen celebration overlay + 50-particle confetti burst |
+| `proud` | Milestone / settings | Settings saved (`settings_saved`); achievements |
+| `curious` | Attention / focus | Tap elsewhere gaze lean (`tap_elsewhere`); push notification received |
+| `alas` | Pending-list reminder | Gentle "still waiting" face when an incomplete list awaits |
+| `listening` | Typing / adding items | Add-Items view opened (`add_items_opened`, user is about to type) |
+| `sleepy` | Nighttime greeting | App opened at night (23:00–06:00 local time) |
+| `sad` | List deleted | List deleted (`list_deleted`); empathetic soft face for 2s then back to idle |
+| `blink` | Blinking overlay | Eyelid overlay with buttery 80ms opacity fade both ways |
 
 ---
 
-## MILO-06: Interactive Gaze & The No-Auto-Move Hard Rule (v5)
+## MILO-06: Interactive Gaze & The No-Auto-Move Hard Rule
 - **Gaze Directional Lean**:
   - When the user taps anywhere on screen (outside the Milo bubble), Milo calculates the unit vector toward the tap point.
   - Applies a temporary CSS transform on an inner wrapper: translates up to 6px toward the tap and rotates up to 6° in the tap direction.
@@ -88,7 +88,7 @@ Milo actively reacts with dedicated expressions and WebAudio sounds to key actio
 
 ---
 
-## MILO-07: "Meet Milo" Onboarding Intro (v5)
+## MILO-07: "Meet Milo" Onboarding Intro
 - **Component**: `src/pet/MiloIntro.tsx`.
 - **Trigger**: Shown when `onboarding_complete` fires AND `localStorage.getItem('milo-intro-seen') !== '1'`.
 - **Design**:
@@ -103,7 +103,7 @@ Milo actively reacts with dedicated expressions and WebAudio sounds to key actio
 
 ---
 
-## MILO-08: WebAudio Sound Synthesis & Idle Signature (v5 Audit)
+## MILO-08: WebAudio Sound Synthesis & Idle Signature
 - Lazy, safe `AudioContext` initializing strictly after the first user gesture (`hasUserGestured` guard). No startup warnings.
 - **Distinct Recipes per Emotion**:
   - `happy`: 523 -> 659 -> 784 rising arpeggio (C5-E5-G5).
@@ -122,7 +122,7 @@ Milo actively reacts with dedicated expressions and WebAudio sounds to key actio
 ---
 
 ## MILO-09: Always Alive, Even When Idle / Battery-Friendly Lifecycle
-- Milo stays alive continuously while the app is open (blinking every 2.5–5s, per-expression motions, 10s return-to-idle). No "sleep" or "away" state exists.
+- Milo stays alive continuously while the app is open (blinking every 2.5–5s, per-expression motions, return-to-idle timer: 2s for sad, 10s for other emotions). No "sleep" or "away" state exists.
 - **Battery Optimization**:
   - When `document.hidden` (tab backgrounded), idle blink loops and return-to-idle countdowns are paused.
   - Resumed automatically on `visibilitychange`. This is the only pause permitted.
@@ -147,7 +147,7 @@ Milo actively reacts with dedicated expressions and WebAudio sounds to key actio
 
 ---
 
-## MILO-12: Tick Satisfaction Upgrade & Micro-Reactions (v6)
+## MILO-12: Tick Satisfaction Upgrade & Micro-Reactions
 - **Clean Tick Choreography (No Per-Tick Confetti Burst)**:
   - Routine item ticks are clean, tactile, and fast (150–300ms total):
     1. Press down (0ms): tactile scale `0.95x` (150ms) with zero-latency audio dispatch.
@@ -157,17 +157,33 @@ Milo actively reacts with dedicated expressions and WebAudio sounds to key actio
     5. Rising melody (Clear's trick): consecutive ticks within 2000ms advance along the pentatonic scale with anti-fatigue micro-variations.
     6. Untick sound: softer downward-pitched blip (undo).
   - **Deliberate Design Law**: **Zero per-tick confetti particles.** Confetti on every routine tick produces visual noise and animation fatigue. The tick interaction is kept focused and satisfying.
-- **List-Complete Milestone Spectacle (Spectacle Reserved Exclusively for Here)**:
-  - Visual spectacle is strictly reserved for completing the whole list.
+- **List-Complete Milestone Spectacle**:
   - Full-screen celebration overlay features the 50-particle radial celebratory confetti burst.
   - Multi-tone rising acoustic chime (`playCompletionSound()`, 400–600ms) with coordinated haptic pulse `[40, 50, 70]`.
   - Synced to Milo's 240px `hurrah` celebratory jump.
 - **Visible Micro-Reaction Hop on `item_purchased`**:
   - Milo hops vertically: `translateY(0 -> -8% -> 0)` over 400ms (`cubic-bezier(0.25, 1, 0.5, 1)`).
   - Fires an intentional eyelid blink (`blink.webp` flash) + cheerful short chirp sound (`playMiloSound('excited')`).
-  - Completely visible even if Milo already idles at `happy`.
-  - **Streak Throttle**: Capped to maximum 1 hop per 600ms during fast multi-tick streaks (the per-tick sound still plays).
-  - **No-Auto-Move Hard Rule Preserved**: The hop occurs strictly within an inner visual layer; Milo's resting coordinates (`milo-bubble-pos`) never change.
-- **Decoupled from Lottie**:
-  - Checkbox SVG draw, scale pop, and ripple execute independently in SVG/CSS/Motion, completely unblocked by Lottie.
-  - Untick triggers a softer, downward-pitched reverse blip (`playItemUncheckSound()`).
+  - Streak throttle: maximum 1 hop per 600ms during fast multi-tick streaks.
+  - No-auto-move hard rule preserved.
+
+---
+
+## MILO-13: Gentle Pending-List Reminder (v7 Law)
+- **Purpose**: Drives gentle re-engagement and session duration by softly nudging users back to unfinished lists without guilt.
+- **Trigger Conditions**:
+  - Scheduled after a ~5s settle delay upon app mount.
+  - **Age Threshold**: At least one incomplete list created more than 3 hours ago (`Date.now() - createdAt >= 3 * 3600 * 1000`).
+  - **Frequency Cap**: Maximum once per calendar day (`localStorage.getItem('milo-pending-reminder-date') !== YYYY-MM-DD`).
+  - **Conflict Guards**: Never triggers if celebration or onboarding intro is active (`!isCelebrationActive && !isIntroActive`) or if Milo is disabled.
+  - **Priority**: Oldest pending list wins (sorted ascending by `createdAt`).
+- **Visual Presentation**:
+  - Milo switches to `alas` expression (gentle "still waiting" face) and synthesizes the soft `alas` downward sigh blip.
+  - A small, elevated speech bubble anchors above Milo's mini bubble (or below if positioned near top screen margin).
+  - Copy: `Psst… your "X" list is still waiting 🙂` (title truncated to 24 chars).
+  - Includes a quick "X" dismiss button in the bubble header.
+- **Interaction & Dismissal**:
+  - Tapping the speech bubble OR tapping Milo's bubble navigates directly to that list in shopping mode (`onOpenList(id)`) and dismisses the reminder.
+  - Tapping "X" dismisses the speech bubble immediately and returns Milo to idle.
+  - Automatically dismisses after 8 seconds of inactivity.
+  - Date stamp is recorded (`localStorage.setItem('milo-pending-reminder-date', today)`), guaranteeing no repetition that day.

@@ -53,7 +53,10 @@ export type MiloTriggerEvent =
   | 'item_purchased'
   | 'settings_saved'
   | 'tap_elsewhere'
-  | 'onboarding_complete';
+  | 'onboarding_complete'
+  | 'add_items_opened'
+  | 'list_deleted'
+  | 'pending_list_reminder';
 
 export const EVENT_EXPRESSION_MAP: Record<MiloTriggerEvent, MiloExpression> = {
   app_open: 'happy',
@@ -68,6 +71,9 @@ export const EVENT_EXPRESSION_MAP: Record<MiloTriggerEvent, MiloExpression> = {
   settings_saved: 'proud',
   tap_elsewhere: 'curious',
   onboarding_complete: 'happy',
+  add_items_opened: 'listening',
+  list_deleted: 'sad',
+  pending_list_reminder: 'alas',
 };
 
 /**

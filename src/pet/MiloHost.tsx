@@ -15,12 +15,20 @@ import { X, Volume2, VolumeX } from 'lucide-react';
 
 export type MiloHostVariant = 'mini' | 'celebration' | 'hero';
 
+export interface MiloPendingList {
+  id: string;
+  name: string;
+  createdAt: number;
+}
+
 export interface MiloHostProps {
   variant?: MiloHostVariant;
   expression?: MiloExpression;
   onExpressionChange?: (expr: MiloExpression) => void;
   onDismissCelebration?: () => void;
   className?: string;
+  getPendingLists?: () => MiloPendingList[];
+  onOpenList?: (id: string) => void;
 }
 
 
@@ -43,6 +51,15 @@ const CELEBRATION_BURST_PARTICLES = Array.from({ length: 50 }, (_, i) => {
 
 export const STORAGE_BUBBLE_POS_KEY = 'milo-bubble-pos';
 export const STORAGE_MILO_ENABLED_KEY = 'yaad_milo_enabled';
+export const STORAGE_PENDING_REMINDER_DATE_KEY = 'milo-pending-reminder-date';
+
+export function getTodayDateString(): string {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
 interface Position {
   x: number;
@@ -90,6 +107,8 @@ export const MiloHost: React.FC<MiloHostProps> = ({
   onExpressionChange,
   onDismissCelebration,
   className = '',
+  getPendingLists,
+  onOpenList,
 }) => {
   // Global Milo enabled state
   const [enabled, setEnabled] = useState<boolean>(() => isMiloEnabled());
@@ -126,14 +145,14 @@ export const MiloHost: React.FC<MiloHostProps> = ({
   }, []);
 
 
-  // State machine hook
+  // State machine hook - variant celebration uses 'hurrah', otherwise default greeting (sleepy at night, happy in day)
   const {
     expression: hookExpression,
     trigger,
     setExpression,
     isSoundEnabled,
     setSoundEnabled,
-  } = useMilo(variant === 'celebration' ? 'hurrah' : 'happy');
+  } = useMilo(variant === 'celebration' ? 'hurrah' : undefined);
 
   const activeExpression = propExpression || hookExpression;
 
@@ -172,10 +191,103 @@ export const MiloHost: React.FC<MiloHostProps> = ({
     }
   }, [activeExpression, onExpressionChange]);
 
-  // Tap handler: Tapping Milo anywhere -> laughing + giggle + fur impulse
-  const handleMiloTap = useCallback(() => {
-    trigger('tap');
+  // Pending-List Reminder State (Part C)
+  const [pendingReminder, setPendingReminder] = useState<{ id: string; name: string } | null>(null);
+  const reminderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Dismiss pending reminder
+  const dismissPendingReminder = useCallback(() => {
+    if (reminderTimerRef.current) {
+      clearTimeout(reminderTimerRef.current);
+      reminderTimerRef.current = null;
+    }
+    setPendingReminder(null);
+    trigger('inactivity');
   }, [trigger]);
+
+  // Click handler for speech bubble or tapping Milo during active reminder
+  const handleReminderClick = useCallback(() => {
+    if (!pendingReminder) return;
+    const targetId = pendingReminder.id;
+    dismissPendingReminder();
+    if (onOpenList) {
+      onOpenList(targetId);
+    }
+  }, [pendingReminder, dismissPendingReminder, onOpenList]);
+
+  // Check pending lists and trigger reminder if conditions met
+  const checkPendingListReminder = useCallback(() => {
+    if (!getPendingLists) return;
+    if (isCelebrationActive || isIntroActive) return;
+
+    const today = getTodayDateString();
+    try {
+      const lastDate = localStorage.getItem(STORAGE_PENDING_REMINDER_DATE_KEY);
+      if (lastDate === today) return; // Max once per day
+    } catch {}
+
+    const allPending = getPendingLists();
+    if (!allPending || allPending.length === 0) return;
+
+    const now = Date.now();
+    const THREE_HOURS_MS = 3 * 60 * 60 * 1000;
+    const eligible = allPending.filter((l) => {
+      const age = now - l.createdAt;
+      return age >= THREE_HOURS_MS && l.createdAt > 0;
+    });
+
+    if (eligible.length === 0) return;
+
+    // Oldest pending list wins (sort ascending by createdAt)
+    eligible.sort((a, b) => a.createdAt - b.createdAt);
+    const oldest = eligible[0];
+
+    try {
+      localStorage.setItem(STORAGE_PENDING_REMINDER_DATE_KEY, today);
+    } catch {}
+
+    setPendingReminder({
+      id: oldest.id,
+      name: oldest.name,
+    });
+
+    trigger('pending_list_reminder');
+
+    // Auto-dismiss after 8s
+    if (reminderTimerRef.current) clearTimeout(reminderTimerRef.current);
+    reminderTimerRef.current = setTimeout(() => {
+      dismissPendingReminder();
+    }, 8000);
+  }, [getPendingLists, isCelebrationActive, isIntroActive, trigger, dismissPendingReminder]);
+
+  // Settle delay on mount (~5s) before triggering reminder
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      checkPendingListReminder();
+    }, 5000);
+    return () => {
+      clearTimeout(timer);
+      if (reminderTimerRef.current) {
+        clearTimeout(reminderTimerRef.current);
+      }
+    };
+  }, [checkPendingListReminder]);
+
+  // If celebration or intro becomes active, dismiss any active pending reminder
+  useEffect(() => {
+    if ((isCelebrationActive || isIntroActive) && pendingReminder) {
+      dismissPendingReminder();
+    }
+  }, [isCelebrationActive, isIntroActive, pendingReminder, dismissPendingReminder]);
+
+  // Tap handler: Tapping Milo during reminder -> opens list; else laughing + giggle + fur impulse
+  const handleMiloTap = useCallback(() => {
+    if (pendingReminder) {
+      handleReminderClick();
+      return;
+    }
+    trigger('tap');
+  }, [pendingReminder, handleReminderClick, trigger]);
 
   // Dismiss celebration overlay (auto or manual)
   const dismissCelebration = useCallback(() => {
@@ -598,6 +710,56 @@ export const MiloHost: React.FC<MiloHostProps> = ({
           } ${className}`}
           aria-label={`Floating Milo Companion (${activeExpression})`}
         >
+          {/* Gentle Pending-List Reminder Speech Bubble (Part C) */}
+          {pendingReminder && (
+            <div
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleReminderClick();
+              }}
+              style={{
+                width: 'max-content',
+                maxWidth: '240px',
+              }}
+              className={`absolute ${
+                bubblePos.y < 120 ? 'top-full mt-2' : 'bottom-full mb-2'
+              } ${
+                bubblePos.x > 180 ? 'right-0' : 'left-0'
+              } z-50 p-2.5 rounded-2xl bg-surface-container-highest/95 backdrop-blur-md shadow-xl border border-white/20 text-on-surface cursor-pointer select-none transition-all hover:scale-102`}
+              role="status"
+              aria-live="polite"
+              aria-label="Pending list reminder"
+            >
+              <div className="flex items-start gap-1.5">
+                <p className="text-xs font-medium text-on-surface leading-snug flex-1 select-none">
+                  Psst… your "{pendingReminder.name.length > 24 ? `${pendingReminder.name.slice(0, 24)}…` : pendingReminder.name}" list is still waiting 🙂
+                </p>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    dismissPendingReminder();
+                  }}
+                  className="p-1 -mr-1 -mt-1 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors pointer-events-auto"
+                  aria-label="Dismiss reminder"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              {/* Bubble pointer caret */}
+              <div
+                className={`absolute w-2 h-2 bg-surface-container-highest/95 rotate-45 border-white/20 ${
+                  bubblePos.y < 120
+                    ? '-top-1 border-t border-l'
+                    : '-bottom-1 border-b border-r'
+                } ${
+                  bubblePos.x > 180 ? 'right-6' : 'left-6'
+                }`}
+              />
+            </div>
+          )}
+
           {/* Gaze Lean Wrapper (Part B): temporary lean up to 6px / 6deg toward tap, eased out in 600ms */}
           <div
             style={{

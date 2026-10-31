@@ -160,6 +160,11 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
   const lastActionTimestampRef = useRef<number>(0);
   const lastAddedKeyRef = useRef<string>('');
 
+  // Trigger Milo listening expression on AddItemsView mount (user is about to type)
+  useEffect(() => {
+    triggerMiloEvent('add_items_opened');
+  }, []);
+
   // Synchronize items with parent
   const updateItems = (newItems: ShoppingItem[]) => {
     setItems(newItems);

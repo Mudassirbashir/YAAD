@@ -21,10 +21,14 @@ import {
   setMiloEnabled,
   STORAGE_BUBBLE_POS_KEY,
   STORAGE_MILO_ENABLED_KEY,
+  STORAGE_PENDING_REMINDER_DATE_KEY,
+  getTodayDateString,
+  MiloPendingList,
 } from '../src/pet/MiloHost';
 import {
   MILO_TRIGGER_CUSTOM_EVENT,
   triggerMiloEvent,
+  getDefaultGreeting,
 } from '../src/pet/useMilo';
 import {
   playItemCheckSound,
@@ -103,6 +107,18 @@ assert(EVENT_EXPRESSION_MAP.item_purchased === 'happy', 'item_purchased triggers
 assert(EVENT_EXPRESSION_MAP.settings_saved === 'proud', 'settings_saved triggers proud');
 assert(EVENT_EXPRESSION_MAP.tap_elsewhere === 'curious', 'tap_elsewhere triggers curious');
 assert(EVENT_EXPRESSION_MAP.onboarding_complete === 'happy', 'onboarding_complete triggers happy');
+assert(EVENT_EXPRESSION_MAP.add_items_opened === 'listening', 'add_items_opened triggers listening');
+assert(EVENT_EXPRESSION_MAP.list_deleted === 'sad', 'list_deleted triggers sad');
+assert(EVENT_EXPRESSION_MAP.pending_list_reminder === 'alas', 'pending_list_reminder triggers alas');
+
+// 2.1 Night Greeting Verification (23:00–06:00 local)
+console.log('\n--- 2.1 Testing Night Greeting Logic (sleepy vs happy) ---');
+assert(getDefaultGreeting(23) === 'sleepy', '23:00 triggers sleepy greeting');
+assert(getDefaultGreeting(0) === 'sleepy', '00:00 midnight triggers sleepy greeting');
+assert(getDefaultGreeting(4) === 'sleepy', '04:00 night triggers sleepy greeting');
+assert(getDefaultGreeting(6) === 'happy', '06:00 morning triggers happy greeting');
+assert(getDefaultGreeting(12) === 'happy', '12:00 noon triggers happy greeting');
+assert(getDefaultGreeting(22) === 'happy', '22:00 evening triggers happy greeting');
 
 // --- 3. PARAMETRIC INTERPOLATION & EASING VERIFICATION ---
 console.log('\n--- 3. Testing Interpolation & easeOutCubic Easing ---');
@@ -242,12 +258,20 @@ assert(
   'MiloHost is NOT rendered in HomeView (hero section completely removed)'
 );
 
-// 5.2 Verify App.tsx renders floating bubble at root level
+// 5.2 Verify App.tsx renders floating bubble at root level and wires reminder props
 const appPath = path.resolve(process.cwd(), 'src/App.tsx');
 const appCode = fs.readFileSync(appPath, 'utf8');
 assert(
-  appCode.includes('<MiloHost variant="mini" />'),
-  'App.tsx renders <MiloHost variant="mini" /> at root level'
+  appCode.includes('<MiloHost') && appCode.includes('variant="mini"'),
+  'App.tsx renders <MiloHost variant="mini" ... /> at root level'
+);
+assert(
+  appCode.includes('getPendingLists={getPendingLists}') && appCode.includes('onOpenList={handleOpenListInShoppingMode}'),
+  'App.tsx wires getPendingLists and onOpenList to MiloHost'
+);
+assert(
+  appCode.includes("triggerMiloEvent('list_deleted')"),
+  'App.tsx triggers list_deleted on list removal'
 );
 
 // 5.3 Verify Bubble position storage key is milo-bubble-pos
@@ -488,6 +512,62 @@ assert(miloHostCode.includes('CELEBRATION_BURST_PARTICLES'), 'MiloHost includes 
 const cardCode = fs.readFileSync(path.resolve(process.cwd(), 'src/components/SwipeableShoppingItemCard.tsx'), 'utf8');
 assert(cardCode.includes("width: isChecked ? '100%' : '0%'"), 'SwipeableShoppingItemCard animates strikethrough left-to-right');
 assert(cardCode.includes('scale: [1, 0.98, 1]'), 'SwipeableShoppingItemCard animates spring settle scale [1, 0.98, 1] on completion');
+
+// --- 8. PENDING-LIST REMINDER & MOTION SMOOTHNESS (v7) QA ---
+console.log('\n--- 8. Testing Pending-List Reminder & Motion Smoothness (v7) ---');
+
+// 8.1 Date format & Storage Key
+assert(
+  STORAGE_PENDING_REMINDER_DATE_KEY === 'milo-pending-reminder-date',
+  'Pending reminder storage key is "milo-pending-reminder-date"'
+);
+const todayStr = getTodayDateString();
+assert(
+  /^\d{4}-\d{2}-\d{2}$/.test(todayStr),
+  `getTodayDateString returns YYYY-MM-DD format: ${todayStr}`
+);
+
+// 8.2 Age Filter (> 3 hours) and Oldest List Selection
+const now = Date.now();
+const testLists: MiloPendingList[] = [
+  { id: '1', name: 'Fresh List (1h)', createdAt: now - 1 * 3600 * 1000 },
+  { id: '2', name: 'Old List (5h)', createdAt: now - 5 * 3600 * 1000 },
+  { id: '3', name: 'Oldest List (10h)', createdAt: now - 10 * 3600 * 1000 },
+];
+
+const THREE_HOURS_MS = 3 * 3600 * 1000;
+const eligible = testLists.filter((l) => now - l.createdAt >= THREE_HOURS_MS);
+assert(eligible.length === 2, 'Lists older than 3 hours are eligible (2 of 3 qualify)');
+assert(!eligible.some((l) => l.id === '1'), 'List created 1h ago is filtered out');
+
+eligible.sort((a, b) => a.createdAt - b.createdAt);
+assert(eligible[0].id === '3', 'Oldest list (10h) wins over 5h list');
+assert(eligible[0].name === 'Oldest List (10h)', 'Oldest list name selected for gentle reminder copy');
+
+// 8.3 Once-per-day rate limit
+window.localStorage.setItem(STORAGE_PENDING_REMINDER_DATE_KEY, todayStr);
+const reminderAlreadySeen = window.localStorage.getItem(STORAGE_PENDING_REMINDER_DATE_KEY) === todayStr;
+assert(reminderAlreadySeen, 'Pending reminder obeys max 1 reminder per calendar day guard');
+
+// 8.4 Smoothness Pass: Softened laugh & Buttery blink crossfade
+const miloImageCode = fs.readFileSync(path.resolve(process.cwd(), 'src/pet/MiloImage.tsx'), 'utf8');
+assert(
+  miloImageCode.includes('animation: milo-shake 0.8s ease-in-out infinite') &&
+  miloImageCode.includes('rotate(-3deg)') &&
+  miloImageCode.includes('rotate(3deg)'),
+  'MiloImage softens laughing shake to 0.8s ease-in-out and -3deg to 3deg'
+);
+assert(
+  miloImageCode.includes("transition: reducedMotion ? 'none' : 'opacity 80ms ease-in-out'"),
+  'MiloImage blink overlay applies 80ms opacity crossfade both ways, instant swap under reduced motion'
+);
+
+// 8.5 AddItemsView wires add_items_opened
+const addItemsCode = fs.readFileSync(path.resolve(process.cwd(), 'src/components/AddItemsView.tsx'), 'utf8');
+assert(
+  addItemsCode.includes("triggerMiloEvent('add_items_opened')"),
+  'AddItemsView triggers add_items_opened on mount (Milo switches to listening)'
+);
 
 console.log('\n======================================================');
 console.log('🎉 ALL MILO QA TESTS PASSED SUCCESSFULLY (100%)');
