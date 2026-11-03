@@ -112,7 +112,7 @@ async function runCatalogImageLibrarySuite() {
 
   const iconUrl = buildCatalogImageUrl('yaad-catalog/veg_potato', 'icon');
   const expectedIconUrl =
-    'https://res.cloudinary.com/rvhmsppk/image/upload/c_pad,b_white,w_96,h_96,f_auto,q_auto/yaad-catalog/veg_potato';
+    'https://res.cloudinary.com/rvhmsppk/image/upload/c_pad,w_96,h_96,f_auto,q_auto/yaad-catalog/veg_potato';
   assert.strictEqual(
     iconUrl,
     expectedIconUrl,
@@ -121,14 +121,14 @@ async function runCatalogImageLibrarySuite() {
 
   const largeUrl = buildCatalogImageUrl('yaad-catalog/veg_potato', 'large');
   const expectedLargeUrl =
-    'https://res.cloudinary.com/rvhmsppk/image/upload/c_pad,b_white,w_600,h_600,f_auto,q_auto/yaad-catalog/veg_potato';
+    'https://res.cloudinary.com/rvhmsppk/image/upload/c_pad,w_600,h_600,f_auto,q_auto/yaad-catalog/veg_potato';
   assert.strictEqual(
     largeUrl,
     expectedLargeUrl,
     `Large URL format mismatch.\nExpected: ${expectedLargeUrl}\nGot:      ${largeUrl}`
   );
 
-  console.log('  ✅ Workstream D1 delivery URL transformations verified (c_pad,b_white,f_auto,q_auto)');
+  console.log('  ✅ Workstream D1 delivery URL transformations verified (c_pad,f_auto,q_auto — no b_white; transparency preserved per 2026-11-02 owner rule)');
 
   // =========================================================================
   // WORKSTREAM C: App Display Precedence & Component Rendering

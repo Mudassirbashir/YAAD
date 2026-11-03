@@ -52,7 +52,7 @@ async function runCategoryBrowserModalSuite() {
 
     // 3. Verify that Apple renders an <img> tag pointing to the catalog delivery URL
     const expectedAppleImageDeliveryUrl =
-      'https://res.cloudinary.com/rvhmsppk/image/upload/c_pad,b_white,w_96,h_96,f_auto,q_auto/yaad-catalog/fruit_apple';
+      'https://res.cloudinary.com/rvhmsppk/image/upload/c_pad,w_96,h_96,f_auto,q_auto/yaad-catalog/fruit_apple';
 
     assert(
       renderedHtml.includes(expectedAppleImageDeliveryUrl),

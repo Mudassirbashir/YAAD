@@ -119,6 +119,13 @@ class SupabaseCatalogService {
   private items: MasterCatalogItem[] = INITIAL_MASTER_CATALOG;
   private version = 0;
   private listeners: Set<() => void> = new Set();
+  // Live sync: Supabase Realtime on the master `items` table + a 45s version-poll
+  // fallback (realtime needs the table in the supabase_realtime publication; if it
+  // is not, the poll still picks changes up within a minute).
+  private realtimeChannel: any = null;
+  private pollTimer: ReturnType<typeof setInterval> | null = null;
+  private lastSeenUpdatedAt = 0;
+  private lastPollSync = 0;
 
   public getVersion(): number {
     return this.version;
@@ -154,6 +161,57 @@ class SupabaseCatalogService {
     this.items = INITIAL_MASTER_CATALOG;
     defaultCatalogSearchEngine.indexItems(INITIAL_MASTER_CATALOG);
     this.notifyListeners();
+  }
+
+  /**
+   * Starts live catalog sync: realtime subscription on `items` plus a 45s
+   * max(updated_at) poll fallback. Syncs at most once per 30s; offline keeps cache.
+   * Admin uploads bump `updated_at` (persistAuthoritativeCatalogProduct), so an
+   * admin image change reaches open apps within seconds.
+   */
+  public startLiveSync(): void {
+    if (typeof window === 'undefined' || !supabase) return;
+    if (this.realtimeChannel || this.pollTimer) return;
+    try {
+      this.realtimeChannel = supabase
+        .channel('yaad-catalog-items')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'items' }, () => {
+          this.syncFromSupabase().catch(() => { /* keep cache on failure */ });
+        })
+        .subscribe();
+    } catch { /* realtime unavailable; poll covers it */ }
+    this.pollTimer = setInterval(() => {
+      void this.pollForUpdates();
+    }, 45 * 1000);
+  }
+
+  public stopLiveSync(): void {
+    try {
+      if (this.realtimeChannel && supabase) void supabase.removeChannel(this.realtimeChannel);
+    } catch { /* ignore */ }
+    this.realtimeChannel = null;
+    if (this.pollTimer) clearInterval(this.pollTimer);
+    this.pollTimer = null;
+  }
+
+  private async pollForUpdates(): Promise<void> {
+    const now = Date.now();
+    if (now - this.lastPollSync < 30 * 1000) return; // never refetch more than once/30s
+    if (!supabase || typeof navigator !== 'undefined' && !navigator.onLine) return;
+    try {
+      const { data } = await supabase
+        .from('items')
+        .select('updated_at')
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const latest = data?.updated_at ? new Date(data.updated_at).getTime() : 0;
+      if (latest > this.lastSeenUpdatedAt) {
+        this.lastSeenUpdatedAt = latest;
+        this.lastPollSync = now;
+        await this.syncFromSupabase();
+      }
+    } catch { /* offline: serve cache, sync on reconnect */ }
   }
 
   /**
@@ -199,6 +257,12 @@ class SupabaseCatalogService {
     this.syncFromSupabase().catch(() => {
       // Silently continue with local seed items on offline or unconfigured instances
     });
+
+    // 4. Live sync: realtime + 45s poll so admin changes land within seconds
+    // (initialize() is guarded by hasInitialized, so this runs once per page load).
+    try {
+      this.startLiveSync();
+    } catch { /* non-fatal */ }
   }
 
   /**

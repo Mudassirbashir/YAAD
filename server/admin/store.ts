@@ -3127,6 +3127,21 @@ class AdminStore {
     if (!this.db.settings) this.db.settings = {};
     this.db.settings.autoPublishEnabled = enabled;
     this.save();
+    // Persist authoritatively: local save() is a no-op on serverless (read-only FS),
+    // so the toggle would silently revert on production without this.
+    setAuthoritativeSetting('auto_publish_enabled', enabled).catch(() => null);
+  }
+
+  /**
+   * Authoritative enabled check: Supabase admin_settings first, local fallback.
+   * Use this on every publish path so the owner's toggle is honored on production.
+   */
+  public async isAutoPublishEnabledAsync(): Promise<boolean> {
+    try {
+      const v = await getAuthoritativeSetting<boolean>('auto_publish_enabled');
+      if (v !== null && v !== undefined) return Boolean(v);
+    } catch { /* fall back to local */ }
+    return this.isAutoPublishEnabled();
   }
 
   public recordAutoPublishRun(slug?: string, status?: string): void {
@@ -3137,14 +3152,37 @@ class AdminStore {
     this.save();
   }
 
-  public getAutoPublishStatus() {
+  /**
+   * Honest auto-publish status. "Last run" is derived from the real shared audit log
+   * (Supabase-backed on production), not the local settings row (which does not persist
+   * on serverless). Two separate secret badges: a saved secret vs Vercel actually sending
+   * the cron auth header (which requires the EXACT name CRON_SECRET).
+   */
+  public async getAutoPublishStatusAsync() {
+    const enabled = await this.isAutoPublishEnabledAsync();
+    const cronSecretSaved = Boolean(process.env.CRON_SECRET || process.env.cron_secret);
+    const vercelAutoHeader = Boolean(process.env.CRON_SECRET);
+    let lastAuto: { at: number | null; slug: string | null; status: string | null } = {
+      at: null, slug: null, status: null,
+    };
+    try {
+      const res = await this.getAuditLogsAsync({ action: 'auto_publish', limit: 5 });
+      const latest = (res?.logs || []).find((l: any) => l?.metadata?.status === 'published');
+      if (latest) {
+        lastAuto = { at: latest.timestamp || null, slug: latest.metadata?.slug || null, status: 'published' };
+      }
+    } catch { /* best-effort */ }
     return {
-      enabled: this.isAutoPublishEnabled(),
-      nextRun: "daily 8:00 AM PKT (03:00 UTC) via Vercel Cron",
-      lastRunAt: this.db.settings?.lastAutoPublishAt || null,
-      lastRunSlug: this.db.settings?.lastAutoPublishSlug || null,
-      lastRunStatus: this.db.settings?.lastAutoPublishStatus || null,
-      cronSecretConfigured: Boolean(process.env.CRON_SECRET || process.env.cron_secret),
+      enabled,
+      nextRun: vercelAutoHeader
+        ? 'daily 8:00 AM PKT (03:00 UTC) via Vercel Cron'
+        : 'daily after 8:00 AM PKT — automatic on first site traffic (no setup needed)',
+      lastRunAt: lastAuto.at,
+      lastRunSlug: lastAuto.slug,
+      lastRunStatus: lastAuto.status,
+      cronSecretConfigured: cronSecretSaved,
+      cronSecretSaved,
+      vercelAutoHeader,
       deployHookConfigured: Boolean(process.env.DEPLOY_HOOK_URL || process.env.deploy_hook_url),
     };
   }
@@ -3698,6 +3736,210 @@ class AdminStore {
     };
   }
 
+  /**
+   * PKT calendar date (YYYY-MM-DD). Pakistan is UTC+5 with no DST.
+   */
+  private pktToday(): string {
+    return new Date(Date.now() + 5 * 3600 * 1000).toISOString().slice(0, 10);
+  }
+
+  /**
+   * Shared publish-candidate ordering: priority ASC, then oldest first.
+   */
+  private sortPublishCandidates(list: any[]): any[] {
+    return [...list].sort((a, b) => {
+      const p = (a.priority ?? 0) - (b.priority ?? 0);
+      if (p !== 0) return p;
+      return (a.createdAt || 0) - (b.createdAt || 0);
+    });
+  }
+
+  /**
+   * ONE shared publish candidate selector (sync, local db).
+   * Scheduled-due articles first (backward compatible), then oldest draft_ready.
+   */
+  public selectNextPublishCandidates(limit: number = 1): any[] {
+    const all = this.db.cmsArticles || [];
+    const today = this.pktToday();
+    const scheduledDue = this.sortPublishCandidates(
+      all.filter((a) => a.status === 'draft' && a.queueStatus === 'scheduled' && a.publishDate && a.publishDate <= today)
+    );
+    const ready = this.sortPublishCandidates(
+      all.filter((a) => a.status === 'draft' && a.queueStatus === 'draft_ready')
+    );
+    return [...scheduledDue, ...ready].slice(0, Math.max(0, limit));
+  }
+
+  /**
+   * Supabase-backed variant of the selector (authoritative on production),
+   * falls back to the local store when the shared read is unavailable.
+   */
+  public async selectNextPublishCandidatesAsync(limit: number = 1): Promise<any[]> {
+    try {
+      const res = await this.getCmsArticlesAsync({ status: 'all' });
+      const all = res?.articles || [];
+      if (all.length > 0) {
+        const today = this.pktToday();
+        const scheduledDue = this.sortPublishCandidates(
+          all.filter((a: any) => a.status === 'draft' && a.queueStatus === 'scheduled' && a.publishDate && a.publishDate <= today)
+        );
+        const ready = this.sortPublishCandidates(
+          all.filter((a: any) => a.status === 'draft' && a.queueStatus === 'draft_ready')
+        );
+        return [...scheduledDue, ...ready].slice(0, Math.max(0, limit));
+      }
+    } catch { /* fall through to local */ }
+    return this.selectNextPublishCandidates(limit);
+  }
+
+  private autoPublishRunning = false;
+
+  /**
+   * Unified daily auto-publish engine. The Vercel cron endpoint, the lazy traffic
+   * trigger, and the manual "Upload Today's Articles" button ALL run through this.
+   * - Concurrency-guarded (in-memory flag; best-effort on serverless)
+   * - Idempotent per PKT calendar day via the shared audit log (Supabase-backed).
+   *   The 'manual' source bypasses the daily idempotency so the owner can always
+   *   publish on demand; 'cron' and 'lazy' respect it.
+   * - Every candidate is gate-checked; failures go to needs_review (max ~3 attempts)
+   * - Fires the deploy hook after any publish so prerender + sitemap regenerate
+   */
+  public async runDailyAutoPublish(source: 'cron' | 'lazy' | 'manual', limit: number = 1): Promise<{
+    status: 'published' | 'already_run_today' | 'already_running' | 'disabled' | 'idle';
+    published: Array<{ id: string; title: string; slug: string; url: string }>;
+    blocked: Array<{ id: string; title: string; slug: string; reasons: string[] }>;
+    errors: string[];
+    reason?: string;
+  }> {
+    const empty = (status: 'published' | 'already_run_today' | 'already_running' | 'disabled' | 'idle', reason?: string) => ({
+      status, published: [] as Array<{ id: string; title: string; slug: string; url: string }>,
+      blocked: [] as Array<{ id: string; title: string; slug: string; reasons: string[] }>,
+      errors: [] as string[], reason,
+    });
+    if (this.autoPublishRunning) return empty('already_running', 'another publish run is in progress');
+    if (!(await this.isAutoPublishEnabledAsync())) return empty('disabled', 'auto_publish_disabled_in_settings');
+    this.autoPublishRunning = true;
+    const errors: string[] = [];
+    try {
+      const todayPkt = this.pktToday();
+      // Idempotency for automatic sources (cron/lazy). Manual bypasses it.
+      if (source !== 'manual') {
+        try {
+          const logsRes = await this.getAuditLogsAsync({ action: 'auto_publish', limit: 10 });
+          const already = (logsRes?.logs || []).some((log: any) => {
+            if (!log?.timestamp || log.metadata?.status !== 'published') return false;
+            const pktDate = new Date(new Date(log.timestamp).getTime() + 5 * 3600 * 1000).toISOString().slice(0, 10);
+            return pktDate === todayPkt;
+          });
+          if (already) return empty('already_run_today');
+        } catch { /* idempotency best-effort; continue */ }
+      }
+
+      // Full article list once (candidates + gate slug-uniqueness set).
+      let allArticles: any[] = [];
+      try {
+        const res = await this.getCmsArticlesAsync({ status: 'all' });
+        allArticles = res?.articles || [];
+      } catch { /* fallback below */ }
+      if (!allArticles.length) allArticles = this.db.cmsArticles || [];
+      const allKnownSlugs = new Set(allArticles.map((a: any) => a.slug));
+      const pool = this.sortPublishCandidates(allArticles.filter((a: any) =>
+        a.status === 'draft' && (
+          a.queueStatus === 'draft_ready' ||
+          (a.queueStatus === 'scheduled' && a.publishDate && a.publishDate <= todayPkt)
+        )
+      ));
+      // Scheduled-due ahead of draft_ready within the pool.
+      pool.sort((a: any, b: any) => {
+        const sa = a.queueStatus === 'scheduled' ? 0 : 1;
+        const sb = b.queueStatus === 'scheduled' ? 0 : 1;
+        if (sa !== sb) return sa - sb;
+        const p = (a.priority ?? 0) - (b.priority ?? 0);
+        if (p !== 0) return p;
+        return (a.createdAt || 0) - (b.createdAt || 0);
+      });
+
+      const want = Math.max(limit, 1);
+      const attempts = pool.slice(0, want + 2); // small buffer for gate failures
+      if (attempts.length === 0) {
+        const ideas = allArticles.filter((a: any) => a.status === 'draft' && a.queueStatus === 'idea').length;
+        const ready = allArticles.filter((a: any) => a.status === 'draft' && a.queueStatus === 'draft_ready').length;
+        this.recordAutoPublishRun(undefined, 'idle');
+        return empty('idle', `Nothing to publish — ${ideas} ideas still need writing (titles only), ${ready} draft_ready.`);
+      }
+
+      const published: Array<{ id: string; title: string; slug: string; url: string }> = [];
+      const blocked: Array<{ id: string; title: string; slug: string; reasons: string[] }> = [];
+      const now = Date.now();
+      const actor = `system_auto_publish_${source}`;
+      for (const candidate of attempts) {
+        if (published.length >= want) break;
+        const gateResult = validateArticleSeoGate(candidate, allKnownSlugs);
+        if (gateResult.passed) {
+          try {
+            const updated = await this.saveCmsArticleAsync({
+              id: candidate.id,
+              status: 'published',
+              queueStatus: 'published',
+              publishedAt: now,
+            }, actor);
+            this.writeAuditLog({
+              adminId: actor,
+              adminEmail: `${source}@yaadapppk.vercel.app`,
+              action: 'auto_publish',
+              targetType: 'cms_article',
+              targetId: updated.id,
+              metadata: {
+                articleId: updated.id,
+                slug: updated.slug,
+                title: updated.title,
+                wordCount: updated.wordCount,
+                listItemsCount: updated.listItems?.length || 0,
+                status: 'published',
+                publishedAt: now,
+                source,
+              },
+            });
+            this.recordAutoPublishRun(updated.slug, 'published');
+            published.push({ id: updated.id, title: updated.title, slug: updated.slug, url: `/blog/${updated.slug}` });
+          } catch (err: any) {
+            errors.push(`Failed to publish ${candidate.slug}: ${err?.message || 'unknown error'}`);
+          }
+        } else {
+          try {
+            await this.saveCmsArticleAsync({
+              id: candidate.id,
+              queueStatus: 'needs_review',
+              needsReviewReasons: gateResult.errors,
+            }, actor);
+          } catch (err: any) {
+            errors.push(`Failed to mark ${candidate.slug} needs_review: ${err?.message || 'unknown error'}`);
+          }
+          blocked.push({ id: candidate.id, title: candidate.title, slug: candidate.slug, reasons: gateResult.errors });
+        }
+      }
+
+      if (published.length > 0) {
+        try { this.regenerateSitemap(); } catch { /* best-effort */ }
+        const deployHookUrl = process.env.DEPLOY_HOOK_URL || process.env.deploy_hook_url;
+        if (deployHookUrl) {
+          fetch(deployHookUrl, { method: 'POST' })
+            .then((r) => console.log('[AutoPublish] Triggered deploy hook:', r.status))
+            .catch((err) => console.error('[AutoPublish] Failed to trigger deploy hook:', err));
+        }
+      } else if (blocked.length === 0 && errors.length === 0) {
+        this.recordAutoPublishRun(undefined, 'idle');
+      }
+      return {
+        status: published.length > 0 ? 'published' : 'idle',
+        published, blocked, errors,
+        reason: published.length === 0 && blocked.length > 0 ? 'All candidates blocked by the SEO gate.' : undefined,
+      };
+    } finally {
+      this.autoPublishRunning = false;
+    }
+  }
+
   public async publishTodayArticlesAsync(options?: { targetDate?: string; limit?: number }): Promise<{
     success: boolean;
     targetDate: string;
@@ -3708,84 +3950,26 @@ class AdminStore {
     totalBlocked: number;
     persistedCount: number;
     errors: string[];
+    remainingInQueue: number;
+    emptyReason?: string;
   }> {
-    if (!this.db.cmsArticles) this.db.cmsArticles = [];
-    const targetDate = options?.targetDate || new Date().toISOString().split('T')[0];
-    const limit = options?.limit !== undefined ? options.limit : 2;
-
-    const candidates = this.db.cmsArticles
-      .filter((a) => a.publishDate === targetDate && a.queueStatus === 'scheduled')
-      .sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0))
-      .slice(0, limit);
-
-    const published: Array<{ id: string; title: string; slug: string; url: string }> = [];
-    const blocked: Array<{ id: string; title: string; slug: string; reasons: string[] }> = [];
-    const allKnownSlugs = new Set(this.db.cmsArticles.map((a) => a.slug));
-    const now = Date.now();
-
-    for (const article of candidates) {
-      const gateResult = validateArticleSeoGate(article, allKnownSlugs);
-      if (gateResult.passed) {
-        article.status = 'published';
-        article.publishedAt = now;
-        article.queueStatus = 'published';
-        article.needsReviewReasons = [];
-        article.updatedAt = now;
-        published.push({
-          id: article.id,
-          title: article.title,
-          slug: article.slug,
-          url: `/blog/${article.slug}`,
-        });
-      } else {
-        article.queueStatus = 'needs_review';
-        article.needsReviewReasons = gateResult.errors;
-        article.updatedAt = now;
-        blocked.push({
-          id: article.id,
-          title: article.title,
-          slug: article.slug,
-          reasons: gateResult.errors,
-        });
-      }
-    }
-
-    if (candidates.length > 0) {
-      this.save();
-    }
-
-    if (published.length > 0) {
-      this.regenerateSitemap();
-    }
-
-    let persistedCount = 0;
-    const errors: string[] = [];
-    if (candidates.length > 0) {
-      const persistResults = await Promise.allSettled(
-        candidates.map((art) => persistSharedCmsArticle(art))
-      );
-      persistResults.forEach((res, idx) => {
-        if (res.status === 'fulfilled' && res.value.success) {
-          persistedCount++;
-        } else {
-          const errMsg = res.status === 'rejected' ? res.reason?.message : res.value.error;
-          const msg = `Failed to persist article ${candidates[idx].slug}: ${errMsg || 'Unknown error'}`;
-          console.error(`[CMS PublishToday] ${msg}`);
-          errors.push(msg);
-        }
-      });
-    }
-
+    const limit = options?.limit !== undefined ? Number(options.limit) || 2 : 2;
+    const targetDate = options?.targetDate || this.pktToday();
+    // The manual button always runs on demand (bypasses the daily idempotency).
+    const result = await this.runDailyAutoPublish('manual', limit);
+    const remaining = (await this.selectNextPublishCandidatesAsync(1000)).length;
     return {
-      success: errors.length === 0,
+      success: result.errors.length === 0,
       targetDate,
-      published,
-      blocked,
-      totalAttempted: candidates.length,
-      totalPublished: published.length,
-      totalBlocked: blocked.length,
-      persistedCount,
-      errors,
+      published: result.published,
+      blocked: result.blocked,
+      totalAttempted: result.published.length + result.blocked.length,
+      totalPublished: result.published.length,
+      totalBlocked: result.blocked.length,
+      persistedCount: result.published.length + result.blocked.length,
+      errors: result.errors,
+      remainingInQueue: remaining,
+      emptyReason: result.status === 'idle' ? result.reason : undefined,
     };
   }
 

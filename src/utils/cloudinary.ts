@@ -47,17 +47,22 @@ export const OFFICIAL_CLOUDINARY_UPLOAD_PRESET = 'yaad_preset';
 
 /**
  * Builds Cloudinary delivery URL for admin-managed master catalog item images.
- * Library standard: c_pad,b_white creates a uniform square canvas with white background padding,
- * f_auto,q_auto delivers automatic modern format (WebP/AVIF) and quality optimization in KBs.
+ * Library standard: c_pad creates a uniform square canvas; NO background fill is forced,
+ * so transparent source images (e.g. thiings.co 3D icons) keep their transparency in
+ * admin AND app (owner rule 2026-11-02, supersedes the old pure-white rule).
+ * f_auto,q_auto delivers automatic modern format (WebP/AVIF, alpha preserved) and quality optimization in KBs.
  */
 export function buildCatalogImageUrl(publicId: string, variant: 'icon' | 'large'): string {
   if (!publicId) return '';
   const cleanId = publicId.replace(/^\/+/, '');
   const cloud = OFFICIAL_CLOUDINARY_CLOUD_NAME;
+  // NOTE (2026-11-03): no b_white — transparent source images (e.g. thiings.co 3D icons)
+  // must keep their transparency in admin AND app. f_auto serves WebP/AVIF with
+  // alpha preserved; white-background photos look unchanged.
   const transform =
     variant === 'icon'
-      ? 'c_pad,b_white,w_96,h_96,f_auto,q_auto'
-      : 'c_pad,b_white,w_600,h_600,f_auto,q_auto';
+      ? 'c_pad,w_96,h_96,f_auto,q_auto'
+      : 'c_pad,w_600,h_600,f_auto,q_auto';
   return `https://res.cloudinary.com/${cloud}/image/upload/${transform}/${cleanId}`;
 }
 

@@ -307,6 +307,8 @@ export const AdminCmsPage: React.FC = () => {
     totalAttempted: number;
     totalPublished: number;
     totalBlocked: number;
+    remainingInQueue?: number;
+    emptyReason?: string;
   } | null>(null);
 
   // Queue Scheduling Settings
@@ -358,6 +360,8 @@ export const AdminCmsPage: React.FC = () => {
     recentLogs: any[];
     cronSecretConfigured?: boolean;
     deployHookConfigured?: boolean;
+    cronSecretSaved?: boolean;
+    vercelAutoHeader?: boolean;
   } | null>(null);
   const [isTogglingAutoPublish, setIsTogglingAutoPublish] = useState(false);
 
@@ -1288,7 +1292,7 @@ export const AdminCmsPage: React.FC = () => {
               In-App Articles &amp; SEO Auto-Upload
             </h2>
             <p className="text-xs sm:text-sm text-emerald-100/80 leading-relaxed">
-              256-idea bank scheduled queue, 1-click daily publishing gate, verified feature claims, and public indexable article pages.
+              {articles.filter((a) => a.queueStatus === 'idea').length}-idea bank scheduled queue, 1-click daily publishing gate, verified feature claims, and public indexable article pages.
             </p>
           </div>
 
@@ -1339,16 +1343,29 @@ export const AdminCmsPage: React.FC = () => {
                 }`}>
                   {autoPublishStatus?.enabled ? 'Active' : 'Disabled'}
                 </span>
-                {autoPublishStatus?.cronSecretConfigured !== undefined && (
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                    autoPublishStatus.cronSecretConfigured ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'
-                  }`}>
-                    {autoPublishStatus.cronSecretConfigured ? 'Secret Configured' : 'Secret Missing'}
+                {(autoPublishStatus?.cronSecretSaved !== undefined || autoPublishStatus?.cronSecretConfigured !== undefined) && (
+                  <span
+                    title="A cron secret is saved on the server (either casing)."
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                      (autoPublishStatus.cronSecretSaved ?? autoPublishStatus.cronSecretConfigured) ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'
+                    }`}>
+                    {(autoPublishStatus.cronSecretSaved ?? autoPublishStatus.cronSecretConfigured) ? 'Secret Saved' : 'Secret Missing'}
+                  </span>
+                )}
+                {autoPublishStatus?.vercelAutoHeader !== undefined && (
+                  <span
+                    title={autoPublishStatus.vercelAutoHeader
+                      ? 'Vercel sends the auth header automatically — the 8:00 AM cron fires at exactly 8:00.'
+                      : 'Vercel only auto-sends the cron auth header for the exact name CRON_SECRET. Until then, publishing happens automatically on first site traffic after 8:00 AM.'}
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                      autoPublishStatus.vercelAutoHeader ? 'bg-emerald-100 text-emerald-800' : 'bg-neutral-100 text-neutral-600'
+                    }`}>
+                    {autoPublishStatus.vercelAutoHeader ? '8 AM Exact' : '8 AM via Traffic'}
                   </span>
                 )}
               </div>
               <p className="text-xs text-neutral-500 mt-0.5">
-                Next run: daily 8:00 AM PKT (03:00 UTC) via Vercel Cron
+                Next run: {autoPublishStatus?.nextRun || 'daily 8:00 AM PKT'}
               </p>
             </div>
           </div>
@@ -1385,7 +1402,7 @@ export const AdminCmsPage: React.FC = () => {
             </strong>{' '}
             — Published:{' '}
             <strong className="text-neutral-800">
-              {autoPublishStatus?.lastRunSlug || 'None (no draft_ready candidate)'}
+              {autoPublishStatus?.lastRunSlug || 'None yet'}
             </strong>
           </div>
         </div>
@@ -1487,7 +1504,7 @@ export const AdminCmsPage: React.FC = () => {
             }`}
           >
             <FileSpreadsheet className="w-3.5 h-3.5" />
-            <span>Import Idea Bank (256)</span>
+            <span>Import Idea Bank ({articles.filter((a) => a.queueStatus === 'idea').length})</span>
           </button>
         </div>
       </div>
@@ -1588,7 +1605,10 @@ export const AdminCmsPage: React.FC = () => {
 
             {publishReport.totalAttempted === 0 && (
               <div className="p-4 rounded-2xl bg-neutral-50 text-center text-xs text-neutral-500">
-                No articles were scheduled for today ({publishReport.targetDate}). Visit the <strong>Publishing Queue</strong> tab to schedule or auto-schedule upcoming articles.
+                {publishReport.emptyReason || `No articles were ready to publish for ${publishReport.targetDate}.`}
+                {publishReport.remainingInQueue != null && publishReport.remainingInQueue > 0 && (
+                  <> Remaining in queue: <strong>{publishReport.remainingInQueue}</strong>.</>
+                )}
               </div>
             )}
 
@@ -1913,7 +1933,7 @@ export const AdminCmsPage: React.FC = () => {
               <Upload className="w-10 h-10 text-neutral-300 mx-auto" />
               <p className="text-sm font-bold text-neutral-700">No articles match this sub-filter</p>
               <p className="text-xs text-neutral-400 max-w-md mx-auto">
-                Check other sub-filters or import ideas from the 256-idea bank.
+                Check other sub-filters or import ideas from the {articles.filter((a) => a.queueStatus === 'idea').length}-idea bank.
               </p>
             </div>
           ) : (
@@ -2127,8 +2147,12 @@ export const AdminCmsPage: React.FC = () => {
           {/* Scheduled by Date */}
           {(() => {
             const scheduled = articles
-              .filter((a) => a.queueStatus === 'scheduled' || a.queueStatus === 'needs_review')
+              .filter((a) => a.queueStatus === 'scheduled' || a.queueStatus === 'needs_review' || a.queueStatus === 'draft_ready')
               .sort((a, b) => {
+                // draft_ready first (next in the auto-publish queue), then by date
+                const ra = a.queueStatus === 'draft_ready' ? 0 : 1;
+                const rb = b.queueStatus === 'draft_ready' ? 0 : 1;
+                if (ra !== rb) return ra - rb;
                 const dateCmp = (a.publishDate || '9999').localeCompare(b.publishDate || '9999');
                 if (dateCmp !== 0) return dateCmp;
                 return (a.priority ?? 100) - (b.priority ?? 100);
@@ -2150,9 +2174,9 @@ export const AdminCmsPage: React.FC = () => {
               return (
                 <div className="bg-white border border-neutral-200 rounded-2xl p-10 text-center space-y-3">
                   <CalendarClock className="w-10 h-10 text-neutral-300 mx-auto" />
-                  <p className="text-sm font-bold text-neutral-700">No scheduled articles in the queue</p>
+                  <p className="text-sm font-bold text-neutral-700">Queue is empty — nothing scheduled or ready to publish</p>
                   <p className="text-xs text-neutral-400 max-w-md mx-auto">
-                    Click <strong>Auto-schedule queue</strong> above to automatically assign publishing dates to draft articles at {articlesPerDay} articles per day.
+                    Write idea-bank articles first (they are titles only), then they appear here as draft_ready for auto-publishing.
                   </p>
                 </div>
               );
@@ -2161,7 +2185,7 @@ export const AdminCmsPage: React.FC = () => {
             // Group by publishDate
             const datesMap: Record<string, CmsArticle[]> = {};
             for (const art of scheduled) {
-              const d = art.publishDate || 'No Date';
+              const d = art.queueStatus === 'draft_ready' ? 'Ready — next in auto-publish queue' : (art.publishDate || 'No Date');
               if (!datesMap[d]) datesMap[d] = [];
               datesMap[d].push(art);
             }

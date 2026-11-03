@@ -520,6 +520,91 @@ await runTest('Cron auto-publish endpoint rejects unauthorized and executes idem
   }
 });
 
+// -------------------------------------------------------------
+// Test: Unified publishing engine (selector + draft_ready publish +
+// concurrency guard + honest idle reason). Single sequential test because
+// the harness runs tests concurrently against the singleton store.
+// -------------------------------------------------------------
+runTest('Unified publishing engine: selector, draft_ready publish, guard, idle', async () => {
+  const originalArticlesSnapshot = JSON.parse(JSON.stringify(adminStore.getCmsArticles()));
+  const originalDbSnapshot = JSON.parse(JSON.stringify(adminStore['db']));
+  const sitemapBak = fs.existsSync(sitemapPath) ? fs.readFileSync(sitemapPath, 'utf-8') : null;
+  try {
+    // 1. Selector ordering: scheduled-due first, then oldest draft_ready
+    adminStore['db'].cmsArticles = [
+      { id: 't1', slug: 'ready-new', status: 'draft', queueStatus: 'draft_ready', priority: 5, createdAt: 2000 },
+      { id: 't2', slug: 'ready-old', status: 'draft', queueStatus: 'draft_ready', priority: 5, createdAt: 1000 },
+      { id: 't3', slug: 'sched-due', status: 'draft', queueStatus: 'scheduled', publishDate: '2020-01-01', priority: 99, createdAt: 3000 },
+      { id: 't4', slug: 'sched-future', status: 'draft', queueStatus: 'scheduled', publishDate: '2099-01-01', priority: 1, createdAt: 500 },
+      { id: 't5', slug: 'idea-x', status: 'draft', queueStatus: 'idea', priority: 1, createdAt: 100 },
+      { id: 't6', slug: 'pub-x', status: 'published', queueStatus: 'published', priority: 1, createdAt: 100 },
+    ];
+    const cands = adminStore.selectNextPublishCandidates(10);
+    assert.deepStrictEqual(
+      cands.map((c: any) => c.slug),
+      ['sched-due', 'ready-old', 'ready-new'],
+      'scheduled-due first, then oldest draft_ready; future/idea/published excluded'
+    );
+    assert.strictEqual(adminStore.selectNextPublishCandidates(1)[0].slug, 'sched-due');
+
+    // 2. publish-today publishes a draft_ready article with ZERO scheduled
+    // (regression: the button used to do nothing — it only read scheduled)
+    const source = originalArticlesSnapshot.find((a: any) => a.status === 'published');
+    assert.ok(source, 'fixture needs at least one published article to clone');
+    const clone = JSON.parse(JSON.stringify(source));
+    clone.id = 'test-publish-e2e-1';
+    clone.slug = 'test-publish-e2e-1';
+    clone.title = source.title + ' (E2E Test)';
+    clone.status = 'draft';
+    clone.queueStatus = 'draft_ready';
+    clone.priority = 1;
+    clone.createdAt = Date.now();
+    delete clone.publishedAt;
+    // Sanitize the clone so it passes the CURRENT gate (the fixture predates some rules)
+    clone.body = (clone.body || '').replace(/\boffline\s+sync\b/gi, 'offline access').replace(/\bshared\s+lists?\b/gi, 'family lists');
+    if (clone.excerpt && clone.excerpt.length > 160) clone.excerpt = clone.excerpt.slice(0, 157) + '...';
+    // Exact regression scenario: strip every other draft_ready/scheduled article,
+    // leaving the pool with 0 scheduled and exactly 1 draft_ready (the clone).
+    const base = originalArticlesSnapshot.filter(
+      (a: any) => !(a.status === 'draft' && (a.queueStatus === 'draft_ready' || a.queueStatus === 'scheduled'))
+    );
+    adminStore['db'].cmsArticles = [...base, clone];
+    adminStore['save']();
+    const scheduledNow = adminStore['db'].cmsArticles.filter((a: any) => a.queueStatus === 'scheduled');
+    assert.strictEqual(scheduledNow.length, 0, 'fixture must have 0 scheduled articles');
+    const pubRes = await adminStore.publishTodayArticlesAsync({ limit: 1 });
+    assert.strictEqual(pubRes.totalPublished, 1, `must publish exactly 1, got ${pubRes.totalPublished} (errors: ${JSON.stringify(pubRes.errors)}, blocked: ${JSON.stringify((pubRes.blocked || []).map((b: any) => b.reasons))})`);
+    assert.strictEqual(pubRes.published[0].slug, 'test-publish-e2e-1');
+    assert.ok(pubRes.emptyReason === undefined, 'no empty reason when something published');
+    const after = adminStore['db'].cmsArticles.find((a: any) => a.id === 'test-publish-e2e-1');
+    assert.strictEqual(after.status, 'published', 'clone must be marked published');
+    assert.strictEqual(after.queueStatus, 'published');
+
+    // 3. Concurrency guard: overlapping runs are rejected, nothing publishes
+    adminStore['autoPublishRunning'] = true;
+    try {
+      const guardRes = await adminStore.runDailyAutoPublish('lazy', 1);
+      assert.strictEqual(guardRes.status, 'already_running', 'overlapping run must be rejected');
+      assert.strictEqual(guardRes.published.length, 0, 'no publish during overlap');
+    } finally {
+      adminStore['autoPublishRunning'] = false;
+    }
+
+    // 4. Empty queue gives an honest human-readable reason
+    adminStore['db'].cmsArticles = [
+      { id: 'i1', slug: 'idea-only', status: 'draft', queueStatus: 'idea', priority: 1, createdAt: 100 },
+    ];
+    const idleRes = await adminStore.runDailyAutoPublish('manual', 1);
+    assert.strictEqual(idleRes.status, 'idle');
+    assert.ok(idleRes.reason && idleRes.reason.includes('ideas still need writing'), `honest reason required, got: ${idleRes.reason}`);
+  } finally {
+    // Restore the ENTIRE db (articles + audit logs + settings) — no test-run state leaks
+    adminStore['db'] = originalDbSnapshot;
+    adminStore['save']();
+    if (sitemapBak !== null) fs.writeFileSync(sitemapPath, sitemapBak, 'utf-8');
+  }
+});
+
 if (originalSitemap !== null) {
   fs.writeFileSync(sitemapPath, originalSitemap, 'utf-8');
 }

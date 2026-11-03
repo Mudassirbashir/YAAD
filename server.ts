@@ -81,99 +81,26 @@ app.all('/api/cron/publish-daily', async (req, res) => {
       return res.status(401).json({ error: 'Unauthorized: cron secret not configured on server' });
     }
 
-    // 2. Check if auto-publish is enabled in settings
-    if (!adminStore.isAutoPublishEnabled()) {
-      return res.status(200).json({ status: 'disabled', reason: 'auto_publish_disabled_in_settings' });
+    // Delegate to the unified daily auto-publish engine (same selector, gate,
+    // idempotency, audit log and deploy-hook as the manual button + lazy trigger).
+    const result = await adminStore.runDailyAutoPublish('cron', 1);
+    if (result.status === 'published') {
+      const p = result.published[0];
+      return res.status(200).json({
+        status: 'published',
+        slug: p.slug,
+        title: p.title,
+        publishedCount: result.published.length,
+        blocked: result.blocked.length,
+      });
     }
-
-    // 3. Idempotency: Check if an article was ALREADY published on this UTC calendar day via auto_publish
-    const todayStr = new Date().toISOString().slice(0, 10);
-    const recentAuditLogs = await adminStore.getAuditLogsAsync({ action: 'auto_publish', limit: 20 });
-    const alreadyRunToday = (recentAuditLogs?.logs || []).some((log: any) => {
-      const logDate = new Date(log.timestamp).toISOString().slice(0, 10);
-      return logDate === todayStr && log.metadata?.status === 'published';
+    return res.status(200).json({
+      status: result.status,
+      reason: result.reason,
+      publishedCount: result.published.length,
+      blocked: result.blocked.length,
+      errors: result.errors,
     });
-
-    if (alreadyRunToday) {
-      return res.status(200).json({ status: 'already_run_today', date: todayStr, publishedCount: 0 });
-    }
-
-    // 4. Candidate selection
-    const resArticles = await adminStore.getCmsArticlesAsync({ status: 'all' });
-    const allArticles = resArticles?.articles || adminStore.getCmsArticles();
-    const candidates = allArticles.filter((a: any) => a.status === 'draft' && a.queueStatus === 'draft_ready');
-
-    if (candidates.length === 0) {
-      adminStore.recordAutoPublishRun(undefined, 'idle');
-      return res.status(200).json({ status: 'idle', reason: 'no_draft_ready_articles' });
-    }
-
-    // Sort: priority ASC (lower number = higher priority), then createdAt ASC (oldest first)
-    candidates.sort((a: any, b: any) => {
-      const pA = a.priority ?? 0;
-      const pB = b.priority ?? 0;
-      if (pA !== pB) return pA - pB;
-      return (a.createdAt || 0) - (b.createdAt || 0);
-    });
-
-    // 5. Try up to 3 candidates
-    const maxAttempts = Math.min(candidates.length, 3);
-    for (let i = 0; i < maxAttempts; i++) {
-      const candidate = candidates[i];
-      const gateResult = validateArticleSeoGate(candidate);
-      if (gateResult.passed) {
-        const now = Date.now();
-        const updated = await adminStore.saveCmsArticleAsync({
-          id: candidate.id,
-          status: 'published',
-          queueStatus: 'published',
-          publishedAt: now,
-        }, 'system_cron');
-
-        adminStore.writeAuditLog({
-          adminId: 'system_cron',
-          adminEmail: 'cron@yaadapppk.vercel.app',
-          action: 'auto_publish',
-          targetType: 'cms_article',
-          targetId: updated.id,
-          metadata: {
-            articleId: updated.id,
-            slug: updated.slug,
-            title: updated.title,
-            wordCount: updated.wordCount,
-            listItemsCount: updated.listItems?.length || 0,
-            status: 'published',
-            publishedAt: now,
-          },
-        });
-
-        adminStore.recordAutoPublishRun(updated.slug, 'published');
-
-        const deployHookUrl = process.env.DEPLOY_HOOK_URL || process.env.deploy_hook_url;
-        if (deployHookUrl) {
-          fetch(deployHookUrl, { method: 'POST' })
-            .then((r) => console.log('[Cron Auto-Publish] Triggered deploy hook:', r.status))
-            .catch((err) => console.error('[Cron Auto-Publish] Failed to trigger deploy hook:', err));
-        }
-
-        return res.status(200).json({
-          status: 'published',
-          slug: updated.slug,
-          title: updated.title,
-          wordCount: updated.wordCount,
-          listItemsCount: updated.listItems?.length || 0,
-        });
-      } else {
-        await adminStore.saveCmsArticleAsync({
-          id: candidate.id,
-          queueStatus: 'needs_review',
-          needsReviewReasons: gateResult.errors,
-        }, 'system_cron');
-      }
-    }
-
-    adminStore.recordAutoPublishRun(undefined, 'idle');
-    return res.status(200).json({ status: 'idle', reason: 'no_draft_ready_articles' });
   } catch (err: any) {
     console.error('[Cron Auto-Publish] Error:', err);
     return res.status(500).json({ error: 'Internal server error during auto-publish', details: err?.message });
@@ -229,7 +156,33 @@ app.post(['/api/support/tickets', '/api/tickets'], (req, res) => {
 });
 
 // Public Blog Articles API (authoritative from Supabase)
+/**
+ * Lazy daily auto-publish trigger (zero-setup automation).
+ * Vercel Cron needs the exact CRON_SECRET env var to authenticate; the owner could not
+ * add it, so this traffic-driven fallback guarantees the daily publish anyway:
+ * on public blog API traffic, once per ~60s (in-memory throttle), if auto-publish is
+ * enabled and no auto-publish has succeeded today (PKT) and it is past 08:00 PKT,
+ * fire-and-forget the unified engine. Never blocks or slows the response.
+ */
+let lazyPublishLastCheck = 0;
+function maybeTriggerLazyAutoPublish(): void {
+  try {
+    const now = Date.now();
+    if (now - lazyPublishLastCheck < 60 * 1000) return;
+    lazyPublishLastCheck = now;
+    const pktHour = new Date(now + 5 * 3600 * 1000).getUTCHours();
+    if (pktHour < 8) return; // not yet 08:00 PKT
+    if (!adminStore.isAutoPublishEnabled()) return;
+    void adminStore.runDailyAutoPublish('lazy', 1).catch((e) =>
+      console.error('[Lazy Auto-Publish] Error:', e?.message || e)
+    );
+  } catch (e: any) {
+    console.error('[Lazy Auto-Publish] Trigger error:', e?.message || e);
+  }
+}
+
 app.get(['/api/blog/articles', '/api/cms/articles', '/api/articles', '/api/public/cms/articles'], async (req, res) => {
+  maybeTriggerLazyAutoPublish();
   try {
     const authCms = await getAuthoritativeCms({ status: 'published' });
     const localArticles = adminStore.getPublicCmsArticles();
@@ -295,6 +248,7 @@ export async function resolvePublishedArticle(idOrSlug: string): Promise<{ artic
 
 // Single Public Article by ID or Slug (Published articles only)
 app.get(['/api/blog/articles/:id', '/api/articles/:id'], async (req, res) => {
+  maybeTriggerLazyAutoPublish();
   try {
     const resolved = await resolvePublishedArticle(req.params.id);
     if (!resolved) {

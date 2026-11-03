@@ -2373,7 +2373,7 @@ adminRouter.delete('/cms/articles/:id/comments/:commentId', requireAdminAuth, re
 
 adminRouter.get('/cms/auto-publish', requireAdminAuth, async (req: AdminAuthRequest, res: Response) => {
   try {
-    const status = adminStore.getAutoPublishStatus();
+    const status = await adminStore.getAutoPublishStatusAsync();
     const auditLogsRes = await adminStore.getAuditLogsAsync({ action: 'auto_publish', limit: 7 });
     res.status(200).json({
       success: true,

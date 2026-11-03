@@ -64,6 +64,9 @@ export const AdminItemImageModal: React.FC<AdminItemImageModalProps> = ({
     bytes?: number;
   } | null>(null);
 
+  // Preview background for transparency check (checkerboard shows alpha accurately)
+  const [previewBg, setPreviewBg] = useState<'checker' | 'white' | 'dark'>('checker');
+
   // Sync check state
   const [syncStatus, setSyncStatus] = useState<{
     isLoading: boolean;
@@ -306,21 +309,47 @@ export const AdminItemImageModal: React.FC<AdminItemImageModalProps> = ({
             converts and standardises it automatically.
           </div>
 
-          {/* Current Image Preview */}
+          {/* Current Image Preview — checkerboard reveals transparency accurately */}
           <div className="flex items-center gap-4 p-3 rounded-2xl bg-neutral-50/60 border border-neutral-200/60">
-            <div className="w-24 h-24 rounded-2xl bg-white border border-neutral-200/80 shadow-2xs flex items-center justify-center overflow-hidden shrink-0">
-              {previewUrl ? (
-                <img
-                  src={previewUrl}
-                  alt={item.name}
-                  className="w-full h-full object-contain p-1"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLElement).style.display = 'none';
-                  }}
-                />
-              ) : (
-                <div className="text-3xl text-neutral-400">{item.emoji || '📦'}</div>
-              )}
+            <div className="shrink-0 space-y-1.5">
+              <div
+                className="w-24 h-24 rounded-2xl border border-neutral-200/80 shadow-2xs flex items-center justify-center overflow-hidden"
+                style={
+                  previewBg === 'checker'
+                    ? { backgroundImage: 'conic-gradient(#e5e5e5 0 25%, #ffffff 0 50%, #e5e5e5 0 75%, #ffffff 0)', backgroundSize: '16px 16px' }
+                    : previewBg === 'dark'
+                      ? { backgroundColor: '#1c1c1e' }
+                      : { backgroundColor: '#ffffff' }
+                }
+              >
+                {previewUrl ? (
+                  <img
+                    src={previewUrl}
+                    alt={item.name}
+                    className="w-full h-full object-contain p-1"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLElement).style.display = 'none';
+                    }}
+                  />
+                ) : (
+                  <div className="text-3xl text-neutral-400">{item.emoji || '📦'}</div>
+                )}
+              </div>
+              <div className="flex gap-1 justify-center">
+                {(['checker', 'white', 'dark'] as const).map((bg) => (
+                  <button
+                    key={bg}
+                    type="button"
+                    onClick={() => setPreviewBg(bg)}
+                    title={bg === 'checker' ? 'Checkerboard (shows transparency)' : bg === 'white' ? 'White background' : 'Dark background'}
+                    className={`px-2 py-0.5 rounded-md text-[10px] font-bold capitalize cursor-pointer ${
+                      previewBg === bg ? 'bg-[#003527] text-white' : 'bg-neutral-200 text-neutral-600 hover:bg-neutral-300'
+                    }`}
+                  >
+                    {bg === 'checker' ? 'Alpha' : bg}
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="flex-1 min-w-0 space-y-1">
               <span className="text-xs font-bold text-neutral-800 block">
