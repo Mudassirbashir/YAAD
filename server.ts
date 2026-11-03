@@ -312,6 +312,7 @@ app.get(['/api/notifications', '/api/notifications/broadcasts'], (req, res) => {
       bodyEn: c.bodyEn || c.body_en || '',
       bodyUr: c.bodyUr || c.body_ur || '',
       iconUrl: c.iconUrl || '/logo.png',
+      category: c.category || undefined,
       sentAt: c.sentAt || c.sent_at || c.createdAt || Date.now(),
       status: c.status || 'sent',
     }));

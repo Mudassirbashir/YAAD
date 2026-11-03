@@ -320,12 +320,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         onBack={onBack}
       />
 
-      {/* 2. Main Page Container */}
-      <main className="max-w-2xl mx-auto w-full px-4 sm:px-6 py-4 sm:py-6 flex flex-col gap-5 sm:gap-6">
+      {/* 2. Main Page Container — 24px section rhythm (iOS/M3 spec) */}
+      <main className="max-w-2xl mx-auto w-full px-4 sm:px-6 py-4 sm:py-6 flex flex-col gap-6">
         {/* ------------------------------------------------------------------ */}
         {/* SECTION 1: PROFILE & ACCOUNT (Directly at top of settings)         */}
         {/* ------------------------------------------------------------------ */}
-        <section id="settings_profile_section" className="flex flex-col gap-2">
+        <section id="settings_profile_section" className="flex flex-col gap-4">
           <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-display">
             {t('settings.accountTitle') || (language === 'ur' ? 'اکاؤنٹ' : 'Account')}
           </h2>
@@ -358,7 +358,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 {/* Profile Information: Name on top with verified badge, phone below, email below phone */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 min-w-0">
-                    <h3 className="text-base sm:text-lg font-bold text-on-surface font-display truncate">
+                    <h3 className="text-[17px] font-bold text-on-surface font-display truncate leading-snug">
                       {displayName}
                     </h3>
                     {isVerified && (
@@ -368,7 +368,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     )}
                   </div>
 
-                  <p className="text-xs text-outline font-body truncate mt-0.5">
+                  <p className="text-[13px] text-outline font-body truncate mt-0.5 leading-snug">
                     {displayPhone ? (
                       <span dir="ltr" className="font-mono text-on-surface-variant font-medium">
                         {formatPhoneNumber(displayPhone)}
@@ -379,7 +379,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   </p>
 
                   {displayPhone && displayEmail && (
-                    <p className="text-[11px] text-outline/80 font-body truncate">
+                    <p className="text-xs text-outline/80 font-body truncate leading-snug">
                       {displayEmail}
                     </p>
                   )}
@@ -403,16 +403,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
             ) : (
               /* Guest State Card */
-              <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center justify-between gap-4 min-h-[52px]">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-11 h-11 rounded-full bg-surface-container text-primary flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-2xl bg-surface-container text-primary flex items-center justify-center shrink-0">
                     <User className="w-5 h-5 stroke-[2]" />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="text-sm sm:text-base font-bold text-on-surface font-display">
+                    <h3 className="text-[15px] font-semibold text-on-surface font-display leading-snug">
                       {t('settings.guestUser') || (language === 'ur' ? 'مہمان صارف' : 'Guest Account')}
                     </h3>
-                    <p className="text-xs text-outline font-body truncate">
+                    <p className="text-[13px] text-outline font-body truncate leading-snug mt-0.5">
                       {language === 'ur'
                         ? 'پرچیاں کلاؤڈ پر محفوظ کرنے کے لیے لاگ ان کریں'
                         : 'Sign in to sync your lists across devices'}
@@ -435,21 +435,21 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {/* ------------------------------------------------------------------ */}
         {/* SECTION 2: PERFORMANCE (Language only, smooth & rounded)          */}
         {/* ------------------------------------------------------------------ */}
-        <section id="settings_preferences_section" className="flex flex-col gap-2">
+        <section id="settings_preferences_section" className="flex flex-col gap-4">
           <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-display">
-            {language === 'ur' ? 'کارکردگی و زبان' : 'Performance & Language'}
+            {language === 'ur' ? 'جنرل' : 'General'}
           </h2>
 
-          <div className="bg-surface-container-lowest rounded-3xl border border-surface-dim/75 shadow-2xs p-4 sm:p-5 flex flex-col gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-surface-container text-primary flex items-center justify-center shrink-0">
-                <Globe2 className="w-4.5 h-4.5 stroke-[2.2]" />
+          <div className="bg-surface-container-lowest rounded-3xl border border-surface-dim/75 shadow-2xs p-4 sm:p-5 flex flex-col gap-4">
+            <div className="flex items-center gap-3 min-h-[52px]">
+              <div className="w-10 h-10 rounded-2xl bg-surface-container text-primary flex items-center justify-center shrink-0">
+                <Globe2 className="w-5 h-5 stroke-[2]" />
               </div>
               <div className="min-w-0 flex-1">
-                <h3 className="text-sm font-bold text-on-surface font-display">
+                <h3 className="text-[15px] font-semibold text-on-surface font-display leading-snug">
                   {t('settings.language') || (language === 'ur' ? 'زبان منتخب کریں' : 'Display Language')}
                 </h3>
-                <p className="text-xs text-outline font-body">
+                <p className="text-[13px] text-outline font-body leading-snug mt-0.5">
                   {t('settings.languageSubtitle') ||
                     (language === 'ur'
                       ? 'اردو، رومن اردو یا انگریزی میں استعمال کریں'
@@ -458,14 +458,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
             </div>
 
-            {/* 3-way Segmented Control with no-wrap and uniform heights */}
+            {/* 3-way Segmented Control — uniform 44px rows (touch target spec) */}
             <div className="grid grid-cols-3 gap-1.5 p-1.5 bg-surface-container-low rounded-2xl items-center">
               {/* English */}
               <button
                 id="lang_select_en"
                 type="button"
                 onClick={() => handleSelectLanguage('en')}
-                className={`min-h-[42px] py-2 px-1 sm:px-2 rounded-xl text-[11.5px] sm:text-xs font-bold font-display transition-all flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
+                className={`min-h-[44px] py-2 px-1 sm:px-2 rounded-xl text-xs font-semibold font-display transition-all flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
                   language === 'en'
                     ? 'bg-surface-container-lowest text-primary shadow-xs ring-1 ring-black/5'
                     : 'text-outline hover:text-on-surface'
@@ -480,7 +480,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 id="lang_select_roman_urdu"
                 type="button"
                 onClick={() => handleSelectLanguage('roman-urdu')}
-                className={`min-h-[42px] py-2 px-1 sm:px-2 rounded-xl text-[11.5px] sm:text-xs font-bold font-display transition-all flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
+                className={`min-h-[44px] py-2 px-1 sm:px-2 rounded-xl text-xs font-semibold font-display transition-all flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
                   language === 'roman-urdu'
                     ? 'bg-surface-container-lowest text-primary shadow-xs ring-1 ring-black/5'
                     : 'text-outline hover:text-on-surface'
@@ -495,7 +495,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 id="lang_select_ur"
                 type="button"
                 onClick={() => handleSelectLanguage('ur')}
-                className={`min-h-[42px] py-2 px-1 sm:px-2 rounded-xl text-[11.5px] sm:text-xs font-bold font-urdu transition-all flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
+                className={`min-h-[44px] py-2 px-1 sm:px-2 rounded-xl text-xs font-semibold font-urdu transition-all flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
                   language === 'ur'
                     ? 'bg-surface-container-lowest text-primary shadow-xs ring-1 ring-black/5'
                     : 'text-outline hover:text-on-surface'
@@ -507,18 +507,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
 
             {/* Milo Pet Companion & Sound Feedback Toggles */}
-            <div className="pt-3 border-t border-surface-dim/40 flex flex-col gap-3.5">
+            <div className="pt-4 border-t border-surface-dim/40 flex flex-col gap-4">
               {/* Milo Companion Toggle */}
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center justify-between gap-3 min-h-[52px]">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded-full bg-amber-400/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-                    <Sparkles className="w-4.5 h-4.5 stroke-[2.2]" />
+                  <div className="w-10 h-10 rounded-2xl bg-amber-400/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-5 h-5 stroke-[2]" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h4 className="text-sm font-bold text-on-surface font-display truncate">
+                    <h4 className="text-[15px] font-semibold text-on-surface font-display truncate leading-snug">
                       {language === 'ur' ? 'مائلو پالتو ساتھی' : 'Milo Pet Companion'}
                     </h4>
-                    <p className="text-xs text-outline font-body">
+                    <p className="text-[13px] text-outline font-body leading-snug mt-0.5">
                       {language === 'ur'
                         ? 'فلوٹنگ اینیمیٹڈ ببل اور جشن کے تاثرات'
                         : 'Interactive floating pet & celebration moments'}
@@ -530,30 +530,30 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   type="button"
                   id="toggle_milo_companion"
                   onClick={handleToggleMilo}
-                  className={`w-12 h-6.5 rounded-full transition-colors p-0.5 flex items-center shrink-0 cursor-pointer ${
+                  className={`w-[51px] h-[31px] rounded-full transition-colors p-[2px] flex items-center shrink-0 cursor-pointer ${
                     miloActive ? 'bg-primary justify-end' : 'bg-surface-dim justify-start'
                   }`}
                   aria-label={miloActive ? 'Disable Milo' : 'Enable Milo'}
                 >
-                  <span className="w-5.5 h-5.5 rounded-full bg-white shadow-xs block" />
+                  <span className="w-[27px] h-[27px] rounded-full bg-white shadow-xs block" />
                 </button>
               </div>
 
               {/* Sound Effects Toggle */}
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center justify-between gap-3 min-h-[52px]">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded-full bg-surface-container text-primary flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-2xl bg-surface-container text-primary flex items-center justify-center shrink-0">
                     {soundEnabled ? (
-                      <Volume2 className="w-4.5 h-4.5 stroke-[2.2]" />
+                      <Volume2 className="w-5 h-5 stroke-[2]" />
                     ) : (
-                      <VolumeX className="w-4.5 h-4.5 stroke-[2.2] text-outline" />
+                      <VolumeX className="w-5 h-5 stroke-[2] text-outline" />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h4 className="text-sm font-bold text-on-surface font-display truncate">
+                    <h4 className="text-[15px] font-semibold text-on-surface font-display truncate leading-snug">
                       {language === 'ur' ? 'آواز کے اثرات' : 'Sound Effects'}
                     </h4>
-                    <p className="text-xs text-outline font-body">
+                    <p className="text-[13px] text-outline font-body leading-snug mt-0.5">
                       {language === 'ur'
                         ? 'مائلو کی آوازیں اور تصدیقی دھنیں'
                         : 'Synthesized pet audio & action feedback'}
@@ -565,12 +565,12 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   type="button"
                   id="toggle_sound_effects"
                   onClick={handleToggleSound}
-                  className={`w-12 h-6.5 rounded-full transition-colors p-0.5 flex items-center shrink-0 cursor-pointer ${
+                  className={`w-[51px] h-[31px] rounded-full transition-colors p-[2px] flex items-center shrink-0 cursor-pointer ${
                     soundEnabled ? 'bg-primary justify-end' : 'bg-surface-dim justify-start'
                   }`}
                   aria-label={soundEnabled ? 'Mute sound effects' : 'Enable sound effects'}
                 >
-                  <span className="w-5.5 h-5.5 rounded-full bg-white shadow-xs block" />
+                  <span className="w-[27px] h-[27px] rounded-full bg-white shadow-xs block" />
                 </button>
               </div>
             </div>
@@ -580,21 +580,21 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {/* ------------------------------------------------------------------ */}
         {/* SECTION 3: APPEARANCE & THEMES (Simplified Names + Custom Palettes) */}
         {/* ------------------------------------------------------------------ */}
-        <section id="settings_appearance_section" className="flex flex-col gap-2">
+        <section id="settings_appearance_section" className="flex flex-col gap-4">
           <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-display">
             {t('settings.appearanceTitle') || (language === 'ur' ? 'تھیم اور رنگ' : 'Appearance & Theme')}
           </h2>
 
           <div className="bg-surface-container-lowest rounded-3xl p-4 sm:p-5 border border-surface-dim/75 shadow-2xs space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-surface-container text-primary flex items-center justify-center shrink-0">
-                <Palette className="w-4.5 h-4.5 stroke-[2.2]" />
+            <div className="flex items-center gap-3 min-h-[52px]">
+              <div className="w-10 h-10 rounded-2xl bg-surface-container text-primary flex items-center justify-center shrink-0">
+                <Palette className="w-5 h-5 stroke-[2]" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-on-surface font-display">
+                <h3 className="text-[15px] font-semibold text-on-surface font-display leading-snug">
                   {language === 'ur' ? 'ایپ تھیم' : 'App Theme'}
                 </h3>
-                <p className="text-xs text-outline font-body">
+                <p className="text-[13px] text-outline font-body leading-snug mt-0.5">
                   {language === 'ur'
                     ? 'اپنی پسند کی آسان تھیم یا کسٹم رنگ منتخب کریں'
                     : 'Select a clean pre-set theme or customize your own'}
@@ -623,7 +623,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       setTheme(item.id);
                       triggerMiloEvent('settings_saved');
                     }}
-                    className={`h-12 rounded-2xl border px-3 flex items-center justify-between gap-2 transition-all cursor-pointer text-start active:scale-[0.98] ${
+                    className={`h-14 rounded-2xl border px-3 flex items-center justify-between gap-2 transition-all cursor-pointer text-start active:bg-surface-container-low ${
                       isActive
                         ? 'border-primary bg-primary/10 ring-1 ring-primary/30 shadow-2xs'
                         : 'border-surface-dim/70 bg-surface-container-lowest hover:bg-surface-container-low/60'
@@ -688,7 +688,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         setTheme('custom');
                         triggerMiloEvent('settings_saved');
                       }}
-                      className={`h-11 rounded-2xl border px-2.5 flex items-center justify-between gap-1.5 transition-all cursor-pointer text-start active:scale-95 ${
+                      className={`h-12 rounded-2xl border px-2.5 flex items-center justify-between gap-1.5 transition-all cursor-pointer text-start active:bg-surface-container-low ${
                         isCpActive
                           ? 'border-primary ring-2 ring-primary/40 bg-primary/10 shadow-xs'
                           : 'border-surface-dim/70 bg-surface-container-low hover:bg-surface-container'
@@ -718,21 +718,21 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {/* SECTION 4: SECURITY (Change Password Card)                         */}
         {/* ------------------------------------------------------------------ */}
         {user && (
-          <section id="settings_security_section" className="flex flex-col gap-2">
+          <section id="settings_security_section" className="flex flex-col gap-4">
             <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-display">
               {t('settings.securityTitle') || (language === 'ur' ? 'سیکیورٹی' : 'Security')}
             </h2>
 
-            <div className="bg-surface-container-lowest rounded-3xl border border-surface-dim/75 shadow-2xs p-4 sm:p-5 flex items-center justify-between gap-3">
+            <div className="bg-surface-container-lowest rounded-3xl border border-surface-dim/75 shadow-2xs p-4 sm:p-5 flex items-center justify-between gap-3 min-h-[76px]">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-full bg-surface-container text-primary flex items-center justify-center shrink-0">
-                  <LockKeyhole className="w-4.5 h-4.5 stroke-[2.2]" />
+                <div className="w-10 h-10 rounded-2xl bg-surface-container text-primary flex items-center justify-center shrink-0">
+                  <LockKeyhole className="w-5 h-5 stroke-[2]" />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-sm font-bold text-on-surface font-display">
+                  <h3 className="text-[15px] font-semibold text-on-surface font-display leading-snug">
                     {t('settings.changePassword') || (language === 'ur' ? 'پاس ورڈ تبدیل کریں' : 'Change Password')}
                   </h3>
-                  <p className="text-xs text-outline font-body truncate">
+                  <p className="text-[13px] text-outline font-body truncate leading-snug mt-0.5">
                     {language === 'ur'
                       ? 'اپنے یاد اکاؤنٹ کا نیا پاس ورڈ سیٹ کریں'
                       : 'Update your account login password'}
@@ -758,7 +758,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {/* ------------------------------------------------------------------ */}
         {/* SECTION 5: ABOUT & SUPPORT (Only About YAAD & Customer Support Desk) */}
         {/* ------------------------------------------------------------------ */}
-        <section id="settings_about_section" className="flex flex-col gap-2">
+        <section id="settings_about_section" className="flex flex-col gap-4">
           <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-display">
             {t('settings.aboutTitle') || (language === 'ur' ? 'معلومات و سپورٹ' : 'About & Support')}
           </h2>
@@ -772,29 +772,29 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 triggerHaptic(8);
                 setShowSupportModal(true);
               }}
-              className={`w-full p-4 sm:p-5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-low/50 transition-colors cursor-pointer group active:bg-surface-container-low ${
+              className={`w-full p-4 sm:px-5 sm:py-4 flex items-center justify-between gap-3 text-start hover:bg-surface-container-low/60 active:bg-surface-container-low transition-colors cursor-pointer group min-h-[68px] ${
                 highlightedSection === 'support' ? 'bg-primary/10 ring-2 ring-primary ring-inset rounded-2xl' : ''
               }`}
             >
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-full bg-surface-container text-primary flex items-center justify-center shrink-0">
-                  <Headphones className="w-4.5 h-4.5 stroke-[2.2]" />
+                <div className="w-10 h-10 rounded-2xl bg-surface-container text-primary flex items-center justify-center shrink-0">
+                  <Headphones className="w-5 h-5 stroke-[2]" />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-sm font-bold text-on-surface font-display flex items-center gap-2">
+                  <h3 className="text-[15px] font-semibold text-on-surface font-display flex items-center gap-2 leading-snug">
                     <span>{language === 'ur' ? 'کسٹمر سپورٹ ڈیسک' : 'Customer Support Desk'}</span>
                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
                       {language === 'ur' ? 'براہ راست رابطہ' : 'Direct Help'}
                     </span>
                   </h3>
-                  <p className="text-xs text-outline font-body truncate">
+                  <p className="text-[13px] text-outline font-body truncate leading-snug mt-0.5">
                     {language === 'ur'
                       ? 'ایڈمن سپورٹ ٹیم سے فوری مدد یا شکایت درج کریں'
                       : 'Contact staff or report an issue directly'}
                   </p>
                 </div>
               </div>
-              <ChevronRight className="w-4.5 h-4.5 text-outline group-hover:text-primary transition-colors shrink-0" />
+              <ChevronRight className="w-5 h-5 text-outline group-hover:text-primary transition-colors shrink-0" />
             </button>
 
             {/* 2. About YAAD */}
@@ -802,17 +802,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               id="settings_link_about"
               type="button"
               onClick={() => handleOpenLegal('about')}
-              className="w-full p-4 sm:p-5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-low/50 transition-colors cursor-pointer group active:bg-surface-container-low"
+              className="w-full p-4 sm:px-5 sm:py-4 flex items-center justify-between gap-3 text-start hover:bg-surface-container-low/60 active:bg-surface-container-low transition-colors cursor-pointer group min-h-[68px]"
             >
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-full bg-surface-container text-primary flex items-center justify-center shrink-0">
-                  <Sparkles className="w-4.5 h-4.5 stroke-[2.2]" />
+                <div className="w-10 h-10 rounded-2xl bg-surface-container text-primary flex items-center justify-center shrink-0">
+                  <Sparkles className="w-5 h-5 stroke-[2]" />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="text-sm font-bold text-on-surface font-display">
+                  <h3 className="text-[15px] font-semibold text-on-surface font-display leading-snug">
                     {t('settings.aboutYaad') || (language === 'ur' ? 'یاد کے بارے میں' : 'About YAAD')}
                   </h3>
-                  <p className="text-xs text-outline font-body truncate">
+                  <p className="text-[13px] text-outline font-body truncate leading-snug mt-0.5">
                     {t('settings.aboutYaadDesc') ||
                       (language === 'ur'
                         ? 'آسان اور تیز خریداری اسسٹنٹ'
@@ -820,16 +820,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   </p>
                 </div>
               </div>
-              <ChevronRight className="w-4.5 h-4.5 text-outline group-hover:text-primary transition-colors shrink-0" />
+              <ChevronRight className="w-5 h-5 text-outline group-hover:text-primary transition-colors shrink-0" />
             </button>
           </div>
         </section>
 
         {/* ------------------------------------------------------------------ */}
-        {/* SECTION 6: SIGN OUT & DESTRUCTIVE ACTIONS                          */}
+        {/* SECTION 6: SIGN OUT & DESTRUCTIVE ACTIONS (32px separated zone)    */}
         {/* ------------------------------------------------------------------ */}
         {user && (
-          <div className="pt-2 flex flex-col items-center justify-center gap-3">
+          <div className="pt-8 flex flex-col items-center justify-center gap-3">
             <button
               id="settings_sign_out_trigger_btn"
               type="button"

@@ -56,10 +56,10 @@ const DEFAULT_NOTIFICATIONS: NotificationItem[] = [
   {
     id: 'offline-cloud-sync',
     category: 'system',
-    titleEn: 'Smart Cloud Backup Active ☁️',
-    titleUr: 'کلاؤڈ بیک اپ مکمل فعال ہے ☁️',
-    bodyEn: 'Your shopping items and attached photos are safely synced across your devices.',
-    bodyUr: 'آپ کی تمام خریدی گئی اشیاء اور تصاویر آپ کے تمام فونز پر خودکار طور پر محفوظ ہیں۔',
+    titleEn: 'Your Lists, Always With You 📝',
+    titleUr: 'آپ کی پرچیاں ہمیشہ آپ کے ساتھ 📝',
+    bodyEn: 'YAAD helps you keep shopping needs in one place. Open the app to review your parchi before heading out.',
+    bodyUr: 'یاد آپ کی خریداری کی ضروریات ایک جگہ رکھنے میں مدد کرتا ہے۔ بازار جانے سے پہلے اپنی پرچی چیک کر لیں۔',
     sentAt: Date.now() - 3600000 * 48,
   },
 ];
@@ -73,7 +73,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ onBack }) 
   const { user, profile } = useAuth();
 
   const [notifications, setNotifications] = useState<NotificationItem[]>(DEFAULT_NOTIFICATIONS);
-  const [selectedFilter, setSelectedFilter] = useState<'all' | 'price' | 'deal' | 'system'>('all');
+  const [selectedFilter, setSelectedFilter] = useState<'all' | 'price' | 'deal' | 'system' | 'reminder'>('all');
   const [activeReplyId, setActiveReplyId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState<{ [key: string]: string }>({});
   const [isSendingReply, setIsSendingReply] = useState<{ [key: string]: boolean }>({});
@@ -172,12 +172,36 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ onBack }) 
         return <TrendingDown className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />;
       case 'deal':
         return <ShoppingCart className="w-4 h-4 text-amber-600 dark:text-amber-400" />;
+      case 'reminder':
+        return <Clock className="w-4 h-4 text-violet-600 dark:text-violet-400" />;
       case 'system':
         return <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400" />;
       default:
         return <Bell className="w-4 h-4 text-primary" />;
     }
   };
+
+  // Relative timestamp: "5 min ago" / "2 hours ago" / "Yesterday" (EN + UR)
+  const formatRelativeTime = (ts?: number): string => {
+    if (!ts) return '';
+    const diffMs = Date.now() - ts;
+    const mins = Math.floor(diffMs / 60000);
+    const hours = Math.floor(diffMs / 3600000);
+    const days = Math.floor(diffMs / 86400000);
+    const ur = language === 'ur';
+    if (mins < 1) return ur ? 'ابھی' : 'Just now';
+    if (mins < 60) return ur ? `${mins} منٹ پہلے` : `${mins} min ago`;
+    if (hours < 24) return ur ? `${hours} گھنٹے پہلے` : `${hours}h ago`;
+    if (days === 1) return ur ? 'کل' : 'Yesterday';
+    if (days < 7) return ur ? `${days} دن پہلے` : `${days}d ago`;
+    return new Date(ts).toLocaleDateString(ur ? 'ur-PK' : 'en-GB', {
+      day: 'numeric',
+      month: 'short',
+    });
+  };
+
+  // Track which notification images failed to load so we can fall back to the category icon
+  const [brokenIcons, setBrokenIcons] = useState<{ [key: string]: boolean }>({});
 
   return (
     <div
@@ -225,6 +249,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ onBack }) 
             { id: 'all', labelEn: 'All Alerts', labelUr: 'تمام اطلاعات' },
             { id: 'price', labelEn: 'Mandi Rates', labelUr: 'منڈی ریٹس' },
             { id: 'deal', labelEn: 'Groceries & Rashan', labelUr: 'راشن یاد دہانی' },
+            { id: 'reminder', labelEn: 'Reminders', labelUr: 'یاد دہانیاں' },
             { id: 'system', labelEn: 'System', labelUr: 'سسٹم اور کلاؤڈ' },
           ].map((tab) => {
             const isSelected = selectedFilter === tab.id;
@@ -279,11 +304,23 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ onBack }) 
                 key={notif.id}
                 className="bg-surface-container-lowest p-4 sm:p-5 rounded-3xl border border-surface-dim shadow-xs space-y-3 transition-all hover:border-primary/40"
               >
-                {/* Header row: Icon, Category, Timestamp */}
+                {/* Header row: Icon/Image, Category, Timestamp */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-9 h-9 rounded-2xl bg-surface-container flex items-center justify-center shrink-0 border border-surface-dim/80 shadow-2xs">
-                      {getCategoryIcon(notif.category)}
+                    <div className="w-10 h-10 rounded-2xl bg-surface-container flex items-center justify-center shrink-0 border border-surface-dim/80 shadow-2xs overflow-hidden">
+                      {notif.iconUrl && !brokenIcons[notif.id] ? (
+                        <img
+                          src={notif.iconUrl}
+                          alt=""
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                          onError={() =>
+                            setBrokenIcons((prev) => ({ ...prev, [notif.id]: true }))
+                          }
+                        />
+                      ) : (
+                        getCategoryIcon(notif.category)
+                      )}
                     </div>
                     <div className="min-w-0">
                       <h2 className="text-sm sm:text-base font-bold text-on-surface truncate font-display">
@@ -292,9 +329,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ onBack }) 
                       {notif.sentAt && (
                         <div className="flex items-center gap-1 text-[11px] text-on-surface-variant font-medium mt-0.5">
                           <Clock className="w-3 h-3 text-outline" />
-                          <span>
-                            {language === 'ur' ? 'حالیہ الرٹ' : 'Recent alert'}
-                          </span>
+                          <span>{formatRelativeTime(notif.sentAt)}</span>
                         </div>
                       )}
                     </div>

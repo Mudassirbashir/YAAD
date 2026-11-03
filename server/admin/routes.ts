@@ -2446,7 +2446,7 @@ adminRouter.delete('/push/templates/:id', requireAdminAuth, (req: AdminAuthReque
 
 adminRouter.post('/push/campaigns', requireAdminAuth, requirePermission('notifications.send'), (req: AdminAuthRequest, res: Response) => {
   try {
-    const { title_en, title_ur, body_en, body_ur, icon_url, target_audience = 'all_active' } = req.body;
+    const { title_en, title_ur, body_en, body_ur, icon_url, target_audience = 'all_active', category } = req.body;
     if (!title_en || !body_en) {
       return res.status(400).json({ error: 'Title and message body are required' });
     }
@@ -2456,6 +2456,7 @@ adminRouter.post('/push/campaigns', requireAdminAuth, requirePermission('notific
       bodyEn: body_en,
       bodyUr: body_ur || '',
       iconUrl: icon_url || '',
+      category: category || undefined,
       targetAudience: target_audience,
       status: 'sent',
       createdBy: req.admin?.email || 'admin',

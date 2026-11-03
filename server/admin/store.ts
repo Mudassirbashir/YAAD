@@ -356,6 +356,7 @@ export interface PushCampaign {
   bodyEn: string;
   bodyUr?: string;
   iconUrl?: string;
+  category?: 'price' | 'deal' | 'system' | 'reminder' | string;
   targetAudience: 'all_active' | 'all' | 'inactive_30d' | 'custom_segment';
   customSegmentCriteria?: string;
   deepLink?: string;

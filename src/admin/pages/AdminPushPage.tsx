@@ -126,6 +126,22 @@ export const AdminPushPage: React.FC = () => {
   const [bodyUr, setBodyUr] = useState('');
   const [targetAudience, setTargetAudience] = useState<'all_active' | 'all' | 'inactive_30d'>('all_active');
   const [iconUrl, setIconUrl] = useState('/logo.png');
+  const [category, setCategory] = useState<'price' | 'deal' | 'system' | 'reminder'>('deal');
+
+  // Map template categories (mandi/rashan/savings/reminder/deals) to app filter categories
+  const mapTemplateCategory = (tplCategory?: string): 'price' | 'deal' | 'system' | 'reminder' => {
+    switch ((tplCategory || '').toLowerCase()) {
+      case 'mandi':
+      case 'price':
+        return 'price';
+      case 'system':
+        return 'system';
+      case 'reminder':
+        return 'reminder';
+      default:
+        return 'deal';
+    }
+  };
 
   // Device Test State
   const [testStatus, setTestStatus] = useState<string | null>(null);
@@ -184,6 +200,7 @@ export const AdminPushPage: React.FC = () => {
     setTitleUr(tpl.titleUr || '');
     setBodyEn(tpl.bodyEn);
     setBodyUr(tpl.bodyUr || '');
+    setCategory(mapTemplateCategory(tpl.category));
     setErrorMsg(null);
     setSuccessMsg(null);
     setIsModalOpen(true);
@@ -235,6 +252,7 @@ export const AdminPushPage: React.FC = () => {
       body_en: bodyEn.trim(),
       body_ur: bodyUr.trim() || undefined,
       icon_url: iconUrl.trim() || '/logo.png',
+      category,
       target_audience: targetAudience,
     };
 
@@ -526,6 +544,7 @@ export const AdminPushPage: React.FC = () => {
                       setTitleUr(chosen.titleUr || '');
                       setBodyEn(chosen.bodyEn);
                       setBodyUr(chosen.bodyUr || '');
+                      setCategory(mapTemplateCategory(chosen.category));
                     }
                   }}
                   className="w-full px-3 py-2 rounded-lg border border-emerald-200 bg-white text-neutral-800 focus:outline-none focus:border-[#003527] text-xs font-medium cursor-pointer"
@@ -595,6 +614,24 @@ export const AdminPushPage: React.FC = () => {
                   dir="rtl"
                   className="w-full px-3 py-2 rounded-xl border border-neutral-200 text-neutral-900 focus:outline-none focus:border-[#003527] font-urdu text-right"
                 />
+              </div>
+
+              {/* Notification Category (drives app filter tabs + card icon) */}
+              <div>
+                <label className="block font-bold text-neutral-700 mb-1">Category</label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value as any)}
+                  className="w-full px-3 py-2 rounded-xl border border-neutral-200 text-neutral-800 focus:outline-none focus:border-[#003527] bg-white"
+                >
+                  <option value="price">Mandi Rates</option>
+                  <option value="deal">Groceries &amp; Rashan</option>
+                  <option value="reminder">Reminder</option>
+                  <option value="system">System</option>
+                </select>
+                <p className="text-[11px] text-neutral-400 mt-1">
+                  Controls which filter tab the alert appears under in the app, and its card icon.
+                </p>
               </div>
 
               {/* Target Audience */}
