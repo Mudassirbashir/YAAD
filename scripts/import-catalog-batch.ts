@@ -43,6 +43,12 @@ const DEPARTMENT_MAP: Record<string, string> = {
 
 const CATEGORY_ID_MAP: Record<string, string> = {
   'Grocery & Food': 'grocery',
+  'Snacks & Beverages': 'snacks',
+  'Personal & Home Care': 'personal_care',
+  'Pharmacy & Health': 'health',
+  'Electronics & Appliances': 'electronics',
+  'Cars & Automotive': 'automotive',
+  // Legacy/alternate spellings (never silently fall through to 'grocery')
   'Snacks': 'snacks',
   'Personal/Home Care': 'personal_care',
   'Pharmacy': 'health',
