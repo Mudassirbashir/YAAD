@@ -20,6 +20,7 @@ import {
   Baby,
   FileText,
   Smartphone,
+  Car,
   Shirt,
   Tag,
   Package,
@@ -395,6 +396,7 @@ const CATEGORY_MAP: Record<
   health: { icon: Pill, bgGradient: 'bg-rose-50', borderColor: 'border-rose-200/80', iconColor: 'text-rose-700', label: 'Health' },
   stationery: { icon: FileText, bgGradient: 'bg-blue-50', borderColor: 'border-blue-200/80', iconColor: 'text-blue-700', label: 'Stationery' },
   electronics: { icon: Smartphone, bgGradient: 'bg-slate-50', borderColor: 'border-slate-200/80', iconColor: 'text-slate-700', label: 'Electronics' },
+  automotive: { icon: Car, bgGradient: 'bg-slate-50', borderColor: 'border-slate-200/80', iconColor: 'text-slate-700', label: 'Automotive' },
   uncategorized: { icon: ShoppingBag, bgGradient: 'bg-surface-container', borderColor: 'border-surface-dim', iconColor: 'text-on-surface-variant', label: 'General' },
   other: { icon: Tag, bgGradient: 'bg-surface-container', borderColor: 'border-surface-dim', iconColor: 'text-on-surface-variant', label: 'Other' },
   // Backward compatibility keys

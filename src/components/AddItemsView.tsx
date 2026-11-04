@@ -914,7 +914,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                               className="w-10 h-10 rounded-xl shrink-0 group-hover:scale-105 transition-transform"
                             />
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1.5 truncate">
+                              <div className="flex items-center gap-1.5 truncate" title={sug.displayName}>
                                 <span className="font-body font-bold text-sm text-primary truncate">
                                   {sug.displayName}
                                 </span>
@@ -1223,7 +1223,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                               />
                               <div className="min-w-0 flex-1 flex flex-col gap-0.5">
                             {/* Line 1: Item Name */}
-                            <span className="font-display font-bold text-sm text-primary truncate block">
+                            <span className="font-display font-bold text-sm text-primary truncate block" title={item.name}>
                               {item.name}
                             </span>
 

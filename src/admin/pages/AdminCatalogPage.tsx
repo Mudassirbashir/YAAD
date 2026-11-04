@@ -176,6 +176,9 @@ export const AdminCatalogPage: React.FC = () => {
         },
         {
           ttl: 300_000,
+          // force=true bypasses the 5-min SWR cache so a just-finished upload
+          // (drop zone / image modal) shows in the table immediately.
+          force,
           onRevalidate: (freshData) => {
             if (freshData) {
               setItems(freshData.items || []);
@@ -295,23 +298,40 @@ export const AdminCatalogPage: React.FC = () => {
     }
   };
 
-  // P4: one-time alias backfill (idempotent)
+  // P4: one-time alias backfill (idempotent). The endpoint is chunked —
+  // loop with nextOffset until done so large catalogs never 504.
   const [isSeedingAliases, setIsSeedingAliases] = useState(false);
+  const [seedProgress, setSeedProgress] = useState('');
   const handleSeedAliases = async () => {
     if (!token || isSeedingAliases) return;
     setIsSeedingAliases(true);
+    setSeedProgress('');
     try {
-      const res = await fetch('/api/admin/catalog/aliases/seed', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-      toast.success('Aliases seeded', `${data.inserted} added, ${data.skipped} already existed.`);
+      let offset = 0;
+      let totalInserted = 0;
+      let totalSkipped = 0;
+      let total = 0;
+      for (;;) {
+        const res = await fetch('/api/admin/catalog/aliases/seed', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ offset, limit: 200 }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+        totalInserted += data.inserted || 0;
+        totalSkipped += data.skipped || 0;
+        total = data.total || total;
+        offset = data.nextOffset ?? offset;
+        if (total > 0) setSeedProgress(`${Math.min(offset, total)}/${total}`);
+        if (data.done) break;
+      }
+      toast.success('Aliases seeded', `${totalInserted} added, ${totalSkipped} already existed.`);
     } catch (err: any) {
       toast.error('Seed failed', err.message || 'Could not seed aliases.');
     } finally {
       setIsSeedingAliases(false);
+      setSeedProgress('');
     }
   };
 
@@ -386,7 +406,7 @@ export const AdminCatalogPage: React.FC = () => {
               className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-2xl border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-700 font-bold text-xs transition-colors shrink-0 cursor-pointer shadow-2xs disabled:opacity-50"
             >
               <Languages className={`w-4 h-4 text-neutral-500 ${isSeedingAliases ? 'animate-pulse' : ''}`} />
-              <span>{isSeedingAliases ? 'Seeding…' : 'Seed Aliases'}</span>
+              <span>{isSeedingAliases ? `Seeding… ${seedProgress}` : 'Seed Aliases'}</span>
             </button>
             <button
               type="button"

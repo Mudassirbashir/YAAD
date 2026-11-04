@@ -304,9 +304,24 @@ class SupabaseCatalogService {
       const aliasByItemId = new Map<string, string[]>();
       try {
         if (supabase) {
-          const { data: aliasData, error: aliasError } = await supabase
-            .from('item_aliases')
-            .select('item_id,alias');
+          // Same 1000-row cap guard as items above — paginate.
+          const allAliasRows: any[] = [];
+          const ALIAS_PAGE = 1000;
+          let aliasOffset = 0;
+          let aliasError: any = null;
+          for (;;) {
+            const { data: aliasPage, error } = await supabase
+              .from('item_aliases')
+              .select('item_id,alias')
+              .order('item_id', { ascending: true })
+              .range(aliasOffset, aliasOffset + ALIAS_PAGE - 1);
+            if (error) { aliasError = error; break; }
+            if (!aliasPage || aliasPage.length === 0) break;
+            allAliasRows.push(...aliasPage);
+            if (aliasPage.length < ALIAS_PAGE) break;
+            aliasOffset += ALIAS_PAGE;
+          }
+          const aliasData = allAliasRows;
 
           if (!aliasError && aliasData && Array.isArray(aliasData) && aliasData.length > 0) {
             for (const row of aliasData) {
@@ -329,13 +344,29 @@ class SupabaseCatalogService {
         // Graceful fallback
       }
 
-      // 3. Fetch public items from Supabase 'items' table
+      // 3. Fetch public items from Supabase 'items' table.
+      // PostgREST caps a single response at 1000 rows — paginate with .range()
+      // so catalogs larger than 1000 items load fully (else items silently go missing).
       let mergedItems: MasterCatalogItem[] = INITIAL_MASTER_CATALOG;
       try {
         if (supabase) {
-          const { data: itemsData, error: itemsError } = await supabase
-            .from('items')
-            .select('*');
+          const allRows: any[] = [];
+          const PAGE_SIZE = 1000;
+          let offset = 0;
+          let itemsError: any = null;
+          for (;;) {
+            const { data: page, error } = await supabase
+              .from('items')
+              .select('*')
+              .order('id', { ascending: true })
+              .range(offset, offset + PAGE_SIZE - 1);
+            if (error) { itemsError = error; break; }
+            if (!page || page.length === 0) break;
+            allRows.push(...page);
+            if (page.length < PAGE_SIZE) break;
+            offset += PAGE_SIZE;
+          }
+          const itemsData = allRows;
 
           if (!itemsError && itemsData && Array.isArray(itemsData) && itemsData.length > 0) {
             mergedItems = mergeMasterCatalogItems(INITIAL_MASTER_CATALOG, itemsData);

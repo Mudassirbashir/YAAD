@@ -28,6 +28,7 @@ import {
   Soup,
   Droplets,
   Archive,
+  Car,
   LucideIcon,
 } from 'lucide-react';
 import { CategoryId } from '../types';
@@ -59,6 +60,7 @@ const ICON_MAP: Record<CategoryId, LucideIcon> = {
   health: Pill,
   stationery: FileText,
   electronics: Smartphone,
+  automotive: Car,
   uncategorized: Tag,
   other: Tag,
   // Backward compatibility

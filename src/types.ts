@@ -18,6 +18,7 @@ export type CategoryId =
   | 'snacks'
   | 'frozen'
   | 'sauces_condiments'
+  | 'grocery'
   | 'cooking_essentials'
   | 'household'
   | 'cleaning'
@@ -27,6 +28,7 @@ export type CategoryId =
   | 'stationery'
   | 'kitchen'
   | 'electronics'
+  | 'automotive'
   | 'uncategorized'
   | 'other'
   // Backward compatibility aliases:
@@ -34,7 +36,6 @@ export type CategoryId =
   | 'oil'
   | 'perishables'
   | 'eggs'
-  | 'grocery'
   | 'herbal'
   | 'baby'
   | 'pet_supplies'
@@ -62,6 +63,7 @@ export const CATEGORIES_LIST: CategoryInfo[] = [
   { id: 'bakery', icon: 'bakery_dining', defaultName: 'Bakery', order: 7 },
   { id: 'oils', icon: 'inventory_2', defaultName: 'Cooking Oil & Ghee', order: 8 },
   { id: 'cooking_essentials', icon: 'inventory_2', defaultName: 'Cooking Essentials', order: 9 },
+  { id: 'grocery', icon: 'shopping_cart', defaultName: 'Grocery', order: 9 },
   { id: 'rice', icon: 'grain', defaultName: 'Rice', order: 10 },
   { id: 'grains', icon: 'grain', defaultName: 'Grains', order: 11 },
   { id: 'pulses', icon: 'soup', defaultName: 'Pulses & Lentils', order: 12 },
@@ -80,8 +82,9 @@ export const CATEGORIES_LIST: CategoryInfo[] = [
   { id: 'health', icon: 'medication', defaultName: 'Medicines / Health', order: 25 },
   { id: 'stationery', icon: 'edit_note', defaultName: 'Stationery', order: 26 },
   { id: 'electronics', icon: 'devices', defaultName: 'Electronics', order: 27 },
-  { id: 'uncategorized', icon: 'category', defaultName: 'Uncategorized', order: 28 },
-  { id: 'other', icon: 'category', defaultName: 'Other', order: 29 },
+  { id: 'automotive', icon: 'directions_car', defaultName: 'Automotive', order: 28 },
+  { id: 'uncategorized', icon: 'category', defaultName: 'Uncategorized', order: 29 },
+  { id: 'other', icon: 'category', defaultName: 'Other', order: 30 },
 ];
 
 export const CATEGORY_MAP: Record<CategoryId, CategoryInfo> = CATEGORIES_LIST.reduce(
@@ -123,8 +126,9 @@ export function normalizeCategoryId(id?: string | null): CategoryId {
   ) {
     return 'oils';
   }
+  // 'grocery' is now a real top-level category (was: alias of cooking_essentials).
+  // Only the legacy 'canned_food' / 'grains_staples' ids still fold into it.
   if (
-    clean === 'grocery' ||
     clean === 'canned_food' ||
     clean === 'grains_staples'
   ) {

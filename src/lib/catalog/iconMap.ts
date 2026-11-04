@@ -41,6 +41,7 @@ const CATEGORY_DEFAULT_EMOJIS: Record<CategoryId, string> = {
   frozen: '❄️',
   snacks: '🍪',
   electronics: '📱',
+  automotive: '🚗',
   uncategorized: '📦',
   other: '📦',
   oil: '🛢️',

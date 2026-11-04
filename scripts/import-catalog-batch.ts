@@ -120,7 +120,10 @@ async function main() {
     const product = (r.product || '').trim();
     if (!product) continue;
     const pack = (r.pack || '').trim();
-    const name = brand ? `${brand} ${product}${pack ? ` ${pack}` : ''}` : `${product}${pack ? ` ${pack}` : ''}`;
+    // Dedupe: many source rows already start with the brand ("Weetabix Original"
+    // with brand "Weetabix") — don't prepend it again ("Weetabix Weetabix Original").
+    const productStartsWithBrand = !!brand && product.toLowerCase().startsWith(brand.toLowerCase());
+    const name = brand && !productStartsWithBrand ? `${brand} ${product}${pack ? ` ${pack}` : ''}` : `${product}${pack ? ` ${pack}` : ''}`;
     const normName = name.toLowerCase().trim();
 
     if (existingNames.has(normName)) {

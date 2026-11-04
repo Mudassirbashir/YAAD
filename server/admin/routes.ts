@@ -2023,15 +2023,26 @@ adminRouter.post('/catalog/aliases/seed', requireAdminAuth, requirePermission('c
   const sb = getSupabaseAdmin();
   if (!sb) return res.status(503).json({ error: 'Supabase admin not configured' });
   try {
+    // Chunked seed: one batch per call so the serverless function never 504s
+    // on large catalogs. The admin button loops with nextOffset until done=true.
+    const offset = Math.max(0, parseInt(String(req.body?.offset ?? 0), 10) || 0);
+    const limit = Math.min(500, Math.max(1, parseInt(String(req.body?.limit ?? 200), 10) || 200));
+
+    const { count: total } = await sb.from('items').select('id', { count: 'exact', head: true });
     const { data: items, error: itemsError } = await sb
       .from('items')
-      .select('id,english_name,urdu_name,roman_urdu_names');
+      .select('id,english_name,urdu_name,roman_urdu_names')
+      .order('id', { ascending: true })
+      .range(offset, offset + limit - 1);
     if (itemsError) throw itemsError;
 
-    const { data: existing } = await sb.from('item_aliases').select('item_id,alias');
+    const ids = (items || []).map((i: any) => i.id);
+    const { data: existing } = ids.length > 0
+      ? await sb.from('item_aliases').select('item_id,alias').in('item_id', ids)
+      : { data: [] as any[] };
     const have = new Set((existing || []).map((r: any) => `${r.item_id}::${(r.alias || '').toLowerCase()}`));
 
-    let inserted = 0;
+    const rows: any[] = [];
     let skipped = 0;
     for (const item of items || []) {
       const candidates: { alias: string; language: string }[] = [];
@@ -2045,28 +2056,36 @@ adminRouter.post('/catalog/aliases/seed', requireAdminAuth, requirePermission('c
           skipped += 1;
           continue;
         }
-        const { error } = await sb.from('item_aliases').insert({
+        have.add(key);
+        rows.push({
           id: aliasIdFor(item.id, c.alias),
           item_id: item.id,
           alias: c.alias,
           language: c.language,
         });
-        if (!error) {
-          inserted += 1;
-          have.add(key);
-        }
       }
     }
 
-    adminStore.writeAuditLog({
-      action: 'catalog_aliases_seeded',
-      adminId: req.admin?.id,
-      adminEmail: req.admin?.email,
-      targetType: 'catalog',
-      targetId: 'all',
-      afterValue: { inserted, skipped },
-    });
-    res.status(200).json({ inserted, skipped });
+    let inserted = 0;
+    for (let i = 0; i < rows.length; i += 500) {
+      const { error } = await sb.from('item_aliases').insert(rows.slice(i, i + 500));
+      if (error) throw error;
+      inserted += Math.min(500, rows.length - i);
+    }
+
+    const nextOffset = offset + (items || []).length;
+    const done = nextOffset >= (total || 0) || (items || []).length < limit;
+    if (done) {
+      adminStore.writeAuditLog({
+        action: 'catalog_aliases_seeded',
+        adminId: req.admin?.id,
+        adminEmail: req.admin?.email,
+        targetType: 'catalog',
+        targetId: 'all',
+        afterValue: { inserted, skipped, total: total || 0 },
+      });
+    }
+    res.status(200).json({ inserted, skipped, done, nextOffset, total: total || 0 });
   } catch (err: any) {
     res.status(500).json({ error: err.message || 'Seed failed' });
   }
