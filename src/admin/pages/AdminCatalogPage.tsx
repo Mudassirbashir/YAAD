@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   FileText,
   Search,
@@ -93,7 +93,23 @@ export const AdminCatalogPage: React.FC = () => {
 
   // P1 — full catalog for drop-strip matching + tab counts (fetched once)
   const [allItems, setAllItems] = useState<CatalogItem[]>([]);
-  const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
+
+  // Live categories derived from the actual catalog (not the hardcoded fallback list)
+  const liveCategories = useMemo(() => {
+    const seen = new Map<string, number>();
+    for (const it of allItems) {
+      const cat = (it.category || '').trim();
+      if (!cat) continue;
+      seen.set(cat, (seen.get(cat) || 0) + 1);
+    }
+    return [...seen.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  }, [allItems]);
+
+  const prettifyCategory = (cat: string) =>
+    cat
+      .split('_')
+      .map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1) : w))
+      .join(' ');
 
   useEffect(() => {
     if (!token) return;
@@ -108,12 +124,6 @@ export const AdminCatalogPage: React.FC = () => {
         if (cancelled) return;
         const list: CatalogItem[] = data.items || [];
         setAllItems(list);
-        const counts: Record<string, number> = {};
-        for (const it of list) {
-          const cat = it.category || 'Uncategorized';
-          counts[cat] = (counts[cat] || 0) + 1;
-        }
-        setCategoryCounts(counts);
       } catch {
         // Non-fatal: tabs fall back to no counts, drop strip matches page items.
       }
@@ -435,10 +445,10 @@ export const AdminCatalogPage: React.FC = () => {
             aria-label="Filter by category"
             className="px-3 py-2 text-xs rounded-xl border border-neutral-200 bg-white font-medium text-neutral-700 focus:outline-none focus:ring-2 focus:ring-[#003527]/20 md:hidden"
           >
-            <option value="all">All Categories ({total})</option>
-            {categories.map((c) => (
+            <option value="all">All Categories ({allItems.length || total})</option>
+            {liveCategories.map(([c, count]) => (
               <option key={c} value={c}>
-                {c}
+                {prettifyCategory(c)} ({count})
               </option>
             ))}
           </select>
@@ -467,8 +477,7 @@ export const AdminCatalogPage: React.FC = () => {
         >
           All ({allItems.length || total})
         </button>
-        {categories.map((c) => {
-          const count = categoryCounts[c] ?? 0;
+        {liveCategories.map(([c, count]) => {
           const active = selectedCategory === c;
           return (
             <button
@@ -486,7 +495,7 @@ export const AdminCatalogPage: React.FC = () => {
                   : 'bg-white text-neutral-600 border-neutral-200 hover:border-neutral-300'
               }`}
             >
-              {c} ({count})
+              {prettifyCategory(c)} ({count})
             </button>
           );
         })}

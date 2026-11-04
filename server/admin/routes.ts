@@ -1908,8 +1908,15 @@ adminRouter.post('/catalog/images/clear-dead', requireAdminAuth, requirePermissi
         imageUrl: '',
         cloudinaryPublicId: '',
       });
+      // Belt-and-suspenders: the store merge must not resurrect cleared fields.
+      updated.imageUrl = '';
+      updated.cloudinaryPublicId = '';
 
-      await persistAuthoritativeCatalogProduct(updated);
+      const persisted = await persistAuthoritativeCatalogProduct(updated);
+      if (!persisted) {
+        failed.push({ id, error: 'Failed to persist to database' });
+        continue;
+      }
 
       adminStore.writeAuditLog({
         action: 'catalog_image_dead_ref_cleared',
