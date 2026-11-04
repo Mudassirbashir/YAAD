@@ -152,7 +152,7 @@ async function main() {
     const categoryId = CATEGORY_ID_MAP[r.category] || 'grocery';
     const terms = [product.toLowerCase(), brand.toLowerCase()].filter(Boolean);
     itemRows.push(
-      `(${sqlStr(id)},${sqlStr(name)},${sqlStr(name)},NULL,'{}',${sqlStr(categoryId)},'general',${sqlArr(terms)},'{}',true,'piece',${sqlStr(leafId)},NULL,NULL,now(),now())`
+      `(${sqlStr(id)},${sqlStr(name)},${sqlStr(name)},'',${sqlArr([])},${sqlStr(categoryId)},'general',${sqlArr(terms)},${sqlArr([])},true,'piece',${sqlStr(leafId)},NULL,NULL,now(),now())`
     );
   }
 
