@@ -15,6 +15,7 @@ import {
   Edit,
   Trash2,
   UploadCloud,
+  Languages,
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { useAdminToast } from '../components/AdminToasts';
@@ -284,6 +285,26 @@ export const AdminCatalogPage: React.FC = () => {
     }
   };
 
+  // P4: one-time alias backfill (idempotent)
+  const [isSeedingAliases, setIsSeedingAliases] = useState(false);
+  const handleSeedAliases = async () => {
+    if (!token || isSeedingAliases) return;
+    setIsSeedingAliases(true);
+    try {
+      const res = await fetch('/api/admin/catalog/aliases/seed', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      toast.success('Aliases seeded', `${data.inserted} added, ${data.skipped} already existed.`);
+    } catch (err: any) {
+      toast.error('Seed failed', err.message || 'Could not seed aliases.');
+    } finally {
+      setIsSeedingAliases(false);
+    }
+  };
+
   const handleConfirmDelete = async () => {
     if (!itemToDelete) return;
     setIsDeleting(true);
@@ -346,6 +367,16 @@ export const AdminCatalogPage: React.FC = () => {
             >
               <UploadCloud className="w-4 h-4 text-neutral-500" />
               <span>Bulk Import Images</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleSeedAliases}
+              disabled={isSeedingAliases}
+              title="One-time backfill: copy Urdu/Roman/English names into the searchable alias table"
+              className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-2xl border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-700 font-bold text-xs transition-colors shrink-0 cursor-pointer shadow-2xs disabled:opacity-50"
+            >
+              <Languages className={`w-4 h-4 text-neutral-500 ${isSeedingAliases ? 'animate-pulse' : ''}`} />
+              <span>{isSeedingAliases ? 'Seeding…' : 'Seed Aliases'}</span>
             </button>
             <button
               type="button"
