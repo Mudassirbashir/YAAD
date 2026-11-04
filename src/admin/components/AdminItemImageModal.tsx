@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { CatalogItem } from '../pages/AdminCatalogPage';
 import { buildCatalogImageUrl, extractCloudinaryVersion } from '../../utils/cloudinary';
+import { compressCatalogImage } from '../lib/compressCatalogImage';
 
 export const CATALOG_IMAGE_ACCEPT =
   '.jpg,.jpeg,.png,.webp,.gif,.avif,.heic,.heif,.bmp,.tif,.tiff,.svg,image/*';
@@ -132,7 +133,7 @@ export const AdminItemImageModal: React.FC<AdminItemImageModalProps> = ({
     ? buildCatalogImageUrl(currentPublicId, 'large', extractCloudinaryVersion(currentImageUrl))
     : currentImageUrl;
 
-  const handleProcessFile = (file: File) => {
+  const handleProcessFile = async (file: File) => {
     setErrorMsg(null);
     setUploadStats(null);
 
@@ -144,7 +145,12 @@ export const AdminItemImageModal: React.FC<AdminItemImageModalProps> = ({
       return;
     }
 
+    // P2: compress BEFORE upload — one shared call site (never throws; falls
+    // back to the original file). Show the saving in the stats line.
+    const originalBytes = file.size;
     setIsUploading(true);
+    const uploadFile = await compressCatalogImage(file);
+    const savedBytes = originalBytes - uploadFile.size;
     const reader = new FileReader();
     reader.onerror = () => {
       setIsUploading(false);
@@ -177,6 +183,13 @@ export const AdminItemImageModal: React.FC<AdminItemImageModalProps> = ({
         };
 
         setUploadStats(data.cloudinary || null);
+        if (savedBytes > 0) {
+          setUploadStats({
+            ...(data.cloudinary || {}),
+            bytes: uploadFile.size,
+            format: 'webp',
+          });
+        }
         setSyncStatus({
           isLoading: false,
           inSync: true,
@@ -191,7 +204,7 @@ export const AdminItemImageModal: React.FC<AdminItemImageModalProps> = ({
         setIsUploading(false);
       }
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(uploadFile);
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -328,6 +341,7 @@ export const AdminItemImageModal: React.FC<AdminItemImageModalProps> = ({
                   <img
                     src={previewUrl}
                     alt={item.name}
+                    crossOrigin="anonymous"
                     className="w-full h-full object-contain p-1"
                     onError={(e) => {
                       (e.currentTarget as HTMLElement).style.display = 'none';

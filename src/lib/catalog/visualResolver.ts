@@ -1,4 +1,4 @@
-import { getCatalogImageForItem } from './supabaseCatalog';
+import { getCatalogImageForItem, getLeafImage } from './supabaseCatalog';
 import { buildCatalogImageUrl, extractCloudinaryVersion } from '../../utils/cloudinary';
 
 export interface VisualItemLike {
@@ -16,6 +16,8 @@ export interface VisualItemLike {
   category?: string;
   categoryId?: string;
   category_id?: string;
+  leaf_id?: string;
+  leafId?: string;
 }
 
 export interface ResolvedVisual {
@@ -152,6 +154,27 @@ export function resolveVisual(
           url: catalogMatch.imageUrl,
           largeUrl: catalogMatch.imageUrl,
         };
+      }
+    }
+  }
+
+  // 3b. P5: leaf representative image — one image per taxonomy leaf covers every
+  // item in the leaf that has no per-item photo (the image-scaling trick).
+  const leafId = (item as any).leaf_id || (item as any).leafId;
+  if (leafId) {
+    const leafImage = getLeafImage(leafId);
+    if (leafImage) {
+      if (leafImage.publicId) {
+        const version = extractCloudinaryVersion(leafImage.imageUrl);
+        return {
+          type: 'catalog',
+          url: buildCatalogImageUrl(leafImage.publicId, variant, version),
+          largeUrl: buildCatalogImageUrl(leafImage.publicId, 'large', version),
+          publicId: leafImage.publicId,
+        };
+      }
+      if (leafImage.imageUrl) {
+        return { type: 'catalog', url: leafImage.imageUrl, largeUrl: leafImage.imageUrl };
       }
     }
   }

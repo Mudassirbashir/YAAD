@@ -34,6 +34,7 @@ import {
   deleteSharedAdminUser,
   getAuthoritativeCms,
   persistAuthoritativeCatalogProduct,
+  getSupabaseAdmin,
 } from './supabaseAdmin';
 import {
   getCloudinaryAdminConfig,
@@ -1825,6 +1826,295 @@ adminRouter.get('/catalog/products/:id/image/status', requireAdminAuth, requireP
     });
   } catch (err: any) {
     res.status(500).json({ error: err.message || 'Failed to check image status' });
+  }
+});
+
+// -----------------------------------------------------------------------------
+// 14e2. Image health sweep — detect catalog items whose Cloudinary asset is gone
+// (e.g. deleted directly in the Cloudinary console) while the DB still references
+// it. The admin lists images from the DB, so these stale refs stay visible as
+// broken images until cleared. Read-only; clearing is a separate explicit call.
+// -----------------------------------------------------------------------------
+adminRouter.get('/catalog/images/health', requireAdminAuth, requirePermission('catalog.edit'), async (req: AdminAuthRequest, res: Response) => {
+  const config = getCloudinaryAdminConfig();
+  if (!config) {
+    return res.status(503).json({ error: 'Cloudinary admin credentials not configured' });
+  }
+
+  try {
+    const catalogResult = await adminStore.getCatalogProductsAsync({ limit: 5000 });
+    const withImages = catalogResult.items.filter((p: any) => p.imageUrl || p.cloudinaryPublicId);
+    const items: { id: string; name: string; cloudinaryPublicId: string; imageUrl: string; alive: boolean }[] = [];
+
+    // Sequential: Cloudinary Admin API is rate-limited; the catalog is small.
+    for (const p of withImages) {
+      const publicId = p.cloudinaryPublicId || `yaad-catalog/${p.id}`;
+      let alive = false;
+      try {
+        alive = Boolean(await cloudinaryResource(publicId));
+      } catch {
+        alive = false;
+      }
+      items.push({
+        id: p.id,
+        name: p.name || p.nameEn || p.id,
+        cloudinaryPublicId: publicId,
+        imageUrl: p.imageUrl || '',
+        alive,
+      });
+    }
+
+    const broken = items.filter((i) => !i.alive);
+    res.status(200).json({
+      total: withImages.length,
+      healthy: items.length - broken.length,
+      broken: broken.length,
+      items,
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to check image health' });
+  }
+});
+
+// -----------------------------------------------------------------------------
+// 14e3. Clear dead image refs — DB-only clear of stale image references.
+// NEVER touches Cloudinary (the asset is already gone — that is the point).
+// Each clear is audit-logged. Requires explicit ids; nothing is auto-cleared.
+// -----------------------------------------------------------------------------
+adminRouter.post('/catalog/images/clear-dead', requireAdminAuth, requirePermission('catalog.edit'), async (req: AdminAuthRequest, res: Response) => {
+  const { ids } = req.body || {};
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ error: 'ids array is required' });
+  }
+
+  const cleared: string[] = [];
+  const failed: { id: string; error: string }[] = [];
+
+  for (const id of ids) {
+    try {
+      const existing = await findCatalogProductById(id);
+      if (!existing) {
+        failed.push({ id, error: 'Catalog product not found' });
+        continue;
+      }
+      const updated = adminStore.saveCatalogProduct({
+        id: existing.id,
+        nameEn: existing.name || existing.nameEn,
+        nameUr: existing.nameUr || existing.urduName || '',
+        category: existing.category,
+        unit: existing.defaultUnit || existing.unit || 'kg',
+        pricePkr: existing.pricePkr,
+        isEssential: existing.isEssential,
+        imageUrl: '',
+        cloudinaryPublicId: '',
+      });
+
+      await persistAuthoritativeCatalogProduct(updated);
+
+      adminStore.writeAuditLog({
+        action: 'catalog_image_dead_ref_cleared',
+        adminId: req.admin?.id,
+        adminEmail: req.admin?.email,
+        targetType: 'catalog_item',
+        targetId: id,
+      });
+      cleared.push(id);
+    } catch (err: any) {
+      failed.push({ id, error: err.message || 'Failed to clear' });
+    }
+  }
+
+  res.status(200).json({ cleared, failed });
+});
+
+// -----------------------------------------------------------------------------
+// 14e4. Search aliases (P4) — multilingual sidecar table `item_aliases`.
+// Every item stays findable in Urdu script, Roman Urdu and English. The app
+// merges these into the search engine on sync; the table already exists
+// (migration 20260903) and is empty, so no new migration is needed.
+// -----------------------------------------------------------------------------
+function aliasIdFor(itemId: string, alias: string): string {
+  const slug = alias.toLowerCase().trim().replace(/[^a-z0-9\u0600-\u06FF]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'alias';
+  return `a_${itemId}_${slug}_${Date.now().toString(36)}`;
+}
+
+adminRouter.get('/catalog/products/:id/aliases', requireAdminAuth, requirePermission('catalog.edit'), async (req: AdminAuthRequest, res: Response) => {
+  const sb = getSupabaseAdmin();
+  if (!sb) return res.status(503).json({ error: 'Supabase admin not configured' });
+  try {
+    const { data, error } = await sb
+      .from('item_aliases')
+      .select('id,alias,language')
+      .eq('item_id', req.params.id)
+      .order('alias', { ascending: true });
+    if (error) throw error;
+    res.status(200).json({ aliases: data || [] });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to load aliases' });
+  }
+});
+
+adminRouter.post('/catalog/products/:id/aliases', requireAdminAuth, requirePermission('catalog.edit'), async (req: AdminAuthRequest, res: Response) => {
+  const sb = getSupabaseAdmin();
+  if (!sb) return res.status(503).json({ error: 'Supabase admin not configured' });
+  const { alias, language } = req.body || {};
+  if (!alias || typeof alias !== 'string' || !alias.trim()) {
+    return res.status(400).json({ error: 'alias is required' });
+  }
+  try {
+    const { error } = await sb.from('item_aliases').insert({
+      id: aliasIdFor(req.params.id, alias),
+      item_id: req.params.id,
+      alias: alias.trim(),
+      language: language || (/[\u0600-\u06FF]/.test(alias) ? 'ur' : 'roman'),
+    });
+    if (error) throw error;
+    adminStore.writeAuditLog({
+      action: 'catalog_alias_added',
+      adminId: req.admin?.id,
+      adminEmail: req.admin?.email,
+      targetType: 'catalog_item',
+      targetId: req.params.id,
+      afterValue: { alias: alias.trim(), language },
+    });
+    res.status(200).json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to add alias' });
+  }
+});
+
+adminRouter.delete('/catalog/products/:id/aliases', requireAdminAuth, requirePermission('catalog.edit'), async (req: AdminAuthRequest, res: Response) => {
+  const sb = getSupabaseAdmin();
+  if (!sb) return res.status(503).json({ error: 'Supabase admin not configured' });
+  const { alias } = req.body || {};
+  if (!alias) return res.status(400).json({ error: 'alias is required' });
+  try {
+    const { error } = await sb
+      .from('item_aliases')
+      .delete()
+      .eq('item_id', req.params.id)
+      .eq('alias', alias);
+    if (error) throw error;
+    adminStore.writeAuditLog({
+      action: 'catalog_alias_removed',
+      adminId: req.admin?.id,
+      adminEmail: req.admin?.email,
+      targetType: 'catalog_item',
+      targetId: req.params.id,
+      afterValue: { alias },
+    });
+    res.status(200).json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Failed to remove alias' });
+  }
+});
+
+// One-time backfill (P4): seed item_aliases from the items table's existing
+// urdu_name / roman_urdu_names / english_name fields. Idempotent — skips
+// aliases that already exist for the item. Audit-logged once per run.
+adminRouter.post('/catalog/aliases/seed', requireAdminAuth, requirePermission('catalog.edit'), async (req: AdminAuthRequest, res: Response) => {
+  const sb = getSupabaseAdmin();
+  if (!sb) return res.status(503).json({ error: 'Supabase admin not configured' });
+  try {
+    const { data: items, error: itemsError } = await sb
+      .from('items')
+      .select('id,english_name,urdu_name,roman_urdu_names');
+    if (itemsError) throw itemsError;
+
+    const { data: existing } = await sb.from('item_aliases').select('item_id,alias');
+    const have = new Set((existing || []).map((r: any) => `${r.item_id}::${(r.alias || '').toLowerCase()}`));
+
+    let inserted = 0;
+    let skipped = 0;
+    for (const item of items || []) {
+      const candidates: { alias: string; language: string }[] = [];
+      if (item.urdu_name) candidates.push({ alias: item.urdu_name, language: 'ur' });
+      for (const r of item.roman_urdu_names || []) candidates.push({ alias: r, language: 'roman' });
+      if (item.english_name) candidates.push({ alias: item.english_name, language: 'en' });
+
+      for (const c of candidates) {
+        const key = `${item.id}::${c.alias.toLowerCase()}`;
+        if (have.has(key)) {
+          skipped += 1;
+          continue;
+        }
+        const { error } = await sb.from('item_aliases').insert({
+          id: aliasIdFor(item.id, c.alias),
+          item_id: item.id,
+          alias: c.alias,
+          language: c.language,
+        });
+        if (!error) {
+          inserted += 1;
+          have.add(key);
+        }
+      }
+    }
+
+    adminStore.writeAuditLog({
+      action: 'catalog_aliases_seeded',
+      adminId: req.admin?.id,
+      adminEmail: req.admin?.email,
+      targetType: 'catalog',
+      targetId: 'all',
+      afterValue: { inserted, skipped },
+    });
+    res.status(200).json({ inserted, skipped });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Seed failed' });
+  }
+});
+
+// P5: leaf representative image upload — one image per taxonomy leaf
+// (image-scaling trick). Stored as yaad-leaf/<leaf-id>, versioned URLs.
+adminRouter.post('/catalog/leaves/:id/image', requireAdminAuth, requirePermission('catalog.edit'), async (req: AdminAuthRequest, res: Response) => {
+  const config = getCloudinaryAdminConfig();
+  if (!config) {
+    return res.status(503).json({ error: 'Cloudinary admin credentials not configured' });
+  }
+  const { fileDataUri } = req.body || {};
+  if (!fileDataUri || typeof fileDataUri !== 'string') {
+    return res.status(400).json({ error: 'fileDataUri is required' });
+  }
+  const sb = getSupabaseAdmin();
+  if (!sb) return res.status(503).json({ error: 'Supabase admin not configured' });
+
+  try {
+    const { data: leaf, error: leafError } = await sb
+      .from('catalog_leaves')
+      .select('id,representative_public_id')
+      .eq('id', req.params.id)
+      .maybeSingle();
+    if (leafError) throw leafError;
+    if (!leaf) return res.status(404).json({ error: 'Leaf not found' });
+
+    const publicId = `yaad-leaf/${req.params.id}`;
+    const upload = await cloudinaryUploadImage(fileDataUri, { publicId });
+
+    const { error: updateError } = await sb
+      .from('catalog_leaves')
+      .update({
+        representative_image_url: upload.secureUrl,
+        representative_public_id: upload.publicId,
+      })
+      .eq('id', req.params.id);
+    if (updateError) throw updateError;
+
+    adminStore.writeAuditLog({
+      action: 'catalog_leaf_image_uploaded',
+      adminId: req.admin?.id,
+      adminEmail: req.admin?.email,
+      targetType: 'catalog_leaf',
+      targetId: req.params.id,
+    });
+
+    res.status(200).json({
+      imageUrl: upload.secureUrl,
+      publicId: upload.publicId,
+      cloudinary: { format: upload.format, width: upload.width, height: upload.height, bytes: upload.bytes },
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Leaf image upload failed' });
   }
 });
 

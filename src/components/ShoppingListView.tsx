@@ -16,7 +16,7 @@ import { categorizeItemLocally, smartCategorizeItem } from '../lib/categorizer';
 import { parseShoppingItem, parseMultiItemInput } from '../lib/recognition/engine';
 import { detectDuplicateItem, mergeQuantities } from '../lib/recognition';
 import { recordLearnedAlias } from '../lib/recognition/userAliases';
-import { defaultCatalogSearchEngine, CatalogSearchResult, useCatalogVersion } from '../lib/catalog';
+import { defaultCatalogSearchEngine, CatalogSearchResult, useCatalogVersion, searchNeverBlank } from '../lib/catalog';
 import { playCompletionSound, playItemCheckSound, playItemUncheckSound, triggerHaptic } from '../lib/sound';
 import { updateShoppingItemCompletionStatus } from '../lib/supabase';
 import { reportItemCompletionFailed } from '../lib/monitoring';
@@ -232,11 +232,11 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
     return parseShoppingItem(trimmed);
   }, [newItemText]);
 
-  // Real-time catalog search suggestions
+  // Real-time catalog search suggestions (P3: never-blank — populars when nothing matches)
   const searchSuggestions: CatalogSearchResult[] = useMemo(() => {
     const trimmed = newItemText.trim();
     if (!trimmed) return [];
-    return defaultCatalogSearchEngine.search(trimmed, 3);
+    return searchNeverBlank(trimmed, 3).results;
   }, [newItemText, catalogVersion]);
 
   const handleSelectSuggestion = (suggestion: CatalogSearchResult) => {

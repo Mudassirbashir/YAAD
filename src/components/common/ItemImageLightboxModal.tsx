@@ -64,6 +64,7 @@ export const ItemImageLightboxModal: React.FC<ItemImageLightboxModalProps> = ({
       >
         <img
           src={imageUrl}
+          crossOrigin="anonymous"
           alt={itemName}
           className="max-h-full max-w-full object-contain pointer-events-auto rounded-2xl shadow-2xl"
           onClick={(e) => {

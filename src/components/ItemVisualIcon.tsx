@@ -56,6 +56,7 @@ export const ItemVisualIcon: React.FC<ItemVisualIconProps> = ({
         <img
           src={sanitizedUrl}
           alt={displayName || name || 'Product'}
+          crossOrigin="anonymous"
           onError={() => setHasImgError(true)}
           className="w-full h-full object-contain p-0.5"
           loading="lazy"

@@ -228,6 +228,8 @@ export interface MasterCatalogItem {
   nameRomanUrdu?: string;
   categoryId?: CategoryId;
   defaultUnit?: string;
+  // P5: taxonomy leaf (one representative image per leaf)
+  leaf_id?: string;
 }
 
 export interface ItemAliasRecord {

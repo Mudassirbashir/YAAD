@@ -75,7 +75,10 @@ export async function cloudinaryUploadImage(
     overwrite: true,
     public_id: options.publicId,
     timestamp,
-    transformation: 'c_limit,w_1200,h_1200',
+    // P2: safety net only — the client already compresses to a 1600px WebP master
+    // before upload. c_limit never upscales; this only caps bypasses. NEVER put
+    // f_auto here (format must resolve per-request at the CDN, not at upload).
+    transformation: 'c_limit,w_1600',
   };
 
   const signature = signParams(paramsToSign, config.apiSecret);

@@ -148,6 +148,27 @@ export default defineConfig(() => {
                 },
               },
             },
+            {
+              // P6: Cloudinary catalog images — CacheFirst so a cache hit never
+              // touches the network (instant render, works offline, no spinner).
+              // Versioned URLs (v{version} from da4e54d) make CacheFirst correct:
+              // every replace is a NEW url, so stale can never be served.
+              // cacheableResponse: [200] ONLY — never cache opaque (status 0)
+              // responses; each opaque response costs ~7MB of Chrome quota.
+              // (Requires crossOrigin="anonymous" on catalog <img> tags.)
+              urlPattern: /^https:\/\/res\.cloudinary\.com\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'yaad-cloudinary-v1',
+                cacheableResponse: {
+                  statuses: [200],
+                },
+                expiration: {
+                  maxEntries: 1500,
+                  maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year — versioned URLs are immutable
+                },
+              },
+            },
           ],
         },
         devOptions: {

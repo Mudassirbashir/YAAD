@@ -7,6 +7,9 @@ import { extractQuantityAndUnit } from '../recognition/quantityExtractor';
 import { getItemEmoji } from './iconMap';
 import { getUserCustomAlias, getAllUserCustomAliases } from '../recognition/userAliases';
 import type { UserItemBehaviorProfile } from '../recommendations/types';
+import { buildMiniSearchIndex, searchMiniIndex } from './miniSearchIndex';
+import type MiniSearch from 'minisearch';
+import type { MiniDoc } from './miniSearchIndex';
 
 export interface CatalogSearchResult {
   item: MasterCatalogItem;
@@ -17,7 +20,7 @@ export interface CatalogSearchResult {
   categoryId: CategoryId;
   categoryName: string;
   emoji: string;
-  matchType: 'exact' | 'prefix' | 'alias' | 'phonetic' | 'fuzzy';
+  matchType: 'exact' | 'prefix' | 'alias' | 'phonetic' | 'fuzzy' | 'popular';
   confidence: number;
   parsedQuantity?: string;
   parsedUnit?: string;
@@ -35,6 +38,8 @@ class CatalogSearchEngine {
   private aliasMap = new Map<string, MasterCatalogItem>();
   private phoneticMap = new Map<string, MasterCatalogItem>();
   private commonSpellingMap = new Map<string, MasterCatalogItem>();
+  // P3: MiniSearch recall tier (typo-tolerant, scales to 100k+ docs).
+  private miniIndex: MiniSearch<MiniDoc> | null = null;
 
   constructor(initialItems: MasterCatalogItem[]) {
     this.indexItems(initialItems);
@@ -46,6 +51,11 @@ class CatalogSearchEngine {
     this.aliasMap.clear();
     this.phoneticMap.clear();
     this.commonSpellingMap.clear();
+    try {
+      this.miniIndex = buildMiniSearchIndex(this.items);
+    } catch {
+      this.miniIndex = null;
+    }
 
     for (const item of this.items) {
       if (!item.active) continue;
@@ -131,7 +141,7 @@ class CatalogSearchEngine {
     const addResult = (
       item: MasterCatalogItem,
       matchedName: string,
-      matchType: 'exact' | 'prefix' | 'alias' | 'phonetic' | 'fuzzy',
+      matchType: 'exact' | 'prefix' | 'alias' | 'phonetic' | 'fuzzy' | 'popular',
       confidence: number,
       isUserLearned: boolean = false
     ) => {
@@ -358,6 +368,23 @@ class CatalogSearchEngine {
       }
     }
 
+    // 7. MiniSearch recall tier (P3) — typo-tolerant inverted-index retrieval that
+    // scales to 100k+ docs. Fills remaining slots; never duplicates earlier tiers.
+    // MiniSearch scores are unbounded — squash to a 0..0.8 confidence band so the
+    // precision tiers above always outrank it.
+    if (results.length < maxResults && norm.length >= 2) {
+      const hits = searchMiniIndex(this.miniIndex, cleanSearchText || rawTrimmed, maxResults * 2);
+      const topScore = hits.length > 0 ? hits[0].score : 1;
+      for (const hit of hits) {
+        if (results.length >= maxResults) break;
+        if (seenItemIds.has(hit.id)) continue;
+        const item = this.items.find((i) => i.id === hit.id);
+        if (!item) continue;
+        const confidence = topScore > 0 ? Math.min(0.8, (hit.score / topScore) * 0.8) : 0.5;
+        addResult(item, item.canonical_name, 'fuzzy', Math.max(0.3, confidence));
+      }
+    }
+
     // Sort results by confidence descending
     results.sort((a, b) => b.confidence - a.confidence);
 
@@ -366,6 +393,40 @@ class CatalogSearchEngine {
 
   public getAllItems(): MasterCatalogItem[] {
     return this.items;
+  }
+
+  /**
+   * P3 — popular-items fallback for the never-blank ladder. Shapes the first N
+   * active items as low-confidence results so a search screen never renders an
+   * empty state. Callers should label these ("Popular items") and keep the
+   * free-text/custom-item path as the final answer.
+   */
+  public getPopularResults(count: number = 5): CatalogSearchResult[] {
+    const out: CatalogSearchResult[] = [];
+    for (const item of this.items) {
+      if (out.length >= count) break;
+      if (!item.active) continue;
+      const cat = MASTER_CATEGORIES.find((c) => c.id === item.category_id);
+      out.push({
+        item,
+        matchedName: item.canonical_name,
+        displayName: item.canonical_name,
+        secondaryName: item.urdu_name ? `${item.urdu_name}` : undefined,
+        multilingualTitle: [
+          item.urdu_name,
+          (item.roman_urdu_names || [])[0],
+          item.english_name || item.canonical_name,
+        ]
+          .filter(Boolean)
+          .join(' / '),
+        categoryId: item.category_id,
+        categoryName: cat ? cat.name_en : item.category_id,
+        emoji: getItemEmoji(item.canonical_name, item.category_id, item.emoji),
+        matchType: 'popular',
+        confidence: 0.3,
+      });
+    }
+    return out;
   }
 }
 

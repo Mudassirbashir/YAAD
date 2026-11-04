@@ -6,6 +6,8 @@ import { MASTER_CATEGORIES } from './categories';
 import { defaultCatalogSearchEngine } from './searchEngine';
 import { defaultItemCatalog } from '../recognition/catalog';
 import { generateUUID } from '../uuid';
+import { buildCatalogImageUrl, extractCloudinaryVersion } from '../../utils/cloudinary';
+import { ensurePersistentStorage, warmCatalogImages } from '../offlineImages';
 
 const CACHE_KEY_ITEMS = 'yaad_cached_master_items_v1';
 const CACHE_KEY_CATEGORIES = 'yaad_cached_master_categories_v1';
@@ -64,6 +66,7 @@ export function mergeMasterCatalogItems(
         nameUrdu: row.urdu_name !== undefined ? row.urdu_name : twin.nameUrdu || twin.urdu_name,
         categoryId: (row.category_id as any) || twin.categoryId || twin.category_id,
         defaultUnit: row.default_unit || twin.defaultUnit || twin.default_unit,
+        leaf_id: (row.leaf_id as string | undefined) ?? twin.leaf_id,
       });
     } else {
       const name = row.english_name || row.canonical_name || row.name || '';
@@ -99,6 +102,7 @@ export function mergeMasterCatalogItems(
         nameUrdu: row.urdu_name || '',
         categoryId: (row.category_id as any) || 'other',
         defaultUnit: row.default_unit || 'kg',
+        leaf_id: (row.leaf_id as string | undefined) || undefined,
       });
     }
   }
@@ -119,6 +123,8 @@ class SupabaseCatalogService {
   private items: MasterCatalogItem[] = INITIAL_MASTER_CATALOG;
   private version = 0;
   private listeners: Set<() => void> = new Set();
+  // P5: leaf representative images (one image per taxonomy leaf — the image-scaling trick).
+  private leafImages = new Map<string, { imageUrl?: string; publicId?: string }>();
   // Live sync: Supabase Realtime on the master `items` table + a 45s version-poll
   // fallback (realtime needs the table in the supabase_realtime publication; if it
   // is not, the poll still picks changes up within a minute).
@@ -254,9 +260,14 @@ class SupabaseCatalogService {
     }
 
     // 3. Fetch updates from Supabase asynchronously in background (non-blocking)
-    this.syncFromSupabase().catch(() => {
-      // Silently continue with local seed items on offline or unconfigured instances
-    });
+    this.syncFromSupabase()
+      .then(() => {
+        // P6: T1 warm-up + persistent storage, both idle-safe and silent.
+        this.warmTopImages();
+      })
+      .catch(() => {
+        // Silently continue with local seed items on offline or unconfigured instances
+      });
 
     // 4. Live sync: realtime + 45s poll so admin changes land within seconds
     // (initialize() is guarded by hasInitialized, so this runs once per page load).
@@ -288,18 +299,23 @@ class SupabaseCatalogService {
       }
 
       // 2. Fetch public master aliases from existing Supabase 'item_aliases' table
+      // P4: these feed BOTH the legacy recognition catalog AND the search engine
+      // (merged into each item's aliases/searchable_terms below).
+      const aliasByItemId = new Map<string, string[]>();
       try {
         if (supabase) {
           const { data: aliasData, error: aliasError } = await supabase
             .from('item_aliases')
-            .select('*');
+            .select('item_id,alias');
 
           if (!aliasError && aliasData && Array.isArray(aliasData) && aliasData.length > 0) {
             for (const row of aliasData) {
-              const aliasText = (row.alias || row.alias_name || row.raw_alias || '').trim();
-              const canonicalName = row.canonical_name || row.item_name || '';
-              if (aliasText && canonicalName) {
-                defaultItemCatalog.registerCustomAlias(aliasText, canonicalName);
+              const aliasText = (row.alias || '').trim();
+              const itemId = row.item_id || '';
+              if (aliasText && itemId) {
+                const list = aliasByItemId.get(itemId) || [];
+                if (!list.includes(aliasText)) list.push(aliasText);
+                aliasByItemId.set(itemId, list);
               }
             }
             try {
@@ -323,6 +339,28 @@ class SupabaseCatalogService {
 
           if (!itemsError && itemsData && Array.isArray(itemsData) && itemsData.length > 0) {
             mergedItems = mergeMasterCatalogItems(INITIAL_MASTER_CATALOG, itemsData);
+            // P4: merge sidecar aliases into the engine's indexed fields, and feed
+            // the legacy recognition catalog too.
+            if (aliasByItemId.size > 0) {
+              for (const item of mergedItems) {
+                const extra = aliasByItemId.get(item.id);
+                if (extra && extra.length > 0) {
+                  const have = new Set([...(item.aliases || []), ...(item.searchable_terms || [])].map((a) => a.toLowerCase()));
+                  const fresh = extra.filter((a) => !have.has(a.toLowerCase()));
+                  if (fresh.length > 0) {
+                    item.aliases = [...(item.aliases || []), ...fresh];
+                    item.searchable_terms = [...(item.searchable_terms || []), ...fresh];
+                  }
+                  for (const a of extra) {
+                    try {
+                      defaultItemCatalog.registerCustomAlias(a, item.canonical_name);
+                    } catch {
+                      // legacy catalog is best-effort
+                    }
+                  }
+                }
+              }
+            }
             try {
               localStorage.setItem(CACHE_KEY_ITEMS, JSON.stringify(mergedItems));
             } catch {
@@ -336,6 +374,30 @@ class SupabaseCatalogService {
 
       this.items = mergedItems;
       defaultCatalogSearchEngine.indexItems(mergedItems);
+
+      // P5: fetch leaf representative images (graceful when the table/migration
+      // hasn't been run yet).
+      try {
+        if (supabase) {
+          const { data: leafData, error: leafError } = await supabase
+            .from('catalog_leaves')
+            .select('id,representative_image_url,representative_public_id');
+          if (!leafError && Array.isArray(leafData)) {
+            this.leafImages.clear();
+            for (const leaf of leafData) {
+              if (leaf.representative_image_url || leaf.representative_public_id) {
+                this.leafImages.set(leaf.id, {
+                  imageUrl: leaf.representative_image_url || undefined,
+                  publicId: leaf.representative_public_id || undefined,
+                });
+              }
+            }
+          }
+        }
+      } catch {
+        // leaves table missing — emoji fallback still works
+      }
+
       return true;
     } catch {
       // Offline fallback is natural
@@ -395,6 +457,40 @@ class SupabaseCatalogService {
   }
 
   /**
+   * P5: representative image for a taxonomy leaf (image-scaling trick).
+   */
+  public getLeafImage(
+    leafId?: string | null
+  ): { imageUrl?: string; publicId?: string } | undefined {
+    if (!leafId) return undefined;
+    return this.leafImages.get(leafId);
+  }
+
+  /**
+   * P6: T1 warm-up — fetch the top catalog thumbnails into the SW cache during
+   * idle time so they render instantly (and offline). Fire-and-forget.
+   */
+  private warmTopImages(): void {
+    try {
+      ensurePersistentStorage().catch(() => {});
+      const urls: string[] = [];
+      for (const item of this.items) {
+        if (urls.length >= 300) break;
+        const publicId = item.cloudinaryPublicId;
+        const rawUrl = item.imageUrl;
+        if (publicId) {
+          urls.push(buildCatalogImageUrl(publicId, 'icon', extractCloudinaryVersion(rawUrl)));
+        } else if (rawUrl && rawUrl.includes('res.cloudinary.com')) {
+          urls.push(rawUrl);
+        }
+      }
+      warmCatalogImages(urls);
+    } catch {
+      // never break the app for a warm-up
+    }
+  }
+
+  /**
    * Returns the current catalog items in memory.
    */
   public getItems(): MasterCatalogItem[] {
@@ -440,6 +536,12 @@ export function getCatalogImageForItem(
   idOrName?: string | null
 ): { imageUrl?: string; cloudinaryPublicId?: string } | undefined {
   return supabaseCatalog.getCatalogImageForItem(idOrName);
+}
+
+export function getLeafImage(
+  leafId?: string | null
+): { imageUrl?: string; publicId?: string } | undefined {
+  return supabaseCatalog.getLeafImage(leafId);
 }
 
 export function useCatalogVersion(): number {

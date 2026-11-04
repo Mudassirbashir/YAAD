@@ -22,6 +22,9 @@ import { AdminConfirmModal } from '../components/AdminConfirmModal';
 import { adminCache } from '../utils/adminCache';
 import { AdminItemImageModal } from '../components/AdminItemImageModal';
 import { AdminBulkImageImportModal } from '../components/AdminBulkImageImportModal';
+import { AdminImageHealthPanel } from '../components/AdminImageHealthPanel';
+import { AdminDropStrip } from '../components/AdminDropStrip';
+import { AdminAliasEditor } from '../components/AdminAliasEditor';
 import { buildCatalogImageUrl, extractCloudinaryVersion } from '../../utils/cloudinary';
 
 export interface CatalogItem {
@@ -86,6 +89,38 @@ export const AdminCatalogPage: React.FC = () => {
   // Catalog Image Modal States (Workstream B3 & D2)
   const [selectedImageItem, setSelectedImageItem] = useState<CatalogItem | null>(null);
   const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
+
+  // P1 — full catalog for drop-strip matching + tab counts (fetched once)
+  const [allItems, setAllItems] = useState<CatalogItem[]>([]);
+  const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/admin/catalog/products?page=1&limit=5000', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (cancelled) return;
+        const list: CatalogItem[] = data.items || [];
+        setAllItems(list);
+        const counts: Record<string, number> = {};
+        for (const it of list) {
+          const cat = it.category || 'Uncategorized';
+          counts[cat] = (counts[cat] || 0) + 1;
+        }
+        setCategoryCounts(counts);
+      } catch {
+        // Non-fatal: tabs fall back to no counts, drop strip matches page items.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
 
   // Form Fields
   const [nameEn, setNameEn] = useState('');
@@ -324,6 +359,25 @@ export const AdminCatalogPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Drop Zone (P1) — drag from Google/browser, auto-places on the right item */}
+      <AdminDropStrip
+        token={token}
+        allItems={allItems.length > 0 ? allItems : items}
+        onUploadComplete={() => fetchCatalog(true)}
+        notify={(msg, kind) =>
+          kind === 'success' ? toast.success('Image upload', msg) : toast.error('Image upload', msg)
+        }
+      />
+
+      {/* Image Health (P0) — dead Cloudinary refs sweep */}
+      <AdminImageHealthPanel
+        token={token}
+        onCleared={() => fetchCatalog(true)}
+        notify={(msg, kind) =>
+          kind === 'success' ? toast.success('Image health', msg) : toast.error('Image health', msg)
+        }
+      />
+
       {/* Filters & Search */}
       <div className="bg-white border border-neutral-200/90 rounded-2xl p-4 shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
         <div className="relative w-full md:w-80">
@@ -348,7 +402,7 @@ export const AdminCatalogPage: React.FC = () => {
               setPage(1);
             }}
             aria-label="Filter by category"
-            className="px-3 py-2 text-xs rounded-xl border border-neutral-200 bg-white font-medium text-neutral-700 focus:outline-none focus:ring-2 focus:ring-[#003527]/20"
+            className="px-3 py-2 text-xs rounded-xl border border-neutral-200 bg-white font-medium text-neutral-700 focus:outline-none focus:ring-2 focus:ring-[#003527]/20 md:hidden"
           >
             <option value="all">All Categories ({total})</option>
             {categories.map((c) => (
@@ -358,6 +412,53 @@ export const AdminCatalogPage: React.FC = () => {
             ))}
           </select>
         </div>
+      </div>
+
+      {/* Category Tabs (P1) — every searchable category as a tab with live counts */}
+      <div
+        className="hidden md:flex items-center gap-1.5 overflow-x-auto pb-1 -mx-1 px-1"
+        role="tablist"
+        aria-label="Filter by category"
+      >
+        <button
+          type="button"
+          role="tab"
+          aria-selected={selectedCategory === 'all'}
+          onClick={() => {
+            setSelectedCategory('all');
+            setPage(1);
+          }}
+          className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border transition-colors cursor-pointer ${
+            selectedCategory === 'all'
+              ? 'bg-[#003527] text-white border-[#003527]'
+              : 'bg-white text-neutral-600 border-neutral-200 hover:border-neutral-300'
+          }`}
+        >
+          All ({allItems.length || total})
+        </button>
+        {categories.map((c) => {
+          const count = categoryCounts[c] ?? 0;
+          const active = selectedCategory === c;
+          return (
+            <button
+              key={c}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => {
+                setSelectedCategory(c);
+                setPage(1);
+              }}
+              className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border transition-colors cursor-pointer ${
+                active
+                  ? 'bg-[#003527] text-white border-[#003527]'
+                  : 'bg-white text-neutral-600 border-neutral-200 hover:border-neutral-300'
+              }`}
+            >
+              {c} ({count})
+            </button>
+          );
+        })}
       </div>
 
       {/* Database Error Banner */}
@@ -438,6 +539,7 @@ export const AdminCatalogPage: React.FC = () => {
                                 : item.imageUrl
                             }
                             alt={item.name}
+                            crossOrigin="anonymous"
                             className="w-10 h-10 rounded-lg object-contain bg-white border border-neutral-200 shadow-2xs group-hover:scale-105 transition-transform"
                             onError={(e) => {
                               (e.currentTarget as HTMLElement).style.display = 'none';
@@ -674,6 +776,17 @@ export const AdminCatalogPage: React.FC = () => {
                   </label>
                 </div>
               </div>
+
+              {/* Search aliases (P4) — only for existing items */}
+              {editingItem && (
+                <AdminAliasEditor
+                  token={token}
+                  itemId={editingItem.id}
+                  notify={(msg, kind) =>
+                    kind === 'success' ? toast.success('Aliases', msg) : toast.error('Aliases', msg)
+                  }
+                />
+              )}
 
               {/* Actions */}
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-neutral-100">

@@ -32,7 +32,7 @@ import { parseShoppingItem, parseMultiItemInput } from '../lib/recognition/engin
 import { detectDuplicateItem, mergeQuantities } from '../lib/recognition';
 import { saveUserCustomAlias, recordLearnedAlias } from '../lib/recognition/userAliases';
 import { normalizeBaseText } from '../lib/recognition/normalizer';
-import { defaultCatalogSearchEngine, CatalogSearchResult, useCatalogVersion } from '../lib/catalog';
+import { defaultCatalogSearchEngine, CatalogSearchResult, useCatalogVersion, searchNeverBlank } from '../lib/catalog';
 import { generateUUID } from '../lib/uuid';
 import { QuantityEditModal } from './QuantityEditModal';
 import { useRecommendations, RecommendationCandidate } from '../lib/recommendations';
@@ -285,16 +285,18 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
     return () => clearTimeout(timer);
   }, [inputVal, selectedCategory]);
 
-  // Real-time Catalog Search Suggestions
-  const searchSuggestions: CatalogSearchResult[] = useMemo(() => {
+  // Real-time Catalog Search Suggestions (P3: never-blank ladder)
+  const searchMeta: { results: CatalogSearchResult[]; tier: string } = useMemo(() => {
     const trimmed = inputVal.trim();
-    if (!trimmed) return [];
-    return defaultCatalogSearchEngine.search(trimmed, 5, {
+    if (!trimmed) return { results: [], tier: 'direct' };
+    const nb = searchNeverBlank(trimmed, 5, {
       frequentlyBoughtNames: new Set(
         recommendations.map((r) => normalizeBaseText(r.canonicalName))
       ),
     });
+    return { results: nb.results, tier: nb.tier };
   }, [inputVal, recommendations, catalogVersion]);
+  const searchSuggestions: CatalogSearchResult[] = searchMeta.results;
 
   // Auto-detect category from input if user hasn't manually clicked one
   useEffect(() => {
@@ -879,7 +881,11 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-body font-bold text-outline uppercase tracking-wider block">
                         {searchSuggestions.length > 0
-                          ? 'Catalog Matches'
+                          ? searchMeta.tier === 'popular'
+                            ? 'Popular Items'
+                            : searchMeta.tier === 'relaxed'
+                              ? 'Close Matches'
+                              : 'Catalog Matches'
                           : 'Custom Item'}
                       </span>
                       <span className="text-[11px] text-on-surface-variant font-medium">
