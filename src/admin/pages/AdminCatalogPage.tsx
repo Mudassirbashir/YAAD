@@ -22,7 +22,7 @@ import { AdminConfirmModal } from '../components/AdminConfirmModal';
 import { adminCache } from '../utils/adminCache';
 import { AdminItemImageModal } from '../components/AdminItemImageModal';
 import { AdminBulkImageImportModal } from '../components/AdminBulkImageImportModal';
-import { buildCatalogImageUrl } from '../../utils/cloudinary';
+import { buildCatalogImageUrl, extractCloudinaryVersion } from '../../utils/cloudinary';
 
 export interface CatalogItem {
   id: string;
@@ -434,7 +434,7 @@ export const AdminCatalogPage: React.FC = () => {
                           <img
                             src={
                               item.cloudinaryPublicId
-                                ? buildCatalogImageUrl(item.cloudinaryPublicId, 'icon')
+                                ? buildCatalogImageUrl(item.cloudinaryPublicId, 'icon', extractCloudinaryVersion(item.imageUrl))
                                 : item.imageUrl
                             }
                             alt={item.name}

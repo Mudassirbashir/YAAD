@@ -52,18 +52,41 @@ export const OFFICIAL_CLOUDINARY_UPLOAD_PRESET = 'yaad_preset';
  * admin AND app (owner rule 2026-11-02, supersedes the old pure-white rule).
  * f_auto,q_auto delivers automatic modern format (WebP/AVIF, alpha preserved) and quality optimization in KBs.
  */
-export function buildCatalogImageUrl(publicId: string, variant: 'icon' | 'large'): string {
+export function buildCatalogImageUrl(
+  publicId: string,
+  variant: 'icon' | 'large',
+  version?: number | string | null
+): string {
   if (!publicId) return '';
   const cleanId = publicId.replace(/^\/+/, '');
   const cloud = OFFICIAL_CLOUDINARY_CLOUD_NAME;
   // NOTE (2026-11-03): no b_white — transparent source images (e.g. thiings.co 3D icons)
   // must keep their transparency in admin AND app. f_auto serves WebP/AVIF with
   // alpha preserved; white-background photos look unchanged.
+  //
+  // NOTE (2026-11-04): `version` is the Cloudinary asset version (from the upload
+  // response / embedded in the stored secure_url as /v{version}/). The catalog uses
+  // STABLE public ids (yaad-catalog/{id}), so without the version the delivery URL
+  // is byte-identical after a replace — browsers then serve the stale cached image
+  // for up to a year. Embedding v{version} makes every replace a fresh URL.
   const transform =
     variant === 'icon'
       ? 'c_pad,w_96,h_96,f_auto,q_auto'
       : 'c_pad,w_600,h_600,f_auto,q_auto';
-  return `https://res.cloudinary.com/${cloud}/image/upload/${transform}/${cleanId}`;
+  const versionSegment = version ? `/v${version}` : '';
+  return `https://res.cloudinary.com/${cloud}/image/upload/${transform}${versionSegment}/${cleanId}`;
+}
+
+/**
+ * Extracts the Cloudinary asset version from a stored secure_url.
+ * Cloudinary secure_urls always embed it as /v{version}/ — e.g.
+ * https://res.cloudinary.com/rvhmsppk/image/upload/v1762185600/yaad-catalog/banana
+ * Returns null when the URL carries no version (manually set URLs).
+ */
+export function extractCloudinaryVersion(imageUrl?: string | null): string | null {
+  if (!imageUrl) return null;
+  const match = /\/v(\d+)\//.exec(imageUrl);
+  return match ? match[1] : null;
 }
 
 export function getCloudinaryConfig(): CloudinaryConfig {

@@ -1616,6 +1616,20 @@ adminRouter.put('/catalog/products/:id', requireAdminAuth, requirePermission('ca
 adminRouter.delete('/catalog/products/:id', requireAdminAuth, requirePermission('catalog.edit'), async (req: AdminAuthRequest, res: Response) => {
   try {
     const { id } = req.params;
+
+    // Best-effort: destroy the product's Cloudinary image FIRST so a deleted item
+    // never leaves an orphaned asset behind. A destroy failure must not block the
+    // product delete itself.
+    try {
+      const existing = await findCatalogProductById(id);
+      const publicId = existing?.cloudinaryPublicId || (existing ? `yaad-catalog/${existing.id || id}` : null);
+      if (publicId && getCloudinaryAdminConfig()) {
+        await cloudinaryDestroy(publicId);
+      }
+    } catch (destroyErr: any) {
+      console.warn('[admin] catalog product delete: Cloudinary destroy best-effort failed:', destroyErr?.message || destroyErr);
+    }
+
     const ok = await adminStore.deleteCatalogProductAsync(id);
     if (!ok) {
       return res.status(404).json({ error: 'Catalog item not found' });

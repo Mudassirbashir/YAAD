@@ -10,7 +10,7 @@ import {
   Check,
 } from 'lucide-react';
 import { CatalogItem } from '../pages/AdminCatalogPage';
-import { buildCatalogImageUrl } from '../../utils/cloudinary';
+import { buildCatalogImageUrl, extractCloudinaryVersion } from '../../utils/cloudinary';
 
 export const CATALOG_IMAGE_ACCEPT =
   '.jpg,.jpeg,.png,.webp,.gif,.avif,.heic,.heif,.bmp,.tif,.tiff,.svg,image/*';
@@ -126,8 +126,10 @@ export const AdminItemImageModal: React.FC<AdminItemImageModalProps> = ({
 
   const currentPublicId = item.cloudinaryPublicId;
   const currentImageUrl = item.imageUrl;
+  // Version from the stored secure_url busts the browser cache right after a replace
+  // (stable public id => identical URL otherwise).
   const previewUrl = currentPublicId
-    ? buildCatalogImageUrl(currentPublicId, 'large')
+    ? buildCatalogImageUrl(currentPublicId, 'large', extractCloudinaryVersion(currentImageUrl))
     : currentImageUrl;
 
   const handleProcessFile = (file: File) => {

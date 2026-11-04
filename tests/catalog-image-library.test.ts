@@ -131,11 +131,69 @@ async function runCatalogImageLibrarySuite() {
   console.log('  ✅ Workstream D1 delivery URL transformations verified (c_pad,f_auto,q_auto — no b_white; transparency preserved per 2026-11-02 owner rule)');
 
   // =========================================================================
+  // WORKSTREAM D2: Cache-busting via Cloudinary version (2026-11-04)
+  // Stable public ids mean replace-in-place keeps the URL byte-identical, so
+  // browsers serve the stale image for up to a year. Embedding v{version}
+  // (extracted from the stored secure_url) makes every replace a fresh URL.
+  // =========================================================================
+  console.log('\n[Workstream D2] Testing Cloudinary version cache-busting...');
+
+  const { extractCloudinaryVersion } = await import('../src/utils/cloudinary.js');
+
+  assert.strictEqual(
+    extractCloudinaryVersion('https://res.cloudinary.com/rvhmsppk/image/upload/v1762185600/yaad-catalog/veg_potato.jpg'),
+    '1762185600',
+    'Version must be extracted from a versioned secure_url'
+  );
+  assert.strictEqual(
+    extractCloudinaryVersion('https://res.cloudinary.com/rvhmsppk/image/upload/yaad-catalog/veg_potato.jpg'),
+    null,
+    'Unversioned URL must yield null version'
+  );
+  assert.strictEqual(extractCloudinaryVersion(''), null, 'Empty URL must yield null version');
+  assert.strictEqual(extractCloudinaryVersion(undefined), null, 'Undefined URL must yield null version');
+
+  const versionedUrl = buildCatalogImageUrl('yaad-catalog/veg_potato', 'icon', '1762185600');
+  assert.strictEqual(
+    versionedUrl,
+    'https://res.cloudinary.com/rvhmsppk/image/upload/c_pad,w_96,h_96,f_auto,q_auto/v1762185600/yaad-catalog/veg_potato',
+    'Versioned URL must embed v{version} between transform and public id'
+  );
+
+  // Without a version the URL stays exactly as before (backward compatible)
+  assert.strictEqual(
+    buildCatalogImageUrl('yaad-catalog/veg_potato', 'icon'),
+    expectedIconUrl,
+    'Unversioned URL must remain byte-identical to the legacy format'
+  );
+
+  // resolveVisual end-to-end: new upload version => new delivery URL
+  const replacedItem = {
+    id: 'veg_potato',
+    canonical_name: 'Potato',
+    cloudinaryPublicId: 'yaad-catalog/veg_potato',
+    imageUrl: 'https://res.cloudinary.com/rvhmsppk/image/upload/v9999999999/yaad-catalog/veg_potato.jpg',
+  };
+  const resolvedReplaced = resolveVisual(replacedItem, 'icon');
+  assert(
+    resolvedReplaced.url!.includes('/v9999999999/'),
+    `Replaced image must resolve to a versioned URL. Got: ${resolvedReplaced.url}`
+  );
+  assert(
+    resolvedReplaced.url !== versionedUrl,
+    'Different versions must produce different URLs (cache-bust)'
+  );
+
+  console.log('  ✅ Workstream D2 version cache-busting verified');
+
+  // =========================================================================
   // WORKSTREAM C: App Display Precedence & Component Rendering
   // =========================================================================
   console.log('\n[Workstream C] Testing visual precedence and ItemVisualIcon rendering...');
 
   // 1. Catalog item with cloudinaryPublicId renders transformed Cloudinary URL
+  // NOTE (2026-11-04): version is extracted from the stored secure_url (/v123/) and
+  // embedded in the delivery URL for cache-busting after admin replaces.
   const catalogItemWithImage = {
     id: 'veg_potato',
     canonical_name: 'Potato',
@@ -148,10 +206,12 @@ async function runCatalogImageLibrarySuite() {
     'catalog',
     'Catalog item visual must have type "catalog"'
   );
+  const expectedVersionedIconUrl =
+    'https://res.cloudinary.com/rvhmsppk/image/upload/c_pad,w_96,h_96,f_auto,q_auto/v123/yaad-catalog/veg_potato';
   assert.strictEqual(
     resolvedCatalog.url,
-    expectedIconUrl,
-    'Catalog item visual must deliver transformed icon URL'
+    expectedVersionedIconUrl,
+    'Catalog item visual must deliver versioned transformed icon URL (cache-busting)'
   );
 
   const htmlCatalogImg = renderToString(
@@ -163,8 +223,8 @@ async function runCatalogImageLibrarySuite() {
     })
   );
   assert(
-    htmlCatalogImg.includes('img') && htmlCatalogImg.includes(expectedIconUrl),
-    `ItemVisualIcon must render <img> with D-variant Cloudinary URL. Got:\n${htmlCatalogImg}`
+    htmlCatalogImg.includes('img') && htmlCatalogImg.includes(expectedVersionedIconUrl),
+    `ItemVisualIcon must render <img> with versioned D-variant Cloudinary URL. Got:\n${htmlCatalogImg}`
   );
 
   // 2. Item without image fields renders emoji fallback

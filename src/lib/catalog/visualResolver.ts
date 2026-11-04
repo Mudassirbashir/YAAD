@@ -1,5 +1,5 @@
 import { getCatalogImageForItem } from './supabaseCatalog';
-import { buildCatalogImageUrl } from '../../utils/cloudinary';
+import { buildCatalogImageUrl, extractCloudinaryVersion } from '../../utils/cloudinary';
 
 export interface VisualItemLike {
   id?: string;
@@ -85,10 +85,13 @@ export function resolveVisual(
   // 2. Catalog library image (Precedence 2)
   // 2a. Direct catalog public ID on item (e.g. MasterCatalogItem search results)
   if (directPublicId) {
+    // Version extracted from the stored secure_url busts the browser cache after
+    // an admin replace (stable public id => identical URL otherwise).
+    const version = extractCloudinaryVersion(rawImageUrl);
     return {
       type: 'catalog',
-      url: buildCatalogImageUrl(directPublicId, variant),
-      largeUrl: buildCatalogImageUrl(directPublicId, 'large'),
+      url: buildCatalogImageUrl(directPublicId, variant, version),
+      largeUrl: buildCatalogImageUrl(directPublicId, 'large', version),
       publicId: directPublicId,
     };
   }
@@ -106,10 +109,11 @@ export function resolveVisual(
     const catalogMatch = getCatalogImageForItem(lookupKey);
     if (catalogMatch) {
       if (catalogMatch.cloudinaryPublicId) {
+        const version = extractCloudinaryVersion(catalogMatch.imageUrl);
         return {
           type: 'catalog',
-          url: buildCatalogImageUrl(catalogMatch.cloudinaryPublicId, variant),
-          largeUrl: buildCatalogImageUrl(catalogMatch.cloudinaryPublicId, 'large'),
+          url: buildCatalogImageUrl(catalogMatch.cloudinaryPublicId, variant, version),
+          largeUrl: buildCatalogImageUrl(catalogMatch.cloudinaryPublicId, 'large', version),
           publicId: catalogMatch.cloudinaryPublicId,
         };
       }
@@ -134,10 +138,11 @@ export function resolveVisual(
     const catalogMatch = getCatalogImageForItem(altName);
     if (catalogMatch) {
       if (catalogMatch.cloudinaryPublicId) {
+        const version = extractCloudinaryVersion(catalogMatch.imageUrl);
         return {
           type: 'catalog',
-          url: buildCatalogImageUrl(catalogMatch.cloudinaryPublicId, variant),
-          largeUrl: buildCatalogImageUrl(catalogMatch.cloudinaryPublicId, 'large'),
+          url: buildCatalogImageUrl(catalogMatch.cloudinaryPublicId, variant, version),
+          largeUrl: buildCatalogImageUrl(catalogMatch.cloudinaryPublicId, 'large', version),
           publicId: catalogMatch.cloudinaryPublicId,
         };
       }
