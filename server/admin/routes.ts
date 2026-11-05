@@ -1940,9 +1940,10 @@ adminRouter.post('/catalog/images/clear-dead', requireAdminAuth, requirePermissi
 // merges these into the search engine on sync; the table already exists
 // (migration 20260903) and is empty, so no new migration is needed.
 // -----------------------------------------------------------------------------
-function aliasIdFor(itemId: string, alias: string): string {
-  const slug = alias.toLowerCase().trim().replace(/[^a-z0-9\u0600-\u06FF]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'alias';
-  return `a_${itemId}_${slug}_${Date.now().toString(36)}`;
+function aliasIdFor(_itemId: string, _alias: string): string {
+  // Live item_aliases.id is a uuid column (not text) — text ids like
+  // "a_<item>_<slug>" fail with 22P02. Use a real uuid.
+  return crypto.randomUUID();
 }
 
 adminRouter.get('/catalog/products/:id/aliases', requireAdminAuth, requirePermission('catalog.edit'), async (req: AdminAuthRequest, res: Response) => {
