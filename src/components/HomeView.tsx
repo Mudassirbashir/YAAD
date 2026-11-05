@@ -228,7 +228,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
               {greetingData.timeGreeting}
             </span>
             {/* Middle: User's name prominently enlarged with Verified Badge if granted */}
-            <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-black text-on-surface tracking-tight leading-tight truncate mt-0.5 flex items-center gap-2">
+            <h1 className="font-display text-display font-black text-on-surface tracking-tight leading-tight truncate mt-0.5 flex items-center gap-2">
               <span className="truncate">{greetingData.userName}</span>
               {(profile?.is_verified || (user?.user_metadata as any)?.is_verified || (user?.id && typeof window !== 'undefined' && localStorage.getItem('yaad_verified_' + user.id) === 'true')) && (
                 <span className="inline-flex shrink-0 items-center self-center align-middle">
@@ -286,7 +286,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
               <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-white/15 flex items-center justify-center shrink-0 border border-white/20 shadow-2xs group-hover:bg-white/25 transition-all">
                 <Plus className="w-6 h-6 sm:w-7 sm:h-7 text-white stroke-[2.4] transition-transform duration-300 group-hover:rotate-90" />
               </div>
-              <h2 className="font-display text-lg sm:text-2xl font-black tracking-tight text-white leading-tight">
+              <h2 className="font-display text-headline font-black tracking-tight text-white leading-tight">
                 {t('home.createListTitle')}
               </h2>
             </div>

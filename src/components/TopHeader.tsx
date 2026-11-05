@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { APP_IMAGES } from '../data/initialData';
 import { useLanguage } from '../context/LanguageContext';
+import { Badge } from './common/Badge';
 
 interface TopHeaderProps {
   title?: string;
@@ -276,7 +277,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             >
               <Bell className="w-5 h-5 stroke-[2]" />
               {hasUnread && (
-                <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-amber-500 border-2 border-white rounded-full animate-pulse" />
+                <span className="absolute top-2 right-2">
+                  <Badge dot tone="warning" pulse />
+                </span>
               )}
             </button>
 

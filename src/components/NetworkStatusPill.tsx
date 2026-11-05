@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { WifiOff, RefreshCw, Check, Cloud } from 'lucide-react';
 import { SyncStatus } from '../lib/useOnlineStatus';
 import { useLanguage } from '../context/LanguageContext';
+import { Badge } from './common/Badge';
 
 interface NetworkStatusPillProps {
   isOnline: boolean;
@@ -58,9 +59,7 @@ export const NetworkStatusPill: React.FC<NetworkStatusPillProps> = ({
               {language === 'ur' ? 'آف لائن • دوبارہ کوشش کریں' : 'Offline • Tap to retry'}
             </span>
             {pendingCount > 0 && (
-              <span className="ml-0.5 px-1.5 py-0.5 text-[0.625rem] font-bold rounded-full bg-amber-500/30 text-amber-200">
-                {pendingCount}
-              </span>
+              <Badge count={pendingCount} tone="warning" />
             )}
             <RefreshCw className="w-3 h-3 text-amber-300/80 ml-0.5" />
           </motion.button>
@@ -107,8 +106,9 @@ export const NetworkStatusPill: React.FC<NetworkStatusPillProps> = ({
             className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container-high/80 text-on-surface backdrop-blur-xl shadow-[0_4px_14px_rgba(0,0,0,0.08)] border border-surface-dim text-xs font-medium hover:bg-surface-container-highest active:scale-95 transition-all"
           >
             <Cloud className="w-3.5 h-3.5 text-primary" />
-            <span className="font-body">
-              {pendingCount} pending sync
+            <span className="font-body flex items-center gap-1.5">
+              <Badge count={pendingCount} tone="default" />
+              pending sync
             </span>
             <RefreshCw className="w-3 h-3 text-on-surface-variant ml-0.5" />
           </motion.button>

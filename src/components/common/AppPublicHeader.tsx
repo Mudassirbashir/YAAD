@@ -93,7 +93,7 @@ export const AppPublicHeader: React.FC<AppPublicHeaderProps> = ({
               type="button"
               onClick={onBack}
               aria-label="Go back"
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-[#e5e1d8] bg-white hover:bg-[#f0ebe1] flex items-center justify-center text-[#1c2826] transition-colors shadow-2xs active:scale-95 cursor-pointer"
+              className="w-11 h-11 rounded-full border border-[#e5e1d8] bg-white hover:bg-[#f0ebe1] flex items-center justify-center text-[#1c2826] transition-colors shadow-2xs active:scale-95 cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4 text-[#1c2826]" />
             </button>
@@ -164,7 +164,7 @@ export const AppPublicHeader: React.FC<AppPublicHeaderProps> = ({
               className={`group relative flex items-center shadow-2xs cursor-pointer active:scale-95 transition-all duration-500 ease-out overflow-hidden ${
                 isExpanding
                   ? 'w-[108px] sm:w-[116px] px-3.5 py-2 rounded-full bg-[#005039] text-white border border-[#005039] shadow-md'
-                  : 'w-9 h-9 sm:w-10 sm:h-10 rounded-full justify-center bg-white border border-[#005039]/25 text-[#005039] hover:border-[#005039] hover:bg-[#005039]/5'
+                  : 'w-11 h-11 rounded-full justify-center bg-white border border-[#005039]/25 text-[#005039] hover:border-[#005039] hover:bg-[#005039]/5'
               }`}
             >
               <div

@@ -26,6 +26,7 @@ import { AdminBulkImageImportModal } from '../components/AdminBulkImageImportMod
 import { AdminImageHealthPanel } from '../components/AdminImageHealthPanel';
 import { AdminDropStrip } from '../components/AdminDropStrip';
 import { AdminAliasEditor } from '../components/AdminAliasEditor';
+import { ProgressBar } from '../../components/common/LoadingStates';
 import { buildCatalogImageUrl, extractCloudinaryVersion } from '../../utils/cloudinary';
 
 export interface CatalogItem {
@@ -302,10 +303,12 @@ export const AdminCatalogPage: React.FC = () => {
   // loop with nextOffset until done so large catalogs never 504.
   const [isSeedingAliases, setIsSeedingAliases] = useState(false);
   const [seedProgress, setSeedProgress] = useState('');
+  const [seedProgressNum, setSeedProgressNum] = useState<{ done: number; total: number } | null>(null);
   const handleSeedAliases = async () => {
     if (!token || isSeedingAliases) return;
     setIsSeedingAliases(true);
     setSeedProgress('');
+    setSeedProgressNum(null);
     try {
       let offset = 0;
       let totalInserted = 0;
@@ -323,7 +326,10 @@ export const AdminCatalogPage: React.FC = () => {
         totalSkipped += data.skipped || 0;
         total = data.total || total;
         offset = data.nextOffset ?? offset;
-        if (total > 0) setSeedProgress(`${Math.min(offset, total)}/${total}`);
+        if (total > 0) {
+          setSeedProgress(`${Math.min(offset, total)}/${total}`);
+          setSeedProgressNum({ done: Math.min(offset, total), total });
+        }
         if (data.done) break;
       }
       toast.success('Aliases seeded', `${totalInserted} added, ${totalSkipped} already existed.`);
@@ -332,6 +338,7 @@ export const AdminCatalogPage: React.FC = () => {
     } finally {
       setIsSeedingAliases(false);
       setSeedProgress('');
+      setSeedProgressNum(null);
     }
   };
 
@@ -419,6 +426,17 @@ export const AdminCatalogPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Measurable job → real progress bar (never a fake one) */}
+      {isSeedingAliases && seedProgressNum && (
+        <div className="px-4 sm:px-6 -mt-2 mb-4 max-w-md">
+          <ProgressBar
+            value={seedProgressNum.done}
+            max={seedProgressNum.total}
+            label={`Seeding aliases — ${seedProgressNum.done} of ${seedProgressNum.total} items`}
+          />
+        </div>
+      )}
 
       {/* Drop Zone (P1) — drag from Google/browser, auto-places on the right item */}
       <AdminDropStrip

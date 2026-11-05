@@ -366,6 +366,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Email Address"
+                    aria-label="Email address"
                     disabled={isSubmitting}
                     className="w-full h-12 bg-[#f3f4f6] text-neutral-800 text-sm font-medium rounded-2xl px-4 border border-transparent focus:bg-white focus:border-neutral-300 focus:ring-2 focus:ring-neutral-900/10 outline-none transition-all placeholder:text-neutral-400 disabled:opacity-60"
                     autoComplete="email"
@@ -430,6 +431,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
                     placeholder="Phone number (+92 300 1234567)"
+                    aria-label="Phone number"
                     disabled={isSubmitting}
                     className="w-full h-12 bg-[#f3f4f6] text-neutral-800 text-sm font-medium rounded-2xl px-4 border border-transparent focus:bg-white focus:border-neutral-300 focus:ring-2 focus:ring-neutral-900/10 outline-none transition-all placeholder:text-neutral-400 disabled:opacity-60"
                     autoComplete="tel"
@@ -445,6 +447,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email address"
+                aria-label="Email address"
                 disabled={isSubmitting}
                 className="w-full h-12 bg-[#f3f4f6] text-neutral-800 text-sm font-medium rounded-2xl px-4 border border-transparent focus:bg-white focus:border-neutral-300 focus:ring-2 focus:ring-neutral-900/10 outline-none transition-all placeholder:text-neutral-400 disabled:opacity-60"
                 autoComplete="email"
@@ -458,6 +461,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
+                aria-label="Password"
                 disabled={isSubmitting}
                 className="w-full h-12 bg-[#f3f4f6] text-neutral-800 text-sm font-medium rounded-2xl ps-4 pe-11 border border-transparent focus:bg-white focus:border-neutral-300 focus:ring-2 focus:ring-neutral-900/10 outline-none transition-all placeholder:text-neutral-400 disabled:opacity-60"
                 autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}

@@ -12,6 +12,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { useAppTheme } from '../context/ThemeContext';
 import { BidiText, MixedQuantityBadge } from '../utils/bidi';
+import { DelayedSpinner } from './common/LoadingStates';
 import { categorizeItemLocally, smartCategorizeItem } from '../lib/categorizer';
 import { parseShoppingItem, parseMultiItemInput } from '../lib/recognition/engine';
 import { detectDuplicateItem, mergeQuantities } from '../lib/recognition';
@@ -1243,7 +1244,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
             >
               {isCompletingTrip ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <DelayedSpinner className="w-4 h-4" label="Completing trip" />
                   <span>{t('shoppingList.completingTrip') || 'Completing trip...'}</span>
                 </>
               ) : (

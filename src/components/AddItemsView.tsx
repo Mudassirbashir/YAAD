@@ -35,6 +35,7 @@ import { normalizeBaseText } from '../lib/recognition/normalizer';
 import { defaultCatalogSearchEngine, CatalogSearchResult, useCatalogVersion, searchNeverBlank } from '../lib/catalog';
 import { generateUUID } from '../lib/uuid';
 import { QuantityEditModal } from './QuantityEditModal';
+import { DelayedSpinner } from './common/LoadingStates';
 import { useRecommendations, RecommendationCandidate } from '../lib/recommendations';
 import { recordSearchQuery } from '../lib/recommendations/searchHistory';
 import { getSuggestionsForContext } from '../lib/recommendations/shoppingContexts';
@@ -726,7 +727,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                     onRenameList?.(trimmed);
                   }}
                   aria-label="Save list name"
-                  className="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center hover:bg-primary/90 transition-colors cursor-pointer shrink-0"
+                  className="w-11 h-11 rounded-full bg-primary text-on-primary flex items-center justify-center hover:bg-primary/90 transition-colors cursor-pointer shrink-0"
                 >
                   <Check className="w-4 h-4" />
                 </button>
@@ -737,7 +738,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                     setIsEditingTitle(false);
                   }}
                   aria-label="Cancel editing"
-                  className="w-8 h-8 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center hover:bg-surface-container-high transition-colors cursor-pointer shrink-0"
+                  className="w-11 h-11 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center hover:bg-surface-container-high transition-colors cursor-pointer shrink-0"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -825,6 +826,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                         }
                       }}
                       placeholder={t('addItems.inputPlaceholder') || 'Add item (e.g. Milk, Apples)...'}
+                      aria-label={t('addItems.inputPlaceholder') || 'Add item'}
                       className="w-full h-12 bg-surface-container-low rounded-full ps-11 pe-24 text-sm sm:text-base text-on-surface font-body border border-outline-variant/60 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
                     />
 
@@ -846,7 +848,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                     {/* Add Button - Inside Circle */}
                     <button
                       type="submit"
-                      className="absolute end-1.5 top-1.5 bottom-1.5 w-9 h-9 rounded-full bg-primary text-on-primary flex items-center justify-center hover:bg-primary-container active:scale-95 transition-all shadow-xs cursor-pointer"
+                      className="absolute end-1.5 top-1.5 bottom-1.5 w-11 min-w-11 rounded-full bg-primary text-on-primary flex items-center justify-center hover:bg-primary-container active:scale-95 transition-all shadow-xs cursor-pointer"
                       aria-label="Add item"
                     >
                       <Plus className="w-5 h-5" />
@@ -982,11 +984,11 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                       disabled={isAnalyzingSuggestions}
                       className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-body font-bold text-primary bg-primary/10 hover:bg-primary/15 active:scale-95 transition-all border border-primary/20 shadow-2xs cursor-pointer group"
                     >
-                      <Sparkles
-                        className={`w-3.5 h-3.5 text-primary ${
-                          isAnalyzingSuggestions ? 'animate-spin' : 'group-hover:scale-110 transition-transform'
-                        }`}
-                      />
+                      {isAnalyzingSuggestions ? (
+                        <DelayedSpinner className="w-3.5 h-3.5 text-primary" label="Analyzing context" />
+                      ) : (
+                        <Sparkles className="w-3.5 h-3.5 text-primary group-hover:scale-110 transition-transform" />
+                      )}
                       <span>
                         {isAnalyzingSuggestions
                           ? (language === 'ur' ? 'تجزیہ ہو رہا ہے...' : 'Analyzing context...')
@@ -1285,7 +1287,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                               setPhotoCaptureItem(item);
                             }}
                             aria-label={`Attach photo for ${item.name}`}
-                            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
+                            className={`w-11 h-11 rounded-full flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
                               item.imageUrl
                                 ? 'text-primary bg-primary/10 hover:bg-primary/20'
                                 : 'text-outline hover:text-primary hover:bg-surface-container'
@@ -1301,7 +1303,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                               handleRemoveItem(item.id);
                             }}
                             aria-label="Remove item"
-                            className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-error hover:bg-error-container/20 transition-colors cursor-pointer shrink-0"
+                            className="w-11 h-11 rounded-full flex items-center justify-center text-outline hover:text-error hover:bg-error-container/20 transition-colors cursor-pointer shrink-0"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
