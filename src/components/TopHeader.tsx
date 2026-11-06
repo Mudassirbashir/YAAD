@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { APP_IMAGES } from '../data/initialData';
 import { useLanguage } from '../context/LanguageContext';
-import { Badge } from './common/Badge';
+import { Badge, BadgeAnchor } from './common/Badge';
 
 interface TopHeaderProps {
   title?: string;
@@ -209,20 +209,20 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
       <header className="sticky top-0 w-full z-40 bg-background/80 backdrop-blur-xl border-b border-surface-dim/40 transition-colors select-none">
         <div className="relative flex justify-between items-center px-4 sm:px-6 lg:px-8 h-14 w-full max-w-7xl mx-auto">
           {/* Left Action: Back Arrow on non-home screens, Official Logo on Home */}
-          <div className="flex items-center z-10 min-w-[40px]">
+          <div className="flex items-center z-10 min-w-[44px]">
             {showBack ? (
               <button
                 id="top_header_back_btn"
                 type="button"
                 onClick={handleBackClick}
                 aria-label="Go back"
-                className="w-10 h-10 -ms-2 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors text-primary active:scale-95 duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer"
+                className="w-11 h-11 min-w-[44px] min-h-[44px] -ms-2 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors text-primary active:scale-95 duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer"
               >
                 <ArrowLeft className="w-5 h-5 rtl:rotate-180" />
               </button>
             ) : (
               <div id="top_header_logo_area" className="flex items-center">
-                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white border border-[#e5e1d8] flex items-center justify-center shadow-2xs p-1">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white border border-[#e5e1d8] flex items-center justify-center shadow-2xs p-1">
                   <picture className="h-full w-full flex items-center justify-center">
                     <source srcSet="/logo-128.webp" type="image/webp" />
                     <img
@@ -259,29 +259,33 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
           </div>
 
           {/* Right Action: Notifications & Settings always present */}
-          <div className="flex items-center justify-end gap-1 min-w-[40px] z-10">
+          <div className="flex items-center justify-end gap-1 min-w-[44px] z-10">
             {rightAction && (
               <div className="me-1">
                 {rightAction}
               </div>
             )}
 
-            {/* Push Notification Bell Button */}
-            <button
-              id="top_header_notification_btn"
-              type="button"
-              onClick={handleOpenNotifications}
-              aria-label="Notifications"
-              title="Notifications & Alerts"
-              className="relative w-10 h-10 flex items-center justify-center rounded-full text-primary hover:bg-surface-container-low active:bg-surface-container active:scale-95 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer"
+            {/* Push Notification Bell Button with top-right dot badge */}
+            <BadgeAnchor
+              placement="top-right"
+              badge={
+                hasUnread ? (
+                  <Badge dot tone="warning" pulse ariaLabel="Unread notifications" />
+                ) : null
+              }
             >
-              <Bell className="w-5 h-5 stroke-[2]" />
-              {hasUnread && (
-                <span className="absolute top-2 right-2">
-                  <Badge dot tone="warning" pulse />
-                </span>
-              )}
-            </button>
+              <button
+                id="top_header_notification_btn"
+                type="button"
+                onClick={handleOpenNotifications}
+                aria-label="Notifications"
+                title="Notifications & Alerts"
+                className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-primary hover:bg-surface-container-low active:bg-surface-container active:scale-95 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer"
+              >
+                <Bell className="w-5 h-5 stroke-[2]" />
+              </button>
+            </BadgeAnchor>
 
             {/* Settings Gear Button */}
             <button
@@ -291,7 +295,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
               onClick={handleSettingsClick}
               aria-label="Settings"
               title="Settings"
-              className="w-10 h-10 -me-2 flex items-center justify-center rounded-full text-primary hover:bg-surface-container-low active:bg-surface-container active:scale-95 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer group"
+              className="w-11 h-11 min-w-[44px] min-h-[44px] -me-2 flex items-center justify-center rounded-full text-primary hover:bg-surface-container-low active:bg-surface-container active:scale-95 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer group"
             >
               <Settings
                 className={`w-5 h-5 text-primary stroke-[2] transition-transform duration-300 ease-out group-hover:rotate-45 motion-reduce:transform-none ${

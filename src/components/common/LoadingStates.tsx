@@ -47,11 +47,41 @@ export const TileSkeleton: React.FC<{ count?: number; className?: string }> = ({
   count = 4,
   className = '',
 }) => (
-  <div className={`grid grid-cols-4 gap-2 ${className}`} aria-hidden="true">
+  <div className={`grid grid-cols-2 sm:grid-cols-4 gap-2 ${className}`} aria-hidden="true">
     {Array.from({ length: count }).map((_, i) => (
-      <div key={i} className="rounded-2xl bg-surface-container-low border border-surface-dim/70 p-2">
-        <div className="w-10 h-10 mx-auto rounded-xl bg-surface-container-high animate-pulse" />
-        <div className="h-2.5 w-4/5 mx-auto mt-2 bg-surface-container-high rounded animate-pulse" />
+      <div key={i} className="rounded-2xl bg-surface-container-low border border-surface-dim/70 p-2.5 flex flex-col items-center">
+        <div className="w-10 h-10 rounded-xl bg-surface-container-high animate-pulse" />
+        <div className="h-2.5 w-4/5 mt-2 bg-surface-container-high rounded animate-pulse" />
+      </div>
+    ))}
+  </div>
+);
+
+/** Cards matching the Home shopping list cards (116px min-height with icon, title, meta line). */
+export const ListCardSkeleton: React.FC<{ count?: number; className?: string }> = ({
+  count = 4,
+  className = '',
+}) => (
+  <div
+    className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 ${className}`}
+    aria-hidden="true"
+  >
+    {Array.from({ length: count }).map((_, i) => (
+      <div
+        key={i}
+        className="w-full min-h-[116px] bg-surface-container-lowest rounded-2xl p-4 sm:p-4.5 flex flex-col justify-between border border-surface-dim/70 shadow-2xs"
+      >
+        <div className="flex items-start gap-3.5 w-full">
+          <div className="w-12 h-12 rounded-xl bg-surface-container animate-pulse shrink-0" />
+          <div className="flex flex-col gap-2 flex-1 pt-1">
+            <div className="w-3/4 h-4 bg-surface-container rounded animate-pulse" />
+            <div className="w-1/2 h-3 bg-surface-container-low rounded animate-pulse" />
+          </div>
+        </div>
+        <div className="flex items-center justify-between pt-2 border-t border-surface-dim/40 mt-3">
+          <div className="w-16 h-3 bg-surface-container-high rounded animate-pulse" />
+          <div className="w-10 h-3 bg-surface-container-high rounded animate-pulse" />
+        </div>
       </div>
     ))}
   </div>

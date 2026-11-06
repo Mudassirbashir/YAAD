@@ -211,7 +211,7 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
 
           {/* Three-Dot Menu Button in Top-Right Corner (Hidden in selection mode) */}
           {!selectable && (
-            <div className="relative shrink-0 -mt-1 -mr-1" ref={menuRef}>
+            <div className="relative shrink-0 -mt-2 -mr-2" ref={menuRef}>
               <button
                 type="button"
                 id={`card_options_btn_${list.id}`}
@@ -221,10 +221,10 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
                   triggerHaptic(6);
                   setIsMenuOpen((prev) => !prev);
                 }}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-[transform,background-color,color] duration-150 ease-out active:duration-75 active:scale-95 cursor-pointer"
-            >
-              <MoreVertical className="w-4 h-4" />
-            </button>
+                className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-[transform,background-color,color] duration-150 ease-out active:duration-75 active:scale-95 cursor-pointer"
+              >
+                <MoreVertical className="w-4 h-4" />
+              </button>
 
             {/* Dropdown Menu: View Details + Reuse List + Delete List */}
             <AnimatePresence>
@@ -246,9 +246,9 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
                       triggerHaptic(8);
                       onSelectList(list);
                     }}
-                    className="w-full px-3.5 py-2 text-left rtl:text-right flex items-center gap-2 hover:bg-surface-container transition-colors cursor-pointer text-primary font-bold"
+                    className="w-full px-3.5 py-2.5 min-h-[44px] text-left rtl:text-right flex items-center gap-2 hover:bg-surface-container transition-colors cursor-pointer text-primary font-bold"
                   >
-                    <Eye className="w-3.5 h-3.5 text-primary" />
+                    <Eye className="w-4 h-4 text-primary shrink-0" />
                     <span>{t('viewDetails') || 'View Details'}</span>
                   </button>
 
@@ -263,9 +263,9 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
                         triggerHaptic(8);
                         onShareList(list);
                       }}
-                      className="w-full px-3.5 py-2 text-left rtl:text-right flex items-center gap-2 hover:bg-surface-container transition-colors cursor-pointer"
+                      className="w-full px-3.5 py-2.5 min-h-[44px] text-left rtl:text-right flex items-center gap-2 hover:bg-surface-container transition-colors cursor-pointer"
                     >
-                      <Share2 className="w-3.5 h-3.5 text-outline" />
+                      <Share2 className="w-4 h-4 text-outline shrink-0" />
                       <span>{t('shareList') || 'Share List'}</span>
                     </button>
                   )}
@@ -276,9 +276,9 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
                       type="button"
                       role="menuitem"
                       onClick={handleReuseClick}
-                      className="w-full px-3.5 py-2 text-left rtl:text-right flex items-center gap-2 hover:bg-surface-container transition-colors cursor-pointer"
+                      className="w-full px-3.5 py-2.5 min-h-[44px] text-left rtl:text-right flex items-center gap-2 hover:bg-surface-container transition-colors cursor-pointer"
                     >
-                      <RotateCcw className="w-3.5 h-3.5 text-outline" />
+                      <RotateCcw className="w-4 h-4 text-outline shrink-0" />
                       <span>{t('history.reuseList') || 'Reuse List'}</span>
                     </button>
                   )}
@@ -291,9 +291,9 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
                         type="button"
                         role="menuitem"
                         onClick={handleDeleteTrigger}
-                        className="w-full px-3.5 py-2 text-left rtl:text-right flex items-center gap-2 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-700 dark:text-rose-400 transition-colors cursor-pointer"
+                        className="w-full px-3.5 py-2.5 min-h-[44px] text-left rtl:text-right flex items-center gap-2 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-700 dark:text-rose-400 transition-colors cursor-pointer"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Trash2 className="w-4 h-4 shrink-0" />
                         <span>{t('delete') || 'Delete List'}</span>
                       </button>
                     </>

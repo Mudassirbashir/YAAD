@@ -18,6 +18,7 @@ import { FrequentEssentialsSection } from './home/FrequentEssentialsSection';
 import { HomeListsSection } from './home/HomeListsSection';
 import { NoActiveListModal } from './home/NoActiveListModal';
 import { ShareListModal } from './ShareListModal';
+import { ViewAllEssentialsModal } from './ViewAllEssentialsModal';
 
 interface HomeViewProps {
   lists: ShoppingList[];
@@ -69,6 +70,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
   const [isFavoritesModalOpen, setIsFavoritesModalOpen] = useState(false);
   const [isCategoryBrowserOpen, setIsCategoryBrowserOpen] = useState(false);
+  const [isViewAllEssentialsOpen, setIsViewAllEssentialsOpen] = useState(false);
   const [sharingList, setSharingList] = useState<ShoppingList | null>(null);
 
   // Frequent essential item awaiting target list choice if no active list exists
@@ -323,7 +325,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           lists={lists}
           mostRecentActiveList={mostRecentActiveList}
           onAddItem={handleAddEssentialItem}
-          onViewAllCategories={() => setIsCategoryBrowserOpen(true)}
+          onViewAll={() => setIsViewAllEssentialsOpen(true)}
         />
 
         {/* 8. SHOPPING LISTS SECTION (Responsive skeletons, friendly empty state, populated lists) */}
@@ -386,6 +388,15 @@ export const HomeView: React.FC<HomeViewProps> = ({
           }
         }}
         activeListTitle={mostRecentActiveList?.title}
+      />
+
+      {/* 3b. View All Frequent Essentials Modal */}
+      <ViewAllEssentialsModal
+        isOpen={isViewAllEssentialsOpen}
+        onClose={() => setIsViewAllEssentialsOpen(false)}
+        lists={lists}
+        mostRecentActiveList={mostRecentActiveList}
+        onAddItem={handleAddEssentialItem}
       />
 
       {/* 4. No Active List Modal for Frequent Essentials */}

@@ -152,12 +152,12 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
     <div className="w-full min-h-screen flex flex-col antialiased bg-background text-on-surface">
       {/* 1. Header: Minimal with back button only */}
       <header className="sticky top-0 z-30 bg-background/75 backdrop-blur-xl border-b border-surface-dim/40">
-        <div className="w-full max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto flex items-center justify-between px-4 sm:px-6 h-12">
+        <div className="w-full max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto flex items-center justify-between px-4 sm:px-6 h-14">
           <button
             type="button"
             onClick={onBack}
             aria-label="Go back"
-            className="flex items-center justify-center w-9 h-9 -ms-2 rounded-full hover:bg-surface-container transition-colors text-on-surface active:scale-95 cursor-pointer"
+            className="flex items-center justify-center w-11 h-11 min-w-[44px] min-h-[44px] -ms-2 rounded-full hover:bg-surface-container transition-colors text-on-surface active:scale-95 cursor-pointer"
           >
             <ArrowLeft className="w-5 h-5 rtl:rotate-180" />
           </button>
@@ -194,7 +194,7 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
                 setCustomTitle(e.target.value);
                 if (errorMsg) setErrorMsg('');
               }}
-              className="w-full h-11 sm:h-12 ps-5 pe-14 bg-transparent text-on-surface font-body text-sm sm:text-base outline-none placeholder:text-neutral-400 dark:placeholder:text-neutral-500 rounded-full"
+              className="w-full h-12 sm:h-14 ps-5 pe-16 bg-transparent text-on-surface font-body text-sm sm:text-base outline-none placeholder:text-neutral-400 dark:placeholder:text-neutral-500 rounded-full"
               placeholder={t('createList.customPlaceholder') || 'List Name'}
               aria-label="List Name"
             />
@@ -205,9 +205,9 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
               type="submit"
               disabled={isSubmitting}
               aria-label="Continue"
-              className="absolute end-1.5 top-1.5 bottom-1.5 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center hover:opacity-90 active:scale-95 transition-all shadow-xs cursor-pointer disabled:opacity-50"
+              className="absolute end-1.5 top-1/2 -translate-y-1/2 w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center hover:opacity-90 active:scale-95 transition-all shadow-xs cursor-pointer disabled:opacity-50"
             >
-              <ArrowRight className="w-4 h-4 rtl:rotate-180" />
+              <ArrowRight className="w-5 h-5 rtl:rotate-180" />
             </button>
           </div>
 

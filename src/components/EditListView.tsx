@@ -282,7 +282,7 @@ export const EditListView: React.FC<EditListViewProps> = ({
                   showFeedbackToast(`Added ${newShoppingItems.length} items to list`, 'add');
                 }
               }}
-              className="w-full h-[54px] ps-5 pe-14 rounded-full border-none bg-transparent focus:ring-2 focus:ring-primary/20 text-base text-on-surface placeholder:text-outline font-body outline-none"
+              className="w-full h-[54px] ps-5 pe-16 rounded-full border-none bg-transparent focus:ring-2 focus:ring-primary/20 text-base text-on-surface placeholder:text-outline font-body outline-none"
               placeholder={t('editList.inputPlaceholder')}
               type="text"
             />
@@ -290,7 +290,7 @@ export const EditListView: React.FC<EditListViewProps> = ({
               type="submit"
               aria-label="Add item"
               style={{ backgroundColor: plusBg }}
-              className="absolute end-1.5 top-1/2 -translate-y-1/2 w-10 h-10 text-white rounded-full flex items-center justify-center hover:opacity-90 active:scale-95 transition-all shadow-xs cursor-pointer"
+              className="absolute end-1.5 top-1/2 -translate-y-1/2 w-11 h-11 min-w-[44px] min-h-[44px] text-white rounded-full flex items-center justify-center hover:opacity-90 active:scale-95 transition-all shadow-xs cursor-pointer"
             >
               <Plus className="w-5 h-5 stroke-[2.4]" />
             </button>
@@ -303,7 +303,7 @@ export const EditListView: React.FC<EditListViewProps> = ({
                 key={cat.id}
                 type="button"
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`px-3.5 py-1.5 rounded-full font-body text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 cursor-pointer ${
+                className={`px-3.5 py-2 min-h-[44px] rounded-full font-body text-xs font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 cursor-pointer ${
                   selectedCategory === cat.id
                     ? 'bg-primary text-on-primary shadow-xs'
                     : 'bg-surface-container-lowest border border-surface-container-high text-primary hover:bg-surface-container-low'
@@ -441,7 +441,7 @@ export const EditListView: React.FC<EditListViewProps> = ({
                               handleDeleteItem(item.id);
                             }}
                             aria-label={`Remove ${item.name}`}
-                            className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-error hover:bg-error-container/20 transition-colors cursor-pointer shrink-0"
+                            className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center text-outline hover:text-error hover:bg-error-container/20 transition-colors cursor-pointer shrink-0"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>

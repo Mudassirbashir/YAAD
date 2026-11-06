@@ -684,7 +684,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
           <button
             onClick={onBack}
             aria-label="Go back"
-            className="w-10 h-10 -ms-2 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors text-primary active:scale-95 cursor-pointer"
+            className="w-11 h-11 min-w-[44px] min-h-[44px] -ms-2 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors text-primary active:scale-95 cursor-pointer"
           >
             <ArrowLeft className="w-5 h-5 rtl:rotate-180 text-primary" />
           </button>
@@ -766,7 +766,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                     setIsEditingTitle(true);
                   }}
                   aria-label="Rename list"
-                  className="w-7 h-7 rounded-full bg-surface-container hover:bg-surface-container-high text-primary/80 hover:text-primary flex items-center justify-center transition-colors cursor-pointer shrink-0 border border-surface-dim/70 shadow-2xs"
+                  className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-surface-container hover:bg-surface-container-high text-primary/80 hover:text-primary flex items-center justify-center transition-colors cursor-pointer shrink-0 border border-surface-dim/70 shadow-2xs"
                   title="Rename list"
                 >
                   <Pencil className="w-3.5 h-3.5" />
@@ -827,7 +827,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                       }}
                       placeholder={t('addItems.inputPlaceholder') || 'Add item (e.g. Milk, Apples)...'}
                       aria-label={t('addItems.inputPlaceholder') || 'Add item'}
-                      className="w-full h-12 bg-surface-container-low rounded-full ps-11 pe-24 text-sm sm:text-base text-on-surface font-body border border-outline-variant/60 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
+                      className="w-full h-12 bg-surface-container-low rounded-full ps-11 pe-26 text-sm sm:text-base text-on-surface font-body border border-outline-variant/60 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
                     />
 
                     {/* Clear Button */}
@@ -838,7 +838,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                           setInputVal('');
                           inputRef.current?.focus();
                         }}
-                        className="absolute end-13 top-2.5 w-7 h-7 rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container-high transition-colors"
+                        className="absolute end-13 top-1/2 -translate-y-1/2 w-11 h-11 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer"
                         aria-label="Clear input"
                       >
                         <X className="w-4 h-4" />

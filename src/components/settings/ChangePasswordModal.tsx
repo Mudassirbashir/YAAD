@@ -120,10 +120,10 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
             type="button"
             onClick={onClose}
             disabled={isUpdating}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container-low transition-colors cursor-pointer"
+            className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container-low transition-colors cursor-pointer"
             aria-label="Close"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -163,13 +163,14 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="••••••••"
                 disabled={isUpdating}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-surface border border-surface-dim/75 text-on-surface font-mono pe-10 focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-surface border border-surface-dim/75 text-on-surface font-mono pe-12 focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all min-h-[44px]"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowNew(!showNew)}
-                className="absolute inset-y-0 end-3 flex items-center text-outline hover:text-on-surface cursor-pointer"
+                aria-label={showNew ? 'Hide new password' : 'Show new password'}
+                className="absolute inset-y-0 end-0 w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center text-outline hover:text-on-surface cursor-pointer rounded-r-xl"
               >
                 {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -193,13 +194,14 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
                 disabled={isUpdating}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-surface border border-surface-dim/75 text-on-surface font-mono pe-10 focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-surface border border-surface-dim/75 text-on-surface font-mono pe-12 focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all min-h-[44px]"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowConfirm(!showConfirm)}
-                className="absolute inset-y-0 end-3 flex items-center text-outline hover:text-on-surface cursor-pointer"
+                aria-label={showConfirm ? 'Hide confirm password' : 'Show confirm password'}
+                className="absolute inset-y-0 end-0 w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center text-outline hover:text-on-surface cursor-pointer rounded-r-xl"
               >
                 {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -212,14 +214,14 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
               type="button"
               onClick={onClose}
               disabled={isUpdating}
-              className="px-4 py-2 text-xs font-semibold text-outline hover:text-on-surface bg-surface-container-low hover:bg-surface-container rounded-xl transition-colors cursor-pointer"
+              className="px-4 py-2.5 min-h-[44px] text-xs font-semibold text-outline hover:text-on-surface bg-surface-container-low hover:bg-surface-container rounded-xl transition-colors cursor-pointer flex items-center justify-center"
             >
               {t('settings.cancel') || 'Cancel'}
             </button>
             <button
               type="submit"
               disabled={isUpdating || newPassword.length < 6 || newPassword !== confirmPassword}
-              className="px-5 py-2 text-xs font-bold text-white bg-primary hover:bg-primary/90 rounded-xl transition-all disabled:opacity-50 active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-xs"
+              className="px-5 py-2.5 min-h-[44px] text-xs font-bold text-white bg-primary hover:bg-primary/90 rounded-xl transition-all disabled:opacity-50 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
             >
               {isUpdating ? (
                 <>

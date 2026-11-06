@@ -10,6 +10,7 @@ import { ShoppingList } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
 import { isNetworkOrOfflineError } from '../../lib/supabase';
 import { ShoppingListCard } from '../ShoppingListCard';
+import { ListCardSkeleton } from '../common/LoadingStates';
 
 interface HomeListsSectionProps {
   lists: ShoppingList[];
@@ -52,7 +53,7 @@ export const HomeListsSection: React.FC<HomeListsSectionProps> = ({
     >
       {/* Section Header */}
       <div className="flex items-center justify-between px-0.5">
-        <h3 className="font-display text-base sm:text-lg font-bold text-on-surface">
+        <h3 className="font-display text-title font-bold text-on-surface">
           {t('home.yourListsTitle') || 'Your Lists'}
         </h3>
         {lists.length > 0 && onOpenHistory && (
@@ -60,7 +61,7 @@ export const HomeListsSection: React.FC<HomeListsSectionProps> = ({
             type="button"
             id="see_all_lists_btn"
             onClick={onOpenHistory}
-            className="text-xs sm:text-sm font-semibold text-primary hover:underline cursor-pointer"
+            className="text-xs sm:text-sm font-semibold text-primary hover:underline cursor-pointer min-h-[44px] flex items-center px-1"
           >
             {t('home.seeAll') || 'See All'}
           </button>
@@ -77,7 +78,7 @@ export const HomeListsSection: React.FC<HomeListsSectionProps> = ({
           {onRetry && (
             <button
               onClick={onRetry}
-              className="px-2.5 py-1 bg-surface-container rounded-lg font-bold text-primary hover:bg-surface-container-high transition-colors flex items-center gap-1 shrink-0 cursor-pointer"
+              className="px-2.5 py-1 min-h-[44px] bg-surface-container rounded-lg font-bold text-primary hover:bg-surface-container-high transition-colors flex items-center gap-1 shrink-0 cursor-pointer"
             >
               <RefreshCw className="w-3 h-3" />
               <span>{t('appUpdate.retry') || 'Retry'}</span>
@@ -88,22 +89,7 @@ export const HomeListsSection: React.FC<HomeListsSectionProps> = ({
 
       {/* Loading Skeleton */}
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div
-              key={i}
-              className="w-full min-h-[116px] bg-white rounded-2xl p-4 sm:p-4.5 flex flex-col justify-between border border-surface-dim/70 shadow-2xs animate-pulse"
-            >
-              <div className="flex items-start gap-3.5 w-full">
-                <div className="w-12 h-12 rounded-xl bg-surface-container shrink-0" />
-                <div className="flex flex-col gap-2 flex-1 pt-1">
-                  <div className="w-3/4 h-4 bg-surface-container rounded" />
-                  <div className="w-1/2 h-3 bg-surface-container-low rounded" />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        <ListCardSkeleton count={4} />
       ) : lists.length === 0 ? (
         /* Super-rounded Slim Modern Empty State Card */
         <div
@@ -135,7 +121,7 @@ export const HomeListsSection: React.FC<HomeListsSectionProps> = ({
               e.stopPropagation();
               onCreateList();
             }}
-            className="w-10 h-10 rounded-full bg-primary hover:bg-primary-container text-on-primary flex items-center justify-center shadow-xs active:scale-95 transition-all shrink-0 cursor-pointer group-hover:scale-105"
+            className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-primary hover:bg-primary-container text-on-primary flex items-center justify-center shadow-xs active:scale-95 transition-all shrink-0 cursor-pointer group-hover:scale-105"
           >
             <Plus className="w-5 h-5 stroke-[2.6]" />
           </button>
