@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Search, Plus, Check, ArrowLeft } from 'lucide-react';
+import { X, Search, Plus, Check, ArrowLeft, Loader2 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import {
   CURATED_HOUSEHOLD_ESSENTIALS,
@@ -10,7 +10,7 @@ import {
 import { INITIAL_MASTER_CATALOG } from '../lib/catalog/items';
 import { supabaseCatalog, useCatalogVersion } from '../lib/catalog/supabaseCatalog';
 import { ShoppingList } from '../types';
-import { FrequentEssentialVisual } from './home/FrequentEssentialsSection';
+import { FrequentEssentialVisual, FIXED_HOME_ESSENTIALS } from './home/FrequentEssentialsSection';
 import { playItemAddSound, triggerHaptic } from '../lib/sound';
 
 interface ViewAllEssentialsModalProps {
@@ -21,6 +21,8 @@ interface ViewAllEssentialsModalProps {
   onAddItem: (item: EssentialDisplayItem) => void;
 }
 
+const PAGE_SIZE = 40;
+
 export const ViewAllEssentialsModal: React.FC<ViewAllEssentialsModalProps> = ({
   isOpen,
   onClose,
@@ -28,18 +30,41 @@ export const ViewAllEssentialsModal: React.FC<ViewAllEssentialsModalProps> = ({
   mostRecentActiveList,
   onAddItem,
 }) => {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const catalogVersion = useCatalogVersion();
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [addedItemsMap, setAddedItemsMap] = useState<Record<string, boolean>>({});
   const [addingItemId, setAddingItemId] = useState<string | null>(null);
 
-  // Combine curated household essentials with rest of catalog staples
+  // Pagination limit to ensure instant sub-second opening without UI freezing
+  const [visibleCount, setVisibleCount] = useState<number>(PAGE_SIZE);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Reset search and pagination when modal opens or closes
+  useEffect(() => {
+    if (isOpen) {
+      setVisibleCount(PAGE_SIZE);
+      setSearchQuery('');
+    }
+  }, [isOpen]);
+
+  // Combine fixed home staples first, then other curated household essentials, then rest of grocery catalog
   const allEssentials = useMemo(() => {
+    if (!isOpen) return []; // Don't compute heavy catalog arrays when closed!
+
     const seen = new Set<string>();
     const list: EssentialDisplayItem[] = [];
 
-    // 1. Curated household staples first
+    // 1. The 8 fixed essentials first in exact order
+    FIXED_HOME_ESSENTIALS.forEach((item) => {
+      const key = item.canonicalName.toLowerCase().trim();
+      if (!seen.has(key)) {
+        seen.add(key);
+        list.push(item);
+      }
+    });
+
+    // 2. Any additional curated staples
     CURATED_HOUSEHOLD_ESSENTIALS.forEach((curated) => {
       const key = curated.canonicalName.toLowerCase().trim();
       if (!seen.has(key)) {
@@ -48,13 +73,12 @@ export const ViewAllEssentialsModal: React.FC<ViewAllEssentialsModalProps> = ({
       }
     });
 
-    // 2. All other grocery catalog items
+    // 3. All other grocery catalog items
     const sourceItems = supabaseCatalog.getItems() || INITIAL_MASTER_CATALOG;
     sourceItems.forEach((catItem) => {
       const key = (catItem.canonical_name || catItem.english_name).toLowerCase().trim();
       if (!seen.has(key)) {
         seen.add(key);
-        // Map to EssentialDisplayItem
         const unit = catItem.default_unit || 'piece';
         const formattedUnit =
           unit.toLowerCase() === 'litre' || unit.toLowerCase() === 'liter'
@@ -79,7 +103,7 @@ export const ViewAllEssentialsModal: React.FC<ViewAllEssentialsModalProps> = ({
     });
 
     return list;
-  }, [catalogVersion]);
+  }, [isOpen, catalogVersion]);
 
   // Filtered by search query
   const filteredEssentials = useMemo(() => {
@@ -94,6 +118,25 @@ export const ViewAllEssentialsModal: React.FC<ViewAllEssentialsModalProps> = ({
       );
     });
   }, [allEssentials, searchQuery]);
+
+  // Paginated slice for buttery-smooth rendering
+  const paginatedEssentials = useMemo(() => {
+    return filteredEssentials.slice(0, visibleCount);
+  }, [filteredEssentials, visibleCount]);
+
+  // Infinite scroll listener
+  const handleScroll = useCallback(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 250) {
+      setVisibleCount((prev) => {
+        if (prev < filteredEssentials.length) {
+          return prev + PAGE_SIZE;
+        }
+        return prev;
+      });
+    }
+  }, [filteredEssentials.length]);
 
   const handleAddClick = (item: EssentialDisplayItem) => {
     if (addingItemId === item.canonicalName) return;
@@ -111,10 +154,6 @@ export const ViewAllEssentialsModal: React.FC<ViewAllEssentialsModalProps> = ({
     }, 1600);
   };
 
-  /**
-   * Format quantity and unit matching screenshot format:
-   * e.g. "1 Litre", "1 Dozen", "1 kg"
-   */
   const formatQuantity = (qty: string, unitStr: string): string => {
     const rawUnit = (unitStr || '').trim();
     const cleanQty = (qty || '1').trim();
@@ -183,17 +222,20 @@ export const ViewAllEssentialsModal: React.FC<ViewAllEssentialsModalProps> = ({
               <input
                 type="text"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setVisibleCount(PAGE_SIZE);
+                }}
                 placeholder={t('essentials.searchPlaceholder') || 'Search staples & essentials (Milk, Eggs, Atta)...'}
                 aria-label="Search essentials"
-                className="w-full h-11 ps-10 pe-4 bg-surface-container-lowest dark:bg-surface-container border border-surface-dim rounded-xl font-body text-sm text-on-surface placeholder:text-outline outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                className="w-full h-11 ps-10 pe-10 bg-surface-container-lowest dark:bg-surface-container border border-surface-dim rounded-xl font-body text-sm text-on-surface placeholder:text-outline outline-none focus:ring-2 focus:ring-primary/20 transition-all"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
                   aria-label="Clear search"
-                  className="w-9 h-9 absolute end-1 top-1/2 -translate-y-1/2 flex items-center justify-center text-outline hover:text-on-surface cursor-pointer"
+                  className="w-10 h-10 absolute end-0.5 top-1/2 -translate-y-1/2 flex items-center justify-center text-outline hover:text-on-surface cursor-pointer rounded-full"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -214,92 +256,106 @@ export const ViewAllEssentialsModal: React.FC<ViewAllEssentialsModalProps> = ({
             </div>
           )}
 
-          {/* Grid of row cards */}
-          <div className="flex-1 overflow-y-auto p-3.5 sm:p-5">
+          {/* Grid of row cards with smooth infinite scroll */}
+          <div
+            ref={scrollContainerRef}
+            onScroll={handleScroll}
+            className="flex-1 overflow-y-auto p-3.5 sm:p-5"
+          >
             {filteredEssentials.length === 0 ? (
               <div className="text-center py-16 text-outline font-body text-sm">
                 {t('common.noResults') || 'No essentials match your search.'}
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {filteredEssentials.map((item) => {
-                  const isAdded = !!addedItemsMap[item.canonicalName];
-                  const isAdding = addingItemId === item.canonicalName;
-                  const activeStatus = getItemStatusInActiveList(
-                    item.canonicalName,
-                    mostRecentActiveList
-                  );
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {paginatedEssentials.map((item) => {
+                    const isAdded = !!addedItemsMap[item.canonicalName];
+                    const isAdding = addingItemId === item.canonicalName;
+                    const activeStatus = getItemStatusInActiveList(
+                      item.canonicalName,
+                      mostRecentActiveList
+                    );
 
-                  return (
-                    <div
-                      key={item.canonicalName}
-                      id={`view_all_card_${item.canonicalName}`}
-                      onClick={() => handleAddClick(item)}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          handleAddClick(item);
-                        }
-                      }}
-                      className="bg-white dark:bg-surface-container-low rounded-2xl p-3 sm:p-3.5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] border border-surface-dim/40 flex items-center gap-3 cursor-pointer select-none hover:shadow-md transition-all active:scale-[0.99] min-h-[80px]"
-                    >
-                      {/* Left: 56x56 photo stage */}
-                      <div className="w-14 h-14 min-w-[56px] min-h-[56px] rounded-xl bg-white dark:bg-stone-900 border border-surface-dim/60 flex items-center justify-center overflow-hidden shrink-0">
-                        <FrequentEssentialVisual item={item} />
-                      </div>
-
-                      {/* Middle: Name (line 1) + Quantity (line 2) */}
-                      <div className="flex-1 min-w-0 flex flex-col justify-center text-left rtl:text-right">
-                        <h4 className="font-display text-[15px] font-bold text-[#1c2826] dark:text-white leading-tight truncate">
-                          {item.displayName}
-                        </h4>
-                        <p className="font-body text-[13px] font-normal text-[#717974] dark:text-neutral-400 leading-tight mt-0.5 truncate">
-                          {formatQuantity(item.quantity, item.unit)}
-                        </p>
-                      </div>
-
-                      {/* Right: + Add pill button */}
-                      <div className="relative shrink-0 flex items-center justify-center">
-                        <button
-                          type="button"
-                          disabled={isAdding}
-                          onClick={(e) => {
-                            e.stopPropagation();
+                    return (
+                      <div
+                        key={item.canonicalName}
+                        id={`view_all_card_${item.canonicalName}`}
+                        onClick={() => handleAddClick(item)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
                             handleAddClick(item);
-                          }}
-                          aria-label={`Add ${item.displayName} to shopping list`}
-                          className={`h-8 px-3 rounded-full text-[13px] font-semibold flex items-center justify-center gap-1 transition-all active:scale-95 cursor-pointer shadow-none select-none min-w-[68px] ${
-                            isAdded
-                              ? 'bg-emerald-600 text-white'
-                              : activeStatus.inList
-                              ? 'bg-[#0F3D2E] text-white opacity-90'
-                              : 'bg-[#0F3D2E] hover:bg-[#0c3125] text-white'
-                          }`}
-                        >
-                          {isAdded ? (
-                            <>
-                              <Check className="w-3.5 h-3.5 stroke-[3]" />
-                              <span>{t('home.essentials.added') || 'Added'}</span>
-                            </>
-                          ) : activeStatus.inList ? (
-                            <>
-                              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                              <span>{t('home.essentials.addMore') || 'Add'}</span>
-                            </>
-                          ) : (
-                            <>
-                              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                              <span>{t('home.essentials.add') || 'Add'}</span>
-                            </>
-                          )}
-                        </button>
+                          }
+                        }}
+                        style={{ borderRadius: '1rem' }}
+                        className="bg-white dark:bg-surface-container-low rounded-2xl p-2.5 xs:p-3 sm:p-3.5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] border border-surface-dim/40 flex items-center gap-2.5 sm:gap-3 cursor-pointer select-none hover:shadow-md transition-all active:scale-[0.99] min-h-[80px] w-full overflow-hidden"
+                      >
+                        {/* Left: 56x56 circular photo stage */}
+                        <div className="w-13 h-13 sm:w-14 sm:h-14 min-w-[52px] min-h-[52px] sm:min-w-[56px] sm:min-h-[56px] rounded-full bg-white dark:bg-stone-900 border border-surface-dim/60 flex items-center justify-center overflow-hidden shrink-0 shadow-2xs">
+                          <FrequentEssentialVisual item={item} />
+                        </div>
+
+                        {/* Middle: Name (line 1) + Quantity (line 2) - NEVER COLLAPSES */}
+                        <div className="flex-1 min-w-0 flex flex-col justify-center text-left rtl:text-right overflow-hidden">
+                          <h4 className="font-display text-[14px] sm:text-[15px] font-bold text-[#1c2826] dark:text-white leading-tight truncate">
+                            {item.displayName}
+                          </h4>
+                          <p className="font-body text-[12px] sm:text-[13px] font-normal text-[#717974] dark:text-neutral-400 leading-tight mt-0.5 truncate">
+                            {formatQuantity(item.quantity, item.unit)}
+                          </p>
+                        </div>
+
+                        {/* Right: + Add pill button */}
+                        <div className="relative shrink-0 flex items-center justify-center">
+                          <button
+                            type="button"
+                            disabled={isAdding}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAddClick(item);
+                            }}
+                            aria-label={`Add ${item.displayName} to shopping list`}
+                            className={`h-8 px-3 rounded-full text-[13px] font-semibold flex items-center justify-center gap-1 transition-all active:scale-95 cursor-pointer shadow-none select-none min-w-[64px] min-h-[44px] ${
+                              isAdded
+                                ? 'bg-emerald-600 text-white'
+                                : activeStatus.inList
+                                ? 'bg-[#0F3D2E] text-white opacity-90'
+                                : 'bg-[#0F3D2E] hover:bg-[#0c3125] text-white'
+                            }`}
+                          >
+                            {isAdded ? (
+                              <>
+                                <Check className="w-3.5 h-3.5 stroke-[3]" />
+                                <span>{t('home.essentials.added') || 'Added'}</span>
+                              </>
+                            ) : activeStatus.inList ? (
+                              <>
+                                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                                <span>{t('home.essentials.addMore') || 'Add'}</span>
+                              </>
+                            ) : (
+                              <>
+                                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                                <span>{t('home.essentials.add') || 'Add'}</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+
+                {/* Infinite scroll loader */}
+                {visibleCount < filteredEssentials.length && (
+                  <div className="py-6 flex justify-center items-center">
+                    <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                  </div>
+                )}
+              </>
             )}
           </div>
         </motion.div>
