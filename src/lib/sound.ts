@@ -271,7 +271,7 @@ export function playItemUncheckSound(): void {
 }
 
 /**
- * Plays a gentle, subtle acoustic pop when an item is added to the list
+ * Plays a joyful, sweet acoustic double-pop when an essential item is added
  */
 export function playItemAddSound(): void {
   if (!isSoundEnabled()) return;
@@ -282,24 +282,39 @@ export function playItemAddSound(): void {
 
   try {
     const now = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
+    
+    // Note 1: Upbeat primary chime (G5 -> C6)
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(783.99, now); // G5
+    osc1.frequency.exponentialRampToValueAtTime(1046.5, now + 0.05); // C6
 
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(587.33, now); // D5
-    osc.frequency.exponentialRampToValueAtTime(880, now + 0.04); // A5
+    gain1.gain.setValueAtTime(0.0001, now);
+    gain1.gain.linearRampToValueAtTime(0.12, now + 0.005);
+    gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
 
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.08, now + 0.004);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.07);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start(now);
+    osc1.stop(now + 0.095);
 
-    osc.connect(gain);
-    gain.connect(ctx.destination);
+    // Note 2: Harmonic sparkle double chime 40ms later (E6)
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(1318.51, now + 0.04); // E6
 
-    osc.start(now);
-    osc.stop(now + 0.08);
+    gain2.gain.setValueAtTime(0.0001, now + 0.04);
+    gain2.gain.linearRampToValueAtTime(0.09, now + 0.046);
+    gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
 
-    triggerHaptic(8);
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(now + 0.04);
+    osc2.stop(now + 0.17);
+
+    triggerHaptic([12, 20, 16]);
   } catch {
     // Non-blocking
   }

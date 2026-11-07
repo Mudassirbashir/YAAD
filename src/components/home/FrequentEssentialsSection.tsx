@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Plus, Check } from 'lucide-react';
 import { ShoppingList } from '../../types';
 import { useLanguage } from '../../context/LanguageContext';
 import {
-  CURATED_HOUSEHOLD_ESSENTIALS,
   getItemStatusInActiveList,
   EssentialDisplayItem,
 } from '../../lib/recommendations/popularEssentials';
@@ -206,7 +206,7 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
   const [addedItemsMap, setAddedItemsMap] = useState<Record<string, boolean>>({});
   const [addingItemId, setAddingItemId] = useState<string | null>(null);
 
-  // Fix 3: Exact 8 fixed items for everyone — no personalization algorithm here
+  // Exact 8 fixed items for everyone — no personalization
   const essentials = FIXED_HOME_ESSENTIALS;
 
   const handleAddClick = (item: EssentialDisplayItem) => {
@@ -278,8 +278,8 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
                 <FrequentEssentialVisual item={item} />
               </div>
 
-              {/* Text (middle, flex-1, two lines, left-aligned): MUST NEVER COLLAPSE */}
-              <div className="flex-1 min-w-0 flex flex-col justify-center text-left rtl:text-right overflow-hidden">
+              {/* Text (middle, flex-1, two lines, left-aligned): Wide space, NEVER collapses */}
+              <div className="flex-1 min-w-0 flex flex-col justify-center text-left rtl:text-right overflow-hidden pr-0.5">
                 {/* Line 1 — item name: ~15px, weight 700, near-black */}
                 <h4 className="font-display text-[13.5px] xs:text-[14.5px] sm:text-[15px] font-bold text-[#1c2826] dark:text-white leading-tight truncate">
                   {item.displayName}
@@ -290,7 +290,7 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
                 </p>
               </div>
 
-              {/* "+ Add" button (right): dark green #0F3D2E, white text ~13px weight 600, "+" icon + "Add" text */}
+              {/* Small Green Circle Button with Animated White Plus -> Check Tick */}
               <div className="relative shrink-0 flex items-center justify-center">
                 <button
                   type="button"
@@ -300,30 +300,41 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
                     handleAddClick(item);
                   }}
                   aria-label={`Add ${item.displayName} to shopping list`}
-                  className={`h-7 xs:h-8 px-2 xs:px-2.5 sm:px-3 rounded-full text-[12px] xs:text-[13px] font-semibold flex items-center justify-center gap-0.5 xs:gap-1 transition-all active:scale-95 cursor-pointer shadow-none select-none min-w-[54px] xs:min-w-[62px] sm:min-w-[68px] min-h-[44px] ${
-                    isAdded
-                      ? 'bg-emerald-600 text-white'
-                      : activeStatus.inList
-                      ? 'bg-[#0F3D2E] text-white opacity-90'
-                      : 'bg-[#0F3D2E] hover:bg-[#0c3125] text-white'
-                  }`}
+                  className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer transition-transform active:scale-90"
                 >
-                  {isAdded ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 stroke-[3]" />
-                      <span className="hidden xs:inline">{t('home.essentials.added') || 'Added'}</span>
-                    </>
-                  ) : activeStatus.inList ? (
-                    <>
-                      <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                      <span>{t('home.essentials.addMore') || 'Add'}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                      <span>{t('home.essentials.add') || 'Add'}</span>
-                    </>
-                  )}
+                  <motion.div
+                    animate={
+                      isAdded
+                        ? { scale: [1, 1.25, 1], backgroundColor: '#16a34a' }
+                        : { scale: 1, backgroundColor: '#0F3D2E' }
+                    }
+                    transition={{ duration: 0.28, ease: 'easeOut' }}
+                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white shadow-xs"
+                  >
+                    <AnimatePresence mode="wait" initial={false}>
+                      {isAdded ? (
+                        <motion.div
+                          key="checked"
+                          initial={{ scale: 0, rotate: -45 }}
+                          animate={{ scale: 1, rotate: 0 }}
+                          exit={{ scale: 0 }}
+                          transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+                        >
+                          <Check className="w-4 h-4 stroke-[3]" />
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="plus"
+                          initial={{ scale: 0, rotate: 45 }}
+                          animate={{ scale: 1, rotate: 0 }}
+                          exit={{ scale: 0 }}
+                          transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+                        >
+                          <Plus className="w-4 h-4 stroke-[2.8]" />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
                 </button>
               </div>
             </div>

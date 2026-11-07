@@ -59,6 +59,15 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
 
+  // Guarantee the screen opens scrolled to top
+  React.useEffect(() => {
+    try {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    } catch {
+      window.scrollTo(0, 0);
+    }
+  }, []);
+
   // Compute theme-responsive icon color: Default black in light theme, white in dark mode, or active theme color if changed in settings
   const iconColor = currentThemeConfig?.isDark
     ? '#ffffff'

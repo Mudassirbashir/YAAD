@@ -19,6 +19,7 @@ import { HomeListsSection } from './home/HomeListsSection';
 import { NoActiveListModal } from './home/NoActiveListModal';
 import { ShareListModal } from './ShareListModal';
 import { ViewAllEssentialsModal } from './ViewAllEssentialsModal';
+import { AddItemToListChoiceModal } from './home/AddItemToListChoiceModal';
 
 interface HomeViewProps {
   lists: ShoppingList[];
@@ -176,7 +177,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
   // Handle adding an essential item to the current list or prompting for new list
   const handleAddEssentialItem = (item: EssentialDisplayItem) => {
-    if (!mostRecentActiveList) {
+    // If no lists at all or user has multiple lists and no single active list, open choice modal
+    if (!mostRecentActiveList || lists.length > 1) {
       setPendingEssentialItem(item);
       return;
     }
@@ -192,6 +194,22 @@ export const HomeView: React.FC<HomeViewProps> = ({
       listTitle: mostRecentActiveList.title,
       targetList: mostRecentActiveList,
     });
+  };
+
+  const handleAddEssentialToSpecificList = (item: EssentialDisplayItem, listId: string) => {
+    const candidate = buildCandidate(item);
+    const targetList = lists.find((l) => l.id === listId);
+    if (onQuickAddRecommendation) {
+      onQuickAddRecommendation(candidate, listId, false);
+    }
+
+    const itemLabel = language === 'ur' && item.nameUrdu ? item.nameUrdu : item.displayName;
+    setAddedItemToast({
+      message: `${itemLabel} (${item.quantity} ${item.unit})`,
+      listTitle: targetList?.title || 'List',
+      targetList: targetList || ({} as ShoppingList),
+    });
+    setPendingEssentialItem(null);
   };
 
   const handleAddToNewList = (item: EssentialDisplayItem) => {
@@ -399,13 +417,14 @@ export const HomeView: React.FC<HomeViewProps> = ({
         onAddItem={handleAddEssentialItem}
       />
 
-      {/* 4. No Active List Modal for Frequent Essentials */}
-      <NoActiveListModal
+      {/* 4. Choice Modal: Save to old list or create a new list */}
+      <AddItemToListChoiceModal
         isOpen={!!pendingEssentialItem}
         item={pendingEssentialItem}
+        lists={lists}
         onClose={() => setPendingEssentialItem(null)}
-        onAddToNewList={handleAddToNewList}
-        onCreateListFirst={handleCreateListFirst}
+        onAddToList={handleAddEssentialToSpecificList}
+        onCreateNewList={handleAddToNewList}
       />
 
       {/* 5. Quick Add Success Toast */}

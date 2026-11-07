@@ -63,6 +63,13 @@ export const RouterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       // Fallback
     }
 
+    // Scroll to top on navigation so new views never open scrolled down
+    try {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    } catch {
+      window.scrollTo(0, 0);
+    }
+
     setCurrentPath(normalizedTarget);
   }, []);
 

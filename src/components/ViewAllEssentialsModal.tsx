@@ -308,7 +308,7 @@ export const ViewAllEssentialsModal: React.FC<ViewAllEssentialsModalProps> = ({
                           </p>
                         </div>
 
-                        {/* Right: + Add pill button */}
+                        {/* Right: Small Green Circle Button with Animated White Plus -> Check Tick */}
                         <div className="relative shrink-0 flex items-center justify-center">
                           <button
                             type="button"
@@ -318,30 +318,41 @@ export const ViewAllEssentialsModal: React.FC<ViewAllEssentialsModalProps> = ({
                               handleAddClick(item);
                             }}
                             aria-label={`Add ${item.displayName} to shopping list`}
-                            className={`h-8 px-3 rounded-full text-[13px] font-semibold flex items-center justify-center gap-1 transition-all active:scale-95 cursor-pointer shadow-none select-none min-w-[64px] min-h-[44px] ${
-                              isAdded
-                                ? 'bg-emerald-600 text-white'
-                                : activeStatus.inList
-                                ? 'bg-[#0F3D2E] text-white opacity-90'
-                                : 'bg-[#0F3D2E] hover:bg-[#0c3125] text-white'
-                            }`}
+                            className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer transition-transform active:scale-90"
                           >
-                            {isAdded ? (
-                              <>
-                                <Check className="w-3.5 h-3.5 stroke-[3]" />
-                                <span>{t('home.essentials.added') || 'Added'}</span>
-                              </>
-                            ) : activeStatus.inList ? (
-                              <>
-                                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                                <span>{t('home.essentials.addMore') || 'Add'}</span>
-                              </>
-                            ) : (
-                              <>
-                                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                                <span>{t('home.essentials.add') || 'Add'}</span>
-                              </>
-                            )}
+                            <motion.div
+                              animate={
+                                isAdded
+                                  ? { scale: [1, 1.25, 1], backgroundColor: '#16a34a' }
+                                  : { scale: 1, backgroundColor: '#0F3D2E' }
+                              }
+                              transition={{ duration: 0.28, ease: 'easeOut' }}
+                              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white shadow-xs"
+                            >
+                              <AnimatePresence mode="wait" initial={false}>
+                                {isAdded ? (
+                                  <motion.div
+                                    key="checked"
+                                    initial={{ scale: 0, rotate: -45 }}
+                                    animate={{ scale: 1, rotate: 0 }}
+                                    exit={{ scale: 0 }}
+                                    transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+                                  >
+                                    <Check className="w-4 h-4 stroke-[3]" />
+                                  </motion.div>
+                                ) : (
+                                  <motion.div
+                                    key="plus"
+                                    initial={{ scale: 0, rotate: 45 }}
+                                    animate={{ scale: 1, rotate: 0 }}
+                                    exit={{ scale: 0 }}
+                                    transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+                                  >
+                                    <Plus className="w-4 h-4 stroke-[2.8]" />
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
+                            </motion.div>
                           </button>
                         </div>
                       </div>
