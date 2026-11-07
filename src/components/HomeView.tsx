@@ -175,25 +175,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
     };
   };
 
-  // Handle adding an essential item to the current list or prompting for new list
+  // Handle adding an essential item: always open choice modal for user to pick new or existing list
   const handleAddEssentialItem = (item: EssentialDisplayItem) => {
-    // If no lists at all or user has multiple lists and no single active list, open choice modal
-    if (!mostRecentActiveList || lists.length > 1) {
-      setPendingEssentialItem(item);
-      return;
-    }
-
-    const candidate = buildCandidate(item);
-    if (onQuickAddRecommendation) {
-      onQuickAddRecommendation(candidate, mostRecentActiveList.id, false);
-    }
-
-    const itemLabel = language === 'ur' && item.nameUrdu ? item.nameUrdu : item.displayName;
-    setAddedItemToast({
-      message: `${itemLabel} (${item.quantity} ${item.unit})`,
-      listTitle: mostRecentActiveList.title,
-      targetList: mostRecentActiveList,
-    });
+    setPendingEssentialItem({ ...item });
   };
 
   const handleAddEssentialToSpecificList = (item: EssentialDisplayItem, listId: string) => {
@@ -215,8 +199,14 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const handleAddToNewList = (item: EssentialDisplayItem) => {
     const candidate = buildCandidate(item);
     if (onQuickAddRecommendation) {
-      onQuickAddRecommendation(candidate, undefined, true);
+      onQuickAddRecommendation(candidate, undefined, false);
     }
+    const itemLabel = language === 'ur' && item.nameUrdu ? item.nameUrdu : item.displayName;
+    setAddedItemToast({
+      message: `${itemLabel} (${item.quantity} ${item.unit})`,
+      listTitle: language === 'ur' ? 'نئی فہرست' : 'New List',
+      targetList: {} as ShoppingList,
+    });
     setPendingEssentialItem(null);
   };
 
@@ -419,6 +409,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
       {/* 4. Choice Modal: Save to old list or create a new list */}
       <AddItemToListChoiceModal
+        key={pendingEssentialItem?.canonicalName || 'modal'}
         isOpen={!!pendingEssentialItem}
         item={pendingEssentialItem}
         lists={lists}

@@ -270,27 +270,26 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
                   handleAddClick(item);
                 }
               }}
-              style={{ borderRadius: '1rem' }}
-              className="bg-white dark:bg-surface-container-low rounded-2xl p-2.5 xs:p-3 sm:p-3.5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] border border-surface-dim/40 flex items-center gap-2 xs:gap-2.5 sm:gap-3 cursor-pointer select-none hover:shadow-md transition-all active:scale-[0.99] min-h-[80px] sm:min-h-[84px] w-full overflow-hidden"
+              className="bg-white dark:bg-surface-container-low rounded-2xl py-1.5 px-2 xs:py-2 xs:px-2.5 sm:py-2 sm:px-3 shadow-[0_1px_3px_rgba(0,0,0,0.06)] border border-surface-dim/40 flex items-center gap-1.5 xs:gap-2 sm:gap-2.5 cursor-pointer select-none hover:shadow-md transition-all active:scale-[0.99] min-h-[58px] xs:min-h-[62px] sm:min-h-[64px] w-full overflow-hidden"
             >
-              {/* Image (left): Circular 44-56px photo, object-cover centered */}
-              <div className="w-11 h-11 xs:w-13 xs:h-13 sm:w-14 sm:h-14 min-w-[44px] min-h-[44px] xs:min-w-[52px] xs:min-h-[52px] sm:min-w-[56px] sm:min-h-[56px] rounded-full bg-white dark:bg-stone-900 border border-surface-dim/60 flex items-center justify-center overflow-hidden shrink-0 shadow-2xs">
+              {/* Image (left): Circular photo, compact object-cover centered */}
+              <div className="w-9 h-9 xs:w-10 xs:h-10 sm:w-11 sm:h-11 rounded-full bg-white dark:bg-stone-900 border border-surface-dim/60 flex items-center justify-center overflow-hidden shrink-0 shadow-2xs">
                 <FrequentEssentialVisual item={item} />
               </div>
 
-              {/* Text (middle, flex-1, two lines, left-aligned): Wide space, NEVER collapses */}
+              {/* Text (middle, flex-1, two lines, left-aligned): Compact fonts, reduced whitespace */}
               <div className="flex-1 min-w-0 flex flex-col justify-center text-left rtl:text-right overflow-hidden pr-0.5">
-                {/* Line 1 — item name: ~15px, weight 700, near-black */}
-                <h4 className="font-display text-[13.5px] xs:text-[14.5px] sm:text-[15px] font-bold text-[#1c2826] dark:text-white leading-tight truncate">
+                {/* Line 1 — item name: ~13px, weight 700, near-black */}
+                <h4 className="font-display text-[12.5px] xs:text-[13px] sm:text-[13.5px] font-bold text-[#1c2826] dark:text-white leading-tight truncate">
                   {item.displayName}
                 </h4>
-                {/* Line 2 — quantity: ~13px, weight 400-500, medium gray #717974 */}
-                <p className="font-body text-[11.5px] xs:text-[12.5px] sm:text-[13px] font-normal text-[#717974] dark:text-neutral-400 leading-tight mt-0.5 truncate">
+                {/* Line 2 — quantity: ~11px, weight 400, medium gray #717974 */}
+                <p className="font-body text-[10.5px] xs:text-[11px] sm:text-[11.5px] font-normal text-[#717974] dark:text-neutral-400 leading-tight mt-0.5 truncate">
                   {quantityLabel}
                 </p>
               </div>
 
-              {/* Small Green Circle Button with Animated White Plus -> Check Tick */}
+              {/* Small Green Circle Button with Animated White Plus -> Check Tick (Size preserved: w-7 h-7 / w-8 h-8) */}
               <div className="relative shrink-0 flex items-center justify-center">
                 <button
                   type="button"
@@ -300,7 +299,7 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
                     handleAddClick(item);
                   }}
                   aria-label={`Add ${item.displayName} to shopping list`}
-                  className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer transition-transform active:scale-90"
+                  className="w-8 h-8 xs:w-9 xs:h-9 flex items-center justify-center cursor-pointer transition-transform active:scale-90"
                 >
                   <motion.div
                     animate={

@@ -24,6 +24,8 @@ interface TopHeaderProps {
   onMenuClick?: () => void;
   onNotificationsClick?: () => void;
   rightAction?: React.ReactNode;
+  hideNotifications?: boolean;
+  hideSettings?: boolean;
 }
 
 interface InAppNotification {
@@ -140,6 +142,8 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   onMenuClick,
   onNotificationsClick,
   rightAction,
+  hideNotifications = false,
+  hideSettings = false,
 }) => {
   const { language } = useLanguage();
   const [isGearTapped, setIsGearTapped] = useState(false);
@@ -258,51 +262,55 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             </h1>
           </div>
 
-          {/* Right Action: Notifications & Settings always present */}
+          {/* Right Action: Notifications & Settings */}
           <div className="flex items-center justify-end gap-1 min-w-[44px] z-10">
             {rightAction && (
-              <div className="me-1">
+              <div className="flex items-center">
                 {rightAction}
               </div>
             )}
 
             {/* Push Notification Bell Button with top-right dot badge */}
-            <BadgeAnchor
-              placement="top-right"
-              badge={
-                hasUnread ? (
-                  <Badge dot tone="warning" pulse ariaLabel="Unread notifications" />
-                ) : null
-              }
-            >
-              <button
-                id="top_header_notification_btn"
-                type="button"
-                onClick={handleOpenNotifications}
-                aria-label="Notifications"
-                title="Notifications & Alerts"
-                className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-primary hover:bg-surface-container-low active:bg-surface-container active:scale-95 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer"
+            {!hideNotifications && (
+              <BadgeAnchor
+                placement="top-right"
+                badge={
+                  hasUnread ? (
+                    <Badge dot tone="warning" pulse ariaLabel="Unread notifications" />
+                  ) : null
+                }
               >
-                <Bell className="w-5 h-5 stroke-[2]" />
-              </button>
-            </BadgeAnchor>
+                <button
+                  id="top_header_notification_btn"
+                  type="button"
+                  onClick={handleOpenNotifications}
+                  aria-label="Notifications"
+                  title="Notifications & Alerts"
+                  className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-primary hover:bg-surface-container-low active:bg-surface-container active:scale-95 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer"
+                >
+                  <Bell className="w-5 h-5 stroke-[2]" />
+                </button>
+              </BadgeAnchor>
+            )}
 
             {/* Settings Gear Button */}
-            <button
-              id="top_header_settings_btn"
-              data-testid="top_header_settings_btn"
-              type="button"
-              onClick={handleSettingsClick}
-              aria-label="Settings"
-              title="Settings"
-              className="w-11 h-11 min-w-[44px] min-h-[44px] -me-2 flex items-center justify-center rounded-full text-primary hover:bg-surface-container-low active:bg-surface-container active:scale-95 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer group"
-            >
-              <Settings
-                className={`w-5 h-5 text-primary stroke-[2] transition-transform duration-300 ease-out group-hover:rotate-45 motion-reduce:transform-none ${
-                  isGearTapped ? 'rotate-90' : 'rotate-0'
-                }`}
-              />
-            </button>
+            {!hideSettings && (
+              <button
+                id="top_header_settings_btn"
+                data-testid="top_header_settings_btn"
+                type="button"
+                onClick={handleSettingsClick}
+                aria-label="Settings"
+                title="Settings"
+                className="w-11 h-11 min-w-[44px] min-h-[44px] -me-2 flex items-center justify-center rounded-full text-primary hover:bg-surface-container-low active:bg-surface-container active:scale-95 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer group"
+              >
+                <Settings
+                  className={`w-5 h-5 text-primary stroke-[2] transition-transform duration-300 ease-out group-hover:rotate-45 motion-reduce:transform-none ${
+                    isGearTapped ? 'rotate-90' : 'rotate-0'
+                  }`}
+                />
+              </button>
+            )}
           </div>
         </div>
       </header>

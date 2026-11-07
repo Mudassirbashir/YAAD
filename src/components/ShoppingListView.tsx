@@ -793,14 +793,20 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
         showBack={true}
         onBack={onBack}
         onAvatarClick={onOpenProfile}
+        hideNotifications={true}
+        hideSettings={true}
         rightAction={
           <div className="flex items-center gap-1">
             <button
+              type="button"
+              id="shopping_list_edit_btn"
               onClick={() => onEditList(list)}
-              className="font-body text-sm font-bold text-primary hover:bg-surface-container-low px-3.5 py-2 min-h-[44px] rounded-full transition-colors active:scale-95 flex items-center gap-1.5 cursor-pointer"
+              aria-label={t('shoppingList.editList') || 'Edit list'}
+              title={t('shoppingList.editList') || 'Edit list'}
+              className="h-9 px-2.5 sm:px-3 rounded-full text-primary hover:bg-surface-container-low transition-colors active:scale-95 flex items-center gap-1.5 cursor-pointer text-xs sm:text-sm font-bold"
             >
               <Edit3 className="w-4 h-4" />
-              <span>{t('shoppingList.editList')}</span>
+              <span className="hidden xs:inline">{t('shoppingList.editList')}</span>
             </button>
             {onDeleteList && (
               <button
@@ -808,7 +814,8 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                 id="shopping_list_delete_btn"
                 onClick={() => setShowDeleteConfirm(true)}
                 aria-label={t('delete') || 'Delete list'}
-                className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center text-outline hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors active:scale-95 cursor-pointer"
+                title={t('delete') || 'Delete list'}
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-outline hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors active:scale-95 cursor-pointer"
               >
                 <Trash2 className="w-4 h-4" />
               </button>

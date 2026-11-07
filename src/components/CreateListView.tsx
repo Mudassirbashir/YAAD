@@ -1,28 +1,7 @@
-import React, { useState, useRef } from 'react';
-import {
-  ArrowLeft,
-  ArrowRight,
-  AlertCircle,
-  CalendarDays,
-  ShoppingBasket,
-  Apple,
-  ShoppingCart,
-  Flame,
-  Coffee,
-  Home,
-  Pill,
-  Sparkles,
-  PartyPopper,
-  Cake,
-  Plus,
-} from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { ArrowLeft, ArrowRight, AlertCircle, ShoppingBag } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
-import { useAppTheme } from '../context/ThemeContext';
 import { triggerHaptic } from '../lib/sound';
-import {
-  SHOPPING_CONTEXT_OPTIONS,
-  ShoppingContextOption,
-} from '../lib/recommendations/shoppingContexts';
 
 export interface CreateListViewProps {
   onBack: () => void;
@@ -30,37 +9,22 @@ export interface CreateListViewProps {
   onContinue?: (title: string, icon?: string, contextId?: string) => void;
 }
 
-// Updated distinct icons for category cards
-const CONTEXT_ICON_MAP: Record<string, React.ComponentType<{ className?: string; strokeWidth?: number }>> = {
-  weekly: CalendarDays,
-  grocery: ShoppingBasket,
-  fruits_vegetables: Apple,
-  supermarket: ShoppingCart,
-  bbq: Flame,
-  breakfast: Coffee,
-  home: Home,
-  pharmacy: Pill,
-  personal: Sparkles,
-  party: PartyPopper,
-  baking: Cake,
-};
-
 export const CreateListView: React.FC<CreateListViewProps> = ({
   onBack,
   onCreateList,
   onContinue,
 }) => {
-  const { t } = useLanguage();
-  const { theme, currentThemeConfig } = useAppTheme();
+  const { t, language } = useLanguage();
   const [customTitle, setCustomTitle] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [isShaking, setIsShaking] = useState<boolean>(false);
-  const [selectedContextId, setSelectedContextId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
 
+  const isUrdu = language === 'ur';
+
   // Guarantee the screen opens scrolled to top
-  React.useEffect(() => {
+  useEffect(() => {
     try {
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     } catch {
@@ -68,41 +32,20 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
     }
   }, []);
 
-  // Compute theme-responsive icon color: Default black in light theme, white in dark mode, or active theme color if changed in settings
-  const iconColor = currentThemeConfig?.isDark
-    ? '#ffffff'
-    : theme === 'default'
-    ? '#000000'
-    : currentThemeConfig?.primary || '#000000';
-
-  const handleDispatchCreate = (title: string, iconName?: string, contextId?: string) => {
+  const handleDispatchCreate = (title: string) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
     triggerHaptic(14);
 
     const resolvedTitle = title.trim() || t('createList.title') || 'Shopping List';
-    const resolvedIcon = iconName || 'shopping_basket';
-    const resolvedContext = contextId || 'weekly';
+    const resolvedIcon = 'shopping_basket';
+    const resolvedContext = 'weekly';
 
     if (onCreateList) {
       onCreateList(resolvedTitle, resolvedIcon, resolvedContext);
     } else if (onContinue) {
       onContinue(resolvedTitle, resolvedIcon, resolvedContext);
     }
-  };
-
-  /**
-   * Fast 1-tap category selection - clicking either card or right animated plus circle creates the list
-   */
-  const handleSelectCategory = (ctx: ShoppingContextOption) => {
-    if (isSubmitting) return;
-    triggerHaptic(14);
-    setSelectedContextId(ctx.id);
-
-    const resolvedTitle = customTitle.trim() ? customTitle.trim() : ctx.title;
-    setTimeout(() => {
-      handleDispatchCreate(resolvedTitle, ctx.iconName, ctx.id);
-    }, 180);
   };
 
   /**
@@ -115,52 +58,24 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
     const finalTitle = customTitle.trim();
     if (!finalTitle) {
       triggerHaptic(25);
-      setErrorMsg(t('createList.errorEmpty') || 'First enter the list name, then continue.');
+      setErrorMsg(
+        isUrdu
+          ? 'پہلے لسٹ کا نام درج کریں، پھر آگے بڑھیں۔'
+          : t('createList.errorEmpty') || 'First enter the list name, then continue.'
+      );
       setIsShaking(true);
       setTimeout(() => setIsShaking(false), 500);
       titleInputRef.current?.focus();
       return;
     }
 
-    // Infer context from title
-    const lower = finalTitle.toLowerCase();
-    let bestContextId = 'custom';
-    let bestIcon = 'list_plus';
-
-    if (lower.includes('bbq') || lower.includes('grill') || lower.includes('tikka')) {
-      bestContextId = 'bbq';
-      bestIcon = 'flame';
-    } else if (lower.includes('nashta') || lower.includes('breakfast') || lower.includes('chai')) {
-      bestContextId = 'breakfast';
-      bestIcon = 'coffee';
-    } else if (lower.includes('sabzi') || lower.includes('vegetable') || lower.includes('fruit') || lower.includes('phal')) {
-      bestContextId = 'fruits_vegetables';
-      bestIcon = 'apple';
-    } else if (lower.includes('supermarket') || lower.includes('mart') || lower.includes('imtiaz') || lower.includes('carrefour')) {
-      bestContextId = 'supermarket';
-      bestIcon = 'store';
-    } else if (lower.includes('pharmacy') || lower.includes('dawa') || lower.includes('medicine')) {
-      bestContextId = 'pharmacy';
-      bestIcon = 'heart_pulse';
-    } else if (lower.includes('groc') || lower.includes('rashan') || lower.includes('sauda')) {
-      bestContextId = 'grocery';
-      bestIcon = 'shopping_bag';
-    } else if (lower.includes('week') || lower.includes('hafta') || lower.includes('month')) {
-      bestContextId = 'weekly';
-      bestIcon = 'calendar';
-    } else if (lower.includes('home') || lower.includes('safai') || lower.includes('cleaning')) {
-      bestContextId = 'home';
-      bestIcon = 'home';
-    }
-
-    setSelectedContextId(bestContextId);
-    handleDispatchCreate(finalTitle, bestIcon, bestContextId);
+    handleDispatchCreate(finalTitle);
   };
 
   return (
     <div className="w-full min-h-screen flex flex-col antialiased bg-background text-on-surface">
       {/* 1. Header: Minimal with back button only */}
-      <header className="sticky top-0 z-30 bg-background/75 backdrop-blur-xl border-b border-surface-dim/40">
+      <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-xl border-b border-surface-dim/40">
         <div className="w-full max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto flex items-center justify-between px-4 sm:px-6 h-14">
           <button
             type="button"
@@ -173,24 +88,32 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
         </div>
       </header>
 
-      {/* 2. Main Page Content: Tight, balanced spacing with heading slightly below header */}
-      <main className="flex-1 w-full max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto px-4 sm:px-6 pt-2.5 pb-20 flex flex-col gap-3">
-        {/* Page Title: Create New List placed cleanly inside the page */}
-        <div>
-          <h1 className="font-display text-xl sm:text-2xl font-extrabold text-on-surface tracking-tight">
-            {t('createList.title') || 'Create New List'}
+      {/* 2. Main Page Content: Clean, focused, no category clutter */}
+      <main className="flex-1 w-full max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto px-4 sm:px-6 pt-4 pb-20 flex flex-col gap-5">
+        {/* Icon & Heading */}
+        <div className="flex flex-col gap-1.5">
+          <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-1">
+            <ShoppingBag className="w-6 h-6 stroke-[2.2]" />
+          </div>
+          <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight">
+            {t('createList.title') || (isUrdu ? 'نئی لسٹ بنائیں' : 'Create New List')}
           </h1>
+          <p className="font-body text-sm text-outline">
+            {isUrdu
+              ? 'اپنی خریداری کی فہرست کا نام درج کریں'
+              : 'Enter a name for your shopping list to get started'}
+          </p>
         </div>
 
-        {/* 3. List Name Input Field: Round shape, 'List Name' placeholder, circle with right arrow */}
-        <form onSubmit={handleSubmitCustomTitle} className="space-y-1.5">
+        {/* 3. List Name Input Field: Round shape, 16px text-base (prevents mobile zoom), submit button */}
+        <form onSubmit={handleSubmitCustomTitle} className="space-y-2 mt-1">
           <div
             className={`relative flex items-center w-full rounded-full border transition-all bg-surface-container-lowest shadow-xs ${
               isShaking ? 'animate-bounce' : ''
             } ${
               errorMsg
                 ? 'border-error ring-2 ring-error/20'
-                : 'border-neutral-300 dark:border-neutral-700 focus-within:border-black dark:focus-within:border-white focus-within:ring-2 focus-within:ring-black/10 dark:focus-within:ring-white/10'
+                : 'border-neutral-300 dark:border-neutral-700 focus-within:border-primary dark:focus-within:border-white focus-within:ring-2 focus-within:ring-primary/20 dark:focus-within:ring-white/10'
             }`}
           >
             <input
@@ -198,13 +121,14 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
               id="list_title_input"
               dir="auto"
               type="text"
+              autoFocus
               value={customTitle}
               onChange={(e) => {
                 setCustomTitle(e.target.value);
                 if (errorMsg) setErrorMsg('');
               }}
-              className="w-full h-12 sm:h-14 ps-5 pe-16 bg-transparent text-on-surface font-body text-sm sm:text-base outline-none placeholder:text-neutral-400 dark:placeholder:text-neutral-500 rounded-full"
-              placeholder={t('createList.customPlaceholder') || 'List Name'}
+              className="w-full h-13 sm:h-14 ps-5 pe-16 bg-transparent text-on-surface font-body text-base outline-none placeholder:text-neutral-400 dark:placeholder:text-neutral-500 rounded-full"
+              placeholder={t('createList.customPlaceholder') || (isUrdu ? 'لسٹ کا نام (مثلاً سودا سلف)' : 'List Name (e.g. Weekly Groceries)')}
               aria-label="List Name"
             />
 
@@ -214,7 +138,7 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
               type="submit"
               disabled={isSubmitting}
               aria-label="Continue"
-              className="absolute end-1.5 top-1/2 -translate-y-1/2 w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center hover:opacity-90 active:scale-95 transition-all shadow-xs cursor-pointer disabled:opacity-50"
+              className="absolute end-1.5 top-1/2 -translate-y-1/2 w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-primary hover:bg-[#0c3125] text-white flex items-center justify-center hover:opacity-95 active:scale-95 transition-all shadow-xs cursor-pointer disabled:opacity-50"
             >
               <ArrowRight className="w-5 h-5 rtl:rotate-180" />
             </button>
@@ -231,67 +155,6 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
             </div>
           )}
         </form>
-
-        {/* 4. Categories Section Heading */}
-        <div className="pt-1">
-          <h2 className="font-display text-sm sm:text-base font-bold text-on-surface text-start px-0.5">
-            {t('createList.categoriesHeading') || 'Categories'}
-          </h2>
-        </div>
-
-        {/* 5. Compact Category Cards with Left Icon, Name, and Right Animated Plus in Circle */}
-        <div className="flex flex-col gap-2.5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-2.5">
-            {SHOPPING_CONTEXT_OPTIONS.map((ctx) => {
-              const IconComp = CONTEXT_ICON_MAP[ctx.id] || ctx.icon;
-              const isSelected = selectedContextId === ctx.id;
-
-              return (
-                <button
-                  key={ctx.id}
-                  id={`context-tile-${ctx.id}`}
-                  type="button"
-                  disabled={isSubmitting}
-                  onClick={() => handleSelectCategory(ctx)}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 sm:px-4 sm:py-2.5 rounded-2xl border transition-all duration-150 active:scale-[0.98] cursor-pointer group shadow-2xs text-start ${
-                    isSelected
-                      ? 'border-black dark:border-white ring-2 ring-black/20 dark:ring-white/20 bg-surface-container-low'
-                      : 'bg-surface-container-lowest hover:bg-surface-container-low border-surface-dim hover:border-black/30 dark:hover:border-white/30 text-on-surface'
-                  }`}
-                >
-                  {/* Left Side: Icon + Category Name */}
-                  <div className="flex items-center gap-3 min-w-0">
-                    {/* Left Icon Container: Default black in light theme, theme-responsive */}
-                    <div
-                      className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 border border-neutral-200/80 dark:border-neutral-700/80 transition-transform group-hover:scale-105"
-                      style={{ color: iconColor }}
-                    >
-                      <IconComp className="w-5 h-5" strokeWidth={2.2} />
-                    </div>
-
-                    {/* Right Hand Side of Icon: Category Name */}
-                    <span className="font-display font-semibold text-sm sm:text-base text-on-surface truncate">
-                      {ctx.title}
-                    </span>
-                  </div>
-
-                  {/* Right Side: Circle with Animated Plus */}
-                  <div
-                    className="w-8 h-8 rounded-full border border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center shrink-0 ms-2 text-black dark:text-white group-hover:bg-black group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-black transition-all"
-                    aria-hidden="true"
-                  >
-                    <Plus
-                      className={`w-4 h-4 transition-transform duration-200 ease-out group-hover:rotate-90 group-active:scale-125 ${
-                        isSelected ? 'rotate-90 scale-125 text-emerald-600 dark:text-emerald-400' : ''
-                      }`}
-                      strokeWidth={2.5}
-                    />
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
       </main>
     </div>
   );
