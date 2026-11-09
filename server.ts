@@ -8,6 +8,7 @@ import { adminRouter } from './server/admin/routes';
 import { adminStore } from './server/admin/store';
 import { validateArticleSeoGate } from './server/admin/seoValidator';
 import { getSupabaseAdmin, getAuthoritativeCms, getAuthoritativeCmsArticleBySlugOrId } from './server/admin/supabaseAdmin';
+import { DEFAULT_REMOTE_CONFIG } from './src/types/remoteConfig';
 
 dotenv.config();
 
@@ -109,6 +110,27 @@ app.all('/api/cron/publish-daily', async (req, res) => {
 
 // Dedicated Staff Admin API routes (Module 1-12)
 app.use('/api/admin', adminRouter);
+
+// Public Remote Configuration API (Fast, cached, with optional per-user overrides)
+app.get(['/api/public/config', '/api/config'], async (req, res) => {
+  try {
+    const userId = (req.query.userId as string) || (req.query.uid as string) || undefined;
+    const data = await adminStore.getPublicMergedConfigAsync(userId);
+
+    // Cache headers: short browser cache, stale-while-revalidate for instantaneous speed
+    res.setHeader('Cache-Control', 'public, max-age=15, stale-while-revalidate=60');
+    return res.status(200).json(data);
+  } catch (err: any) {
+    console.warn('[Public Config API] Error:', err);
+    // Fail-open: return default config
+    return res.status(200).json({
+      config: DEFAULT_REMOTE_CONFIG,
+      userStatus: 'active',
+      isReadOnly: false,
+      targetedMessages: [],
+    });
+  }
+});
 
 // App User Verification Check API (Synchronized with Admin Verified Blue Tick)
 app.get(['/api/users/:id/verification', '/api/user/verification'], async (req, res) => {

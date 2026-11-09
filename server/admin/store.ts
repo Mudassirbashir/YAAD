@@ -39,7 +39,23 @@ import {
   deleteAuthoritativeCatalogProduct,
   deleteSharedAdminUser,
   getAuthoritativeAnalytics,
+  getAuthoritativeRemoteConfig,
+  setAuthoritativeRemoteConfig,
+  getAuthoritativeUserOverrides,
+  getAuthoritativeUserOverride,
+  setAuthoritativeUserOverride,
+  deleteAuthoritativeUserOverride,
+  getAuthoritativeAbuseEvents,
+  recordAuthoritativeAbuseEvent,
+  updateAuthoritativeAbuseEventStatus,
 } from './supabaseAdmin';
+import {
+  RemoteConfigDocument,
+  UserOverrideRecord,
+  AbuseEventRecord,
+  DEFAULT_REMOTE_CONFIG,
+  mergeRemoteConfig,
+} from '../../src/types/remoteConfig';
 import { validateArticleSeoGate } from './seoValidator';
 // @ts-ignore
 import { buildSitemapXml } from '../../scripts/generate-sitemap.mjs';
@@ -497,6 +513,9 @@ export interface AdminDatabase {
   cannedReplies?: CannedReply[];
   accessRequests?: AdminAccessRequest[];
   dismissedNotificationIds?: string[];
+  remoteConfig?: RemoteConfigDocument;
+  userOverrides?: UserOverrideRecord[];
+  abuseEvents?: AbuseEventRecord[];
 }
 
 const isServerless = Boolean(
@@ -4503,6 +4522,188 @@ class AdminStore {
       return true;
     }
     return false;
+  }
+
+  // =========================================================================
+  // MODULE 13: REMOTE CONTROL SYSTEM & USER OVERRIDES
+  // =========================================================================
+
+  public async getRemoteConfigAsync(): Promise<RemoteConfigDocument> {
+    try {
+      const fromDb = await getAuthoritativeRemoteConfig();
+      if (fromDb && typeof fromDb === 'object') {
+        const merged: RemoteConfigDocument = {
+          ...DEFAULT_REMOTE_CONFIG,
+          ...fromDb,
+          header: { ...DEFAULT_REMOTE_CONFIG.header, ...(fromDb.header || {}) },
+          home: { ...DEFAULT_REMOTE_CONFIG.home, ...(fromDb.home || {}) },
+          bottomNav: { ...DEFAULT_REMOTE_CONFIG.bottomNav, ...(fromDb.bottomNav || {}) },
+          screens: { ...DEFAULT_REMOTE_CONFIG.screens, ...(fromDb.screens || {}) },
+          settings: { ...DEFAULT_REMOTE_CONFIG.settings, ...(fromDb.settings || {}) },
+          features: { ...DEFAULT_REMOTE_CONFIG.features, ...(fromDb.features || {}) },
+          essentials: { ...DEFAULT_REMOTE_CONFIG.essentials, ...(fromDb.essentials || {}) },
+          system: { ...DEFAULT_REMOTE_CONFIG.system, ...(fromDb.system || {}) },
+          abuse: { ...DEFAULT_REMOTE_CONFIG.abuse, ...(fromDb.abuse || {}) },
+        };
+        this.db.remoteConfig = merged;
+        return merged;
+      }
+    } catch {}
+
+    if (!this.db.remoteConfig) {
+      this.db.remoteConfig = JSON.parse(JSON.stringify(DEFAULT_REMOTE_CONFIG));
+    }
+    return this.db.remoteConfig;
+  }
+
+  public async updateRemoteConfigAsync(
+    patch: Partial<RemoteConfigDocument>,
+    adminEmail?: string
+  ): Promise<RemoteConfigDocument> {
+    const current = await this.getRemoteConfigAsync();
+    const updated: RemoteConfigDocument = {
+      ...current,
+      ...patch,
+      header: { ...current.header, ...(patch.header || {}) },
+      home: { ...current.home, ...(patch.home || {}) },
+      bottomNav: { ...current.bottomNav, ...(patch.bottomNav || {}) },
+      screens: { ...current.screens, ...(patch.screens || {}) },
+      settings: { ...current.settings, ...(patch.settings || {}) },
+      features: { ...current.features, ...(patch.features || {}) },
+      essentials: { ...current.essentials, ...(patch.essentials || {}) },
+      system: { ...current.system, ...(patch.system || {}) },
+      abuse: { ...current.abuse, ...(patch.abuse || {}) },
+      version: (current.version || 1) + 1,
+      updatedAt: Date.now(),
+      updatedBy: adminEmail || 'admin',
+    };
+
+    this.db.remoteConfig = updated;
+    this.save();
+
+    await setAuthoritativeRemoteConfig(updated, adminEmail);
+    return updated;
+  }
+
+  public async getUserOverridesAsync(): Promise<UserOverrideRecord[]> {
+    try {
+      const list = await getAuthoritativeUserOverrides();
+      if (Array.isArray(list) && list.length > 0) {
+        this.db.userOverrides = list;
+        return list;
+      }
+    } catch {}
+    return this.db.userOverrides || [];
+  }
+
+  public async getUserOverrideAsync(userId: string): Promise<UserOverrideRecord | null> {
+    if (!userId) return null;
+    try {
+      const item = await getAuthoritativeUserOverride(userId);
+      if (item) return item;
+    } catch {}
+    return this.db.userOverrides?.find((o) => o.userId === userId) || null;
+  }
+
+  public async setUserOverrideAsync(
+    userId: string,
+    data: Partial<UserOverrideRecord>,
+    adminEmail?: string
+  ): Promise<UserOverrideRecord> {
+    if (!this.db.userOverrides) this.db.userOverrides = [];
+    const existingIndex = this.db.userOverrides.findIndex((o) => o.userId === userId);
+    const existing = existingIndex >= 0 ? this.db.userOverrides[existingIndex] : null;
+
+    const record: UserOverrideRecord = {
+      userId,
+      status: data.status || existing?.status || 'active',
+      isReadOnly: typeof data.isReadOnly === 'boolean' ? data.isReadOnly : existing?.isReadOnly || false,
+      notes: typeof data.notes === 'string' ? data.notes : existing?.notes || '',
+      targetedMessages: Array.isArray(data.targetedMessages)
+        ? data.targetedMessages
+        : existing?.targetedMessages || [],
+      overrides: data.overrides !== undefined ? data.overrides : existing?.overrides || {},
+      updatedAt: Date.now(),
+      updatedBy: adminEmail || 'admin',
+    };
+
+    if (existingIndex >= 0) {
+      this.db.userOverrides[existingIndex] = record;
+    } else {
+      this.db.userOverrides.push(record);
+    }
+    this.save();
+
+    await setAuthoritativeUserOverride(userId, record, adminEmail);
+    return record;
+  }
+
+  public async deleteUserOverrideAsync(userId: string, adminEmail?: string): Promise<boolean> {
+    if (this.db.userOverrides) {
+      this.db.userOverrides = this.db.userOverrides.filter((o) => o.userId !== userId);
+      this.save();
+    }
+    await deleteAuthoritativeUserOverride(userId);
+    return true;
+  }
+
+  public async getPublicMergedConfigAsync(userId?: string): Promise<{
+    config: RemoteConfigDocument;
+    userStatus: 'active' | 'suspended' | 'blocked';
+    isReadOnly: boolean;
+    targetedMessages: any[];
+  }> {
+    const globalConfig = await this.getRemoteConfigAsync();
+    let override: UserOverrideRecord | null = null;
+    if (userId) {
+      override = await this.getUserOverrideAsync(userId);
+    }
+    return mergeRemoteConfig(globalConfig, override);
+  }
+
+  // Abuse Detection & Review Queue
+  public async getAbuseEventsAsync(): Promise<AbuseEventRecord[]> {
+    try {
+      const events = await getAuthoritativeAbuseEvents();
+      if (Array.isArray(events) && events.length > 0) {
+        this.db.abuseEvents = events;
+        return events;
+      }
+    } catch {}
+    return this.db.abuseEvents || [];
+  }
+
+  public async recordAbuseEventAsync(event: Omit<AbuseEventRecord, 'id' | 'createdAt'>): Promise<AbuseEventRecord> {
+    if (!this.db.abuseEvents) this.db.abuseEvents = [];
+    const newRecord: AbuseEventRecord = {
+      ...event,
+      id: 'ab_' + crypto.randomUUID(),
+      createdAt: Date.now(),
+    };
+    this.db.abuseEvents.unshift(newRecord);
+    if (this.db.abuseEvents.length > 200) this.db.abuseEvents.length = 200;
+    this.save();
+
+    await recordAuthoritativeAbuseEvent(newRecord);
+    return newRecord;
+  }
+
+  public async updateAbuseEventStatusAsync(
+    id: string,
+    status: 'warned' | 'suspended' | 'dismissed' | 'resolved',
+    adminEmail?: string
+  ): Promise<boolean> {
+    if (this.db.abuseEvents) {
+      const ev = this.db.abuseEvents.find((e) => e.id === id);
+      if (ev) {
+        ev.status = status;
+        ev.resolvedAt = Date.now();
+        ev.resolvedBy = adminEmail;
+        this.save();
+      }
+    }
+    await updateAuthoritativeAbuseEventStatus(id, status, adminEmail);
+    return true;
   }
 }
 

@@ -6,6 +6,7 @@ import { Avatar } from './Avatar';
 import { VerifiedBadge } from './VerifiedBadge';
 import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
+import { useRemoteConfig } from '../hooks/useRemoteConfig';
 import { RecommendationCandidate } from '../lib/recommendations';
 import { GroceryBasketIllustration } from './GroceryBasketIllustration';
 import { EssentialDisplayItem } from '../lib/recommendations/popularEssentials';
@@ -66,6 +67,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
 }) => {
   const { t, language } = useLanguage();
   const { user, profile } = useAuth();
+  const { config: remoteConfig } = useRemoteConfig();
 
   // Modals visibility states
   const [isStatsModalOpen, setIsStatsModalOpen] = useState(false);
@@ -228,43 +230,45 @@ export const HomeView: React.FC<HomeViewProps> = ({
       {/* Main Content Feed */}
       <main className="flex-1 px-3.5 sm:px-6 lg:px-8 pt-2 sm:pt-4 flex flex-col gap-3.5 sm:gap-5">
         {/* 2. PERSONALIZED GREETING & AVATAR */}
-        <section
-          id="home_greeting_section"
-          className="flex items-center justify-between gap-3 select-none"
-        >
-          <div className="flex flex-col min-w-0">
-            {/* Top: Time greeting slightly increased */}
-            <span className="font-body text-[0.84375rem] sm:text-[0.9375rem] font-semibold text-outline leading-tight">
-              {greetingData.timeGreeting}
-            </span>
-            {/* Middle: User's name prominently enlarged with Verified Badge if granted */}
-            <h1 className="font-display text-display font-black text-on-surface tracking-tight leading-tight truncate mt-0.5 flex items-center gap-2">
-              <span className="truncate">{greetingData.userName}</span>
-              {(profile?.is_verified || (user?.user_metadata as any)?.is_verified || (user?.id && typeof window !== 'undefined' && localStorage.getItem('yaad_verified_' + user.id) === 'true')) && (
-                <span className="inline-flex shrink-0 items-center self-center align-middle">
-                  <VerifiedBadge size="sm" />
-                </span>
-              )}
-            </h1>
-            {/* Bottom: Let's make a list in solid proper black */}
-            <p className="font-body text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100 mt-0.5">
-              {t('home.letsMakeAList') || "Let's make a list"}
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={onOpenProfile}
-            aria-label="Open Profile & Settings"
-            className="w-11 h-11 rounded-full ring-2 ring-surface-dim hover:ring-primary/40 active:scale-95 transition-all shrink-0 cursor-pointer overflow-hidden flex items-center justify-center bg-surface-container shadow-2xs"
+        {remoteConfig.home?.showGreeting !== false && (
+          <section
+            id="home_greeting_section"
+            className="flex items-center justify-between gap-3 select-none"
           >
-            <Avatar
-              name={profile?.full_name || user?.email || 'User'}
-              avatarUrl={profile?.avatar_url}
-              size="md"
-            />
-          </button>
-        </section>
+            <div className="flex flex-col min-w-0">
+              {/* Top: Time greeting slightly increased */}
+              <span className="font-body text-[0.84375rem] sm:text-[0.9375rem] font-semibold text-outline leading-tight">
+                {greetingData.timeGreeting}
+              </span>
+              {/* Middle: User's name prominently enlarged with Verified Badge if granted */}
+              <h1 className="font-display text-display font-black text-on-surface tracking-tight leading-tight truncate mt-0.5 flex items-center gap-2">
+                <span className="truncate">{greetingData.userName}</span>
+                {(profile?.is_verified || (user?.user_metadata as any)?.is_verified || (user?.id && typeof window !== 'undefined' && localStorage.getItem('yaad_verified_' + user.id) === 'true')) && (
+                  <span className="inline-flex shrink-0 items-center self-center align-middle">
+                    <VerifiedBadge size="sm" />
+                  </span>
+                )}
+              </h1>
+              {/* Bottom: Let's make a list in solid proper black */}
+              <p className="font-body text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100 mt-0.5">
+                {t('home.letsMakeAList') || "Let's make a list"}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={onOpenProfile}
+              aria-label="Open Profile & Settings"
+              className="w-11 h-11 rounded-full ring-2 ring-surface-dim hover:ring-primary/40 active:scale-95 transition-all shrink-0 cursor-pointer overflow-hidden flex items-center justify-center bg-surface-container shadow-2xs"
+            >
+              <Avatar
+                name={profile?.full_name || user?.email || 'User'}
+                avatarUrl={profile?.avatar_url}
+                size="md"
+              />
+            </button>
+          </section>
+        )}
 
         {/* 3. NON-BLOCKING PHONE NUMBER NOTIFICATION (At top of Home if missing) */}
         <PhoneNumberNotification
@@ -274,44 +278,46 @@ export const HomeView: React.FC<HomeViewProps> = ({
         />
 
         {/* 4. PRIMARY ACTION: CREATE NEW LIST CARD */}
-        <section aria-label={t('home.createListTitle') || 'Create New List'}>
-          <div
-            id="home_create_list_btn"
-            role="button"
-            tabIndex={0}
-            onClick={onCreateList}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                onCreateList();
-              }
-            }}
-            className="w-full min-h-[76px] sm:min-h-[96px] rounded-2xl sm:rounded-3xl bg-gradient-to-br from-primary via-primary to-primary-container p-4 sm:p-5 text-on-primary flex items-center justify-between gap-3 shadow-[0_4px_20px_rgba(15,61,46,0.18)] hover:shadow-[0_6px_24px_rgba(15,61,46,0.25)] cursor-pointer relative overflow-hidden transition-all duration-200 active:scale-[0.99] select-none group border border-white/10"
-          >
-            {/* Background subtle radial glow */}
-            <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-2xl pointer-events-none" />
+        {remoteConfig.home?.showHeroCard !== false && remoteConfig.home?.showCreateListButton !== false && (
+          <section aria-label={t('home.createListTitle') || 'Create New List'}>
+            <div
+              id="home_create_list_btn"
+              role="button"
+              tabIndex={0}
+              onClick={onCreateList}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onCreateList();
+                }
+              }}
+              className="w-full min-h-[76px] sm:min-h-[96px] rounded-2xl sm:rounded-3xl bg-gradient-to-br from-primary via-primary to-primary-container p-4 sm:p-5 text-on-primary flex items-center justify-between gap-3 shadow-[0_4px_20px_rgba(15,61,46,0.18)] hover:shadow-[0_6px_24px_rgba(15,61,46,0.25)] cursor-pointer relative overflow-hidden transition-all duration-200 active:scale-[0.99] select-none group border border-white/10"
+            >
+              {/* Background subtle radial glow */}
+              <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-2xl pointer-events-none" />
 
-            {/* Left side: Plus icon + Enlarged Create List Title */}
-            <div className="flex items-center gap-3 sm:gap-4 min-w-0 z-10">
-              <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-white/15 flex items-center justify-center shrink-0 border border-white/20 shadow-2xs group-hover:bg-white/25 transition-all">
-                <Plus className="w-6 h-6 sm:w-7 sm:h-7 text-white stroke-[2.4] transition-transform duration-300 group-hover:rotate-90" />
+              {/* Left side: Plus icon + Enlarged Create List Title */}
+              <div className="flex items-center gap-3 sm:gap-4 min-w-0 z-10">
+                <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-white/15 flex items-center justify-center shrink-0 border border-white/20 shadow-2xs group-hover:bg-white/25 transition-all">
+                  <Plus className="w-6 h-6 sm:w-7 sm:h-7 text-white stroke-[2.4] transition-transform duration-300 group-hover:rotate-90" />
+                </div>
+                <h2 className="font-display text-headline font-black tracking-tight text-white leading-tight">
+                  {t('home.createListTitle')}
+                </h2>
               </div>
-              <h2 className="font-display text-headline font-black tracking-tight text-white leading-tight">
-                {t('home.createListTitle')}
-              </h2>
-            </div>
 
-            {/* Right side: Grocery Basket Visual & Circular Arrow */}
-            <div className="flex items-center gap-2 sm:gap-3 shrink-0 z-10">
-              <div className="hidden xs:block relative transform group-hover:scale-105 transition-all duration-300">
-                <GroceryBasketIllustration size={68} />
-              </div>
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/15 flex items-center justify-center text-white shrink-0 group-hover:bg-white/25 group-hover:scale-105 transition-all rtl:rotate-180 border border-white/20 shadow-2xs">
-                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2]" />
+              {/* Right side: Grocery Basket Visual & Circular Arrow */}
+              <div className="flex items-center gap-2 sm:gap-3 shrink-0 z-10">
+                <div className="hidden xs:block relative transform group-hover:scale-105 transition-all duration-300">
+                  <GroceryBasketIllustration size={68} />
+                </div>
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/15 flex items-center justify-center text-white shrink-0 group-hover:bg-white/25 group-hover:scale-105 transition-all rtl:rotate-180 border border-white/20 shadow-2xs">
+                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2]" />
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* 6. QUICK ACTIONS SHORTCUTS GRID */}
         <QuickActionsGrid
@@ -329,28 +335,32 @@ export const HomeView: React.FC<HomeViewProps> = ({
         />
 
         {/* 7. FREQUENT ESSENTIALS SECTION (Quick-add with real user behavior / curated staples) */}
-        <FrequentEssentialsSection
-          lists={lists}
-          mostRecentActiveList={mostRecentActiveList}
-          onAddItem={handleAddEssentialItem}
-          onViewAll={() => setIsViewAllEssentialsOpen(true)}
-        />
+        {remoteConfig.home?.showFrequentEssentials !== false && (
+          <FrequentEssentialsSection
+            lists={lists}
+            mostRecentActiveList={mostRecentActiveList}
+            onAddItem={handleAddEssentialItem}
+            onViewAll={() => setIsViewAllEssentialsOpen(true)}
+          />
+        )}
 
         {/* 8. SHOPPING LISTS SECTION (Responsive skeletons, friendly empty state, populated lists) */}
-        <HomeListsSection
-          lists={lists}
-          isLoading={isLoading}
-          error={error}
-          onRetry={onRetry}
-          onCreateList={onCreateList}
-          onSelectList={(selected) => onSelectList(selected)}
-          onContinueShopping={onContinueShopping}
-          onMarkComplete={onMarkComplete}
-          onReuseList={onReuseList}
-          onOpenHistory={onOpenHistory}
-          onDeleteList={onDeleteList}
-          onShareList={(listToShare) => setSharingList(listToShare)}
-        />
+        {remoteConfig.home?.showYourLists !== false && (
+          <HomeListsSection
+            lists={lists}
+            isLoading={isLoading}
+            error={error}
+            onRetry={onRetry}
+            onCreateList={onCreateList}
+            onSelectList={(selected) => onSelectList(selected)}
+            onContinueShopping={onContinueShopping}
+            onMarkComplete={onMarkComplete}
+            onReuseList={onReuseList}
+            onOpenHistory={onOpenHistory}
+            onDeleteList={onDeleteList}
+            onShareList={(listToShare) => setSharingList(listToShare)}
+          />
+        )}
       </main>
 
       {/* MODALS */}

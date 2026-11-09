@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Settings } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
 import { NavigationTab } from '../types';
 import { useLanguage } from '../context/LanguageContext';
+import { useRemoteConfig } from '../hooks/useRemoteConfig';
 import { triggerHaptic } from '../lib/sound';
 import { AnimatedHomeIcon } from './common/AnimatedHomeIcon';
 import { AnimatedHistoryIcon } from './common/AnimatedHistoryIcon';
@@ -117,9 +118,21 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
     onTabChange('lists');
   };
 
+  const { config: remoteConfig } = useRemoteConfig();
+  const showHome = remoteConfig.bottomNav?.showHomeTab !== false;
+  const showCreate = remoteConfig.bottomNav?.showCreateTab !== false;
+  const showHistory = remoteConfig.bottomNav?.showHistoryTab !== false;
+  const showSettings = remoteConfig.bottomNav?.showSettingsTab === true;
+
   const isHomeActive = activeTab === 'home';
   const isCreateActive = activeTab === 'create';
   const isListsActive = activeTab === 'lists';
+  const isSettingsActive = activeTab === 'settings';
+
+  const handleSettingsClick = () => {
+    triggerHaptic(10);
+    onTabChange('settings');
+  };
 
   return (
     <div
@@ -138,115 +151,155 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
           className="flex items-center justify-between sm:justify-around gap-2 w-full relative"
         >
           {/* 1. Left: Home Tab */}
-          <button
-            ref={homeBtnRef}
-            id="nav_tab_home"
-            role="tab"
-            type="button"
-            tabIndex={isHomeActive ? 0 : -1}
-            onClick={handleHomeClick}
-            onMouseEnter={() => setHomeAnimationTrigger((c) => c + 1)}
-            onKeyDown={(e) => handleTabKeyDown(e, 'home')}
-            aria-selected={isHomeActive}
-            aria-label={t('nav.home') || 'Home'}
-            className={`relative flex-1 sm:flex-initial min-w-[76px] sm:min-w-[88px] flex flex-col items-center justify-center gap-1 py-1 px-2 rounded-2xl text-center transition-[transform,background-color,box-shadow] duration-150 ease-out active:duration-75 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-pointer min-h-[50px] ${
-              isHomeActive
-                ? 'text-primary font-bold'
-                : 'text-on-surface-variant/80 hover:text-on-surface font-medium hover:bg-surface-container'
-            }`}
-          >
-            {isHomeActive && (
-              <motion.div
-                layoutId="nav-active-indicator"
-                className="absolute inset-0 bg-primary/12 dark:bg-primary/25 border border-primary/20 dark:border-primary/30 rounded-2xl -z-10 shadow-[0_2px_12px_rgba(15,61,46,0.08)]"
-                transition={
-                  prefersReducedMotion
-                    ? { duration: 0 }
-                    : { type: 'spring', stiffness: 360, damping: 30, mass: 0.75 }
-                }
-              />
-            )}
-            <AnimatedHomeIcon
-              isActive={isHomeActive}
-              playTrigger={homeAnimationTrigger}
-              size={22}
-              className="transition-transform duration-150"
-            />
-            <span className="text-[0.6875rem] sm:text-xs font-body font-bold whitespace-nowrap leading-none">
-              {t('nav.home') || 'Home'}
-            </span>
-          </button>
-
-          {/* 2. Center: Prominent Elevated Floating Create Button */}
-          <div className="relative -top-4 sm:-top-5 flex flex-col items-center shrink-0 z-20">
-            <motion.button
-              ref={createBtnRef}
-              id="nav_tab_create"
+          {showHome && (
+            <button
+              ref={homeBtnRef}
+              id="nav_tab_home"
               role="tab"
               type="button"
-              tabIndex={isCreateActive ? 0 : -1}
-              onClick={handleCreateClick}
-              onKeyDown={(e) => handleTabKeyDown(e, 'create')}
-              aria-selected={isCreateActive}
-              aria-label={t('nav.create') || 'Create New List'}
-              whileHover={{ scale: 1.06 }}
-              whileTap={{ scale: 0.92 }}
-              transition={{ type: 'spring', stiffness: 420, damping: 24 }}
-              className="relative w-14 h-14 sm:w-15 sm:h-15 rounded-full bg-gradient-to-tr from-primary to-primary-container text-on-primary flex items-center justify-center shadow-[0_6px_22px_rgba(15,61,46,0.38)] hover:shadow-[0_8px_28px_rgba(15,61,46,0.48)] ring-4 ring-background dark:ring-stone-900 cursor-pointer group"
+              tabIndex={isHomeActive ? 0 : -1}
+              onClick={handleHomeClick}
+              onMouseEnter={() => setHomeAnimationTrigger((c) => c + 1)}
+              onKeyDown={(e) => handleTabKeyDown(e, 'home')}
+              aria-selected={isHomeActive}
+              aria-label={t('nav.home') || 'Home'}
+              className={`relative flex-1 sm:flex-initial min-w-[76px] sm:min-w-[88px] flex flex-col items-center justify-center gap-1 py-1 px-2 rounded-2xl text-center transition-[transform,background-color,box-shadow] duration-150 ease-out active:duration-75 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-pointer min-h-[50px] ${
+                isHomeActive
+                  ? 'text-primary font-bold'
+                  : 'text-on-surface-variant/80 hover:text-on-surface font-medium hover:bg-surface-container'
+              }`}
             >
-              {/* Eye-catching subtle ambient breathing halo behind button */}
-              <div className="absolute -inset-1 rounded-full bg-emerald-500/30 dark:bg-emerald-400/25 blur-md -z-10 opacity-70 group-hover:opacity-100 transition-opacity" />
-              <motion.div
-                whileHover={{ rotate: 90 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+              {isHomeActive && (
+                <motion.div
+                  layoutId="nav-active-indicator"
+                  className="absolute inset-0 bg-primary/12 dark:bg-primary/25 border border-primary/20 dark:border-primary/30 rounded-2xl -z-10 shadow-[0_2px_12px_rgba(15,61,46,0.08)]"
+                  transition={
+                    prefersReducedMotion
+                      ? { duration: 0 }
+                      : { type: 'spring', stiffness: 360, damping: 30, mass: 0.75 }
+                  }
+                />
+              )}
+              <AnimatedHomeIcon
+                isActive={isHomeActive}
+                playTrigger={homeAnimationTrigger}
+                size={22}
+                className="transition-transform duration-150"
+              />
+              <span className="text-[0.6875rem] sm:text-xs font-body font-bold whitespace-nowrap leading-none">
+                {t('nav.home') || 'Home'}
+              </span>
+            </button>
+          )}
+
+          {/* 2. Center: Prominent Elevated Floating Create Button */}
+          {showCreate && (
+            <div className="relative -top-4 sm:-top-5 flex flex-col items-center shrink-0 z-20">
+              <motion.button
+                ref={createBtnRef}
+                id="nav_tab_create"
+                role="tab"
+                type="button"
+                tabIndex={isCreateActive ? 0 : -1}
+                onClick={handleCreateClick}
+                onKeyDown={(e) => handleTabKeyDown(e, 'create')}
+                aria-selected={isCreateActive}
+                aria-label={t('nav.create') || 'Create New List'}
+                whileHover={{ scale: 1.06 }}
+                whileTap={{ scale: 0.92 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 24 }}
+                className="relative w-14 h-14 sm:w-15 sm:h-15 rounded-full bg-gradient-to-tr from-primary to-primary-container text-on-primary flex items-center justify-center shadow-[0_6px_22px_rgba(15,61,46,0.38)] hover:shadow-[0_8px_28px_rgba(15,61,46,0.48)] ring-4 ring-background dark:ring-stone-900 cursor-pointer group"
               >
-                <Plus className="w-7 h-7 sm:w-8 sm:h-8 stroke-[2.6]" />
-              </motion.div>
-            </motion.button>
-            <span className="text-[0.625rem] sm:text-[0.6875rem] font-body font-bold text-on-surface mt-1">
-              {t('nav.create') || 'Create'}
-            </span>
-          </div>
+                {/* Eye-catching subtle ambient breathing halo behind button */}
+                <div className="absolute -inset-1 rounded-full bg-emerald-500/30 dark:bg-emerald-400/25 blur-md -z-10 opacity-70 group-hover:opacity-100 transition-opacity" />
+                <motion.div
+                  whileHover={{ rotate: 90 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+                >
+                  <Plus className="w-7 h-7 sm:w-8 sm:h-8 stroke-[2.6]" />
+                </motion.div>
+              </motion.button>
+              <span className="text-[0.625rem] sm:text-[0.6875rem] font-body font-bold text-on-surface mt-1">
+                {t('nav.create') || 'Create'}
+              </span>
+            </div>
+          )}
 
           {/* 3. Right: Lists / History Tab */}
-          <button
-            ref={listsBtnRef}
-            id="nav_tab_lists"
-            role="tab"
-            type="button"
-            tabIndex={isListsActive ? 0 : -1}
-            onClick={handleListsClick}
-            onMouseEnter={() => setHistoryAnimationTrigger((c) => c + 1)}
-            onKeyDown={(e) => handleTabKeyDown(e, 'lists')}
-            aria-selected={isListsActive}
-            aria-label={t('nav.history') || t('history.title') || 'History'}
-            className={`relative flex-1 sm:flex-initial min-w-[76px] sm:min-w-[88px] flex flex-col items-center justify-center gap-1 py-1 px-2 rounded-2xl text-center transition-[transform,background-color,box-shadow] duration-150 ease-out active:duration-75 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-pointer min-h-[50px] ${
-              isListsActive
-                ? 'text-primary font-bold'
-                : 'text-on-surface-variant/80 hover:text-on-surface font-medium hover:bg-surface-container'
-            }`}
-          >
-            {isListsActive && (
-              <motion.div
-                layoutId="nav-active-indicator"
-                className="absolute inset-0 bg-primary/12 dark:bg-primary/25 border border-primary/20 dark:border-primary/30 rounded-2xl -z-10 shadow-[0_2px_12px_rgba(15,61,46,0.08)]"
-                transition={
-                  prefersReducedMotion
-                    ? { duration: 0 }
-                    : { type: 'spring', stiffness: 360, damping: 30, mass: 0.75 }
-                }
+          {showHistory && (
+            <button
+              ref={listsBtnRef}
+              id="nav_tab_lists"
+              role="tab"
+              type="button"
+              tabIndex={isListsActive ? 0 : -1}
+              onClick={handleListsClick}
+              onMouseEnter={() => setHistoryAnimationTrigger((c) => c + 1)}
+              onKeyDown={(e) => handleTabKeyDown(e, 'lists')}
+              aria-selected={isListsActive}
+              aria-label={t('nav.history') || t('history.title') || 'History'}
+              className={`relative flex-1 sm:flex-initial min-w-[76px] sm:min-w-[88px] flex flex-col items-center justify-center gap-1 py-1 px-2 rounded-2xl text-center transition-[transform,background-color,box-shadow] duration-150 ease-out active:duration-75 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-pointer min-h-[50px] ${
+                isListsActive
+                  ? 'text-primary font-bold'
+                  : 'text-on-surface-variant/80 hover:text-on-surface font-medium hover:bg-surface-container'
+              }`}
+            >
+              {isListsActive && (
+                <motion.div
+                  layoutId="nav-active-indicator"
+                  className="absolute inset-0 bg-primary/12 dark:bg-primary/25 border border-primary/20 dark:border-primary/30 rounded-2xl -z-10 shadow-[0_2px_12px_rgba(15,61,46,0.08)]"
+                  transition={
+                    prefersReducedMotion
+                      ? { duration: 0 }
+                      : { type: 'spring', stiffness: 360, damping: 30, mass: 0.75 }
+                  }
+                />
+              )}
+              <AnimatedHistoryIcon
+                isActive={isListsActive}
+                playTrigger={historyAnimationTrigger}
+                size={22}
+                className="transition-transform duration-150"
               />
-            )}
-            <AnimatedHistoryIcon
-              isActive={isListsActive}
-              playTrigger={historyAnimationTrigger}
-              size={22}
-              className="transition-transform duration-150"
-            />
-            <span className="text-[0.6875rem] sm:text-xs font-body font-bold whitespace-nowrap leading-none">
-              {t('nav.history') || t('history.title') || 'History'}
-            </span>
-          </button>
+              <span className="text-[0.6875rem] sm:text-xs font-body font-bold whitespace-nowrap leading-none">
+                {t('nav.history') || t('history.title') || 'History'}
+              </span>
+            </button>
+          )}
+
+          {/* 4. Optional Settings Tab if enabled in remoteConfig */}
+          {showSettings && (
+            <button
+              id="nav_tab_settings"
+              role="tab"
+              type="button"
+              tabIndex={isSettingsActive ? 0 : -1}
+              onClick={handleSettingsClick}
+              aria-selected={isSettingsActive}
+              aria-label={t('settings.title') || 'Settings'}
+              className={`relative flex-1 sm:flex-initial min-w-[76px] sm:min-w-[88px] flex flex-col items-center justify-center gap-1 py-1 px-2 rounded-2xl text-center transition-[transform,background-color,box-shadow] duration-150 ease-out active:duration-75 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-pointer min-h-[50px] ${
+                isSettingsActive
+                  ? 'text-primary font-bold'
+                  : 'text-on-surface-variant/80 hover:text-on-surface font-medium hover:bg-surface-container'
+              }`}
+            >
+              {isSettingsActive && (
+                <motion.div
+                  layoutId="nav-active-indicator"
+                  className="absolute inset-0 bg-primary/12 dark:bg-primary/25 border border-primary/20 dark:border-primary/30 rounded-2xl -z-10 shadow-[0_2px_12px_rgba(15,61,46,0.08)]"
+                  transition={
+                    prefersReducedMotion
+                      ? { duration: 0 }
+                      : { type: 'spring', stiffness: 360, damping: 30, mass: 0.75 }
+                  }
+                />
+              )}
+              <Settings className="w-5 h-5 transition-transform duration-150" />
+              <span className="text-[0.6875rem] sm:text-xs font-body font-bold whitespace-nowrap leading-none">
+                {t('settings.title') || 'Settings'}
+              </span>
+            </button>
+          )}
         </div>
       </nav>
     </div>

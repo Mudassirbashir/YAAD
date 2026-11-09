@@ -13,6 +13,11 @@ import {
   Phone,
   Mail,
   Shield,
+  LogOut,
+  Eye,
+  MessageSquare,
+  FileText,
+  Lock,
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { useAdminToast } from '../components/AdminToasts';
@@ -57,6 +62,19 @@ export const AdminUserDirectoryPage: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<AuthoritativeUser | null>(null);
   const [suspendReason, setSuspendReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Message modal state
+  const [messagingUser, setMessagingUser] = useState<AuthoritativeUser | null>(null);
+  const [msgTitle, setMsgTitle] = useState('');
+  const [msgBody, setMsgBody] = useState('');
+  const [msgBlocking, setMsgBlocking] = useState(false);
+
+  // Private Admin Notes modal state
+  const [notesUser, setNotesUser] = useState<AuthoritativeUser | null>(null);
+  const [userNotes, setUserNotes] = useState('');
+
+  // Read-only user tracking
+  const [readOnlyUsers, setReadOnlyUsers] = useState<Record<string, boolean>>({});
 
   const fetchUsers = useCallback(async (force = false) => {
     if (!token) return;
@@ -197,6 +215,80 @@ export const AdminUserDirectoryPage: React.FC = () => {
       });
     } finally {
       setVerifyLoadingId(null);
+    }
+  };
+
+  const handleForceSignout = async (userId: string, userName: string) => {
+    if (!token || !window.confirm(`Force sign-out ${userName}? All active mobile and web sessions will be invalidated.`)) return;
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/force-signout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to force sign-out user');
+      showToast({ type: 'success', title: 'Sessions Invalidated', message: `Forced sign-out for ${userName}.` });
+    } catch (e: any) {
+      showToast({ type: 'error', title: 'Error', message: e.message });
+    }
+  };
+
+  const handleToggleReadOnly = async (userId: string, current: boolean) => {
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/read-only`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ isReadOnly: !current }),
+      });
+      if (!res.ok) throw new Error('Failed to update read-only state');
+      setReadOnlyUsers((prev) => ({ ...prev, [userId]: !current }));
+      showToast({
+        type: 'success',
+        title: !current ? 'Read-Only Mode Enabled' : 'Read-Only Mode Removed',
+        message: !current ? 'User can only view lists, cannot add or check items.' : 'Full edit access restored.',
+      });
+    } catch (e: any) {
+      showToast({ type: 'error', title: 'Error', message: e.message });
+    }
+  };
+
+  const handleSendMessageSubmit = async () => {
+    if (!messagingUser || !msgTitle.trim() || !msgBody.trim()) return;
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`/api/admin/users/${messagingUser.id}/message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ title: msgTitle.trim(), message: msgBody.trim(), blocking: msgBlocking }),
+      });
+      if (!res.ok) throw new Error('Failed to send in-app message');
+      showToast({ type: 'success', title: 'Message Sent', message: `Targeted message queued for ${messagingUser.name}.` });
+      setMessagingUser(null);
+      setMsgTitle('');
+      setMsgBody('');
+      setMsgBlocking(false);
+    } catch (e: any) {
+      showToast({ type: 'error', title: 'Error', message: e.message });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSaveNotesSubmit = async () => {
+    if (!notesUser) return;
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`/api/admin/users/${notesUser.id}/notes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ notes: userNotes }),
+      });
+      if (!res.ok) throw new Error('Failed to save private admin notes');
+      showToast({ type: 'success', title: 'Notes Saved', message: 'Private admin notes updated in audit trail.' });
+      setNotesUser(null);
+    } catch (e: any) {
+      showToast({ type: 'error', title: 'Error', message: e.message });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -404,12 +496,12 @@ export const AdminUserDirectoryPage: React.FC = () => {
 
                       {isSuperAdmin && (
                         <td className="py-3.5 px-4 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
+                          <div className="flex items-center justify-end gap-1.5 flex-wrap">
                             <button
                               type="button"
                               disabled={verifyLoadingId === u.id}
                               onClick={() => toggleVerifyUser(u.id, !u.isVerified)}
-                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl font-bold text-[11px] transition-all cursor-pointer border ${
+                              className={`inline-flex items-center gap-1 px-2 py-1 rounded-xl font-bold text-[11px] transition-all cursor-pointer border ${
                                 u.isVerified
                                   ? 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100'
                                   : 'border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-100'
@@ -420,6 +512,62 @@ export const AdminUserDirectoryPage: React.FC = () => {
                               <span>{u.isVerified ? 'Verified' : 'Verify'}</span>
                             </button>
 
+                            {/* Targeted Message Button */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setMessagingUser(u);
+                                setMsgTitle('');
+                                setMsgBody('');
+                                setMsgBlocking(false);
+                              }}
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-xl bg-neutral-100 hover:bg-sky-50 hover:text-sky-700 text-neutral-600 font-bold text-[11px] transition-colors cursor-pointer"
+                              title="Send In-App Message to this User"
+                            >
+                              <MessageSquare className="w-3 h-3 text-sky-600" />
+                              <span>Message</span>
+                            </button>
+
+                            {/* Read-Only Mode Toggle */}
+                            <button
+                              type="button"
+                              onClick={() => handleToggleReadOnly(u.id, !!readOnlyUsers[u.id])}
+                              className={`inline-flex items-center gap-1 px-2 py-1 rounded-xl font-bold text-[11px] transition-colors cursor-pointer border ${
+                                readOnlyUsers[u.id]
+                                  ? 'bg-amber-100 border-amber-300 text-amber-800'
+                                  : 'bg-neutral-100 border-transparent hover:bg-amber-50 hover:text-amber-800 text-neutral-600'
+                              }`}
+                              title={readOnlyUsers[u.id] ? 'Disable Read-Only Mode' : 'Enable Read-Only Mode'}
+                            >
+                              <Lock className="w-3 h-3 text-amber-600" />
+                              <span>{readOnlyUsers[u.id] ? 'Read-Only' : 'Read-Only'}</span>
+                            </button>
+
+                            {/* Private Admin Notes */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setNotesUser(u);
+                                setUserNotes('');
+                              }}
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-xl bg-neutral-100 hover:bg-purple-50 hover:text-purple-700 text-neutral-600 font-bold text-[11px] transition-colors cursor-pointer"
+                              title="Private Admin Notes"
+                            >
+                              <FileText className="w-3 h-3 text-purple-600" />
+                              <span>Notes</span>
+                            </button>
+
+                            {/* Force Sign-Out */}
+                            <button
+                              type="button"
+                              onClick={() => handleForceSignout(u.id, u.name)}
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-xl bg-neutral-100 hover:bg-rose-50 hover:text-rose-700 text-neutral-600 font-bold text-[11px] transition-colors cursor-pointer"
+                              title="Force sign-out all sessions for this user"
+                            >
+                              <LogOut className="w-3 h-3 text-rose-500" />
+                              <span>Sign Out</span>
+                            </button>
+
                             {u.status === 'active' ? (
                               <button
                                 type="button"
@@ -427,7 +575,7 @@ export const AdminUserDirectoryPage: React.FC = () => {
                                   setSelectedUser(u);
                                   setSuspendReason('');
                                 }}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-neutral-100 hover:bg-rose-50 hover:text-rose-700 text-neutral-600 font-bold text-[11px] transition-colors cursor-pointer"
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-xl bg-neutral-100 hover:bg-rose-50 hover:text-rose-700 text-neutral-600 font-bold text-[11px] transition-colors cursor-pointer"
                                 title="Suspend User Account"
                               >
                                 <Ban className="w-3 h-3 text-rose-500" />
@@ -437,7 +585,7 @@ export const AdminUserDirectoryPage: React.FC = () => {
                               <button
                                 type="button"
                                 onClick={() => handleStatusChange(u.id, 'active')}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-[11px] transition-colors cursor-pointer"
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-[11px] transition-colors cursor-pointer"
                                 title="Reactivate User Account"
                               >
                                 <RotateCcw className="w-3 h-3 text-emerald-600" />
@@ -527,6 +675,128 @@ export const AdminUserDirectoryPage: React.FC = () => {
                 className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs cursor-pointer disabled:opacity-50"
               >
                 {isSubmitting ? 'Suspending...' : 'Confirm Suspension'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Targeted In-App Message Modal */}
+      {messagingUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-900/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-xl border border-neutral-200">
+            <div className="flex items-center gap-3 text-sky-700">
+              <div className="w-10 h-10 rounded-2xl bg-sky-50 border border-sky-200 flex items-center justify-center">
+                <MessageSquare className="w-5 h-5 text-sky-600" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-neutral-900">Send Targeted Message</h3>
+                <p className="text-xs text-neutral-500">{messagingUser.name} ({messagingUser.id})</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-neutral-600 leading-relaxed">
+              This message will display directly on this user's screen upon their next app refresh or screen change.
+            </p>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-bold text-neutral-700">Message Title</label>
+                <input
+                  type="text"
+                  value={msgTitle}
+                  onChange={(e) => setMsgTitle(e.target.value)}
+                  placeholder="e.g. Account Notice / نوٹس"
+                  className="w-full mt-1 p-2.5 text-xs rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-neutral-700">Message Body (English or Urdu)</label>
+                <textarea
+                  value={msgBody}
+                  onChange={(e) => setMsgBody(e.target.value)}
+                  placeholder="Enter message text..."
+                  rows={4}
+                  className="w-full mt-1 p-2.5 text-xs rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+                />
+              </div>
+
+              <label className="flex items-center gap-2 cursor-pointer pt-1">
+                <input
+                  type="checkbox"
+                  checked={msgBlocking}
+                  onChange={(e) => setMsgBlocking(e.target.checked)}
+                  className="rounded text-sky-600 focus:ring-sky-500"
+                />
+                <span className="text-xs text-neutral-700 font-semibold">
+                  Blocking modal (user must acknowledge before proceeding)
+                </span>
+              </label>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setMessagingUser(null)}
+                className="px-4 py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold text-xs cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isSubmitting || !msgTitle.trim() || !msgBody.trim()}
+                onClick={handleSendMessageSubmit}
+                className="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs cursor-pointer disabled:opacity-50"
+              >
+                {isSubmitting ? 'Sending...' : 'Send Message'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Private Admin Notes Modal */}
+      {notesUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-900/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-xl border border-neutral-200">
+            <div className="flex items-center gap-3 text-purple-700">
+              <div className="w-10 h-10 rounded-2xl bg-purple-50 border border-purple-200 flex items-center justify-center">
+                <FileText className="w-5 h-5 text-purple-600" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-neutral-900">Private Admin Notes</h3>
+                <p className="text-xs text-neutral-500">{notesUser.name} ({notesUser.id})</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-neutral-500">
+              These notes are strictly private to admins and will never be exposed to the user.
+            </p>
+
+            <textarea
+              value={userNotes}
+              onChange={(e) => setUserNotes(e.target.value)}
+              placeholder="e.g. Verified phone via WhatsApp; reported bug in list sharing on 2026-11-05..."
+              rows={4}
+              className="w-full p-3 text-xs rounded-xl border border-neutral-200 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500"
+            />
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setNotesUser(null)}
+                className="px-4 py-2 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold text-xs cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={handleSaveNotesSubmit}
+                className="px-4 py-2 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs cursor-pointer disabled:opacity-50"
+              >
+                {isSubmitting ? 'Saving...' : 'Save Notes'}
               </button>
             </div>
           </div>

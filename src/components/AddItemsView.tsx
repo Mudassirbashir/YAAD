@@ -42,6 +42,7 @@ import { getSuggestionsForContext } from '../lib/recommendations/shoppingContext
 import { triggerHaptic } from '../lib/sound';
 import { resolveVisual } from '../lib/catalog/visualResolver';
 import { triggerMiloEvent } from '../pet/useMilo';
+import { useRemoteConfig } from '../hooks/useRemoteConfig';
 
 export interface AddItemsViewProps {
   listTitle: string;
@@ -63,6 +64,10 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
   onRenameList,
 }) => {
   const { t, getCategoryName, language } = useLanguage();
+  const { config: remoteConfig } = useRemoteConfig();
+  const showBarcodeScanner = remoteConfig.features?.barcodeScanner !== false;
+  const showItemPhotoUpload = remoteConfig.features?.itemPhotoUpload !== false;
+  const showSmartSuggestionsFeature = remoteConfig.features?.smartSuggestions !== false;
   const isUrdu = language === 'ur';
   const catalogVersion = useCatalogVersion();
   const [items, setItems] = useState<ShoppingItem[]>(initialItems);
@@ -856,18 +861,20 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                   </div>
 
                   {/* Raised square scanner button with red BETA label */}
-                  <button
-                    type="button"
-                    onClick={() => setIsBarcodeScannerOpen(true)}
-                    className="relative shrink-0 w-12 h-12 rounded-2xl bg-surface-bright hover:bg-surface-container-low active:scale-95 border border-surface-dim/80 shadow-xs flex flex-col items-center justify-center text-primary transition-all cursor-pointer group"
-                    aria-label={(t as any)?.barcode?.scanItem || 'Scan Barcode'}
-                    title={(t as any)?.barcode?.scanItem || 'Scan Barcode'}
-                  >
-                    <ScanBarcode className="w-5 h-5 group-hover:scale-110 transition-transform text-primary" />
-                    <span className="absolute -top-1.5 -end-1 bg-red-600 text-white text-[8px] font-black tracking-wider px-1 py-0.2 rounded-full shadow-2xs uppercase leading-tight">
-                      {(t as any)?.barcode?.beta || 'BETA'}
-                    </span>
-                  </button>
+                  {showBarcodeScanner && (
+                    <button
+                      type="button"
+                      onClick={() => setIsBarcodeScannerOpen(true)}
+                      className="relative shrink-0 w-12 h-12 rounded-2xl bg-surface-bright hover:bg-surface-container-low active:scale-95 border border-surface-dim/80 shadow-xs flex flex-col items-center justify-center text-primary transition-all cursor-pointer group"
+                      aria-label={(t as any)?.barcode?.scanItem || 'Scan Barcode'}
+                      title={(t as any)?.barcode?.scanItem || 'Scan Barcode'}
+                    >
+                      <ScanBarcode className="w-5 h-5 group-hover:scale-110 transition-transform text-primary" />
+                      <span className="absolute -top-1.5 -end-1 bg-red-600 text-white text-[8px] font-black tracking-wider px-1 py-0.2 rounded-full shadow-2xs uppercase leading-tight">
+                        {(t as any)?.barcode?.beta || 'BETA'}
+                      </span>
+                    </button>
+                  )}
                 </div>
 
                 {inputError && (
@@ -975,7 +982,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
               </form>
 
               {/* USER-CONTROLLED SMART SUGGESTIONS (Triggered on Demand with 1-2s Analysis) */}
-              {!inputVal.trim() && (
+              {showSmartSuggestionsFeature && !inputVal.trim() && (
                 <div className="pt-2 border-t border-surface-dim/60 space-y-2.5">
                   <div className="flex items-center justify-between gap-2">
                     <button
@@ -1280,22 +1287,24 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
 
                         {/* Actions: Photo and Delete Buttons */}
                         <div className="flex items-center gap-1 shrink-0">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setPhotoCaptureItem(item);
-                            }}
-                            aria-label={`Attach photo for ${item.name}`}
-                            className={`w-11 h-11 rounded-full flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
-                              item.imageUrl
-                                ? 'text-primary bg-primary/10 hover:bg-primary/20'
-                                : 'text-outline hover:text-primary hover:bg-surface-container'
-                            }`}
-                            title={item.imageUrl ? 'Change photo' : 'Attach photo'}
-                          >
-                            <Camera className="w-4 h-4" />
-                          </button>
+                          {showItemPhotoUpload && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPhotoCaptureItem(item);
+                              }}
+                              aria-label={`Attach photo for ${item.name}`}
+                              className={`w-11 h-11 rounded-full flex items-center justify-center transition-colors cursor-pointer shrink-0 ${
+                                item.imageUrl
+                                  ? 'text-primary bg-primary/10 hover:bg-primary/20'
+                                  : 'text-outline hover:text-primary hover:bg-surface-container'
+                              }`}
+                              title={item.imageUrl ? 'Change photo' : 'Attach photo'}
+                            >
+                              <Camera className="w-4 h-4" />
+                            </button>
+                          )}
                           <button
                             type="button"
                             onClick={(e) => {

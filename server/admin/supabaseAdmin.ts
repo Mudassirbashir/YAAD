@@ -2051,3 +2051,298 @@ export async function getAuthoritativeAnalytics(
   }
 }
 
+/**
+ * -----------------------------------------------------------------------------
+ * AUTHORITATIVE REMOTE CONFIG & ABUSE CONTROL SYSTEM
+ * -----------------------------------------------------------------------------
+ */
+
+export async function getAuthoritativeRemoteConfig(): Promise<any | null> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return null;
+
+  try {
+    if (!isTableMissingInSupabase('remote_config')) {
+      const { data, error } = await supabase
+        .from('remote_config')
+        .select('config')
+        .eq('id', 'global')
+        .maybeSingle();
+
+      if (!error && data?.config) {
+        return data.config;
+      }
+      if (error && isSchemaCacheMissingTableError(error)) {
+        markTableMissingInSupabase('remote_config');
+      }
+    }
+  } catch {
+    // Fall back to admin_settings
+  }
+
+  // Fallback to admin_settings table key
+  return getAuthoritativeSetting<any>('yaad_remote_config');
+}
+
+export async function setAuthoritativeRemoteConfig(config: any, updatedBy?: string): Promise<boolean> {
+  const supabase = getSupabaseAdmin();
+  let success = false;
+
+  try {
+    if (supabase && !isTableMissingInSupabase('remote_config')) {
+      const { error } = await supabase
+        .from('remote_config')
+        .upsert({
+          id: 'global',
+          config,
+          updated_at: new Date().toISOString(),
+          updated_by: updatedBy || 'admin',
+        });
+
+      if (!error) {
+        success = true;
+      } else if (isSchemaCacheMissingTableError(error)) {
+        markTableMissingInSupabase('remote_config');
+      }
+    }
+  } catch (err) {
+    console.warn('[SupabaseAdmin] setAuthoritativeRemoteConfig error:', err);
+  }
+
+  // Also persist in admin_settings for 100% durability across environments
+  try {
+    await setAuthoritativeSetting('yaad_remote_config', config, updatedBy || 'super_admin');
+    success = true;
+  } catch {}
+
+  return success;
+}
+
+export async function getAuthoritativeUserOverrides(): Promise<any[]> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return [];
+
+  try {
+    if (!isTableMissingInSupabase('user_overrides')) {
+      const { data, error } = await supabase
+        .from('user_overrides')
+        .select('*')
+        .order('updated_at', { ascending: false });
+
+      if (!error && Array.isArray(data)) {
+        return data.map((row) => ({
+          userId: row.user_id,
+          status: row.status || 'active',
+          isReadOnly: Boolean(row.is_read_only),
+          notes: row.notes || '',
+          targetedMessages: Array.isArray(row.targeted_messages) ? row.targeted_messages : [],
+          overrides: row.overrides || {},
+          updatedAt: new Date(row.updated_at).getTime(),
+          updatedBy: row.updated_by,
+        }));
+      }
+      if (error && isSchemaCacheMissingTableError(error)) {
+        markTableMissingInSupabase('user_overrides');
+      }
+    }
+  } catch {}
+
+  const map = (await getAuthoritativeSetting<Record<string, any>>('yaad_user_overrides_map')) || {};
+  return Object.values(map);
+}
+
+export async function getAuthoritativeUserOverride(userId: string): Promise<any | null> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase || !userId) return null;
+
+  try {
+    if (!isTableMissingInSupabase('user_overrides')) {
+      const { data, error } = await supabase
+        .from('user_overrides')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (!error && data) {
+        return {
+          userId: data.user_id,
+          status: data.status || 'active',
+          isReadOnly: Boolean(data.is_read_only),
+          notes: data.notes || '',
+          targetedMessages: Array.isArray(data.targeted_messages) ? data.targeted_messages : [],
+          overrides: data.overrides || {},
+          updatedAt: new Date(data.updated_at).getTime(),
+          updatedBy: data.updated_by,
+        };
+      }
+      if (error && isSchemaCacheMissingTableError(error)) {
+        markTableMissingInSupabase('user_overrides');
+      }
+    }
+  } catch {}
+
+  const map = (await getAuthoritativeSetting<Record<string, any>>('yaad_user_overrides_map')) || {};
+  return map[userId] || null;
+}
+
+export async function setAuthoritativeUserOverride(userId: string, data: any, updatedBy?: string): Promise<boolean> {
+  const supabase = getSupabaseAdmin();
+  let success = false;
+
+  const payload = {
+    user_id: userId,
+    overrides: data.overrides || {},
+    status: data.status || 'active',
+    is_read_only: Boolean(data.isReadOnly),
+    notes: data.notes || '',
+    targeted_messages: Array.isArray(data.targetedMessages) ? data.targetedMessages : [],
+    updated_at: new Date().toISOString(),
+    updated_by: updatedBy || 'admin',
+  };
+
+  try {
+    if (supabase && !isTableMissingInSupabase('user_overrides')) {
+      const { error } = await supabase.from('user_overrides').upsert(payload);
+      if (!error) success = true;
+      else if (isSchemaCacheMissingTableError(error)) markTableMissingInSupabase('user_overrides');
+    }
+  } catch {}
+
+  try {
+    const map = (await getAuthoritativeSetting<Record<string, any>>('yaad_user_overrides_map')) || {};
+    map[userId] = {
+      userId,
+      status: payload.status,
+      isReadOnly: payload.is_read_only,
+      notes: payload.notes,
+      targetedMessages: payload.targeted_messages,
+      overrides: payload.overrides,
+      updatedAt: Date.now(),
+      updatedBy,
+    };
+    await setAuthoritativeSetting('yaad_user_overrides_map', map, updatedBy || 'super_admin');
+    success = true;
+  } catch {}
+
+  return success;
+}
+
+export async function deleteAuthoritativeUserOverride(userId: string): Promise<boolean> {
+  const supabase = getSupabaseAdmin();
+  try {
+    if (supabase && !isTableMissingInSupabase('user_overrides')) {
+      await supabase.from('user_overrides').delete().eq('user_id', userId);
+    }
+  } catch {}
+
+  try {
+    const map = (await getAuthoritativeSetting<Record<string, any>>('yaad_user_overrides_map')) || {};
+    delete map[userId];
+    await setAuthoritativeSetting('yaad_user_overrides_map', map, 'super_admin');
+  } catch {}
+
+  return true;
+}
+
+export async function getAuthoritativeAbuseEvents(): Promise<any[]> {
+  const supabase = getSupabaseAdmin();
+  if (!supabase) return [];
+
+  try {
+    if (!isTableMissingInSupabase('abuse_events')) {
+      const { data, error } = await supabase
+        .from('abuse_events')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (!error && Array.isArray(data)) {
+        return data.map((row) => ({
+          id: row.id,
+          userId: row.user_id,
+          userName: row.user_name,
+          userEmail: row.user_email,
+          ruleId: row.rule_id,
+          ruleName: row.rule_name,
+          details: row.details,
+          actionTaken: row.action_taken,
+          status: row.status,
+          metadata: row.metadata || {},
+          createdAt: new Date(row.created_at).getTime(),
+          resolvedAt: row.resolved_at ? new Date(row.resolved_at).getTime() : undefined,
+          resolvedBy: row.resolved_by,
+        }));
+      }
+      if (error && isSchemaCacheMissingTableError(error)) {
+        markTableMissingInSupabase('abuse_events');
+      }
+    }
+  } catch {}
+
+  const events = (await getAuthoritativeSetting<any[]>('yaad_abuse_events_list')) || [];
+  return events;
+}
+
+export async function recordAuthoritativeAbuseEvent(event: any): Promise<boolean> {
+  const supabase = getSupabaseAdmin();
+  try {
+    if (supabase && !isTableMissingInSupabase('abuse_events')) {
+      await supabase.from('abuse_events').insert({
+        id: event.id,
+        user_id: event.userId,
+        user_name: event.userName || null,
+        user_email: event.userEmail || null,
+        rule_id: event.ruleId,
+        rule_name: event.ruleName,
+        details: event.details,
+        action_taken: event.actionTaken || 'logged',
+        status: event.status || 'pending',
+        metadata: event.metadata || {},
+        created_at: new Date(event.createdAt || Date.now()).toISOString(),
+      });
+    }
+  } catch {}
+
+  try {
+    const list = (await getAuthoritativeSetting<any[]>('yaad_abuse_events_list')) || [];
+    list.unshift(event);
+    if (list.length > 200) list.length = 200;
+    await setAuthoritativeSetting('yaad_abuse_events_list', list, 'system');
+  } catch {}
+
+  return true;
+}
+
+export async function updateAuthoritativeAbuseEventStatus(
+  eventId: string,
+  status: 'warned' | 'suspended' | 'dismissed' | 'resolved',
+  resolvedBy?: string
+): Promise<boolean> {
+  const supabase = getSupabaseAdmin();
+  try {
+    if (supabase && !isTableMissingInSupabase('abuse_events')) {
+      await supabase
+        .from('abuse_events')
+        .update({
+          status,
+          resolved_at: new Date().toISOString(),
+          resolved_by: resolvedBy || null,
+        })
+        .eq('id', eventId);
+    }
+  } catch {}
+
+  try {
+    const list = (await getAuthoritativeSetting<any[]>('yaad_abuse_events_list')) || [];
+    const item = list.find((e) => e.id === eventId);
+    if (item) {
+      item.status = status;
+      item.resolvedAt = Date.now();
+      item.resolvedBy = resolvedBy;
+      await setAuthoritativeSetting('yaad_abuse_events_list', list, resolvedBy || 'super_admin');
+    }
+  } catch {}
+
+  return true;
+}
+

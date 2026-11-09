@@ -57,6 +57,8 @@ import { HeadManager } from './seo/HeadManager';
 import { SuspendedAccountModal } from './components/SuspendedAccountModal';
 import { MiloHost } from './pet/MiloHost';
 import { triggerMiloEvent } from './pet/useMilo';
+import { useRemoteConfig } from './hooks/useRemoteConfig';
+import { Sparkles, Wrench } from 'lucide-react';
 
 const LegalPageView = React.lazy(() => import('./components/legal/LegalPageView').then((m) => ({ default: m.LegalPageView })));
 const BlogArticlePage = React.lazy(() => import('./components/legal/BlogArticlePage').then((m) => ({ default: m.BlogArticlePage })));
@@ -95,6 +97,9 @@ function AppContent() {
     getIntendedDestination,
     clearIntendedDestination,
   } = useAppRouter();
+
+  const { config: remoteConfig, userStatus, targetedMessages, dismissMessage } = useRemoteConfig();
+  const [dismissedMessageId, setDismissedMessageId] = useState<string | null>(null);
 
   const { isRTL } = useLanguage();
   const shouldReduceMotion = useReducedMotion();
@@ -178,7 +183,7 @@ function AppContent() {
       case 'add_items':
         return 'add_items';
       case 'history':
-        return 'history';
+        return remoteConfig.screens?.historyScreenEnabled === false ? 'home' : 'history';
       case 'history_session':
         return 'list_details';
       case 'shopping_list':
@@ -193,7 +198,7 @@ function AppContent() {
       case 'notifications':
         return 'notifications';
       case 'statistics':
-        return 'statistics';
+        return remoteConfig.screens?.statisticsScreenEnabled === false ? 'home' : 'statistics';
       case 'auth':
         return user ? 'home' : 'auth';
       case 'reset_password':
@@ -206,7 +211,7 @@ function AppContent() {
       default:
         return 'not_found';
     }
-  }, [hasSplashFinished, isPasswordResetRequiredActive, route.routeId, user]);
+  }, [hasSplashFinished, isPasswordResetRequiredActive, route.routeId, user, remoteConfig.screens]);
 
   // Derive active navigation tab from route
   const activeTab: NavigationTab = useMemo(() => {
@@ -1361,6 +1366,63 @@ function AppContent() {
     return <SplashView onFinish={handleSplashFinish} isRestoringAuth={isAuthLoading && !user} />;
   }
 
+  // System-level Maintenance Mode Screen
+  if (remoteConfig.system?.maintenanceMode?.enabled) {
+    return (
+      <div className="min-h-screen bg-[#fcfaf7] flex flex-col items-center justify-center p-6 text-center select-none">
+        <div className="w-16 h-16 rounded-3xl bg-white border border-[#e5e1d8] flex items-center justify-center shadow-sm mb-6 p-2">
+          <img src="/logo.png" alt="YAAD" className="w-full h-full object-contain" />
+        </div>
+        <h1 className="text-2xl font-black font-display text-primary tracking-tight mb-1">
+          Under Scheduled Maintenance
+        </h1>
+        <p className="text-xs font-urdu text-neutral-500 mb-4" dir="rtl">
+          یاد میں شیڈول دیکھ بھال جاری ہے۔
+        </p>
+        <p className="text-sm text-neutral-600 max-w-sm mb-8 leading-relaxed">
+          {remoteConfig.system.maintenanceMode.message ||
+            'YAAD is temporarily paused for essential system upgrades. Your saved lists are safe and we will be back shortly.'}
+        </p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="px-6 py-3 rounded-full bg-primary text-white text-xs font-bold shadow-sm hover:opacity-95 active:scale-95 transition-all cursor-pointer"
+        >
+          Refresh Page / ریفریش کریں
+        </button>
+      </div>
+    );
+  }
+
+  // System-level Force Update Screen
+  const minAppVersion = remoteConfig.system?.minAppVersion;
+  const currentAppVersion = '1.0.0';
+  if (minAppVersion && minAppVersion > currentAppVersion) {
+    return (
+      <div className="min-h-screen bg-[#fcfaf7] flex flex-col items-center justify-center p-6 text-center select-none">
+        <div className="w-16 h-16 rounded-3xl bg-emerald-50 border border-emerald-200 flex items-center justify-center shadow-sm mb-6 p-2 text-primary">
+          <Sparkles className="w-8 h-8" />
+        </div>
+        <h1 className="text-2xl font-black font-display text-primary tracking-tight mb-1">
+          Update Required
+        </h1>
+        <p className="text-xs font-urdu text-neutral-500 mb-4" dir="rtl">
+          جاری رکھنے کے لیے نیا ورژن اپڈیٹ کریں۔
+        </p>
+        <p className="text-sm text-neutral-600 max-w-sm mb-8 leading-relaxed">
+          A mandatory update is required to continue using YAAD safely. Please update to version {minAppVersion}.
+        </p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="px-6 py-3 rounded-full bg-primary text-white text-xs font-bold shadow-sm hover:opacity-95 active:scale-95 transition-all cursor-pointer"
+        >
+          Update Now / ابھی اپڈیٹ کریں
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background text-on-background flex flex-col justify-between selection:bg-primary-container selection:text-on-primary-container">
       <AnimatePresence mode="wait" initial={false}>
@@ -1804,12 +1866,38 @@ function AppContent() {
         onSyncClick={triggerSync}
       />
 
-      {/* Account Suspended Blocking Screen */}
+      {/* Account Suspended or Blocked Screen */}
       <SuspendedAccountModal
-        isOpen={Boolean(user && profile?.is_suspended)}
-        reason={profile?.suspend_reason}
+        isOpen={Boolean((user && profile?.is_suspended) || userStatus === 'blocked')}
+        reason={profile?.suspend_reason || (userStatus === 'blocked' ? 'Account temporarily restricted by safety system.' : undefined)}
         onSignOut={handleSignOut}
       />
+
+      {/* Targeted In-App Message Modal */}
+      {targetedMessages.length > 0 && dismissedMessageId !== targetedMessages[0].id && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 text-center space-y-4 shadow-xl border border-neutral-100">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-primary mx-auto flex items-center justify-center">
+              <Sparkles className="w-6 h-6" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-base font-bold text-neutral-900">{targetedMessages[0].title}</h3>
+              <p className="text-xs text-neutral-600 leading-relaxed whitespace-pre-wrap">{targetedMessages[0].body}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const id = targetedMessages[0].id;
+                setDismissedMessageId(id);
+                dismissMessage(id);
+              }}
+              className="w-full py-2.5 rounded-full bg-primary text-white text-xs font-bold hover:opacity-95 active:scale-95 transition-all cursor-pointer"
+            >
+              Understood / سمجھ گیا
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* PWA Update Notification */}
       <PWAUpdateNotification />

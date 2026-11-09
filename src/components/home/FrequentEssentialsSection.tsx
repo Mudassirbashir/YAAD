@@ -10,6 +10,7 @@ import {
 import { playItemAddSound, triggerHaptic } from '../../lib/sound';
 import { resolveVisual } from '../../lib/catalog/visualResolver';
 import { useCatalogVersion } from '../../lib/catalog/supabaseCatalog';
+import { useRemoteConfig } from '../../hooks/useRemoteConfig';
 
 interface FrequentEssentialsSectionProps {
   lists: ShoppingList[];
@@ -201,13 +202,20 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
 }) => {
   const { t } = useLanguage();
   useCatalogVersion();
+  const { config: remoteConfig } = useRemoteConfig();
 
   // Added items micro-feedback tracker: canonicalName -> boolean
   const [addedItemsMap, setAddedItemsMap] = useState<Record<string, boolean>>({});
   const [addingItemId, setAddingItemId] = useState<string | null>(null);
 
-  // Exact 8 fixed items for everyone — no personalization
-  const essentials = FIXED_HOME_ESSENTIALS;
+  // Authoritative fixed essentials list: remoteConfig overrides if provided, otherwise default FIXED_HOME_ESSENTIALS
+  const configuredList = (remoteConfig.essentials?.fixedList && remoteConfig.essentials.fixedList.length > 0)
+    ? remoteConfig.essentials.fixedList
+    : FIXED_HOME_ESSENTIALS;
+  const count = remoteConfig.home?.essentialsCount || 8;
+  const essentials = configuredList.slice(0, count);
+
+  const showViewAll = remoteConfig.home?.showEssentialsViewAll !== false && !!onViewAll;
 
   const handleAddClick = (item: EssentialDisplayItem) => {
     if (addingItemId === item.canonicalName) return;
@@ -237,7 +245,7 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
         <h3 className="font-display text-[19px] sm:text-[20px] font-extrabold text-[#1c2826] dark:text-white tracking-tight leading-tight">
           {t('home.essentials.title') || 'Frequent Essentials'}
         </h3>
-        {onViewAll && (
+        {showViewAll && (
           <button
             type="button"
             id="view_all_essentials_btn"

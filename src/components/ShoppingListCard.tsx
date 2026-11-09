@@ -16,6 +16,7 @@ import { ListIcon } from './ListIcon';
 import { formatRelativeTimeAgo } from '../utils/dateFormatting';
 import { triggerHaptic } from '../lib/sound';
 import { resolveVisual } from '../lib/catalog/visualResolver';
+import { useRemoteConfig } from '../hooks/useRemoteConfig';
 
 export interface ShoppingListCardProps {
   list: ShoppingList;
@@ -45,9 +46,15 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
   onLongPress,
 }) => {
   const { t } = useLanguage();
+  const { config: remoteConfig } = useRemoteConfig();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const showMenuDetails = remoteConfig.home?.showListMenuDetails !== false;
+  const showMenuShare = remoteConfig.home?.showListMenuShare !== false;
+  const showMenuReuse = remoteConfig.home?.showListMenuReuse !== false;
+  const showMenuDelete = remoteConfig.home?.showListMenuDelete !== false;
 
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isLongPressTriggeredRef = useRef(false);
@@ -237,23 +244,25 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
                   className="absolute right-0 rtl:right-auto rtl:left-0 top-8 z-[60] w-44 bg-white dark:bg-surface-container-lowest rounded-2xl shadow-xl border border-surface-dim/80 py-1.5 popover-menu text-xs font-body font-semibold text-on-surface"
                 >
                   {/* 1. View Details (Open Details) */}
-                  <button
-                    type="button"
-                    role="menuitem"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsMenuOpen(false);
-                      triggerHaptic(8);
-                      onSelectList(list);
-                    }}
-                    className="w-full px-3.5 py-2.5 min-h-[44px] text-left rtl:text-right flex items-center gap-2 hover:bg-surface-container transition-colors cursor-pointer text-primary font-bold"
-                  >
-                    <Eye className="w-4 h-4 text-primary shrink-0" />
-                    <span>{t('viewDetails') || 'View Details'}</span>
-                  </button>
+                  {showMenuDetails && (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsMenuOpen(false);
+                        triggerHaptic(8);
+                        onSelectList(list);
+                      }}
+                      className="w-full px-3.5 py-2.5 min-h-[44px] text-left rtl:text-right flex items-center gap-2 hover:bg-surface-container transition-colors cursor-pointer text-primary font-bold"
+                    >
+                      <Eye className="w-4 h-4 text-primary shrink-0" />
+                      <span>{t('viewDetails') || 'View Details'}</span>
+                    </button>
+                  )}
 
                   {/* Share List */}
-                  {onShareList && (
+                  {onShareList && showMenuShare && (
                     <button
                       type="button"
                       role="menuitem"
@@ -271,7 +280,7 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
                   )}
 
                   {/* 2. Reuse as New List */}
-                  {onReuseList && (
+                  {onReuseList && showMenuReuse && (
                     <button
                       type="button"
                       role="menuitem"
@@ -284,7 +293,7 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
                   )}
 
                   {/* 3. Delete List */}
-                  {onDeleteList && (
+                  {onDeleteList && showMenuDelete && (
                     <>
                       <div className="my-1 border-t border-surface-dim/60" />
                       <button

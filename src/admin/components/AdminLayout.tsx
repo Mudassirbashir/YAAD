@@ -15,6 +15,7 @@ import {
   HelpCircle,
   Settings,
   ArrowLeft,
+  Sliders,
 } from 'lucide-react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { AdminRole, ROLE_LABELS } from '../types';
@@ -42,6 +43,7 @@ export const ROLE_PERMITTED_ROUTES: Record<AdminRole, string[]> = {
     '/admin/team',
     '/admin/audit-log',
     '/admin/settings',
+    '/admin/app-control',
   ],
   content_editor: [
     '/admin',
@@ -125,6 +127,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   ];
 
   const govNavItems = [
+    { id: 'app-control', label: 'App Control', path: '/admin/app-control', icon: Sliders },
     { id: 'team', label: 'Staff & Team', path: '/admin/team', icon: Shield },
     { id: 'audit', label: 'Audit Trail', path: '/admin/audit-log', icon: History },
     { id: 'settings', label: 'System Settings', path: '/admin/settings', icon: Settings },

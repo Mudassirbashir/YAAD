@@ -23,6 +23,7 @@ import { updateShoppingItemCompletionStatus } from '../lib/supabase';
 import { reportItemCompletionFailed } from '../lib/monitoring';
 import { generateUUID } from '../lib/uuid';
 import { QuantityEditModal } from './QuantityEditModal';
+import { useRemoteConfig } from '../hooks/useRemoteConfig';
 import { SmartSuggestionsSection } from './SmartSuggestionsSection';
 import { SwipeableShoppingItemCard } from './SwipeableShoppingItemCard';
 import { ItemImageLightboxModal } from './common/ItemImageLightboxModal';
@@ -59,6 +60,12 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
   const { t, getCategoryName, language } = useLanguage();
   const catalogVersion = useCatalogVersion();
   const { theme, currentThemeConfig } = useAppTheme();
+  const { isActionAllowed } = useRemoteConfig();
+  const canAddItems = isActionAllowed('actionAddItems');
+  const canDeleteList = isActionAllowed('actionDeleteList');
+  const canMarkComplete = isActionAllowed('actionMarkComplete');
+  const canScanBarcode = isActionAllowed('barcodeScanner');
+  const canSmartSuggest = isActionAllowed('smartSuggestions');
   const isUrdu = language === 'ur';
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
   const [newItemText, setNewItemText] = useState<string>('');
@@ -808,7 +815,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
               <Edit3 className="w-4 h-4" />
               <span className="hidden xs:inline">{t('shoppingList.editList')}</span>
             </button>
-            {onDeleteList && (
+            {onDeleteList && canDeleteList && (
               <button
                 type="button"
                 id="shopping_list_delete_btn"
@@ -883,18 +890,20 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
             </form>
 
             {/* Raised square scanner button with red BETA label */}
-            <button
-              type="button"
-              onClick={() => setIsBarcodeScannerOpen(true)}
-              className="relative shrink-0 w-[54px] h-[54px] rounded-2xl bg-surface-bright hover:bg-surface-container-low active:scale-95 border border-surface-dim/80 shadow-xs flex flex-col items-center justify-center text-primary transition-all cursor-pointer group"
-              aria-label={(t as any)?.barcode?.scanItem || 'Scan Barcode'}
-              title={(t as any)?.barcode?.scanItem || 'Scan Barcode'}
-            >
-              <ScanBarcode className="w-5 h-5 group-hover:scale-110 transition-transform text-primary" />
-              <span className="absolute -top-1.5 -end-1 bg-red-600 text-white text-[8px] font-black tracking-wider px-1 py-0.2 rounded-full shadow-2xs uppercase leading-tight">
-                {(t as any)?.barcode?.beta || 'BETA'}
-              </span>
-            </button>
+            {canScanBarcode && (
+              <button
+                type="button"
+                onClick={() => setIsBarcodeScannerOpen(true)}
+                className="relative shrink-0 w-[54px] h-[54px] rounded-2xl bg-surface-bright hover:bg-surface-container-low active:scale-95 border border-surface-dim/80 shadow-xs flex flex-col items-center justify-center text-primary transition-all cursor-pointer group"
+                aria-label={(t as any)?.barcode?.scanItem || 'Scan Barcode'}
+                title={(t as any)?.barcode?.scanItem || 'Scan Barcode'}
+              >
+                <ScanBarcode className="w-5 h-5 group-hover:scale-110 transition-transform text-primary" />
+                <span className="absolute -top-1.5 -end-1 bg-red-600 text-white text-[8px] font-black tracking-wider px-1 py-0.2 rounded-full shadow-2xs uppercase leading-tight">
+                  {(t as any)?.barcode?.beta || 'BETA'}
+                </span>
+              </button>
+            )}
           </div>
 
           {/* Real-time Catalog Search Suggestions */}
@@ -979,11 +988,13 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
         </div>
 
         {/* Smart Suggestions Section (Deterministic & Explainable) */}
-        <SmartSuggestionsSection
-          listTitle={list.title}
-          currentItems={list.items}
-          onAddItem={handleAddSmartSuggestion}
-        />
+        {canSmartSuggest && (
+          <SmartSuggestionsSection
+            listTitle={list.title}
+            currentItems={list.items}
+            onAddItem={handleAddSmartSuggestion}
+          />
+        )}
 
         {/* Categories / Filter Chips & Fast Switcher */}
         <div className="flex gap-2 overflow-x-auto pb-1.5 no-scrollbar -mx-4 sm:-mx-6 md:-mx-8 px-4 sm:px-6 md:px-8">
@@ -1237,7 +1248,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
         )}
 
         {/* Finish Shopping Trip Button */}
-        {completedItemsCount > 0 && (
+        {completedItemsCount > 0 && canMarkComplete && (
           <div className="pt-2 pb-4">
             <button
               id="finish_shopping_trip_btn"

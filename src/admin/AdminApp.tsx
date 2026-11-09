@@ -18,6 +18,7 @@ import { AdminSupportPage } from './pages/AdminSupportPage';
 import { AdminCmsPage } from './pages/AdminCmsPage';
 import { AdminPushPage } from './pages/AdminPushPage';
 import { AdminAnalyticsPage } from './pages/AdminAnalyticsPage';
+import { AdminAppControlPage } from './pages/AdminAppControlPage';
 import { AdminNotFoundPage } from './pages/AdminNotFoundPage';
 import { AdminLayout } from './components/AdminLayout';
 import { Loader2 } from 'lucide-react';
@@ -207,6 +208,14 @@ function AdminRouter() {
     return (
       <AdminLayout activePath="/admin/analytics" onNavigate={navigate}>
         <AdminAnalyticsPage />
+      </AdminLayout>
+    );
+  }
+
+  if (currentPath === '/admin/app-control') {
+    return (
+      <AdminLayout activePath="/admin/app-control" onNavigate={navigate}>
+        <AdminAppControlPage />
       </AdminLayout>
     );
   }

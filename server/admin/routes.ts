@@ -1424,6 +1424,202 @@ adminRouter.post('/users/:id/verify', requireAdminAuth, requireRoles('super_admi
   }
 });
 
+// Phase 4 User Upgrades: Block, Force Sign-out, Read-only Mode, Targeted Message, Private Notes
+adminRouter.post('/users/:id/block', requireAdminAuth, requireRoles('super_admin'), async (req: AdminAuthRequest, res: Response) => {
+  const { id } = req.params;
+  const { reason } = req.body;
+  const clientIp = getClientIp(req);
+
+  try {
+    const existing = await adminStore.getUserOverrideAsync(id);
+    const updated = await adminStore.setUserOverrideAsync(
+      id,
+      {
+        status: 'blocked',
+        notes: reason ? `${existing?.notes ? existing.notes + '\n' : ''}[Blocked]: ${reason}` : existing?.notes,
+      },
+      req.admin!.email
+    );
+
+    // Also update app user status for consistency
+    adminStore.setAppUserStatus(id, 'suspended', reason || 'Blocked by super admin');
+
+    adminStore.writeAuditLog({
+      action: 'user_blocked',
+      adminId: req.admin!.id,
+      adminEmail: req.admin!.email,
+      targetType: 'app_user',
+      targetId: id,
+      afterValue: { status: 'blocked', reason },
+      ip: clientIp,
+    });
+
+    res.status(200).json({ success: true, message: 'User permanently blocked.', override: updated });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to block user.', details: err.message });
+  }
+});
+
+adminRouter.post('/users/:id/force-signout', requireAdminAuth, requireRoles('super_admin'), async (req: AdminAuthRequest, res: Response) => {
+  const { id } = req.params;
+  const clientIp = getClientIp(req);
+
+  try {
+    // Add targeted logout flag and update user override
+    const existing = await adminStore.getUserOverrideAsync(id);
+    const messages = existing?.targetedMessages || [];
+    messages.push({
+      id: 'force_logout_' + Date.now(),
+      title: 'Session Expired',
+      body: 'Your active session has been remotely terminated by security administration. Please log in again.',
+      sentAt: Date.now(),
+      read: false,
+    });
+
+    await adminStore.setUserOverrideAsync(
+      id,
+      {
+        targetedMessages: messages,
+      },
+      req.admin!.email
+    );
+
+    adminStore.writeAuditLog({
+      action: 'user_forced_signout',
+      adminId: req.admin!.id,
+      adminEmail: req.admin!.email,
+      targetType: 'app_user',
+      targetId: id,
+      ip: clientIp,
+    });
+
+    res.status(200).json({ success: true, message: 'User sessions successfully terminated.' });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to terminate user sessions.', details: err.message });
+  }
+});
+
+adminRouter.post('/users/:id/read-only', requireAdminAuth, requireRoles('super_admin'), async (req: AdminAuthRequest, res: Response) => {
+  const { id } = req.params;
+  const { isReadOnly } = req.body;
+  const clientIp = getClientIp(req);
+
+  try {
+    const updated = await adminStore.setUserOverrideAsync(
+      id,
+      {
+        isReadOnly: Boolean(isReadOnly),
+      },
+      req.admin!.email
+    );
+
+    adminStore.writeAuditLog({
+      action: isReadOnly ? 'user_set_readonly' : 'user_unset_readonly',
+      adminId: req.admin!.id,
+      adminEmail: req.admin!.email,
+      targetType: 'app_user',
+      targetId: id,
+      afterValue: { isReadOnly: Boolean(isReadOnly) },
+      ip: clientIp,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: `User read-only mode set to ${Boolean(isReadOnly)}.`,
+      isReadOnly: Boolean(isReadOnly),
+      override: updated,
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to update user read-only status.', details: err.message });
+  }
+});
+
+adminRouter.post('/users/:id/message', requireAdminAuth, requireRoles('super_admin'), async (req: AdminAuthRequest, res: Response) => {
+  const { id } = req.params;
+  const { title, body, titleUr, bodyUr } = req.body;
+  const clientIp = getClientIp(req);
+
+  if (!title || !body) {
+    return res.status(400).json({ error: 'Message title and body are required.' });
+  }
+
+  try {
+    const existing = await adminStore.getUserOverrideAsync(id);
+    const messages = existing?.targetedMessages || [];
+    const newMsg = {
+      id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+      title: String(title).trim(),
+      body: String(body).trim(),
+      titleUr: titleUr ? String(titleUr).trim() : undefined,
+      bodyUr: bodyUr ? String(bodyUr).trim() : undefined,
+      sentAt: Date.now(),
+      read: false,
+    };
+    messages.unshift(newMsg);
+
+    await adminStore.setUserOverrideAsync(
+      id,
+      {
+        targetedMessages: messages,
+      },
+      req.admin!.email
+    );
+
+    adminStore.writeAuditLog({
+      action: 'targeted_user_message_sent',
+      adminId: req.admin!.id,
+      adminEmail: req.admin!.email,
+      targetType: 'app_user',
+      targetId: id,
+      afterValue: { title, body },
+      ip: clientIp,
+    });
+
+    res.status(200).json({ success: true, message: 'In-app message sent to user.', messageItem: newMsg });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to send targeted message.', details: err.message });
+  }
+});
+
+adminRouter.post('/users/:id/notes', requireAdminAuth, requireRoles('super_admin'), async (req: AdminAuthRequest, res: Response) => {
+  const { id } = req.params;
+  const { notes } = req.body;
+  const clientIp = getClientIp(req);
+
+  try {
+    const updated = await adminStore.setUserOverrideAsync(
+      id,
+      {
+        notes: String(notes || ''),
+      },
+      req.admin!.email
+    );
+
+    adminStore.writeAuditLog({
+      action: 'user_private_notes_updated',
+      adminId: req.admin!.id,
+      adminEmail: req.admin!.email,
+      targetType: 'app_user',
+      targetId: id,
+      ip: clientIp,
+    });
+
+    res.status(200).json({ success: true, message: 'Private admin notes saved.', notes: updated.notes });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to save admin notes.', details: err.message });
+  }
+});
+
+adminRouter.get('/users/:id/overrides', requireAdminAuth, async (req: AdminAuthRequest, res: Response) => {
+  const { id } = req.params;
+  try {
+    const override = await adminStore.getUserOverrideAsync(id);
+    res.status(200).json({ override });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to load user override.', details: err.message });
+  }
+});
+
 // -----------------------------------------------------------------------------
 // 14d. Authoritative Shopping List Moderation (Phase 10: Lists + Items)
 // -----------------------------------------------------------------------------
@@ -2178,6 +2374,152 @@ adminRouter.post('/role-matrix', requireAdminAuth, requireRoles('super_admin'), 
     afterValue: matrix,
   });
   res.status(200).json({ success: true, matrix });
+});
+
+// -----------------------------------------------------------------------------
+// 14h. Remote Control System & Abuse Review Queue (Module 13)
+// -----------------------------------------------------------------------------
+adminRouter.get('/remote-config', requireAdminAuth, async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const config = await adminStore.getRemoteConfigAsync();
+    res.status(200).json(config);
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to retrieve remote configuration.', details: err.message });
+  }
+});
+
+adminRouter.put('/remote-config', requireAdminAuth, requireRoles('super_admin'), async (req: AdminAuthRequest, res: Response) => {
+  const clientIp = getClientIp(req);
+  try {
+    const previous = await adminStore.getRemoteConfigAsync();
+    const updated = await adminStore.updateRemoteConfigAsync(req.body, req.admin!.email);
+    adminStore.writeAuditLog({
+      action: 'remote_config_updated',
+      adminId: req.admin!.id,
+      adminEmail: req.admin!.email,
+      targetType: 'remote_config',
+      targetId: 'global',
+      beforeValue: previous,
+      afterValue: updated,
+      ip: clientIp,
+    });
+    res.status(200).json({ success: true, message: 'Remote configuration updated live.', config: updated });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to update remote configuration.', details: err.message });
+  }
+});
+
+adminRouter.get('/user-overrides', requireAdminAuth, async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const overrides = await adminStore.getUserOverridesAsync();
+    res.status(200).json({ overrides });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to load user overrides.', details: err.message });
+  }
+});
+
+adminRouter.get('/user-overrides/:userId', requireAdminAuth, async (req: AdminAuthRequest, res: Response) => {
+  const { userId } = req.params;
+  try {
+    const override = await adminStore.getUserOverrideAsync(userId);
+    res.status(200).json({ override });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to load user override.', details: err.message });
+  }
+});
+
+adminRouter.put('/user-overrides/:userId', requireAdminAuth, requireRoles('super_admin'), async (req: AdminAuthRequest, res: Response) => {
+  const { userId } = req.params;
+  const clientIp = getClientIp(req);
+  try {
+    const updated = await adminStore.setUserOverrideAsync(userId, req.body, req.admin!.email);
+    adminStore.writeAuditLog({
+      action: 'user_override_updated',
+      adminId: req.admin!.id,
+      adminEmail: req.admin!.email,
+      targetType: 'user_override',
+      targetId: userId,
+      afterValue: updated,
+      ip: clientIp,
+    });
+    res.status(200).json({ success: true, message: 'User override saved.', override: updated });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to save user override.', details: err.message });
+  }
+});
+
+adminRouter.delete('/user-overrides/:userId', requireAdminAuth, requireRoles('super_admin'), async (req: AdminAuthRequest, res: Response) => {
+  const { userId } = req.params;
+  const clientIp = getClientIp(req);
+  try {
+    await adminStore.deleteUserOverrideAsync(userId, req.admin!.email);
+    adminStore.writeAuditLog({
+      action: 'user_override_deleted',
+      adminId: req.admin!.id,
+      adminEmail: req.admin!.email,
+      targetType: 'user_override',
+      targetId: userId,
+      ip: clientIp,
+    });
+    res.status(200).json({ success: true, message: 'User override cleared.' });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to delete user override.', details: err.message });
+  }
+});
+
+adminRouter.get('/abuse/queue', requireAdminAuth, async (req: AdminAuthRequest, res: Response) => {
+  try {
+    const events = await adminStore.getAbuseEventsAsync();
+    res.status(200).json({ events });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to load abuse review queue.', details: err.message });
+  }
+});
+
+adminRouter.post('/abuse/action', requireAdminAuth, requireRoles('super_admin'), async (req: AdminAuthRequest, res: Response) => {
+  const { eventId, userId, action, reason } = req.body;
+  const clientIp = getClientIp(req);
+
+  try {
+    if (action === 'suspend' && userId) {
+      adminStore.setAppUserStatus(userId, 'suspended', reason || 'Suspended via abuse review queue');
+      if (eventId) {
+        await adminStore.updateAbuseEventStatusAsync(eventId, 'suspended', req.admin!.email);
+      }
+    } else if (action === 'warn' && userId) {
+      const existing = await adminStore.getUserOverrideAsync(userId);
+      const messages = existing?.targetedMessages || [];
+      messages.unshift({
+        id: 'abuse_warn_' + Date.now(),
+        title: 'Security Notice',
+        body: reason || 'Unusual activity was detected on your account. Continued automated or excessive actions may result in suspension.',
+        sentAt: Date.now(),
+        read: false,
+      });
+      await adminStore.setUserOverrideAsync(userId, { targetedMessages: messages }, req.admin!.email);
+      if (eventId) {
+        await adminStore.updateAbuseEventStatusAsync(eventId, 'warned', req.admin!.email);
+      }
+    } else if (action === 'dismiss' && eventId) {
+      await adminStore.updateAbuseEventStatusAsync(eventId, 'dismissed', req.admin!.email);
+    } else if (action === 'resolve' && eventId) {
+      await adminStore.updateAbuseEventStatusAsync(eventId, 'resolved', req.admin!.email);
+    }
+
+    adminStore.writeAuditLog({
+      action: 'abuse_queue_action',
+      adminId: req.admin!.id,
+      adminEmail: req.admin!.email,
+      targetType: 'abuse_event',
+      targetId: eventId || userId,
+      afterValue: { action, reason },
+      ip: clientIp,
+    });
+
+    res.status(200).json({ success: true, message: `Abuse action ${action} executed.` });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to execute abuse action.', details: err.message });
+  }
 });
 
 // -----------------------------------------------------------------------------

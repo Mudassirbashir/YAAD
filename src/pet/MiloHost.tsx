@@ -12,6 +12,7 @@ import { MiloExpression, MiloTriggerEvent } from './miloExpressions';
 import { playMiloSound } from './miloSounds';
 import { playCompletionSound, triggerHaptic } from '../lib/sound';
 import { X, Volume2, VolumeX } from 'lucide-react';
+import { useRemoteConfig } from '../hooks/useRemoteConfig';
 
 export type MiloHostVariant = 'mini' | 'celebration' | 'hero';
 
@@ -111,6 +112,7 @@ export const MiloHost: React.FC<MiloHostProps> = ({
   onOpenList,
 }) => {
   // Global Milo enabled state
+  const { config: remoteConfig } = useRemoteConfig();
   const [enabled, setEnabled] = useState<boolean>(() => isMiloEnabled());
 
   // Dragging active state (controls 1:1 instantaneous transform without transition lag)
@@ -569,8 +571,8 @@ export const MiloHost: React.FC<MiloHostProps> = ({
     };
   }, [isCelebrationActive, isIntroActive, trigger]);
 
-  // If user disabled Milo in settings, hide both bubble and overlay
-  if (!enabled) {
+  // If user disabled Milo in settings or remotely disabled, hide both bubble and overlay
+  if (!enabled || remoteConfig.header?.showMiloCompanion === false) {
     return null;
   }
 

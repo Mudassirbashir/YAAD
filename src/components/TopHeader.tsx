@@ -11,9 +11,9 @@ import {
   Calendar,
   ChevronRight,
 } from 'lucide-react';
-import { APP_IMAGES } from '../data/initialData';
 import { useLanguage } from '../context/LanguageContext';
 import { Badge, BadgeAnchor } from './common/Badge';
+import { useRemoteConfig } from '../hooks/useRemoteConfig';
 
 interface TopHeaderProps {
   title?: string;
@@ -146,9 +146,19 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   hideSettings = false,
 }) => {
   const { language } = useLanguage();
+  const { config: remoteConfig } = useRemoteConfig();
   const [isGearTapped, setIsGearTapped] = useState(false);
   const [notifications, setNotifications] = useState<InAppNotification[]>(DEFAULT_NOTIFICATIONS);
   const [hasUnread, setHasUnread] = useState(false);
+
+  // By default, if showBack is true (inside a list, edit screen, etc.), do not crowd the header with bell and gear
+  const effectiveHideSettings = hideSettings || showBack;
+  const effectiveHideNotifications = hideNotifications || showBack;
+
+  const showSettingsGear = remoteConfig.header?.showSettingsGear !== false && !effectiveHideSettings;
+  const showNotificationBell = remoteConfig.header?.showNotificationBell !== false && !effectiveHideNotifications;
+  const showBellBadge = remoteConfig.header?.showBellBadgeCount !== false && hasUnread;
+  const showAvatarLogo = remoteConfig.header?.showAvatarButton !== false;
 
   useEffect(() => {
     // Fetch live announcements from public endpoint
@@ -211,20 +221,20 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   return (
     <>
       <header className="sticky top-0 w-full z-40 bg-background/80 backdrop-blur-xl border-b border-surface-dim/40 transition-colors select-none">
-        <div className="relative flex justify-between items-center px-4 sm:px-6 lg:px-8 h-14 w-full max-w-7xl mx-auto">
+        <div className="grid grid-cols-[auto_1fr_auto] items-center px-3 sm:px-6 lg:px-8 h-14 w-full max-w-7xl mx-auto gap-2">
           {/* Left Action: Back Arrow on non-home screens, Official Logo on Home */}
-          <div className="flex items-center z-10 min-w-[44px]">
+          <div className="flex items-center min-w-[44px]">
             {showBack ? (
               <button
                 id="top_header_back_btn"
                 type="button"
                 onClick={handleBackClick}
                 aria-label="Go back"
-                className="w-11 h-11 min-w-[44px] min-h-[44px] -ms-2 flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors text-primary active:scale-95 duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer"
+                className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors text-primary active:scale-95 duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer"
               >
                 <ArrowLeft className="w-5 h-5 rtl:rotate-180" />
               </button>
-            ) : (
+            ) : showAvatarLogo ? (
               <div id="top_header_logo_area" className="flex items-center">
                 <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white border border-[#e5e1d8] flex items-center justify-center shadow-2xs p-1">
                   <picture className="h-full w-full flex items-center justify-center">
@@ -241,13 +251,15 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                   </picture>
                 </div>
               </div>
+            ) : (
+              <div className="w-11" />
             )}
           </div>
 
-          {/* Center Title - Standard English Wordmark YAAD Centered */}
+          {/* Center Title - Standard English Wordmark YAAD Centered without overlap */}
           <div
             id="top_header_title"
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none px-4 max-w-[62%] sm:max-w-[70%]"
+            className="flex items-center justify-center text-center px-1 min-w-0"
           >
             <h1 className="text-lg sm:text-xl font-extrabold font-display text-primary tracking-tight truncate flex items-center justify-center">
               <div
@@ -262,20 +274,20 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             </h1>
           </div>
 
-          {/* Right Action: Notifications & Settings */}
-          <div className="flex items-center justify-end gap-1 min-w-[44px] z-10">
+          {/* Right Action: Cleanly aligned without crowding or collision */}
+          <div className="flex items-center justify-end gap-1 min-w-[44px]">
             {rightAction && (
-              <div className="flex items-center">
+              <div className="flex items-center gap-1">
                 {rightAction}
               </div>
             )}
 
             {/* Push Notification Bell Button with top-right dot badge */}
-            {!hideNotifications && (
+            {showNotificationBell && (
               <BadgeAnchor
                 placement="top-right"
                 badge={
-                  hasUnread ? (
+                  showBellBadge ? (
                     <Badge dot tone="warning" pulse ariaLabel="Unread notifications" />
                   ) : null
                 }
@@ -294,7 +306,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             )}
 
             {/* Settings Gear Button */}
-            {!hideSettings && (
+            {showSettingsGear && (
               <button
                 id="top_header_settings_btn"
                 data-testid="top_header_settings_btn"
