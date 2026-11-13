@@ -6,10 +6,14 @@ import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { RemoteConfigProvider } from './context/RemoteConfigContext';
 import { initMonitoring } from './lib/monitoring';
+import { isPerfMeterEnabled, startPerfMeter } from './lib/perfMeter';
 import './index.css';
 
 // Initialize Sentry monitoring before mounting React application
 initMonitoring();
+if (isPerfMeterEnabled()) {
+  startPerfMeter();
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

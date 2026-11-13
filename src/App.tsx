@@ -59,6 +59,7 @@ import { MiloHost } from './pet/MiloHost';
 import { triggerMiloEvent } from './pet/useMilo';
 import { useRemoteConfig } from './hooks/useRemoteConfig';
 import { Sparkles, Wrench } from 'lucide-react';
+import { PerfMeterPanel } from './components/PerfMeterPanel';
 
 const LegalPageView = React.lazy(() => import('./components/legal/LegalPageView').then((m) => ({ default: m.LegalPageView })));
 const BlogArticlePage = React.lazy(() => import('./components/legal/BlogArticlePage').then((m) => ({ default: m.BlogArticlePage })));
@@ -2119,6 +2120,7 @@ export default function App() {
       <RouterProvider>
         <HeadManager />
         <AppContent />
+        <PerfMeterPanel />
       </RouterProvider>
     </ErrorBoundary>
   );

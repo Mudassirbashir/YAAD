@@ -30,6 +30,7 @@ import { ItemImageLightboxModal } from './common/ItemImageLightboxModal';
 import { resolveVisual } from '../lib/catalog/visualResolver';
 import { triggerMiloEvent } from '../pet/useMilo';
 import { noteLocalMutation } from '../lib/realtimeSync';
+import { measureTick, setPerfCountdownActive } from '../lib/perfMeter';
 
 interface ShoppingListViewProps {
   list: ShoppingList;
@@ -177,6 +178,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
   };
 
   const cancelAutoFinish = useCallback(() => {
+    setPerfCountdownActive(false);
     if (autoFinishTimerRef.current) {
       clearTimeout(autoFinishTimerRef.current);
       autoFinishTimerRef.current = null;
@@ -197,6 +199,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
 
   const startAutoFinishCountdown = useCallback((targetList: ShoppingList) => {
     cancelAutoFinish();
+    setPerfCountdownActive(true);
     playCompletionSound();
     triggerHaptic([50, 40, 60, 40, 80]);
 
@@ -424,6 +427,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
    * audio & haptic feedback, Supabase database mutation, and realtime broadcast.
    */
   const completeShoppingItem = async (itemId: string, forcePurchased?: boolean) => {
+    const t0 = performance.now();
     const currentList = listRef.current;
     const currentItem = currentList.items.find((it) => it.id === itemId);
     if (!currentItem) return;
@@ -479,6 +483,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
     }
     setItemSyncError(null);
     onUpdateList(updatedList);
+    measureTick(t0);
 
     // 2. Sound & Haptic Feedback (Fast & Premium tactile physical vibration)
     if (nextCompleted) {

@@ -20,6 +20,7 @@ import {
   ChevronRight,
   ChevronLeft,
   Trash2,
+  Gauge,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -41,6 +42,7 @@ import { triggerHaptic } from '../lib/sound';
 import { isMiloEnabled, setMiloEnabled } from '../pet/MiloHost';
 import { isMiloSoundEnabled, setMiloSoundEnabled } from '../pet/miloSounds';
 import { triggerMiloEvent } from '../pet/useMilo';
+import { isPerfMeterEnabled, setPerfMeterEnabled } from '../lib/perfMeter';
 
 interface SettingsViewProps {
   onBack: () => void;
@@ -119,6 +121,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     setMiloActive(nextVal);
     setMiloEnabled(nextVal);
     triggerMiloEvent('settings_saved');
+  };
+
+  // Speed meter active state (zero-cost when OFF)
+  const [perfMeterActive, setPerfMeterActive] = useState<boolean>(() => isPerfMeterEnabled());
+
+  const handleTogglePerfMeter = () => {
+    triggerHaptic(8);
+    const nextVal = !perfMeterActive;
+    setPerfMeterActive(nextVal);
+    setPerfMeterEnabled(nextVal);
   };
 
   // Sound preference state
@@ -551,6 +563,35 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       </button>
                     </div>
                   )}
+
+                  {/* Speed Meter Toggle */}
+                  <div className="flex items-center justify-between gap-3 min-h-[52px]">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-2xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                        <Gauge className="w-5 h-5 stroke-[2]" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-[15px] font-semibold text-on-surface font-display truncate leading-snug">
+                          Speed meter
+                        </h4>
+                        <p className="text-[13px] text-outline font-body leading-snug mt-0.5">
+                          Phone par asal speed naapne ke liye (band hone par bilkul free)
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      id="toggle_speed_meter"
+                      onClick={handleTogglePerfMeter}
+                      className={`w-[51px] h-[31px] rounded-full transition-colors p-[2px] flex items-center shrink-0 cursor-pointer ${
+                        perfMeterActive ? 'bg-primary justify-end' : 'bg-surface-dim justify-start'
+                      }`}
+                      aria-label={perfMeterActive ? 'Disable Speed meter' : 'Enable Speed meter'}
+                    >
+                      <span className="w-[27px] h-[27px] rounded-full bg-white shadow-xs block" />
+                    </button>
+                  </div>
 
                   {/* Sound Effects Toggle */}
                   {remoteConfig.settings?.soundEffects !== false && (
