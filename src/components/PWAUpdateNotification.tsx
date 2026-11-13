@@ -289,7 +289,7 @@ export const PWAUpdateNotification: React.FC<PWAUpdateNotificationProps> = ({
   return (
     <div
       id="yaad_update_notification_wrapper"
-      className={`fixed z-50 pointer-events-none transition-all duration-300
+      className={`fixed z-50 pointer-events-none transition-[transform,opacity] duration-300
         /* Small mobile screens (< 380px) */
         bottom-20 inset-x-2 flex justify-center
         /* Normal mobile phones (380px - 640px) */
@@ -436,7 +436,7 @@ export const PWAUpdateNotification: React.FC<PWAUpdateNotificationProps> = ({
                 id="yaad_update_later_btn"
                 onClick={handleLater}
                 disabled={isUpdating}
-                className="flex-1 sm:flex-initial min-h-[44px] px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium text-on-surface-variant hover:text-on-surface dark:text-[#c0c8c3] dark:hover:text-white bg-surface-container hover:bg-surface-container-high dark:bg-white/5 dark:hover:bg-white/10 active:scale-[0.98] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-40 cursor-pointer text-center"
+                className="flex-1 sm:flex-initial min-h-[44px] px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium text-on-surface-variant hover:text-on-surface dark:text-[#c0c8c3] dark:hover:text-white bg-surface-container hover:bg-surface-container-high dark:bg-white/5 dark:hover:bg-white/10 active:scale-[0.98] transition-[transform,background-color,color,opacity] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-40 cursor-pointer text-center"
               >
                 {laterText}
               </button>
@@ -449,7 +449,7 @@ export const PWAUpdateNotification: React.FC<PWAUpdateNotificationProps> = ({
                 onClick={handleUpdate}
                 disabled={isUpdating}
                 aria-busy={isUpdating}
-                className={`flex-1 sm:flex-initial min-h-[44px] px-4 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-primary hover:bg-primary-container dark:bg-primary-fixed dark:text-on-primary-fixed dark:hover:bg-primary-fixed-dim active:scale-[0.98] transition-all shadow-xs flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-pointer text-center`}
+                className={`flex-1 sm:flex-initial min-h-[44px] px-4 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-bold text-white bg-primary hover:bg-primary-container dark:bg-primary-fixed dark:text-on-primary-fixed dark:hover:bg-primary-fixed-dim active:scale-[0.98] transition-[transform,background-color,opacity] shadow-xs flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-pointer text-center`}
               >
                 <RefreshCw
                   className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 ${isUpdating ? 'animate-spin' : ''}`}

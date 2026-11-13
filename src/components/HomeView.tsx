@@ -259,7 +259,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
               type="button"
               onClick={onOpenProfile}
               aria-label="Open Profile & Settings"
-              className="w-11 h-11 rounded-full ring-2 ring-surface-dim hover:ring-primary/40 active:scale-95 transition-all shrink-0 cursor-pointer overflow-hidden flex items-center justify-center bg-surface-container shadow-2xs"
+              className="w-11 h-11 rounded-full ring-2 ring-surface-dim hover:ring-primary/40 active:scale-95 transition-[transform,box-shadow] duration-150 shrink-0 cursor-pointer overflow-hidden flex items-center justify-center bg-surface-container shadow-2xs"
             >
               <Avatar
                 name={profile?.full_name || user?.email || 'User'}
@@ -291,14 +291,14 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   onCreateList();
                 }
               }}
-              className="w-full min-h-[76px] sm:min-h-[96px] rounded-2xl sm:rounded-3xl bg-gradient-to-br from-primary via-primary to-primary-container p-4 sm:p-5 text-on-primary flex items-center justify-between gap-3 shadow-[0_4px_20px_rgba(15,61,46,0.18)] hover:shadow-[0_6px_24px_rgba(15,61,46,0.25)] cursor-pointer relative overflow-hidden transition-all duration-200 active:scale-[0.99] select-none group border border-white/10"
+              className="w-full min-h-[76px] sm:min-h-[96px] rounded-2xl sm:rounded-3xl bg-gradient-to-br from-primary via-primary to-primary-container p-4 sm:p-5 text-on-primary flex items-center justify-between gap-3 shadow-[0_4px_20px_rgba(15,61,46,0.18)] hover:shadow-[0_6px_24px_rgba(15,61,46,0.25)] cursor-pointer relative overflow-hidden transition-[transform,box-shadow] duration-200 active:scale-[0.99] select-none group border border-white/10"
             >
               {/* Background subtle radial glow */}
               <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-2xl pointer-events-none" />
 
               {/* Left side: Plus icon + Enlarged Create List Title */}
               <div className="flex items-center gap-3 sm:gap-4 min-w-0 z-10">
-                <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-white/15 flex items-center justify-center shrink-0 border border-white/20 shadow-2xs group-hover:bg-white/25 transition-all">
+                <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-white/15 flex items-center justify-center shrink-0 border border-white/20 shadow-2xs group-hover:bg-white/25 transition-colors duration-150">
                   <Plus className="w-6 h-6 sm:w-7 sm:h-7 text-white stroke-[2.4] transition-transform duration-300 group-hover:rotate-90" />
                 </div>
                 <h2 className="font-display text-headline font-black tracking-tight text-white leading-tight">
@@ -308,10 +308,10 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
               {/* Right side: Grocery Basket Visual & Circular Arrow */}
               <div className="flex items-center gap-2 sm:gap-3 shrink-0 z-10">
-                <div className="hidden xs:block relative transform group-hover:scale-105 transition-all duration-300">
+                <div className="hidden xs:block relative transform group-hover:scale-105 transition-transform duration-300">
                   <GroceryBasketIllustration size={68} />
                 </div>
-                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/15 flex items-center justify-center text-white shrink-0 group-hover:bg-white/25 group-hover:scale-105 transition-all rtl:rotate-180 border border-white/20 shadow-2xs">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/15 flex items-center justify-center text-white shrink-0 group-hover:bg-white/25 group-hover:scale-105 transition-[transform,background-color] duration-150 rtl:rotate-180 border border-white/20 shadow-2xs">
                   <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2]" />
                 </div>
               </div>

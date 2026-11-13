@@ -102,7 +102,7 @@ export const AppPublicHeader: React.FC<AppPublicHeaderProps> = ({
           <button
             type="button"
             onClick={handleLogoClick}
-            className="flex items-center gap-2 p-1 rounded-xl hover:opacity-90 active:scale-95 transition-all cursor-pointer group"
+            className="flex items-center gap-2 p-1 rounded-xl hover:opacity-90 active:scale-95 transition-[transform,opacity] duration-150 cursor-pointer group"
             title="Go to YAAD Home"
           >
             {/* High-contrast container for the official logo */}
@@ -141,7 +141,7 @@ export const AppPublicHeader: React.FC<AppPublicHeaderProps> = ({
               type="button"
               onClick={handleProfileClick}
               title={userDisplayName || 'Your Account Dashboard'}
-              className="inline-flex items-center gap-2 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-full bg-white hover:bg-[#faf8f5] border border-[#005039]/25 text-[#005039] shadow-2xs active:scale-95 transition-all cursor-pointer group"
+              className="inline-flex items-center gap-2 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-full bg-white hover:bg-[#faf8f5] border border-[#005039]/25 text-[#005039] shadow-2xs active:scale-95 transition-[transform,background-color] duration-150 cursor-pointer group"
             >
               <Avatar
                 name={userDisplayName}
@@ -161,7 +161,7 @@ export const AppPublicHeader: React.FC<AppPublicHeaderProps> = ({
               disabled={isExpanding}
               title="Sign in to your account"
               aria-label="Sign in"
-              className={`group relative flex items-center shadow-2xs cursor-pointer active:scale-95 transition-all duration-500 ease-out overflow-hidden ${
+              className={`group relative flex items-center shadow-2xs cursor-pointer active:scale-95 transition-[background-color,border-color,color,box-shadow,transform] duration-500 ease-out overflow-hidden ${
                 isExpanding
                   ? 'w-[108px] sm:w-[116px] px-3.5 py-2 rounded-full bg-[#005039] text-white border border-[#005039] shadow-md'
                   : 'w-11 h-11 rounded-full justify-center bg-white border border-[#005039]/25 text-[#005039] hover:border-[#005039] hover:bg-[#005039]/5'
@@ -180,7 +180,7 @@ export const AppPublicHeader: React.FC<AppPublicHeaderProps> = ({
               </div>
 
               <span
-                className={`whitespace-nowrap text-xs font-extrabold tracking-tight transition-all duration-500 ease-out ${
+                className={`whitespace-nowrap text-xs font-extrabold tracking-tight transition-[opacity,transform] duration-500 ease-out ${
                   isExpanding
                     ? 'opacity-100 translate-x-0 ms-2 max-w-[80px]'
                     : 'opacity-0 -translate-x-2 ms-0 max-w-0 pointer-events-none'

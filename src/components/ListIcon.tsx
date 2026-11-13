@@ -34,7 +34,7 @@ export const ListIcon: React.FC<ListIconProps> = ({
 
   return (
     <div
-      className={`${sizeClasses[size]} flex items-center justify-center shrink-0 border transition-all ${config.bgColor} ${config.textColor} ${config.borderColor} ${config.hoverBg} ${className}`}
+      className={`${sizeClasses[size]} flex items-center justify-center shrink-0 border transition-colors ${config.bgColor} ${config.textColor} ${config.borderColor} ${config.hoverBg} ${className}`}
       aria-hidden="true"
     >
       <Icon className={iconSizes[size]} />

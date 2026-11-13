@@ -583,7 +583,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
               type="button"
               onClick={handleGoogleSignIn}
               disabled={isAnyLoading}
-              className="w-full h-12 rounded-full border border-neutral-300/90 bg-white hover:bg-neutral-50 text-neutral-800 text-sm font-semibold font-body shadow-2xs flex items-center justify-center gap-3 transition-all active:scale-[0.99] cursor-pointer disabled:opacity-60 mb-5"
+              className="w-full h-12 rounded-full border border-neutral-300/90 bg-white hover:bg-neutral-50 text-neutral-800 text-sm font-semibold font-body shadow-2xs flex items-center justify-center gap-3 transition-[transform,background-color] duration-150 active:scale-[0.99] cursor-pointer disabled:opacity-60 mb-5"
             >
               {googleLoading ? (
                 <Loader2 className="w-5 h-5 animate-spin text-neutral-600" />
@@ -620,7 +620,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@example.com"
                   disabled={isAnyLoading}
-                  className="w-full h-12 px-4 rounded-2xl border border-neutral-200/90 bg-neutral-50/60 text-neutral-900 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 focus:bg-white transition-all disabled:opacity-60"
+                  className="w-full h-12 px-4 rounded-2xl border border-neutral-200/90 bg-neutral-50/60 text-neutral-900 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 focus:bg-white transition-[border-color,box-shadow,background-color] duration-150 disabled:opacity-60"
                 />
               </div>
 
@@ -641,7 +641,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     disabled={isAnyLoading}
-                    className="w-full h-12 px-4 pr-12 rounded-2xl border border-neutral-200/90 bg-neutral-50/60 text-neutral-900 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 focus:bg-white transition-all disabled:opacity-60"
+                    className="w-full h-12 px-4 pr-12 rounded-2xl border border-neutral-200/90 bg-neutral-50/60 text-neutral-900 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 focus:bg-white transition-[border-color,box-shadow,background-color] duration-150 disabled:opacity-60"
                   />
                   <button
                     type="button"
@@ -677,7 +677,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
               <button
                 type="submit"
                 disabled={isAnyLoading}
-                className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-sm hover:shadow-md active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 mt-2"
+                className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-sm hover:shadow-md active:scale-[0.99] transition-[transform,background-color,box-shadow] duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 mt-2"
               >
                 {loading ? (
                   <Loader2 className="w-5 h-5 animate-spin text-white" />
@@ -725,7 +725,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
               type="button"
               onClick={handleGoogleSignIn}
               disabled={isAnyLoading}
-              className="w-full h-12 rounded-full border border-neutral-300/90 bg-white hover:bg-neutral-50 text-neutral-800 text-sm font-semibold font-body shadow-2xs flex items-center justify-center gap-3 transition-all active:scale-[0.99] cursor-pointer disabled:opacity-60 mb-5"
+              className="w-full h-12 rounded-full border border-neutral-300/90 bg-white hover:bg-neutral-50 text-neutral-800 text-sm font-semibold font-body shadow-2xs flex items-center justify-center gap-3 transition-[transform,background-color] duration-150 active:scale-[0.99] cursor-pointer disabled:opacity-60 mb-5"
             >
               {googleLoading ? (
                 <Loader2 className="w-5 h-5 animate-spin text-neutral-600" />
@@ -762,7 +762,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="e.g. Ali Khan"
                   disabled={isAnyLoading}
-                  className="w-full h-11 px-4 rounded-2xl border border-neutral-200/90 bg-neutral-50/60 text-neutral-900 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 focus:bg-white transition-all disabled:opacity-60"
+                  className="w-full h-11 px-4 rounded-2xl border border-neutral-200/90 bg-neutral-50/60 text-neutral-900 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 focus:bg-white transition-[border-color,box-shadow,background-color] duration-150 disabled:opacity-60"
                 />
               </div>
 
@@ -782,7 +782,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   onChange={(e) => setPhoneNumber(e.target.value)}
                   placeholder="0300 1234567"
                   disabled={isAnyLoading}
-                  className="w-full h-11 px-4 rounded-2xl border border-neutral-200/90 bg-neutral-50/60 text-neutral-900 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 focus:bg-white transition-all disabled:opacity-60"
+                  className="w-full h-11 px-4 rounded-2xl border border-neutral-200/90 bg-neutral-50/60 text-neutral-900 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 focus:bg-white transition-[border-color,box-shadow,background-color] duration-150 disabled:opacity-60"
                 />
               </div>
 
@@ -802,7 +802,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@example.com"
                   disabled={isAnyLoading}
-                  className="w-full h-11 px-4 rounded-2xl border border-neutral-200/90 bg-neutral-50/60 text-neutral-900 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 focus:bg-white transition-all disabled:opacity-60"
+                  className="w-full h-11 px-4 rounded-2xl border border-neutral-200/90 bg-neutral-50/60 text-neutral-900 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 focus:bg-white transition-[border-color,box-shadow,background-color] duration-150 disabled:opacity-60"
                 />
               </div>
 
@@ -823,7 +823,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     disabled={isAnyLoading}
-                    className="w-full h-11 px-4 pr-12 rounded-2xl border border-neutral-200/90 bg-neutral-50/60 text-neutral-900 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 focus:bg-white transition-all disabled:opacity-60"
+                    className="w-full h-11 px-4 pr-12 rounded-2xl border border-neutral-200/90 bg-neutral-50/60 text-neutral-900 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 focus:bg-white transition-[border-color,box-shadow,background-color] duration-150 disabled:opacity-60"
                   />
                   <button
                     type="button"
@@ -860,7 +860,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
                     disabled={isAnyLoading}
-                    className="w-full h-11 px-4 pr-12 rounded-2xl border border-neutral-200/90 bg-neutral-50/60 text-neutral-900 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 focus:bg-white transition-all disabled:opacity-60"
+                    className="w-full h-11 px-4 pr-12 rounded-2xl border border-neutral-200/90 bg-neutral-50/60 text-neutral-900 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 focus:bg-white transition-[border-color,box-shadow,background-color] duration-150 disabled:opacity-60"
                   />
                   <button
                     type="button"
@@ -914,7 +914,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
               <button
                 type="submit"
                 disabled={!agreedToTerms || isAnyLoading}
-                className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-sm hover:shadow-md active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed mt-3"
+                className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-sm hover:shadow-md active:scale-[0.99] transition-[transform,background-color,box-shadow] duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed mt-3"
               >
                 {loading ? (
                   <Loader2 className="w-5 h-5 animate-spin text-white" />
@@ -985,7 +985,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
               {particles.map((p, idx) => (
                 <span
                   key={idx}
-                  className="absolute rounded-full pointer-events-none transition-all duration-700 ease-out"
+                  className="absolute rounded-full pointer-events-none transition-[transform,opacity] duration-700 ease-out"
                   style={{
                     width: `${p.size}px`,
                     height: `${p.size}px`,
@@ -1001,7 +1001,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
             {/* Success Copy */}
             <div
-              className={`transition-all duration-500 ease-out ${
+              className={`transition-[opacity,transform] duration-500 ease-out ${
                 contentVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
               }`}
             >
@@ -1019,7 +1019,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
             {/* Action CTA: Browse Home or Go to Sign In */}
             <div
-              className={`w-full mt-8 transition-all duration-500 ease-out ${
+              className={`w-full mt-8 transition-[opacity,transform] duration-500 ease-out ${
                 contentVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
               }`}
             >
@@ -1033,7 +1033,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                     setPassword('');
                     setNeedsEmailConfirmation(false);
                   }}
-                  className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-[transform,background-color,box-shadow] duration-150 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <span>Go to Sign In</span>
                 </button>
@@ -1041,7 +1041,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 <button
                   type="button"
                   onClick={handleBrowseHome}
-                  className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-[transform,background-color,box-shadow] duration-150 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <span>Browse Home</span>
                 </button>
@@ -1082,7 +1082,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@example.com"
                   disabled={isAnyLoading}
-                  className="w-full h-12 px-4 rounded-2xl border border-neutral-200/90 bg-neutral-50/60 text-neutral-900 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 focus:bg-white transition-all disabled:opacity-60"
+                  className="w-full h-12 px-4 rounded-2xl border border-neutral-200/90 bg-neutral-50/60 text-neutral-900 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 focus:bg-white transition-[border-color,box-shadow,background-color] duration-150 disabled:opacity-60"
                 />
               </div>
 
@@ -1090,7 +1090,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
               <button
                 type="submit"
                 disabled={isAnyLoading}
-                className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-sm hover:shadow-md active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 mt-3"
+                className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-sm hover:shadow-md active:scale-[0.99] transition-[transform,background-color,box-shadow] duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 mt-3"
               >
                 {loading ? (
                   <Loader2 className="w-5 h-5 animate-spin text-white" />
@@ -1151,7 +1151,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="••••••••"
                     disabled={isAnyLoading}
-                    className="w-full h-12 px-4 pr-12 rounded-2xl border border-neutral-200/90 bg-neutral-50/60 text-neutral-900 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 focus:bg-white transition-all disabled:opacity-60"
+                    className="w-full h-12 px-4 pr-12 rounded-2xl border border-neutral-200/90 bg-neutral-50/60 text-neutral-900 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 focus:bg-white transition-[border-color,box-shadow,background-color] duration-150 disabled:opacity-60"
                   />
                   <button
                     type="button"
@@ -1184,7 +1184,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                     onChange={(e) => setConfirmNewPassword(e.target.value)}
                     placeholder="••••••••"
                     disabled={isAnyLoading}
-                    className="w-full h-12 px-4 pr-12 rounded-2xl border border-neutral-200/90 bg-neutral-50/60 text-neutral-900 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 focus:bg-white transition-all disabled:opacity-60"
+                    className="w-full h-12 px-4 pr-12 rounded-2xl border border-neutral-200/90 bg-neutral-50/60 text-neutral-900 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 focus:bg-white transition-[border-color,box-shadow,background-color] duration-150 disabled:opacity-60"
                   />
                   <button
                     type="button"
@@ -1205,7 +1205,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
               <button
                 type="submit"
                 disabled={isAnyLoading}
-                className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-sm hover:shadow-md active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 mt-3"
+                className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-sm hover:shadow-md active:scale-[0.99] transition-[transform,background-color,box-shadow] duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 mt-3"
               >
                 {loading ? (
                   <Loader2 className="w-5 h-5 animate-spin text-white" />

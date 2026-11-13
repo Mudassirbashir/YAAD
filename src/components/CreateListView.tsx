@@ -108,7 +108,7 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
         {/* 3. List Name Input Field: Round shape, 16px text-base (prevents mobile zoom), submit button */}
         <form onSubmit={handleSubmitCustomTitle} className="space-y-2 mt-1">
           <div
-            className={`relative flex items-center w-full rounded-full border transition-all bg-surface-container-lowest shadow-xs ${
+            className={`relative flex items-center w-full rounded-full border transition-[border-color,box-shadow] duration-150 bg-surface-container-lowest shadow-xs ${
               isShaking ? 'animate-bounce' : ''
             } ${
               errorMsg
@@ -138,7 +138,7 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
               type="submit"
               disabled={isSubmitting}
               aria-label="Continue"
-              className="absolute end-1.5 top-1/2 -translate-y-1/2 w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-primary hover:bg-[#0c3125] text-white flex items-center justify-center hover:opacity-95 active:scale-95 transition-all shadow-xs cursor-pointer disabled:opacity-50"
+              className="absolute end-1.5 top-1/2 -translate-y-1/2 w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-primary hover:bg-[#0c3125] text-white flex items-center justify-center hover:opacity-95 active:scale-95 transition-[transform,background-color,opacity] duration-150 shadow-xs cursor-pointer disabled:opacity-50"
             >
               <ArrowRight className="w-5 h-5 rtl:rotate-180" />
             </button>

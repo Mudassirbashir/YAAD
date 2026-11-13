@@ -290,7 +290,7 @@ export const EditListView: React.FC<EditListViewProps> = ({
               type="submit"
               aria-label="Add item"
               style={{ backgroundColor: plusBg }}
-              className="absolute end-1.5 top-1/2 -translate-y-1/2 w-11 h-11 min-w-[44px] min-h-[44px] text-white rounded-full flex items-center justify-center hover:opacity-90 active:scale-95 transition-all shadow-xs cursor-pointer"
+              className="absolute end-1.5 top-1/2 -translate-y-1/2 w-11 h-11 min-w-[44px] min-h-[44px] text-white rounded-full flex items-center justify-center hover:opacity-90 active:scale-95 transition-[transform,opacity] duration-150 shadow-xs cursor-pointer"
             >
               <Plus className="w-5 h-5 stroke-[2.4]" />
             </button>
@@ -348,7 +348,7 @@ export const EditListView: React.FC<EditListViewProps> = ({
                       return (
                         <div
                           key={item.id}
-                          className="flex items-center justify-between p-2.5 sm:p-3 rounded-2xl bg-surface-container-low hover:bg-surface-container border border-surface-dim/70 transition-all gap-3 shadow-2xs"
+                          className="flex items-center justify-between p-2.5 sm:p-3 rounded-2xl bg-surface-container-low hover:bg-surface-container border border-surface-dim/70 transition-colors duration-150 gap-3 shadow-2xs"
                         >
                           {/* Left: Item Logo + 3-Tier Info (Name, Quantity, Category) */}
                           <div className="flex items-center gap-3 min-w-0 flex-1">

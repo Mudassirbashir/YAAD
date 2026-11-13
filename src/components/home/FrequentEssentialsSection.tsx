@@ -250,7 +250,7 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
             type="button"
             id="view_all_essentials_btn"
             onClick={onViewAll}
-            className="font-body text-[14px] font-semibold text-[#0F3D2E] dark:text-emerald-400 underline underline-offset-2 hover:opacity-80 active:scale-95 transition-all cursor-pointer p-1.5 -m-1.5 min-h-[44px] inline-flex items-center"
+            className="font-body text-[14px] font-semibold text-[#0F3D2E] dark:text-emerald-400 underline underline-offset-2 hover:opacity-80 active:scale-95 transition-[transform,opacity] duration-150 cursor-pointer p-1.5 -m-1.5 min-h-[44px] inline-flex items-center"
           >
             {t('home.viewAll') || 'View All'}
           </button>
@@ -278,7 +278,7 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
                   handleAddClick(item);
                 }
               }}
-              className="bg-white dark:bg-surface-container-low rounded-full py-1 px-2 xs:py-1.5 xs:px-2.5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] border border-surface-dim/40 flex items-center gap-1.5 xs:gap-2 cursor-pointer select-none hover:shadow-md transition-all active:scale-[0.99] min-h-[48px] xs:min-h-[52px] sm:min-h-[54px] w-full overflow-hidden"
+              className="bg-white dark:bg-surface-container-low rounded-full py-1 px-2 xs:py-1.5 xs:px-2.5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] border border-surface-dim/40 flex items-center gap-1.5 xs:gap-2 cursor-pointer select-none hover:shadow-md transition-[transform,box-shadow] duration-150 active:scale-[0.99] min-h-[48px] xs:min-h-[52px] sm:min-h-[54px] w-full overflow-hidden"
             >
               {/* Image (left): Circular photo, compact object-cover centered */}
               <div className="w-8 h-8 xs:w-9 xs:h-9 rounded-full bg-white dark:bg-stone-900 border border-surface-dim/60 flex items-center justify-center overflow-hidden shrink-0 shadow-2xs">

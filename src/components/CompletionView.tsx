@@ -355,7 +355,7 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
                             size={28}
                             className={`w-7 h-7 rounded-lg shrink-0 opacity-80 ${
                               visual.url
-                                ? 'cursor-pointer hover:opacity-100 hover:scale-110 active:scale-95 transition-all'
+                                ? 'cursor-pointer hover:opacity-100 hover:scale-110 active:scale-95 transition-[transform,opacity]'
                                 : ''
                             }`}
                             title={visual.url ? `Click to view photo of ${item.name}` : undefined}

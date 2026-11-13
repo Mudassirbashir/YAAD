@@ -54,7 +54,7 @@ export const SuspendedAccountModal: React.FC<SuspendedAccountModalProps> = ({
         <div className="flex flex-col gap-2.5 pt-1">
           <a
             href={`mailto:support@yaad.app?subject=Account%20Suspension%20Appeal&body=Reason:%20${encodeURIComponent(reason || 'N/A')}`}
-            className="w-full py-3 px-4 rounded-xl text-xs font-bold bg-primary text-white hover:bg-primary/90 flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-[0.98] transition-all"
+            className="w-full py-3 px-4 rounded-xl text-xs font-bold bg-primary text-white hover:bg-primary/90 flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-[0.98] transition-[transform,background-color]"
           >
             <Mail className="w-4 h-4" />
             <span>Contact Support / رابطہ کریں</span>
@@ -63,7 +63,7 @@ export const SuspendedAccountModal: React.FC<SuspendedAccountModalProps> = ({
           <button
             type="button"
             onClick={onSignOut}
-            className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-red-600 hover:bg-red-500/10 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] transition-all"
+            className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-red-600 hover:bg-red-500/10 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] transition-[transform,background-color]"
           >
             <LogOut className="w-4 h-4" />
             <span>Sign Out / لاگ آؤٹ</span>

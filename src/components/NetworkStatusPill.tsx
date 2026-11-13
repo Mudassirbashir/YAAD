@@ -103,7 +103,7 @@ export const NetworkStatusPill: React.FC<NetworkStatusPillProps> = ({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -12, scale: 0.95 }}
             transition={{ type: 'spring', stiffness: 500, damping: 38 }}
-            className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container-high/80 text-on-surface backdrop-blur-xl shadow-[0_4px_14px_rgba(0,0,0,0.08)] border border-surface-dim text-xs font-medium hover:bg-surface-container-highest active:scale-95 transition-all"
+            className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container-high/80 text-on-surface backdrop-blur-xl shadow-[0_4px_14px_rgba(0,0,0,0.08)] border border-surface-dim text-xs font-medium hover:bg-surface-container-highest active:scale-95 transition-[transform,background-color] duration-150"
           >
             <Cloud className="w-3.5 h-3.5 text-primary" />
             <span className="font-body flex items-center gap-1.5">

@@ -181,7 +181,7 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
                   triggerHaptic(6);
                   onToggleSelect?.(list.id);
                 }}
-                className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 border transition-all cursor-pointer ${
+                className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 border transition-[transform,background-color,border-color,color] duration-150 cursor-pointer ${
                   selected
                     ? 'bg-primary border-primary text-white shadow-2xs scale-105'
                     : 'bg-surface-container-low border-surface-dim text-transparent hover:border-primary/50'

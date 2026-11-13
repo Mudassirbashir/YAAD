@@ -172,7 +172,7 @@ export const SupportDeskModal: React.FC<SupportDeskModalProps> = ({
             <button
               type="button"
               onClick={handleDone}
-              className="w-full py-2.5 rounded-xl bg-[#003527] hover:bg-[#00271c] text-white font-bold text-xs shadow-xs cursor-pointer transition-all"
+              className="w-full py-2.5 rounded-xl bg-[#003527] hover:bg-[#00271c] text-white font-bold text-xs shadow-xs cursor-pointer transition-colors duration-150"
             >
               {language === 'ur' ? 'ٹھیک ہے' : 'Done & Close'}
             </button>
@@ -278,7 +278,7 @@ export const SupportDeskModal: React.FC<SupportDeskModalProps> = ({
               <button
                 type="submit"
                 disabled={isSubmitting || !description.trim()}
-                className="px-5 py-2 rounded-xl bg-[#003527] hover:bg-[#00271c] text-white font-bold transition-all disabled:opacity-50 flex items-center gap-1.5 cursor-pointer shadow-xs"
+                className="px-5 py-2 rounded-xl bg-[#003527] hover:bg-[#00271c] text-white font-bold transition-[background-color,opacity] duration-150 disabled:opacity-50 flex items-center gap-1.5 cursor-pointer shadow-xs"
               >
                 {isSubmitting ? (
                   <>

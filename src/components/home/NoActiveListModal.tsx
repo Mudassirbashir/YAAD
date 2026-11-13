@@ -85,7 +85,7 @@ export const NoActiveListModal: React.FC<NoActiveListModalProps> = ({
             type="button"
             id="add_to_new_list_btn"
             onClick={() => onAddToNewList(item)}
-            className="w-full p-3 rounded-2xl bg-primary hover:bg-primary-container active:scale-[0.98] text-on-primary transition-all shadow-xs flex items-center justify-between gap-3 text-left cursor-pointer group"
+            className="w-full p-3 rounded-2xl bg-primary hover:bg-primary-container active:scale-[0.98] text-on-primary transition-[transform,background-color] duration-150 shadow-xs flex items-center justify-between gap-3 text-left cursor-pointer group"
           >
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
@@ -108,7 +108,7 @@ export const NoActiveListModal: React.FC<NoActiveListModalProps> = ({
             type="button"
             id="create_list_first_btn"
             onClick={onCreateListFirst}
-            className="w-full p-3 rounded-2xl bg-surface-container hover:bg-surface-container-high active:scale-[0.98] text-on-surface transition-all border border-surface-dim/80 flex items-center justify-between gap-3 text-left cursor-pointer group"
+            className="w-full p-3 rounded-2xl bg-surface-container hover:bg-surface-container-high active:scale-[0.98] text-on-surface transition-[transform,background-color] duration-150 border border-surface-dim/80 flex items-center justify-between gap-3 text-left cursor-pointer group"
           >
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-8 h-8 rounded-xl bg-surface-container-lowest flex items-center justify-center shrink-0">

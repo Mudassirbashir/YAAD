@@ -145,7 +145,7 @@ export const PreferencesSection: React.FC<PreferencesSectionProps> = ({
               id="lang_select_en"
               type="button"
               onClick={() => onLanguageSelect('en')}
-              className={`min-h-[56px] p-3.5 rounded-2xl border text-start flex items-center justify-between transition-all cursor-pointer active:scale-[0.98] ${
+              className={`min-h-[56px] p-3.5 rounded-2xl border text-start flex items-center justify-between transition-[transform,background-color,border-color,box-shadow] duration-150 cursor-pointer active:scale-[0.98] ${
                 language === 'en'
                   ? 'border-primary bg-primary-fixed/25 ring-1 ring-primary/30 shadow-xs'
                   : 'border-surface-dim bg-surface-container-lowest hover:bg-surface-container-low/70'
@@ -176,7 +176,7 @@ export const PreferencesSection: React.FC<PreferencesSectionProps> = ({
               id="lang_select_roman_urdu"
               type="button"
               onClick={() => onLanguageSelect('roman-urdu')}
-              className={`min-h-[56px] p-3.5 rounded-2xl border text-start flex items-center justify-between transition-all cursor-pointer active:scale-[0.98] ${
+              className={`min-h-[56px] p-3.5 rounded-2xl border text-start flex items-center justify-between transition-[transform,background-color,border-color,box-shadow] duration-150 cursor-pointer active:scale-[0.98] ${
                 language === 'roman-urdu'
                   ? 'border-primary bg-primary-fixed/25 ring-1 ring-primary/30 shadow-xs'
                   : 'border-surface-dim bg-surface-container-lowest hover:bg-surface-container-low/70'
@@ -207,7 +207,7 @@ export const PreferencesSection: React.FC<PreferencesSectionProps> = ({
               id="lang_select_ur"
               type="button"
               onClick={() => onLanguageSelect('ur')}
-              className={`min-h-[56px] p-3.5 rounded-2xl border text-start flex items-center justify-between transition-all cursor-pointer active:scale-[0.98] ${
+              className={`min-h-[56px] p-3.5 rounded-2xl border text-start flex items-center justify-between transition-[transform,background-color,border-color,box-shadow] duration-150 cursor-pointer active:scale-[0.98] ${
                 language === 'ur'
                   ? 'border-primary bg-primary-fixed/25 ring-1 ring-primary/30 shadow-xs'
                   : 'border-surface-dim bg-surface-container-lowest hover:bg-surface-container-low/70'
@@ -342,7 +342,7 @@ export const PreferencesSection: React.FC<PreferencesSectionProps> = ({
               <button
                 type="button"
                 onClick={handleSendTestNotification}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container-low hover:bg-surface-container text-primary font-bold text-xs border border-surface-dim transition-all cursor-pointer shadow-2xs"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-container-low hover:bg-surface-container text-primary font-bold text-xs border border-surface-dim transition-colors duration-150 cursor-pointer shadow-2xs"
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>

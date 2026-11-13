@@ -17,7 +17,7 @@ export const GroceryBasketIllustration: React.FC<GroceryBasketIllustrationProps>
       aria-hidden="true"
     >
       {/* 1. Ambient Warm Emerald & Golden Glow behind basket */}
-      <div className="absolute inset-0 bg-gradient-to-tr from-amber-400/25 via-emerald-400/30 to-teal-300/20 rounded-full blur-xl scale-125 opacity-70 group-hover:opacity-100 group-hover:scale-135 transition-all duration-300" />
+      <div className="absolute inset-0 bg-gradient-to-tr from-amber-400/25 via-emerald-400/30 to-teal-300/20 rounded-full blur-xl scale-125 opacity-70 group-hover:opacity-100 group-hover:scale-135 transition-[transform,opacity] duration-300" />
 
       {/* 2. Glassmorphic pill container */}
       <div className="relative w-full h-full rounded-2xl bg-white/10 backdrop-blur-md border border-white/25 shadow-[0_8px_20px_rgba(0,0,0,0.2)] p-1.5 flex items-center justify-center overflow-hidden ring-1 ring-white/20">

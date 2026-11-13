@@ -359,7 +359,7 @@ export const BlogArticlePage: React.FC<BlogArticlePageProps> = ({
           <button
             type="button"
             onClick={handleCopyLink}
-            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-[#ddd7c3] hover:border-[#003527] text-[#003527] text-xs font-bold transition-all shadow-2xs cursor-pointer"
+            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-[#ddd7c3] hover:border-[#003527] text-[#003527] text-xs font-bold transition-colors shadow-2xs cursor-pointer"
           >
             {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Share2 className="w-3.5 h-3.5" />}
             <span>{copiedLink ? 'Link Copied' : 'Share'}</span>
@@ -549,7 +549,7 @@ export const BlogArticlePage: React.FC<BlogArticlePageProps> = ({
                         <div
                           key={globalIdx}
                           onClick={() => toggleItemCheck(globalIdx)}
-                          className={`flex items-center justify-between p-3.5 rounded-2xl border transition-all cursor-pointer select-none ${
+                          className={`flex items-center justify-between p-3.5 rounded-2xl border transition-[background-color,border-color,opacity] cursor-pointer select-none ${
                             isChecked
                               ? 'bg-[#f4f2ea]/60 border-[#e0dcce] text-neutral-400 opacity-60'
                               : 'bg-[#faf9f5] border-[#e7e1ce] hover:border-[#003527] text-[#1c2826] shadow-2xs'
@@ -664,7 +664,7 @@ export const BlogArticlePage: React.FC<BlogArticlePageProps> = ({
                 return (
                   <div
                     key={fIdx}
-                    className="border border-[#ddd7c3] rounded-2xl bg-white overflow-hidden transition-all shadow-2xs"
+                    className="border border-[#ddd7c3] rounded-2xl bg-white overflow-hidden transition-colors shadow-2xs"
                   >
                     <button
                       type="button"
@@ -735,7 +735,7 @@ export const BlogArticlePage: React.FC<BlogArticlePageProps> = ({
                     e.preventDefault();
                     handleNav(`/blog/${rel.slug}`);
                   }}
-                  className="p-5 rounded-2xl bg-white border border-[#ddd7c3] hover:border-[#003527] hover:shadow-md transition-all flex flex-col justify-between group cursor-pointer"
+                  className="p-5 rounded-2xl bg-white border border-[#ddd7c3] hover:border-[#003527] hover:shadow-md transition-[border-color,box-shadow] flex flex-col justify-between group cursor-pointer"
                 >
                   <div className="space-y-2">
                     <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#005039]">

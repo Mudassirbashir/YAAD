@@ -55,7 +55,7 @@ export const RecommendationChipsBar: React.FC<RecommendationChipsBarProps> = ({
               key={item.canonicalName}
               type="button"
               onClick={() => onSelectItem(item)}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-surface-container-low border border-outline-variant/60 hover:border-primary hover:bg-primary/5 active:scale-95 transition-all text-on-surface whitespace-nowrap shadow-2xs"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-surface-container-low border border-outline-variant/60 hover:border-primary hover:bg-primary/5 active:scale-95 transition-[transform,background-color,border-color] duration-150 text-on-surface whitespace-nowrap shadow-2xs"
             >
               <EssentialProductVisual
                 canonicalName={item.canonicalName}

@@ -23,7 +23,7 @@ interface SwipeableShoppingItemCardProps {
   onOpenImage?: (item: ShoppingItem, imageUrl?: string) => void;
 }
 
-export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps> = ({
+export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps> = React.memo(({
   item,
   isChecked,
   formattedQty,
@@ -192,7 +192,7 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
                     : undefined
                 }
                 title={visual.url ? `Click to view photo of ${item.name}` : undefined}
-                className={`w-9 h-9 rounded-xl shrink-0 transition-all duration-200 ${
+                className={`w-9 h-9 rounded-xl shrink-0 transition-[transform,opacity,filter] duration-200 ${
                   isChecked
                     ? 'opacity-50 grayscale-[35%] scale-95'
                     : justCompletedLocally
@@ -325,4 +325,6 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
       </motion.div>
     </div>
   );
-};
+});
+
+SwipeableShoppingItemCard.displayName = 'SwipeableShoppingItemCard';

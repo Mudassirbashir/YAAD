@@ -110,7 +110,7 @@ export const AppearanceSection: React.FC = () => {
                 id={`theme_select_btn_${item.id}`}
                 type="button"
                 onClick={() => setTheme(item.id)}
-                className={`relative p-4 rounded-2xl border text-start transition-all cursor-pointer active:scale-[0.98] flex flex-col justify-between gap-3 group ${
+                className={`relative p-4 rounded-2xl border text-start transition-[transform,background-color,border-color,box-shadow] duration-150 cursor-pointer active:scale-[0.98] flex flex-col justify-between gap-3 group ${
                   isActive
                     ? 'border-primary bg-primary-fixed/20 ring-2 ring-primary/40 shadow-sm'
                     : 'border-surface-dim bg-surface-container-lowest hover:bg-surface-container-low/70 hover:border-surface-dim/80'

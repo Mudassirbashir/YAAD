@@ -126,7 +126,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
             <button
               type="button"
               onClick={onGetStarted}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-2xl bg-[#005039] hover:bg-[#003d2b] text-white font-bold text-sm sm:text-base shadow-[0_4px_0_0_#003324,0_8px_20px_rgba(0,80,57,0.28)] active:translate-y-1 active:shadow-[0_0px_0_0_#003324] border border-emerald-500/30 transition-all cursor-pointer whitespace-nowrap"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-2xl bg-[#005039] hover:bg-[#003d2b] text-white font-bold text-sm sm:text-base shadow-[0_4px_0_0_#003324,0_8px_20px_rgba(0,80,57,0.28)] active:translate-y-1 active:shadow-[0_0px_0_0_#003324] border border-emerald-500/30 transition-[transform,background-color,box-shadow] cursor-pointer whitespace-nowrap"
             >
               <span>List Now</span>
               <ArrowRight className="w-4 h-4" />
@@ -136,7 +136,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
             <button
               type="button"
               onClick={onOpenRashanList}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-white hover:bg-neutral-50 text-[#1c2826] font-bold text-sm sm:text-base shadow-[0_4px_0_0_#d8d3c7,0_8px_16px_rgba(0,0,0,0.06)] active:translate-y-1 active:shadow-[0_0px_0_0_#d8d3c7] border border-[#d8d3c7] transition-all cursor-pointer whitespace-nowrap"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-white hover:bg-neutral-50 text-[#1c2826] font-bold text-sm sm:text-base shadow-[0_4px_0_0_#d8d3c7,0_8px_16px_rgba(0,0,0,0.06)] active:translate-y-1 active:shadow-[0_0px_0_0_#d8d3c7] border border-[#d8d3c7] transition-[transform,background-color,box-shadow] cursor-pointer whitespace-nowrap"
             >
               <ShoppingBag className="w-4 h-4 text-[#005039]" />
               <span>Monthly Grocery Guide</span>
@@ -167,7 +167,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
                 e.preventDefault();
                 navigate('/features');
               }}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white border border-[#e5e1d8] hover:border-[#005039]/40 hover:bg-[#faf8f5] transition-all shadow-2xs"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white border border-[#e5e1d8] hover:border-[#005039]/40 hover:bg-[#faf8f5] transition-colors shadow-2xs"
             >
               <Sparkles className="w-3.5 h-3.5 text-[#005039]" />
               <span>Explore YAAD features</span>
@@ -178,7 +178,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
                 e.preventDefault();
                 navigate('/how-it-works');
               }}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white border border-[#e5e1d8] hover:border-[#005039]/40 hover:bg-[#faf8f5] transition-all shadow-2xs"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white border border-[#e5e1d8] hover:border-[#005039]/40 hover:bg-[#faf8f5] transition-colors shadow-2xs"
             >
               <CheckCircle2 className="w-3.5 h-3.5 text-[#005039]" />
               <span>See how YAAD works</span>
@@ -189,7 +189,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
                 e.preventDefault();
                 navigate('/faq');
               }}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white border border-[#e5e1d8] hover:border-[#005039]/40 hover:bg-[#faf8f5] transition-all shadow-2xs"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white border border-[#e5e1d8] hover:border-[#005039]/40 hover:bg-[#faf8f5] transition-colors shadow-2xs"
             >
               <span>Read frequently asked questions</span>
             </a>
@@ -199,7 +199,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
                 e.preventDefault();
                 navigate('/about');
               }}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white border border-[#e5e1d8] hover:border-[#005039]/40 hover:bg-[#faf8f5] transition-all shadow-2xs"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white border border-[#e5e1d8] hover:border-[#005039]/40 hover:bg-[#faf8f5] transition-colors shadow-2xs"
             >
               <span>Learn about YAAD</span>
             </a>
@@ -229,7 +229,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
         <section className="py-10 px-4 sm:px-6 max-w-5xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
             {/* Card 1: Write It Down */}
-            <div className="bg-white border border-[#e5e1d8] rounded-2xl p-6 shadow-2xs hover:border-[#005039]/40 hover:shadow-xs transition-all flex flex-col justify-between">
+            <div className="bg-white border border-[#e5e1d8] rounded-2xl p-6 shadow-2xs hover:border-[#005039]/40 hover:shadow-xs transition-[border-color,box-shadow] flex flex-col justify-between">
               <div>
                 <div className="w-12 h-12 rounded-2xl bg-[#005039]/10 text-[#005039] flex items-center justify-center mb-4">
                   <PenLine className="w-5 h-5 text-[#005039]" />
@@ -261,7 +261,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
             </div>
 
             {/* Card 2: Go to the Shop */}
-            <div className="bg-white border border-[#e5e1d8] rounded-2xl p-6 shadow-2xs hover:border-[#005039]/40 hover:shadow-xs transition-all flex flex-col justify-between">
+            <div className="bg-white border border-[#e5e1d8] rounded-2xl p-6 shadow-2xs hover:border-[#005039]/40 hover:shadow-xs transition-[border-color,box-shadow] flex flex-col justify-between">
               <div>
                 <div className="w-12 h-12 rounded-2xl bg-[#005039]/10 text-[#005039] flex items-center justify-center mb-4">
                   <Store className="w-5 h-5 text-[#005039]" />
@@ -293,7 +293,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
             </div>
 
             {/* Card 3: Check It Off */}
-            <div className="bg-white border border-[#e5e1d8] rounded-2xl p-6 shadow-2xs hover:border-[#005039]/40 hover:shadow-xs transition-all flex flex-col justify-between">
+            <div className="bg-white border border-[#e5e1d8] rounded-2xl p-6 shadow-2xs hover:border-[#005039]/40 hover:shadow-xs transition-[border-color,box-shadow] flex flex-col justify-between">
               <div>
                 <div className="w-12 h-12 rounded-2xl bg-[#005039]/10 text-[#005039] flex items-center justify-center mb-4">
                   <CheckSquare className="w-5 h-5 text-[#005039]" />
@@ -361,7 +361,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
                 <div
                   key={item.id}
                   onClick={() => toggleDemoItem(item.id)}
-                  className={`py-3 px-3 flex items-center justify-between gap-3 rounded-xl transition-all select-none cursor-pointer ${
+                  className={`py-3 px-3 flex items-center justify-between gap-3 rounded-xl transition-colors select-none cursor-pointer ${
                     item.completed ? 'bg-[#f5f1e8]/70' : 'hover:bg-[#faf8f5]'
                   }`}
                 >
@@ -395,7 +395,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
                 <button
                   type="button"
                   onClick={() => addQuickItem('Chocolate', '1 Bar')}
-                  className="inline-flex items-center gap-1.5 text-xs px-3.5 py-1.5 rounded-full bg-[#faf8f5] hover:bg-[#f0ebe1] border border-[#e5e1d8] text-[#1c2826] font-semibold whitespace-nowrap transition-all active:scale-95 cursor-pointer"
+                  className="inline-flex items-center gap-1.5 text-xs px-3.5 py-1.5 rounded-full bg-[#faf8f5] hover:bg-[#f0ebe1] border border-[#e5e1d8] text-[#1c2826] font-semibold whitespace-nowrap transition-[transform,background-color] active:scale-95 cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5 text-[#005039]" />
                   <span>Chocolate</span>
@@ -403,7 +403,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
                 <button
                   type="button"
                   onClick={() => addQuickItem('Fruit Juice', '1 Pack')}
-                  className="inline-flex items-center gap-1.5 text-xs px-3.5 py-1.5 rounded-full bg-[#faf8f5] hover:bg-[#f0ebe1] border border-[#e5e1d8] text-[#1c2826] font-semibold whitespace-nowrap transition-all active:scale-95 cursor-pointer"
+                  className="inline-flex items-center gap-1.5 text-xs px-3.5 py-1.5 rounded-full bg-[#faf8f5] hover:bg-[#f0ebe1] border border-[#e5e1d8] text-[#1c2826] font-semibold whitespace-nowrap transition-[transform,background-color] active:scale-95 cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5 text-[#005039]" />
                   <span>Fruit Juice</span>
@@ -411,7 +411,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
                 <button
                   type="button"
                   onClick={() => addQuickItem('Fresh Yogurt', '1 Cup')}
-                  className="inline-flex items-center gap-1.5 text-xs px-3.5 py-1.5 rounded-full bg-[#faf8f5] hover:bg-[#f0ebe1] border border-[#e5e1d8] text-[#1c2826] font-semibold whitespace-nowrap transition-all active:scale-95 cursor-pointer"
+                  className="inline-flex items-center gap-1.5 text-xs px-3.5 py-1.5 rounded-full bg-[#faf8f5] hover:bg-[#f0ebe1] border border-[#e5e1d8] text-[#1c2826] font-semibold whitespace-nowrap transition-[transform,background-color] active:scale-95 cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5 text-[#005039]" />
                   <span>Fresh Yogurt</span>
@@ -425,7 +425,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
             <button
               type="button"
               onClick={onGetStarted}
-              className="inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl bg-[#005039] hover:bg-[#003d2b] text-white font-black text-sm sm:text-base shadow-[0_4px_0_0_#003324,0_8px_20px_rgba(0,80,57,0.28)] active:translate-y-1 active:shadow-[0_0px_0_0_#003324] border border-emerald-500/30 transition-all cursor-pointer whitespace-nowrap"
+              className="inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl bg-[#005039] hover:bg-[#003d2b] text-white font-black text-sm sm:text-base shadow-[0_4px_0_0_#003324,0_8px_20px_rgba(0,80,57,0.28)] active:translate-y-1 active:shadow-[0_0px_0_0_#003324] border border-emerald-500/30 transition-[transform,background-color,box-shadow] cursor-pointer whitespace-nowrap"
             >
               <span>Create Your Own List</span>
               <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />

@@ -272,7 +272,7 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
                   value={countrySearchQuery}
                   onChange={(e) => setCountrySearchQuery(e.target.value)}
                   placeholder="Search country or code (e.g. Pakistan, +92)..."
-                  className="w-full h-11 ps-9 pe-3 rounded-xl bg-surface-container border border-surface-dim text-xs font-body text-on-surface placeholder:text-outline/60 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                  className="w-full h-11 ps-9 pe-3 rounded-xl bg-surface-container border border-surface-dim text-xs font-body text-on-surface placeholder:text-outline/60 focus:outline-none focus:ring-2 focus:ring-primary transition-shadow duration-150"
                 />
               </div>
 
@@ -374,7 +374,7 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
                       onChange={handleInputChange}
                       placeholder={selectedCountry.placeholder}
                       disabled={isSubmitting}
-                      className="w-full h-11 px-3.5 rounded-xl bg-surface-container border border-surface-dim text-sm font-body font-medium text-on-surface placeholder:text-outline/50 focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+                      className="w-full h-11 px-3.5 rounded-xl bg-surface-container border border-surface-dim text-sm font-body font-medium text-on-surface placeholder:text-outline/50 focus:outline-none focus:ring-2 focus:ring-primary transition-shadow duration-150"
                     />
                   </div>
                 </div>
@@ -399,7 +399,7 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
                   id="add_phone_not_now_btn"
                   onClick={onClose}
                   disabled={isSubmitting}
-                  className="min-h-[44px] px-4 py-2 flex items-center justify-center rounded-full text-xs font-semibold text-outline hover:text-on-surface hover:bg-surface-container active:scale-95 transition-all cursor-pointer"
+                  className="min-h-[44px] px-4 py-2 flex items-center justify-center rounded-full text-xs font-semibold text-outline hover:text-on-surface hover:bg-surface-container active:scale-95 transition-[transform,background-color,color] duration-150 cursor-pointer"
                 >
                   'Not now'
                 </button>
@@ -408,7 +408,7 @@ export const AddPhoneNumberModal: React.FC<AddPhoneNumberModalProps> = ({
                   type="submit"
                   id="save_phone_number_btn"
                   disabled={isSubmitting || !localNumber}
-                  className="h-11 min-h-[44px] px-5 rounded-full bg-primary hover:bg-primary-container active:scale-95 text-on-primary text-xs font-bold font-body transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="h-11 min-h-[44px] px-5 rounded-full bg-primary hover:bg-primary-container active:scale-95 text-on-primary text-xs font-bold font-body transition-[transform,background-color,opacity] duration-150 shadow-xs flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? (
                     <>

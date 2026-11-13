@@ -219,7 +219,7 @@ export const ShoppingStatisticsModal: React.FC<ShoppingStatisticsModalProps> = (
               onClose();
               onViewFullStatistics();
             }}
-            className="w-full mb-2.5 py-3 px-4 rounded-2xl bg-primary hover:bg-primary/90 text-white text-sm font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.99]"
+            className="w-full mb-2.5 py-3 px-4 rounded-2xl bg-primary hover:bg-primary/90 text-white text-sm font-bold transition-[transform,background-color] shadow-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.99]"
           >
             <span>{t('statistics.title')}</span>
             <Chevron className="w-4 h-4" />
@@ -230,7 +230,7 @@ export const ShoppingStatisticsModal: React.FC<ShoppingStatisticsModalProps> = (
         <button
           type="button"
           onClick={onClose}
-          className="w-full py-2.5 px-4 rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface text-xs font-semibold transition-all active:scale-[0.99] cursor-pointer"
+          className="w-full py-2.5 px-4 rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface text-xs font-semibold transition-[transform,background-color] active:scale-[0.99] cursor-pointer"
         >
           {t('statistics.done')}
         </button>

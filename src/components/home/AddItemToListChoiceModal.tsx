@@ -97,7 +97,7 @@ export const AddItemToListChoiceModal: React.FC<AddItemToListChoiceModalProps> =
             type="button"
             id="choice_modal_create_new_list_btn"
             onClick={() => onCreateNewList(item)}
-            className="w-full p-3.5 rounded-2xl bg-primary hover:bg-[#0c3125] text-white active:scale-[0.98] transition-all shadow-xs flex items-center justify-between gap-3 cursor-pointer group"
+            className="w-full p-3.5 rounded-2xl bg-primary hover:bg-[#0c3125] text-white active:scale-[0.98] transition-[transform,background-color] duration-150 shadow-xs flex items-center justify-between gap-3 cursor-pointer group"
           >
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
@@ -133,7 +133,7 @@ export const AddItemToListChoiceModal: React.FC<AddItemToListChoiceModalProps> =
                     key={list.id}
                     type="button"
                     onClick={() => onAddToList(item, list.id)}
-                    className="w-full p-3 rounded-2xl bg-surface-container hover:bg-surface-container-high active:scale-[0.99] text-on-surface transition-all border border-surface-dim/70 flex items-center justify-between gap-3 text-start cursor-pointer group"
+                    className="w-full p-3 rounded-2xl bg-surface-container hover:bg-surface-container-high active:scale-[0.99] text-on-surface transition-[transform,background-color] duration-150 border border-surface-dim/70 flex items-center justify-between gap-3 text-start cursor-pointer group"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="w-9 h-9 rounded-xl bg-surface-container-lowest flex items-center justify-center shrink-0 text-primary border border-surface-dim/60">

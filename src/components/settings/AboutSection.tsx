@@ -86,7 +86,7 @@ export const AboutSection: React.FC<AboutSectionProps> = ({
               </p>
             </div>
           </div>
-          <Chevron className="w-4 h-4 text-outline group-hover:text-primary group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-all shrink-0" />
+          <Chevron className="w-4 h-4 text-outline group-hover:text-primary group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-[transform,color] duration-150 shrink-0" />
         </button>
 
         {/* 2. Help & Feedback */}
@@ -115,7 +115,7 @@ export const AboutSection: React.FC<AboutSectionProps> = ({
               </p>
             </div>
           </div>
-          <Chevron className="w-4 h-4 text-outline group-hover:text-primary group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-all shrink-0" />
+          <Chevron className="w-4 h-4 text-outline group-hover:text-primary group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-[transform,color] duration-150 shrink-0" />
         </button>
 
         {/* 3. Privacy Policy */}
@@ -141,7 +141,7 @@ export const AboutSection: React.FC<AboutSectionProps> = ({
               </p>
             </div>
           </div>
-          <Chevron className="w-4 h-4 text-outline group-hover:text-primary group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-all shrink-0" />
+          <Chevron className="w-4 h-4 text-outline group-hover:text-primary group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-[transform,color] duration-150 shrink-0" />
         </button>
 
         {/* 4. Terms of Service */}
@@ -167,7 +167,7 @@ export const AboutSection: React.FC<AboutSectionProps> = ({
               </p>
             </div>
           </div>
-          <Chevron className="w-4 h-4 text-outline group-hover:text-primary group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-all shrink-0" />
+          <Chevron className="w-4 h-4 text-outline group-hover:text-primary group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-[transform,color] duration-150 shrink-0" />
         </button>
 
         {/* 5. Version */}

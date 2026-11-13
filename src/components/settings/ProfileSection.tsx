@@ -99,7 +99,7 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
         {profileMessage && (
           <div
             id="settings_profile_msg"
-            className={`p-3.5 rounded-2xl text-xs sm:text-sm flex items-center gap-2.5 transition-all animate-slide-in-from-top ${
+            className={`p-3.5 rounded-2xl text-xs sm:text-sm flex items-center gap-2.5 transition-colors duration-150 animate-slide-in-from-top ${
               profileMessage.type === 'success'
                 ? 'bg-secondary-fixed/50 text-on-secondary-fixed font-semibold border border-secondary-fixed'
                 : 'bg-error-container text-on-error-container border border-error/20'
@@ -246,7 +246,7 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
                     value={fullNameInput}
                     onChange={(e) => setFullNameInput(e.target.value)}
                     placeholder={t('settings.namePlaceholder') || (language === 'ur' ? 'اپنا نام درج کریں' : 'Enter your name')}
-                    className="flex-1 px-3.5 py-2.5 text-sm rounded-xl bg-surface border border-surface-dim focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                    className="flex-1 px-3.5 py-2.5 text-sm rounded-xl bg-surface border border-surface-dim focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 transition-[border-color,box-shadow] duration-150"
                     autoFocus
                   />
                   <div className="flex gap-2 shrink-0">
@@ -313,7 +313,7 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
                       value={phoneInput}
                       onChange={(e) => setPhoneInput(e.target.value)}
                       placeholder="+92 300 1234567"
-                      className="flex-1 px-3.5 py-2.5 text-sm rounded-xl bg-surface border border-surface-dim focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 font-mono transition-all"
+                      className="flex-1 px-3.5 py-2.5 text-sm rounded-xl bg-surface border border-surface-dim focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 font-mono transition-[border-color,box-shadow] duration-150"
                       autoFocus
                     />
                     <div className="flex gap-2 shrink-0">
@@ -387,7 +387,7 @@ export const ProfileSection: React.FC<ProfileSectionProps> = ({
               <button
                 type="button"
                 onClick={() => onOpenAuth('signin')}
-                className="min-h-[44px] px-5 py-2.5 text-xs sm:text-sm font-bold text-white bg-primary hover:bg-primary/90 rounded-2xl transition-all shadow-xs active:scale-95 flex items-center gap-2 cursor-pointer shrink-0"
+                className="min-h-[44px] px-5 py-2.5 text-xs sm:text-sm font-bold text-white bg-primary hover:bg-primary/90 rounded-2xl transition-[transform,background-color] duration-150 shadow-xs active:scale-95 flex items-center gap-2 cursor-pointer shrink-0"
               >
                 <LogIn className="w-4 h-4" />
                 <span>{t('auth.signIn') || (language === 'ur' ? 'سائن ان / رجسٹریشن' : 'Sign In / Register')}</span>

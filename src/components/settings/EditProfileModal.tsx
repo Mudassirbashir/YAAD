@@ -355,7 +355,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                       id="upload_profile_pic_btn"
                       onClick={handleTriggerFileSelect}
                       disabled={isSaving}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-white text-xs font-semibold hover:bg-primary/90 active:scale-95 transition-all shadow-xs cursor-pointer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-white text-xs font-semibold hover:bg-primary/90 active:scale-95 transition-[transform,background-color] duration-150 shadow-xs cursor-pointer"
                     >
                       <CloudUpload className="w-3.5 h-3.5" />
                       <span>
@@ -415,7 +415,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                         id="retry_photo_upload_btn"
                         onClick={handleRetryUpload}
                         disabled={isSaving}
-                        className="px-2.5 py-1 rounded-lg bg-error text-white font-semibold text-[11px] hover:bg-error/90 active:scale-95 transition-all shrink-0 cursor-pointer"
+                        className="px-2.5 py-1 rounded-lg bg-error text-white font-semibold text-[11px] hover:bg-error/90 active:scale-95 transition-[transform,background-color] duration-150 shrink-0 cursor-pointer"
                       >
                         {language === 'ur' ? 'دوبارہ کوشش کریں' : 'Retry'}
                       </button>
@@ -463,7 +463,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 onChange={(e) => setName(e.target.value)}
                 placeholder={t('settings.namePlaceholder') || 'Enter your name'}
                 disabled={isSaving}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-surface border border-surface-dim/75 text-on-surface focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-body"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-surface border border-surface-dim/75 text-on-surface focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 transition-[border-color,box-shadow] duration-150 font-body"
                 required
               />
             </div>
@@ -488,7 +488,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 }}
                 placeholder="+92 300 1234567"
                 disabled={isSaving}
-                className={`w-full px-3.5 py-2.5 text-sm rounded-xl bg-surface border text-on-surface font-mono focus:outline-hidden focus:ring-2 transition-all ${
+                className={`w-full px-3.5 py-2.5 text-sm rounded-xl bg-surface border text-on-surface font-mono focus:outline-hidden focus:ring-2 transition-[border-color,box-shadow] duration-150 ${
                   phoneError
                     ? 'border-error focus:border-error focus:ring-error/20'
                     : 'border-surface-dim/75 focus:border-primary focus:ring-primary/20'
@@ -518,7 +518,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
               <button
                 type="submit"
                 disabled={isSaving}
-                className="px-5 py-2 text-xs font-bold text-white bg-primary hover:bg-primary/90 rounded-xl transition-all disabled:opacity-50 active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-xs"
+                className="px-5 py-2 text-xs font-bold text-white bg-primary hover:bg-primary/90 rounded-xl transition-[transform,background-color,opacity] duration-150 disabled:opacity-50 active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-xs"
               >
                 {isSaving ? (
                   <>

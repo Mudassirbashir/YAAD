@@ -601,7 +601,7 @@ export const MiloHost: React.FC<MiloHostProps> = ({
             <button
               type="button"
               onClick={dismissCelebration}
-              className="absolute top-4 right-4 p-2 rounded-full bg-surface-container hover:bg-surface-dim text-on-surface-variant transition-all active:scale-95"
+              className="absolute top-4 right-4 p-2 rounded-full bg-surface-container hover:bg-surface-dim text-on-surface-variant transition-[transform,background-color] duration-150 active:scale-95"
               aria-label="Close celebration"
             >
               <X className="w-5 h-5" />
@@ -611,7 +611,7 @@ export const MiloHost: React.FC<MiloHostProps> = ({
             <button
               type="button"
               onClick={() => setSoundEnabled(!isSoundEnabled)}
-              className="absolute top-4 left-4 p-2 rounded-full bg-surface-container hover:bg-surface-dim text-on-surface-variant transition-all active:scale-95"
+              className="absolute top-4 left-4 p-2 rounded-full bg-surface-container hover:bg-surface-dim text-on-surface-variant transition-[transform,background-color] duration-150 active:scale-95"
               aria-label={isSoundEnabled ? 'Mute sound' : 'Unmute sound'}
             >
               {isSoundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
@@ -683,7 +683,7 @@ export const MiloHost: React.FC<MiloHostProps> = ({
             <button
               type="button"
               onClick={dismissCelebration}
-              className="mt-6 w-full py-3.5 px-6 rounded-2xl bg-primary text-on-primary font-bold shadow-md hover:bg-primary/95 active:scale-98 transition-all"
+              className="mt-6 w-full py-3.5 px-6 rounded-2xl bg-primary text-on-primary font-bold shadow-md hover:bg-primary/95 active:scale-98 transition-[transform,background-color] duration-150"
             >
               Done
             </button>
@@ -728,7 +728,7 @@ export const MiloHost: React.FC<MiloHostProps> = ({
                 bubblePos.y < 120 ? 'top-full mt-2' : 'bottom-full mb-2'
               } ${
                 bubblePos.x > 180 ? 'right-0' : 'left-0'
-              } z-50 p-2.5 rounded-2xl bg-surface-container-highest/95 backdrop-blur-md shadow-xl border border-white/20 text-on-surface cursor-pointer select-none transition-all hover:scale-102`}
+              } z-50 p-2.5 rounded-2xl bg-surface-container-highest/95 backdrop-blur-md shadow-xl border border-white/20 text-on-surface cursor-pointer select-none transition-transform duration-150 hover:scale-102`}
               role="status"
               aria-live="polite"
               aria-label="Pending list reminder"

@@ -169,7 +169,7 @@ export const SmartSuggestionsSection: React.FC<SmartSuggestionsSectionProps> = (
               handleAnalyzeClick();
             }
           }}
-          className="w-full bg-surface-container-lowest hover:bg-surface-container-low/70 border border-surface-container-high/80 rounded-2xl sm:rounded-full px-4 py-2.5 flex items-center justify-between gap-3 shadow-2xs transition-all cursor-pointer group active:scale-[0.99]"
+          className="w-full bg-surface-container-lowest hover:bg-surface-container-low/70 border border-surface-container-high/80 rounded-2xl sm:rounded-full px-4 py-2.5 flex items-center justify-between gap-3 shadow-2xs transition-[transform,background-color] duration-150 cursor-pointer group active:scale-[0.99]"
         >
           {/* Left Side: Sparkles Badge + Smart Suggestions Title & Subtitle */}
           <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -206,7 +206,7 @@ export const SmartSuggestionsSection: React.FC<SmartSuggestionsSectionProps> = (
             }}
             disabled={isAnalyzing}
             style={{ backgroundColor: circleBg }}
-            className="w-10 h-10 rounded-full text-white flex items-center justify-center shrink-0 hover:opacity-90 active:scale-95 transition-all shadow-xs cursor-pointer"
+            className="w-10 h-10 rounded-full text-white flex items-center justify-center shrink-0 hover:opacity-90 active:scale-95 transition-[transform,opacity] duration-150 shadow-xs cursor-pointer"
           >
             {isAnalyzing ? (
               <Loader2 className="w-4 h-4 animate-spin text-white" />
@@ -270,7 +270,7 @@ export const SmartSuggestionsSection: React.FC<SmartSuggestionsSectionProps> = (
                 <div
                   key={candidate.canonicalName}
                   id={`smart_suggestion_${candidate.canonicalName}`}
-                  className="relative flex-shrink-0 w-44 sm:w-48 rounded-2xl bg-surface-container-lowest border border-surface-container-high/80 p-2.5 flex flex-col justify-between gap-2 shadow-2xs hover:border-primary/40 hover:shadow-xs transition-all group"
+                  className="relative flex-shrink-0 w-44 sm:w-48 rounded-2xl bg-surface-container-lowest border border-surface-container-high/80 p-2.5 flex flex-col justify-between gap-2 shadow-2xs hover:border-primary/40 hover:shadow-xs transition-[border-color,box-shadow] duration-150 group"
                 >
                   {/* Top row: Category icon, reason tag, dismiss button */}
                   <div className="flex items-start justify-between gap-1.5">
@@ -331,7 +331,7 @@ export const SmartSuggestionsSection: React.FC<SmartSuggestionsSectionProps> = (
                           ? '#000000'
                           : circleBg,
                       }}
-                      className="flex-1 py-1.5 px-2 rounded-xl text-xs font-semibold text-white flex items-center justify-center gap-1 transition-all active:scale-95 select-none shadow-2xs cursor-pointer hover:opacity-90"
+                      className="flex-1 py-1.5 px-2 rounded-xl text-xs font-semibold text-white flex items-center justify-center gap-1 transition-[transform,opacity,background-color] duration-150 active:scale-95 select-none shadow-2xs cursor-pointer hover:opacity-90"
                     >
                       {isAdded ? (
                         <>

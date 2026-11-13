@@ -343,7 +343,7 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
                       onChange={(e) => setInlineEmail(e.target.value)}
                       placeholder="name@example.com"
                       disabled={isSendingResetEmail}
-                      className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-4 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-body disabled:opacity-60"
+                      className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-4 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-[border-color,box-shadow] placeholder:text-outline font-body disabled:opacity-60"
                       required
                     />
                   </div>
@@ -368,7 +368,7 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
                     id="reset_send_new_link_submit_btn"
                     type="submit"
                     disabled={isSendingResetEmail || !inlineEmail.trim()}
-                    className="w-full h-12 rounded-full bg-primary text-on-primary font-body text-sm font-bold shadow-md hover:bg-primary/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full h-12 rounded-full bg-primary text-on-primary font-body text-sm font-bold shadow-md hover:bg-primary/90 disabled:opacity-50 transition-[background-color,opacity] flex items-center justify-center gap-2 cursor-pointer"
                   >
                     {isSendingResetEmail ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -397,7 +397,7 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
                   type="button"
                   onClick={() => setShowInlineRequestForm(true)}
                   disabled={isLoading}
-                  className="w-full h-12 rounded-full bg-primary text-on-primary font-body text-sm font-bold shadow-md hover:bg-primary/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full h-12 rounded-full bg-primary text-on-primary font-body text-sm font-bold shadow-md hover:bg-primary/90 disabled:opacity-50 transition-[background-color,opacity] flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <RefreshCw className="w-4 h-4" />
                   <span>{t('settings.requestNewLink') || 'Request New Link'}</span>
@@ -443,7 +443,7 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="At least 6 characters"
                   disabled={isLoading}
-                  className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-11 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline font-body disabled:opacity-60"
+                  className="w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-11 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-[border-color,box-shadow] placeholder:text-outline font-body disabled:opacity-60"
                   autoComplete="new-password"
                   required
                 />
@@ -476,7 +476,7 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Re-enter your new password"
                   disabled={isLoading}
-                  className={`w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-11 border focus:ring-2 outline-none transition-all placeholder:text-outline font-body disabled:opacity-60 ${
+                  className={`w-full h-11 bg-surface-container text-on-surface text-sm rounded-2xl ps-10 pe-11 border focus:ring-2 outline-none transition-[border-color,box-shadow] placeholder:text-outline font-body disabled:opacity-60 ${
                     confirmPassword && !passwordsMatch
                       ? 'border-error/60 focus:border-error focus:ring-error/20'
                       : 'border-outline-variant focus:border-primary focus:ring-primary/20'
@@ -546,7 +546,7 @@ export const ResetPasswordView: React.FC<ResetPasswordViewProps> = ({
               id="reset_password_submit_btn"
               type="submit"
               disabled={isLoading || !isValid}
-              className="w-full h-12 rounded-full bg-primary text-on-primary font-body text-sm font-bold shadow-md hover:bg-primary/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2 active:scale-[0.99] mt-2 cursor-pointer"
+              className="w-full h-12 rounded-full bg-primary text-on-primary font-body text-sm font-bold shadow-md hover:bg-primary/90 disabled:opacity-50 transition-[transform,background-color,opacity] flex items-center justify-center gap-2 active:scale-[0.99] mt-2 cursor-pointer"
             >
               {isLoading ? (
                 <>

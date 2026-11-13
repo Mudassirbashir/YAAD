@@ -263,7 +263,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
                       return !prev;
                     });
                   }}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-body font-bold border transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs ${
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-body font-bold border transition-[background-color,border-color,color,box-shadow] duration-150 flex items-center gap-1.5 cursor-pointer shadow-2xs ${
                     isSelectionMode
                       ? 'bg-neutral-900 text-white border-neutral-900 shadow-xs'
                       : 'bg-white text-on-surface border-surface-dim hover:border-primary/50'
@@ -316,7 +316,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
                   triggerHaptic(10);
                   setShowBulkDeleteModal(true);
                 }}
-                className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 disabled:opacity-40 disabled:hover:bg-rose-600 text-white rounded-xl text-xs font-bold shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed"
+                className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 disabled:opacity-40 disabled:hover:bg-rose-600 text-white rounded-xl text-xs font-bold shadow-2xs transition-[background-color,opacity] duration-150 flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Delete Selected ({selectedIds.size})</span>
@@ -330,7 +330,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
                   triggerHaptic(10);
                   setShowClearAllModal(true);
                 }}
-                className="px-3.5 py-1.5 bg-white border border-rose-200 text-rose-700 hover:bg-rose-50 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                className="px-3.5 py-1.5 bg-white border border-rose-200 text-rose-700 hover:bg-rose-50 rounded-xl text-xs font-bold transition-colors duration-150 flex items-center gap-1.5 cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5 text-rose-600" />
                 <span>Clear All</span>
@@ -385,7 +385,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t('history.searchPlaceholder')}
-                className="w-full h-11 pl-10 pr-4 bg-white border border-surface-dim/80 rounded-xl text-xs sm:text-sm font-body text-on-surface placeholder:text-outline/70 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-2xs transition-all"
+                className="w-full h-11 pl-10 pr-4 bg-white border border-surface-dim/80 rounded-xl text-xs sm:text-sm font-body text-on-surface placeholder:text-outline/70 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary shadow-2xs transition-[border-color,box-shadow] duration-150"
               />
               {searchQuery && (
                 <button
@@ -407,7 +407,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
                   triggerHaptic(6);
                   setFilterTab('all');
                 }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-body font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-body font-semibold transition-[background-color,color,box-shadow] duration-150 flex items-center gap-1.5 cursor-pointer ${
                   filterTab === 'all'
                     ? 'bg-white text-primary shadow-xs'
                     : 'text-outline hover:text-on-surface'
@@ -426,7 +426,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
                   triggerHaptic(6);
                   setFilterTab('completed');
                 }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-body font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-body font-semibold transition-[background-color,color,box-shadow] duration-150 flex items-center gap-1.5 cursor-pointer ${
                   filterTab === 'completed'
                     ? 'bg-white text-emerald-800 shadow-xs'
                     : 'text-outline hover:text-on-surface'
@@ -445,7 +445,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
                   triggerHaptic(6);
                   setFilterTab('active');
                 }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-body font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-body font-semibold transition-[background-color,color,box-shadow] duration-150 flex items-center gap-1.5 cursor-pointer ${
                   filterTab === 'active'
                     ? 'bg-white text-amber-900 shadow-xs'
                     : 'text-outline hover:text-on-surface'
@@ -497,7 +497,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
                 triggerHaptic(14);
                 onCreateNewList();
               }}
-              className="bg-primary hover:bg-primary/90 text-white font-body text-sm sm:text-base font-bold px-7 py-3.5 rounded-full shadow-md transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
+              className="bg-primary hover:bg-primary/90 text-white font-body text-sm sm:text-base font-bold px-7 py-3.5 rounded-full shadow-md transition-[transform,background-color] duration-150 active:scale-95 flex items-center gap-2 cursor-pointer"
             >
               <Plus className="w-5 h-5 stroke-[2.4]" />
               <span>{t('history.createListBtn')}</span>
@@ -599,7 +599,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
                 id="confirm_bulk_delete_btn"
                 disabled={isDeleting}
                 onClick={handleConfirmBulkDelete}
-                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md shadow-rose-950/20 transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md shadow-rose-950/20 transition-[background-color,opacity] duration-150 cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
               >
                 {isDeleting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                 <span>Delete {selectedIds.size}</span>
@@ -646,7 +646,7 @@ export const ListHistoryView: React.FC<ListHistoryViewProps> = ({
                 id="confirm_clear_all_btn"
                 disabled={isDeleting}
                 onClick={handleConfirmClearAll}
-                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md shadow-rose-950/20 transition-all cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+                className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md shadow-rose-950/20 transition-[background-color,opacity] duration-150 cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
               >
                 {isDeleting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                 <span>Clear All ({lists.length})</span>

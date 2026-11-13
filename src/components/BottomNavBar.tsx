@@ -143,7 +143,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
         id="bottom_navigation_bar"
         role="navigation"
         aria-label={t('nav.mainNavigation') || 'Main Navigation'}
-        className="pointer-events-auto w-full sm:w-auto sm:min-w-[380px] sm:max-w-[440px] bg-surface-container-lowest/80 backdrop-blur-xl [backdrop-filter:blur(24px)] [-webkit-backdrop-filter:blur(24px)] border-t sm:border border-surface-dim/70 rounded-none sm:rounded-full px-5 sm:px-7 pt-1.5 pb-[max(env(safe-area-inset-bottom,0px),0.5rem)] sm:py-2 sm:mb-3 shadow-[0_-2px_16px_rgba(0,0,0,0.04)] sm:shadow-[0_8px_32px_-6px_rgba(0,0,0,0.12)] select-none transition-all duration-200"
+        className="pointer-events-auto w-full sm:w-auto sm:min-w-[380px] sm:max-w-[440px] bg-surface-container-lowest/80 backdrop-blur-xl [backdrop-filter:blur(24px)] [-webkit-backdrop-filter:blur(24px)] border-t sm:border border-surface-dim/70 rounded-none sm:rounded-full px-5 sm:px-7 pt-1.5 pb-[max(env(safe-area-inset-bottom,0px),0.5rem)] sm:py-2 sm:mb-3 shadow-[0_-2px_16px_rgba(0,0,0,0.04)] sm:shadow-[0_8px_32px_-6px_rgba(0,0,0,0.12)] select-none transition-[background-color,border-color,box-shadow] duration-200"
       >
         <div
           role="tablist"

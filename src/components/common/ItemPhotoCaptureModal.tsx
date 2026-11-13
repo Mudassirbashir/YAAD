@@ -329,7 +329,7 @@ export const ItemPhotoCaptureModal: React.FC<ItemPhotoCaptureModalProps> = ({
               <button
                 type="button"
                 onClick={handleSelectFromGallery}
-                className="px-3 py-1.5 rounded-xl bg-white text-black text-xs font-bold hover:bg-white/90 transition-all flex items-center gap-1.5 cursor-pointer mt-1"
+                className="px-3 py-1.5 rounded-xl bg-white text-black text-xs font-bold hover:bg-white/90 transition-colors flex items-center gap-1.5 cursor-pointer mt-1"
               >
                 <ImageIcon className="w-3.5 h-3.5" />
                 <span>{isUrdu ? 'گیلری سے منتخب کریں' : 'Choose from Gallery'}</span>
@@ -347,7 +347,7 @@ export const ItemPhotoCaptureModal: React.FC<ItemPhotoCaptureModalProps> = ({
                 type="button"
                 onClick={handleRetake}
                 disabled={isUploading}
-                className="flex-1 h-12 rounded-2xl bg-surface-container hover:bg-surface-container-high border border-surface-dim font-body text-xs font-bold text-on-surface transition-all active:scale-[0.98] cursor-pointer"
+                className="flex-1 h-12 rounded-2xl bg-surface-container hover:bg-surface-container-high border border-surface-dim font-body text-xs font-bold text-on-surface transition-[transform,background-color] active:scale-[0.98] cursor-pointer"
               >
                 {isUrdu ? 'دوبارہ لیں (Retake)' : 'Retake'}
               </button>
@@ -356,7 +356,7 @@ export const ItemPhotoCaptureModal: React.FC<ItemPhotoCaptureModalProps> = ({
                 type="button"
                 onClick={handleConfirmSave}
                 disabled={isUploading}
-                className="flex-2 h-12 rounded-2xl bg-primary text-on-primary hover:bg-primary-container font-body text-xs font-bold transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                className="flex-2 h-12 rounded-2xl bg-primary text-on-primary hover:bg-primary-container font-body text-xs font-bold transition-[transform,background-color,opacity] shadow-md active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 {isUploading ? (
                   <>
@@ -379,7 +379,7 @@ export const ItemPhotoCaptureModal: React.FC<ItemPhotoCaptureModalProps> = ({
                 type="button"
                 onClick={handleSelectFromGallery}
                 aria-label={isUrdu ? 'گیلری سے منتخب کریں' : 'Choose from Gallery'}
-                className="w-12 h-12 rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface-variant flex items-center justify-center transition-all active:scale-95 cursor-pointer shadow-xs"
+                className="w-12 h-12 rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface-variant flex items-center justify-center transition-[transform,background-color] active:scale-95 cursor-pointer shadow-xs"
                 title={isUrdu ? 'گیلری سے فوٹو اپلوڈ کریں' : 'Pick from Gallery'}
               >
                 <ImageIcon className="w-5 h-5" />
@@ -404,7 +404,7 @@ export const ItemPhotoCaptureModal: React.FC<ItemPhotoCaptureModalProps> = ({
                 onClick={handleFlipCamera}
                 disabled={!isCameraActive}
                 aria-label={isUrdu ? 'کیمرہ تبدیل کریں' : 'Flip Camera'}
-                className="w-12 h-12 rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface-variant flex items-center justify-center transition-all active:scale-95 cursor-pointer shadow-xs disabled:opacity-40"
+                className="w-12 h-12 rounded-2xl bg-surface-container hover:bg-surface-container-high text-on-surface-variant flex items-center justify-center transition-[transform,background-color,opacity] active:scale-95 cursor-pointer shadow-xs disabled:opacity-40"
                 title={isUrdu ? 'کیمرہ بدلیں' : 'Flip Camera'}
               >
                 <RefreshCw className="w-5 h-5" />

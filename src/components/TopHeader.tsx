@@ -298,7 +298,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                   onClick={handleOpenNotifications}
                   aria-label="Notifications"
                   title="Notifications & Alerts"
-                  className="w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full text-primary hover:bg-surface-container-low active:bg-surface-container active:scale-95 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer"
+                  className="w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full text-primary hover:bg-surface-container-low active:bg-surface-container active:scale-95 transition-[transform,background-color] duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer"
                 >
                   <Bell className="w-5 h-5 stroke-[2]" />
                 </button>
@@ -314,7 +314,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                 onClick={handleSettingsClick}
                 aria-label="Settings"
                 title="Settings"
-                className="w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full text-primary hover:bg-surface-container-low active:bg-surface-container active:scale-95 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer group"
+                className="w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full text-primary hover:bg-surface-container-low active:bg-surface-container active:scale-95 transition-[transform,background-color] duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer group"
               >
                 <Settings
                   className={`w-5 h-5 text-primary stroke-[2] transition-transform duration-300 ease-out group-hover:rotate-45 motion-reduce:transform-none ${

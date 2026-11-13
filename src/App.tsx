@@ -1608,7 +1608,7 @@ function AppContent() {
         <button
           type="button"
           onClick={() => window.location.reload()}
-          className="px-6 py-3 rounded-full bg-primary text-white text-xs font-bold shadow-sm hover:opacity-95 active:scale-95 transition-all cursor-pointer"
+          className="px-6 py-3 rounded-full bg-primary text-white text-xs font-bold shadow-sm hover:opacity-95 active:scale-95 transition-[transform,opacity] cursor-pointer"
         >
           Refresh Page / ریفریش کریں
         </button>
@@ -1635,7 +1635,7 @@ function AppContent() {
         <button
           type="button"
           onClick={() => window.location.reload()}
-          className="px-6 py-3 rounded-full bg-primary text-white text-xs font-bold shadow-sm hover:opacity-95 active:scale-95 transition-all cursor-pointer"
+          className="px-6 py-3 rounded-full bg-primary text-white text-xs font-bold shadow-sm hover:opacity-95 active:scale-95 transition-[transform,opacity] cursor-pointer"
         >
           Update Now / ابھی اپڈیٹ کریں
         </button>
@@ -2071,7 +2071,7 @@ function AppContent() {
                 setDismissedMessageId(id);
                 dismissMessage(id);
               }}
-              className="w-full py-2.5 rounded-full bg-primary text-white text-xs font-bold hover:opacity-95 active:scale-95 transition-all cursor-pointer"
+              className="w-full py-2.5 rounded-full bg-primary text-white text-xs font-bold hover:opacity-95 active:scale-95 transition-[transform,opacity] cursor-pointer"
             >
               Understood / سمجھ گیا
             </button>

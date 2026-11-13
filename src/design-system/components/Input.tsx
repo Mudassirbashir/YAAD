@@ -55,7 +55,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             id={inputId}
             value={value}
             disabled={disabled}
-            className={`w-full min-h-[44px] sm:min-h-[46px] rounded-xl sm:rounded-2xl bg-surface-container-lowest text-on-surface font-body text-sm sm:text-base border transition-all duration-150 placeholder:text-outline/70 focus-visible:outline-none disabled:opacity-50 disabled:bg-surface-container disabled:cursor-not-allowed ${
+            className={`w-full min-h-[44px] sm:min-h-[46px] rounded-xl sm:rounded-2xl bg-surface-container-lowest text-on-surface font-body text-sm sm:text-base border transition-[border-color,box-shadow] duration-150 placeholder:text-outline/70 focus-visible:outline-none disabled:opacity-50 disabled:bg-surface-container disabled:cursor-not-allowed ${
               leftIcon ? 'ps-10' : 'ps-3.5 sm:ps-4'
             } ${
               rightSlot || (showClearButton && hasValue) ? 'pe-11' : 'pe-3.5 sm:pe-4'

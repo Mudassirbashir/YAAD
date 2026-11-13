@@ -361,7 +361,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     email={user.email}
                     avatarUrl={profile?.avatar_url}
                     size="lg"
-                    className="w-14 h-14 sm:w-16 sm:h-16 ring-2 ring-primary/20 group-hover:ring-primary/50 transition-all rounded-full"
+                    className="w-14 h-14 sm:w-16 sm:h-16 ring-2 ring-primary/20 group-hover:ring-primary/50 transition-shadow duration-150 rounded-full"
                   />
                   {remoteConfig.settings?.photoUpload !== false && (
                     <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center shadow-xs ring-1 ring-white">
@@ -412,7 +412,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     }}
                     title={language === 'ur' ? 'ایڈٹ انفو' : 'Edit Info'}
                     aria-label={language === 'ur' ? 'ایڈٹ انفو' : 'Edit Info'}
-                    className="w-11 h-11 rounded-full bg-surface-container hover:bg-surface-container-high border border-surface-dim/75 text-primary flex items-center justify-center shrink-0 cursor-pointer shadow-2xs active:scale-95 transition-all group"
+                    className="w-11 h-11 rounded-full bg-surface-container hover:bg-surface-container-high border border-surface-dim/75 text-primary flex items-center justify-center shrink-0 cursor-pointer shadow-2xs active:scale-95 transition-[transform,background-color] duration-150 group"
                   >
                     <Pencil className="w-4 h-4 group-hover:scale-110 transition-transform" />
                   </button>
@@ -440,7 +440,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <button
                   type="button"
                   onClick={() => onOpenAuth?.('signin')}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-primary hover:bg-primary/90 transition-all shrink-0 cursor-pointer shadow-xs active:scale-95"
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-primary hover:bg-primary/90 transition-[transform,background-color] duration-150 shrink-0 cursor-pointer shadow-xs active:scale-95"
                 >
                   {t('auth.signIn') || (language === 'ur' ? 'سائن ان' : 'Sign In')}
                 </button>
@@ -485,7 +485,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       id="lang_select_en"
                       type="button"
                       onClick={() => handleSelectLanguage('en')}
-                      className={`min-h-[44px] py-2 px-1 sm:px-2 rounded-xl text-xs font-semibold font-display transition-all flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
+                      className={`min-h-[44px] py-2 px-1 sm:px-2 rounded-xl text-xs font-semibold font-display transition-[background-color,color,box-shadow] duration-150 flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
                         language === 'en'
                           ? 'bg-surface-container-lowest text-primary shadow-xs ring-1 ring-black/5'
                           : 'text-outline hover:text-on-surface'
@@ -500,7 +500,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       id="lang_select_roman_urdu"
                       type="button"
                       onClick={() => handleSelectLanguage('roman-urdu')}
-                      className={`min-h-[44px] py-2 px-1 sm:px-2 rounded-xl text-xs font-semibold font-display transition-all flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
+                      className={`min-h-[44px] py-2 px-1 sm:px-2 rounded-xl text-xs font-semibold font-display transition-[background-color,color,box-shadow] duration-150 flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
                         language === 'roman-urdu'
                           ? 'bg-surface-container-lowest text-primary shadow-xs ring-1 ring-black/5'
                           : 'text-outline hover:text-on-surface'
@@ -515,7 +515,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       id="lang_select_ur"
                       type="button"
                       onClick={() => handleSelectLanguage('ur')}
-                      className={`min-h-[44px] py-2 px-1 sm:px-2 rounded-xl text-xs font-semibold font-urdu transition-all flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
+                      className={`min-h-[44px] py-2 px-1 sm:px-2 rounded-xl text-xs font-semibold font-urdu transition-[background-color,color,box-shadow] duration-150 flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
                         language === 'ur'
                           ? 'bg-surface-container-lowest text-primary shadow-xs ring-1 ring-black/5'
                           : 'text-outline hover:text-on-surface'
@@ -685,7 +685,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         setTheme(item.id);
                         triggerMiloEvent('settings_saved');
                       }}
-                      className={`h-14 rounded-2xl border px-3 flex items-center justify-between gap-2 transition-all cursor-pointer text-start active:bg-surface-container-low ${
+                      className={`h-14 rounded-2xl border px-3 flex items-center justify-between gap-2 transition-[background-color,border-color,box-shadow] duration-150 cursor-pointer text-start active:bg-surface-container-low ${
                         isActive
                           ? 'border-primary bg-primary/10 ring-1 ring-primary/30 shadow-2xs'
                           : 'border-surface-dim/70 bg-surface-container-lowest hover:bg-surface-container-low/60'
@@ -750,7 +750,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                           setTheme('custom');
                           triggerMiloEvent('settings_saved');
                         }}
-                        className={`h-12 rounded-2xl border px-2.5 flex items-center justify-between gap-1.5 transition-all cursor-pointer text-start active:bg-surface-container-low ${
+                        className={`h-12 rounded-2xl border px-2.5 flex items-center justify-between gap-1.5 transition-[background-color,border-color,box-shadow] duration-150 cursor-pointer text-start active:bg-surface-container-low ${
                           isCpActive
                             ? 'border-primary ring-2 ring-primary/40 bg-primary/10 shadow-xs'
                             : 'border-surface-dim/70 bg-surface-container-low hover:bg-surface-container'
@@ -810,7 +810,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 onClick={() => setShowChangePasswordModal(true)}
                 title={language === 'ur' ? 'پاس ورڈ تبدیل کریں' : 'Change Password'}
                 aria-label="Change Password"
-                className="w-10 h-10 rounded-full bg-surface-container hover:bg-surface-container-high border border-surface-dim/75 text-primary flex items-center justify-center shrink-0 cursor-pointer shadow-2xs active:scale-95 transition-all group"
+                className="w-10 h-10 rounded-full bg-surface-container hover:bg-surface-container-high border border-surface-dim/75 text-primary flex items-center justify-center shrink-0 cursor-pointer shadow-2xs active:scale-95 transition-[transform,background-color] duration-150 group"
               >
                 <Pencil className="w-4 h-4 group-hover:scale-110 transition-transform" />
               </button>
@@ -907,7 +907,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   triggerHaptic(10);
                   setShowSignOutModal(true);
                 }}
-                className="w-full sm:w-auto sm:min-w-[220px] py-2.5 px-6 rounded-xl border border-rose-200/80 bg-rose-50/80 hover:bg-rose-100/90 text-rose-700 font-bold font-display text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs active:scale-95"
+                className="w-full sm:w-auto sm:min-w-[220px] py-2.5 px-6 rounded-xl border border-rose-200/80 bg-rose-50/80 hover:bg-rose-100/90 text-rose-700 font-bold font-display text-xs sm:text-sm transition-[transform,background-color] duration-150 flex items-center justify-center gap-2 cursor-pointer shadow-2xs active:scale-95"
               >
                 <LogOut className="w-4 h-4 stroke-[2.2]" />
                 <span>{t('auth.signOut') || (language === 'ur' ? 'اکاؤنٹ سے لاگ آؤٹ' : 'Sign Out')}</span>

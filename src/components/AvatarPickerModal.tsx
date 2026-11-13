@@ -299,7 +299,7 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
                 type="button"
                 onClick={handleUploadClick}
                 disabled={isUploadingPhoto}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-[transform,background-color,color,box-shadow] active:scale-95 cursor-pointer ${
                   customPhotoUrl
                     ? 'bg-primary text-on-primary shadow-xs'
                     : 'bg-surface-container text-on-surface hover:bg-surface-container-high'
@@ -317,7 +317,7 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
                 id="avatar_toggle_initials_btn"
                 type="button"
                 onClick={handleSetInitials}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-[transform,background-color,color,box-shadow] active:scale-95 cursor-pointer ${
                   isUseInitials && !customPhotoUrl
                     ? 'bg-primary text-on-primary shadow-xs'
                     : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'
@@ -363,7 +363,7 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
                     onClick={() => handleSelectColor(palette.id)}
                     title={language === 'ur' ? palette.nameUrdu : palette.name}
                     aria-label={`Select background color ${palette.name}`}
-                    className={`w-9 h-9 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all duration-150 relative ${
+                    className={`w-9 h-9 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-[transform,opacity,box-shadow] duration-150 relative ${
                       palette.bgClass
                     } ${palette.borderClass} border ${
                       isSelected
@@ -401,7 +401,7 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
                       setSelectedCategory(cat.id);
                       setSearchQuery('');
                     }}
-                    className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 ${
+                    className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-[transform,background-color,color,box-shadow] active:scale-95 ${
                       isActive
                         ? 'bg-primary text-on-primary shadow-xs font-bold'
                         : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container'
@@ -423,7 +423,7 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t('settings.avatarSearchPlaceholder') || 'Search emojis...'}
-                className="w-full h-9 bg-surface-container rounded-xl pl-9 pr-8 rtl:pl-8 rtl:pr-9 text-xs font-body text-on-surface placeholder:text-outline border border-surface-dim focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition-all"
+                className="w-full h-9 bg-surface-container rounded-xl pl-9 pr-8 rtl:pl-8 rtl:pr-9 text-xs font-body text-on-surface placeholder:text-outline border border-surface-dim focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition-[border-color,box-shadow]"
               />
               {searchQuery && (
                 <button
@@ -450,7 +450,7 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
                       id={`avatar_emoji_btn_${index}`}
                       onClick={() => handleSelectEmoji(emoji)}
                       aria-label={`Select ${emoji}`}
-                      className={`h-11 rounded-xl flex items-center justify-center text-2xl transition-all duration-150 select-none ${
+                      className={`h-11 rounded-xl flex items-center justify-center text-2xl transition-[transform,background-color,box-shadow] duration-150 select-none ${
                         isSelected
                           ? `${activeColorOption.bgClass} ring-2 ring-primary scale-110 shadow-sm font-bold`
                           : 'hover:bg-surface-container-high hover:scale-105 active:scale-95'
@@ -486,7 +486,7 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="px-5 py-2.5 text-xs font-bold text-on-primary bg-primary hover:bg-primary/90 rounded-2xl shadow-sm hover:shadow transition-all flex items-center gap-2 active:scale-95 disabled:opacity-50"
+            className="px-5 py-2.5 text-xs font-bold text-on-primary bg-primary hover:bg-primary/90 rounded-2xl shadow-sm hover:shadow transition-[transform,background-color,box-shadow,opacity] flex items-center gap-2 active:scale-95 disabled:opacity-50"
           >
             {isSaving ? (
               <>

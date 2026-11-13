@@ -67,7 +67,7 @@ export const NotFoundView: React.FC<NotFoundViewProps> = ({
           <button
             id="not_found_home_btn"
             onClick={onGoHome}
-            className="w-full flex items-center justify-center gap-2 py-3 px-5 rounded-xl bg-primary text-on-primary font-bold text-sm shadow-sm hover:bg-primary/95 active:scale-[0.98] transition-all cursor-pointer"
+            className="w-full flex items-center justify-center gap-2 py-3 px-5 rounded-xl bg-primary text-on-primary font-bold text-sm shadow-sm hover:bg-primary/95 active:scale-[0.98] transition-[transform,background-color] cursor-pointer"
           >
             <Home className="w-4 h-4" />
             <span>{t('nav.home') || 'Go to Home'}</span>
@@ -77,7 +77,7 @@ export const NotFoundView: React.FC<NotFoundViewProps> = ({
             <button
               id="not_found_history_btn"
               onClick={onGoHistory}
-              className="w-full flex items-center justify-center gap-2 py-3 px-5 rounded-xl bg-surface-container text-on-surface font-semibold text-sm hover:bg-surface-container-high active:scale-[0.98] transition-all border border-surface-dim cursor-pointer"
+              className="w-full flex items-center justify-center gap-2 py-3 px-5 rounded-xl bg-surface-container text-on-surface font-semibold text-sm hover:bg-surface-container-high active:scale-[0.98] transition-[transform,background-color] border border-surface-dim cursor-pointer"
             >
               <Clock className="w-4 h-4" />
               <span>{t('nav.history') || 'View Lists'}</span>

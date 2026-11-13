@@ -123,7 +123,7 @@ export const SecuritySection: React.FC<SecuritySectionProps> = ({
                 setIsChangingPassword(!isChangingPassword);
                 setPasswordMessage(null);
               }}
-              className="min-h-[38px] px-4 py-1.5 text-xs font-bold text-primary bg-primary-fixed/30 hover:bg-primary-fixed/50 rounded-xl transition-all active:scale-95 shrink-0 cursor-pointer"
+              className="min-h-[38px] px-4 py-1.5 text-xs font-bold text-primary bg-primary-fixed/30 hover:bg-primary-fixed/50 rounded-xl transition-[transform,background-color] duration-150 active:scale-95 shrink-0 cursor-pointer"
             >
               {isChangingPassword
                 ? t('settings.cancel') || 'Cancel'
@@ -176,7 +176,7 @@ export const SecuritySection: React.FC<SecuritySectionProps> = ({
                     }
                     autoComplete="current-password"
                     disabled={isUpdatingPassword}
-                    className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-surface border border-surface-dim focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 pe-10 font-mono transition-all disabled:opacity-60"
+                    className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-surface border border-surface-dim focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 pe-10 font-mono transition-[border-color,box-shadow] duration-150 disabled:opacity-60"
                     autoFocus
                     required
                   />
@@ -213,7 +213,7 @@ export const SecuritySection: React.FC<SecuritySectionProps> = ({
                       text: language === 'ur' ? 'مضبوط پاس ورڈ بن گیا اور کاپی ہو گیا!' : 'Strong password generated and copied to clipboard!',
                     });
                   }}
-                  className="px-2.5 py-1 rounded-lg bg-primary-fixed/30 hover:bg-primary-fixed/50 text-primary text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                  className="px-2.5 py-1 rounded-lg bg-primary-fixed/30 hover:bg-primary-fixed/50 text-primary text-xs font-bold transition-colors duration-150 flex items-center gap-1.5 cursor-pointer shadow-2xs"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-primary" />
                   <span>{language === 'ur' ? 'مضبوط پاس ورڈ تجویز کریں' : 'Suggest Strong Password'}</span>
@@ -249,7 +249,7 @@ export const SecuritySection: React.FC<SecuritySectionProps> = ({
                       (language === 'ur' ? 'نیا پاس ورڈ (کم از کم 6 ہندسے)' : 'Enter new password (min 6 chars)')
                     }
                     disabled={isUpdatingPassword}
-                    className={`w-full px-3.5 py-2.5 text-sm rounded-xl bg-surface border focus:outline-hidden focus:ring-2 pe-10 font-mono transition-all disabled:opacity-60 ${
+                    className={`w-full px-3.5 py-2.5 text-sm rounded-xl bg-surface border focus:outline-hidden focus:ring-2 pe-10 font-mono transition-[border-color,box-shadow] duration-150 disabled:opacity-60 ${
                       newPassword && currentPassword && newPassword === currentPassword
                         ? 'border-error focus:border-error focus:ring-error/20'
                         : 'border-surface-dim focus:border-primary focus:ring-primary/20'
@@ -299,7 +299,7 @@ export const SecuritySection: React.FC<SecuritySectionProps> = ({
                       (language === 'ur' ? 'نیا پاس ورڈ دوبارہ درج کریں' : 'Re-enter new password')
                     }
                     disabled={isUpdatingPassword}
-                    className={`w-full px-3.5 py-2.5 text-sm rounded-xl bg-surface border focus:outline-hidden focus:ring-2 pe-10 font-mono transition-all disabled:opacity-60 ${
+                    className={`w-full px-3.5 py-2.5 text-sm rounded-xl bg-surface border focus:outline-hidden focus:ring-2 pe-10 font-mono transition-[border-color,box-shadow] duration-150 disabled:opacity-60 ${
                       confirmPassword && !passwordsMatch
                         ? 'border-error focus:border-error focus:ring-error/20'
                         : 'border-surface-dim focus:border-primary focus:ring-primary/20'
@@ -348,7 +348,7 @@ export const SecuritySection: React.FC<SecuritySectionProps> = ({
                   id="settings_submit_password_btn"
                   type="submit"
                   disabled={!canSubmit}
-                  className="px-5 py-2 text-xs font-bold text-white bg-primary hover:bg-primary/90 rounded-xl transition-all disabled:opacity-50 active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-xs"
+                  className="px-5 py-2 text-xs font-bold text-white bg-primary hover:bg-primary/90 rounded-xl transition-[transform,background-color,opacity] duration-150 disabled:opacity-50 active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-xs"
                 >
                   {isUpdatingPassword ? (
                     <>
@@ -387,7 +387,7 @@ export const SecuritySection: React.FC<SecuritySectionProps> = ({
             id="settings_sign_out_trigger_btn"
             type="button"
             onClick={onRequestSignOut}
-            className="min-h-[40px] px-4 py-2 text-xs sm:text-sm font-bold text-error hover:text-white bg-error/10 hover:bg-error border border-error/30 rounded-xl transition-all active:scale-95 shrink-0 flex items-center gap-2 cursor-pointer shadow-2xs"
+            className="min-h-[40px] px-4 py-2 text-xs sm:text-sm font-bold text-error hover:text-white bg-error/10 hover:bg-error border border-error/30 rounded-xl transition-[transform,background-color,color] duration-150 active:scale-95 shrink-0 flex items-center gap-2 cursor-pointer shadow-2xs"
           >
             <LogOut className="w-4 h-4 stroke-[2.2]" />
             <span>{t('settings.signOut') || (language === 'ur' ? 'لاگ آؤٹ' : 'Sign Out')}</span>

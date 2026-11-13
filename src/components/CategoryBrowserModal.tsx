@@ -180,7 +180,7 @@ export const CategoryBrowserModal: React.FC<CategoryBrowserModalProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t('home.categoriesModal.searchPlaceholder')}
-            className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-surface-container-lowest border border-surface-dim text-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary transition-all font-body"
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-surface-container-lowest border border-surface-dim text-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary transition-colors duration-150 font-body"
           />
         </div>
 
@@ -189,7 +189,7 @@ export const CategoryBrowserModal: React.FC<CategoryBrowserModalProps> = ({
           <button
             type="button"
             onClick={() => setSelectedCategory('all')}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 transition-all ${
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 transition-[background-color,color,box-shadow] duration-150 ${
               selectedCategory === 'all'
                 ? 'bg-primary text-white shadow-xs'
                 : 'bg-surface-container text-outline hover:text-on-surface'
@@ -202,7 +202,7 @@ export const CategoryBrowserModal: React.FC<CategoryBrowserModalProps> = ({
               key={cat.id}
               type="button"
               onClick={() => setSelectedCategory(cat.id)}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 flex items-center gap-1.5 transition-all ${
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 flex items-center gap-1.5 transition-[background-color,color,box-shadow] duration-150 ${
                 selectedCategory === cat.id
                   ? 'bg-primary text-white shadow-xs'
                   : 'bg-surface-container text-outline hover:text-on-surface'
@@ -224,7 +224,7 @@ export const CategoryBrowserModal: React.FC<CategoryBrowserModalProps> = ({
             return (
               <div
                 key={item.id}
-                className="flex items-center justify-between p-2.5 rounded-xl bg-surface-container-lowest border border-surface-dim/60 shadow-xs hover:border-primary/25 transition-all"
+                className="flex items-center justify-between p-2.5 rounded-xl bg-surface-container-lowest border border-surface-dim/60 shadow-xs hover:border-primary/25 transition-colors duration-150"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <ItemVisualIcon
@@ -248,7 +248,7 @@ export const CategoryBrowserModal: React.FC<CategoryBrowserModalProps> = ({
                 <button
                   type="button"
                   onClick={() => handleAdd(item)}
-                  className={`px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shrink-0 transition-all duration-200 active:scale-95 ${
+                  className={`px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shrink-0 transition-[transform,background-color] duration-200 active:scale-95 ${
                     isAdded
                       ? 'bg-emerald-600 text-white'
                       : 'bg-primary hover:bg-primary/90 text-white'
@@ -275,7 +275,7 @@ export const CategoryBrowserModal: React.FC<CategoryBrowserModalProps> = ({
         <div className="pt-3 border-t border-surface-dim/40 shrink-0">
           <button
             onClick={onClose}
-            className="w-full py-2.5 px-4 rounded-xl bg-primary hover:bg-primary/90 text-white text-sm font-semibold transition-all shadow-sm active:scale-[0.99]"
+            className="w-full py-2.5 px-4 rounded-xl bg-primary hover:bg-primary/90 text-white text-sm font-semibold transition-[transform,background-color] duration-150 shadow-sm active:scale-[0.99]"
           >
             {t('home.categoriesModal.close')}
           </button>

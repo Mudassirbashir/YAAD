@@ -832,7 +832,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                       }}
                       placeholder={t('addItems.inputPlaceholder') || 'Add item (e.g. Milk, Apples)...'}
                       aria-label={t('addItems.inputPlaceholder') || 'Add item'}
-                      className="w-full h-12 bg-surface-container-low rounded-full ps-11 pe-26 text-sm sm:text-base text-on-surface font-body border border-outline-variant/60 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
+                      className="w-full h-12 bg-surface-container-low rounded-full ps-11 pe-26 text-sm sm:text-base text-on-surface font-body border border-outline-variant/60 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-[border-color,box-shadow,background-color] duration-150 placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
                     />
 
                     {/* Clear Button */}
@@ -853,7 +853,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                     {/* Add Button - Inside Circle */}
                     <button
                       type="submit"
-                      className="absolute end-1.5 top-1.5 bottom-1.5 w-11 min-w-11 rounded-full bg-primary text-on-primary flex items-center justify-center hover:bg-primary-container active:scale-95 transition-all shadow-xs cursor-pointer"
+                      className="absolute end-1.5 top-1.5 bottom-1.5 w-11 min-w-11 rounded-full bg-primary text-on-primary flex items-center justify-center hover:bg-primary-container active:scale-95 transition-[transform,background-color] duration-150 shadow-xs cursor-pointer"
                       aria-label="Add item"
                     >
                       <Plus className="w-5 h-5" />
@@ -865,7 +865,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                     <button
                       type="button"
                       onClick={() => setIsBarcodeScannerOpen(true)}
-                      className="relative shrink-0 w-12 h-12 rounded-2xl bg-surface-bright hover:bg-surface-container-low active:scale-95 border border-surface-dim/80 shadow-xs flex flex-col items-center justify-center text-primary transition-all cursor-pointer group"
+                      className="relative shrink-0 w-12 h-12 rounded-2xl bg-surface-bright hover:bg-surface-container-low active:scale-95 border border-surface-dim/80 shadow-xs flex flex-col items-center justify-center text-primary transition-[transform,background-color] duration-150 cursor-pointer group"
                       aria-label={(t as any)?.barcode?.scanItem || 'Scan Barcode'}
                       title={(t as any)?.barcode?.scanItem || 'Scan Barcode'}
                     >
@@ -911,7 +911,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                             key={sug.item.id}
                             type="button"
                             onClick={() => handleSelectSuggestion(sug)}
-                            className="flex items-center gap-3 p-2.5 rounded-2xl bg-surface-container-low hover:bg-surface-container border border-surface-container-high/60 transition-all text-start group active:scale-[0.99] cursor-pointer"
+                            className="flex items-center gap-3 p-2.5 rounded-2xl bg-surface-container-low hover:bg-surface-container border border-surface-container-high/60 transition-[transform,background-color] duration-150 text-start group active:scale-[0.99] cursor-pointer"
                           >
                             <ItemVisualIcon
                               name={sug.displayName}
@@ -959,7 +959,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                       <button
                         type="button"
                         onClick={() => handleAddCustomItem(inputVal)}
-                        className="flex items-center gap-3 p-2.5 rounded-2xl bg-surface-container-low hover:bg-surface-container border border-dashed border-outline-variant/80 transition-all text-start group active:scale-[0.99] cursor-pointer"
+                        className="flex items-center gap-3 p-2.5 rounded-2xl bg-surface-container-low hover:bg-surface-container border border-dashed border-outline-variant/80 transition-[transform,background-color] duration-150 text-start group active:scale-[0.99] cursor-pointer"
                       >
                         <div className="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center text-outline shrink-0">
                           <Package className="w-5 h-5" />
@@ -989,7 +989,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                       type="button"
                       onClick={handleTriggerSuggestionsAnalysis}
                       disabled={isAnalyzingSuggestions}
-                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-body font-bold text-primary bg-primary/10 hover:bg-primary/15 active:scale-95 transition-all border border-primary/20 shadow-2xs cursor-pointer group"
+                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-body font-bold text-primary bg-primary/10 hover:bg-primary/15 active:scale-95 transition-[transform,background-color] duration-150 border border-primary/20 shadow-2xs cursor-pointer group"
                     >
                       {isAnalyzingSuggestions ? (
                         <DelayedSpinner className="w-3.5 h-3.5 text-primary" label="Analyzing context" />
@@ -1054,7 +1054,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                                 handleUnifiedAddItem(sug.name);
                               }
                             }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-body font-semibold transition-all active:scale-95 cursor-pointer shadow-2xs bg-surface-container hover:bg-surface-container-high text-on-surface border border-surface-dim/80 hover:border-primary/50"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-body font-semibold transition-[transform,background-color,border-color] duration-150 active:scale-95 cursor-pointer shadow-2xs bg-surface-container hover:bg-surface-container-high text-on-surface border border-surface-dim/80 hover:border-primary/50"
                             title={sug.reason}
                           >
                             <Plus className="w-3.5 h-3.5 text-primary/70" />
@@ -1112,7 +1112,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                           setSelectedCategory(cat.id);
                           setUserManuallySelectedCategory(true);
                         }}
-                        className={`px-3 py-1.5 rounded-full text-xs font-body font-semibold flex items-center gap-1.5 transition-all shrink-0 cursor-pointer ${
+                        className={`px-3 py-1.5 rounded-full text-xs font-body font-semibold flex items-center gap-1.5 transition-colors duration-150 shrink-0 cursor-pointer ${
                           isSelected
                             ? 'bg-primary text-on-primary shadow-2xs'
                             : 'bg-surface-container hover:bg-surface-container-high text-on-surface-variant border border-surface-dim/70'
@@ -1148,11 +1148,11 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                   onClick={handleStartShoppingWithAnimation}
                   onMouseEnter={() => setCartHoverTrigger((c) => c + 1)}
                   disabled={items.length === 0 || isBottomCartDriving}
-                  className="px-3.5 py-2 sm:px-4 sm:py-2 rounded-full bg-primary text-on-primary font-body text-xs sm:text-sm font-bold flex items-center gap-2 hover:bg-primary-container disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-xs active:scale-95 cursor-pointer group whitespace-nowrap shrink-0 overflow-hidden"
+                  className="px-3.5 py-2 sm:px-4 sm:py-2 rounded-full bg-primary text-on-primary font-body text-xs sm:text-sm font-bold flex items-center gap-2 hover:bg-primary-container disabled:opacity-50 disabled:cursor-not-allowed transition-[transform,background-color,opacity] duration-150 shadow-xs active:scale-95 cursor-pointer group whitespace-nowrap shrink-0 overflow-hidden"
                 >
                   <span className="whitespace-nowrap">{t('addItems.startShoppingBtn') || 'Start Shopping'}</span>
                   <div
-                    className={`relative flex items-center transition-all duration-500 ease-out ${
+                    className={`relative flex items-center transition-transform duration-500 ease-out ${
                       isBottomCartDriving
                         ? 'translate-x-3.5 scale-110'
                         : 'translate-x-0 scale-100 group-hover:translate-x-1 group-hover:scale-105'
@@ -1203,7 +1203,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                     return (
                       <div
                         key={item.id}
-                        className="flex items-center justify-between p-2.5 sm:p-3 rounded-2xl bg-surface-container-low hover:bg-surface-container border border-surface-dim/70 transition-all gap-3"
+                        className="flex items-center justify-between p-2.5 sm:p-3 rounded-2xl bg-surface-container-low hover:bg-surface-container border border-surface-dim/70 transition-colors duration-150 gap-3"
                       >
                         {(() => {
                           const visual = resolveVisual(item);
@@ -1386,7 +1386,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
           onClick={handleStartShoppingWithAnimation}
           onMouseEnter={() => setCartHoverTrigger((c) => c + 1)}
           disabled={items.length === 0 || isBottomCartDriving}
-          className={`relative overflow-hidden w-full h-14 rounded-2xl font-body text-base font-bold shadow-md disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] transition-all flex items-center justify-center gap-3 cursor-pointer group ${
+          className={`relative overflow-hidden w-full h-14 rounded-2xl font-body text-base font-bold shadow-md disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] transition-[transform,background-color,opacity] duration-150 flex items-center justify-center gap-3 cursor-pointer group ${
             isBottomCartDriving
               ? 'bg-[#00422f] text-emerald-100 shadow-emerald-950/40'
               : 'bg-primary text-on-primary hover:bg-primary-container'
@@ -1408,7 +1408,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
 
           {/* Animated Cart Icon (system-outline-146-cart-hover-slide.json) - drives to the right on click & hover */}
           <div
-            className={`relative flex items-center transition-all duration-500 ease-out ${
+            className={`relative flex items-center transition-transform duration-500 ease-out ${
               isBottomCartDriving
                 ? 'translate-x-12 sm:translate-x-16 scale-110'
                 : 'translate-x-0 scale-100 group-hover:translate-x-1.5 group-hover:scale-105'

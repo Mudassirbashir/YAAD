@@ -246,7 +246,7 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
             </div>
             <div className="w-full bg-surface-container rounded-full h-2 overflow-hidden shadow-inner">
               <div
-                className="bg-primary h-2 rounded-full transition-all duration-200 ease-out"
+                className="bg-primary h-2 rounded-full transition-[width] duration-200 ease-out"
                 style={{ width: `${percentComplete}%` }}
               />
             </div>
@@ -354,7 +354,7 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
                                       : undefined
                                   }
                                   size={36}
-                                  className={`w-9 h-9 rounded-xl shrink-0 transition-all ${
+                                  className={`w-9 h-9 rounded-xl shrink-0 transition-[transform,opacity] duration-150 ${
                                     item.completed ? 'opacity-60' : 'opacity-100'
                                   } ${
                                     visual.url
@@ -444,7 +444,7 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
             type="button"
             id="history_reuse_list_btn"
             onClick={() => onReuseList(list)}
-            className="w-full sm:w-auto sm:min-w-[170px] min-h-[50px] px-5 rounded-full bg-emerald-50 text-primary border border-emerald-200/80 hover:bg-emerald-100/70 font-body text-sm sm:text-base font-bold flex items-center justify-center gap-2 transition-all shadow-2xs active:scale-[0.98] cursor-pointer"
+            className="w-full sm:w-auto sm:min-w-[170px] min-h-[50px] px-5 rounded-full bg-emerald-50 text-primary border border-emerald-200/80 hover:bg-emerald-100/70 font-body text-sm sm:text-base font-bold flex items-center justify-center gap-2 transition-[transform,background-color] duration-150 shadow-2xs active:scale-[0.98] cursor-pointer"
           >
             <RotateCcw className="w-4 h-4 text-primary" />
             <span>{t('history.reuseList')}</span>
@@ -456,7 +456,7 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
               type="button"
               id="history_mark_complete_btn"
               onClick={() => onMarkComplete(list)}
-              className="w-full sm:w-auto sm:min-w-[170px] min-h-[50px] px-5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-body text-sm sm:text-base font-bold flex items-center justify-center gap-2 shadow-xs active:scale-[0.98] transition-all cursor-pointer"
+              className="w-full sm:w-auto sm:min-w-[170px] min-h-[50px] px-5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-body text-sm sm:text-base font-bold flex items-center justify-center gap-2 shadow-xs active:scale-[0.98] transition-[transform,background-color] duration-150 cursor-pointer"
             >
               <CheckCircle2 className="w-4 h-4" />
               <span>Mark Complete</span>
@@ -469,7 +469,7 @@ export const ListDetailsView: React.FC<ListDetailsViewProps> = ({
               type="button"
               id="history_continue_shopping_btn"
               onClick={() => onContinueShopping(list)}
-              className="w-full sm:w-auto sm:min-w-[190px] min-h-[50px] px-6 rounded-full bg-primary hover:bg-primary/90 text-white font-body text-sm sm:text-base font-bold flex items-center justify-center gap-2 shadow-xs active:scale-[0.98] transition-all cursor-pointer"
+              className="w-full sm:w-auto sm:min-w-[190px] min-h-[50px] px-6 rounded-full bg-primary hover:bg-primary/90 text-white font-body text-sm sm:text-base font-bold flex items-center justify-center gap-2 shadow-xs active:scale-[0.98] transition-[transform,background-color] duration-150 cursor-pointer"
             >
               <ShoppingCart className="w-4 h-4" />
               <span>{t('history.continueShopping')}</span>

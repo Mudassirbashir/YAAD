@@ -196,7 +196,7 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
                   if (errorMessage) setErrorMessage(null);
                 }}
                 placeholder={t('profileSetup.namePlaceholder') || 'e.g. Sara Ahmed'}
-                className="w-full h-12 bg-surface-container text-on-surface font-body text-sm rounded-2xl px-4 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline"
+                className="w-full h-12 bg-surface-container text-on-surface font-body text-sm rounded-2xl px-4 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-[border-color,box-shadow] placeholder:text-outline"
                 autoFocus
               />
             </div>
@@ -221,7 +221,7 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
                   if (errorMessage) setErrorMessage(null);
                 }}
                 placeholder="+92 300 1234567"
-                className="w-full h-12 bg-surface-container text-on-surface font-mono text-sm rounded-2xl px-4 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all placeholder:text-outline"
+                className="w-full h-12 bg-surface-container text-on-surface font-mono text-sm rounded-2xl px-4 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-[border-color,box-shadow] placeholder:text-outline"
               />
             </div>
           </div>
@@ -238,7 +238,7 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
               <button
                 type="button"
                 onClick={() => handleLanguageSelect('en')}
-                className={`p-3 rounded-2xl border text-center transition-all ${
+                className={`p-3 rounded-2xl border text-center transition-[background-color,border-color,color,box-shadow] ${
                   selectedLanguage === 'en'
                     ? 'border-primary bg-primary-fixed/20 text-primary font-bold shadow-xs'
                     : 'border-outline-variant bg-surface-container hover:bg-surface-container-high text-on-surface'
@@ -251,7 +251,7 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
               <button
                 type="button"
                 onClick={() => handleLanguageSelect('roman-urdu')}
-                className={`p-3 rounded-2xl border text-center transition-all ${
+                className={`p-3 rounded-2xl border text-center transition-[background-color,border-color,color,box-shadow] ${
                   selectedLanguage === 'roman-urdu'
                     ? 'border-primary bg-primary-fixed/20 text-primary font-bold shadow-xs'
                     : 'border-outline-variant bg-surface-container hover:bg-surface-container-high text-on-surface'
@@ -264,7 +264,7 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
               <button
                 type="button"
                 onClick={() => handleLanguageSelect('ur')}
-                className={`p-3 rounded-2xl border text-center transition-all ${
+                className={`p-3 rounded-2xl border text-center transition-[background-color,border-color,color,box-shadow] ${
                   selectedLanguage === 'ur'
                     ? 'border-primary bg-primary-fixed/20 text-primary font-bold shadow-xs'
                     : 'border-outline-variant bg-surface-container hover:bg-surface-container-high text-on-surface'
@@ -291,7 +291,7 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
                     key={opt.id}
                     type="button"
                     onClick={() => setUsagePurpose(isSelected ? '' : opt.id)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-body transition-all flex items-center gap-1.5 ${
+                    className={`px-3 py-1.5 rounded-full text-xs font-body transition-[background-color,border-color,color,box-shadow] flex items-center gap-1.5 ${
                       isSelected
                         ? 'bg-primary text-on-primary font-semibold shadow-xs'
                         : 'bg-surface-container hover:bg-surface-container-high text-on-surface border border-outline-variant/60'
@@ -315,7 +315,7 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
             <select
               value={referralSource}
               onChange={(e) => setReferralSource(e.target.value)}
-              className="w-full h-11 bg-surface-container text-on-surface font-body text-xs rounded-2xl px-3.5 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+              className="w-full h-11 bg-surface-container text-on-surface font-body text-xs rounded-2xl px-3.5 border border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-[border-color,box-shadow]"
             >
               <option value="">Select an option (optional)</option>
               {referralOptions.map((opt) => (
@@ -330,7 +330,7 @@ export const ProfileSetupView: React.FC<ProfileSetupViewProps> = ({ onComplete }
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full h-12 rounded-full bg-primary text-on-primary font-body text-sm font-bold shadow-md hover:bg-primary-container hover:shadow-lg disabled:opacity-50 transition-all flex items-center justify-center gap-2 active:scale-[0.99] mt-4"
+            className="w-full h-12 rounded-full bg-primary text-on-primary font-body text-sm font-bold shadow-md hover:bg-primary-container hover:shadow-lg disabled:opacity-50 transition-[transform,background-color,box-shadow,opacity] flex items-center justify-center gap-2 active:scale-[0.99] mt-4"
           >
             {isSubmitting ? (
               <>

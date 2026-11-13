@@ -121,7 +121,7 @@ export const RecommendationsSection: React.FC<RecommendationsSectionProps> = ({
           return (
             <div
               key={item.canonicalName}
-              className="relative group bg-surface-container-lowest border border-outline-variant/60 rounded-xl p-3 flex flex-col justify-between hover:border-primary/40 hover:shadow-[0px_4px_16px_rgba(0,30,21,0.06)] transition-all duration-200"
+              className="relative group bg-surface-container-lowest border border-outline-variant/60 rounded-xl p-3 flex flex-col justify-between hover:border-primary/40 hover:shadow-[0px_4px_16px_rgba(0,30,21,0.06)] transition-[border-color,box-shadow] duration-200"
             >
               {/* Dismiss button */}
               {onDismissItem && !item.isStarterCatalog && (
@@ -173,7 +173,7 @@ export const RecommendationsSection: React.FC<RecommendationsSectionProps> = ({
                   type="button"
                   onClick={() => handleAdd(item)}
                   disabled={isAdded}
-                  className={`flex items-center justify-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg transition-all duration-200 ${
+                  className={`flex items-center justify-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg transition-[transform,background-color,color] duration-200 ${
                     isAdded
                       ? 'bg-secondary text-on-secondary cursor-default'
                       : 'bg-primary text-on-primary hover:bg-primary/90 active:scale-95 shadow-sm'

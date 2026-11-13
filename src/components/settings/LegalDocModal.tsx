@@ -280,7 +280,7 @@ export const LegalDocModal: React.FC<LegalDocModalProps> = ({
                           key={cat.id}
                           type="button"
                           onClick={() => setSupportCategory(cat.id as any)}
-                          className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                          className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors duration-150 cursor-pointer ${
                             supportCategory === cat.id
                               ? 'bg-primary text-white shadow-2xs'
                               : 'bg-surface-container-low text-outline hover:text-on-surface border border-surface-dim/60'
@@ -321,7 +321,7 @@ export const LegalDocModal: React.FC<LegalDocModalProps> = ({
                   <button
                     type="submit"
                     disabled={isSubmittingTicket || !supportMessage.trim()}
-                    className="w-full py-2.5 px-4 bg-primary hover:bg-primary/90 disabled:opacity-50 text-white rounded-xl text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
+                    className="w-full py-2.5 px-4 bg-primary hover:bg-primary/90 disabled:opacity-50 text-white rounded-xl text-xs font-bold shadow-xs transition-[background-color,opacity] duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
                   >
                     {isSubmittingTicket ? (
                       <>
@@ -351,7 +351,7 @@ export const LegalDocModal: React.FC<LegalDocModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="w-full min-h-[44px] py-2.5 text-xs sm:text-sm font-bold text-white bg-primary hover:bg-primary/90 rounded-2xl transition-all shadow-xs active:scale-98 cursor-pointer"
+            className="w-full min-h-[44px] py-2.5 text-xs sm:text-sm font-bold text-white bg-primary hover:bg-primary/90 rounded-2xl transition-[transform,background-color] duration-150 shadow-xs active:scale-98 cursor-pointer"
           >
             {t('settings.done') || 'Done'}
           </button>

@@ -126,7 +126,7 @@ export const FollowYaadBlock: React.FC<{ className?: string }> = ({ className = 
             target="_blank"
             rel="noopener noreferrer"
             aria-label={profile.ariaLabel}
-            className={`p-3.5 rounded-2xl bg-white border border-[#ddd7c3] text-[#1c2826] transition-all duration-200 flex flex-col items-center justify-center gap-2 group hover:shadow-sm hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-[#003527] ${profile.badgeBg}`}
+            className={`p-3.5 rounded-2xl bg-white border border-[#ddd7c3] text-[#1c2826] transition-[transform,background-color,border-color,box-shadow] duration-200 flex flex-col items-center justify-center gap-2 group hover:shadow-sm hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-[#003527] ${profile.badgeBg}`}
           >
             <div
               className="w-10 h-10 rounded-xl flex items-center justify-center transition-colors text-[#003527] group-hover:scale-105 transition-transform"

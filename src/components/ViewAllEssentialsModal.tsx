@@ -228,7 +228,7 @@ export const ViewAllEssentialsModal: React.FC<ViewAllEssentialsModalProps> = ({
                 }}
                 placeholder={t('essentials.searchPlaceholder') || 'Search staples & essentials (Milk, Eggs, Atta)...'}
                 aria-label="Search essentials"
-                className="w-full h-11 ps-10 pe-10 bg-surface-container-lowest dark:bg-surface-container border border-surface-dim rounded-xl font-body text-sm text-on-surface placeholder:text-outline outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                className="w-full h-11 ps-10 pe-10 bg-surface-container-lowest dark:bg-surface-container border border-surface-dim rounded-xl font-body text-sm text-on-surface placeholder:text-outline outline-none focus:ring-2 focus:ring-primary/20 transition-shadow duration-150"
               />
               {searchQuery && (
                 <button
@@ -291,7 +291,7 @@ export const ViewAllEssentialsModal: React.FC<ViewAllEssentialsModalProps> = ({
                           }
                         }}
                         style={{ borderRadius: '1rem' }}
-                        className="bg-white dark:bg-surface-container-low rounded-2xl p-2.5 xs:p-3 sm:p-3.5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] border border-surface-dim/40 flex items-center gap-2.5 sm:gap-3 cursor-pointer select-none hover:shadow-md transition-all active:scale-[0.99] min-h-[80px] w-full overflow-hidden"
+                        className="bg-white dark:bg-surface-container-low rounded-2xl p-2.5 xs:p-3 sm:p-3.5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] border border-surface-dim/40 flex items-center gap-2.5 sm:gap-3 cursor-pointer select-none hover:shadow-md transition-[transform,box-shadow] duration-150 active:scale-[0.99] min-h-[80px] w-full overflow-hidden"
                       >
                         {/* Left: 56x56 circular photo stage */}
                         <div className="w-13 h-13 sm:w-14 sm:h-14 min-w-[52px] min-h-[52px] sm:min-w-[56px] sm:min-h-[56px] rounded-full bg-white dark:bg-stone-900 border border-surface-dim/60 flex items-center justify-center overflow-hidden shrink-0 shadow-2xs">

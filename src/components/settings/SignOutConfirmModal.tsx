@@ -72,7 +72,7 @@ export const SignOutConfirmModal: React.FC<SignOutConfirmModalProps> = ({
             type="button"
             onClick={onConfirm}
             disabled={isSigningOut}
-            className="flex-1 min-h-[46px] py-2.5 px-4 text-xs sm:text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 active:bg-rose-800 rounded-2xl transition-all shadow-xs disabled:opacity-50 active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+            className="flex-1 min-h-[46px] py-2.5 px-4 text-xs sm:text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 active:bg-rose-800 rounded-2xl transition-[transform,background-color,opacity] duration-150 shadow-xs disabled:opacity-50 active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
           >
             {isSigningOut ? (
               <>

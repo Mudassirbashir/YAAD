@@ -121,7 +121,7 @@ export const elevation = {
   // Standard card elevation
   card: 'shadow-[0_1px_3px_rgba(0,0,0,0.05),0_1px_2px_rgba(0,0,0,0.03)] border border-surface-dim/60',
   // Hover elevation for interactive cards
-  cardHover: 'hover:shadow-[0_6px_16px_rgba(15,61,46,0.08)] hover:border-primary/25 transition-all duration-200',
+  cardHover: 'hover:shadow-[0_6px_16px_rgba(15,61,46,0.08)] hover:border-primary/25 transition-[border-color,box-shadow] duration-200',
   // Modals, dropdowns, and floating bottom sheets
   popover: 'shadow-[0_10px_30px_rgba(15,61,46,0.12)] border border-surface-dim/80',
   // Floating action modals & dialogs

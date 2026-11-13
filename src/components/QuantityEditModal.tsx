@@ -202,7 +202,7 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
               type="button"
               onClick={() => handleStep(-0.5)}
               aria-label="Decrease quantity"
-              className="w-11 h-11 rounded-2xl bg-surface-container hover:bg-surface-container-high text-primary flex items-center justify-center transition-all active:scale-95 shrink-0"
+              className="w-11 h-11 rounded-2xl bg-surface-container hover:bg-surface-container-high text-primary flex items-center justify-center transition-[transform,background-color] active:scale-95 shrink-0"
             >
               <Minus className="w-5 h-5" />
             </button>
@@ -214,7 +214,7 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
                 placeholder="e.g. 2, 1.5, 500"
-                className="w-full h-11 px-3 text-center font-body font-bold text-lg text-primary bg-surface-container-low border border-surface-container-high rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                className="w-full h-11 px-3 text-center font-body font-bold text-lg text-primary bg-surface-container-low border border-surface-container-high rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-[border-color,box-shadow]"
               />
             </div>
 
@@ -222,7 +222,7 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
               type="button"
               onClick={() => handleStep(0.5)}
               aria-label="Increase quantity"
-              className="w-11 h-11 rounded-2xl bg-surface-container hover:bg-surface-container-high text-primary flex items-center justify-center transition-all active:scale-95 shrink-0"
+              className="w-11 h-11 rounded-2xl bg-surface-container hover:bg-surface-container-high text-primary flex items-center justify-center transition-[transform,background-color] active:scale-95 shrink-0"
             >
               <Plus className="w-5 h-5" />
             </button>
@@ -242,7 +242,7 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
                   key={q.val}
                   type="button"
                   onClick={() => setQuantity(q.val)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-body font-bold whitespace-nowrap transition-all shrink-0 active:scale-95 ${
+                  className={`px-3 py-1.5 rounded-full text-xs font-body font-bold whitespace-nowrap transition-[transform,background-color,color,box-shadow] shrink-0 active:scale-95 ${
                     isSelected
                       ? 'bg-primary text-on-primary shadow-xs'
                       : 'bg-surface-container hover:bg-surface-container-high text-on-surface-variant'
@@ -279,7 +279,7 @@ export const QuantityEditModal: React.FC<QuantityEditModalProps> = ({
                   key={u.id}
                   type="button"
                   onClick={() => setUnit(isSelected ? '' : u.id)}
-                  className={`px-2.5 py-1 rounded-xl text-xs font-body font-semibold transition-all flex items-center gap-1 active:scale-95 ${
+                  className={`px-2.5 py-1 rounded-xl text-xs font-body font-semibold transition-[transform,background-color,color,box-shadow] flex items-center gap-1 active:scale-95 ${
                     isSelected
                       ? 'bg-primary text-on-primary shadow-xs'
                       : 'bg-surface-container hover:bg-surface-container-high text-on-surface-variant'

@@ -66,7 +66,7 @@ export const MiloIntro: React.FC<MiloIntroProps> = ({ isOpen, onDismiss }) => {
         <button
           type="button"
           onClick={onDismiss}
-          className="mt-6 w-full py-3.5 px-6 rounded-2xl bg-primary text-on-primary font-bold shadow-md hover:bg-primary/95 active:scale-98 transition-all"
+          className="mt-6 w-full py-3.5 px-6 rounded-2xl bg-primary text-on-primary font-bold shadow-md hover:bg-primary/95 active:scale-98 transition-[transform,background-color] duration-150"
         >
           Let's go
         </button>

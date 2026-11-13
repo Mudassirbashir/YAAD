@@ -287,7 +287,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 setErrorMsg(null);
                 setSuccessMsg(null);
               }}
-              className={`flex-1 py-2 rounded-full transition-all cursor-pointer ${
+              className={`flex-1 py-2 rounded-full transition-[background-color,color,box-shadow] cursor-pointer ${
                 mode === 'signin'
                   ? 'bg-white text-neutral-900 font-bold shadow-xs'
                   : 'hover:text-neutral-900 text-neutral-500'
@@ -302,7 +302,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 setErrorMsg(null);
                 setSuccessMsg(null);
               }}
-              className={`flex-1 py-2 rounded-full transition-all cursor-pointer ${
+              className={`flex-1 py-2 rounded-full transition-[background-color,color,box-shadow] cursor-pointer ${
                 mode === 'signup'
                   ? 'bg-white text-neutral-900 font-bold shadow-xs'
                   : 'hover:text-neutral-900 text-neutral-500'
@@ -368,7 +368,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     placeholder="Email Address"
                     aria-label="Email address"
                     disabled={isSubmitting}
-                    className="w-full h-12 bg-[#f3f4f6] text-neutral-800 text-sm font-medium rounded-2xl px-4 border border-transparent focus:bg-white focus:border-neutral-300 focus:ring-2 focus:ring-neutral-900/10 outline-none transition-all placeholder:text-neutral-400 disabled:opacity-60"
+                    className="w-full h-12 bg-[#f3f4f6] text-neutral-800 text-sm font-medium rounded-2xl px-4 border border-transparent focus:bg-white focus:border-neutral-300 focus:ring-2 focus:ring-neutral-900/10 outline-none transition-[background-color,border-color,box-shadow] placeholder:text-neutral-400 disabled:opacity-60"
                     autoComplete="email"
                     required
                   />
@@ -421,7 +421,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     placeholder="Full name"
                     aria-label="Full name"
                     disabled={isSubmitting}
-                    className="w-full h-12 bg-[#f3f4f6] text-neutral-800 text-sm font-medium rounded-2xl px-4 border border-transparent focus:bg-white focus:border-neutral-300 focus:ring-2 focus:ring-neutral-900/10 outline-none transition-all placeholder:text-neutral-400 disabled:opacity-60"
+                    className="w-full h-12 bg-[#f3f4f6] text-neutral-800 text-sm font-medium rounded-2xl px-4 border border-transparent focus:bg-white focus:border-neutral-300 focus:ring-2 focus:ring-neutral-900/10 outline-none transition-[background-color,border-color,box-shadow] placeholder:text-neutral-400 disabled:opacity-60"
                     required
                   />
                 </div>
@@ -434,7 +434,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     placeholder="Phone number (+92 300 1234567)"
                     aria-label="Phone number"
                     disabled={isSubmitting}
-                    className="w-full h-12 bg-[#f3f4f6] text-neutral-800 text-sm font-medium rounded-2xl px-4 border border-transparent focus:bg-white focus:border-neutral-300 focus:ring-2 focus:ring-neutral-900/10 outline-none transition-all placeholder:text-neutral-400 disabled:opacity-60"
+                    className="w-full h-12 bg-[#f3f4f6] text-neutral-800 text-sm font-medium rounded-2xl px-4 border border-transparent focus:bg-white focus:border-neutral-300 focus:ring-2 focus:ring-neutral-900/10 outline-none transition-[background-color,border-color,box-shadow] placeholder:text-neutral-400 disabled:opacity-60"
                     autoComplete="tel"
                     required
                   />
@@ -450,7 +450,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 placeholder="Email address"
                 aria-label="Email address"
                 disabled={isSubmitting}
-                className="w-full h-12 bg-[#f3f4f6] text-neutral-800 text-sm font-medium rounded-2xl px-4 border border-transparent focus:bg-white focus:border-neutral-300 focus:ring-2 focus:ring-neutral-900/10 outline-none transition-all placeholder:text-neutral-400 disabled:opacity-60"
+                className="w-full h-12 bg-[#f3f4f6] text-neutral-800 text-sm font-medium rounded-2xl px-4 border border-transparent focus:bg-white focus:border-neutral-300 focus:ring-2 focus:ring-neutral-900/10 outline-none transition-[background-color,border-color,box-shadow] placeholder:text-neutral-400 disabled:opacity-60"
                 autoComplete="email"
                 required
               />
@@ -464,7 +464,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 placeholder="Password"
                 aria-label="Password"
                 disabled={isSubmitting}
-                className="w-full h-12 bg-[#f3f4f6] text-neutral-800 text-sm font-medium rounded-2xl ps-4 pe-14 border border-transparent focus:bg-white focus:border-neutral-300 focus:ring-2 focus:ring-neutral-900/10 outline-none transition-all placeholder:text-neutral-400 disabled:opacity-60"
+                className="w-full h-12 bg-[#f3f4f6] text-neutral-800 text-sm font-medium rounded-2xl ps-4 pe-14 border border-transparent focus:bg-white focus:border-neutral-300 focus:ring-2 focus:ring-neutral-900/10 outline-none transition-[background-color,border-color,box-shadow] placeholder:text-neutral-400 disabled:opacity-60"
                 autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
                 required
               />

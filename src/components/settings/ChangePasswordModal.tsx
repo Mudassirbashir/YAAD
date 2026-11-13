@@ -163,7 +163,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="••••••••"
                 disabled={isUpdating}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-surface border border-surface-dim/75 text-on-surface font-mono pe-12 focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all min-h-[44px]"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-surface border border-surface-dim/75 text-on-surface font-mono pe-12 focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 transition-[border-color,box-shadow] duration-150 min-h-[44px]"
                 required
               />
               <button
@@ -194,7 +194,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
                 disabled={isUpdating}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-surface border border-surface-dim/75 text-on-surface font-mono pe-12 focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all min-h-[44px]"
+                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-surface border border-surface-dim/75 text-on-surface font-mono pe-12 focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 transition-[border-color,box-shadow] duration-150 min-h-[44px]"
                 required
               />
               <button
@@ -221,7 +221,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
             <button
               type="submit"
               disabled={isUpdating || newPassword.length < 6 || newPassword !== confirmPassword}
-              className="px-5 py-2.5 min-h-[44px] text-xs font-bold text-white bg-primary hover:bg-primary/90 rounded-xl transition-all disabled:opacity-50 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+              className="px-5 py-2.5 min-h-[44px] text-xs font-bold text-white bg-primary hover:bg-primary/90 rounded-xl transition-[transform,background-color,opacity] duration-150 disabled:opacity-50 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
             >
               {isUpdating ? (
                 <>

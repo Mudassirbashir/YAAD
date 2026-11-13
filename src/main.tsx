@@ -7,10 +7,12 @@ import { ThemeProvider } from './context/ThemeContext';
 import { RemoteConfigProvider } from './context/RemoteConfigContext';
 import { initMonitoring } from './lib/monitoring';
 import { isPerfMeterEnabled, startPerfMeter } from './lib/perfMeter';
+import { syncLowEndDeviceClass } from './lib/deviceTier';
 import './index.css';
 
 // Initialize Sentry monitoring before mounting React application
 initMonitoring();
+syncLowEndDeviceClass();
 if (isPerfMeterEnabled()) {
   startPerfMeter();
 }

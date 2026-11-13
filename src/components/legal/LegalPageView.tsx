@@ -382,7 +382,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                 e.preventDefault();
                 handleTabClick('features');
               }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-colors cursor-pointer ${
                 currentPage === 'features'
                   ? 'bg-[#005039] text-white shadow-xs'
                   : 'bg-[#faf8f5] text-[#556960] hover:text-[#1c2826] hover:bg-[#f0ebe1] border border-[#e5e1d8]'
@@ -400,7 +400,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                 e.preventDefault();
                 handleTabClick('how_it_works');
               }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-colors cursor-pointer ${
                 currentPage === 'how_it_works'
                   ? 'bg-[#005039] text-white shadow-xs'
                   : 'bg-[#faf8f5] text-[#556960] hover:text-[#1c2826] hover:bg-[#f0ebe1] border border-[#e5e1d8]'
@@ -418,7 +418,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                 e.preventDefault();
                 handleTabClick('help');
               }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-colors cursor-pointer ${
                 currentPage === 'help'
                   ? 'bg-[#005039] text-white shadow-xs'
                   : 'bg-[#faf8f5] text-[#556960] hover:text-[#1c2826] hover:bg-[#f0ebe1] border border-[#e5e1d8]'
@@ -436,7 +436,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                 e.preventDefault();
                 handleTabClick('about');
               }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-colors cursor-pointer ${
                 currentPage === 'about'
                   ? 'bg-[#005039] text-white shadow-xs'
                   : 'bg-[#faf8f5] text-[#556960] hover:text-[#1c2826] hover:bg-[#f0ebe1] border border-[#e5e1d8]'
@@ -454,7 +454,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                 e.preventDefault();
                 handleTabClick('blog');
               }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-colors cursor-pointer ${
                 currentPage === 'blog'
                   ? 'bg-[#005039] text-white shadow-xs'
                   : 'bg-[#faf8f5] text-[#556960] hover:text-[#1c2826] hover:bg-[#f0ebe1] border border-[#e5e1d8]'
@@ -472,7 +472,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                 e.preventDefault();
                 navigate(rashanListPath);
               }}
-              className="flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all bg-[#faf8f5] text-[#556960] hover:text-[#1c2826] hover:bg-[#f0ebe1] border border-[#e5e1d8] cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-colors bg-[#faf8f5] text-[#556960] hover:text-[#1c2826] hover:bg-[#f0ebe1] border border-[#e5e1d8] cursor-pointer"
             >
               <ShoppingBag className="w-3.5 h-3.5 shrink-0 text-[#005039]" />
               <span>{rashanListLabel}</span>
@@ -486,7 +486,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                 e.preventDefault();
                 handleTabClick('privacy');
               }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-colors cursor-pointer ${
                 currentPage === 'privacy'
                   ? 'bg-[#005039] text-white shadow-xs'
                   : 'bg-[#faf8f5] text-[#556960] hover:text-[#1c2826] hover:bg-[#f0ebe1] border border-[#e5e1d8]'
@@ -504,7 +504,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                 e.preventDefault();
                 handleTabClick('terms');
               }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-colors cursor-pointer ${
                 currentPage === 'terms'
                   ? 'bg-[#005039] text-white shadow-xs'
                   : 'bg-[#faf8f5] text-[#556960] hover:text-[#1c2826] hover:bg-[#f0ebe1] border border-[#e5e1d8]'
@@ -522,7 +522,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                 e.preventDefault();
                 handleTabClick('legal');
               }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold whitespace-nowrap transition-colors cursor-pointer ${
                 currentPage === 'legal'
                   ? 'bg-[#005039] text-white shadow-xs'
                   : 'bg-[#faf8f5] text-[#556960] hover:text-[#1c2826] hover:bg-[#f0ebe1] border border-[#e5e1d8]'
@@ -844,7 +844,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 {/* Pillar 1: Native Bilingual Intelligence */}
-                <div className="p-6 rounded-3xl bg-white border border-[#e5e1d8] space-y-3.5 shadow-2xs hover:border-[#005039]/40 hover:shadow-xs transition-all flex flex-col justify-between">
+                <div className="p-6 rounded-3xl bg-white border border-[#e5e1d8] space-y-3.5 shadow-2xs hover:border-[#005039]/40 hover:shadow-xs transition-[border-color,box-shadow] flex flex-col justify-between">
                   <div>
                     <div className="w-12 h-12 rounded-2xl bg-[#005039]/10 text-[#005039] flex items-center justify-center mb-3">
                       <Languages className="w-6 h-6 text-[#005039]" />
@@ -862,7 +862,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                 </div>
 
                 {/* Pillar 2: Unstoppable Offline First */}
-                <div className="p-6 rounded-3xl bg-white border border-[#e5e1d8] space-y-3.5 shadow-2xs hover:border-[#005039]/40 hover:shadow-xs transition-all flex flex-col justify-between">
+                <div className="p-6 rounded-3xl bg-white border border-[#e5e1d8] space-y-3.5 shadow-2xs hover:border-[#005039]/40 hover:shadow-xs transition-[border-color,box-shadow] flex flex-col justify-between">
                   <div>
                     <div className="w-12 h-12 rounded-2xl bg-[#005039]/10 text-[#005039] flex items-center justify-center mb-3">
                       <WifiOff className="w-6 h-6 text-[#005039]" />
@@ -880,7 +880,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                 </div>
 
                 {/* Pillar 3: Zero Ad Tracking & Absolute Privacy */}
-                <div className="p-6 rounded-3xl bg-white border border-[#e5e1d8] space-y-3.5 shadow-2xs hover:border-[#005039]/40 hover:shadow-xs transition-all flex flex-col justify-between">
+                <div className="p-6 rounded-3xl bg-white border border-[#e5e1d8] space-y-3.5 shadow-2xs hover:border-[#005039]/40 hover:shadow-xs transition-[border-color,box-shadow] flex flex-col justify-between">
                   <div>
                     <div className="w-12 h-12 rounded-2xl bg-[#005039]/10 text-[#005039] flex items-center justify-center mb-3">
                       <ShieldCheck className="w-6 h-6 text-[#005039]" />
@@ -898,7 +898,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                 </div>
 
                 {/* Pillar 4: Smart Restock Memory */}
-                <div className="p-6 rounded-3xl bg-white border border-[#e5e1d8] space-y-3.5 shadow-2xs hover:border-[#005039]/40 hover:shadow-xs transition-all flex flex-col justify-between">
+                <div className="p-6 rounded-3xl bg-white border border-[#e5e1d8] space-y-3.5 shadow-2xs hover:border-[#005039]/40 hover:shadow-xs transition-[border-color,box-shadow] flex flex-col justify-between">
                   <div>
                     <div className="w-12 h-12 rounded-2xl bg-[#005039]/10 text-[#005039] flex items-center justify-center mb-3">
                       <RotateCcw className="w-6 h-6 text-[#005039]" />
@@ -947,7 +947,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                     e.preventDefault();
                     navigate(rashanListPath);
                   }}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-[#005039] hover:bg-[#003d2b] shadow-xs transition-all active:scale-95 cursor-pointer"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-[#005039] hover:bg-[#003d2b] shadow-xs transition-[transform,background-color] active:scale-95 cursor-pointer"
                 >
                   <ShoppingBag className="w-4 h-4 shrink-0" />
                   <span>
@@ -980,7 +980,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                     e.preventDefault();
                     navigate(howItWorksPath);
                   }}
-                  className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] hover:border-[#005039]/40 hover:bg-white transition-all space-y-1.5 group cursor-pointer block"
+                  className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] hover:border-[#005039]/40 hover:bg-white transition-colors space-y-1.5 group cursor-pointer block"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-[#005039] uppercase tracking-wider">Interactive Guide</span>
@@ -999,7 +999,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                     e.preventDefault();
                     navigate(featuresPath);
                   }}
-                  className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] hover:border-[#005039]/40 hover:bg-white transition-all space-y-1.5 group cursor-pointer block"
+                  className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] hover:border-[#005039]/40 hover:bg-white transition-colors space-y-1.5 group cursor-pointer block"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-[#005039] uppercase tracking-wider">Features</span>
@@ -1018,7 +1018,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                     e.preventDefault();
                     navigate(rashanListPath);
                   }}
-                  className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] hover:border-[#005039]/40 hover:bg-white transition-all space-y-1.5 group cursor-pointer block"
+                  className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] hover:border-[#005039]/40 hover:bg-white transition-colors space-y-1.5 group cursor-pointer block"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-[#005039] uppercase tracking-wider">Pantry Checklist</span>
@@ -1037,7 +1037,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                     e.preventDefault();
                     navigate(blogPath);
                   }}
-                  className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] hover:border-[#005039]/40 hover:bg-white transition-all space-y-1.5 group cursor-pointer block"
+                  className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] hover:border-[#005039]/40 hover:bg-white transition-colors space-y-1.5 group cursor-pointer block"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-[#005039] uppercase tracking-wider">Knowledge Hub</span>
@@ -1056,7 +1056,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                     e.preventDefault();
                     navigate(helpPath);
                   }}
-                  className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] hover:border-[#005039]/40 hover:bg-white transition-all space-y-1.5 group cursor-pointer block"
+                  className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] hover:border-[#005039]/40 hover:bg-white transition-colors space-y-1.5 group cursor-pointer block"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-[#005039] uppercase tracking-wider">Help Center</span>
@@ -1071,7 +1071,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                 {/* Link 6: Contact Maintainer */}
                 <a
                   href="mailto:yaadapppk@gmail.com"
-                  className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] hover:border-[#005039]/40 hover:bg-white transition-all space-y-1.5 group cursor-pointer block"
+                  className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e5e1d8] hover:border-[#005039]/40 hover:bg-white transition-colors space-y-1.5 group cursor-pointer block"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-[#005039] uppercase tracking-wider">Direct Support</span>
@@ -1187,7 +1187,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                     key={cat}
                     type="button"
                     onClick={() => setSelectedFaqCategory(cat)}
-                    className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full font-bold capitalize transition-all cursor-pointer ${
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full font-bold capitalize transition-colors cursor-pointer ${
                       selectedFaqCategory === cat
                         ? 'bg-[#005039] text-white shadow-xs'
                         : 'bg-white text-[#556960] hover:text-[#1c2826] border border-[#e5e1d8]'
@@ -1217,7 +1217,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                   return (
                     <div
                       key={faq.id}
-                      className="rounded-3xl bg-white border border-[#e5e1d8] overflow-hidden transition-all shadow-2xs"
+                      className="rounded-3xl bg-white border border-[#e5e1d8] overflow-hidden transition-colors shadow-2xs"
                     >
                       <button
                         type="button"
@@ -1511,7 +1511,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                         key={cat}
                         type="button"
                         onClick={() => setSelectedBlogCategory(cat)}
-                        className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                        className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors shrink-0 cursor-pointer ${
                           isSelected
                             ? 'bg-[#003527] text-white shadow-2xs'
                             : 'bg-white border border-[#e5e1d8] text-[#4a5c53] hover:border-[#003527]/40 hover:text-[#003527]'
@@ -1534,7 +1534,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                   <article
                     key={art.id}
                     id={art.slug || art.id}
-                    className={`p-6 sm:p-7 rounded-3xl bg-white border transition-all flex flex-col justify-between space-y-4 shadow-2xs ${
+                    className={`p-6 sm:p-7 rounded-3xl bg-white border transition-[border-color,box-shadow] flex flex-col justify-between space-y-4 shadow-2xs ${
                       isExpanded
                         ? 'border-[#005039] ring-2 ring-[#005039]/10 md:col-span-2'
                         : 'border-[#e5e1d8] hover:border-[#005039]/30'
@@ -1670,7 +1670,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                                     href={art.socialLinks.facebook}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1877F2]/10 text-[#1877F2] hover:bg-[#1877F2] hover:text-white transition-all text-xs font-bold shadow-2xs"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1877F2]/10 text-[#1877F2] hover:bg-[#1877F2] hover:text-white transition-colors text-xs font-bold shadow-2xs"
                                   >
                                     <span>Facebook</span>
                                     <ExternalLink className="w-3 h-3" />
@@ -1681,7 +1681,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                                     href={art.socialLinks.instagram}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#E4405F]/10 text-[#E4405F] hover:bg-[#E4405F] hover:text-white transition-all text-xs font-bold shadow-2xs"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#E4405F]/10 text-[#E4405F] hover:bg-[#E4405F] hover:text-white transition-colors text-xs font-bold shadow-2xs"
                                   >
                                     <span>Instagram</span>
                                     <ExternalLink className="w-3 h-3" />
@@ -1692,7 +1692,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                                     href={art.socialLinks.youtube}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FF0000]/10 text-[#FF0000] hover:bg-[#FF0000] hover:text-white transition-all text-xs font-bold shadow-2xs"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FF0000]/10 text-[#FF0000] hover:bg-[#FF0000] hover:text-white transition-colors text-xs font-bold shadow-2xs"
                                   >
                                     <span>YouTube</span>
                                     <ExternalLink className="w-3 h-3" />
@@ -1703,7 +1703,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                                     href={art.socialLinks.linkedin}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0A66C2]/10 text-[#0A66C2] hover:bg-[#0A66C2] hover:text-white transition-all text-xs font-bold shadow-2xs"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0A66C2]/10 text-[#0A66C2] hover:bg-[#0A66C2] hover:text-white transition-colors text-xs font-bold shadow-2xs"
                                   >
                                     <span>LinkedIn</span>
                                     <ExternalLink className="w-3 h-3" />
@@ -1714,7 +1714,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                                     href={art.socialLinks.tiktok}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-neutral-800/10 text-neutral-800 hover:bg-neutral-800 hover:text-white transition-all text-xs font-bold shadow-2xs"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-neutral-800/10 text-neutral-800 hover:bg-neutral-800 hover:text-white transition-colors text-xs font-bold shadow-2xs"
                                   >
                                     <span>TikTok</span>
                                     <ExternalLink className="w-3 h-3" />
@@ -1725,7 +1725,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                                     href={art.socialLinks.twitter}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-neutral-900/10 text-neutral-900 hover:bg-neutral-900 hover:text-white transition-all text-xs font-bold shadow-2xs"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-neutral-900/10 text-neutral-900 hover:bg-neutral-900 hover:text-white transition-colors text-xs font-bold shadow-2xs"
                                   >
                                     <span>X / Twitter</span>
                                     <ExternalLink className="w-3 h-3" />
@@ -1889,7 +1889,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                       setBlogSearchQuery('');
                       setSelectedBlogCategory('all');
                     }}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#005039] text-white text-xs font-bold hover:bg-[#003d2b] transition-all cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#005039] text-white text-xs font-bold hover:bg-[#003d2b] transition-colors cursor-pointer"
                   >
                     <span>View All Guides</span>
                   </button>
@@ -1913,7 +1913,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                   <article
                     key={post.id}
                     id={post.id}
-                    className={`p-6 sm:p-7 rounded-3xl bg-white border transition-all flex flex-col justify-between space-y-4 shadow-2xs ${
+                    className={`p-6 sm:p-7 rounded-3xl bg-white border transition-[border-color,box-shadow] flex flex-col justify-between space-y-4 shadow-2xs ${
                       isExpanded ? 'border-[#005039] ring-2 ring-[#005039]/10 md:col-span-2' : 'border-[#e5e1d8] hover:border-[#005039]/30'
                     }`}
                   >
@@ -2030,7 +2030,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                                         navigate(link.path);
                                       }
                                     }}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-[#e5e1d8] text-xs font-bold text-[#005039] hover:bg-[#005039] hover:text-white transition-all cursor-pointer shadow-2xs"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-[#e5e1d8] text-xs font-bold text-[#005039] hover:bg-[#005039] hover:text-white transition-colors cursor-pointer shadow-2xs"
                                   >
                                     <span>{link.label}</span>
                                     <ArrowRight className="w-3 h-3" />
@@ -2208,7 +2208,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                     <div
                       key={feat.id}
                       id={feat.id}
-                      className="p-6 rounded-3xl bg-white border border-[#e5e1d8] hover:border-[#005039]/30 transition-all flex flex-col justify-between space-y-4 shadow-2xs"
+                      className="p-6 rounded-3xl bg-white border border-[#e5e1d8] hover:border-[#005039]/30 transition-colors flex flex-col justify-between space-y-4 shadow-2xs"
                     >
                       <div className="space-y-3">
                         <span className="inline-flex px-2.5 py-1 rounded-full bg-[#005039]/10 text-[#005039] text-xs font-bold">
@@ -2269,7 +2269,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
               <button
                 type="button"
                 onClick={onBack}
-                className="px-6 py-2.5 rounded-full bg-white text-[#005039] font-bold text-xs sm:text-sm shadow-xs hover:bg-[#faf8f5] transition-all cursor-pointer shrink-0"
+                className="px-6 py-2.5 rounded-full bg-white text-[#005039] font-bold text-xs sm:text-sm shadow-xs hover:bg-[#faf8f5] transition-colors cursor-pointer shrink-0"
               >
                 Make First List Now
               </button>
@@ -2336,7 +2336,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                   return (
                     <div
                       key={step.step}
-                      className="p-6 sm:p-7 rounded-3xl bg-white border border-[#e5e1d8] hover:border-[#005039]/30 transition-all flex flex-col justify-between space-y-4 shadow-2xs"
+                      className="p-6 sm:p-7 rounded-3xl bg-white border border-[#e5e1d8] hover:border-[#005039]/30 transition-colors flex flex-col justify-between space-y-4 shadow-2xs"
                     >
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
@@ -2481,7 +2481,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
                           <div
                             key={item.id}
                             onClick={() => toggleExampleItem(item.id)}
-                            className={`p-2.5 rounded-xl bg-white border border-[#e5e1d8]/80 flex items-center justify-between gap-2.5 transition-all select-none cursor-pointer ${
+                            className={`p-2.5 rounded-xl bg-white border border-[#e5e1d8]/80 flex items-center justify-between gap-2.5 transition-[background-color,border-color,opacity] select-none cursor-pointer ${
                               item.completed ? 'opacity-60 bg-[#f9f7f2]' : 'hover:border-[#005039]/40 shadow-2xs'
                             }`}
                           >
@@ -2524,7 +2524,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
               <button
                 type="button"
                 onClick={() => handleTabClick('help')}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-[#005039] bg-white border border-[#e5e1d8] hover:bg-[#f0ebe1] shadow-2xs transition-all cursor-pointer shrink-0"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-[#005039] bg-white border border-[#e5e1d8] hover:bg-[#f0ebe1] shadow-2xs transition-colors cursor-pointer shrink-0"
               >
                 <HelpCircle className="w-4 h-4" />
                 <span>Browse FAQ Hub</span>
@@ -2538,7 +2538,7 @@ export const LegalPageView: React.FC<LegalPageViewProps> = ({
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-xs font-bold text-[#005039] bg-white border border-[#e5e1d8] hover:bg-[#faf8f5] shadow-2xs transition-all active:scale-95 cursor-pointer"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-xs font-bold text-[#005039] bg-white border border-[#e5e1d8] hover:bg-[#faf8f5] shadow-2xs transition-[transform,background-color] active:scale-95 cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Return to Shopping</span>

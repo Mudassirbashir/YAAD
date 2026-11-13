@@ -129,7 +129,7 @@ export const PhoneNumberNotification: React.FC<PhoneNumberNotificationProps> = (
             type="button"
             id="home_phone_notice_add_btn"
             onClick={handleOpenModal}
-            className="h-8 px-3.5 rounded-full bg-primary hover:bg-primary-container active:scale-95 text-on-primary text-xs font-bold font-body transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer"
+            className="h-8 px-3.5 rounded-full bg-primary hover:bg-primary-container active:scale-95 text-on-primary text-xs font-bold font-body transition-[transform,background-color] duration-150 shadow-2xs flex items-center gap-1.5 cursor-pointer"
           >
             <Phone className="w-3.5 h-3.5 stroke-[2.2]" />
             <span>Add Phone Number</span>

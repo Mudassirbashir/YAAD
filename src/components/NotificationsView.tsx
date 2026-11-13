@@ -218,7 +218,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ onBack }) 
               type="button"
               onClick={onBack}
               aria-label="Go back"
-              className="w-10 h-10 -ms-2 rounded-full flex items-center justify-center text-primary hover:bg-surface-container-low active:scale-95 transition-all cursor-pointer"
+              className="w-10 h-10 -ms-2 rounded-full flex items-center justify-center text-primary hover:bg-surface-container-low active:scale-95 transition-[transform,background-color] cursor-pointer"
             >
               <ArrowLeft className="w-5 h-5 rtl:rotate-180" />
             </button>
@@ -261,7 +261,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ onBack }) 
                   triggerHaptic(8);
                   setSelectedFilter(tab.id as any);
                 }}
-                className={`px-3.5 py-1.5 rounded-2xl transition-all cursor-pointer whitespace-nowrap shrink-0 border ${
+                className={`px-3.5 py-1.5 rounded-2xl transition-colors cursor-pointer whitespace-nowrap shrink-0 border ${
                   isSelected
                     ? 'bg-primary text-on-primary border-primary shadow-2xs'
                     : 'bg-surface-container-lowest hover:bg-surface-container-low text-on-surface-variant border-surface-dim'
@@ -302,7 +302,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ onBack }) 
             return (
               <div
                 key={notif.id}
-                className="bg-surface-container-lowest p-4 sm:p-5 rounded-3xl border border-surface-dim shadow-xs space-y-3 transition-all hover:border-primary/40"
+                className="bg-surface-container-lowest p-4 sm:p-5 rounded-3xl border border-surface-dim shadow-xs space-y-3 transition-colors hover:border-primary/40"
               >
                 {/* Header row: Icon/Image, Category, Timestamp */}
                 <div className="flex items-start justify-between gap-3">
@@ -360,7 +360,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ onBack }) 
                           type="button"
                           onClick={() => handleSelectReaction(notif.id, item.emoji)}
                           aria-label={`React ${item.label}`}
-                          className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm transition-all cursor-pointer active:scale-90 border ${
+                          className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm transition-[transform,background-color,border-color] cursor-pointer active:scale-90 border ${
                             isSelected
                               ? 'bg-primary/15 border-primary shadow-xs scale-105'
                               : 'bg-surface-container-low hover:bg-surface-container border-surface-dim/70'
@@ -379,7 +379,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ onBack }) 
                       triggerHaptic(8);
                       setActiveReplyId(isReplying ? null : notif.id);
                     }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 active:scale-95 transition-all cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 active:scale-95 transition-[transform,background-color] cursor-pointer"
                   >
                     <MessageSquare className="w-3.5 h-3.5" />
                     <span>
@@ -421,7 +421,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ onBack }) 
                             : 'Write your message or question to the Super Admin...'
                         }
                         rows={2}
-                        className="w-full p-3 rounded-2xl bg-surface-container-low text-xs sm:text-sm text-on-surface border border-surface-dim focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-neutral-400"
+                        className="w-full p-3 rounded-2xl bg-surface-container-low text-xs sm:text-sm text-on-surface border border-surface-dim focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-[border-color,box-shadow] placeholder:text-neutral-400"
                         autoFocus
                       />
                     </div>
@@ -430,7 +430,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({ onBack }) 
                         type="button"
                         onClick={() => handleSendReply(notif.id)}
                         disabled={!replyText[notif.id]?.trim() || isSendingReply[notif.id]}
-                        className="px-4 py-2 rounded-xl bg-primary text-on-primary text-xs font-bold flex items-center gap-1.5 shadow-xs disabled:opacity-50 hover:bg-primary-container active:scale-95 transition-all cursor-pointer"
+                        className="px-4 py-2 rounded-xl bg-primary text-on-primary text-xs font-bold flex items-center gap-1.5 shadow-xs disabled:opacity-50 hover:bg-primary-container active:scale-95 transition-[transform,background-color,opacity] cursor-pointer"
                       >
                         <Send className="w-3.5 h-3.5 rtl:rotate-180" />
                         <span>

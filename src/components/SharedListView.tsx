@@ -139,7 +139,7 @@ export const SharedListView: React.FC<SharedListViewProps> = ({ token, onOpenApp
             id="shared_list_cta_btn"
             type="button"
             onClick={handleOpenAppClick}
-            className="px-3.5 py-1.5 rounded-full bg-primary hover:bg-primary-hover text-on-primary text-xs font-bold transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-xs"
+            className="px-3.5 py-1.5 rounded-full bg-primary hover:bg-primary-hover text-on-primary text-xs font-bold transition-[transform,background-color] active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-xs"
           >
             <span>{language === 'ur' ? 'یاد ایپ کھولیں' : 'Open YAAD'}</span>
             <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
@@ -174,7 +174,7 @@ export const SharedListView: React.FC<SharedListViewProps> = ({ token, onOpenApp
             <button
               type="button"
               onClick={handleOpenAppClick}
-              className="px-5 py-2.5 rounded-xl bg-primary text-on-primary font-bold text-xs sm:text-sm shadow-sm active:scale-95 transition-all cursor-pointer"
+              className="px-5 py-2.5 rounded-xl bg-primary text-on-primary font-bold text-xs sm:text-sm shadow-sm active:scale-95 transition-[transform,background-color] cursor-pointer"
             >
               {language === 'ur' ? 'اپنا گروسری لسٹ بنائیں' : 'Create your own shopping list'}
             </button>
@@ -332,7 +332,7 @@ export const SharedListView: React.FC<SharedListViewProps> = ({ token, onOpenApp
               <button
                 type="button"
                 onClick={handleOpenAppClick}
-                className="px-4 py-2 rounded-xl bg-primary text-on-primary font-bold text-xs shadow-xs active:scale-95 transition-all cursor-pointer shrink-0"
+                className="px-4 py-2 rounded-xl bg-primary text-on-primary font-bold text-xs shadow-xs active:scale-95 transition-[transform,background-color] cursor-pointer shrink-0"
               >
                 {language === 'ur' ? 'شروع کریں' : 'Get Started Free'}
               </button>

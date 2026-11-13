@@ -253,7 +253,7 @@ export const ShareListModal: React.FC<ShareListModalProps> = ({
                   id="share_list_copy_btn"
                   type="button"
                   onClick={handleCopyLink}
-                  className="px-3 py-1.5 bg-primary text-on-primary rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer shrink-0"
+                  className="px-3 py-1.5 bg-primary text-on-primary rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-[transform,background-color] active:scale-95 cursor-pointer shrink-0"
                 >
                   {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                   <span>{copied ? (language === 'ur' ? 'کاپی ہوگیا!' : 'Copied!') : (language === 'ur' ? 'کاپی کریں' : 'Copy')}</span>
@@ -266,7 +266,7 @@ export const ShareListModal: React.FC<ShareListModalProps> = ({
                   id="share_list_whatsapp_btn"
                   type="button"
                   onClick={handleWhatsAppShare}
-                  className="px-3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer shadow-xs"
+                  className="px-3 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-2 transition-[transform,background-color] active:scale-95 cursor-pointer shadow-xs"
                 >
                   <MessageCircle className="w-4 h-4 shrink-0" />
                   <span>WhatsApp</span>
@@ -276,7 +276,7 @@ export const ShareListModal: React.FC<ShareListModalProps> = ({
                   href={shareUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-3 py-2.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface text-xs font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-95"
+                  className="px-3 py-2.5 rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface text-xs font-semibold flex items-center justify-center gap-1.5 transition-[transform,background-color] active:scale-95"
                 >
                   <ExternalLink className="w-3.5 h-3.5 shrink-0" />
                   <span>{language === 'ur' ? 'لنک کھولیں' : 'Open Link'}</span>

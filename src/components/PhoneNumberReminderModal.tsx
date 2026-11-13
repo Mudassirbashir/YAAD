@@ -121,7 +121,7 @@ export const PhoneNumberReminderModal: React.FC<PhoneNumberReminderModalProps> =
                   id="phone_reminder_add_btn"
                   type="button"
                   onClick={handleOpenForm}
-                  className="h-8 px-3.5 rounded-full bg-primary hover:bg-primary-container text-on-primary text-xs font-bold font-body shadow-xs active:scale-[0.98] transition-all flex items-center gap-1 cursor-pointer"
+                  className="h-8 px-3.5 rounded-full bg-primary hover:bg-primary-container text-on-primary text-xs font-bold font-body shadow-xs active:scale-[0.98] transition-[transform,background-color] flex items-center gap-1 cursor-pointer"
                 >
                   <span>Add Number</span>
                   {isRTL ? (

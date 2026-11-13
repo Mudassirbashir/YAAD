@@ -18,7 +18,7 @@ export const AppPublicFooter: React.FC<AppPublicFooterProps> = ({
   return (
     <footer
       id="app_public_footer"
-      className="mt-16 border-t border-[#e5e1d8] bg-white pt-12 pb-10 px-4 sm:px-6 transition-all"
+      className="mt-16 border-t border-[#e5e1d8] bg-white pt-12 pb-10 px-4 sm:px-6 transition-colors"
     >
       <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 pb-10 border-b border-[#e5e1d8]">
         {/* Col 1: Brand Identity */}

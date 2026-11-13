@@ -995,4 +995,86 @@ html.dark .border-neutral-100 {
   .backdrop-blur-3xl { -webkit-backdrop-filter: blur(64px); }
 }
 
+/* ====================================================================
+   LOW-END DEVICE TIER: Kill GPU-expensive backdrop-blur & use opaque
+   surfaces while leaving capable devices untouched.
+   ==================================================================== */
+html.yaad-low-end [class*="backdrop-blur"],
+html.yaad-low-end [class*="backdrop-filter"] {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+html.yaad-low-end .bg-background\/80,
+html.yaad-low-end .bg-background\/75 {
+  background-color: color-mix(in oklab, var(--color-background) 97%, transparent) !important;
+}
+
+html.yaad-low-end .bg-surface-container-lowest\/80,
+html.yaad-low-end .bg-surface-container-lowest\/90 {
+  background-color: color-mix(in oklab, var(--color-surface-container-lowest) 97%, transparent) !important;
+}
+
+html.dark.yaad-low-end .dark\:bg-surface-container-lowest\/80 {
+  background-color: color-mix(in oklab, var(--color-surface-container-lowest) 97%, transparent) !important;
+}
+
+html.yaad-low-end .bg-surface-container-high\/80 {
+  background-color: color-mix(in oklab, var(--color-surface-container-high) 97%, transparent) !important;
+}
+
+html.yaad-low-end .bg-surface-container-highest\/95 {
+  background-color: var(--color-surface-container-highest) !important;
+}
+
+html.yaad-low-end .bg-white\/80 {
+  background-color: rgba(255, 255, 255, 0.97) !important;
+}
+
+html.yaad-low-end .bg-\[\#faf8f5\]\/80 {
+  background-color: rgba(250, 248, 245, 0.97) !important;
+}
+
+html.yaad-low-end .bg-\[\#fffdf6\]\/90 {
+  background-color: rgba(255, 253, 246, 0.97) !important;
+}
+
+html.yaad-low-end .bg-primary\/80 {
+  background-color: color-mix(in oklab, var(--color-primary) 97%, transparent) !important;
+}
+
+html.yaad-low-end .bg-emerald-900\/80 {
+  background-color: rgba(6, 78, 59, 0.97) !important;
+}
+
+html.yaad-low-end .bg-emerald-600\/90 {
+  background-color: rgba(5, 150, 105, 0.97) !important;
+}
+
+html.yaad-low-end .bg-white\/10[class*="backdrop-blur"] {
+  background-color: rgba(20, 82, 62, 0.96) !important;
+}
+
+html.yaad-low-end .bg-\[\#1c190e\]\/90 {
+  background-color: rgba(28, 25, 14, 0.97) !important;
+}
+
+html.yaad-low-end .bg-\[\#111917\]\/90,
+html.yaad-low-end .bg-\[\#111917\]\/95 {
+  background-color: rgba(17, 25, 23, 0.97) !important;
+}
+
+html.yaad-low-end .bg-black\/40[class*="backdrop-blur"],
+html.yaad-low-end .bg-black\/50[class*="backdrop-blur"],
+html.yaad-low-end .bg-black\/55[class*="backdrop-blur"],
+html.yaad-low-end .bg-black\/60[class*="backdrop-blur"] {
+  background-color: rgba(0, 0, 0, 0.78) !important;
+}
+
+html.yaad-low-end .bg-black\/75[class*="backdrop-blur"],
+html.yaad-low-end .bg-black\/80[class*="backdrop-blur"] {
+  background-color: rgba(0, 0, 0, 0.88) !important;
+}
+
+
 

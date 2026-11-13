@@ -32,7 +32,7 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ mode = 'bann
   // Settings Card Mode: Always accessible inside Settings view
   if (mode === 'settings_card') {
     return (
-      <div id="pwa_settings_install_row" className="bg-surface-container-lowest border border-surface-dim/70 rounded-2xl p-4 transition-all">
+      <div id="pwa_settings_install_row" className="bg-surface-container-lowest border border-surface-dim/70 rounded-2xl p-4 transition-colors">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
@@ -61,7 +61,7 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ mode = 'bann
                 type="button"
                 onClick={handleInstallClick}
                 disabled={isInstalling}
-                className="px-3.5 py-1.5 rounded-xl bg-primary text-on-primary text-xs font-bold hover:bg-primary-container active:scale-95 transition-all shadow-xs flex items-center gap-1.5"
+                className="px-3.5 py-1.5 rounded-xl bg-primary text-on-primary text-xs font-bold hover:bg-primary-container active:scale-95 transition-[transform,background-color] shadow-xs flex items-center gap-1.5"
               >
                 <Download className="w-3.5 h-3.5" />
                 'Install App'
@@ -153,7 +153,7 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ mode = 'bann
                 type="button"
                 onClick={handleInstallClick}
                 disabled={isInstalling}
-                className="px-3 py-1.5 rounded-xl bg-white text-primary text-xs font-bold hover:bg-white/90 active:scale-95 transition-all shadow-xs flex items-center gap-1.5"
+                className="px-3 py-1.5 rounded-xl bg-white text-primary text-xs font-bold hover:bg-white/90 active:scale-95 transition-[transform,background-color] shadow-xs flex items-center gap-1.5"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Install</span>

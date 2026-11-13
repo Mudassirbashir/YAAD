@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   RemoteConfigDocument,
   DEFAULT_REMOTE_CONFIG,
@@ -22,6 +22,33 @@ interface RemoteConfigContextValue {
 
 const CACHE_KEY = 'yaad_remote_config_cache';
 const DISMISSED_MESSAGES_KEY = 'yaad_dismissed_targeted_msgs';
+const FOCUS_REFETCH_MIN_INTERVAL_MS = 60_000;
+
+function deepEqual(a: unknown, b: unknown): boolean {
+  if (Object.is(a, b)) return true;
+  if (a === null || b === null || typeof a !== 'object' || typeof b !== 'object') {
+    return false;
+  }
+  if (Array.isArray(a) || Array.isArray(b)) {
+    if (!Array.isArray(a) || !Array.isArray(b)) return false;
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+      if (!deepEqual(a[i], b[i])) return false;
+    }
+    return true;
+  }
+  const objA = a as Record<string, unknown>;
+  const objB = b as Record<string, unknown>;
+  const keysA = Object.keys(objA);
+  const keysB = Object.keys(objB);
+  if (keysA.length !== keysB.length) return false;
+  for (let i = 0; i < keysA.length; i++) {
+    const key = keysA[i];
+    if (!Object.prototype.hasOwnProperty.call(objB, key)) return false;
+    if (!deepEqual(objA[key], objB[key])) return false;
+  }
+  return true;
+}
 
 const RemoteConfigContext = createContext<RemoteConfigContextValue>({
   config: DEFAULT_REMOTE_CONFIG,
@@ -36,6 +63,22 @@ const RemoteConfigContext = createContext<RemoteConfigContextValue>({
   essentialsList: DEFAULT_REMOTE_CONFIG.essentials.fixedList,
 });
 
+function mergeWithDefaults(rawConfig: Partial<RemoteConfigDocument>): RemoteConfigDocument {
+  return {
+    ...DEFAULT_REMOTE_CONFIG,
+    ...rawConfig,
+    header: { ...DEFAULT_REMOTE_CONFIG.header, ...(rawConfig.header || {}) },
+    home: { ...DEFAULT_REMOTE_CONFIG.home, ...(rawConfig.home || {}) },
+    bottomNav: { ...DEFAULT_REMOTE_CONFIG.bottomNav, ...(rawConfig.bottomNav || {}) },
+    screens: { ...DEFAULT_REMOTE_CONFIG.screens, ...(rawConfig.screens || {}) },
+    settings: { ...DEFAULT_REMOTE_CONFIG.settings, ...(rawConfig.settings || {}) },
+    features: { ...DEFAULT_REMOTE_CONFIG.features, ...(rawConfig.features || {}) },
+    essentials: { ...DEFAULT_REMOTE_CONFIG.essentials, ...(rawConfig.essentials || {}) },
+    system: { ...DEFAULT_REMOTE_CONFIG.system, ...(rawConfig.system || {}) },
+    abuse: { ...DEFAULT_REMOTE_CONFIG.abuse, ...(rawConfig.abuse || {}) },
+  };
+}
+
 function loadCachedConfig(): {
   config: RemoteConfigDocument;
   userStatus: 'active' | 'suspended' | 'blocked';
@@ -48,7 +91,7 @@ function loadCachedConfig(): {
       const parsed = JSON.parse(raw);
       if (parsed && parsed.config) {
         return {
-          config: { ...DEFAULT_REMOTE_CONFIG, ...parsed.config },
+          config: mergeWithDefaults(parsed.config),
           userStatus: parsed.userStatus || 'active',
           isReadOnly: Boolean(parsed.isReadOnly),
           targetedMessages: Array.isArray(parsed.targetedMessages) ? parsed.targetedMessages : [],
@@ -76,6 +119,17 @@ export const RemoteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [targetedMessages, setTargetedMessages] = useState<TargetedUserMessage[]>(cachedData.targetedMessages);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  const configRef = useRef<RemoteConfigDocument>(config);
+  const userStatusRef = useRef<'active' | 'suspended' | 'blocked'>(userStatus);
+  const isReadOnlyRef = useRef<boolean>(isReadOnly);
+  const targetedMessagesRef = useRef<TargetedUserMessage[]>(targetedMessages);
+  const lastSuccessfulFetchRef = useRef<number>(0);
+
+  configRef.current = config;
+  userStatusRef.current = userStatus;
+  isReadOnlyRef.current = isReadOnly;
+  targetedMessagesRef.current = targetedMessages;
+
   const [dismissedIds, setDismissedIds] = useState<string[]>(() => {
     try {
       const stored = localStorage.getItem(DISMISSED_MESSAGES_KEY);
@@ -86,6 +140,10 @@ export const RemoteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
   });
 
   const fetchConfig = useCallback(async () => {
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      return;
+    }
+
     try {
       const url = userId ? `/api/public/config?userId=${encodeURIComponent(userId)}` : '/api/public/config';
       const res = await fetch(url);
@@ -93,43 +151,59 @@ export const RemoteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
       const data = await res.json();
       if (data && data.config) {
-        const mergedConfig: RemoteConfigDocument = {
-          ...DEFAULT_REMOTE_CONFIG,
-          ...data.config,
-          header: { ...DEFAULT_REMOTE_CONFIG.header, ...(data.config.header || {}) },
-          home: { ...DEFAULT_REMOTE_CONFIG.home, ...(data.config.home || {}) },
-          bottomNav: { ...DEFAULT_REMOTE_CONFIG.bottomNav, ...(data.config.bottomNav || {}) },
-          screens: { ...DEFAULT_REMOTE_CONFIG.screens, ...(data.config.screens || {}) },
-          settings: { ...DEFAULT_REMOTE_CONFIG.settings, ...(data.config.settings || {}) },
-          features: { ...DEFAULT_REMOTE_CONFIG.features, ...(data.config.features || {}) },
-          essentials: { ...DEFAULT_REMOTE_CONFIG.essentials, ...(data.config.essentials || {}) },
-          system: { ...DEFAULT_REMOTE_CONFIG.system, ...(data.config.system || {}) },
-          abuse: { ...DEFAULT_REMOTE_CONFIG.abuse, ...(data.config.abuse || {}) },
-        };
+        lastSuccessfulFetchRef.current = Date.now();
 
-        setConfig(mergedConfig);
-        setUserStatus(data.userStatus || 'active');
-        setIsReadOnly(Boolean(data.isReadOnly));
-        setTargetedMessages(Array.isArray(data.targetedMessages) ? data.targetedMessages : []);
+        const mergedConfig = mergeWithDefaults(data.config);
 
-        try {
-          localStorage.setItem(
-            CACHE_KEY,
-            JSON.stringify({
-              config: mergedConfig,
-              userStatus: data.userStatus || 'active',
-              isReadOnly: Boolean(data.isReadOnly),
-              targetedMessages: data.targetedMessages || [],
-              cachedAt: Date.now(),
-            })
-          );
-        } catch {}
+        const nextUserStatus: 'active' | 'suspended' | 'blocked' = data.userStatus || 'active';
+        const nextIsReadOnly = Boolean(data.isReadOnly);
+        const nextMessages: TargetedUserMessage[] = Array.isArray(data.targetedMessages)
+          ? data.targetedMessages
+          : [];
+
+        let hasChanged = false;
+
+        if (!deepEqual(configRef.current, mergedConfig)) {
+          configRef.current = mergedConfig;
+          setConfig(mergedConfig);
+          hasChanged = true;
+        }
+        if (userStatusRef.current !== nextUserStatus) {
+          userStatusRef.current = nextUserStatus;
+          setUserStatus(nextUserStatus);
+          hasChanged = true;
+        }
+        if (isReadOnlyRef.current !== nextIsReadOnly) {
+          isReadOnlyRef.current = nextIsReadOnly;
+          setIsReadOnly(nextIsReadOnly);
+          hasChanged = true;
+        }
+        if (!deepEqual(targetedMessagesRef.current, nextMessages)) {
+          targetedMessagesRef.current = nextMessages;
+          setTargetedMessages(nextMessages);
+          hasChanged = true;
+        }
+
+        if (hasChanged) {
+          try {
+            localStorage.setItem(
+              CACHE_KEY,
+              JSON.stringify({
+                config: mergedConfig,
+                userStatus: nextUserStatus,
+                isReadOnly: nextIsReadOnly,
+                targetedMessages: nextMessages,
+                cachedAt: Date.now(),
+              })
+            );
+          } catch {}
+        }
       }
     } catch (err) {
       // Fail-open: network error maintains current config or default
       console.warn('[RemoteConfig] Background refresh failed, using cached config:', err);
     } finally {
-      setIsLoading(false);
+      setIsLoading((prev) => (prev ? false : prev));
     }
   }, [userId]);
 
@@ -138,11 +212,27 @@ export const RemoteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
     fetchConfig();
   }, [fetchConfig]);
 
-  // Poll in background every 30 seconds & on focus/online
+  // Poll in background every 30s (only when online), throttle focus refetch (>60s), resume on online
   useEffect(() => {
-    const interval = setInterval(fetchConfig, 30_000);
-    const handleFocus = () => fetchConfig();
-    const handleOnline = () => fetchConfig();
+    const interval = setInterval(() => {
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        return;
+      }
+      fetchConfig();
+    }, 30_000);
+
+    const handleFocus = () => {
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        return;
+      }
+      if (Date.now() - lastSuccessfulFetchRef.current > FOCUS_REFETCH_MIN_INTERVAL_MS) {
+        fetchConfig();
+      }
+    };
+
+    const handleOnline = () => {
+      fetchConfig();
+    };
 
     window.addEventListener('focus', handleFocus);
     window.addEventListener('online', handleOnline);
@@ -177,10 +267,10 @@ export const RemoteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
     (path: string): boolean => {
       if (!path) return true;
       const parts = path.split('.');
-      let current: any = config;
+      let current: unknown = config;
       for (const part of parts) {
-        if (current === undefined || current === null) return true;
-        current = current[part];
+        if (current === undefined || current === null || typeof current !== 'object') return true;
+        current = (current as Record<string, unknown>)[part];
       }
       return current !== false;
     },
@@ -208,7 +298,8 @@ export const RemoteConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
 
       // Check features object
-      const val = (config.features as any)?.[actionKey];
+      const features = config.features as unknown as Record<string, unknown> | undefined;
+      const val = features?.[actionKey];
       return val !== false;
     },
     [config, isReadOnly]

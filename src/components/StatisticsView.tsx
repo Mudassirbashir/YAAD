@@ -435,7 +435,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                 id="statistics_empty_create_btn"
                 type="button"
                 onClick={onCreateList}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-[#0F3D2E] hover:bg-[#145B3A] text-white text-sm font-bold shadow-[0_4px_16px_rgba(15,61,46,0.25)] hover:shadow-[0_6px_20px_rgba(15,61,46,0.35)] transition-all active:scale-95 cursor-pointer mt-2"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-[#0F3D2E] hover:bg-[#145B3A] text-white text-sm font-bold shadow-[0_4px_16px_rgba(15,61,46,0.25)] hover:shadow-[0_6px_20px_rgba(15,61,46,0.35)] transition-[transform,background-color,box-shadow] active:scale-95 cursor-pointer mt-2"
               >
                 <Plus className="w-4 h-4 stroke-[2.6]" />
                 <span>{t('statistics.createFirstList')}</span>
@@ -478,7 +478,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                 {/* Metric 1: Completed Trips */}
                 <div
                   id="metric_card_completed_trips"
-                  className="bg-white rounded-2xl p-4 sm:p-4.5 border border-surface-dim/70 shadow-xs flex flex-col justify-between transition-all hover:border-[#0F3D2E]/20"
+                  className="bg-white rounded-2xl p-4 sm:p-4.5 border border-surface-dim/70 shadow-xs flex flex-col justify-between transition-colors hover:border-[#0F3D2E]/20"
                 >
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-xs font-semibold text-outline font-body">
@@ -503,7 +503,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                 {/* Metric 2: Active Lists */}
                 <div
                   id="metric_card_active_lists"
-                  className="bg-white rounded-2xl p-4 sm:p-4.5 border border-surface-dim/70 shadow-xs flex flex-col justify-between transition-all hover:border-[#0F3D2E]/20"
+                  className="bg-white rounded-2xl p-4 sm:p-4.5 border border-surface-dim/70 shadow-xs flex flex-col justify-between transition-colors hover:border-[#0F3D2E]/20"
                 >
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-xs font-semibold text-outline font-body">
@@ -526,7 +526,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                 {/* Metric 3: Items Purchased */}
                 <div
                   id="metric_card_items_purchased"
-                  className="bg-white rounded-2xl p-4 sm:p-4.5 border border-surface-dim/70 shadow-xs flex flex-col justify-between transition-all hover:border-[#0F3D2E]/20"
+                  className="bg-white rounded-2xl p-4 sm:p-4.5 border border-surface-dim/70 shadow-xs flex flex-col justify-between transition-colors hover:border-[#0F3D2E]/20"
                 >
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-xs font-semibold text-outline font-body">
@@ -551,7 +551,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                 {/* Metric 4: Completion Rate */}
                 <div
                   id="metric_card_completion_rate"
-                  className="bg-white rounded-2xl p-4 sm:p-4.5 border border-surface-dim/70 shadow-xs flex flex-col justify-between transition-all hover:border-[#0F3D2E]/20"
+                  className="bg-white rounded-2xl p-4 sm:p-4.5 border border-surface-dim/70 shadow-xs flex flex-col justify-between transition-colors hover:border-[#0F3D2E]/20"
                 >
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-xs font-semibold text-outline font-body">
@@ -567,7 +567,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                     </div>
                     <div className="w-full bg-surface-container rounded-full h-1.5 mt-2 overflow-hidden">
                       <div
-                        className="bg-[#0F3D2E] h-1.5 rounded-full transition-all duration-200 ease-out"
+                        className="bg-[#0F3D2E] h-1.5 rounded-full transition-[width] duration-200 ease-out"
                         style={{ width: `${Math.min(100, Math.max(5, analytics.completionRate))}%` }}
                       />
                     </div>
@@ -665,7 +665,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                         >
                           {/* Tooltip on hover/select */}
                           <div
-                            className={`text-[10px] font-bold py-0.5 px-1.5 rounded-md mb-1.5 transition-all duration-150 ${
+                            className={`text-[10px] font-bold py-0.5 px-1.5 rounded-md mb-1.5 transition-[transform,opacity,background-color] duration-150 ${
                               isSelected || isPeak
                                 ? 'bg-[#0F3D2E] text-white opacity-100 scale-100'
                                 : 'text-outline opacity-0 group-hover:opacity-100'
@@ -677,7 +677,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                           {/* Bar Capsule */}
                           <div className="w-full max-w-[28px] bg-surface-container rounded-full h-full flex flex-col justify-end p-0.5">
                             <div
-                              className={`w-full rounded-full transition-all duration-200 ease-out ${
+                              className={`w-full rounded-full transition-[height,opacity,background-color] duration-200 ease-out ${
                                 isPeak
                                   ? 'bg-[#0F3D2E] shadow-[0_2px_8px_rgba(15,61,46,0.3)]'
                                   : totalDayScore > 0
@@ -762,7 +762,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
 
                           <div className="w-full bg-surface-container rounded-full h-2 overflow-hidden">
                             <div
-                              className={`h-2 rounded-full transition-all duration-200 ease-out ${
+                              className={`h-2 rounded-full transition-[width] duration-200 ease-out ${
                                 idx === 0
                                   ? 'bg-[#0F3D2E]'
                                   : idx === 1
@@ -893,7 +893,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                         key={list.id}
                         id={`recent_trip_${list.id}`}
                         onClick={() => onSelectList && onSelectList(list)}
-                        className="bg-white rounded-2xl p-3.5 sm:p-4 border border-surface-dim/70 shadow-xs hover:border-[#0F3D2E]/30 transition-all flex items-center justify-between gap-3 active:scale-[0.99] cursor-pointer group"
+                        className="bg-white rounded-2xl p-3.5 sm:p-4 border border-surface-dim/70 shadow-xs hover:border-[#0F3D2E]/30 transition-[transform,border-color] flex items-center justify-between gap-3 active:scale-[0.99] cursor-pointer group"
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           <div

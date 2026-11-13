@@ -95,7 +95,7 @@ export const HomeListsSection: React.FC<HomeListsSectionProps> = ({
         <div
           id="home_empty_create_card"
           onClick={onCreateList}
-          className="w-full h-16 sm:h-[72px] px-4 sm:px-5 bg-surface-container-lowest rounded-full border border-surface-dim/80 shadow-2xs hover:shadow-xs hover:border-primary/40 active:scale-[0.99] transition-all flex items-center justify-between gap-3 cursor-pointer group"
+          className="w-full h-16 sm:h-[72px] px-4 sm:px-5 bg-surface-container-lowest rounded-full border border-surface-dim/80 shadow-2xs hover:shadow-xs hover:border-primary/40 active:scale-[0.99] transition-[transform,border-color,box-shadow] duration-150 flex items-center justify-between gap-3 cursor-pointer group"
         >
           {/* Left: Fresh circular icon with encouraging active title */}
           <div className="flex items-center gap-3 min-w-0">
@@ -121,7 +121,7 @@ export const HomeListsSection: React.FC<HomeListsSectionProps> = ({
               e.stopPropagation();
               onCreateList();
             }}
-            className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-primary hover:bg-primary-container text-on-primary flex items-center justify-center shadow-xs active:scale-95 transition-all shrink-0 cursor-pointer group-hover:scale-105"
+            className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-primary hover:bg-primary-container text-on-primary flex items-center justify-center shadow-xs active:scale-95 transition-[transform,background-color] duration-150 shrink-0 cursor-pointer group-hover:scale-105"
           >
             <Plus className="w-5 h-5 stroke-[2.6]" />
           </button>

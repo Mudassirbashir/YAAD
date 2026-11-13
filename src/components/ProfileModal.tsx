@@ -165,7 +165,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="flex-1 h-10 rounded-full bg-primary text-on-primary font-body text-xs font-bold shadow-sm hover:bg-primary-container disabled:opacity-60 transition-all flex items-center justify-center gap-1"
+                  className="flex-1 h-10 rounded-full bg-primary text-on-primary font-body text-xs font-bold shadow-sm hover:bg-primary-container disabled:opacity-60 transition-[background-color,opacity] flex items-center justify-center gap-1"
                 >
                   <Check className="w-3.5 h-3.5" />
                   <span>{isSaving ? 'Saving...' : 'Save Changes'}</span>

@@ -431,7 +431,7 @@ export const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
             id="cropper_apply_btn"
             onClick={handleCrop}
             disabled={!imageLoaded || isProcessing}
-            className="px-5 py-2.5 text-xs font-bold text-white bg-primary hover:bg-primary/90 rounded-xl transition-all disabled:opacity-50 active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-md"
+            className="px-5 py-2.5 text-xs font-bold text-white bg-primary hover:bg-primary/90 rounded-xl transition-[transform,background-color,opacity] disabled:opacity-50 active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-md"
           >
             {isProcessing ? (
               <>

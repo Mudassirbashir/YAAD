@@ -206,7 +206,7 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
             <button
               onClick={handleLoadRashanIntoYaad}
               disabled={isAddingList}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-[#005039] text-white font-bold text-sm sm:text-base hover:bg-[#003d2b] shadow-md hover:shadow-lg transition-all cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-2xl bg-[#005039] text-white font-bold text-sm sm:text-base hover:bg-[#003d2b] shadow-md hover:shadow-lg transition-[background-color,box-shadow] cursor-pointer"
             >
               {addedListSuccess ? (
                 <>
@@ -311,7 +311,7 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
             <div className="flex flex-wrap gap-1.5 overflow-x-auto pb-1">
               <button
                 onClick={() => setActiveCategoryId('all')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
                   activeCategoryId === 'all'
                     ? 'bg-[#005039] text-white shadow-xs'
                     : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
@@ -323,7 +323,7 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
                 <button
                   key={cat.id}
                   onClick={() => setActiveCategoryId(cat.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
                     activeCategoryId === cat.id
                       ? 'bg-[#005039] text-white shadow-xs'
                       : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
@@ -341,7 +341,7 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
             {filteredCategories.map((cat) => (
               <div
                 key={cat.id}
-                className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden transition-all"
+                className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden transition-colors"
               >
                 <div className="p-5 sm:p-6 bg-slate-50/70 border-b border-slate-200/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
@@ -422,7 +422,7 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
             <button
               onClick={handleLoadRashanIntoYaad}
               disabled={isAddingList}
-              className="px-5 py-3 rounded-2xl bg-white text-[#005039] font-bold text-sm hover:bg-slate-100 transition-all cursor-pointer whitespace-nowrap shadow-xs"
+              className="px-5 py-3 rounded-2xl bg-white text-[#005039] font-bold text-sm hover:bg-slate-100 transition-colors cursor-pointer whitespace-nowrap shadow-xs"
             >
               {addedListSuccess
                 ? 'Added to YAAD ✓'
@@ -575,7 +575,7 @@ export const RashanListPage: React.FC<RashanListPageProps> = ({
             <button
               onClick={handleLoadRashanIntoYaad}
               disabled={isAddingList}
-              className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-white text-[#005039] font-bold text-sm sm:text-base hover:bg-slate-100 transition-all cursor-pointer shadow-md"
+              className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-white text-[#005039] font-bold text-sm sm:text-base hover:bg-slate-100 transition-colors cursor-pointer shadow-md"
             >
               {addedListSuccess ? 'Rashan List Created ✓' : 'Start Your Rashan List in YAAD'}
             </button>

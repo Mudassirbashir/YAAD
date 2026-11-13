@@ -435,7 +435,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                 triggerHaptic(15);
               }}
               title={isQuickScanMode ? 'Quick Scan Mode Active' : 'Enable Continuous Quick Scan'}
-              className={`px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer ${
+              className={`px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer ${
                 isQuickScanMode
                   ? 'bg-amber-500 text-amber-950 font-bold shadow-xs'
                   : 'bg-surface-container hover:bg-surface-container-high text-on-surface-variant'
@@ -580,7 +580,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                 <button
                   type="submit"
                   disabled={!manualCode.trim()}
-                  className="flex-1 py-3 px-4 rounded-2xl bg-primary hover:bg-primary-hover active:bg-primary-active text-on-primary font-bold text-sm shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 py-3 px-4 rounded-2xl bg-primary hover:bg-primary-hover active:bg-primary-active text-on-primary font-bold text-sm shadow-md transition-[background-color,opacity] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {barcodeCopy.lookupBtn || (isUrdu ? 'پروڈکٹ تلاش کریں' : 'Search Product')}
                 </button>
@@ -775,7 +775,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                 <button
                   type="button"
                   onClick={handleConfirmAddItem}
-                  className="flex-1 py-3 px-4 rounded-2xl bg-primary hover:bg-primary-hover active:bg-primary-active text-on-primary font-bold text-sm shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+                  className="flex-1 py-3 px-4 rounded-2xl bg-primary hover:bg-primary-hover active:bg-primary-active text-on-primary font-bold text-sm shadow-md transition-colors cursor-pointer flex items-center justify-center gap-2"
                 >
                   <Check className="w-4 h-4" />
                   <span>{barcodeCopy.confirmAdd || (isUrdu ? 'لسٹ میں شامل کریں' : 'Add to Shopping List')}</span>
@@ -883,7 +883,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                     setReviewName('');
                     setView('review');
                   }}
-                  className="w-full sm:flex-1 py-3 px-4 rounded-2xl bg-primary hover:bg-primary-hover active:bg-primary-active text-on-primary font-bold text-xs sm:text-sm shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+                  className="w-full sm:flex-1 py-3 px-4 rounded-2xl bg-primary hover:bg-primary-hover active:bg-primary-active text-on-primary font-bold text-xs sm:text-sm shadow-md transition-colors cursor-pointer flex items-center justify-center gap-2"
                 >
                   <Keyboard className="w-4 h-4" />
                   <span>{isUrdu ? 'خود نام درج کریں' : 'Enter Name Manually'}</span>
