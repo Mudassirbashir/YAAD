@@ -59,8 +59,11 @@ export type AuthState =
   | 'UNAUTHENTICATED'
   | 'AUTH_ERROR';
 
+export type RecoveryState = 'none' | 'active' | 'completed' | 'expired';
+
 export interface AuthContextType {
   authState: AuthState;
+  recoveryState: RecoveryState;
   user: User | null;
   session: Session | null;
   profile: UserProfile | null;
@@ -175,30 +178,50 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isOfflineUser, setIsOfflineUser] = useState<boolean>(() => Boolean((initialCachedUser as any)?.is_offline_user));
   const [oauthError, setOauthError] = useState<string | null>(null);
   const [passwordResetError, setPasswordResetError] = useState<string | null>(null);
-  const [isPasswordRecovery, setIsPasswordRecovery] = useState<boolean>(() => {
+
+  // Explicit RecoveryState: 'none' | 'active' | 'completed' | 'expired'
+  const [recoveryState, setRecoveryState] = useState<RecoveryState>(() => {
     if (typeof window !== 'undefined') {
       try {
-        return sessionStorage.getItem('yaad_password_recovery_active') === 'true';
+        const hash = window.location.hash || '';
+        const search = window.location.search || '';
+        if (hash.includes('type=recovery') || search.includes('type=recovery')) {
+          return 'active';
+        }
+        return sessionStorage.getItem('yaad_password_recovery_active') === 'true' ? 'active' : 'none';
       } catch {
-        return false;
+        return 'none';
       }
     }
-    return false;
+    return 'none';
   });
+  const recoveryStateRef = useRef<RecoveryState>(recoveryState);
+
+  const updateRecoveryState = useCallback((nextState: RecoveryState) => {
+    recoveryStateRef.current = nextState;
+    setRecoveryState(nextState);
+    if (typeof window !== 'undefined') {
+      try {
+        if (nextState === 'active') {
+          sessionStorage.setItem('yaad_password_recovery_active', 'true');
+          localStorage.setItem('yaad_password_reset_required', 'true');
+        } else {
+          sessionStorage.removeItem('yaad_password_recovery_active');
+          localStorage.removeItem('yaad_password_reset_required');
+          cleanAuthUrlParams(true);
+        }
+      } catch {}
+    }
+  }, []);
+
+  const isPasswordRecovery = recoveryState === 'active';
 
   const clearOauthError = useCallback(() => setOauthError(null), []);
   const clearPasswordResetError = useCallback(() => setPasswordResetError(null), []);
   const clearPasswordRecovery = useCallback(() => {
-    setIsPasswordRecovery(false);
+    updateRecoveryState('none');
     setPasswordResetError(null);
-    if (typeof window !== 'undefined') {
-      try {
-        sessionStorage.removeItem('yaad_password_recovery_active');
-        localStorage.removeItem('yaad_password_reset_required');
-      } catch {}
-      cleanAuthUrlParams(true);
-    }
-  }, []);
+  }, [updateRecoveryState]);
 
   const isAuthenticatingRef = useRef<boolean>(false);
   const isExplicitSignOutRef = useRef<boolean>(false);
@@ -206,6 +229,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Helper to sync user metadata (Google OAuth or email) into profiles table non-blockingly
   const syncProfileFromUser = async (authUser: User): Promise<UserProfile | null> => {
+    // While recovery is 'active': suppress ALL background profile syncs and metadata writes
+    if (recoveryStateRef.current === 'active') {
+      return null;
+    }
     if (syncingUserIdsRef.current.has(authUser.id)) return null;
     syncingUserIdsRef.current.add(authUser.id);
 
@@ -268,8 +295,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     let isMounted = true;
 
+    const hasParsedAuthUrlRef = { current: false };
+
     // Check for OAuth cancellation, errors, or password recovery in URL parameters on mount
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && !hasParsedAuthUrlRef.current) {
+      hasParsedAuthUrlRef.current = true;
       try {
         const searchParams = new URLSearchParams(window.location.search);
         const hashStr = window.location.hash.startsWith('#')
@@ -277,7 +307,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           : window.location.hash;
         const hashParams = new URLSearchParams(hashStr);
 
-        // Check if user clicked a password reset / recovery link
+        // Check if user clicked a password reset / recovery link (parse exactly once)
         const typeParam = searchParams.get('type') || hashParams.get('type');
         const isRecoveryHash =
           window.location.hash.includes('type=recovery') ||
@@ -285,11 +315,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           searchParams.get('type') === 'recovery';
 
         if (isRecoveryHash) {
-          setIsPasswordRecovery(true);
-          try {
-            sessionStorage.setItem('yaad_password_recovery_active', 'true');
-            localStorage.setItem('yaad_password_reset_required', 'true');
-          } catch {}
+          updateRecoveryState('active');
 
           // If recovery tokens exist in URL fragment, establish the session with Supabase Auth
           const accToken = hashParams.get('access_token');
@@ -301,12 +327,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 if (!error && data?.session && isMounted) {
                   setSession(data.session);
                   setUser(data.session.user);
-                  setIsPasswordRecovery(true);
+                  updateRecoveryState('active');
                   setIsLoading(false);
                 }
               })
               .catch((err) => {
                 console.warn('Notice establishing recovery session from hash:', err);
+              })
+              .finally(() => {
+                cleanAuthUrlParams(true);
               });
           } else if (searchParams.get('code')) {
             const authCode = searchParams.get('code')!;
@@ -316,13 +345,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 if (!error && data?.session && isMounted) {
                   setSession(data.session);
                   setUser(data.session.user);
-                  setIsPasswordRecovery(true);
+                  updateRecoveryState('active');
                   setIsLoading(false);
                 }
               })
               .catch((err) => {
                 console.warn('Notice exchanging PKCE code for recovery session:', err);
+              })
+              .finally(() => {
+                cleanAuthUrlParams(true);
               });
+          } else {
+            cleanAuthUrlParams(true);
           }
         }
 
@@ -353,11 +387,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             lowerDesc.includes('already been used')
           ) {
             setPasswordResetError('Your reset link has expired. Request a new one.');
-            setIsPasswordRecovery(false);
-            try {
-              sessionStorage.removeItem('yaad_password_recovery_active');
-              localStorage.removeItem('yaad_password_reset_required');
-            } catch {}
+            updateRecoveryState('expired');
           } else if (
             lowerDesc.includes('database') ||
             lowerDesc.includes('server') ||
@@ -410,11 +440,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (!isMounted) return;
 
         if (event === 'PASSWORD_RECOVERY') {
-          setIsPasswordRecovery(true);
-          try {
-            sessionStorage.setItem('yaad_password_recovery_active', 'true');
-            localStorage.setItem('yaad_password_reset_required', 'true');
-          } catch {}
+          updateRecoveryState('active');
 
           if (currentSession) {
             setSession(currentSession);
@@ -425,8 +451,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           }
           setIsLoading(false);
           // Return early. Do NOT run profile sync or metadata update endpoints during PASSWORD_RECOVERY.
-          // Background calls can mutate user state and invalidate the single-use recovery token before
-          // the user submits their new password.
           return;
         }
 
@@ -523,11 +547,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           );
         } catch {}
 
-        if (currentSession.user.user_metadata?.password_reset_required === true) {
-          setIsPasswordRecovery(true);
-          try {
-            localStorage.setItem('yaad_password_reset_required', 'true');
-          } catch {}
+        if (currentSession.user.user_metadata?.password_reset_required === true && recoveryStateRef.current === 'none') {
+          updateRecoveryState('active');
         }
 
         // 1. Immediately hydrate profile from local IndexedDB cache
@@ -549,9 +570,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         setIsLoading(false);
 
-        // 2. Perform background synchronization without freezing the UI
+        // 2. Perform background synchronization without freezing the UI (never while recovery is active)
         const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
-        if (!isOffline && currentSession.user) {
+        if (!isOffline && currentSession.user && recoveryStateRef.current !== 'active') {
           syncProfileFromUser(currentSession.user).then(async (synced) => {
             if (synced && isMounted) {
               setProfile(synced);
@@ -616,7 +637,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             activeUser.user_metadata?.password_reset_required === true ||
             (typeof window !== 'undefined' && localStorage.getItem('yaad_password_reset_required') === 'true');
           if (isResetRequired) {
-            setIsPasswordRecovery(true);
+            updateRecoveryState('active');
           }
 
           // 3. Hydrate profile BEFORE setting isLoading = false
@@ -965,7 +986,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const signOut = async () => {
     isExplicitSignOutRef.current = true;
-    setIsPasswordRecovery(false);
+    updateRecoveryState('none');
     setPasswordResetError(null);
     persistUser(null);
     if (typeof window !== 'undefined') {
@@ -1138,15 +1159,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
 
       // 3. Clear recovery state and force URL cleanup
-      setIsPasswordRecovery(false);
+      updateRecoveryState('completed');
       setPasswordResetError(null);
-      if (typeof window !== 'undefined') {
-        try {
-          sessionStorage.removeItem('yaad_password_recovery_active');
-          localStorage.removeItem('yaad_password_reset_required');
-        } catch {}
-        cleanAuthUrlParams(true);
-      }
 
       // 4. Refresh current session to ensure clean authenticated state
       let activeAccessToken = sessionData?.session?.access_token;
@@ -1446,23 +1460,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
   };
 
-  const isPasswordResetRequired = Boolean(
-    isPasswordRecovery ||
-    user?.user_metadata?.password_reset_required === true
-  );
+  const isPasswordResetRequired = recoveryState === 'active';
 
   const authState: AuthState = useMemo(() => {
     if (isLoading) return 'AUTH_LOADING';
-    if (isPasswordResetRequired) return 'PASSWORD_RESET_REQUIRED';
+    if (recoveryState === 'active') return 'PASSWORD_RESET_REQUIRED';
     if (user) return 'AUTHENTICATED';
     if (oauthError || passwordResetError) return 'AUTH_ERROR';
     return 'UNAUTHENTICATED';
-  }, [isLoading, isPasswordResetRequired, user, oauthError, passwordResetError]);
+  }, [isLoading, recoveryState, user, oauthError, passwordResetError]);
 
   return (
     <AuthContext.Provider
       value={{
         authState,
+        recoveryState,
         user,
         session,
         profile,

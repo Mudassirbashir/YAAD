@@ -74,6 +74,181 @@ const getStorageKey = (userId?: string | null) => {
 
 const LEGAL_SCREENS: ScreenType[] = ['terms', 'privacy', 'about', 'help', 'legal', 'blog', 'blog_article', 'features', 'how_it_works'];
 
+export type AppScreenState =
+  | { kind: 'maintenance'; message?: string }
+  | { kind: 'force_update'; minVersion: string }
+  | { kind: 'account_blocked'; reason?: string }
+  | { kind: 'password_reset' }
+  | { kind: 'splash'; isRestoringAuth: boolean }
+  | { kind: 'deep_link_resolving' }
+  | { kind: 'deep_link_not_found'; type: 'list' | 'session' }
+  | { kind: 'public_landing' }
+  | { kind: 'blog_article'; slug?: string }
+  | { kind: 'shared_list'; token: string }
+  | { kind: 'rashan_list' }
+  | { kind: 'legal'; page: LegalPageType }
+  | { kind: 'auth' }
+  | { kind: 'profile_setup' }
+  | { kind: 'onboarding' }
+  | { kind: 'app'; screen: ScreenType };
+
+export function resolveAppScreenState(params: {
+  routeId: AppRouteId | string;
+  routeParams?: Record<string, string>;
+  isProtected?: boolean;
+  user: any;
+  profile: any;
+  userStatus: 'active' | 'suspended' | 'blocked';
+  remoteConfig: any;
+  isRemoteConfigLoading: boolean;
+  isAuthLoading: boolean;
+  hasSplashFinished: boolean;
+  isPasswordResetRequiredActive: boolean;
+  isDeepLinkLoading: boolean;
+  deepLinkNotFound: boolean;
+  deepLinkSessionNotFound: boolean;
+  isAuthSuccessShowing: boolean;
+  hasSetupComplete: boolean;
+  hasOnboarded: boolean;
+  currentAppVersion?: string;
+}): AppScreenState {
+  const {
+    routeId,
+    routeParams,
+    isProtected,
+    user,
+    profile,
+    userStatus,
+    remoteConfig,
+    isRemoteConfigLoading,
+    isAuthLoading,
+    hasSplashFinished,
+    isPasswordResetRequiredActive,
+    isDeepLinkLoading,
+    deepLinkNotFound,
+    deepLinkSessionNotFound,
+    isAuthSuccessShowing,
+    hasSetupComplete,
+    hasOnboarded,
+    currentAppVersion = '1.0.0',
+  } = params;
+
+  // 1. Highest Priority: Maintenance Mode
+  if (remoteConfig?.system?.maintenanceMode?.enabled) {
+    return {
+      kind: 'maintenance',
+      message: remoteConfig.system.maintenanceMode.message,
+    };
+  }
+
+  // 2. System-level Force Update
+  const minAppVersion = remoteConfig?.system?.minAppVersion;
+  if (minAppVersion && minAppVersion > currentAppVersion) {
+    return {
+      kind: 'force_update',
+      minVersion: minAppVersion,
+    };
+  }
+
+  // 3. Account Suspended / Blocked
+  if (user && (userStatus === 'blocked' || profile?.is_suspended)) {
+    return {
+      kind: 'account_blocked',
+      reason:
+        profile?.suspend_reason ||
+        (userStatus === 'blocked'
+          ? 'Account temporarily restricted by safety system.'
+          : undefined),
+    };
+  }
+
+  // 4. Password Reset Required / Recovery
+  if (isPasswordResetRequiredActive || routeId === 'reset_password') {
+    return { kind: 'password_reset' };
+  }
+
+  // 5. Public pages that render immediately without splash delay
+  if (routeId === 'rashan_list') return { kind: 'rashan_list' };
+  if (routeId === 'blog_article') return { kind: 'blog_article', slug: routeParams?.slug };
+  if (routeId === 'shared_list') return { kind: 'shared_list', token: routeParams?.token || '' };
+  if (LEGAL_SCREENS.includes(routeId as ScreenType)) {
+    return { kind: 'legal', page: routeId as LegalPageType };
+  }
+  if (routeId === 'root' && !user) return { kind: 'public_landing' };
+
+  // 6. Hold splash until splash has finished, auth is resolved, AND remote config has loaded
+  if (!hasSplashFinished || isAuthLoading || isRemoteConfigLoading) {
+    return {
+      kind: 'splash',
+      isRestoringAuth: isAuthLoading && !user,
+    };
+  }
+
+  // 7. Deep link resolving & not-found (never satisfies splash and not-found simultaneously)
+  if (user && isDeepLinkLoading) {
+    return { kind: 'deep_link_resolving' };
+  }
+  if (user && (deepLinkNotFound || deepLinkSessionNotFound)) {
+    return {
+      kind: 'deep_link_not_found',
+      type: deepLinkSessionNotFound ? 'session' : 'list',
+    };
+  }
+
+  // 8. Auth, Profile Setup, and Onboarding
+  if (!user || isAuthSuccessShowing) {
+    if (routeId === 'auth' || isProtected) return { kind: 'auth' };
+    if (routeId === 'root') return { kind: 'public_landing' };
+  }
+
+  if (user) {
+    if (routeId === 'profile_setup' || !hasSetupComplete) {
+      return { kind: 'profile_setup' };
+    }
+    if (routeId === 'onboarding' || !hasOnboarded) {
+      return { kind: 'onboarding' };
+    }
+  }
+
+  // 9. Standard App Screens
+  switch (routeId) {
+    case 'home':
+    case 'root':
+      return { kind: 'app', screen: 'home' };
+    case 'create':
+      return { kind: 'app', screen: 'create_list' };
+    case 'add_items':
+      return { kind: 'app', screen: 'add_items' };
+    case 'history':
+      return {
+        kind: 'app',
+        screen: remoteConfig?.screens?.historyScreenEnabled === false ? 'home' : 'history',
+      };
+    case 'history_session':
+      return { kind: 'app', screen: 'list_details' };
+    case 'shopping_list':
+      return { kind: 'app', screen: 'shopping_list' };
+    case 'list_details':
+      return { kind: 'app', screen: 'list_details' };
+    case 'edit_list':
+      return { kind: 'app', screen: 'edit_list' };
+    case 'settings':
+    case 'settings_subsection':
+      return { kind: 'app', screen: 'settings' };
+    case 'notifications':
+      return { kind: 'app', screen: 'notifications' };
+    case 'statistics':
+      return {
+        kind: 'app',
+        screen: remoteConfig?.screens?.statisticsScreenEnabled === false ? 'home' : 'statistics',
+      };
+    case 'auth':
+      return user ? { kind: 'app', screen: 'home' } : { kind: 'auth' };
+    default:
+      return { kind: 'app', screen: 'not_found' };
+  }
+}
+
 function AppContent() {
   const {
     user,
@@ -98,7 +273,7 @@ function AppContent() {
     clearIntendedDestination,
   } = useAppRouter();
 
-  const { config: remoteConfig, userStatus, targetedMessages, dismissMessage } = useRemoteConfig();
+  const { config: remoteConfig, isLoading: isRemoteConfigLoading, userStatus, targetedMessages, dismissMessage } = useRemoteConfig();
   const [dismissedMessageId, setDismissedMessageId] = useState<string | null>(null);
 
   const { isRTL } = useLanguage();
@@ -158,60 +333,108 @@ function AppContent() {
     ? localStorage.getItem(STORAGE_ONBOARDED_KEY) === 'true'
     : true;
 
-  // Derive current screen from route
+  const hasSetupComplete = useMemo(() => {
+    if (!user) return true;
+    const hasSetupLocal = typeof window !== 'undefined' && localStorage.getItem(STORAGE_PROFILE_SETUP_KEY) === 'true';
+    return (
+      Boolean(profile?.has_completed_setup) ||
+      Boolean(profile?.full_name?.trim()) ||
+      Boolean(user.user_metadata?.has_completed_setup) ||
+      Boolean(user.user_metadata?.full_name?.trim()) ||
+      Boolean(user.user_metadata?.name?.trim()) ||
+      hasSetupLocal
+    );
+  }, [user, profile]);
+
+  const hasOnboarded = useMemo(() => {
+    if (!user) return true;
+    const hasOnboardedLocal = typeof window !== 'undefined' && localStorage.getItem(STORAGE_ONBOARDED_KEY) === 'true';
+    const isExistingAccount =
+      hasSetupComplete ||
+      Boolean(user.user_metadata?.has_completed_onboarding) ||
+      Boolean(user.created_at && user.last_sign_in_at && user.created_at !== user.last_sign_in_at);
+    return hasOnboardedLocal || isExistingAccount;
+  }, [user, hasSetupComplete]);
+
+  // Controls whether the auth success celebration screen is currently showing
+  const [isAuthSuccessShowing, setIsAuthSuccessShowing] = useState<boolean>(false);
+
+  // Derive explicit single-source-of-truth app screen state
+  const screenState: AppScreenState = useMemo(() => {
+    return resolveAppScreenState({
+      routeId: route.routeId,
+      routeParams: route.params,
+      isProtected: route.isProtected,
+      user,
+      profile,
+      userStatus,
+      remoteConfig,
+      isRemoteConfigLoading,
+      isAuthLoading,
+      hasSplashFinished,
+      isPasswordResetRequiredActive,
+      isDeepLinkLoading,
+      deepLinkNotFound,
+      deepLinkSessionNotFound,
+      isAuthSuccessShowing,
+      hasSetupComplete,
+      hasOnboarded,
+    });
+  }, [
+    route.routeId,
+    route.params,
+    route.isProtected,
+    user,
+    profile,
+    userStatus,
+    remoteConfig,
+    isRemoteConfigLoading,
+    isAuthLoading,
+    hasSplashFinished,
+    isPasswordResetRequiredActive,
+    isDeepLinkLoading,
+    deepLinkNotFound,
+    deepLinkSessionNotFound,
+    isAuthSuccessShowing,
+    hasSetupComplete,
+    hasOnboarded,
+  ]);
+
+  // Derive currentScreen for animations and backwards-compatible props
   const currentScreen: ScreenType = useMemo((): ScreenType => {
-    // If user is already authenticated, they should NEVER see the public website landing page on root '/'
-    if (route.routeId === 'root') {
-      if (user) return 'home';
-      return 'landing';
-    }
-
-    // Public rashan, blog, shared list, and legal pages render immediately without splash delay
-    if (route.routeId === 'rashan_list') return 'rashan_list';
-    if (route.routeId === 'blog_article') return 'blog_article';
-    if (route.routeId === 'shared_list') return 'shared_list';
-    if (LEGAL_SCREENS.includes(route.routeId as ScreenType)) return route.routeId as ScreenType;
-
-    if (!hasSplashFinished) return 'splash';
-    if (isPasswordResetRequiredActive) return 'reset_password';
-
-    switch (route.routeId) {
-      case 'home':
-        return 'home';
-      case 'create':
-        return 'create_list';
-      case 'add_items':
-        return 'add_items';
-      case 'history':
-        return remoteConfig.screens?.historyScreenEnabled === false ? 'home' : 'history';
-      case 'history_session':
-        return 'list_details';
-      case 'shopping_list':
-        return 'shopping_list';
-      case 'list_details':
-        return 'list_details';
-      case 'edit_list':
-        return 'edit_list';
-      case 'settings':
-      case 'settings_subsection':
-        return 'settings';
-      case 'notifications':
-        return 'notifications';
-      case 'statistics':
-        return remoteConfig.screens?.statisticsScreenEnabled === false ? 'home' : 'statistics';
-      case 'auth':
-        return user ? 'home' : 'auth';
-      case 'reset_password':
+    switch (screenState.kind) {
+      case 'maintenance':
+      case 'force_update':
+      case 'splash':
+        return 'splash';
+      case 'password_reset':
         return 'reset_password';
+      case 'account_blocked':
+        return 'home';
+      case 'public_landing':
+        return 'landing';
+      case 'rashan_list':
+        return 'rashan_list';
+      case 'blog_article':
+        return 'blog_article';
+      case 'shared_list':
+        return 'shared_list';
+      case 'legal':
+        return screenState.page;
+      case 'auth':
+        return 'auth';
       case 'profile_setup':
         return 'profile_setup';
       case 'onboarding':
         return 'onboarding';
-      case 'not_found':
-      default:
+      case 'deep_link_resolving':
+        return 'shopping_list';
+      case 'deep_link_not_found':
         return 'not_found';
+      case 'app':
+        return screenState.screen;
     }
-  }, [hasSplashFinished, isPasswordResetRequiredActive, route.routeId, user, remoteConfig.screens]);
+  }, [screenState]);
 
   // Derive active navigation tab from route
   const activeTab: NavigationTab = useMemo(() => {
@@ -257,9 +480,6 @@ function AppContent() {
 
   // Shopping lists collection scoped by authenticated user
   const [lists, setLists] = useState<ShoppingList[]>([]);
-
-  // Controls whether the auth success celebration screen is currently showing
-  const [isAuthSuccessShowing, setIsAuthSuccessShowing] = useState<boolean>(false);
 
   // Track previous user to detect sign in / sign out / switch
   const [prevUserId, setPrevUserId] = useState<string | null | undefined>(user?.id);
@@ -592,7 +812,7 @@ function AppContent() {
   // ===========================================================================
   // Immediate auto-redirect for authenticated users landing on root '/' or '/auth'
   useEffect(() => {
-    if (isAuthLoading) return;
+    if (isAuthLoading || isRemoteConfigLoading) return;
     if (user && !isAuthSuccessShowing) {
       if (route.routeId === 'root' || route.routeId === 'auth') {
         const intended = getIntendedDestination();
@@ -604,10 +824,10 @@ function AppContent() {
         }
       }
     }
-  }, [user, isAuthLoading, isAuthSuccessShowing, route.routeId, getIntendedDestination, clearIntendedDestination, replace]);
+  }, [user, isAuthLoading, isRemoteConfigLoading, isAuthSuccessShowing, route.routeId, getIntendedDestination, clearIntendedDestination, replace]);
 
   useEffect(() => {
-    if (!hasSplashFinished || isAuthLoading) return;
+    if (!hasSplashFinished || isAuthLoading || isRemoteConfigLoading) return;
 
     // 0. HIGHEST PRIORITY ROUTE GUARD: Password Reset
     if (isPasswordResetRequiredActive) {
@@ -694,6 +914,7 @@ function AppContent() {
   }, [
     hasSplashFinished,
     isAuthLoading,
+    isRemoteConfigLoading,
     isPasswordResetRequiredActive,
     route.isProtected,
     route.routeId,
@@ -1356,18 +1577,18 @@ function AppContent() {
   }, [user, route.params?.listId, route.params?.sessionId, lists, activeListId]);
 
   // Determine if bottom navigation bar should be visible
+  // Determine if bottom navigation bar should be visible
   const showBottomNav =
-    (currentScreen === 'home' || currentScreen === 'history' || currentScreen === 'settings' || currentScreen === 'statistics') &&
+    screenState.kind === 'app' &&
+    (screenState.screen === 'home' ||
+      screenState.screen === 'history' ||
+      screenState.screen === 'settings' ||
+      screenState.screen === 'statistics') &&
     !!user &&
     !isPasswordResetRequiredActive;
 
-  // Seamless launch & session restoration: show branded splash until session resolves
-  if ((!hasSplashFinished || isAuthLoading) && currentScreen !== 'landing' && currentScreen !== 'rashan_list' && currentScreen !== 'shared_list' && !LEGAL_SCREENS.includes(currentScreen)) {
-    return <SplashView onFinish={handleSplashFinish} isRestoringAuth={isAuthLoading && !user} />;
-  }
-
-  // System-level Maintenance Mode Screen
-  if (remoteConfig.system?.maintenanceMode?.enabled) {
+  // 1. System-level Maintenance Mode Screen
+  if (screenState.kind === 'maintenance') {
     return (
       <div className="min-h-screen bg-[#fcfaf7] flex flex-col items-center justify-center p-6 text-center select-none">
         <div className="w-16 h-16 rounded-3xl bg-white border border-[#e5e1d8] flex items-center justify-center shadow-sm mb-6 p-2">
@@ -1380,7 +1601,7 @@ function AppContent() {
           یاد میں شیڈول دیکھ بھال جاری ہے۔
         </p>
         <p className="text-sm text-neutral-600 max-w-sm mb-8 leading-relaxed">
-          {remoteConfig.system.maintenanceMode.message ||
+          {screenState.message ||
             'YAAD is temporarily paused for essential system upgrades. Your saved lists are safe and we will be back shortly.'}
         </p>
         <button
@@ -1394,10 +1615,8 @@ function AppContent() {
     );
   }
 
-  // System-level Force Update Screen
-  const minAppVersion = remoteConfig.system?.minAppVersion;
-  const currentAppVersion = '1.0.0';
-  if (minAppVersion && minAppVersion > currentAppVersion) {
+  // 2. System-level Force Update Screen
+  if (screenState.kind === 'force_update') {
     return (
       <div className="min-h-screen bg-[#fcfaf7] flex flex-col items-center justify-center p-6 text-center select-none">
         <div className="w-16 h-16 rounded-3xl bg-emerald-50 border border-emerald-200 flex items-center justify-center shadow-sm mb-6 p-2 text-primary">
@@ -1410,7 +1629,7 @@ function AppContent() {
           جاری رکھنے کے لیے نیا ورژن اپڈیٹ کریں۔
         </p>
         <p className="text-sm text-neutral-600 max-w-sm mb-8 leading-relaxed">
-          A mandatory update is required to continue using YAAD safely. Please update to version {minAppVersion}.
+          A mandatory update is required to continue using YAAD safely. Please update to version {screenState.minVersion}.
         </p>
         <button
           type="button"
@@ -1421,6 +1640,11 @@ function AppContent() {
         </button>
       </div>
     );
+  }
+
+  // 3. Seamless launch & session restoration: show branded splash until session resolves
+  if (screenState.kind === 'splash') {
+    return <SplashView onFinish={handleSplashFinish} isRestoringAuth={screenState.isRestoringAuth} />;
   }
 
   return (
@@ -1446,383 +1670,338 @@ function AppContent() {
             }
           >
             {(() => {
-            if (currentScreen === 'landing') {
-              return (
-                <LandingPageView
-                  user={user}
-                  onGetStarted={() => {
-                    if (user) {
-                      navigate('/home');
-                    } else {
+              if (screenState.kind === 'public_landing') {
+                return (
+                  <LandingPageView
+                    user={user}
+                    onGetStarted={() => {
+                      if (user) {
+                        navigate('/home');
+                      } else {
+                        saveIntendedDestination('/home');
+                        navigate('/auth');
+                      }
+                    }}
+                    onSignIn={() => {
                       saveIntendedDestination('/home');
                       navigate('/auth');
-                    }
-                  }}
-                  onSignIn={() => {
-                    saveIntendedDestination('/home');
-                    navigate('/auth');
-                  }}
-                  onOpenLegalPage={handleOpenLegalPage}
-                  onOpenRashanList={() => navigate('/rashan-list')}
-                />
-              );
-            }
+                    }}
+                    onOpenLegalPage={handleOpenLegalPage}
+                    onOpenRashanList={() => navigate('/rashan-list')}
+                  />
+                );
+              }
 
-            if (currentScreen === 'blog_article') {
-              return (
-                <BlogArticlePage
-                  slug={route.params?.slug}
-                  onBack={() => navigate('/blog')}
-                  onNavigate={(path) => navigate(path)}
-                />
-              );
-            }
+              if (screenState.kind === 'blog_article') {
+                return (
+                  <BlogArticlePage
+                    slug={screenState.slug}
+                    onBack={() => navigate('/blog')}
+                    onNavigate={(path) => navigate(path)}
+                  />
+                );
+              }
 
-            if (currentScreen === 'shared_list') {
-              return (
-                <SharedListView
-                  token={route.params?.token || ''}
-                  onOpenApp={() => navigate(user ? '/home' : '/')}
-                />
-              );
-            }
+              if (screenState.kind === 'shared_list') {
+                return (
+                  <SharedListView
+                    token={screenState.token}
+                    onOpenApp={() => navigate(user ? '/home' : '/')}
+                  />
+                );
+              }
 
-            if (LEGAL_SCREENS.includes(currentScreen)) {
-              return (
-                <LegalPageView
-                  user={user}
-                  initialPage={currentScreen as LegalPageType}
-                  onBack={handleBackFromLegal}
-                  onNavigate={handleOpenLegalPage}
-                />
-              );
-            }
+              if (screenState.kind === 'legal') {
+                return (
+                  <LegalPageView
+                    user={user}
+                    initialPage={screenState.page}
+                    onBack={handleBackFromLegal}
+                    onNavigate={handleOpenLegalPage}
+                  />
+                );
+              }
 
-            if (currentScreen === 'rashan_list') {
-              return (
-                <RashanListPage
-                  onBackToApp={() => {
-                    navigate(user ? '/home' : '/');
-                  }}
-                  onOpenAppWithList={async (newList) => {
-                    if (user) {
-                      setLists((prev) => [newList, ...prev]);
-                      triggerMiloEvent('list_created');
-                      if (isConfigured) {
-                        await saveUserShoppingList(user.id, newList);
+              if (screenState.kind === 'rashan_list') {
+                return (
+                  <RashanListPage
+                    onBackToApp={() => {
+                      navigate(user ? '/home' : '/');
+                    }}
+                    onOpenAppWithList={async (newList) => {
+                      if (user) {
+                        setLists((prev) => [newList, ...prev]);
+                        triggerMiloEvent('list_created');
+                        if (isConfigured) {
+                          await saveUserShoppingList(user.id, newList);
+                        }
+                        setActiveListId(newList.id);
+                        navigate(`/lists/${newList.id}`);
+                      } else {
+                        try {
+                          localStorage.setItem('yaad_pending_imported_rashan_list', JSON.stringify(newList));
+                        } catch {}
+                        saveIntendedDestination(`/lists/${newList.id}`);
+                        navigate('/auth');
                       }
-                      setActiveListId(newList.id);
-                      navigate(`/lists/${newList.id}`);
-                    } else {
-                      try {
-                        localStorage.setItem('yaad_pending_imported_rashan_list', JSON.stringify(newList));
-                      } catch {}
-                      saveIntendedDestination(`/lists/${newList.id}`);
-                      navigate('/auth');
-                    }
-                  }}
-                  onNavigatePage={(path) => {
-                    navigate(path);
-                  }}
-                />
-              );
-            }
+                    }}
+                    onNavigatePage={(path) => {
+                      navigate(path);
+                    }}
+                  />
+                );
+              }
 
-            if (
-              hasSplashFinished &&
-              (isPasswordResetRequiredActive ||
-                currentScreen === 'reset_password' ||
-                route.routeId === 'reset_password')
-            ) {
-              return (
-                <ResetPasswordView
-                  onSuccess={() => {
-                    replace('/home');
-                  }}
-                  onRequestNewLink={() => {
-                    replace('/auth');
-                  }}
-                />
-              );
-            }
+              if (screenState.kind === 'password_reset') {
+                return (
+                  <ResetPasswordView
+                    onSuccess={() => {
+                      replace('/home');
+                    }}
+                    onRequestNewLink={() => {
+                      replace('/auth');
+                    }}
+                  />
+                );
+              }
 
-            if (
-              hasSplashFinished &&
-              !isPasswordResetRequiredActive &&
-              currentScreen !== 'reset_password' &&
-              route.routeId !== 'reset_password' &&
-              (!user || isAuthSuccessShowing) &&
-              !LEGAL_SCREENS.includes(currentScreen) &&
-              currentScreen !== 'not_found'
-            ) {
-              return (
-                <AuthView
-                  onSuccess={() => {
-                    setIsAuthSuccessShowing(false);
-                    handleAuthSuccess();
-                  }}
-                  onSuccessDisplayChange={setIsAuthSuccessShowing}
-                  onOpenLegalPage={handleOpenLegalPage}
-                />
-              );
-            }
+              if (screenState.kind === 'auth') {
+                return (
+                  <AuthView
+                    onSuccess={() => {
+                      setIsAuthSuccessShowing(false);
+                      handleAuthSuccess();
+                    }}
+                    onSuccessDisplayChange={setIsAuthSuccessShowing}
+                    onOpenLegalPage={handleOpenLegalPage}
+                  />
+                );
+              }
 
-            if (hasSplashFinished && user && !isPasswordResetRequiredActive && currentScreen === 'profile_setup') {
-              return <ProfileSetupView onComplete={handleProfileSetupComplete} />;
-            }
+              if (screenState.kind === 'profile_setup') {
+                return <ProfileSetupView onComplete={handleProfileSetupComplete} />;
+              }
 
-            if (hasSplashFinished && user && !isPasswordResetRequiredActive && currentScreen === 'onboarding') {
-              return <OnboardingView onComplete={handleOnboardingComplete} />;
-            }
+              if (screenState.kind === 'onboarding') {
+                return <OnboardingView onComplete={handleOnboardingComplete} />;
+              }
 
-            if (hasSplashFinished && user && !isPasswordResetRequiredActive && currentScreen === 'home') {
-              return (
-                <HomeView
-                  lists={lists}
-                  isLoading={isLoadingLists}
-                  error={listsFetchError}
-                  onRetry={handleRetrySyncAndFetch}
-                  onCreateList={handleStartCreateList}
-                  onSelectList={handleOpenListInShoppingMode}
-                  onContinueShopping={handleOpenListInShoppingMode}
-                  onMarkComplete={handleCompleteTrip}
-                  onReuseList={handleReuseList}
-                  onOpenProfile={() => navigate('/settings')}
-                  onOpenMenu={() => navigate('/settings')}
-                  onOpenPhoneSettings={handleOpenPhoneInSettings}
-                  onOpenHistory={() => navigate('/history')}
-                  onEditList={handleEditList}
-                  onDeleteList={handleDeleteList}
-                  onQuickAddRecommendation={handleQuickAddRecommendation}
-                  onOpenStatistics={() => navigate('/stats')}
-                />
-              );
-            }
+              if (screenState.kind === 'deep_link_resolving') {
+                return (
+                  <div className="flex-1 flex flex-col items-center justify-center p-8">
+                    <Loader2 className="w-8 h-8 text-primary animate-spin mb-3" />
+                    <p className="text-sm font-medium text-on-surface-variant">Loading shopping details...</p>
+                  </div>
+                );
+              }
 
-            if (hasSplashFinished && user && !isPasswordResetRequiredActive && currentScreen === 'create_list') {
-              return (
-                <CreateListView
-                  onBack={() => navigate('/home')}
-                  onCreateList={handleCreateListTitleSubmitted}
-                  onContinue={handleCreateListTitleSubmitted}
-                />
-              );
-            }
+              if (screenState.kind === 'deep_link_not_found') {
+                return (
+                  <ListNotFoundView
+                    type={screenState.type}
+                    onGoHome={() => navigate('/home')}
+                    onGoHistory={() => navigate('/history')}
+                  />
+                );
+              }
 
-            if (hasSplashFinished && user && !isPasswordResetRequiredActive && currentScreen === 'add_items') {
-              return (
-                <AddItemsView
-                  listTitle={tempNewListTitle || currentActiveList?.title || 'Shopping List'}
-                  initialItems={currentActiveList?.items || []}
-                  contextId={activeListContext || currentActiveList?.contextId}
-                  onBack={() => {
-                    if (typeof window !== 'undefined' && window.history.length > 1) {
-                      goBack();
-                    } else {
-                      navigate('/create');
-                    }
-                  }}
-                  onStartShopping={handleStartShoppingFromNewItems}
-                  onItemsChange={handleItemsChangeInAddView}
-                  onRenameList={(newTitle) => {
-                    setTempNewListTitle(newTitle);
+              if (screenState.kind === 'app') {
+                switch (screenState.screen) {
+                  case 'home':
+                    return (
+                      <HomeView
+                        lists={lists}
+                        isLoading={isLoadingLists}
+                        error={listsFetchError}
+                        onRetry={handleRetrySyncAndFetch}
+                        onCreateList={handleStartCreateList}
+                        onSelectList={handleOpenListInShoppingMode}
+                        onContinueShopping={handleOpenListInShoppingMode}
+                        onMarkComplete={handleCompleteTrip}
+                        onReuseList={handleReuseList}
+                        onOpenProfile={() => navigate('/settings')}
+                        onOpenMenu={() => navigate('/settings')}
+                        onOpenPhoneSettings={handleOpenPhoneInSettings}
+                        onOpenHistory={() => navigate('/history')}
+                        onEditList={handleEditList}
+                        onDeleteList={handleDeleteList}
+                        onQuickAddRecommendation={handleQuickAddRecommendation}
+                        onOpenStatistics={() => navigate('/stats')}
+                      />
+                    );
+
+                  case 'create_list':
+                    return (
+                      <CreateListView
+                        onBack={() => navigate('/home')}
+                        onCreateList={handleCreateListTitleSubmitted}
+                        onContinue={handleCreateListTitleSubmitted}
+                      />
+                    );
+
+                  case 'add_items':
+                    return (
+                      <AddItemsView
+                        listTitle={tempNewListTitle || currentActiveList?.title || 'Shopping List'}
+                        initialItems={currentActiveList?.items || []}
+                        contextId={activeListContext || currentActiveList?.contextId}
+                        onBack={() => {
+                          if (typeof window !== 'undefined' && window.history.length > 1) {
+                            goBack();
+                          } else {
+                            navigate('/create');
+                          }
+                        }}
+                        onStartShopping={handleStartShoppingFromNewItems}
+                        onItemsChange={handleItemsChangeInAddView}
+                        onRenameList={(newTitle) => {
+                          setTempNewListTitle(newTitle);
+                          if (currentActiveList) {
+                            handleUpdateList({
+                              ...currentActiveList,
+                              title: newTitle,
+                            });
+                          }
+                        }}
+                      />
+                    );
+
+                  case 'shopping_list':
                     if (currentActiveList) {
-                      handleUpdateList({
-                        ...currentActiveList,
-                        title: newTitle,
-                      });
+                      return (
+                        <ShoppingListView
+                          list={currentActiveList}
+                          onBack={() => navigate('/home')}
+                          onUpdateList={handleUpdateList}
+                          onCompleteTrip={handleCompleteTrip}
+                          onEditList={handleEditList}
+                          onDeleteList={handleDeleteList}
+                          onOpenProfile={() => navigate('/settings')}
+                          isCompletingTrip={isCompletingTrip}
+                          completionError={completionError}
+                          onClearCompletionError={() => setCompletionError(null)}
+                        />
+                      );
                     }
-                  }}
-                />
-              );
-            }
+                    return null;
 
-            if (hasSplashFinished && user && !isPasswordResetRequiredActive && isDeepLinkLoading) {
-              return (
-                <div className="flex-1 flex flex-col items-center justify-center p-8">
-                  <Loader2 className="w-8 h-8 text-primary animate-spin mb-3" />
-                  <p className="text-sm font-medium text-on-surface-variant">Loading shopping details...</p>
-                </div>
-              );
-            }
+                  case 'completion':
+                    if (currentActiveList) {
+                      return (
+                        <CompletionView
+                          list={currentActiveList}
+                          onReturnHome={() => {
+                            setActiveListId(null);
+                            navigate('/home');
+                          }}
+                          onViewHistory={handleFinishCompletion}
+                          onAddMoreItems={() => navigate(`/lists/${currentActiveList.id}`)}
+                          onOpenProfile={() => navigate('/settings')}
+                          onStartNewList={handleStartCreateList}
+                          onReviewTrip={() => navigate(`/lists/${currentActiveList.id}`)}
+                        />
+                      );
+                    }
+                    return null;
 
-            if (
-              hasSplashFinished &&
-              user &&
-              !isPasswordResetRequiredActive &&
-              !isDeepLinkLoading &&
-              (deepLinkNotFound || deepLinkSessionNotFound)
-            ) {
-              return (
-                <ListNotFoundView
-                  type={deepLinkSessionNotFound ? 'session' : 'list'}
-                  onGoHome={() => navigate('/home')}
-                  onGoHistory={() => navigate('/history')}
-                />
-              );
-            }
+                  case 'history':
+                    return (
+                      <ListHistoryView
+                        lists={lists}
+                        isLoading={isLoadingLists}
+                        error={listsFetchError}
+                        onRetry={handleRetrySyncAndFetch}
+                        onSelectList={handleOpenListDetails}
+                        onCreateNewList={handleStartCreateList}
+                        onContinueShopping={handleOpenListInShoppingMode}
+                        onMarkComplete={handleCompleteTrip}
+                        onDeleteList={handleDeleteList}
+                        onDeleteMultipleLists={handleDeleteMultipleLists}
+                        onClearAllHistory={handleClearAllHistory}
+                        onReuseList={handleReuseList}
+                        onOpenProfile={() => navigate('/settings')}
+                        onOpenMenu={() => navigate('/settings')}
+                        onBack={() => navigate('/home')}
+                        isOnline={isOnline}
+                      />
+                    );
 
-            if (
-              hasSplashFinished &&
-              user &&
-              !isPasswordResetRequiredActive &&
-              !isDeepLinkLoading &&
-              !deepLinkNotFound &&
-              currentScreen === 'shopping_list' &&
-              currentActiveList
-            ) {
-              return (
-                <ShoppingListView
-                  list={currentActiveList}
-                  onBack={() => navigate('/home')}
-                  onUpdateList={handleUpdateList}
-                  onCompleteTrip={handleCompleteTrip}
-                  onEditList={handleEditList}
-                  onDeleteList={handleDeleteList}
-                  onOpenProfile={() => navigate('/settings')}
-                  isCompletingTrip={isCompletingTrip}
-                  completionError={completionError}
-                  onClearCompletionError={() => setCompletionError(null)}
-                />
-              );
-            }
+                  case 'list_details':
+                    if (currentActiveList) {
+                      return (
+                        <ListDetailsView
+                          list={currentActiveList}
+                          onBack={() => navigate('/history')}
+                          onReuseList={handleReuseList}
+                          onContinueShopping={handleOpenListInShoppingMode}
+                          onMarkComplete={handleCompleteTrip}
+                          onEditList={handleEditList}
+                          onDeleteList={handleDeleteList}
+                          onOpenProfile={() => navigate('/settings')}
+                        />
+                      );
+                    }
+                    return null;
 
-            if (
-              hasSplashFinished &&
-              user &&
-              !isPasswordResetRequiredActive &&
-              currentScreen === 'completion' &&
-              currentActiveList
-            ) {
-              return (
-                <CompletionView
-                  list={currentActiveList}
-                  onReturnHome={() => {
-                    setActiveListId(null);
-                    navigate('/home');
-                  }}
-                  onViewHistory={handleFinishCompletion}
-                  onAddMoreItems={() => navigate(`/lists/${currentActiveList.id}`)}
-                  onOpenProfile={() => navigate('/settings')}
-                  onStartNewList={handleStartCreateList}
-                  onReviewTrip={() => navigate(`/lists/${currentActiveList.id}`)}
-                />
-              );
-            }
+                  case 'edit_list':
+                    if (currentActiveList) {
+                      return (
+                        <EditListView
+                          list={currentActiveList}
+                          onBack={() => navigate(`/lists/${currentActiveList.id}`)}
+                          onSave={handleSaveEditedList}
+                          onDeleteList={handleDeleteList}
+                          onOpenProfile={() => navigate('/settings')}
+                        />
+                      );
+                    }
+                    return null;
 
-            if (hasSplashFinished && user && !isPasswordResetRequiredActive && currentScreen === 'history') {
-              return (
-                <ListHistoryView
-                  lists={lists}
-                  isLoading={isLoadingLists}
-                  error={listsFetchError}
-                  onRetry={handleRetrySyncAndFetch}
-                  onSelectList={handleOpenListDetails}
-                  onCreateNewList={handleStartCreateList}
-                  onContinueShopping={handleOpenListInShoppingMode}
-                  onMarkComplete={handleCompleteTrip}
-                  onDeleteList={handleDeleteList}
-                  onDeleteMultipleLists={handleDeleteMultipleLists}
-                  onClearAllHistory={handleClearAllHistory}
-                  onReuseList={handleReuseList}
-                  onOpenProfile={() => navigate('/settings')}
-                  onOpenMenu={() => navigate('/settings')}
-                  onBack={() => navigate('/home')}
-                  isOnline={isOnline}
-                />
-              );
-            }
+                  case 'settings':
+                    return (
+                      <SettingsView
+                        subSection={route.params?.subSection as SettingsSubSection || null}
+                        onSubSectionChange={(section) => navigate(`/settings/${section}`)}
+                        onBack={() => navigate('/home')}
+                        onSignOut={handleSignOut}
+                        onDeleteAccount={handleDeleteAccount}
+                        onOpenAuth={handleOpenAuth}
+                        onReplayOnboarding={handleResetOnboarding}
+                        onOpenLegalPage={handleOpenLegalPage}
+                      />
+                    );
 
-            if (
-              hasSplashFinished &&
-              user &&
-              !isPasswordResetRequiredActive &&
-              !isDeepLinkLoading &&
-              !deepLinkNotFound &&
-              !deepLinkSessionNotFound &&
-              currentScreen === 'list_details' &&
-              currentActiveList
-            ) {
-              return (
-                <ListDetailsView
-                  list={currentActiveList}
-                  onBack={() => navigate('/history')}
-                  onReuseList={handleReuseList}
-                  onContinueShopping={handleOpenListInShoppingMode}
-                  onMarkComplete={handleCompleteTrip}
-                  onEditList={handleEditList}
-                  onDeleteList={handleDeleteList}
-                  onOpenProfile={() => navigate('/settings')}
-                />
-              );
-            }
+                  case 'statistics':
+                    return (
+                      <StatisticsView
+                        lists={lists}
+                        isLoading={isLoadingLists}
+                        error={listsFetchError}
+                        onRetry={handleRetrySyncAndFetch}
+                        onBack={() => navigate('/home')}
+                        onCreateList={handleStartCreateList}
+                        onSelectList={handleOpenListInShoppingMode}
+                      />
+                    );
 
-            if (
-              hasSplashFinished &&
-              user &&
-              !isPasswordResetRequiredActive &&
-              !isDeepLinkLoading &&
-              !deepLinkNotFound &&
-              currentScreen === 'edit_list' &&
-              currentActiveList
-            ) {
-              return (
-                <EditListView
-                  list={currentActiveList}
-                  onBack={() => navigate(`/lists/${currentActiveList.id}`)}
-                  onSave={handleSaveEditedList}
-                  onDeleteList={handleDeleteList}
-                  onOpenProfile={() => navigate('/settings')}
-                />
-              );
-            }
+                  case 'notifications':
+                    return <NotificationsView onBack={() => navigate('/home')} />;
 
-            if (hasSplashFinished && user && !isPasswordResetRequiredActive && currentScreen === 'settings') {
-              return (
-                <SettingsView
-                  subSection={route.params?.subSection as SettingsSubSection || null}
-                  onSubSectionChange={(section) => navigate(`/settings/${section}`)}
-                  onBack={() => navigate('/home')}
-                  onSignOut={handleSignOut}
-                  onDeleteAccount={handleDeleteAccount}
-                  onOpenAuth={handleOpenAuth}
-                  onReplayOnboarding={handleResetOnboarding}
-                  onOpenLegalPage={handleOpenLegalPage}
-                />
-              );
-            }
+                  case 'not_found':
+                  default:
+                    return (
+                      <NotFoundView
+                        attemptedPath={currentPath}
+                        onGoHome={() => navigate(user ? '/home' : '/auth')}
+                        onGoHistory={user ? () => navigate('/history') : undefined}
+                        onGoBack={goBack}
+                      />
+                    );
+                }
+              }
 
-            if (hasSplashFinished && user && !isPasswordResetRequiredActive && currentScreen === 'statistics') {
-              return (
-                <StatisticsView
-                  lists={lists}
-                  isLoading={isLoadingLists}
-                  error={listsFetchError}
-                  onRetry={handleRetrySyncAndFetch}
-                  onBack={() => navigate('/home')}
-                  onCreateList={handleStartCreateList}
-                  onSelectList={handleOpenListInShoppingMode}
-                />
-              );
-            }
-
-            if (hasSplashFinished && user && !isPasswordResetRequiredActive && currentScreen === 'notifications') {
-              return <NotificationsView onBack={() => navigate('/home')} />;
-            }
-
-            if (hasSplashFinished && currentScreen === 'not_found') {
-              return (
-                <NotFoundView
-                  attemptedPath={currentPath}
-                  onGoHome={() => navigate(user ? '/home' : '/auth')}
-                  onGoHistory={user ? () => navigate('/history') : undefined}
-                  onGoBack={goBack}
-                />
-              );
-            }
-
-            return null;
-          })()}
+              return null;
+            })()}
           </React.Suspense>
         </motion.div>
       </AnimatePresence>

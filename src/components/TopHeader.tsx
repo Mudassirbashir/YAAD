@@ -275,9 +275,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
           </div>
 
           {/* Right Action: Cleanly aligned without crowding or collision */}
-          <div className="flex items-center justify-end gap-1 min-w-[44px]">
+          <div className="flex items-center justify-end gap-2 shrink-0 min-w-[44px]">
             {rightAction && (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-2">
                 {rightAction}
               </div>
             )}
@@ -298,7 +298,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                   onClick={handleOpenNotifications}
                   aria-label="Notifications"
                   title="Notifications & Alerts"
-                  className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-primary hover:bg-surface-container-low active:bg-surface-container active:scale-95 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer"
+                  className="w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full text-primary hover:bg-surface-container-low active:bg-surface-container active:scale-95 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer"
                 >
                   <Bell className="w-5 h-5 stroke-[2]" />
                 </button>
@@ -314,7 +314,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                 onClick={handleSettingsClick}
                 aria-label="Settings"
                 title="Settings"
-                className="w-11 h-11 min-w-[44px] min-h-[44px] -me-2 flex items-center justify-center rounded-full text-primary hover:bg-surface-container-low active:bg-surface-container active:scale-95 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer group"
+                className="w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full text-primary hover:bg-surface-container-low active:bg-surface-container active:scale-95 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer group"
               >
                 <Settings
                   className={`w-5 h-5 text-primary stroke-[2] transition-transform duration-300 ease-out group-hover:rotate-45 motion-reduce:transform-none ${

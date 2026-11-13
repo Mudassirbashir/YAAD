@@ -13,7 +13,20 @@ import { DEFAULT_REMOTE_CONFIG } from './src/types/remoteConfig';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+function resolvePort(): number {
+  const portFlagIdx = process.argv.indexOf('--port');
+  if (portFlagIdx !== -1 && process.argv[portFlagIdx + 1]) {
+    const parsed = parseInt(process.argv[portFlagIdx + 1], 10);
+    if (!Number.isNaN(parsed) && parsed > 0) return parsed;
+  }
+  const eqArg = process.argv.find((a) => a.startsWith('--port='));
+  if (eqArg) {
+    const parsed = parseInt(eqArg.split('=')[1], 10);
+    if (!Number.isNaN(parsed) && parsed > 0) return parsed;
+  }
+  return process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+}
+const PORT = resolvePort();
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
@@ -1957,12 +1970,31 @@ async function startServer() {
 
   if (!isProduction) {
     const vitePkg = 'vite';
-    const { createServer: createViteServer } = await import(/* @vite-ignore */ vitePkg);
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
+    let resolvedVite: any = null;
+    const vitePromise = import(/* @vite-ignore */ vitePkg)
+      .then(({ createServer: createViteServer }) =>
+        createViteServer({
+          server: { middlewareMode: true },
+          appType: 'spa',
+        })
+      )
+      .then((vite) => {
+        resolvedVite = vite;
+        return vite;
+      })
+      .catch((err) => {
+        console.error('[Vite] Failed to initialize dev middleware:', err);
+        throw err;
+      });
+
+    app.use((req, res, next) => {
+      if (resolvedVite) {
+        return resolvedVite.middlewares(req, res, next);
+      }
+      vitePromise
+        .then((vite) => vite.middlewares(req, res, next))
+        .catch(next);
     });
-    app.use(vite.middlewares);
   } else {
     app.use(express.static(distPath, { index: false, redirect: false }));
     app.get('*', (req, res) => {
@@ -1992,8 +2024,11 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`YAAD server running on http://0.0.0.0:${PORT}`);
+  });
+  server.on('error', (err) => {
+    console.error(`[Server] Failed to listen on 0.0.0.0:${PORT}:`, err);
   });
 }
 

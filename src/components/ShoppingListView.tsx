@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { Plus, Check, Edit3, CheckCheck, Sparkles, ShoppingBag, Loader2, AlertCircle, Trash2, ArrowRight, ArrowLeft, ScanBarcode } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ShoppingList, ShoppingItem, CategoryId, CATEGORIES_LIST, normalizeCategoryId } from '../types';
@@ -143,7 +143,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
   const inFlightItemIdsRef = useRef<Set<string>>(new Set());
   const lastActionTimeRef = useRef<Map<string, number>>(new Map());
   const localActionItemIdsRef = useRef<Set<string>>(new Set());
-  const undoTimerRef = useRef<any>(null);
+  const itemUndoTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const [undoToast, setUndoToast] = useState<{
     item: ShoppingItem;
     listId: string;
@@ -151,6 +151,15 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
     index?: number;
   } | null>(null);
   const [recentLocalCompletedId, setRecentLocalCompletedId] = useState<string | null>(null);
+
+  // Auto trip completion state: 8s delay window with visible countdown & undo
+  const [pendingAutoFinish, setPendingAutoFinish] = useState<{
+    list: ShoppingList;
+    remainingSeconds: number;
+  } | null>(null);
+  const autoFinishTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoFinishIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const hasTriggeredTripCompletionRef = useRef<boolean>(false);
 
   // Subtle first-session swipe hint
   const [showSwipeHint, setShowSwipeHint] = useState<boolean>(() => {
@@ -167,11 +176,69 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
     }
   };
 
+  const cancelAutoFinish = useCallback(() => {
+    if (autoFinishTimerRef.current) {
+      clearTimeout(autoFinishTimerRef.current);
+      autoFinishTimerRef.current = null;
+    }
+    if (autoFinishIntervalRef.current) {
+      clearInterval(autoFinishIntervalRef.current);
+      autoFinishIntervalRef.current = null;
+    }
+    setPendingAutoFinish(null);
+  }, []);
+
+  const triggerTripCompletion = useCallback((targetList: ShoppingList) => {
+    cancelAutoFinish();
+    if (hasTriggeredTripCompletionRef.current || isCompletingTrip) return;
+    hasTriggeredTripCompletionRef.current = true;
+    onCompleteTrip(targetList);
+  }, [cancelAutoFinish, isCompletingTrip, onCompleteTrip]);
+
+  const startAutoFinishCountdown = useCallback((targetList: ShoppingList) => {
+    cancelAutoFinish();
+    playCompletionSound();
+    triggerHaptic([50, 40, 60, 40, 80]);
+
+    setPendingAutoFinish({
+      list: targetList,
+      remainingSeconds: 8,
+    });
+
+    autoFinishIntervalRef.current = setInterval(() => {
+      setPendingAutoFinish((prev) => {
+        if (!prev) return null;
+        if (prev.remainingSeconds <= 1) {
+          return { ...prev, remainingSeconds: 0 };
+        }
+        return { ...prev, remainingSeconds: prev.remainingSeconds - 1 };
+      });
+    }, 1000);
+
+    autoFinishTimerRef.current = setTimeout(() => {
+      triggerTripCompletion(targetList);
+    }, 8000);
+  }, [cancelAutoFinish, triggerTripCompletion]);
+
+  const setItemUndoTimer = (itemId: string, durationMs: number) => {
+    const existing = itemUndoTimersRef.current.get(itemId);
+    if (existing) clearTimeout(existing);
+
+    const timer = setTimeout(() => {
+      setUndoToast((prev) => (prev?.item.id === itemId ? null : prev));
+      itemUndoTimersRef.current.delete(itemId);
+    }, durationMs);
+
+    itemUndoTimersRef.current.set(itemId, timer);
+  };
+
   useEffect(() => {
     return () => {
-      if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+      itemUndoTimersRef.current.forEach((timer) => clearTimeout(timer));
+      itemUndoTimersRef.current.clear();
+      cancelAutoFinish();
     };
-  }, []);
+  }, [cancelAutoFinish]);
 
   const handleSaveQuantity = (
     itemId: string,
@@ -213,24 +280,18 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
     onUpdateList(updatedList);
     triggerHaptic(12);
 
-    // Show undo toast with 10s countdown
+    // Show undo toast with 10s countdown via per-item timer
     setUndoToast({
       item: targetItem,
       listId: list.id,
       type: 'deleted',
       index: itemIndex,
     });
-    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
-    undoTimerRef.current = setTimeout(() => {
-      setUndoToast((prev) => (prev?.item.id === itemId ? null : prev));
-    }, 10000);
+    setItemUndoTimer(itemId, 10000);
 
-    // If deleting remaining items completed the entire list, auto-transition!
+    // If deleting remaining items completed the entire list, trigger 8s auto-finish countdown
     if (isCompleted) {
-      playCompletionSound();
-      setTimeout(() => {
-        onCompleteTrip(updatedList);
-      }, 500);
+      startAutoFinishCountdown(updatedList);
     }
   };
 
@@ -429,15 +490,20 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
       dismissSwipeHint();
       // Show sleek Undo toast for accidental swipe/tap
       setUndoToast({ item: currentItem, listId: currentList.id, type: 'completed' });
-      if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
-      undoTimerRef.current = setTimeout(() => {
-        setUndoToast((prev) => (prev?.item.id === itemId ? null : prev));
-      }, 8000);
+      setItemUndoTimer(itemId, 8000);
     } else {
       // Un-marking item
       triggerHaptic(20);
       playItemUncheckSound();
       setUndoToast(null);
+      const existing = itemUndoTimersRef.current.get(itemId);
+      if (existing) {
+        clearTimeout(existing);
+        itemUndoTimersRef.current.delete(itemId);
+      }
+      if (pendingAutoFinish) {
+        cancelAutoFinish();
+      }
     }
 
     // 3. Supabase Database Update (is_completed = true/false, updated_at = current timestamp)
@@ -459,11 +525,9 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
         }
       }
 
-      // 4. Safely handle trip completion only AFTER changes are safely persisted or offline queued
+      // 4. Safely handle trip completion with 8s undo window
       if (nextCompleted && isAllCompleted) {
-        triggerHaptic([50, 40, 60, 40, 80]);
-        playCompletionSound();
-        onCompleteTrip(updatedList);
+        startAutoFinishCountdown(updatedList);
       }
     } catch (dbErr) {
       console.warn('Notice syncing item completion to Supabase:', dbErr);
@@ -476,17 +540,22 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
         isOffline: false,
       });
     } finally {
-      setTimeout(() => {
-        inFlightItemIdsRef.current.delete(itemId);
-      }, 300);
+      // Synchronously release in-flight item id lock without race window
+      inFlightItemIdsRef.current.delete(itemId);
     }
   };
 
   const handleUndoAction = () => {
+    cancelAutoFinish();
+    hasTriggeredTripCompletionRef.current = false;
     if (!undoToast) return;
     noteLocalMutation();
-    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
     const { item, type, index } = undoToast;
+    const existingTimer = itemUndoTimersRef.current.get(item.id);
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+      itemUndoTimersRef.current.delete(item.id);
+    }
     setUndoToast(null);
 
     if (type === 'deleted') {
@@ -803,14 +872,14 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
         hideNotifications={true}
         hideSettings={true}
         rightAction={
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             <button
               type="button"
               id="shopping_list_edit_btn"
               onClick={() => onEditList(list)}
               aria-label={t('shoppingList.editList') || 'Edit list'}
               title={t('shoppingList.editList') || 'Edit list'}
-              className="h-9 px-2.5 sm:px-3 rounded-full text-primary hover:bg-surface-container-low transition-colors active:scale-95 flex items-center gap-1.5 cursor-pointer text-xs sm:text-sm font-bold"
+              className="h-9 px-3 rounded-full text-primary bg-surface-container-low hover:bg-surface-container transition-colors active:scale-95 flex items-center gap-1.5 cursor-pointer text-xs sm:text-sm font-bold border border-surface-dim/40"
             >
               <Edit3 className="w-4 h-4" />
               <span className="hidden xs:inline">{t('shoppingList.editList')}</span>
@@ -830,6 +899,51 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
           </div>
         }
       />
+
+      {/* 8-second auto-finish trip countdown banner with full undo protection */}
+      <AnimatePresence>
+        {pendingAutoFinish && (
+          <motion.div
+            initial={{ opacity: 0, y: -16, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -16, scale: 0.98 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+            className="sticky top-16 z-30 mx-4 sm:mx-6 md:mx-8 mt-2 p-3.5 rounded-2xl bg-gradient-to-r from-[#0F3D2E] to-emerald-800 text-white shadow-xl border border-emerald-400/30 flex items-center justify-between gap-3"
+          >
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                <Check className="w-4 h-4 stroke-[3]" />
+              </span>
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs sm:text-sm font-bold font-display truncate">
+                  {language === 'ur' ? 'تمام اشیاء مکمل ہو گئیں! 🎉' : 'All items checked! Trip complete 🎉'}
+                </span>
+                <span className="text-[11px] text-white/80">
+                  {language === 'ur'
+                    ? `${pendingAutoFinish.remainingSeconds} سیکنڈ میں خودکار اختتام...`
+                    : `Finishing in ${pendingAutoFinish.remainingSeconds}s...`}
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={handleUndoAction}
+                className="px-3.5 py-1.5 rounded-full bg-white text-primary text-xs font-bold hover:bg-neutral-100 active:scale-95 transition-all cursor-pointer shadow-xs"
+              >
+                {language === 'ur' ? 'منسوخ (Undo)' : 'Undo'}
+              </button>
+              <button
+                type="button"
+                onClick={() => triggerTripCompletion(pendingAutoFinish.list)}
+                className="px-3 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold active:scale-95 transition-all cursor-pointer shadow-xs"
+              >
+                {language === 'ur' ? 'ابھی ختم کریں' : 'Finish Now'}
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Main Content */}
       <main className="flex-1 px-4 sm:px-6 md:px-8 pt-4 flex flex-col gap-5">

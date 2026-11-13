@@ -278,21 +278,21 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
                   handleAddClick(item);
                 }
               }}
-              className="bg-white dark:bg-surface-container-low rounded-2xl py-1.5 px-2 xs:py-2 xs:px-2.5 sm:py-2 sm:px-3 shadow-[0_1px_3px_rgba(0,0,0,0.06)] border border-surface-dim/40 flex items-center gap-1.5 xs:gap-2 sm:gap-2.5 cursor-pointer select-none hover:shadow-md transition-all active:scale-[0.99] min-h-[58px] xs:min-h-[62px] sm:min-h-[64px] w-full overflow-hidden"
+              className="bg-white dark:bg-surface-container-low rounded-full py-1 px-2 xs:py-1.5 xs:px-2.5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] border border-surface-dim/40 flex items-center gap-1.5 xs:gap-2 cursor-pointer select-none hover:shadow-md transition-all active:scale-[0.99] min-h-[48px] xs:min-h-[52px] sm:min-h-[54px] w-full overflow-hidden"
             >
               {/* Image (left): Circular photo, compact object-cover centered */}
-              <div className="w-9 h-9 xs:w-10 xs:h-10 sm:w-11 sm:h-11 rounded-full bg-white dark:bg-stone-900 border border-surface-dim/60 flex items-center justify-center overflow-hidden shrink-0 shadow-2xs">
+              <div className="w-8 h-8 xs:w-9 xs:h-9 rounded-full bg-white dark:bg-stone-900 border border-surface-dim/60 flex items-center justify-center overflow-hidden shrink-0 shadow-2xs">
                 <FrequentEssentialVisual item={item} />
               </div>
 
               {/* Text (middle, flex-1, two lines, left-aligned): Compact fonts, reduced whitespace */}
               <div className="flex-1 min-w-0 flex flex-col justify-center text-left rtl:text-right overflow-hidden pr-0.5">
-                {/* Line 1 — item name: ~13px, weight 700, near-black */}
-                <h4 className="font-display text-[12.5px] xs:text-[13px] sm:text-[13.5px] font-bold text-[#1c2826] dark:text-white leading-tight truncate">
+                {/* Line 1 — item name: ~12px, weight 700, near-black */}
+                <h4 className="font-display text-[12px] xs:text-[12.5px] font-bold text-[#1c2826] dark:text-white leading-tight truncate">
                   {item.displayName}
                 </h4>
-                {/* Line 2 — quantity: ~11px, weight 400, medium gray #717974 */}
-                <p className="font-body text-[10.5px] xs:text-[11px] sm:text-[11.5px] font-normal text-[#717974] dark:text-neutral-400 leading-tight mt-0.5 truncate">
+                {/* Line 2 — quantity: ~10px, weight 400, medium gray #717974 */}
+                <p className="font-body text-[10px] xs:text-[10.5px] font-normal text-[#717974] dark:text-neutral-400 leading-tight mt-0.2 truncate">
                   {quantityLabel}
                 </p>
               </div>
