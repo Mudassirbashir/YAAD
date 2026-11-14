@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { Avatar } from './Avatar';
 import { AvatarPickerModal } from './AvatarPickerModal';
+import { useShouldAnimate } from '../lib/motionPreference';
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   onDeleteAccount,
 }) => {
   const { t } = useLanguage();
+  const canAnimate = useShouldAnimate();
   const { user, profile, isConfigured, signOut, updateUserProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState('');
@@ -75,24 +77,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
   const displayName = profile?.full_name || user?.user_metadata?.full_name || (user ? 'Account User' : 'Guest');
   const displayEmail = profile?.email || user?.email || (user ? 'No email' : 'Not signed in');
 
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1, transition: { duration: 0.16, ease: [0.32, 0.72, 0, 1] } }}
-          exit={{ opacity: 0, transition: { duration: 0.14, ease: [0.36, 0, 0.66, 0] } }}
-          onClick={onClose}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1, transition: { duration: 0.18, ease: [0.32, 0.72, 0, 1] } }}
-            exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.16, ease: [0.36, 0, 0.66, 0] } }}
-            onClick={(e) => e.stopPropagation()}
-            className="bg-surface-container-lowest rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-surface-dim space-y-4 text-center relative"
-          >
-        {/* Close Button */}
+  const modalCardInner = (
+    <>
+      {/* Close Button */}
         <button
           onClick={onClose}
           aria-label="Close"
@@ -262,17 +249,59 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
             {t('cancel')}
           </button>
         </div>
+    </>
+  );
+
+  const avatarPicker = (
+    <AvatarPickerModal
+      isOpen={showAvatarPicker}
+      onClose={() => setShowAvatarPicker(false)}
+      currentAvatarUrl={profile?.avatar_url}
+      onSave={handleSelectAvatar}
+      userName={displayName}
+      userEmail={user?.email}
+    />
+  );
+
+  if (!canAnimate) {
+    return isOpen ? (
+      <div
+        onClick={onClose}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="bg-surface-container-lowest rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-surface-dim space-y-4 text-center relative"
+        >
+          {modalCardInner}
+        </div>
+        {avatarPicker}
+      </div>
+    ) : null;
+  }
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1, transition: { duration: 0.16, ease: [0.32, 0.72, 0, 1] } }}
+          exit={{ opacity: 0, transition: { duration: 0.14, ease: [0.36, 0, 0.66, 0] } }}
+          onClick={onClose}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1, transition: { duration: 0.18, ease: [0.32, 0.72, 0, 1] } }}
+            exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.16, ease: [0.36, 0, 0.66, 0] } }}
+            onClick={(e) => e.stopPropagation()}
+            className="bg-surface-container-lowest rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-surface-dim space-y-4 text-center relative"
+          >
+            {modalCardInner}
           </motion.div>
 
           {/* Avatar Picker Modal */}
-          <AvatarPickerModal
-            isOpen={showAvatarPicker}
-            onClose={() => setShowAvatarPicker(false)}
-            currentAvatarUrl={profile?.avatar_url}
-            onSave={handleSelectAvatar}
-            userName={displayName}
-            userEmail={user?.email}
-          />
+          {avatarPicker}
         </motion.div>
       )}
     </AnimatePresence>

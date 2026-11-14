@@ -1,6 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X } from 'lucide-react';
+import { useShouldAnimate } from '../../lib/motionPreference';
 
 export interface BottomSheetProps {
   isOpen: boolean;
@@ -17,6 +18,8 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   children,
   maxHeight = 'max-h-[85vh]',
 }) => {
+  const canAnimate = useShouldAnimate();
+
   // Prevent body scroll when sheet is open
   useEffect(() => {
     if (isOpen) {
@@ -28,6 +31,44 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
       document.body.style.overflow = '';
     };
   }, [isOpen]);
+
+  const sheetBody = (
+    <>
+      {/* Grab Bar Indicator */}
+      <div className="w-12 h-1.5 rounded-full bg-surface-dim mx-auto mb-3 shrink-0" />
+
+      {title && (
+        <div className="flex items-center justify-between pb-3 mb-2 border-b border-surface-dim/50 shrink-0">
+          <h3 className="font-display text-base sm:text-lg font-bold text-on-surface">
+            {title}
+          </h3>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close sheet"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-colors cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      <div className="flex-1 overflow-y-auto">{children}</div>
+    </>
+  );
+
+  if (!canAnimate) {
+    return isOpen ? (
+      <div className="fixed inset-0 z-50 flex flex-col justify-end">
+        <div onClick={onClose} className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
+        <div
+          className={`relative w-full max-w-lg mx-auto bg-surface-container-lowest rounded-t-[28px] border-t border-x border-surface-dim/80 shadow-[0_-10px_30px_rgba(15,61,46,0.12)] p-4 sm:p-6 pb-safe z-10 flex flex-col ${maxHeight}`}
+        >
+          {sheetBody}
+        </div>
+      </div>
+    ) : null;
+  }
 
   return (
     <AnimatePresence>
@@ -50,26 +91,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             transition={{ type: 'spring', damping: 34, stiffness: 400, mass: 0.85 }}
             className={`relative w-full max-w-lg mx-auto bg-surface-container-lowest rounded-t-[28px] border-t border-x border-surface-dim/80 shadow-[0_-10px_30px_rgba(15,61,46,0.12)] p-4 sm:p-6 pb-safe z-10 flex flex-col ${maxHeight}`}
           >
-            {/* Grab Bar Indicator */}
-            <div className="w-12 h-1.5 rounded-full bg-surface-dim mx-auto mb-3 shrink-0" />
-
-            {title && (
-              <div className="flex items-center justify-between pb-3 mb-2 border-b border-surface-dim/50 shrink-0">
-                <h3 className="font-display text-base sm:text-lg font-bold text-on-surface">
-                  {title}
-                </h3>
-                <button
-                  type="button"
-                  onClick={onClose}
-                  aria-label="Close sheet"
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-colors cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-
-            <div className="flex-1 overflow-y-auto">{children}</div>
+            {sheetBody}
           </motion.div>
         </div>
       )}

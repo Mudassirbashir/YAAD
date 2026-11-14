@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useShouldAnimate } from '../../lib/motionPreference';
 
 export interface ModalProps {
   isOpen: boolean;
@@ -24,6 +25,7 @@ export const Modal: React.FC<ModalProps> = ({
   showCloseButton = true,
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
+  const canAnimate = useShouldAnimate();
 
   // Close on Escape key press
   useEffect(() => {
@@ -56,6 +58,67 @@ export const Modal: React.FC<ModalProps> = ({
     lg: 'max-w-lg',
     xl: 'max-w-xl',
   }[maxWidth];
+
+  const dialogContent = (
+    <>
+      {/* Header */}
+      {(title || showCloseButton) && (
+        <div className="flex items-start justify-between gap-3 pb-3 border-b border-surface-dim/50">
+          <div className="flex flex-col min-w-0">
+            {title && (
+              <h3 className="font-display text-lg sm:text-xl font-bold text-on-surface tracking-tight leading-snug">
+                {title}
+              </h3>
+            )}
+            {description && (
+              <p className="font-body text-xs sm:text-sm text-outline mt-0.5">
+                {description}
+              </p>
+            )}
+          </div>
+
+          {showCloseButton && (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close dialog"
+              className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-colors cursor-pointer shrink-0 -me-1 -mt-1"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Content Body */}
+      <div className="flex-1 overflow-y-auto pt-4 pb-2 -mx-1 px-1">{children}</div>
+
+      {/* Optional Footer */}
+      {footer && (
+        <div className="pt-4 border-t border-surface-dim/50 flex items-center justify-end gap-2.5 mt-2">
+          {footer}
+        </div>
+      )}
+    </>
+  );
+
+  if (!canAnimate) {
+    return isOpen ? (
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
+      >
+        <div onClick={onClose} className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
+        <div
+          ref={modalRef}
+          className={`relative w-full ${maxWidthStyles} bg-surface-container-lowest rounded-3xl border border-surface-dim/80 shadow-[0_20px_50px_rgba(15,61,46,0.18)] p-5 sm:p-6 flex flex-col z-10 max-h-[90vh] overflow-hidden`}
+        >
+          {dialogContent}
+        </div>
+      </div>
+    ) : null;
+  }
 
   return (
     <AnimatePresence>
@@ -92,44 +155,7 @@ export const Modal: React.FC<ModalProps> = ({
             }}
             className={`relative w-full ${maxWidthStyles} bg-surface-container-lowest rounded-3xl border border-surface-dim/80 shadow-[0_20px_50px_rgba(15,61,46,0.18)] p-5 sm:p-6 flex flex-col z-10 max-h-[90vh] overflow-hidden`}
           >
-            {/* Header */}
-            {(title || showCloseButton) && (
-              <div className="flex items-start justify-between gap-3 pb-3 border-b border-surface-dim/50">
-                <div className="flex flex-col min-w-0">
-                  {title && (
-                    <h3 className="font-display text-lg sm:text-xl font-bold text-on-surface tracking-tight leading-snug">
-                      {title}
-                    </h3>
-                  )}
-                  {description && (
-                    <p className="font-body text-xs sm:text-sm text-outline mt-0.5">
-                      {description}
-                    </p>
-                  )}
-                </div>
-
-                {showCloseButton && (
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    aria-label="Close dialog"
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-colors cursor-pointer shrink-0 -me-1 -mt-1"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* Content Body */}
-            <div className="flex-1 overflow-y-auto pt-4 pb-2 -mx-1 px-1">{children}</div>
-
-            {/* Optional Footer */}
-            {footer && (
-              <div className="pt-4 border-t border-surface-dim/50 flex items-center justify-end gap-2.5 mt-2">
-                {footer}
-              </div>
-            )}
+            {dialogContent}
           </motion.div>
         </div>
       )}

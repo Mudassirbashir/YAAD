@@ -43,6 +43,7 @@ import { triggerHaptic } from '../lib/sound';
 import { resolveVisual } from '../lib/catalog/visualResolver';
 import { triggerMiloEvent } from '../pet/useMilo';
 import { useRemoteConfig } from '../hooks/useRemoteConfig';
+import { useShouldAnimate } from '../lib/motionPreference';
 
 export interface AddItemsViewProps {
   listTitle: string;
@@ -68,6 +69,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
   const showBarcodeScanner = remoteConfig.features?.barcodeScanner !== false;
   const showItemPhotoUpload = remoteConfig.features?.itemPhotoUpload !== false;
   const showSmartSuggestionsFeature = remoteConfig.features?.smartSuggestions !== false;
+  const canAnimate = useShouldAnimate();
   const isUrdu = language === 'ur';
   const catalogVersion = useCatalogVersion();
   const [items, setItems] = useState<ShoppingItem[]>(initialItems);
@@ -693,17 +695,9 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
           >
             <ArrowLeft className="w-5 h-5 rtl:rotate-180 text-primary" />
           </button>
-          <AnimatePresence mode="wait" initial={false}>
-            {isEditingTitle ? (
-              <motion.div
-                key="editing-title"
-                layoutId="list-title"
-                initial={{ opacity: 0, scale: 0.96 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.96 }}
-                transition={{ type: 'spring', stiffness: 520, damping: 38 }}
-                className="flex items-center gap-1.5 flex-1 max-w-[260px] sm:max-w-md mx-2"
-              >
+          {(() => {
+            const editingTitleInner = (
+              <>
                 <input
                   ref={renameInputRef}
                   autoFocus
@@ -747,17 +741,11 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                 >
                   <X className="w-4 h-4" />
                 </button>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="static-title"
-                layoutId="list-title"
-                initial={{ opacity: 0, scale: 0.96 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.96 }}
-                transition={{ type: 'spring', stiffness: 520, damping: 38 }}
-                className="flex items-center justify-center gap-2 max-w-[200px] xs:max-w-[240px] sm:max-w-md mx-2 px-2.5 py-1 rounded-2xl bg-surface-container-low/70 border border-surface-dim/60 shadow-2xs"
-              >
+              </>
+            );
+
+            const staticTitleInner = (
+              <>
                 <BidiText
                   as="h2"
                   className="font-display text-sm sm:text-base font-bold text-primary truncate text-center max-w-[130px] xs:max-w-[170px] sm:max-w-xs"
@@ -776,9 +764,51 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                 >
                   <Pencil className="w-3.5 h-3.5" />
                 </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              </>
+            );
+
+            if (!canAnimate) {
+              return isEditingTitle ? (
+                <div className="flex items-center gap-1.5 flex-1 max-w-[260px] sm:max-w-md mx-2">
+                  {editingTitleInner}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-2 max-w-[200px] xs:max-w-[240px] sm:max-w-md mx-2 px-2.5 py-1 rounded-2xl bg-surface-container-low/70 border border-surface-dim/60 shadow-2xs">
+                  {staticTitleInner}
+                </div>
+              );
+            }
+
+            return (
+              <AnimatePresence mode="wait" initial={false}>
+                {isEditingTitle ? (
+                  <motion.div
+                    key="editing-title"
+                    layoutId="list-title"
+                    initial={{ opacity: 0, scale: 0.96 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.96 }}
+                    transition={{ type: 'spring', stiffness: 520, damping: 38 }}
+                    className="flex items-center gap-1.5 flex-1 max-w-[260px] sm:max-w-md mx-2"
+                  >
+                    {editingTitleInner}
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="static-title"
+                    layoutId="list-title"
+                    initial={{ opacity: 0, scale: 0.96 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.96 }}
+                    transition={{ type: 'spring', stiffness: 520, damping: 38 }}
+                    className="flex items-center justify-center gap-2 max-w-[200px] xs:max-w-[240px] sm:max-w-md mx-2 px-2.5 py-1 rounded-2xl bg-surface-container-low/70 border border-surface-dim/60 shadow-2xs"
+                  >
+                    {staticTitleInner}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            );
+          })()}
           <div className="min-w-[40px] flex justify-end">
             <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-surface-container text-primary border border-surface-dim/60 shadow-2xs">
               {items.length}

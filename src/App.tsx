@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { useLanguage } from './context/LanguageContext';
 import { ShoppingList, ShoppingItem, ScreenType, NavigationTab } from './types';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -55,11 +55,14 @@ import type { LegalPageType } from './components/legal/legalContent';
 import { LandingPageView } from './components/LandingPageView';
 import { HeadManager } from './seo/HeadManager';
 import { SuspendedAccountModal } from './components/SuspendedAccountModal';
-import { MiloHost } from './pet/MiloHost';
+import { isMiloEnabled } from './pet/miloPrefs';
 import { triggerMiloEvent } from './pet/useMilo';
 import { useRemoteConfig } from './hooks/useRemoteConfig';
 import { Sparkles, Wrench } from 'lucide-react';
 import { PerfMeterPanel } from './components/PerfMeterPanel';
+import { useShouldAnimate } from './lib/motionPreference';
+
+const MiloHost = React.lazy(() => import('./pet/MiloHost').then((m) => ({ default: m.MiloHost })));
 
 const LegalPageView = React.lazy(() => import('./components/legal/LegalPageView').then((m) => ({ default: m.LegalPageView })));
 const BlogArticlePage = React.lazy(() => import('./components/legal/BlogArticlePage').then((m) => ({ default: m.BlogArticlePage })));
@@ -278,8 +281,25 @@ function AppContent() {
   const [dismissedMessageId, setDismissedMessageId] = useState<string | null>(null);
 
   const { isRTL } = useLanguage();
-  const shouldReduceMotion = useReducedMotion();
+  const canAnimate = useShouldAnimate();
+  const [isMiloCompanionEnabled, setIsMiloCompanionEnabled] = useState<boolean>(() => isMiloEnabled());
   const slideX = (isRTL || (typeof document !== 'undefined' && document.dir === 'rtl')) ? -24 : 24;
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleMiloToggle = (e: Event) => {
+      const detail = (e as CustomEvent<{ enabled?: boolean }>).detail;
+      if (typeof detail?.enabled === 'boolean') {
+        setIsMiloCompanionEnabled(detail.enabled);
+      } else {
+        setIsMiloCompanionEnabled(isMiloEnabled());
+      }
+    };
+    window.addEventListener('yaad:milo:toggle', handleMiloToggle);
+    return () => {
+      window.removeEventListener('yaad:milo:toggle', handleMiloToggle);
+    };
+  }, []);
 
   const isPasswordResetRequiredActive = Boolean(
     isPasswordRecovery ||
@@ -1648,28 +1668,14 @@ function AppContent() {
     return <SplashView onFinish={handleSplashFinish} isRestoringAuth={screenState.isRestoringAuth} />;
   }
 
-  return (
-    <div className="min-h-screen bg-background text-on-background flex flex-col justify-between selection:bg-primary-container selection:text-on-primary-container">
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.div
-          key={currentScreen}
-          initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, x: slideX }}
-          animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, x: 0 }}
-          exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, x: -slideX }}
-          transition={
-            shouldReduceMotion
-              ? { duration: 0.15 }
-              : { type: 'spring', stiffness: 520, damping: 40 }
-          }
-          className="flex-1 flex flex-col w-full"
-        >
-          <React.Suspense
-            fallback={
-              <div className="flex-1 flex flex-col items-center justify-center p-8 min-h-[50vh]">
-                <Loader2 className="w-8 h-8 text-[#005039] animate-spin" />
-              </div>
-            }
-          >
+  const screenSuspenseNode = (
+    <React.Suspense
+      fallback={
+        <div className="flex-1 flex flex-col items-center justify-center p-8 min-h-[50vh]">
+          <Loader2 className="w-8 h-8 text-[#005039] animate-spin" />
+        </div>
+      }
+    >
             {(() => {
               if (screenState.kind === 'public_landing') {
                 return (
@@ -2004,8 +2010,28 @@ function AppContent() {
               return null;
             })()}
           </React.Suspense>
-        </motion.div>
-      </AnimatePresence>
+  );
+
+  return (
+    <div className="min-h-screen bg-background text-on-background flex flex-col justify-between selection:bg-primary-container selection:text-on-primary-container">
+      {canAnimate ? (
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={currentScreen}
+            initial={{ opacity: 0, x: slideX }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -slideX }}
+            transition={{ type: 'spring', stiffness: 520, damping: 40 }}
+            className="flex-1 flex flex-col w-full"
+          >
+            {screenSuspenseNode}
+          </motion.div>
+        </AnimatePresence>
+      ) : (
+        <div key={currentScreen} className="flex-1 flex flex-col w-full">
+          {screenSuspenseNode}
+        </div>
+      )}
 
       {/* Persistent Bottom Navigation */}
       {showBottomNav && (
@@ -2016,12 +2042,16 @@ function AppContent() {
         />
       )}
 
-      {/* Floating Milo Companion Bubble (mini ~64px draggable over all screens) */}
-      <MiloHost
-        variant="mini"
-        getPendingLists={getPendingLists}
-        onOpenList={handleOpenListInShoppingMode}
-      />
+      {/* Floating Milo Companion Bubble (mini ~64px draggable over all screens, lazy-loaded when enabled) */}
+      {isMiloCompanionEnabled && remoteConfig.header?.showMiloCompanion !== false && (
+        <React.Suspense fallback={null}>
+          <MiloHost
+            variant="mini"
+            getPendingLists={getPendingLists}
+            onOpenList={handleOpenListInShoppingMode}
+          />
+        </React.Suspense>
+      )}
 
       {/* Smart Phone Number Completion Reminder Modal */}
       <PhoneNumberReminderModal

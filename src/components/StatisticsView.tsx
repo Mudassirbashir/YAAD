@@ -20,12 +20,13 @@ import {
   AlertCircle,
   RefreshCw,
 } from 'lucide-react';
-import { motion, useReducedMotion } from 'motion/react';
+import { motion } from 'motion/react';
 import { ShoppingList, CategoryId } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { CategoryIcon } from './CategoryIcon';
 import { ItemVisualIcon } from './ItemVisualIcon';
 import { resolveVisual } from '../lib/catalog/visualResolver';
+import { useShouldAnimate } from '../lib/motionPreference';
 
 interface StatisticsViewProps {
   lists: ShoppingList[];
@@ -47,7 +48,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
   onRetry,
 }) => {
   const { t, language, isRTL } = useLanguage();
-  const prefersReducedMotion = useReducedMotion();
+  const canAnimate = useShouldAnimate();
   const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null);
 
   // Chevron icon direction
@@ -406,54 +407,78 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
             </div>
           </div>
         ) : !analytics.hasData ? (
-          <motion.div
-            id="statistics_empty_state"
-            initial={prefersReducedMotion ? false : { opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
-            className="bg-white rounded-3xl p-8 sm:p-10 border border-surface-dim/70 shadow-xs text-center flex flex-col items-center justify-center space-y-5 my-6"
-          >
-            <div className="w-16 h-16 rounded-3xl bg-emerald-50 text-[#0F3D2E] flex items-center justify-center shadow-xs border border-emerald-100/60">
-              <TrendingUp className="w-8 h-8 stroke-[2.2]" />
-            </div>
+          (() => {
+            const emptyStateContent = (
+              <>
+                <div className="w-16 h-16 rounded-3xl bg-emerald-50 text-[#0F3D2E] flex items-center justify-center shadow-xs border border-emerald-100/60">
+                  <TrendingUp className="w-8 h-8 stroke-[2.2]" />
+                </div>
 
-            <div className="space-y-2 max-w-md">
-              <h2
-                className={`text-lg sm:text-xl font-bold text-on-surface ${
-                  language === 'ur' ? 'font-urdu text-xl sm:text-2xl' : "font-body"
-                }`}
-              >
-                {t('statistics.emptyTitle')}
-              </h2>
-              <p className="text-sm text-outline leading-relaxed font-body">
-                {t('statistics.emptySubtitle')}
-              </p>
-            </div>
+                <div className="space-y-2 max-w-md">
+                  <h2
+                    className={`text-lg sm:text-xl font-bold text-on-surface ${
+                      language === 'ur' ? 'font-urdu text-xl sm:text-2xl' : 'font-body'
+                    }`}
+                  >
+                    {t('statistics.emptyTitle')}
+                  </h2>
+                  <p className="text-sm text-outline leading-relaxed font-body">
+                    {t('statistics.emptySubtitle')}
+                  </p>
+                </div>
 
-            {onCreateList && (
-              <button
-                id="statistics_empty_create_btn"
-                type="button"
-                onClick={onCreateList}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-[#0F3D2E] hover:bg-[#145B3A] text-white text-sm font-bold shadow-[0_4px_16px_rgba(15,61,46,0.25)] hover:shadow-[0_6px_20px_rgba(15,61,46,0.35)] transition-[transform,background-color,box-shadow] active:scale-95 cursor-pointer mt-2"
+                {onCreateList && (
+                  <button
+                    id="statistics_empty_create_btn"
+                    type="button"
+                    onClick={onCreateList}
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-[#0F3D2E] hover:bg-[#145B3A] text-white text-sm font-bold shadow-[0_4px_16px_rgba(15,61,46,0.25)] hover:shadow-[0_6px_20px_rgba(15,61,46,0.35)] transition-[transform,background-color,box-shadow] active:scale-95 cursor-pointer mt-2"
+                  >
+                    <Plus className="w-4 h-4 stroke-[2.6]" />
+                    <span>{t('statistics.createFirstList')}</span>
+                  </button>
+                )}
+              </>
+            );
+            const emptyStateClassName =
+              'bg-white rounded-3xl p-8 sm:p-10 border border-surface-dim/70 shadow-xs text-center flex flex-col items-center justify-center space-y-5 my-6';
+
+            return canAnimate ? (
+              <motion.div
+                id="statistics_empty_state"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
+                className={emptyStateClassName}
               >
-                <Plus className="w-4 h-4 stroke-[2.6]" />
-                <span>{t('statistics.createFirstList')}</span>
-              </button>
-            )}
-          </motion.div>
+                {emptyStateContent}
+              </motion.div>
+            ) : (
+              <div id="statistics_empty_state" className={emptyStateClassName}>
+                {emptyStateContent}
+              </div>
+            );
+          })()
         ) : (
           <>
             {/* ================================================================ */}
             {/* 2. OVERVIEW METRICS BENTO GRID                                    */}
             {/* ================================================================ */}
-            <motion.section
-              id="statistics_overview_section"
-              initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.18, ease: [0.32, 0.72, 0, 1] }}
-              className="space-y-3"
-            >
+            {(() => {
+              const OverviewSection = canAnimate ? motion.section : 'section';
+              const overviewMotionProps = canAnimate
+                ? {
+                    initial: { opacity: 0, y: 6 },
+                    animate: { opacity: 1, y: 0 },
+                    transition: { duration: 0.18, ease: [0.32, 0.72, 0, 1] as const },
+                  }
+                : {};
+              return (
+                <OverviewSection
+                  id="statistics_overview_section"
+                  {...overviewMotionProps}
+                  className="space-y-3"
+                >
               <div className="flex items-center justify-between px-1">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-xl bg-emerald-50 text-[#0F3D2E] flex items-center justify-center">
@@ -574,54 +599,73 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                   </div>
                 </div>
               </div>
-            </motion.section>
+                </OverviewSection>
+              );
+            })()}
 
             {/* ================================================================ */}
             {/* 3. SMART INSIGHT (PERSONAL SHOPPING MEMORY HIGHLIGHT)             */}
             {/* ================================================================ */}
-            {smartInsight && (
-              <motion.section
-                id="statistics_smart_insight"
-                initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.18, delay: 0.03, ease: [0.32, 0.72, 0, 1] }}
-                className="bg-emerald-50/90 border border-emerald-200/70 rounded-3xl p-4 sm:p-5 shadow-xs flex items-start gap-3.5"
-              >
-                <div className="w-10 h-10 rounded-2xl bg-[#0F3D2E] text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
-                  <Sparkles className="w-5 h-5 stroke-[2.2]" />
-                </div>
-                <div className="space-y-1 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[0.6875rem] font-bold uppercase tracking-wider text-[#0F3D2E]/80 font-body">
-                      {t('statistics.smartInsightsTitle')}
-                    </span>
-                  </div>
-                  <h3
-                    className={`text-sm sm:text-base font-bold text-emerald-950 ${
-                      language === 'ur' ? 'font-urdu text-base sm:text-lg' : "font-body"
-                    }`}
+            {smartInsight &&
+              (() => {
+                const InsightSection = canAnimate ? motion.section : 'section';
+                const insightProps = canAnimate
+                  ? {
+                      initial: { opacity: 0, y: 6 },
+                      animate: { opacity: 1, y: 0 },
+                      transition: { duration: 0.18, delay: 0.03, ease: [0.32, 0.72, 0, 1] as const },
+                    }
+                  : {};
+                return (
+                  <InsightSection
+                    id="statistics_smart_insight"
+                    {...insightProps}
+                    className="bg-emerald-50/90 border border-emerald-200/70 rounded-3xl p-4 sm:p-5 shadow-xs flex items-start gap-3.5"
                   >
-                    {smartInsight.title}
-                  </h3>
-                  <p className="text-xs sm:text-sm text-emerald-900/80 leading-relaxed font-body">
-                    {smartInsight.description}
-                  </p>
-                </div>
-              </motion.section>
-            )}
+                    <div className="w-10 h-10 rounded-2xl bg-[#0F3D2E] text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+                      <Sparkles className="w-5 h-5 stroke-[2.2]" />
+                    </div>
+                    <div className="space-y-1 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[0.6875rem] font-bold uppercase tracking-wider text-[#0F3D2E]/80 font-body">
+                          {t('statistics.smartInsightsTitle')}
+                        </span>
+                      </div>
+                      <h3
+                        className={`text-sm sm:text-base font-bold text-emerald-950 ${
+                          language === 'ur' ? 'font-urdu text-base sm:text-lg' : 'font-body'
+                        }`}
+                      >
+                        {smartInsight.title}
+                      </h3>
+                      <p className="text-xs sm:text-sm text-emerald-900/80 leading-relaxed font-body">
+                        {smartInsight.description}
+                      </p>
+                    </div>
+                  </InsightSection>
+                );
+              })()}
 
             {/* ================================================================ */}
             {/* 4. SHOPPING ACTIVITY & TOP CATEGORIES (2-Col on Tablet/Desktop)  */}
             {/* ================================================================ */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
               {/* Activity Histogram Card */}
-              <motion.section
-                id="statistics_activity_card"
-                initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2, delay: 0.04, ease: [0.32, 0.72, 0, 1] }}
-                className="bg-white rounded-3xl p-5 sm:p-6 border border-surface-dim/70 shadow-xs flex flex-col justify-between space-y-5"
-              >
+              {(() => {
+                const ActivitySection = canAnimate ? motion.section : 'section';
+                const activityProps = canAnimate
+                  ? {
+                      initial: { opacity: 0, y: 6 },
+                      animate: { opacity: 1, y: 0 },
+                      transition: { duration: 0.2, delay: 0.04, ease: [0.32, 0.72, 0, 1] as const },
+                    }
+                  : {};
+                return (
+                  <ActivitySection
+                    id="statistics_activity_card"
+                    {...activityProps}
+                    className="bg-white rounded-3xl p-5 sm:p-6 border border-surface-dim/70 shadow-xs flex flex-col justify-between space-y-5"
+                  >
                 <div className="flex items-start justify-between">
                   <div className="space-y-0.5">
                     <h3
@@ -711,16 +755,26 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                     <span>{analytics.totalLists} {analytics.totalLists === 1 ? 'trip' : 'trips'} recorded</span>
                   </span>
                 </div>
-              </motion.section>
+                  </ActivitySection>
+                );
+              })()}
 
               {/* Top Categories Card */}
-              <motion.section
-                id="statistics_categories_card"
-                initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2, delay: 0.05, ease: [0.32, 0.72, 0, 1] }}
-                className="bg-white rounded-3xl p-5 sm:p-6 border border-surface-dim/70 shadow-xs flex flex-col justify-between space-y-4"
-              >
+              {(() => {
+                const CategoriesSection = canAnimate ? motion.section : 'section';
+                const categoriesProps = canAnimate
+                  ? {
+                      initial: { opacity: 0, y: 6 },
+                      animate: { opacity: 1, y: 0 },
+                      transition: { duration: 0.2, delay: 0.05, ease: [0.32, 0.72, 0, 1] as const },
+                    }
+                  : {};
+                return (
+                  <CategoriesSection
+                    id="statistics_categories_card"
+                    {...categoriesProps}
+                    className="bg-white rounded-3xl p-5 sm:p-6 border border-surface-dim/70 shadow-xs flex flex-col justify-between space-y-4"
+                  >
                 <div className="flex items-start justify-between">
                   <div className="space-y-0.5">
                     <h3
@@ -787,20 +841,31 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                     ? `Top focus: ${getCategoryLabel(analytics.topCategory)}`
                     : t('statistics.noData')}
                 </div>
-              </motion.section>
+                  </CategoriesSection>
+                );
+              })()}
             </div>
 
             {/* ================================================================ */}
             {/* 5. TOP HOUSEHOLD STAPLES                                          */}
             {/* ================================================================ */}
-            {analytics.topStaples && analytics.topStaples.length > 0 && (
-              <motion.section
-                id="statistics_top_staples_section"
-                initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2, delay: 0.06, ease: [0.32, 0.72, 0, 1] }}
-                className="bg-white rounded-3xl p-5 sm:p-6 border border-surface-dim/70 shadow-xs space-y-4"
-              >
+            {analytics.topStaples &&
+              analytics.topStaples.length > 0 &&
+              (() => {
+                const TopStaplesSection = canAnimate ? motion.section : 'section';
+                const topStaplesProps = canAnimate
+                  ? {
+                      initial: { opacity: 0, y: 6 },
+                      animate: { opacity: 1, y: 0 },
+                      transition: { duration: 0.2, delay: 0.06, ease: [0.32, 0.72, 0, 1] as const },
+                    }
+                  : {};
+                return (
+                  <TopStaplesSection
+                    id="statistics_top_staples_section"
+                    {...topStaplesProps}
+                    className="bg-white rounded-3xl p-5 sm:p-6 border border-surface-dim/70 shadow-xs space-y-4"
+                  >
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <h3 className="text-base font-bold text-on-surface font-body">
@@ -848,20 +913,29 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                   );
                 })}
               </div>
-              </motion.section>
-            )}
+                  </TopStaplesSection>
+                );
+              })()}
 
             {/* ================================================================ */}
             {/* 6. RECENT SHOPPING LISTS                                          */}
             {/* ================================================================ */}
-            {analytics.recentLists.length > 0 && (
-              <motion.section
-                id="statistics_recent_lists_section"
-                initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2, delay: 0.06, ease: [0.32, 0.72, 0, 1] }}
-                className="space-y-3 pt-2"
-              >
+            {analytics.recentLists.length > 0 &&
+              (() => {
+                const RecentListsSection = canAnimate ? motion.section : 'section';
+                const recentListsProps = canAnimate
+                  ? {
+                      initial: { opacity: 0, y: 6 },
+                      animate: { opacity: 1, y: 0 },
+                      transition: { duration: 0.2, delay: 0.06, ease: [0.32, 0.72, 0, 1] as const },
+                    }
+                  : {};
+                return (
+                  <RecentListsSection
+                    id="statistics_recent_lists_section"
+                    {...recentListsProps}
+                    className="space-y-3 pt-2"
+                  >
                 <div className="flex items-center justify-between px-1">
                   <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-xl bg-emerald-50 text-[#0F3D2E] flex items-center justify-center">
@@ -951,8 +1025,9 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                     );
                   })}
                 </div>
-              </motion.section>
-            )}
+                  </RecentListsSection>
+                );
+              })()}
           </>
         )}
       </main>

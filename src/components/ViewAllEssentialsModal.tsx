@@ -12,6 +12,7 @@ import { supabaseCatalog, useCatalogVersion } from '../lib/catalog/supabaseCatal
 import { ShoppingList } from '../types';
 import { FrequentEssentialVisual, FIXED_HOME_ESSENTIALS } from './home/FrequentEssentialsSection';
 import { playItemAddSound, triggerHaptic } from '../lib/sound';
+import { useShouldAnimate } from '../lib/motionPreference';
 
 interface ViewAllEssentialsModalProps {
   isOpen: boolean;
@@ -32,6 +33,7 @@ export const ViewAllEssentialsModal: React.FC<ViewAllEssentialsModalProps> = ({
 }) => {
   const { t } = useLanguage();
   const catalogVersion = useCatalogVersion();
+  const canAnimate = useShouldAnimate();
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [addedItemsMap, setAddedItemsMap] = useState<Record<string, boolean>>({});
   const [addingItemId, setAddingItemId] = useState<string | null>(null);
@@ -175,16 +177,9 @@ export const ViewAllEssentialsModal: React.FC<ViewAllEssentialsModalProps> = ({
 
   if (!isOpen) return null;
 
-  return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.98, y: 12 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.98, y: 12 }}
-          className="bg-[#FAFAFA] dark:bg-surface-container-lowest w-full max-w-2xl h-full sm:h-[88vh] sm:rounded-3xl flex flex-col overflow-hidden shadow-2xl border border-surface-dim/70"
-        >
-          {/* Header */}
+  const modalInner = (
+    <>
+      {/* Header */}
           <div className="bg-white dark:bg-surface-container-low px-4 sm:px-6 py-3.5 border-b border-surface-dim/70 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
               <button
@@ -320,39 +315,52 @@ export const ViewAllEssentialsModal: React.FC<ViewAllEssentialsModalProps> = ({
                             aria-label={`Add ${item.displayName} to shopping list`}
                             className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer transition-transform active:scale-90"
                           >
-                            <motion.div
-                              animate={
-                                isAdded
-                                  ? { scale: [1, 1.25, 1], backgroundColor: '#16a34a' }
-                                  : { scale: 1, backgroundColor: '#0F3D2E' }
-                              }
-                              transition={{ duration: 0.28, ease: 'easeOut' }}
-                              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white shadow-xs"
-                            >
-                              <AnimatePresence mode="wait" initial={false}>
+                            {canAnimate ? (
+                              <motion.div
+                                animate={
+                                  isAdded
+                                    ? { scale: [1, 1.25, 1], backgroundColor: '#16a34a' }
+                                    : { scale: 1, backgroundColor: '#0F3D2E' }
+                                }
+                                transition={{ duration: 0.28, ease: 'easeOut' }}
+                                className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white shadow-xs"
+                              >
+                                <AnimatePresence mode="wait" initial={false}>
+                                  {isAdded ? (
+                                    <motion.div
+                                      key="checked"
+                                      initial={{ scale: 0, rotate: -45 }}
+                                      animate={{ scale: 1, rotate: 0 }}
+                                      exit={{ scale: 0 }}
+                                      transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+                                    >
+                                      <Check className="w-4 h-4 stroke-[3]" />
+                                    </motion.div>
+                                  ) : (
+                                    <motion.div
+                                      key="plus"
+                                      initial={{ scale: 0, rotate: 45 }}
+                                      animate={{ scale: 1, rotate: 0 }}
+                                      exit={{ scale: 0 }}
+                                      transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+                                    >
+                                      <Plus className="w-4 h-4 stroke-[2.8]" />
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </motion.div>
+                            ) : (
+                              <div
+                                style={{ backgroundColor: isAdded ? '#16a34a' : '#0F3D2E' }}
+                                className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white shadow-xs"
+                              >
                                 {isAdded ? (
-                                  <motion.div
-                                    key="checked"
-                                    initial={{ scale: 0, rotate: -45 }}
-                                    animate={{ scale: 1, rotate: 0 }}
-                                    exit={{ scale: 0 }}
-                                    transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-                                  >
-                                    <Check className="w-4 h-4 stroke-[3]" />
-                                  </motion.div>
+                                  <Check className="w-4 h-4 stroke-[3]" />
                                 ) : (
-                                  <motion.div
-                                    key="plus"
-                                    initial={{ scale: 0, rotate: 45 }}
-                                    animate={{ scale: 1, rotate: 0 }}
-                                    exit={{ scale: 0 }}
-                                    transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-                                  >
-                                    <Plus className="w-4 h-4 stroke-[2.8]" />
-                                  </motion.div>
+                                  <Plus className="w-4 h-4 stroke-[2.8]" />
                                 )}
-                              </AnimatePresence>
-                            </motion.div>
+                              </div>
+                            )}
                           </button>
                         </div>
                       </div>
@@ -369,6 +377,29 @@ export const ViewAllEssentialsModal: React.FC<ViewAllEssentialsModalProps> = ({
               </>
             )}
           </div>
+    </>
+  );
+
+  if (!canAnimate) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+        <div className="bg-[#FAFAFA] dark:bg-surface-container-lowest w-full max-w-2xl h-full sm:h-[88vh] sm:rounded-3xl flex flex-col overflow-hidden shadow-2xl border border-surface-dim/70">
+          {modalInner}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <AnimatePresence>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98, y: 12 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.98, y: 12 }}
+          className="bg-[#FAFAFA] dark:bg-surface-container-lowest w-full max-w-2xl h-full sm:h-[88vh] sm:rounded-3xl flex flex-col overflow-hidden shadow-2xl border border-surface-dim/70"
+        >
+          {modalInner}
         </motion.div>
       </div>
     </AnimatePresence>

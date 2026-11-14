@@ -13,6 +13,14 @@ import { playMiloSound } from './miloSounds';
 import { playCompletionSound, triggerHaptic } from '../lib/sound';
 import { X, Volume2, VolumeX } from 'lucide-react';
 import { useRemoteConfig } from '../hooks/useRemoteConfig';
+import { isLowEndDevice } from '../lib/deviceTier';
+import {
+  STORAGE_MILO_ENABLED_KEY,
+  isMiloEnabled,
+  setMiloEnabled,
+} from './miloPrefs';
+
+export { STORAGE_MILO_ENABLED_KEY, isMiloEnabled, setMiloEnabled };
 
 export type MiloHostVariant = 'mini' | 'celebration' | 'hero';
 
@@ -51,7 +59,6 @@ const CELEBRATION_BURST_PARTICLES = Array.from({ length: 50 }, (_, i) => {
 });
 
 export const STORAGE_BUBBLE_POS_KEY = 'milo-bubble-pos';
-export const STORAGE_MILO_ENABLED_KEY = 'yaad_milo_enabled';
 export const STORAGE_PENDING_REMINDER_DATE_KEY = 'milo-pending-reminder-date';
 
 export function getTodayDateString(): string {
@@ -65,29 +72,6 @@ export function getTodayDateString(): string {
 interface Position {
   x: number;
   y: number;
-}
-
-/**
- * Check if Milo floating companion is globally enabled
- */
-export function isMiloEnabled(): boolean {
-  if (typeof window === 'undefined') return true;
-  try {
-    return localStorage.getItem(STORAGE_MILO_ENABLED_KEY) !== 'false';
-  } catch {
-    return true;
-  }
-}
-
-/**
- * Toggle Milo floating companion on/off
- */
-export function setMiloEnabled(enabled: boolean): void {
-  if (typeof window === 'undefined') return;
-  try {
-    localStorage.setItem(STORAGE_MILO_ENABLED_KEY, enabled ? 'true' : 'false');
-    window.dispatchEvent(new CustomEvent('yaad:milo:toggle', { detail: { enabled } }));
-  } catch {}
 }
 
 /**
@@ -147,20 +131,51 @@ export const MiloHost: React.FC<MiloHostProps> = ({
   }, []);
 
 
-  // State machine hook - variant celebration uses 'hurrah', otherwise default greeting (sleepy at night, happy in day)
+  const isLowEnd = isLowEndDevice();
+  const [isTabHidden, setIsTabHidden] = useState<boolean>(() =>
+    typeof document !== 'undefined' ? document.hidden : false
+  );
+  const [isTapActive, setIsTapActive] = useState<boolean>(false);
+
+  // State machine hook - variant celebration uses 'hurrah'; on low-end mini bubble starts idle until user taps
   const {
     expression: hookExpression,
     trigger,
     setExpression,
     isSoundEnabled,
     setSoundEnabled,
-  } = useMilo(variant === 'celebration' ? 'hurrah' : undefined);
+  } = useMilo(
+    variant === 'celebration' ? 'hurrah' : isLowEnd ? 'idle' : undefined
+  );
 
   const activeExpression = propExpression || hookExpression;
 
   // Track active expression in ref for gaze/tap_elsewhere checks without stale state
   const activeExpressionRef = useRef<MiloExpression>(activeExpression);
   activeExpressionRef.current = activeExpression;
+
+  // Track tab visibility and clear transient tap-active state once Milo settles back to idle
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const handleVisibilityChange = () => {
+      setIsTabHidden(document.hidden);
+      if (document.hidden && gazeResetTimerRef.current) {
+        clearTimeout(gazeResetTimerRef.current);
+        gazeResetTimerRef.current = null;
+        setGazeOffset({ x: 0, y: 0, rotate: 0 });
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (activeExpression === 'idle' && isTapActive) {
+      setIsTapActive(false);
+    }
+  }, [activeExpression, isTapActive]);
 
   // Listen for settings visibility toggle
   useEffect(() => {
@@ -262,8 +277,9 @@ export const MiloHost: React.FC<MiloHostProps> = ({
     }, 8000);
   }, [getPendingLists, isCelebrationActive, isIntroActive, trigger, dismissPendingReminder]);
 
-  // Settle delay on mount (~5s) before triggering reminder
+  // Settle delay on mount (~5s) before triggering reminder (paused while tab is hidden)
   useEffect(() => {
+    if (isTabHidden) return;
     const timer = setTimeout(() => {
       checkPendingListReminder();
     }, 5000);
@@ -273,7 +289,7 @@ export const MiloHost: React.FC<MiloHostProps> = ({
         clearTimeout(reminderTimerRef.current);
       }
     };
-  }, [checkPendingListReminder]);
+  }, [checkPendingListReminder, isTabHidden]);
 
   // If celebration or intro becomes active, dismiss any active pending reminder
   useEffect(() => {
@@ -284,6 +300,7 @@ export const MiloHost: React.FC<MiloHostProps> = ({
 
   // Tap handler: Tapping Milo during reminder -> opens list; else laughing + giggle + fur impulse
   const handleMiloTap = useCallback(() => {
+    setIsTapActive(true);
     if (pendingReminder) {
       handleReminderClick();
       return;
@@ -511,7 +528,7 @@ export const MiloHost: React.FC<MiloHostProps> = ({
 
   // Global pointerdown listener for Gaze (Part B) and tap_elsewhere (Part A)
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || isTabHidden || isLowEnd) return;
 
     const handleGlobalPointerDown = (e: PointerEvent) => {
       // Ignore if user tapped inside the Milo bubble itself
@@ -569,7 +586,7 @@ export const MiloHost: React.FC<MiloHostProps> = ({
       window.removeEventListener('pointerdown', handleGlobalPointerDown);
       if (gazeResetTimerRef.current) clearTimeout(gazeResetTimerRef.current);
     };
-  }, [isCelebrationActive, isIntroActive, trigger]);
+  }, [isCelebrationActive, isIntroActive, isTabHidden, isLowEnd, trigger]);
 
   // If user disabled Milo in settings or remotely disabled, hide both bubble and overlay
   if (!enabled || remoteConfig.header?.showMiloCompanion === false) {
@@ -670,6 +687,7 @@ export const MiloHost: React.FC<MiloHostProps> = ({
                 expression="hurrah"
                 size={240}
                 onTap={handleMiloTap}
+                isPaused={isTabHidden}
               />
             </div>
 
@@ -785,6 +803,12 @@ export const MiloHost: React.FC<MiloHostProps> = ({
                 expression={activeExpression}
                 size={64}
                 forceBlinkTrigger={gazeBlinkTrigger}
+                isPaused={
+                  isTabHidden ||
+                  (isLowEnd
+                    ? !isTapActive
+                    : activeExpression === 'idle' && !isDragging && !isTickHopping)
+                }
               />
             </div>
           </div>

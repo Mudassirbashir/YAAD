@@ -9,6 +9,7 @@ import { resolveVisual } from '../lib/catalog/visualResolver';
 import { INITIAL_MASTER_CATALOG } from '../lib/catalog/items';
 import { supabaseCatalog, useCatalogVersion } from '../lib/catalog/supabaseCatalog';
 import { RecommendationCandidate } from '../lib/recommendations';
+import { useShouldAnimate } from '../lib/motionPreference';
 
 interface CategoryBrowserModalProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ export const CategoryBrowserModal: React.FC<CategoryBrowserModalProps> = ({
 }) => {
   const { t, language, getCategoryName } = useLanguage();
   const catalogVersion = useCatalogVersion();
+  const canAnimate = useShouldAnimate();
   const [selectedCategory, setSelectedCategory] = useState<CategoryId | 'all'>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [addedItemNames, setAddedItemNames] = useState<Set<string>>(new Set());
@@ -127,27 +129,10 @@ export const CategoryBrowserModal: React.FC<CategoryBrowserModalProps> = ({
   // Primary categories to show in pill list
   const primaryCategories = CATEGORIES_LIST.slice(0, 16);
 
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1, transition: { duration: 0.16, ease: [0.32, 0.72, 0, 1] } }}
-          exit={{ opacity: 0, transition: { duration: 0.14, ease: [0.36, 0, 0.66, 0] } }}
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm"
-          role="dialog"
-          aria-modal="true"
-          onClick={onClose}
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1, transition: { duration: 0.18, ease: [0.32, 0.72, 0, 1] } }}
-            exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.16, ease: [0.36, 0, 0.66, 0] } }}
-            className="relative w-full max-w-xl sm:max-w-2xl lg:max-w-3xl bg-white rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-        {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-surface-dim/40 shrink-0">
+  const modalInner = (
+    <>
+      {/* Header */}
+      <div className="flex items-center justify-between pb-3 border-b border-surface-dim/40 shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
               <Grid className="w-5 h-5" />
@@ -280,6 +265,47 @@ export const CategoryBrowserModal: React.FC<CategoryBrowserModalProps> = ({
             {t('home.categoriesModal.close')}
           </button>
         </div>
+    </>
+  );
+
+  if (!canAnimate) {
+    return isOpen ? (
+      <div
+        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm"
+        role="dialog"
+        aria-modal="true"
+        onClick={onClose}
+      >
+        <div
+          className="relative w-full max-w-xl sm:max-w-2xl lg:max-w-3xl bg-white rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {modalInner}
+        </div>
+      </div>
+    ) : null;
+  }
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1, transition: { duration: 0.16, ease: [0.32, 0.72, 0, 1] } }}
+          exit={{ opacity: 0, transition: { duration: 0.14, ease: [0.36, 0, 0.66, 0] } }}
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          onClick={onClose}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1, transition: { duration: 0.18, ease: [0.32, 0.72, 0, 1] } }}
+            exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.16, ease: [0.36, 0, 0.66, 0] } }}
+            className="relative w-full max-w-xl sm:max-w-2xl lg:max-w-3xl bg-white rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {modalInner}
           </motion.div>
         </motion.div>
       )}

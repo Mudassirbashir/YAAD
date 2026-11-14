@@ -14,6 +14,7 @@ import {
   hasRecentUpdateAttempt,
   executeUpdateFlow,
 } from '../lib/appUpdateManager';
+import { useShouldAnimate } from '../lib/motionPreference';
 
 export interface PWAUpdateNotificationProps {
   /** Optional override for automated testing or UI simulation */
@@ -34,6 +35,7 @@ export const PWAUpdateNotification: React.FC<PWAUpdateNotificationProps> = ({
 }) => {
   const { user, isConfigured } = useAuth();
   const { language, t, isRTL } = useLanguage();
+  const canAnimate = useShouldAnimate();
 
   // Primary update states
   const [isUpdating, setIsUpdating] = useState<boolean>(false);
@@ -286,33 +288,7 @@ export const PWAUpdateNotification: React.FC<PWAUpdateNotificationProps> = ({
   const errorText = t('appUpdate.updateFailed') || 'Update could not be completed. Please try again.';
   const escHint = t('appUpdate.escHint') || 'Esc to dismiss';
 
-  return (
-    <div
-      id="yaad_update_notification_wrapper"
-      className={`fixed z-50 pointer-events-none transition-[transform,opacity] duration-300
-        /* Small mobile screens (< 380px) */
-        bottom-20 inset-x-2 flex justify-center
-        /* Normal mobile phones (380px - 640px) */
-        xs:inset-x-3 sm:inset-x-auto
-        /* Tablets (640px - 1024px) - docked neatly in bottom-right corner */
-        sm:bottom-6 sm:end-6 sm:max-w-[400px] sm:w-full
-        /* Desktop (> 1024px) */
-        lg:bottom-8 lg:end-8 lg:max-w-[430px]
-      `}
-      dir={isRTL ? 'rtl' : 'ltr'}
-    >
-      <AnimatePresence>
-        <motion.section
-          id="yaad_update_notification_card"
-          role="region"
-          aria-live="polite"
-          aria-labelledby="yaad_update_card_title"
-          aria-describedby="yaad_update_card_desc"
-          initial={{ opacity: 0, y: 24, scale: 0.96 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 24, scale: 0.96 }}
-          transition={{ type: 'spring', stiffness: 500, damping: 38 }}
-          className={`pointer-events-auto w-full max-w-[390px] sm:max-w-[400px] lg:max-w-[430px]
+  const cardClassName = `pointer-events-auto w-full max-w-[390px] sm:max-w-[400px] lg:max-w-[430px]
             rounded-2xl sm:rounded-3xl
             bg-surface-container-lowest dark:bg-[#1a211e]
             text-on-surface dark:text-[#eff2ed]
@@ -322,8 +298,10 @@ export const PWAUpdateNotification: React.FC<PWAUpdateNotificationProps> = ({
             border border-outline-variant/60 dark:border-white/10
             backdrop-blur-sm
             relative overflow-hidden select-none
-          `}
-        >
+          `;
+
+  const cardInner = (
+    <>
           {/* Subtle brand ambient glow in top corner */}
           <div
             aria-hidden="true"
@@ -458,8 +436,53 @@ export const PWAUpdateNotification: React.FC<PWAUpdateNotificationProps> = ({
               </button>
             </div>
           </div>
-        </motion.section>
-      </AnimatePresence>
+    </>
+  );
+
+  return (
+    <div
+      id="yaad_update_notification_wrapper"
+      className={`fixed z-50 pointer-events-none transition-[transform,opacity] duration-300
+        /* Small mobile screens (< 380px) */
+        bottom-20 inset-x-2 flex justify-center
+        /* Normal mobile phones (380px - 640px) */
+        xs:inset-x-3 sm:inset-x-auto
+        /* Tablets (640px - 1024px) - docked neatly in bottom-right corner */
+        sm:bottom-6 sm:end-6 sm:max-w-[400px] sm:w-full
+        /* Desktop (> 1024px) */
+        lg:bottom-8 lg:end-8 lg:max-w-[430px]
+      `}
+      dir={isRTL ? 'rtl' : 'ltr'}
+    >
+      {canAnimate ? (
+        <AnimatePresence>
+          <motion.section
+            id="yaad_update_notification_card"
+            role="region"
+            aria-live="polite"
+            aria-labelledby="yaad_update_card_title"
+            aria-describedby="yaad_update_card_desc"
+            initial={{ opacity: 0, y: 24, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 24, scale: 0.96 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 38 }}
+            className={cardClassName}
+          >
+            {cardInner}
+          </motion.section>
+        </AnimatePresence>
+      ) : (
+        <section
+          id="yaad_update_notification_card"
+          role="region"
+          aria-live="polite"
+          aria-labelledby="yaad_update_card_title"
+          aria-describedby="yaad_update_card_desc"
+          className={cardClassName}
+        >
+          {cardInner}
+        </section>
+      )}
     </div>
   );
 };

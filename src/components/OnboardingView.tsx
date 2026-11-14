@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, ArrowRight, Check, PlusCircle, Sparkles, CheckCircle2, History } from 'lucide-react';
-import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { APP_IMAGES } from '../data/initialData';
 import { useLanguage } from '../context/LanguageContext';
+import { useShouldAnimate } from '../lib/motionPreference';
 
 interface OnboardingViewProps {
   onComplete: (startTour?: boolean) => void;
@@ -21,7 +22,7 @@ interface StepData {
 
 export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) => {
   const { t, isRTL } = useLanguage();
-  const prefersReducedMotion = useReducedMotion();
+  const canAnimate = useShouldAnimate();
   const [step, setStep] = useState<number>(1);
 
   const steps: StepData[] = [
@@ -153,29 +154,45 @@ export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) =>
 
       {/* Main Slide Content with smooth transition */}
       <div className="flex-1 flex flex-col items-center justify-center text-center z-10 w-full my-4">
-        <AnimatePresence mode="popLayout">
-          <motion.div
-            key={`onboarding-step-${step}`}
-            initial={
-              prefersReducedMotion
-                ? { opacity: 0 }
-                : { opacity: 0, x: isRTL ? -32 : 32, scale: 0.94 }
-            }
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={
-              prefersReducedMotion
-                ? { opacity: 0 }
-                : { opacity: 0, x: isRTL ? 32 : -32, scale: 0.94 }
-            }
-            transition={
-              prefersReducedMotion
-                ? { duration: 0.15 }
-                : { type: 'spring', stiffness: 380, damping: 32, mass: 0.8 }
-            }
-            className="flex flex-col items-center w-full"
-          >
+        {canAnimate ? (
+          <AnimatePresence mode="popLayout">
+            <motion.div
+              key={`onboarding-step-${step}`}
+              initial={{ opacity: 0, x: isRTL ? -32 : 32, scale: 0.94 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: isRTL ? 32 : -32, scale: 0.94 }}
+              transition={{ type: 'spring', stiffness: 380, damping: 32, mass: 0.8 }}
+              className="flex flex-col items-center w-full"
+            >
+              {/* Visual Illustration Card */}
+              <div className="w-full max-w-[280px] sm:max-w-[320px] aspect-square bg-surface-container-lowest rounded-3xl shadow-[0px_10px_35px_rgba(0,30,21,0.06)] border border-surface-dim flex flex-col items-center justify-center p-6 mb-6 relative group hover:scale-[1.01] transition-transform">
+                <img
+                  src={currentStep.image}
+                  alt={currentStep.imageAlt}
+                  className="object-contain w-full h-full drop-shadow-md rounded-2xl select-none"
+                />
+                <div
+                  className={`absolute bottom-3 right-3 p-2 rounded-2xl ${currentStep.colorClass} shadow-xs`}
+                >
+                  <StepIcon className="w-5 h-5" />
+                </div>
+              </div>
+
+              {/* Step Content Typography */}
+              <div className="max-w-[360px] space-y-2 px-2">
+                <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-primary tracking-tight leading-snug">
+                  {t(currentStep.titleKey)}
+                </h2>
+                <p className="font-body text-sm sm:text-base text-on-surface-variant leading-relaxed">
+                  {t(currentStep.subtitleKey)}
+                </p>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        ) : (
+          <div key={`onboarding-step-${step}`} className="flex flex-col items-center w-full">
             {/* Visual Illustration Card */}
-            <div className="w-full max-w-[280px] sm:max-w-[320px] aspect-square bg-surface-container-lowest rounded-3xl shadow-[0px_10px_35px_rgba(0,30,21,0.06)] border border-surface-dim flex flex-col items-center justify-center p-6 mb-6 relative group hover:scale-[1.01] transition-transform">
+            <div className="w-full max-w-[280px] sm:max-w-[320px] aspect-square bg-surface-container-lowest rounded-3xl shadow-[0px_10px_35px_rgba(0,30,21,0.06)] border border-surface-dim flex flex-col items-center justify-center p-6 mb-6 relative group">
               <img
                 src={currentStep.image}
                 alt={currentStep.imageAlt}
@@ -197,8 +214,8 @@ export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) =>
                 {t(currentStep.subtitleKey)}
               </p>
             </div>
-          </motion.div>
-        </AnimatePresence>
+          </div>
+        )}
       </div>
 
       {/* Bottom Controls: Step Dots & Navigation Actions */}
@@ -224,17 +241,16 @@ export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) =>
                 <span className="w-2.5 h-2.5 rounded-full bg-surface-dim hover:bg-surface-variant transition-colors" />
 
                 {/* Fluid Sliding Active Pill */}
-                {isActive && (
-                  <motion.div
-                    layoutId="onboarding-active-pill"
-                    className="absolute inset-y-1.5 inset-x-0 w-8 h-2.5 rounded-full bg-gradient-to-r from-primary to-primary-container shadow-[0_2px_8px_rgba(15,61,46,0.30)]"
-                    transition={
-                      prefersReducedMotion
-                        ? { duration: 0 }
-                        : { type: 'spring', stiffness: 380, damping: 30 }
-                    }
-                  />
-                )}
+                {isActive &&
+                  (canAnimate ? (
+                    <motion.div
+                      layoutId="onboarding-active-pill"
+                      className="absolute inset-y-1.5 inset-x-0 w-8 h-2.5 rounded-full bg-gradient-to-r from-primary to-primary-container shadow-[0_2px_8px_rgba(15,61,46,0.30)]"
+                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                    />
+                  ) : (
+                    <div className="absolute inset-y-1.5 inset-x-0 w-8 h-2.5 rounded-full bg-gradient-to-r from-primary to-primary-container shadow-[0_2px_8px_rgba(15,61,46,0.30)]" />
+                  ))}
               </button>
             );
           })}
@@ -243,18 +259,29 @@ export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) =>
         {/* Action Buttons */}
         <div className="w-full max-w-sm flex flex-col gap-2.5">
           {step < steps.length ? (
-            <motion.button
-              whileHover={{ scale: 1.015 }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ type: 'spring', stiffness: 420, damping: 26 }}
-              id="onboarding_next_btn"
-              onClick={handleNext}
-              className="w-full h-12 sm:h-13 rounded-full bg-primary text-on-primary font-body text-base font-bold flex items-center justify-center gap-2 shadow-[0px_8px_20px_rgba(0,30,21,0.12)] hover:bg-primary-container transition-colors cursor-pointer"
-            >
-              <span>{t('onboarding.next')}</span>
-              {isRTL ? <ArrowLeft className="w-4 h-4 stroke-[2.5]" /> : <ArrowRight className="w-4 h-4 stroke-[2.5]" />}
-            </motion.button>
-          ) : (
+            canAnimate ? (
+              <motion.button
+                whileHover={{ scale: 1.015 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 26 }}
+                id="onboarding_next_btn"
+                onClick={handleNext}
+                className="w-full h-12 sm:h-13 rounded-full bg-primary text-on-primary font-body text-base font-bold flex items-center justify-center gap-2 shadow-[0px_8px_20px_rgba(0,30,21,0.12)] hover:bg-primary-container transition-colors cursor-pointer"
+              >
+                <span>{t('onboarding.next')}</span>
+                {isRTL ? <ArrowLeft className="w-4 h-4 stroke-[2.5]" /> : <ArrowRight className="w-4 h-4 stroke-[2.5]" />}
+              </motion.button>
+            ) : (
+              <button
+                id="onboarding_next_btn"
+                onClick={handleNext}
+                className="w-full h-12 sm:h-13 rounded-full bg-primary text-on-primary font-body text-base font-bold flex items-center justify-center gap-2 shadow-[0px_8px_20px_rgba(0,30,21,0.12)] hover:bg-primary-container transition-colors cursor-pointer"
+              >
+                <span>{t('onboarding.next')}</span>
+                {isRTL ? <ArrowLeft className="w-4 h-4 stroke-[2.5]" /> : <ArrowRight className="w-4 h-4 stroke-[2.5]" />}
+              </button>
+            )
+          ) : canAnimate ? (
             <motion.button
               whileHover={{ scale: 1.015 }}
               whileTap={{ scale: 0.98 }}
@@ -266,6 +293,15 @@ export const OnboardingView: React.FC<OnboardingViewProps> = ({ onComplete }) =>
               <span>{t('onboarding.getStarted')}</span>
               <Check className="w-4 h-4 stroke-[2.5]" />
             </motion.button>
+          ) : (
+            <button
+              id="onboarding_get_started_btn"
+              onClick={() => onComplete(false)}
+              className="w-full h-12 sm:h-13 rounded-full bg-primary text-on-primary font-body text-base font-bold flex items-center justify-center gap-2 shadow-[0px_8px_20px_rgba(0,30,21,0.12)] hover:bg-primary-container transition-colors cursor-pointer"
+            >
+              <span>{t('onboarding.getStarted')}</span>
+              <Check className="w-4 h-4 stroke-[2.5]" />
+            </button>
           )}
         </div>
       </footer>

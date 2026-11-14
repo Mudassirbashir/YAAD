@@ -4,6 +4,7 @@ import { Download, X, Share, PlusSquare, Smartphone, CheckCircle2 } from 'lucide
 import { usePWAInstall } from '../lib/usePWAInstall';
 import { useLanguage } from '../context/LanguageContext';
 import { APP_IMAGES } from '../data/initialData';
+import { useShouldAnimate } from '../lib/motionPreference';
 
 interface PWAInstallPromptProps {
   mode?: 'banner' | 'settings_card' | 'inline';
@@ -12,6 +13,7 @@ interface PWAInstallPromptProps {
 export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ mode = 'banner' }) => {
   const { isInstalled, isIOS, canPrompt, showBanner, promptInstall, dismissBanner } = usePWAInstall();
   const { language } = useLanguage();
+  const canAnimate = useShouldAnimate();
   const isUrdu = language === 'ur';
   const [showIOSModal, setShowIOSModal] = useState<boolean>(false);
   const [isInstalling, setIsInstalling] = useState<boolean>(false);
@@ -71,15 +73,58 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ mode = 'bann
         </div>
 
         {/* iOS Safari Guide Modal */}
-        <AnimatePresence>
-          {showIOSModal && (
+        {canAnimate ? (
+          <AnimatePresence>
+            {showIOSModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="bg-surface-container-lowest border border-surface-dim rounded-2xl p-6 max-w-sm w-full shadow-xl"
+                >
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-bold text-base text-primary font-display">
+                      'Install on iPhone / iPad'
+                    </h3>
+                    <button
+                      onClick={() => setShowIOSModal(false)}
+                      className="p-1 rounded-full text-on-surface-variant hover:bg-surface-container-low"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  <div className="space-y-3 text-xs text-on-surface font-body">
+                    <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-surface-container-low">
+                      <Share className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                      <span>
+                        {'1. Tap the Share button at the bottom of Safari.'}
+                      </span>
+                    </div>
+                    <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-surface-container-low">
+                      <PlusSquare className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                      <span>
+                        {'2. Scroll down and tap "Add to Home Screen".'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowIOSModal(false)}
+                    className="mt-5 w-full py-2.5 bg-primary text-on-primary rounded-xl font-bold text-xs"
+                  >
+                    'Got it'
+                  </button>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
+        ) : (
+          showIOSModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="bg-surface-container-lowest border border-surface-dim rounded-2xl p-6 max-w-sm w-full shadow-xl"
-              >
+              <div className="bg-surface-container-lowest border border-surface-dim rounded-2xl p-6 max-w-sm w-full shadow-xl">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="font-bold text-base text-primary font-display">
                     'Install on iPhone / iPad'
@@ -114,10 +159,10 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ mode = 'bann
                 >
                   'Got it'
                 </button>
-              </motion.div>
+              </div>
             </div>
-          )}
-        </AnimatePresence>
+          )
+        )}
       </div>
     );
   }
@@ -172,17 +217,69 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ mode = 'bann
       </div>
 
       {/* iOS Safari Guide Modal */}
-      <AnimatePresence>
-        {showIOSModal && (
+      {canAnimate ? (
+        <AnimatePresence>
+          {showIOSModal && (
+            <div
+              onClick={() => setShowIOSModal(false)}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm cursor-pointer"
+            >
+              <motion.div
+                onClick={(e) => e.stopPropagation()}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-surface-container-lowest border border-surface-dim rounded-2xl p-6 max-w-sm w-full shadow-2xl cursor-default"
+              >
+                <div className="flex justify-between items-center mb-4">
+                  <div className="flex items-center gap-2">
+                    <Smartphone className="w-5 h-5 text-primary" />
+                    <h3 className="font-bold text-base text-primary font-display">
+                      'Install on iPhone / iPad'
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => setShowIOSModal(false)}
+                    className="p-1 rounded-full text-on-surface-variant hover:bg-surface-container-low"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="space-y-3 text-xs text-on-surface font-body">
+                  <div className="flex items-start gap-2.5 p-3 rounded-xl bg-surface-container-low">
+                    <Share className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                    <span>
+                      {'1. Tap the Share button at the bottom bar of Safari.'}
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-2.5 p-3 rounded-xl bg-surface-container-low">
+                    <PlusSquare className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                    <span>
+                      {'2. Scroll down the menu and choose "Add to Home Screen".'}
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowIOSModal(false)}
+                  className="mt-5 w-full py-2.5 bg-primary text-on-primary rounded-xl font-bold text-xs"
+                >
+                  'Got it'
+                </button>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+      ) : (
+        showIOSModal && (
           <div
             onClick={() => setShowIOSModal(false)}
             className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm cursor-pointer"
           >
-            <motion.div
+            <div
               onClick={(e) => e.stopPropagation()}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
               className="bg-surface-container-lowest border border-surface-dim rounded-2xl p-6 max-w-sm w-full shadow-2xl cursor-default"
             >
               <div className="flex justify-between items-center mb-4">
@@ -222,10 +319,10 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({ mode = 'bann
               >
                 'Got it'
               </button>
-            </motion.div>
+            </div>
           </div>
-        )}
-      </AnimatePresence>
+        )
+      )}
     </>
   );
 };

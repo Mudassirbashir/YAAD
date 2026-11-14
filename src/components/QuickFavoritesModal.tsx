@@ -5,6 +5,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { EssentialProductVisual } from './EssentialProductVisual';
 import { STARTER_POPULAR_ESSENTIALS, StarterCatalogItem } from '../lib/recommendations/starterCatalog';
 import { RecommendationCandidate } from '../lib/recommendations';
+import { useShouldAnimate } from '../lib/motionPreference';
 
 interface QuickFavoritesModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export const QuickFavoritesModal: React.FC<QuickFavoritesModalProps> = ({
   activeListTitle,
 }) => {
   const { t, language } = useLanguage();
+  const canAnimate = useShouldAnimate();
   const [addedItemNames, setAddedItemNames] = useState<Set<string>>(new Set());
 
   const handleAdd = (item: StarterCatalogItem) => {
@@ -93,27 +95,10 @@ export const QuickFavoritesModal: React.FC<QuickFavoritesModalProps> = ({
     return item.displayName;
   };
 
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1, transition: { duration: 0.16, ease: [0.32, 0.72, 0, 1] } }}
-          exit={{ opacity: 0, transition: { duration: 0.14, ease: [0.36, 0, 0.66, 0] } }}
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm"
-          role="dialog"
-          aria-modal="true"
-          onClick={onClose}
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1, transition: { duration: 0.18, ease: [0.32, 0.72, 0, 1] } }}
-            exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.16, ease: [0.36, 0, 0.66, 0] } }}
-            className="relative w-full max-w-lg sm:max-w-xl md:max-w-2xl bg-white rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl overflow-hidden max-h-[85vh] flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-        {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-surface-dim/40 shrink-0">
+  const modalInner = (
+    <>
+      {/* Header */}
+      <div className="flex items-center justify-between pb-4 border-b border-surface-dim/40 shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center">
               <Heart className="w-5 h-5 fill-rose-500" />
@@ -201,6 +186,47 @@ export const QuickFavoritesModal: React.FC<QuickFavoritesModalProps> = ({
             {t('home.favoritesModal.close')}
           </button>
         </div>
+    </>
+  );
+
+  if (!canAnimate) {
+    return isOpen ? (
+      <div
+        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm"
+        role="dialog"
+        aria-modal="true"
+        onClick={onClose}
+      >
+        <div
+          className="relative w-full max-w-lg sm:max-w-xl md:max-w-2xl bg-white rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl overflow-hidden max-h-[85vh] flex flex-col"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {modalInner}
+        </div>
+      </div>
+    ) : null;
+  }
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1, transition: { duration: 0.16, ease: [0.32, 0.72, 0, 1] } }}
+          exit={{ opacity: 0, transition: { duration: 0.14, ease: [0.36, 0, 0.66, 0] } }}
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          onClick={onClose}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1, transition: { duration: 0.18, ease: [0.32, 0.72, 0, 1] } }}
+            exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.16, ease: [0.36, 0, 0.66, 0] } }}
+            className="relative w-full max-w-lg sm:max-w-xl md:max-w-2xl bg-white rounded-t-3xl sm:rounded-2xl p-6 shadow-2xl overflow-hidden max-h-[85vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {modalInner}
           </motion.div>
         </motion.div>
       )}

@@ -39,7 +39,7 @@ import { LegalDocModal } from './settings/LegalDocModal';
 import { SupportDeskModal } from './settings/SupportDeskModal';
 import { formatPhoneNumber } from '../utils/phone';
 import { triggerHaptic } from '../lib/sound';
-import { isMiloEnabled, setMiloEnabled } from '../pet/MiloHost';
+import { isMiloEnabled, setMiloEnabled } from '../pet/miloPrefs';
 import { isMiloSoundEnabled, setMiloSoundEnabled } from '../pet/miloSounds';
 import { triggerMiloEvent } from '../pet/useMilo';
 import { isPerfMeterEnabled, setPerfMeterEnabled } from '../lib/perfMeter';

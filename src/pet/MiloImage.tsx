@@ -18,6 +18,7 @@ export interface MiloImageProps {
   className?: string;
   onTap?: () => void;
   forceBlinkTrigger?: number; // External gaze/reaction blink trigger
+  isPaused?: boolean; // Pause timers and idle animations when idle, hidden, or low-end un-tapped
 }
 
 const ALL_ASSET_KEYS: (MiloExpression | 'blink')[] = [
@@ -55,6 +56,7 @@ export const MiloImage: React.FC<MiloImageProps> = ({
   className = '',
   onTap,
   forceBlinkTrigger,
+  isPaused = false,
 }) => {
   const [currentExpr, setCurrentExpr] = useState<MiloExpression>(expression);
   const [prevExpr, setPrevExpr] = useState<MiloExpression | null>(null);
@@ -62,16 +64,23 @@ export const MiloImage: React.FC<MiloImageProps> = ({
   const [isMidBlink, setIsMidBlink] = useState<boolean>(false);
   const [isIdleBlinking, setIsIdleBlinking] = useState<boolean>(false);
   const [reducedMotion, setReducedMotion] = useState<boolean>(false);
+  const [isTabHidden, setIsTabHidden] = useState<boolean>(() =>
+    typeof document !== 'undefined' ? document.hidden : false
+  );
   const [hurrahKey, setHurrahKey] = useState<number>(0);
 
   const prevExprRef = useRef<MiloExpression>(expression);
   const idleBlinkTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const nextIdleBlinkTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Preload all expressions on first mount
+  const effectivelyPaused = isPaused || isTabHidden;
+
+  // Preload all expressions only once Milo is active (not paused/idle on low-end launch)
   useEffect(() => {
-    preloadMiloImages();
-  }, []);
+    if (!effectivelyPaused) {
+      preloadMiloImages();
+    }
+  }, [effectivelyPaused]);
 
   // Detect prefers-reduced-motion
   useEffect(() => {
@@ -81,6 +90,18 @@ export const MiloImage: React.FC<MiloImageProps> = ({
     const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
     mq.addEventListener('change', handler);
     return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  // Track tab visibility
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const handleVisibilityChange = () => {
+      setIsTabHidden(document.hidden);
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   // Calm idle blink trigger (~150ms swap to blink.webp)
@@ -94,10 +115,10 @@ export const MiloImage: React.FC<MiloImageProps> = ({
 
   // External blink trigger (e.g. gaze lean reaction)
   useEffect(() => {
-    if (forceBlinkTrigger && forceBlinkTrigger > 0) {
+    if (forceBlinkTrigger && forceBlinkTrigger > 0 && !effectivelyPaused) {
       triggerIdleBlink();
     }
-  }, [forceBlinkTrigger, triggerIdleBlink]);
+  }, [forceBlinkTrigger, effectivelyPaused, triggerIdleBlink]);
 
   // Schedule periodic idle blink (every 2.5s - 5.0s)
   const scheduleNextIdleBlink = useCallback(() => {
@@ -109,34 +130,28 @@ export const MiloImage: React.FC<MiloImageProps> = ({
     }, delay);
   }, [triggerIdleBlink]);
 
-  // Periodic blinking loop with tab background pause (Part E)
+  // Periodic blinking loop paused whenever idle, paused, or tab hidden
   useEffect(() => {
+    if (effectivelyPaused) {
+      if (nextIdleBlinkTimerRef.current) {
+        clearTimeout(nextIdleBlinkTimerRef.current);
+        nextIdleBlinkTimerRef.current = null;
+      }
+      if (idleBlinkTimeoutRef.current) {
+        clearTimeout(idleBlinkTimeoutRef.current);
+        idleBlinkTimeoutRef.current = null;
+      }
+      setIsIdleBlinking(false);
+      return;
+    }
+
     scheduleNextIdleBlink();
 
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        if (nextIdleBlinkTimerRef.current) {
-          clearTimeout(nextIdleBlinkTimerRef.current);
-          nextIdleBlinkTimerRef.current = null;
-        }
-        if (idleBlinkTimeoutRef.current) {
-          clearTimeout(idleBlinkTimeoutRef.current);
-          idleBlinkTimeoutRef.current = null;
-        }
-        setIsIdleBlinking(false);
-      } else {
-        scheduleNextIdleBlink();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
       if (idleBlinkTimeoutRef.current) clearTimeout(idleBlinkTimeoutRef.current);
       if (nextIdleBlinkTimerRef.current) clearTimeout(nextIdleBlinkTimerRef.current);
     };
-  }, [scheduleNextIdleBlink]);
+  }, [effectivelyPaused, scheduleNextIdleBlink]);
 
   // Handle expression change: animated transition (~350ms total) or instant swap in reduced-motion
   useEffect(() => {
@@ -185,7 +200,7 @@ export const MiloImage: React.FC<MiloImageProps> = ({
 
   // Expression-specific idle motion class (in addition to the 4s breathing wobble)
   const getExpressionMotionClass = (expr: MiloExpression): string => {
-    if (reducedMotion || isTransitioning) return '';
+    if (reducedMotion || isTransitioning || effectivelyPaused) return '';
     switch (expr) {
       case 'laughing':
         return 'milo-motion-laughing';
@@ -373,7 +388,7 @@ export const MiloImage: React.FC<MiloImageProps> = ({
       {/* Layer 1: Outer Breathing Wrapper (4s subtle wobble) */}
       <div
         className={`relative w-full h-full flex items-center justify-center ${
-          reducedMotion ? '' : 'milo-breathing'
+          reducedMotion || effectivelyPaused ? '' : 'milo-breathing'
         }`}
       >
         {/* Layer 2: Inner Per-Expression Motion Wrapper */}

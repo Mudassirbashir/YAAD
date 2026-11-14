@@ -109,11 +109,13 @@ export class RecommendationService {
 
     try {
       // Query shopping_history from Supabase (the real existing persistence table)
+      // Bound to newest 500 purchases and select only the columns used for grouping
       const { data, error } = await supabase
         .from('shopping_history')
-        .select('*')
+        .select('canonical_name, item_name, purchased_at, created_at')
         .eq('user_id', this.userId)
-        .order('purchased_at', { ascending: false });
+        .order('purchased_at', { ascending: false })
+        .limit(500);
 
       if (error) {
         console.warn('Could not fetch shopping_history from Supabase:', error.message);

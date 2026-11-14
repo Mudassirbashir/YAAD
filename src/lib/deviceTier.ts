@@ -73,3 +73,22 @@ export function syncLowEndDeviceClass(): boolean {
 
   return lowEnd;
 }
+
+/**
+ * Returns false when the device is low-end (cores <= 4, RAM <= 4 GB) OR
+ * prefers-reduced-motion is enabled; true otherwise.
+ */
+export function shouldAnimate(): boolean {
+  if (isLowEndDevice()) {
+    return false;
+  }
+  if (
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  ) {
+    return false;
+  }
+  return true;
+}
+

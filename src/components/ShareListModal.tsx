@@ -18,6 +18,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { setListSharing, regenerateListShareToken } from '../lib/supabase';
 import { triggerHaptic } from '../lib/sound';
+import { useShouldAnimate } from '../lib/motionPreference';
 
 export interface ShareListModalProps {
   isOpen: boolean;
@@ -34,6 +35,7 @@ export const ShareListModal: React.FC<ShareListModalProps> = ({
 }) => {
   const { user } = useAuth();
   const { t, language } = useLanguage();
+  const canAnimate = useShouldAnimate();
 
   const [isEnabled, setIsEnabled] = useState<boolean>(false);
   const [shareToken, setShareToken] = useState<string | null>(null);
@@ -148,24 +150,9 @@ export const ShareListModal: React.FC<ShareListModalProps> = ({
     window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
   };
 
-  return (
-    <AnimatePresence>
-      <div
-        id="share_list_modal_backdrop"
-        onClick={onClose}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4"
-        role="dialog"
-        aria-modal="true"
-      >
-        <motion.div
-          id="share_list_modal_container"
-          initial={{ opacity: 0, scale: 0.95, y: 8 }}
-          animate={{ opacity: 1, scale: 1, y: 0, transition: { duration: 0.18, ease: [0.32, 0.72, 0, 1] } }}
-          exit={{ opacity: 0, scale: 0.95, y: 8, transition: { duration: 0.14, ease: [0.36, 0, 0.66, 0] } }}
-          onClick={(e) => e.stopPropagation()}
-          className="bg-white dark:bg-surface-container-lowest rounded-3xl p-5 sm:p-6 max-w-md w-full shadow-2xl border border-surface-dim space-y-5"
-        >
-          {/* Header */}
+  const modalContent = (
+    <>
+      {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
@@ -325,6 +312,47 @@ export const ShareListModal: React.FC<ShareListModalProps> = ({
               </div>
             </div>
           )}
+    </>
+  );
+
+  if (!canAnimate) {
+    return (
+      <div
+        id="share_list_modal_backdrop"
+        onClick={onClose}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4"
+        role="dialog"
+        aria-modal="true"
+      >
+        <div
+          id="share_list_modal_container"
+          onClick={(e) => e.stopPropagation()}
+          className="bg-white dark:bg-surface-container-lowest rounded-3xl p-5 sm:p-6 max-w-md w-full shadow-2xl border border-surface-dim space-y-5"
+        >
+          {modalContent}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <AnimatePresence>
+      <div
+        id="share_list_modal_backdrop"
+        onClick={onClose}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4"
+        role="dialog"
+        aria-modal="true"
+      >
+        <motion.div
+          id="share_list_modal_container"
+          initial={{ opacity: 0, scale: 0.95, y: 8 }}
+          animate={{ opacity: 1, scale: 1, y: 0, transition: { duration: 0.18, ease: [0.32, 0.72, 0, 1] } }}
+          exit={{ opacity: 0, scale: 0.95, y: 8, transition: { duration: 0.14, ease: [0.36, 0, 0.66, 0] } }}
+          onClick={(e) => e.stopPropagation()}
+          className="bg-white dark:bg-surface-container-lowest rounded-3xl p-5 sm:p-6 max-w-md w-full shadow-2xl border border-surface-dim space-y-5"
+        >
+          {modalContent}
         </motion.div>
       </div>
     </AnimatePresence>

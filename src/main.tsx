@@ -10,8 +10,6 @@ import { isPerfMeterEnabled, startPerfMeter } from './lib/perfMeter';
 import { syncLowEndDeviceClass } from './lib/deviceTier';
 import './index.css';
 
-// Initialize Sentry monitoring before mounting React application
-initMonitoring();
 syncLowEndDeviceClass();
 if (isPerfMeterEnabled()) {
   startPerfMeter();
@@ -30,3 +28,26 @@ createRoot(document.getElementById('root')!).render(
     </AuthProvider>
   </StrictMode>,
 );
+
+// Defer Sentry SDK initialization until after first paint so it does not compete with initial render
+if (typeof window !== 'undefined') {
+  const scheduleMonitoringInit = () => {
+    if (typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(() => {
+        initMonitoring();
+      }, { timeout: 2000 });
+    } else {
+      window.setTimeout(() => {
+        initMonitoring();
+      }, 50);
+    }
+  };
+
+  if (typeof window.requestAnimationFrame === 'function') {
+    window.requestAnimationFrame(() => {
+      scheduleMonitoringInit();
+    });
+  } else {
+    scheduleMonitoringInit();
+  }
+}

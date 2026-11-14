@@ -15,6 +15,7 @@ import { playItemCheckSound, triggerHaptic } from '../lib/sound';
 import { BidiText } from '../utils/bidi';
 import { resolveVisual } from '../lib/catalog/visualResolver';
 import { useCatalogVersion } from '../lib/catalog/supabaseCatalog';
+import { useShouldAnimate } from '../lib/motionPreference';
 
 interface EditListViewProps {
   list: ShoppingList;
@@ -34,6 +35,7 @@ export const EditListView: React.FC<EditListViewProps> = ({
   const { t, getCategoryName, language } = useLanguage();
   useCatalogVersion();
   const { theme, currentThemeConfig } = useAppTheme();
+  const canAnimate = useShouldAnimate();
   const isUrdu = language === 'ur';
 
   const [title, setTitle] = useState<string>(list.title);
@@ -472,64 +474,90 @@ export const EditListView: React.FC<EditListViewProps> = ({
       </main>
 
       {/* Delete List Confirmation Modal */}
-      <AnimatePresence>
-        {showDeleteConfirm && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1, transition: { duration: 0.16, ease: [0.32, 0.72, 0, 1] } }}
-            exit={{ opacity: 0, transition: { duration: 0.14, ease: [0.36, 0, 0.66, 0] } }}
-            onClick={() => setShowDeleteConfirm(false)}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4"
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1, transition: { duration: 0.18, ease: [0.32, 0.72, 0, 1] } }}
-              exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.16, ease: [0.36, 0, 0.66, 0] } }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white dark:bg-stone-900 rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-surface-dim space-y-4"
+      {(() => {
+        const deleteModalCard = (
+          <>
+            <div className="flex items-center gap-3 text-rose-700 dark:text-rose-400">
+              <div className="w-10 h-10 rounded-full bg-rose-50 dark:bg-rose-950/40 flex items-center justify-center shrink-0">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="font-display font-bold text-base text-on-surface truncate">
+                  {t('delete') || 'Delete List'}
+                </h3>
+                <p className="text-xs text-outline font-body truncate">
+                  {list.title}
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-on-surface-variant leading-relaxed">
+              Are you sure you want to delete this shopping list? This action cannot be undone.
+            </p>
+
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                className="h-11 rounded-full bg-surface-container text-on-surface font-body text-xs sm:text-sm font-semibold hover:bg-surface-container-high transition-colors cursor-pointer"
+              >
+                {t('cancel')}
+              </button>
+              <button
+                type="button"
+                id="confirm_delete_list_edit_btn"
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  onDeleteList?.(list.id);
+                }}
+                className="h-11 rounded-full bg-rose-600 text-white font-body text-xs sm:text-sm font-semibold hover:bg-rose-700 transition-colors shadow-xs active:scale-95 cursor-pointer"
+              >
+                {t('delete')}
+              </button>
+            </div>
+          </>
+        );
+
+        if (!canAnimate) {
+          return showDeleteConfirm ? (
+            <div
+              onClick={() => setShowDeleteConfirm(false)}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4"
             >
-              <div className="flex items-center gap-3 text-rose-700 dark:text-rose-400">
-                <div className="w-10 h-10 rounded-full bg-rose-50 dark:bg-rose-950/40 flex items-center justify-center shrink-0">
-                  <Trash2 className="w-5 h-5" />
-                </div>
-                <div className="min-w-0">
-                  <h3 className="font-display font-bold text-base text-on-surface truncate">
-                    {t('delete') || 'Delete List'}
-                  </h3>
-                  <p className="text-xs text-outline font-body truncate">
-                    {list.title}
-                  </p>
-                </div>
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="bg-white dark:bg-stone-900 rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-surface-dim space-y-4"
+              >
+                {deleteModalCard}
               </div>
+            </div>
+          ) : null;
+        }
 
-              <p className="text-xs text-on-surface-variant leading-relaxed">
-                Are you sure you want to delete this shopping list? This action cannot be undone.
-              </p>
-
-              <div className="grid grid-cols-2 gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowDeleteConfirm(false)}
-                  className="h-11 rounded-full bg-surface-container text-on-surface font-body text-xs sm:text-sm font-semibold hover:bg-surface-container-high transition-colors cursor-pointer"
+        return (
+          <AnimatePresence>
+            {showDeleteConfirm && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1, transition: { duration: 0.16, ease: [0.32, 0.72, 0, 1] } }}
+                exit={{ opacity: 0, transition: { duration: 0.14, ease: [0.36, 0, 0.66, 0] } }}
+                onClick={() => setShowDeleteConfirm(false)}
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4"
+              >
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1, transition: { duration: 0.18, ease: [0.32, 0.72, 0, 1] } }}
+                  exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.16, ease: [0.36, 0, 0.66, 0] } }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="bg-white dark:bg-stone-900 rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-surface-dim space-y-4"
                 >
-                  {t('cancel')}
-                </button>
-                <button
-                  type="button"
-                  id="confirm_delete_list_edit_btn"
-                  onClick={() => {
-                    setShowDeleteConfirm(false);
-                    onDeleteList?.(list.id);
-                  }}
-                  className="h-11 rounded-full bg-rose-600 text-white font-body text-xs sm:text-sm font-semibold hover:bg-rose-700 transition-colors shadow-xs active:scale-95 cursor-pointer"
-                >
-                  {t('delete')}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                  {deleteModalCard}
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        );
+      })()}
 
       {/* Quantity Edit Modal */}
       <QuantityEditModal

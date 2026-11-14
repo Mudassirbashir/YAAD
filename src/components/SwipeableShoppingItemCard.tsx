@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { motion, useMotionValue, useTransform, useReducedMotion } from 'motion/react';
+import { motion, useMotionValue, useTransform } from 'motion/react';
 import { Trash2 } from 'lucide-react';
 import { ShoppingItem, CategoryId, CATEGORIES_LIST, normalizeCategoryId } from '../types';
 import { ItemVisualIcon } from './ItemVisualIcon';
@@ -8,6 +8,7 @@ import { BidiText } from '../utils/bidi';
 import { CelebrationCheckbox } from './CelebrationCheckbox';
 import { formatItemTitle } from '../lib/recognition/normalizer';
 import { resolveVisual } from '../lib/catalog/visualResolver';
+import { useShouldAnimate } from '../lib/motionPreference';
 
 interface SwipeableShoppingItemCardProps {
   item: ShoppingItem;
@@ -36,7 +37,7 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
   isUrdu,
   onOpenImage,
 }) => {
-  const prefersReducedMotion = useReducedMotion();
+  const canAnimate = useShouldAnimate();
   const isDraggingRef = useRef<boolean>(false);
   const dragDistanceRef = useRef<number>(0);
   const x = useMotionValue(0);
@@ -153,12 +154,14 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
           }
         }}
         animate={
-          justCompletedLocally && !prefersReducedMotion
+          justCompletedLocally && canAnimate
             ? { scale: [1, 0.98, 1] }
             : { scale: 1 }
         }
         transition={
-          justCompletedLocally && !prefersReducedMotion
+          !canAnimate
+            ? { duration: 0 }
+            : justCompletedLocally
             ? { duration: 0.25, ease: [0.34, 1.56, 0.64, 1] }
             : { type: 'spring', stiffness: 520, damping: 40 }
         }
@@ -228,7 +231,7 @@ export const SwipeableShoppingItemCard: React.FC<SwipeableShoppingItemCardProps>
                     opacity: isChecked ? 0.9 : 0,
                   }}
                   transition={
-                    prefersReducedMotion
+                    !canAnimate
                       ? { duration: 0 }
                       : { duration: 0.2, ease: [0.25, 1, 0.5, 1] }
                   }

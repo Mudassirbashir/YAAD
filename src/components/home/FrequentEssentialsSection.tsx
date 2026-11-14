@@ -11,6 +11,7 @@ import { playItemAddSound, triggerHaptic } from '../../lib/sound';
 import { resolveVisual } from '../../lib/catalog/visualResolver';
 import { useCatalogVersion } from '../../lib/catalog/supabaseCatalog';
 import { useRemoteConfig } from '../../hooks/useRemoteConfig';
+import { useShouldAnimate } from '../../lib/motionPreference';
 
 interface FrequentEssentialsSectionProps {
   lists: ShoppingList[];
@@ -203,6 +204,7 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
   const { t } = useLanguage();
   useCatalogVersion();
   const { config: remoteConfig } = useRemoteConfig();
+  const canAnimate = useShouldAnimate();
 
   // Added items micro-feedback tracker: canonicalName -> boolean
   const [addedItemsMap, setAddedItemsMap] = useState<Record<string, boolean>>({});
@@ -309,39 +311,52 @@ export const FrequentEssentialsSection: React.FC<FrequentEssentialsSectionProps>
                   aria-label={`Add ${item.displayName} to shopping list`}
                   className="w-8 h-8 xs:w-9 xs:h-9 flex items-center justify-center cursor-pointer transition-transform active:scale-90"
                 >
-                  <motion.div
-                    animate={
-                      isAdded
-                        ? { scale: [1, 1.25, 1], backgroundColor: '#16a34a' }
-                        : { scale: 1, backgroundColor: '#0F3D2E' }
-                    }
-                    transition={{ duration: 0.28, ease: 'easeOut' }}
-                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white shadow-xs"
-                  >
-                    <AnimatePresence mode="wait" initial={false}>
+                  {canAnimate ? (
+                    <motion.div
+                      animate={
+                        isAdded
+                          ? { scale: [1, 1.25, 1], backgroundColor: '#16a34a' }
+                          : { scale: 1, backgroundColor: '#0F3D2E' }
+                      }
+                      transition={{ duration: 0.28, ease: 'easeOut' }}
+                      className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white shadow-xs"
+                    >
+                      <AnimatePresence mode="wait" initial={false}>
+                        {isAdded ? (
+                          <motion.div
+                            key="checked"
+                            initial={{ scale: 0, rotate: -45 }}
+                            animate={{ scale: 1, rotate: 0 }}
+                            exit={{ scale: 0 }}
+                            transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+                          >
+                            <Check className="w-4 h-4 stroke-[3]" />
+                          </motion.div>
+                        ) : (
+                          <motion.div
+                            key="plus"
+                            initial={{ scale: 0, rotate: 45 }}
+                            animate={{ scale: 1, rotate: 0 }}
+                            exit={{ scale: 0 }}
+                            transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+                          >
+                            <Plus className="w-4 h-4 stroke-[2.8]" />
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+                  ) : (
+                    <div
+                      style={{ backgroundColor: isAdded ? '#16a34a' : '#0F3D2E' }}
+                      className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white shadow-xs"
+                    >
                       {isAdded ? (
-                        <motion.div
-                          key="checked"
-                          initial={{ scale: 0, rotate: -45 }}
-                          animate={{ scale: 1, rotate: 0 }}
-                          exit={{ scale: 0 }}
-                          transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-                        >
-                          <Check className="w-4 h-4 stroke-[3]" />
-                        </motion.div>
+                        <Check className="w-4 h-4 stroke-[3]" />
                       ) : (
-                        <motion.div
-                          key="plus"
-                          initial={{ scale: 0, rotate: 45 }}
-                          animate={{ scale: 1, rotate: 0 }}
-                          exit={{ scale: 0 }}
-                          transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-                        >
-                          <Plus className="w-4 h-4 stroke-[2.8]" />
-                        </motion.div>
+                        <Plus className="w-4 h-4 stroke-[2.8]" />
                       )}
-                    </AnimatePresence>
-                  </motion.div>
+                    </div>
+                  )}
                 </button>
               </div>
             </div>

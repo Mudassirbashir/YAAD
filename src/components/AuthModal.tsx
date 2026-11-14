@@ -15,6 +15,7 @@ import { useAuth } from '../context/AuthContext';
 import { APP_IMAGES } from '../data/initialData';
 import { formatAuthErrorMessage } from '../lib/supabase';
 import { validatePhoneNumber } from '../utils/phone';
+import { useShouldAnimate } from '../lib/motionPreference';
 
 // Official multi-color Google 'G' icon component
 const GoogleOfficialIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5 shrink-0' }) => (
@@ -52,6 +53,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onOpenLegalPage,
 }) => {
   const { signIn, signUp, signInWithGoogle, sendPasswordResetEmail } = useAuth();
+  const canAnimate = useShouldAnimate();
   const [mode, setMode] = useState<'signin' | 'signup' | 'forgot_password'>(initialMode);
   const [fullName, setFullName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -224,24 +226,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1, transition: { duration: 0.16, ease: [0.32, 0.72, 0, 1] } }}
-          exit={{ opacity: 0, transition: { duration: 0.14, ease: [0.36, 0, 0.66, 0] } }}
-          onClick={onClose}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
-        >
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1, transition: { duration: 0.18, ease: [0.32, 0.72, 0, 1] } }}
-            exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.16, ease: [0.36, 0, 0.66, 0] } }}
-            onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-[28px] sm:rounded-[32px] p-6 sm:p-7 max-w-[430px] w-full shadow-2xl border border-neutral-100 space-y-4 font-body"
-          >
-        {/* Header with Logo and Close */}
+  const modalInner = (
+    <>
+      {/* Header with Logo and Close */}
         <div className="flex justify-between items-center pb-1">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-full bg-white shadow-xs border border-neutral-200/80 flex items-center justify-center p-1">
@@ -591,6 +578,43 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </button>
           </div>
         </div>
+    </>
+  );
+
+  if (!canAnimate) {
+    return isOpen ? (
+      <div
+        onClick={onClose}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+      >
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="bg-white rounded-[28px] sm:rounded-[32px] p-6 sm:p-7 max-w-[430px] w-full shadow-2xl border border-neutral-100 space-y-4 font-body"
+        >
+          {modalInner}
+        </div>
+      </div>
+    ) : null;
+  }
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1, transition: { duration: 0.16, ease: [0.32, 0.72, 0, 1] } }}
+          exit={{ opacity: 0, transition: { duration: 0.14, ease: [0.36, 0, 0.66, 0] } }}
+          onClick={onClose}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1, transition: { duration: 0.18, ease: [0.32, 0.72, 0, 1] } }}
+            exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.16, ease: [0.36, 0, 0.66, 0] } }}
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-[28px] sm:rounded-[32px] p-6 sm:p-7 max-w-[430px] w-full shadow-2xl border border-neutral-100 space-y-4 font-body"
+          >
+            {modalInner}
           </motion.div>
         </motion.div>
       )}

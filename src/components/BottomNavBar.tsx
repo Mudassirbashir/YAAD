@@ -1,12 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Plus, Settings } from 'lucide-react';
-import { motion, useReducedMotion } from 'motion/react';
+import { motion } from 'motion/react';
 import { NavigationTab } from '../types';
 import { useLanguage } from '../context/LanguageContext';
 import { useRemoteConfig } from '../hooks/useRemoteConfig';
 import { triggerHaptic } from '../lib/sound';
 import { AnimatedHomeIcon } from './common/AnimatedHomeIcon';
 import { AnimatedHistoryIcon } from './common/AnimatedHistoryIcon';
+import { useShouldAnimate } from '../lib/motionPreference';
 
 interface BottomNavBarProps {
   activeTab: NavigationTab;
@@ -20,7 +21,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   onCreateClick,
 }) => {
   const { t, isRTL } = useLanguage();
-  const prefersReducedMotion = useReducedMotion();
+  const canAnimate = useShouldAnimate();
 
   const [homeAnimationTrigger, setHomeAnimationTrigger] = useState(0);
   const [historyAnimationTrigger, setHistoryAnimationTrigger] = useState(0);
@@ -170,15 +171,15 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               }`}
             >
               {isHomeActive && (
-                <motion.div
-                  layoutId="nav-active-indicator"
-                  className="absolute inset-0 bg-primary/12 dark:bg-primary/25 border border-primary/20 dark:border-primary/30 rounded-2xl -z-10 shadow-[0_2px_12px_rgba(15,61,46,0.08)]"
-                  transition={
-                    prefersReducedMotion
-                      ? { duration: 0 }
-                      : { type: 'spring', stiffness: 360, damping: 30, mass: 0.75 }
-                  }
-                />
+                canAnimate ? (
+                  <motion.div
+                    layoutId="nav-active-indicator"
+                    className="absolute inset-0 bg-primary/12 dark:bg-primary/25 border border-primary/20 dark:border-primary/30 rounded-2xl -z-10 shadow-[0_2px_12px_rgba(15,61,46,0.08)]"
+                    transition={{ type: 'spring', stiffness: 360, damping: 30, mass: 0.75 }}
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-primary/12 dark:bg-primary/25 border border-primary/20 dark:border-primary/30 rounded-2xl -z-10 shadow-[0_2px_12px_rgba(15,61,46,0.08)]" />
+                )
               )}
               <AnimatedHomeIcon
                 isActive={isHomeActive}
@@ -195,30 +196,47 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
           {/* 2. Center: Prominent Elevated Floating Create Button */}
           {showCreate && (
             <div className="relative -top-4 sm:-top-5 flex flex-col items-center shrink-0 z-20">
-              <motion.button
-                ref={createBtnRef}
-                id="nav_tab_create"
-                role="tab"
-                type="button"
-                tabIndex={isCreateActive ? 0 : -1}
-                onClick={handleCreateClick}
-                onKeyDown={(e) => handleTabKeyDown(e, 'create')}
-                aria-selected={isCreateActive}
-                aria-label={t('nav.create') || 'Create New List'}
-                whileHover={{ scale: 1.06 }}
-                whileTap={{ scale: 0.92 }}
-                transition={{ type: 'spring', stiffness: 420, damping: 24 }}
-                className="relative w-14 h-14 sm:w-15 sm:h-15 rounded-full bg-gradient-to-tr from-primary to-primary-container text-on-primary flex items-center justify-center shadow-[0_6px_22px_rgba(15,61,46,0.38)] hover:shadow-[0_8px_28px_rgba(15,61,46,0.48)] ring-4 ring-background dark:ring-stone-900 cursor-pointer group"
-              >
-                {/* Eye-catching subtle ambient breathing halo behind button */}
-                <div className="absolute -inset-1 rounded-full bg-emerald-500/30 dark:bg-emerald-400/25 blur-md -z-10 opacity-70 group-hover:opacity-100 transition-opacity" />
-                <motion.div
-                  whileHover={{ rotate: 90 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+              {canAnimate ? (
+                <motion.button
+                  ref={createBtnRef}
+                  id="nav_tab_create"
+                  role="tab"
+                  type="button"
+                  tabIndex={isCreateActive ? 0 : -1}
+                  onClick={handleCreateClick}
+                  onKeyDown={(e) => handleTabKeyDown(e, 'create')}
+                  aria-selected={isCreateActive}
+                  aria-label={t('nav.create') || 'Create New List'}
+                  whileHover={{ scale: 1.06 }}
+                  whileTap={{ scale: 0.92 }}
+                  transition={{ type: 'spring', stiffness: 420, damping: 24 }}
+                  className="relative w-14 h-14 sm:w-15 sm:h-15 rounded-full bg-gradient-to-tr from-primary to-primary-container text-on-primary flex items-center justify-center shadow-[0_6px_22px_rgba(15,61,46,0.38)] hover:shadow-[0_8px_28px_rgba(15,61,46,0.48)] ring-4 ring-background dark:ring-stone-900 cursor-pointer group"
+                >
+                  {/* Eye-catching subtle ambient breathing halo behind button */}
+                  <div className="absolute -inset-1 rounded-full bg-emerald-500/30 dark:bg-emerald-400/25 blur-md -z-10 opacity-70 group-hover:opacity-100 transition-opacity" />
+                  <motion.div
+                    whileHover={{ rotate: 90 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+                  >
+                    <Plus className="w-7 h-7 sm:w-8 sm:h-8 stroke-[2.6]" />
+                  </motion.div>
+                </motion.button>
+              ) : (
+                <button
+                  ref={createBtnRef}
+                  id="nav_tab_create"
+                  role="tab"
+                  type="button"
+                  tabIndex={isCreateActive ? 0 : -1}
+                  onClick={handleCreateClick}
+                  onKeyDown={(e) => handleTabKeyDown(e, 'create')}
+                  aria-selected={isCreateActive}
+                  aria-label={t('nav.create') || 'Create New List'}
+                  className="relative w-14 h-14 sm:w-15 sm:h-15 rounded-full bg-gradient-to-tr from-primary to-primary-container text-on-primary flex items-center justify-center shadow-[0_6px_22px_rgba(15,61,46,0.38)] ring-4 ring-background dark:ring-stone-900 cursor-pointer group active:scale-95 transition-transform duration-150"
                 >
                   <Plus className="w-7 h-7 sm:w-8 sm:h-8 stroke-[2.6]" />
-                </motion.div>
-              </motion.button>
+                </button>
+              )}
               <span className="text-[0.625rem] sm:text-[0.6875rem] font-body font-bold text-on-surface mt-1">
                 {t('nav.create') || 'Create'}
               </span>
@@ -245,15 +263,15 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               }`}
             >
               {isListsActive && (
-                <motion.div
-                  layoutId="nav-active-indicator"
-                  className="absolute inset-0 bg-primary/12 dark:bg-primary/25 border border-primary/20 dark:border-primary/30 rounded-2xl -z-10 shadow-[0_2px_12px_rgba(15,61,46,0.08)]"
-                  transition={
-                    prefersReducedMotion
-                      ? { duration: 0 }
-                      : { type: 'spring', stiffness: 360, damping: 30, mass: 0.75 }
-                  }
-                />
+                canAnimate ? (
+                  <motion.div
+                    layoutId="nav-active-indicator"
+                    className="absolute inset-0 bg-primary/12 dark:bg-primary/25 border border-primary/20 dark:border-primary/30 rounded-2xl -z-10 shadow-[0_2px_12px_rgba(15,61,46,0.08)]"
+                    transition={{ type: 'spring', stiffness: 360, damping: 30, mass: 0.75 }}
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-primary/12 dark:bg-primary/25 border border-primary/20 dark:border-primary/30 rounded-2xl -z-10 shadow-[0_2px_12px_rgba(15,61,46,0.08)]" />
+                )
               )}
               <AnimatedHistoryIcon
                 isActive={isListsActive}
@@ -284,15 +302,15 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               }`}
             >
               {isSettingsActive && (
-                <motion.div
-                  layoutId="nav-active-indicator"
-                  className="absolute inset-0 bg-primary/12 dark:bg-primary/25 border border-primary/20 dark:border-primary/30 rounded-2xl -z-10 shadow-[0_2px_12px_rgba(15,61,46,0.08)]"
-                  transition={
-                    prefersReducedMotion
-                      ? { duration: 0 }
-                      : { type: 'spring', stiffness: 360, damping: 30, mass: 0.75 }
-                  }
-                />
+                canAnimate ? (
+                  <motion.div
+                    layoutId="nav-active-indicator"
+                    className="absolute inset-0 bg-primary/12 dark:bg-primary/25 border border-primary/20 dark:border-primary/30 rounded-2xl -z-10 shadow-[0_2px_12px_rgba(15,61,46,0.08)]"
+                    transition={{ type: 'spring', stiffness: 360, damping: 30, mass: 0.75 }}
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-primary/12 dark:bg-primary/25 border border-primary/20 dark:border-primary/30 rounded-2xl -z-10 shadow-[0_2px_12px_rgba(15,61,46,0.08)]" />
+                )
               )}
               <Settings className="w-5 h-5 transition-transform duration-150" />
               <span className="text-[0.6875rem] sm:text-xs font-body font-bold whitespace-nowrap leading-none">

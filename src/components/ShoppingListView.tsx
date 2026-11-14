@@ -32,6 +32,7 @@ import { triggerMiloEvent } from '../pet/useMilo';
 import { noteLocalMutation } from '../lib/realtimeSync';
 import { measureTick } from '../lib/perfMeter';
 import { AutoFinishCountdownBanner } from './AutoFinishCountdownBanner';
+import { useShouldAnimate } from '../lib/motionPreference';
 
 interface ShoppingListViewProps {
   list: ShoppingList;
@@ -68,6 +69,7 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
   const canMarkComplete = isActionAllowed('actionMarkComplete');
   const canScanBarcode = isActionAllowed('barcodeScanner');
   const canSmartSuggest = isActionAllowed('smartSuggestions');
+  const canAnimate = useShouldAnimate();
   const isUrdu = language === 'ur';
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
   const [newItemText, setNewItemText] = useState<string>('');
@@ -1150,16 +1152,46 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
         </div>
 
         {/* Swipe Hint Banner (First-time / contextual, dismissed cleanly) */}
-        <AnimatePresence>
-          {showSwipeHint && list.items.length > 0 && (
-            <motion.div
-              id="swipe-hint-banner"
-              initial={{ opacity: 0, scaleY: 0.8, y: -6 }}
-              animate={{ opacity: 1, scaleY: 1, y: 0 }}
-              exit={{ opacity: 0, scaleY: 0.8, y: -6 }}
-              transition={{ type: 'spring', stiffness: 500, damping: 38 }}
-              className="overflow-hidden origin-top"
-            >
+        {canAnimate ? (
+          <AnimatePresence>
+            {showSwipeHint && list.items.length > 0 && (
+              <motion.div
+                id="swipe-hint-banner"
+                initial={{ opacity: 0, scaleY: 0.8, y: -6 }}
+                animate={{ opacity: 1, scaleY: 1, y: 0 }}
+                exit={{ opacity: 0, scaleY: 0.8, y: -6 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 38 }}
+                className="overflow-hidden origin-top"
+              >
+                <div className="flex items-center justify-between gap-3 px-3.5 py-2 rounded-2xl bg-surface-container-low border border-surface-dim/80 text-on-surface-variant text-xs font-body shadow-2xs">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <span className="inline-flex items-center gap-1 font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-md border border-rose-200/60 dark:border-rose-800/40 text-[11px] shrink-0">
+                      <span>←</span>
+                      <span>Delete</span>
+                    </span>
+                    <span className="font-medium text-[11px] truncate">
+                      Swipe card or tap to check
+                    </span>
+                    <span className="inline-flex items-center gap-1 font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200/60 dark:border-emerald-800/40 text-[11px] shrink-0">
+                      <span>Complete</span>
+                      <span>→</span>
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={dismissSwipeHint}
+                    aria-label="Dismiss hint"
+                    className="w-5 h-5 rounded-full hover:bg-surface-container text-outline flex items-center justify-center shrink-0 cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        ) : (
+          showSwipeHint && list.items.length > 0 && (
+            <div id="swipe-hint-banner" className="overflow-hidden origin-top">
               <div className="flex items-center justify-between gap-3 px-3.5 py-2 rounded-2xl bg-surface-container-low border border-surface-dim/80 text-on-surface-variant text-xs font-body shadow-2xs">
                 <div className="flex items-center gap-2 min-w-0 flex-1">
                   <span className="inline-flex items-center gap-1 font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 px-2 py-0.5 rounded-md border border-rose-200/60 dark:border-rose-800/40 text-[11px] shrink-0">
@@ -1183,9 +1215,9 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                   ✕
                 </button>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </div>
+          )
+        )}
 
         {/* Empty State when list has no items */}
         {list.items.length === 0 ? (
@@ -1360,14 +1392,57 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
       </main>
 
       {/* Undo Floating Toast for Accidental Swipes / Taps */}
-      <AnimatePresence>
-        {undoToast && (
-          <motion.div
+      {canAnimate ? (
+        <AnimatePresence>
+          {undoToast && (
+            <motion.div
+              id="shopping-undo-toast"
+              initial={{ opacity: 0, y: 24, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 24, scale: 0.95 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 38 }}
+              className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between gap-3 px-4 py-3 rounded-2xl text-white shadow-2xl border max-w-md w-[92vw] sm:w-auto min-w-[320px] ${
+                undoToast.type === 'deleted'
+                  ? 'bg-rose-950 border-rose-500/60 shadow-rose-950/60'
+                  : 'bg-[#005039] border-emerald-400/40 shadow-emerald-950/50'
+              }`}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <span className={`w-8 h-8 rounded-full flex items-center justify-center text-white shrink-0 ${
+                  undoToast.type === 'deleted' ? 'bg-rose-600/40 text-rose-200' : 'bg-white/20'
+                }`}>
+                  {undoToast.type === 'deleted' ? (
+                    <Trash2 className="w-4 h-4 stroke-[2.2]" />
+                  ) : (
+                    <Check className="w-4 h-4 stroke-[3]" />
+                  )}
+                </span>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-xs sm:text-sm font-display font-bold truncate">
+                    {undoToast.type === 'deleted'
+                      ? `Deleted "${undoToast.item.name}"`
+                      : `Marked "${undoToast.item.name}"`}
+                  </span>
+                  <span className="text-[11px] font-body text-white/70">
+                    Tap Undo to restore (10s)
+                  </span>
+                </div>
+              </div>
+              <button
+                id="shopping-undo-btn"
+                type="button"
+                onClick={handleUndoAction}
+                className="px-4 py-2 bg-white text-slate-900 hover:bg-slate-100 active:scale-95 rounded-xl text-xs font-black uppercase tracking-wider transition-[transform,background-color] duration-150 cursor-pointer shrink-0 shadow-sm border border-white/60 min-h-[44px] flex items-center justify-center"
+              >
+                {t('shoppingList.undo') || 'Undo'}
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      ) : (
+        undoToast && (
+          <div
             id="shopping-undo-toast"
-            initial={{ opacity: 0, y: 24, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 24, scale: 0.95 }}
-            transition={{ type: 'spring', stiffness: 500, damping: 38 }}
             className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between gap-3 px-4 py-3 rounded-2xl text-white shadow-2xl border max-w-md w-[92vw] sm:w-auto min-w-[320px] ${
               undoToast.type === 'deleted'
                 ? 'bg-rose-950 border-rose-500/60 shadow-rose-950/60'
@@ -1403,9 +1478,9 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
             >
               {t('shoppingList.undo') || 'Undo'}
             </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        )
+      )}
 
       {/* Quantity Edit Modal */}
       <QuantityEditModal
@@ -1428,19 +1503,72 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
       )}
 
       {/* Delete List Confirmation Modal */}
-      <AnimatePresence>
-        {showDeleteConfirm && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1, transition: { duration: 0.16, ease: [0.32, 0.72, 0, 1] } }}
-            exit={{ opacity: 0, transition: { duration: 0.14, ease: [0.36, 0, 0.66, 0] } }}
+      {canAnimate ? (
+        <AnimatePresence>
+          {showDeleteConfirm && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1, transition: { duration: 0.16, ease: [0.32, 0.72, 0, 1] } }}
+              exit={{ opacity: 0, transition: { duration: 0.14, ease: [0.36, 0, 0.66, 0] } }}
+              onClick={() => setShowDeleteConfirm(false)}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4"
+            >
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1, transition: { duration: 0.18, ease: [0.32, 0.72, 0, 1] } }}
+                exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.16, ease: [0.36, 0, 0.66, 0] } }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-white dark:bg-surface-container-lowest rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-surface-dim space-y-4"
+              >
+                <div className="flex items-center gap-3 text-rose-700 dark:text-rose-400">
+                  <div className="w-10 h-10 rounded-full bg-rose-50 dark:bg-rose-950/40 flex items-center justify-center shrink-0">
+                    <Trash2 className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="font-display font-bold text-base text-on-surface truncate">
+                      {t('delete') || 'Delete List'}
+                    </h3>
+                    <p className="text-xs text-outline font-body truncate">
+                      {list.title}
+                    </p>
+                  </div>
+                </div>
+
+                <p className="text-xs text-on-surface-variant leading-relaxed">
+                  Are you sure you want to delete this shopping list? This action cannot be undone.
+                </p>
+
+                <div className="grid grid-cols-2 gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="h-11 rounded-full bg-surface-container text-on-surface font-body text-xs sm:text-sm font-semibold hover:bg-surface-container-high transition-colors cursor-pointer"
+                  >
+                    {t('cancel')}
+                  </button>
+                  <button
+                    type="button"
+                    id="confirm_delete_list_btn"
+                    onClick={() => {
+                      setShowDeleteConfirm(false);
+                      onDeleteList?.(list.id);
+                    }}
+                    className="h-11 rounded-full bg-rose-600 text-white font-body text-xs sm:text-sm font-semibold hover:bg-rose-700 transition-colors shadow-xs active:scale-95 cursor-pointer"
+                  >
+                    {t('delete')}
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      ) : (
+        showDeleteConfirm && (
+          <div
             onClick={() => setShowDeleteConfirm(false)}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4"
           >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1, transition: { duration: 0.18, ease: [0.32, 0.72, 0, 1] } }}
-              exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.16, ease: [0.36, 0, 0.66, 0] } }}
+            <div
               onClick={(e) => e.stopPropagation()}
               className="bg-white dark:bg-surface-container-lowest rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-surface-dim space-y-4"
             >
@@ -1482,10 +1610,10 @@ export const ShoppingListView: React.FC<ShoppingListViewProps> = ({
                   {t('delete')}
                 </button>
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </div>
+          </div>
+        )
+      )}
 
       {/* Item High-Resolution Photo Lightbox Preview */}
       <ItemImageLightboxModal

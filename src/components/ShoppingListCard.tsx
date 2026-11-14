@@ -17,6 +17,7 @@ import { formatRelativeTimeAgo } from '../utils/dateFormatting';
 import { triggerHaptic } from '../lib/sound';
 import { resolveVisual } from '../lib/catalog/visualResolver';
 import { useRemoteConfig } from '../hooks/useRemoteConfig';
+import { useShouldAnimate } from '../lib/motionPreference';
 
 export interface ShoppingListCardProps {
   list: ShoppingList;
@@ -47,6 +48,7 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
 }) => {
   const { t } = useLanguage();
   const { config: remoteConfig } = useRemoteConfig();
+  const canAnimate = useShouldAnimate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -234,15 +236,9 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
               </button>
 
             {/* Dropdown Menu: View Details + Reuse List + Delete List */}
-            <AnimatePresence>
-              {isMenuOpen && (
-                <motion.div
-                  role="menu"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1, transition: { duration: 0.16, ease: [0.32, 0.72, 0, 1] } }}
-                  exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.14, ease: [0.36, 0, 0.66, 0] } }}
-                  className="absolute right-0 rtl:right-auto rtl:left-0 top-8 z-[60] w-44 bg-white dark:bg-surface-container-lowest rounded-2xl shadow-xl border border-surface-dim/80 py-1.5 popover-menu text-xs font-body font-semibold text-on-surface"
-                >
+            {(() => {
+              const menuBody = (
+                <>
                   {/* 1. View Details (Open Details) */}
                   {showMenuDetails && (
                     <button
@@ -307,9 +303,36 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
                       </button>
                     </>
                   )}
-                </motion.div>
-              )}
-            </AnimatePresence>
+                </>
+              );
+
+              if (!canAnimate) {
+                return isMenuOpen ? (
+                  <div
+                    role="menu"
+                    className="absolute right-0 rtl:right-auto rtl:left-0 top-8 z-[60] w-44 bg-white dark:bg-surface-container-lowest rounded-2xl shadow-xl border border-surface-dim/80 py-1.5 popover-menu text-xs font-body font-semibold text-on-surface"
+                  >
+                    {menuBody}
+                  </div>
+                ) : null;
+              }
+
+              return (
+                <AnimatePresence>
+                  {isMenuOpen && (
+                    <motion.div
+                      role="menu"
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1, transition: { duration: 0.16, ease: [0.32, 0.72, 0, 1] } }}
+                      exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.14, ease: [0.36, 0, 0.66, 0] } }}
+                      className="absolute right-0 rtl:right-auto rtl:left-0 top-8 z-[60] w-44 bg-white dark:bg-surface-container-lowest rounded-2xl shadow-xl border border-surface-dim/80 py-1.5 popover-menu text-xs font-body font-semibold text-on-surface"
+                    >
+                      {menuBody}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              );
+            })()}
           </div>
         )}
       </div>
@@ -364,62 +387,91 @@ export const ShoppingListCard: React.FC<ShoppingListCardProps> = ({
       </article>
 
       {/* Delete Confirmation Modal */}
-      <AnimatePresence>
-        {showDeleteConfirm && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1, transition: { duration: 0.16, ease: [0.32, 0.72, 0, 1] } }}
-            exit={{ opacity: 0, transition: { duration: 0.14, ease: [0.36, 0, 0.66, 0] } }}
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowDeleteConfirm(false);
-            }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4"
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1, transition: { duration: 0.18, ease: [0.32, 0.72, 0, 1] } }}
-              exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.16, ease: [0.36, 0, 0.66, 0] } }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white dark:bg-surface-container-lowest rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-surface-dim space-y-4"
+      {(() => {
+        const modalCard = (
+          <>
+            <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-700 flex items-center justify-center mx-auto border border-rose-100">
+              <Trash2 className="w-6 h-6" />
+            </div>
+
+            <div className="text-center space-y-1">
+              <h3 className="font-display text-lg font-bold text-on-surface">
+                {t('history.deleteConfirmTitle') || 'Delete this shopping list?'}
+              </h3>
+              <p className="font-body text-xs sm:text-sm text-outline leading-relaxed">
+                {t('history.deleteConfirmDesc', { title: list.title }) ||
+                  `"${list.title}" and its ${totalItems} associated items will be removed.`}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowDeleteConfirm(false);
+                }}
+                className="h-11 rounded-full bg-surface-container text-on-surface font-body text-xs sm:text-sm font-semibold hover:bg-surface-container-high transition-colors cursor-pointer"
+              >
+                {t('cancel') || 'Cancel'}
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                className="h-11 rounded-full bg-rose-600 text-white font-body text-xs sm:text-sm font-semibold hover:bg-rose-700 transition-colors shadow-xs active:scale-95 cursor-pointer"
+              >
+                {t('delete') || 'Delete'}
+              </button>
+            </div>
+          </>
+        );
+
+        if (!canAnimate) {
+          return showDeleteConfirm ? (
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowDeleteConfirm(false);
+              }}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4"
             >
-              <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-700 flex items-center justify-center mx-auto border border-rose-100">
-                <Trash2 className="w-6 h-6" />
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="bg-white dark:bg-surface-container-lowest rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-surface-dim space-y-4"
+              >
+                {modalCard}
               </div>
+            </div>
+          ) : null;
+        }
 
-              <div className="text-center space-y-1">
-                <h3 className="font-display text-lg font-bold text-on-surface">
-                  {t('history.deleteConfirmTitle') || 'Delete this shopping list?'}
-                </h3>
-                <p className="font-body text-xs sm:text-sm text-outline leading-relaxed">
-                  {t('history.deleteConfirmDesc', { title: list.title }) ||
-                    `"${list.title}" and its ${totalItems} associated items will be removed.`}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowDeleteConfirm(false);
-                  }}
-                  className="h-11 rounded-full bg-surface-container text-on-surface font-body text-xs sm:text-sm font-semibold hover:bg-surface-container-high transition-colors cursor-pointer"
+        return (
+          <AnimatePresence>
+            {showDeleteConfirm && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1, transition: { duration: 0.16, ease: [0.32, 0.72, 0, 1] } }}
+                exit={{ opacity: 0, transition: { duration: 0.14, ease: [0.36, 0, 0.66, 0] } }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowDeleteConfirm(false);
+                }}
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4"
+              >
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1, transition: { duration: 0.18, ease: [0.32, 0.72, 0, 1] } }}
+                  exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.16, ease: [0.36, 0, 0.66, 0] } }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="bg-white dark:bg-surface-container-lowest rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-surface-dim space-y-4"
                 >
-                  {t('cancel') || 'Cancel'}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleConfirmDelete}
-                  className="h-11 rounded-full bg-rose-600 text-white font-body text-xs sm:text-sm font-semibold hover:bg-rose-700 transition-colors shadow-xs active:scale-95 cursor-pointer"
-                >
-                  {t('delete') || 'Delete'}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+                  {modalCard}
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        );
+      })()}
     </>
   );
 };

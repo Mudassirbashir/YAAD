@@ -101,11 +101,48 @@ export default defineConfig(() => {
         workbox: {
           maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
           globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2,json}'],
+          globIgnores: [
+            '**/vendor/lottie.min.js',
+            '**/animations/*.json',
+            '**/og-image.png',
+            '**/assets/aistudio/**',
+            '**/assets/AdminApp-*.js',
+          ],
           cleanupOutdatedCaches: true,
           navigateFallback: '/index.html',
           // Prevent Service Worker from hijacking API, Auth, Cloudinary, or Supabase endpoints
           navigateFallbackDenylist: [/^\/api\//, /^\/auth\//, /supabase/, /cloudinary/],
           runtimeCaching: [
+            {
+              // On-demand Lottie player (loaded lazily by src/lib/lottieLoader.ts)
+              urlPattern: /\/vendor\/lottie\.min\.js$/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'yaad-vendor-lottie-v1',
+                cacheableResponse: {
+                  statuses: [200],
+                },
+                expiration: {
+                  maxEntries: 2,
+                  maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+                },
+              },
+            },
+            {
+              // Optional standalone animation JSONs if fetched at runtime
+              urlPattern: /\/animations\/.*\.json$/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'yaad-animations-json-v1',
+                cacheableResponse: {
+                  statuses: [200],
+                },
+                expiration: {
+                  maxEntries: 10,
+                  maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+                },
+              },
+            },
             {
               // Cache Google Fonts stylesheets
               urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,

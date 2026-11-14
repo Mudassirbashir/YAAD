@@ -11,6 +11,7 @@ import {
 } from '../data/avatarData';
 import { Avatar } from './Avatar';
 import { uploadImage } from '../utils/cloudinary';
+import { useShouldAnimate } from '../lib/motionPreference';
 
 interface AvatarPickerModalProps {
   isOpen: boolean;
@@ -30,6 +31,7 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
   userEmail,
 }) => {
   const { t, language } = useLanguage();
+  const canAnimate = useShouldAnimate();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Parse existing avatar
@@ -195,29 +197,9 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
     : encodeEmojiAvatar(selectedEmoji, selectedBgId);
   const activeColorOption = getAvatarColorOption(selectedBgId);
 
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          id="avatar_picker_backdrop"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1, transition: { duration: 0.16, ease: [0.32, 0.72, 0, 1] } }}
-          exit={{ opacity: 0, transition: { duration: 0.14, ease: [0.36, 0, 0.66, 0] } }}
-          onClick={onClose}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="avatar_picker_modal_title"
-        >
-          <motion.div
-            id="avatar_picker_container"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1, transition: { duration: 0.18, ease: [0.32, 0.72, 0, 1] } }}
-            exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.16, ease: [0.36, 0, 0.66, 0] } }}
-            onClick={(e) => e.stopPropagation()}
-            className="bg-surface-container-lowest rounded-3xl w-full max-w-lg shadow-2xl border border-surface-dim overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[88vh]"
-          >
-        {/* Header */}
+  const modalInner = (
+    <>
+      {/* Header */}
         <div className="p-4 sm:p-5 border-b border-surface-dim/60 flex items-center justify-between bg-surface-container-low/40 shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
@@ -501,6 +483,53 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
             )}
           </button>
         </div>
+    </>
+  );
+
+  if (!canAnimate) {
+    return isOpen ? (
+      <div
+        id="avatar_picker_backdrop"
+        onClick={onClose}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="avatar_picker_modal_title"
+      >
+        <div
+          id="avatar_picker_container"
+          onClick={(e) => e.stopPropagation()}
+          className="bg-surface-container-lowest rounded-3xl w-full max-w-lg shadow-2xl border border-surface-dim overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[88vh]"
+        >
+          {modalInner}
+        </div>
+      </div>
+    ) : null;
+  }
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          id="avatar_picker_backdrop"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1, transition: { duration: 0.16, ease: [0.32, 0.72, 0, 1] } }}
+          exit={{ opacity: 0, transition: { duration: 0.14, ease: [0.36, 0, 0.66, 0] } }}
+          onClick={onClose}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="avatar_picker_modal_title"
+        >
+          <motion.div
+            id="avatar_picker_container"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1, transition: { duration: 0.18, ease: [0.32, 0.72, 0, 1] } }}
+            exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.16, ease: [0.36, 0, 0.66, 0] } }}
+            onClick={(e) => e.stopPropagation()}
+            className="bg-surface-container-lowest rounded-3xl w-full max-w-lg shadow-2xl border border-surface-dim overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[88vh]"
+          >
+            {modalInner}
           </motion.div>
         </motion.div>
       )}

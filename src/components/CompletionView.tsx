@@ -24,6 +24,7 @@ import { formatExactDate, formatExactTime } from '../utils/dateFormatting';
 import { YAAD_COMPLETION_CONFIG } from '../lib/completionConfig';
 import { resolveVisual } from '../lib/catalog/visualResolver';
 import { useCatalogVersion } from '../lib/catalog/supabaseCatalog';
+import { useShouldAnimate } from '../lib/motionPreference';
 
 interface CompletionViewProps {
   list: ShoppingList;
@@ -45,6 +46,7 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
   onReviewTrip,
 }) => {
   const { t, getCategoryName, language } = useLanguage();
+  const canAnimate = useShouldAnimate();
   useCatalogVersion();
   const isUrdu = language === 'ur';
 
@@ -144,160 +146,248 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
           {/* Brand Emerald Badge */}
           <div className="relative my-2 flex items-center justify-center">
             {/* Subtle atmospheric pulsating glow */}
-            <motion.div
-              animate={{
-                scale: [1, 1.18, 1],
-                opacity: [0.25, 0.45, 0.25],
-              }}
-              transition={{
-                duration: 2.6,
-                repeat: Infinity,
-                ease: 'easeInOut',
-              }}
-              className="absolute -inset-4 rounded-full blur-xl pointer-events-none"
-              style={{
-                background: `radial-gradient(circle, ${YAAD_COMPLETION_CONFIG.visual.brandEmerald} 0%, transparent 70%)`,
-              }}
-            />
-
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0, y: 12 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              transition={{ type: 'spring', stiffness: 380, damping: 26, mass: 0.8 }}
-              className="relative w-18 h-18 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center shadow-[0px_12px_32px_rgba(10,46,34,0.30)] border border-emerald-500/30 overflow-hidden"
-              style={{
-                background: `linear-gradient(135deg, ${YAAD_COMPLETION_CONFIG.visual.brandEmerald} 0%, ${YAAD_COMPLETION_CONFIG.visual.brandEmeraldDeep} 100%)`,
-              }}
-            >
-              {/* Animated Stroke Checkmark */}
+            {canAnimate ? (
               <motion.div
-                initial={{ scale: 0, rotate: -30 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: 'spring', stiffness: 420, damping: 22, delay: 0.12 }}
-                className="relative z-10"
-              >
-                <Check className="w-9 h-9 sm:w-10 sm:h-10 text-emerald-100 stroke-[3.2] drop-shadow-sm" />
-              </motion.div>
-
-              {/* Signature YAAD Golden Accent Dot */}
-              <div
-                className="absolute top-2 right-2 w-2 h-2 rounded-full shadow-xs"
-                style={{ backgroundColor: YAAD_COMPLETION_CONFIG.visual.brandAmberDot }}
+                animate={{
+                  scale: [1, 1.18, 1],
+                  opacity: [0.25, 0.45, 0.25],
+                }}
+                transition={{
+                  duration: 2.6,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                }}
+                className="absolute -inset-4 rounded-full blur-xl pointer-events-none"
+                style={{
+                  background: `radial-gradient(circle, ${YAAD_COMPLETION_CONFIG.visual.brandEmerald} 0%, transparent 70%)`,
+                }}
               />
-            </motion.div>
+            ) : (
+              <div
+                className="absolute -inset-4 rounded-full blur-xl pointer-events-none opacity-30"
+                style={{
+                  background: `radial-gradient(circle, ${YAAD_COMPLETION_CONFIG.visual.brandEmerald} 0%, transparent 70%)`,
+                }}
+              />
+            )}
+
+            {canAnimate ? (
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0, y: 12 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                transition={{ type: 'spring', stiffness: 380, damping: 26, mass: 0.8 }}
+                className="relative w-18 h-18 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center shadow-[0px_12px_32px_rgba(10,46,34,0.30)] border border-emerald-500/30 overflow-hidden"
+                style={{
+                  background: `linear-gradient(135deg, ${YAAD_COMPLETION_CONFIG.visual.brandEmerald} 0%, ${YAAD_COMPLETION_CONFIG.visual.brandEmeraldDeep} 100%)`,
+                }}
+              >
+                {/* Animated Stroke Checkmark */}
+                <motion.div
+                  initial={{ scale: 0, rotate: -30 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: 'spring', stiffness: 420, damping: 22, delay: 0.12 }}
+                  className="relative z-10"
+                >
+                  <Check className="w-9 h-9 sm:w-10 sm:h-10 text-emerald-100 stroke-[3.2] drop-shadow-sm" />
+                </motion.div>
+
+                {/* Signature YAAD Golden Accent Dot */}
+                <div
+                  className="absolute top-2 right-2 w-2 h-2 rounded-full shadow-xs"
+                  style={{ backgroundColor: YAAD_COMPLETION_CONFIG.visual.brandAmberDot }}
+                />
+              </motion.div>
+            ) : (
+              <div
+                className="relative w-18 h-18 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center shadow-[0px_12px_32px_rgba(10,46,34,0.30)] border border-emerald-500/30 overflow-hidden"
+                style={{
+                  background: `linear-gradient(135deg, ${YAAD_COMPLETION_CONFIG.visual.brandEmerald} 0%, ${YAAD_COMPLETION_CONFIG.visual.brandEmeraldDeep} 100%)`,
+                }}
+              >
+                <div className="relative z-10">
+                  <Check className="w-9 h-9 sm:w-10 sm:h-10 text-emerald-100 stroke-[3.2] drop-shadow-sm" />
+                </div>
+
+                {/* Signature YAAD Golden Accent Dot */}
+                <div
+                  className="absolute top-2 right-2 w-2 h-2 rounded-full shadow-xs"
+                  style={{ backgroundColor: YAAD_COMPLETION_CONFIG.visual.brandAmberDot }}
+                />
+              </div>
+            )}
           </div>
 
           {/* Heading & Subtitle Typography */}
-          <motion.div
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2, delay: 0.06, ease: [0.32, 0.72, 0, 1] }}
-            className="space-y-1 mt-1"
-          >
-            <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-300 text-xs font-body font-bold tracking-tight">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>Shopping Completed</span>
+          {canAnimate ? (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, delay: 0.06, ease: [0.32, 0.72, 0, 1] }}
+              className="space-y-1 mt-1"
+            >
+              <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-300 text-xs font-body font-bold tracking-tight">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Shopping Completed</span>
+              </div>
+
+              <h1 className="font-display text-2xl sm:text-3xl font-bold text-primary tracking-tight">
+                {list.title}
+              </h1>
+
+              <p className="font-body text-xs sm:text-sm text-on-surface-variant max-w-xs sm:max-w-sm mx-auto">
+                All marked items collected. Your trip is saved.
+              </p>
+            </motion.div>
+          ) : (
+            <div className="space-y-1 mt-1">
+              <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/50 text-emerald-800 dark:text-emerald-300 text-xs font-body font-bold tracking-tight">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Shopping Completed</span>
+              </div>
+
+              <h1 className="font-display text-2xl sm:text-3xl font-bold text-primary tracking-tight">
+                {list.title}
+              </h1>
+
+              <p className="font-body text-xs sm:text-sm text-on-surface-variant max-w-xs sm:max-w-sm mx-auto">
+                All marked items collected. Your trip is saved.
+              </p>
             </div>
-
-            <h1 className="font-display text-2xl sm:text-3xl font-bold text-primary tracking-tight">
-              {list.title}
-            </h1>
-
-            <p className="font-body text-xs sm:text-sm text-on-surface-variant max-w-xs sm:max-w-sm mx-auto">
-              All marked items collected. Your trip is saved.
-            </p>
-          </motion.div>
+          )}
         </section>
 
         {/* Clear Summary Metrics Grid - Cascading Staggered Reveal */}
-        <motion.section
-          initial="hidden"
-          animate="visible"
-          variants={{
-            hidden: { opacity: 0 },
-            visible: {
-              opacity: 1,
-              transition: {
-                staggerChildren: 0.07,
-                delayChildren: 0.12,
+        {canAnimate ? (
+          <motion.section
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: { opacity: 0 },
+              visible: {
+                opacity: 1,
+                transition: {
+                  staggerChildren: 0.07,
+                  delayChildren: 0.12,
+                },
               },
-            },
-          }}
-          className="grid grid-cols-3 gap-2.5 sm:gap-3"
-        >
-          {/* 1. Items Completed */}
-          <motion.div
-            variants={{
-              hidden: { opacity: 0, y: 16, scale: 0.94 },
-              visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 420, damping: 28 } },
             }}
-            whileHover={{ y: -2, transition: { duration: 0.15 } }}
-            className="bg-surface-container-lowest rounded-2xl p-3 sm:p-3.5 border border-surface-container-high/80 shadow-2xs hover:shadow-xs flex flex-col justify-between transition-shadow"
+            className="grid grid-cols-3 gap-2.5 sm:gap-3"
           >
-            <div className="flex items-center gap-1.5 text-outline text-[11px] font-body font-semibold">
-              <ShoppingBag className="w-3.5 h-3.5 text-primary" />
-              <span className="truncate">Items</span>
-            </div>
-            <div className="mt-1.5 flex items-baseline gap-1">
-              <span className="font-display text-xl sm:text-2xl font-bold text-primary tabular-nums">
-                {purchasedCount}
-              </span>
-              <span className="text-[11px] text-outline font-body font-medium">
-                /{totalItemsCount}
-              </span>
-            </div>
-          </motion.div>
+            {/* 1. Items Completed */}
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 16, scale: 0.94 },
+                visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 420, damping: 28 } },
+              }}
+              whileHover={{ y: -2, transition: { duration: 0.15 } }}
+              className="bg-surface-container-lowest rounded-2xl p-3 sm:p-3.5 border border-surface-container-high/80 shadow-2xs hover:shadow-xs flex flex-col justify-between transition-shadow"
+            >
+              <div className="flex items-center gap-1.5 text-outline text-[11px] font-body font-semibold">
+                <ShoppingBag className="w-3.5 h-3.5 text-primary" />
+                <span className="truncate">Items</span>
+              </div>
+              <div className="mt-1.5 flex items-baseline gap-1">
+                <span className="font-display text-xl sm:text-2xl font-bold text-primary tabular-nums">
+                  {purchasedCount}
+                </span>
+                <span className="text-[11px] text-outline font-body font-medium">
+                  /{totalItemsCount}
+                </span>
+              </div>
+            </motion.div>
 
-          {/* 2. Trip Duration & Time */}
-          <motion.div
-            variants={{
-              hidden: { opacity: 0, y: 16, scale: 0.94 },
-              visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 420, damping: 28 } },
-            }}
-            whileHover={{ y: -2, transition: { duration: 0.15 } }}
-            className="bg-surface-container-lowest rounded-2xl p-3 sm:p-3.5 border border-surface-container-high/80 shadow-2xs hover:shadow-xs flex flex-col justify-between transition-shadow"
-          >
-            <div className="flex items-center gap-1.5 text-outline text-[11px] font-body font-semibold">
-              <Clock className="w-3.5 h-3.5 text-primary" />
-              <span className="truncate">Duration</span>
-            </div>
-            <div className="mt-1.5">
-              <span className="font-display text-lg sm:text-xl font-bold text-primary tabular-nums">
-                {tripDurationText}
-              </span>
-            </div>
-          </motion.div>
+            {/* 2. Trip Duration & Time */}
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 16, scale: 0.94 },
+                visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 420, damping: 28 } },
+              }}
+              whileHover={{ y: -2, transition: { duration: 0.15 } }}
+              className="bg-surface-container-lowest rounded-2xl p-3 sm:p-3.5 border border-surface-container-high/80 shadow-2xs hover:shadow-xs flex flex-col justify-between transition-shadow"
+            >
+              <div className="flex items-center gap-1.5 text-outline text-[11px] font-body font-semibold">
+                <Clock className="w-3.5 h-3.5 text-primary" />
+                <span className="truncate">Duration</span>
+              </div>
+              <div className="mt-1.5">
+                <span className="font-display text-lg sm:text-xl font-bold text-primary tabular-nums">
+                  {tripDurationText}
+                </span>
+              </div>
+            </motion.div>
 
-          {/* 3. Categories Covered */}
-          <motion.div
-            variants={{
-              hidden: { opacity: 0, y: 16, scale: 0.94 },
-              visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 420, damping: 28 } },
-            }}
-            whileHover={{ y: -2, transition: { duration: 0.15 } }}
-            className="bg-surface-container-lowest rounded-2xl p-3 sm:p-3.5 border border-surface-container-high/80 shadow-2xs hover:shadow-xs flex flex-col justify-between transition-shadow"
-          >
-            <div className="flex items-center gap-1.5 text-outline text-[11px] font-body font-semibold">
-              <Layers className="w-3.5 h-3.5 text-primary" />
-              <span className="truncate">Categories</span>
+            {/* 3. Categories Covered */}
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 16, scale: 0.94 },
+                visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 420, damping: 28 } },
+              }}
+              whileHover={{ y: -2, transition: { duration: 0.15 } }}
+              className="bg-surface-container-lowest rounded-2xl p-3 sm:p-3.5 border border-surface-container-high/80 shadow-2xs hover:shadow-xs flex flex-col justify-between transition-shadow"
+            >
+              <div className="flex items-center gap-1.5 text-outline text-[11px] font-body font-semibold">
+                <Layers className="w-3.5 h-3.5 text-primary" />
+                <span className="truncate">Categories</span>
+              </div>
+              <div className="mt-1.5">
+                <span className="font-display text-xl sm:text-2xl font-bold text-primary tabular-nums">
+                  {purchasedCategoryIds.length}
+                </span>
+              </div>
+            </motion.div>
+          </motion.section>
+        ) : (
+          <section className="grid grid-cols-3 gap-2.5 sm:gap-3">
+            {/* 1. Items Completed */}
+            <div className="bg-surface-container-lowest rounded-2xl p-3 sm:p-3.5 border border-surface-container-high/80 shadow-2xs flex flex-col justify-between">
+              <div className="flex items-center gap-1.5 text-outline text-[11px] font-body font-semibold">
+                <ShoppingBag className="w-3.5 h-3.5 text-primary" />
+                <span className="truncate">Items</span>
+              </div>
+              <div className="mt-1.5 flex items-baseline gap-1">
+                <span className="font-display text-xl sm:text-2xl font-bold text-primary tabular-nums">
+                  {purchasedCount}
+                </span>
+                <span className="text-[11px] text-outline font-body font-medium">
+                  /{totalItemsCount}
+                </span>
+              </div>
             </div>
-            <div className="mt-1.5">
-              <span className="font-display text-xl sm:text-2xl font-bold text-primary tabular-nums">
-                {purchasedCategoryIds.length}
-              </span>
+
+            {/* 2. Trip Duration & Time */}
+            <div className="bg-surface-container-lowest rounded-2xl p-3 sm:p-3.5 border border-surface-container-high/80 shadow-2xs flex flex-col justify-between">
+              <div className="flex items-center gap-1.5 text-outline text-[11px] font-body font-semibold">
+                <Clock className="w-3.5 h-3.5 text-primary" />
+                <span className="truncate">Duration</span>
+              </div>
+              <div className="mt-1.5">
+                <span className="font-display text-lg sm:text-xl font-bold text-primary tabular-nums">
+                  {tripDurationText}
+                </span>
+              </div>
             </div>
-          </motion.div>
-        </motion.section>
+
+            {/* 3. Categories Covered */}
+            <div className="bg-surface-container-lowest rounded-2xl p-3 sm:p-3.5 border border-surface-container-high/80 shadow-2xs flex flex-col justify-between">
+              <div className="flex items-center gap-1.5 text-outline text-[11px] font-body font-semibold">
+                <Layers className="w-3.5 h-3.5 text-primary" />
+                <span className="truncate">Categories</span>
+              </div>
+              <div className="mt-1.5">
+                <span className="font-display text-xl sm:text-2xl font-bold text-primary tabular-nums">
+                  {purchasedCategoryIds.length}
+                </span>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Completed Items Preview (Compact, responsive, space-efficient) */}
-        {purchasedItems.length > 0 && (
-          <motion.section
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 30, delay: 0.28 }}
-            className="bg-surface-container-lowest rounded-3xl p-4 sm:p-5 border border-surface-container-high/80 shadow-2xs space-y-3"
-          >
-            <div className="flex items-center justify-between border-b border-surface-dim/60 pb-2.5">
+        {purchasedItems.length > 0 &&
+          (() => {
+            const purchasedItemsContent = (
+              <>
+                <div className="flex items-center justify-between border-b border-surface-dim/60 pb-2.5">
               <div className="flex items-center gap-2">
                 <span className="font-body text-xs font-bold text-primary uppercase tracking-wider">
                   Purchased Items
@@ -379,72 +469,136 @@ export const CompletionView: React.FC<CompletionViewProps> = ({
                 );
               })}
             </div>
-          </motion.section>
-        )}
+              </>
+            );
+
+            return canAnimate ? (
+              <motion.section
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 30, delay: 0.28 }}
+                className="bg-surface-container-lowest rounded-3xl p-4 sm:p-5 border border-surface-container-high/80 shadow-2xs space-y-3"
+              >
+                {purchasedItemsContent}
+              </motion.section>
+            ) : (
+              <section className="bg-surface-container-lowest rounded-3xl p-4 sm:p-5 border border-surface-container-high/80 shadow-2xs space-y-3">
+                {purchasedItemsContent}
+              </section>
+            );
+          })()}
 
         {/* Working Actions: Done / Return Home, Start New List, Review / Edit Trip */}
-        <motion.section
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 30, delay: 0.35 }}
-          className="space-y-2.5 pt-1"
-        >
-          {/* Primary Action: Done / Return Home */}
-          <motion.button
-            whileHover={{ scale: 1.015 }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ type: 'spring', stiffness: 440, damping: 26 }}
-            id="completion_return_home_btn"
-            type="button"
-            onClick={onReturnHome}
-            className="w-full h-[50px] rounded-2xl bg-primary text-on-primary font-body text-sm font-bold shadow-sm hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <Home className="w-4 h-4" />
-            <span>Done • Go Home</span>
-          </motion.button>
+        {(() => {
+          const actionsContent = (
+            <>
+              {/* Primary Action: Done / Return Home */}
+              {canAnimate ? (
+                <motion.button
+                  whileHover={{ scale: 1.015 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: 'spring', stiffness: 440, damping: 26 }}
+                  id="completion_return_home_btn"
+                  type="button"
+                  onClick={onReturnHome}
+                  className="w-full h-[50px] rounded-2xl bg-primary text-on-primary font-body text-sm font-bold shadow-sm hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Home className="w-4 h-4" />
+                  <span>Done • Go Home</span>
+                </motion.button>
+              ) : (
+                <button
+                  id="completion_return_home_btn"
+                  type="button"
+                  onClick={onReturnHome}
+                  className="w-full h-[50px] rounded-2xl bg-primary text-on-primary font-body text-sm font-bold shadow-sm hover:bg-primary/90 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Home className="w-4 h-4" />
+                  <span>Done • Go Home</span>
+                </button>
+              )}
 
-          {/* Secondary Actions Row: Start New List + Review / Edit Trip */}
-          <div className="grid grid-cols-2 gap-2.5">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ type: 'spring', stiffness: 440, damping: 26 }}
-              id="completion_start_new_list_btn"
-              type="button"
-              onClick={handleStartNewList}
-              className="h-[46px] rounded-2xl bg-surface-container hover:bg-surface-container-high text-primary font-body text-xs sm:text-sm font-bold border border-surface-dim/80 transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
-            >
-              <PlusCircle className="w-4 h-4 text-primary" />
-              <span>Start New List</span>
-            </motion.button>
+              {/* Secondary Actions Row: Start New List + Review / Edit Trip */}
+              <div className="grid grid-cols-2 gap-2.5">
+                {canAnimate ? (
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: 'spring', stiffness: 440, damping: 26 }}
+                    id="completion_start_new_list_btn"
+                    type="button"
+                    onClick={handleStartNewList}
+                    className="h-[46px] rounded-2xl bg-surface-container hover:bg-surface-container-high text-primary font-body text-xs sm:text-sm font-bold border border-surface-dim/80 transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                  >
+                    <PlusCircle className="w-4 h-4 text-primary" />
+                    <span>Start New List</span>
+                  </motion.button>
+                ) : (
+                  <button
+                    id="completion_start_new_list_btn"
+                    type="button"
+                    onClick={handleStartNewList}
+                    className="h-[46px] rounded-2xl bg-surface-container hover:bg-surface-container-high text-primary font-body text-xs sm:text-sm font-bold border border-surface-dim/80 transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                  >
+                    <PlusCircle className="w-4 h-4 text-primary" />
+                    <span>Start New List</span>
+                  </button>
+                )}
 
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ type: 'spring', stiffness: 440, damping: 26 }}
-              id="completion_review_trip_btn"
-              type="button"
-              onClick={handleReviewTrip}
-              className="h-[46px] rounded-2xl bg-surface-container-low hover:bg-surface-container text-primary font-body text-xs sm:text-sm font-bold border border-surface-dim/80 transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
-            >
-              <FileEdit className="w-4 h-4 text-primary" />
-              <span>Review Trip</span>
-            </motion.button>
-          </div>
+                {canAnimate ? (
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: 'spring', stiffness: 440, damping: 26 }}
+                    id="completion_review_trip_btn"
+                    type="button"
+                    onClick={handleReviewTrip}
+                    className="h-[46px] rounded-2xl bg-surface-container-low hover:bg-surface-container text-primary font-body text-xs sm:text-sm font-bold border border-surface-dim/80 transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                  >
+                    <FileEdit className="w-4 h-4 text-primary" />
+                    <span>Review Trip</span>
+                  </motion.button>
+                ) : (
+                  <button
+                    id="completion_review_trip_btn"
+                    type="button"
+                    onClick={handleReviewTrip}
+                    className="h-[46px] rounded-2xl bg-surface-container-low hover:bg-surface-container text-primary font-body text-xs sm:text-sm font-bold border border-surface-dim/80 transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                  >
+                    <FileEdit className="w-4 h-4 text-primary" />
+                    <span>Review Trip</span>
+                  </button>
+                )}
+              </div>
 
-          {/* View in History Link */}
-          <div className="text-center pt-1">
-            <button
-              id="completion_view_history_link"
-              type="button"
-              onClick={onViewHistory}
-              className="inline-flex items-center gap-1.5 text-xs font-body font-semibold text-outline hover:text-primary transition-colors cursor-pointer py-1"
+              {/* View in History Link */}
+              <div className="text-center pt-1">
+                <button
+                  id="completion_view_history_link"
+                  type="button"
+                  onClick={onViewHistory}
+                  className="inline-flex items-center gap-1.5 text-xs font-body font-semibold text-outline hover:text-primary transition-colors cursor-pointer py-1"
+                >
+                  <History className="w-3.5 h-3.5" />
+                  <span>View in History</span>
+                </button>
+              </div>
+            </>
+          );
+
+          return canAnimate ? (
+            <motion.section
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 30, delay: 0.35 }}
+              className="space-y-2.5 pt-1"
             >
-              <History className="w-3.5 h-3.5" />
-              <span>View in History</span>
-            </button>
-          </div>
-        </motion.section>
+              {actionsContent}
+            </motion.section>
+          ) : (
+            <section className="space-y-2.5 pt-1">{actionsContent}</section>
+          );
+        })()}
       </main>
 
       {/* Item Image Lightbox Modal */}
