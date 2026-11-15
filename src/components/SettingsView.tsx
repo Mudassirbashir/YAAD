@@ -21,6 +21,7 @@ import {
   ChevronLeft,
   Trash2,
   Gauge,
+  Zap,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -43,6 +44,8 @@ import { isMiloEnabled, setMiloEnabled } from '../pet/miloPrefs';
 import { isMiloSoundEnabled, setMiloSoundEnabled } from '../pet/miloSounds';
 import { triggerMiloEvent } from '../pet/useMilo';
 import { isPerfMeterEnabled, setPerfMeterEnabled } from '../lib/perfMeter';
+import { isLowEndDevice, setLiteMode } from '../lib/deviceTier';
+import { useLiteMode } from '../lib/motionPreference';
 
 interface SettingsViewProps {
   onBack: () => void;
@@ -131,6 +134,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     const nextVal = !perfMeterActive;
     setPerfMeterActive(nextVal);
     setPerfMeterEnabled(nextVal);
+  };
+
+  // Lite mode active state (maximum-performance escape hatch)
+  const liteModeActive = useLiteMode();
+  const isLowEndPhone = isLowEndDevice();
+
+  const handleToggleLiteMode = () => {
+    triggerHaptic(8);
+    setLiteMode(!liteModeActive);
   };
 
   // Sound preference state
@@ -528,109 +540,147 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </>
               )}
 
-              {/* Milo Pet Companion & Sound Feedback Toggles */}
-              {(remoteConfig.settings?.miloCompanion !== false || remoteConfig.settings?.soundEffects !== false) && (
-                <div className={`flex flex-col gap-4 ${remoteConfig.settings?.languageSelect !== false ? 'pt-4 border-t border-surface-dim/40' : ''}`}>
-                  {/* Milo Companion Toggle */}
-                  {remoteConfig.settings?.miloCompanion !== false && (
-                    <div className="flex items-center justify-between gap-3 min-h-[52px]">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-10 h-10 rounded-2xl bg-amber-400/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-                          <Sparkles className="w-5 h-5 stroke-[2]" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h4 className="text-[15px] font-semibold text-on-surface font-display truncate leading-snug">
-                            {language === 'ur' ? 'مائلو پالتو ساتھی' : 'Milo Pet Companion'}
-                          </h4>
-                          <p className="text-[13px] text-outline font-body leading-snug mt-0.5">
-                            {language === 'ur'
-                              ? 'فلوٹنگ اینیمیٹڈ ببل اور جشن کے تاثرات'
-                              : 'Interactive floating pet & celebration moments'}
-                          </p>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        id="toggle_milo_companion"
-                        onClick={handleToggleMilo}
-                        className={`w-[51px] h-[31px] rounded-full transition-colors p-[2px] flex items-center shrink-0 cursor-pointer ${
-                          miloActive ? 'bg-primary justify-end' : 'bg-surface-dim justify-start'
-                        }`}
-                        aria-label={miloActive ? 'Disable Milo' : 'Enable Milo'}
-                      >
-                        <span className="w-[27px] h-[27px] rounded-full bg-white shadow-xs block" />
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Speed Meter Toggle */}
+              {/* Lite Mode, Milo Pet Companion, Speed Meter & Sound Feedback Toggles */}
+              <div className={`flex flex-col gap-4 ${remoteConfig.settings?.languageSelect !== false ? 'pt-4 border-t border-surface-dim/40' : ''}`}>
+                {/* Lite Mode Toggle + low-end-only hint */}
+                <div className="flex flex-col gap-1.5">
                   <div className="flex items-center justify-between gap-3 min-h-[52px]">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-2xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                        <Gauge className="w-5 h-5 stroke-[2]" />
+                      <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                        <Zap className="w-5 h-5 stroke-[2]" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <h4 className="text-[15px] font-semibold text-on-surface font-display truncate leading-snug">
-                          Speed meter
+                          Lite mode
                         </h4>
                         <p className="text-[13px] text-outline font-body leading-snug mt-0.5">
-                          Phone par asal speed naapne ke liye (band hone par bilkul free)
+                          Halke phone ke liye sab se tez mode — animation aur Milo band
                         </p>
                       </div>
                     </div>
 
                     <button
                       type="button"
-                      id="toggle_speed_meter"
-                      onClick={handleTogglePerfMeter}
+                      id="toggle_lite_mode"
+                      onClick={handleToggleLiteMode}
                       className={`w-[51px] h-[31px] rounded-full transition-colors p-[2px] flex items-center shrink-0 cursor-pointer ${
-                        perfMeterActive ? 'bg-primary justify-end' : 'bg-surface-dim justify-start'
+                        liteModeActive ? 'bg-primary justify-end' : 'bg-surface-dim justify-start'
                       }`}
-                      aria-label={perfMeterActive ? 'Disable Speed meter' : 'Enable Speed meter'}
+                      aria-label={liteModeActive ? 'Disable Lite mode' : 'Enable Lite mode'}
                     >
                       <span className="w-[27px] h-[27px] rounded-full bg-white shadow-xs block" />
                     </button>
                   </div>
 
-                  {/* Sound Effects Toggle */}
-                  {remoteConfig.settings?.soundEffects !== false && (
-                    <div className="flex items-center justify-between gap-3 min-h-[52px]">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-10 h-10 rounded-2xl bg-surface-container text-primary flex items-center justify-center shrink-0">
-                          {soundEnabled ? (
-                            <Volume2 className="w-5 h-5 stroke-[2]" />
-                          ) : (
-                            <VolumeX className="w-5 h-5 stroke-[2] text-outline" />
-                          )}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h4 className="text-[15px] font-semibold text-on-surface font-display truncate leading-snug">
-                            {language === 'ur' ? 'آواز کے اثرات' : 'Sound Effects'}
-                          </h4>
-                          <p className="text-[13px] text-outline font-body leading-snug mt-0.5">
-                            {language === 'ur'
-                              ? 'مائلو کی آوازیں اور تصدیقی دھنیں'
-                              : 'Synthesized pet audio & action feedback'}
-                          </p>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        id="toggle_sound_effects"
-                        onClick={handleToggleSound}
-                        className={`w-[51px] h-[31px] rounded-full transition-colors p-[2px] flex items-center shrink-0 cursor-pointer ${
-                          soundEnabled ? 'bg-primary justify-end' : 'bg-surface-dim justify-start'
-                        }`}
-                        aria-label={soundEnabled ? 'Mute sound effects' : 'Enable sound effects'}
-                      >
-                        <span className="w-[27px] h-[27px] rounded-full bg-white shadow-xs block" />
-                      </button>
-                    </div>
+                  {isLowEndPhone && !liteModeActive && (
+                    <p
+                      id="lite_mode_low_end_hint"
+                      className="text-xs text-outline font-body ps-[52px] leading-snug"
+                    >
+                      Aap ka phone low-end hai — Lite mode se app tez chalega
+                    </p>
                   )}
                 </div>
-              )}
+
+                {/* Milo Companion Toggle */}
+                {remoteConfig.settings?.miloCompanion !== false && (
+                  <div className="flex items-center justify-between gap-3 min-h-[52px]">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-2xl bg-amber-400/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                        <Sparkles className="w-5 h-5 stroke-[2]" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-[15px] font-semibold text-on-surface font-display truncate leading-snug">
+                          {language === 'ur' ? 'مائلو پالتو ساتھی' : 'Milo Pet Companion'}
+                        </h4>
+                        <p className="text-[13px] text-outline font-body leading-snug mt-0.5">
+                          {language === 'ur'
+                            ? 'فلوٹنگ اینیمیٹڈ ببل اور جشن کے تاثرات'
+                            : 'Interactive floating pet & celebration moments'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      id="toggle_milo_companion"
+                      onClick={handleToggleMilo}
+                      className={`w-[51px] h-[31px] rounded-full transition-colors p-[2px] flex items-center shrink-0 cursor-pointer ${
+                        miloActive ? 'bg-primary justify-end' : 'bg-surface-dim justify-start'
+                      }`}
+                      aria-label={miloActive ? 'Disable Milo' : 'Enable Milo'}
+                    >
+                      <span className="w-[27px] h-[27px] rounded-full bg-white shadow-xs block" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Speed Meter Toggle */}
+                <div className="flex items-center justify-between gap-3 min-h-[52px]">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-2xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                      <Gauge className="w-5 h-5 stroke-[2]" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-[15px] font-semibold text-on-surface font-display truncate leading-snug">
+                        Speed meter
+                      </h4>
+                      <p className="text-[13px] text-outline font-body leading-snug mt-0.5">
+                        Phone par asal speed naapne ke liye (band hone par bilkul free)
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    id="toggle_speed_meter"
+                    onClick={handleTogglePerfMeter}
+                    className={`w-[51px] h-[31px] rounded-full transition-colors p-[2px] flex items-center shrink-0 cursor-pointer ${
+                      perfMeterActive ? 'bg-primary justify-end' : 'bg-surface-dim justify-start'
+                    }`}
+                    aria-label={perfMeterActive ? 'Disable Speed meter' : 'Enable Speed meter'}
+                  >
+                    <span className="w-[27px] h-[27px] rounded-full bg-white shadow-xs block" />
+                  </button>
+                </div>
+
+                {/* Sound Effects Toggle */}
+                {remoteConfig.settings?.soundEffects !== false && (
+                  <div className="flex items-center justify-between gap-3 min-h-[52px]">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-2xl bg-surface-container text-primary flex items-center justify-center shrink-0">
+                        {soundEnabled ? (
+                          <Volume2 className="w-5 h-5 stroke-[2]" />
+                        ) : (
+                          <VolumeX className="w-5 h-5 stroke-[2] text-outline" />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-[15px] font-semibold text-on-surface font-display truncate leading-snug">
+                          {language === 'ur' ? 'آواز کے اثرات' : 'Sound Effects'}
+                        </h4>
+                        <p className="text-[13px] text-outline font-body leading-snug mt-0.5">
+                          {language === 'ur'
+                            ? 'مائلو کی آوازیں اور تصدیقی دھنیں'
+                            : 'Synthesized pet audio & action feedback'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      id="toggle_sound_effects"
+                      onClick={handleToggleSound}
+                      className={`w-[51px] h-[31px] rounded-full transition-colors p-[2px] flex items-center shrink-0 cursor-pointer ${
+                        soundEnabled ? 'bg-primary justify-end' : 'bg-surface-dim justify-start'
+                      }`}
+                      aria-label={soundEnabled ? 'Mute sound effects' : 'Enable sound effects'}
+                    >
+                      <span className="w-[27px] h-[27px] rounded-full bg-white shadow-xs block" />
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </section>
         )}

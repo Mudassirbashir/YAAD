@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { triggerHaptic, playItemCheckSound } from '../lib/sound';
 import { loadLottie } from '../lib/lottieLoader';
+import { useLiteMode } from '../lib/motionPreference';
 
 export interface CelebrationCheckboxProps {
   isChecked: boolean;
@@ -58,6 +59,8 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
   ariaLabel,
 }) => {
   const prefersReducedMotion = useReducedMotion();
+  const liteMode = useLiteMode();
+  const skipCelebration = Boolean(prefersReducedMotion || liteMode);
   const isFirstRender = useRef(true);
   const [isPressed, setIsPressed] = useState(false);
   const [isPlayingCelebration, setIsPlayingCelebration] = useState(false);
@@ -76,7 +79,7 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
     prevCheckedRef.current = isChecked;
 
     if (!wasChecked && isChecked) {
-      if (!prefersReducedMotion) {
+      if (!skipCelebration) {
         console.debug('[CelebrationCheckbox] Celebration fired', {
           isChecked,
           isJustCompleted,
@@ -89,16 +92,16 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
         }, 500);
         return () => clearTimeout(timer);
       } else {
-        console.debug('[CelebrationCheckbox] Celebration skipped: prefers-reduced-motion active');
+        console.debug('[CelebrationCheckbox] Celebration skipped: reduced-motion or Lite mode active');
         triggerHaptic(12);
       }
     } else if (!isChecked) {
       console.debug('[CelebrationCheckbox] Celebration skipped: item unchecked');
       setIsPlayingCelebration(false);
     }
-  }, [isChecked, isJustCompleted, prefersReducedMotion]);
+  }, [isChecked, isJustCompleted, skipCelebration]);
 
-  const shouldCelebrate = (isJustCompleted || isPlayingCelebration) && !prefersReducedMotion;
+  const shouldCelebrate = (isJustCompleted || isPlayingCelebration) && !skipCelebration;
 
   // Optional progressive enhancement: Lottie vector circle pinch overlay
   useEffect(() => {
@@ -182,7 +185,7 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
       onPointerLeave={handlePointerLeave}
       onPointerCancel={handlePointerLeave}
       animate={
-        prefersReducedMotion
+        skipCelebration
           ? { scale: 1 }
           : isChecked
           ? shouldCelebrate
@@ -193,7 +196,7 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
           : { scale: 1 }
       }
       transition={
-        prefersReducedMotion
+        skipCelebration
           ? { duration: 0 }
           : isPressed
           ? { duration: 0.15, ease: 'easeOut' }
@@ -249,7 +252,7 @@ export const CelebrationCheckbox: React.FC<CelebrationCheckboxProps> = ({
             opacity: isChecked ? 1 : 0,
           }}
           transition={
-            prefersReducedMotion
+            skipCelebration
               ? { duration: 0 }
               : { duration: 0.3, ease: [0.650, 0, 0.450, 1] }
           }

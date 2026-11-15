@@ -1,3 +1,5 @@
+import { isLiteMode } from './deviceTier';
+
 /**
  * Asynchronously loads Lottie player on demand.
  * Prevents loading 168 KiB of animation library on the critical rendering path
@@ -6,7 +8,7 @@
 let lottiePromise: Promise<any> | null = null;
 
 export function loadLottie(): Promise<any> {
-  if (typeof window === 'undefined') {
+  if (typeof window === 'undefined' || isLiteMode()) {
     return Promise.resolve(null);
   }
 

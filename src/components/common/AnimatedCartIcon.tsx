@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ShoppingCart } from 'lucide-react';
 import { loadLottie } from '../../lib/lottieLoader';
 import cartAnimationData from '../../assets/cart-start-shopping-animation.json';
+import { useLiteMode } from '../../lib/motionPreference';
 
 interface AnimatedCartIconProps {
   isPlaying?: boolean;
@@ -30,6 +31,7 @@ export const AnimatedCartIcon: React.FC<AnimatedCartIconProps> = ({
   className = '',
   size = 24,
 }) => {
+  const liteMode = useLiteMode();
   const containerRef = useRef<HTMLDivElement>(null);
   const animInstanceRef = useRef<any>(null);
   const [isReady, setIsReady] = useState(false);
@@ -38,6 +40,10 @@ export const AnimatedCartIcon: React.FC<AnimatedCartIconProps> = ({
 
   // Initialize Lottie player
   useEffect(() => {
+    if (liteMode) {
+      setIsReady(false);
+      return;
+    }
     let anim: any = null;
     let isCancelled = false;
 
@@ -78,7 +84,7 @@ export const AnimatedCartIcon: React.FC<AnimatedCartIconProps> = ({
       }
       animInstanceRef.current = null;
     };
-  }, [color]);
+  }, [color, liteMode]);
 
   // Play animation when isPlaying transitions to true or triggerPlay increments
   useEffect(() => {

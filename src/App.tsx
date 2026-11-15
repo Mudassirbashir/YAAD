@@ -60,7 +60,7 @@ import { triggerMiloEvent } from './pet/useMilo';
 import { useRemoteConfig } from './hooks/useRemoteConfig';
 import { Sparkles, Wrench } from 'lucide-react';
 import { PerfMeterPanel } from './components/PerfMeterPanel';
-import { useShouldAnimate } from './lib/motionPreference';
+import { useShouldAnimate, useLiteMode } from './lib/motionPreference';
 
 const MiloHost = React.lazy(() => import('./pet/MiloHost').then((m) => ({ default: m.MiloHost })));
 
@@ -282,6 +282,7 @@ function AppContent() {
 
   const { isRTL } = useLanguage();
   const canAnimate = useShouldAnimate();
+  const liteMode = useLiteMode();
   const [isMiloCompanionEnabled, setIsMiloCompanionEnabled] = useState<boolean>(() => isMiloEnabled());
   const slideX = (isRTL || (typeof document !== 'undefined' && document.dir === 'rtl')) ? -24 : 24;
 
@@ -2042,8 +2043,8 @@ function AppContent() {
         />
       )}
 
-      {/* Floating Milo Companion Bubble (mini ~64px draggable over all screens, lazy-loaded when enabled) */}
-      {isMiloCompanionEnabled && remoteConfig.header?.showMiloCompanion !== false && (
+      {/* Floating Milo Companion Bubble (mini ~64px draggable over all screens, lazy-loaded when enabled & Lite OFF) */}
+      {!liteMode && isMiloCompanionEnabled && remoteConfig.header?.showMiloCompanion !== false && (
         <React.Suspense fallback={null}>
           <MiloHost
             variant="mini"

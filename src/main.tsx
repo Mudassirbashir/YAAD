@@ -7,10 +7,11 @@ import { ThemeProvider } from './context/ThemeContext';
 import { RemoteConfigProvider } from './context/RemoteConfigContext';
 import { initMonitoring } from './lib/monitoring';
 import { isPerfMeterEnabled, startPerfMeter } from './lib/perfMeter';
-import { syncLowEndDeviceClass } from './lib/deviceTier';
+import { syncLowEndDeviceClass, syncLiteModeClass } from './lib/deviceTier';
 import './index.css';
 
 syncLowEndDeviceClass();
+syncLiteModeClass();
 if (isPerfMeterEnabled()) {
   startPerfMeter();
 }

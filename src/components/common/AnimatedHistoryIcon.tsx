@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ClipboardList } from 'lucide-react';
 import { loadLottie } from '../../lib/lottieLoader';
 import clipboardAnimationData from '../../assets/clipboard-history-animation.json';
+import { useLiteMode } from '../../lib/motionPreference';
 
 interface AnimatedHistoryIconProps {
   isActive: boolean;
@@ -38,6 +39,7 @@ export const AnimatedHistoryIcon: React.FC<AnimatedHistoryIconProps> = ({
   className = '',
   size = 20,
 }) => {
+  const liteMode = useLiteMode();
   const containerRef = useRef<HTMLDivElement>(null);
   const animInstanceRef = useRef<any>(null);
   const [isReady, setIsReady] = useState(false);
@@ -46,6 +48,10 @@ export const AnimatedHistoryIcon: React.FC<AnimatedHistoryIconProps> = ({
 
   // Initialize and update Lottie animation instance when active state or theme changes
   useEffect(() => {
+    if (liteMode) {
+      setIsReady(false);
+      return;
+    }
     let anim: any = null;
     let isCancelled = false;
 
@@ -87,7 +93,7 @@ export const AnimatedHistoryIcon: React.FC<AnimatedHistoryIconProps> = ({
       }
       animInstanceRef.current = null;
     };
-  }, [isActive]);
+  }, [isActive, liteMode]);
 
   // Play animation whenever playTrigger increments or tab becomes active
   useEffect(() => {
