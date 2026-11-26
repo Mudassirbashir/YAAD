@@ -390,10 +390,10 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
           <div
             role="tablist"
             aria-orientation="horizontal"
-            className="relative flex-1 min-w-0 h-[58px] rounded-full p-1 bg-surface-container-lowest/80 dark:bg-surface-container-lowest/80 backdrop-blur-lg [backdrop-filter:blur(18px)_saturate(160%)] [-webkit-backdrop-filter:blur(18px)_saturate(160%)] border border-primary/12 dark:border-white/15 shadow-[0_8px_28px_-6px_rgba(15,61,46,0.16)] dark:shadow-[0_12px_32px_-6px_rgba(0,0,0,0.55)] overflow-hidden before:content-[''] before:pointer-events-none before:absolute before:inset-0 before:rounded-[inherit] before:shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] dark:before:shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]"
+            className="yaad-liquid-glass relative flex-1 min-w-0 h-[58px] p-1"
           >
             <div
-              className="relative grid w-full h-full items-center"
+              className="relative z-10 grid w-full h-full items-center"
               style={{
                 gridTemplateColumns: `repeat(${visibleTabs.length}, minmax(0, 1fr))`,
               }}
@@ -414,7 +414,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               >
                 <div
                   ref={indicatorSquashRef}
-                  className="w-full h-full rounded-full relative overflow-hidden bg-gradient-to-b from-primary/20 via-primary/12 to-primary/15 dark:from-primary/32 dark:via-primary/20 dark:to-primary/24 border border-primary/25 dark:border-primary/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.16)] before:content-[''] before:pointer-events-none before:absolute before:inset-x-2 before:top-0 before:h-[1px] before:bg-gradient-to-r before:from-transparent before:via-white/85 dark:before:via-white/35 before:to-transparent"
+                  className="yaad-liquid-glass yaad-liquid-glass-no-blur yaad-liquid-glass-indicator relative w-full h-full"
                   style={{
                     willChange: canAnimate ? 'transform' : undefined,
                   }}
@@ -448,7 +448,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
                     } ${
                       isActive
                         ? 'text-primary'
-                        : 'text-on-surface-variant/80 hover:text-on-surface'
+                        : 'text-on-surface-variant/85 hover:text-on-surface'
                     }`}
                   >
                     {tab.id === 'home' && (
@@ -534,9 +534,9 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
                     transformOrigin: isRTL ? 'bottom left' : 'bottom right',
                     willChange: canAnimate ? 'transform, opacity' : undefined,
                   }}
-                  className="yaad-create-menu-glass absolute bottom-[calc(100%+10px)] end-0 w-[204px] max-w-[calc(100vw-24px)] rounded-[26px] p-1.5 backdrop-blur-lg [backdrop-filter:blur(18px)_saturate(165%)] [-webkit-backdrop-filter:blur(18px)_saturate(165%)] border border-white/60 dark:border-white/18 shadow-[0_14px_34px_-8px_rgba(15,61,46,0.22),inset_0_1px_0_rgba(255,255,255,0.85),inset_0_0_0_1px_rgba(255,255,255,0.28)] dark:shadow-[0_16px_38px_-8px_rgba(0,0,0,0.62),inset_0_1px_0_rgba(255,255,255,0.26),inset_0_0_0_1px_rgba(255,255,255,0.08)] overflow-hidden before:content-[''] before:pointer-events-none before:absolute before:inset-0 before:rounded-[inherit] before:bg-gradient-to-b before:from-white/38 before:via-white/6 before:to-transparent dark:before:from-white/12 dark:before:via-white/3 dark:before:to-transparent"
+                  className="yaad-liquid-glass yaad-liquid-glass-menu absolute bottom-[calc(100%+10px)] end-0 w-[204px] max-w-[calc(100vw-24px)] p-1.5"
                 >
-                  <div className="relative z-10 flex flex-col gap-0.5">
+                  <div className="relative z-10 flex flex-col gap-1">
                     {createMenuOptions.map((option, idx) => {
                       const Icon = option.Icon;
                       return (
@@ -576,18 +576,18 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
                                 : { opacity: 1, transition: { duration: 0 } }
                             }
                             whileTap={canAnimate ? { scale: 0.97 } : undefined}
-                            className="w-full min-h-[44px] px-2.5 py-1.5 rounded-full flex items-center gap-2.5 text-start text-[13px] font-body font-semibold text-on-surface hover:bg-white/55 dark:hover:bg-white/14 active:bg-white/75 dark:active:bg-white/22 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                            className="yaad-liquid-glass yaad-liquid-glass-no-blur yaad-liquid-glass-row relative w-full min-h-[44px] px-2.5 py-1.5 flex items-center gap-2.5 text-start text-[13px] font-body font-semibold text-on-surface cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                           >
                             <span
-                              className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 border ${
+                              className={`yaad-liquid-glass yaad-liquid-glass-no-blur relative z-10 w-7 h-7 flex items-center justify-center shrink-0 ${
                                 option.isCustom
-                                  ? 'bg-primary text-white border-white/25'
-                                  : 'bg-primary/14 dark:bg-primary/25 text-primary border-primary/18 dark:border-primary/30'
+                                  ? 'yaad-liquid-glass-primary text-white'
+                                  : 'yaad-liquid-glass-chip text-primary'
                               }`}
                             >
-                              <Icon className="w-3.5 h-3.5 stroke-[2.3]" aria-hidden="true" />
+                              <Icon className="relative z-10 w-3.5 h-3.5 stroke-[2.3]" aria-hidden="true" />
                             </span>
-                            <span className="truncate flex-1 leading-tight">{option.label}</span>
+                            <span className="relative z-10 truncate flex-1 leading-tight">{option.label}</span>
                           </motion.button>
                         </React.Fragment>
                       );
@@ -607,7 +607,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
               aria-haspopup="menu"
               aria-expanded={isCreateMenuOpen}
               aria-controls={isCreateMenuOpen ? 'nav_create_menu' : undefined}
-              className="relative w-14 h-14 min-w-[56px] min-h-[56px] rounded-full bg-gradient-to-tr from-primary/95 to-primary-container/90 text-white flex items-center justify-center backdrop-blur-md [backdrop-filter:blur(16px)_saturate(160%)] [-webkit-backdrop-filter:blur(16px)_saturate(160%)] border border-white/25 dark:border-white/20 shadow-[0_8px_22px_-4px_rgba(15,61,46,0.36)] dark:shadow-[0_8px_22px_-4px_rgba(0,0,0,0.55)] overflow-hidden before:content-[''] before:pointer-events-none before:absolute before:inset-0 before:rounded-[inherit] before:shadow-[inset_0_1px_0_rgba(255,255,255,0.45)] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              className="yaad-liquid-glass yaad-liquid-glass-primary relative w-14 h-14 min-w-[56px] min-h-[56px] text-white flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
               <span
                 className="relative z-10 flex items-center justify-center"

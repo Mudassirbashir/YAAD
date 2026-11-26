@@ -1102,32 +1102,183 @@ html.yaad-lite .bg-black\/80[class*="backdrop-blur"] {
   background-color: rgba(0, 0, 0, 0.88) !important;
 }
 
-html.yaad-low-end .yaad-home-glass-card,
-html.yaad-lite .yaad-home-glass-card {
+/* ====================================================================
+   SHARED LIQUID-GLASS RECIPE (6 stacked properties + low-end/lite fallback)
+   ==================================================================== */
+:root {
+  --lg-surface: rgba(255, 255, 255, 0.72);
+  --lg-surface-opaque: color-mix(in oklab, var(--color-surface-container-lowest) 97%, transparent);
+  --lg-blur: blur(24px) saturate(180%);
+  --lg-radius: 999px;
+  --lg-border: rgba(255, 255, 255, 0.68);
+  --lg-highlight: rgba(255, 255, 255, 0.88);
+  --lg-shadow: 0 12px 32px -8px rgba(15, 61, 46, 0.2);
+  --lg-shine: linear-gradient(180deg, rgba(255, 255, 255, 0.44) 0%, rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0) 100%);
+}
+
+html.dark {
+  --lg-surface: color-mix(in oklab, var(--color-surface-container) 68%, transparent);
+  --lg-surface-opaque: color-mix(in oklab, var(--color-surface-container) 97%, transparent);
+  --lg-border: rgba(255, 255, 255, 0.18);
+  --lg-highlight: rgba(255, 255, 255, 0.26);
+  --lg-shadow: 0 14px 36px -8px rgba(0, 0, 0, 0.6);
+  --lg-shine: linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.03) 50%, rgba(255, 255, 255, 0) 100%);
+}
+
+@layer components {
+  .yaad-liquid-glass {
+    overflow: hidden;
+    background-color: var(--lg-surface);
+    -webkit-backdrop-filter: var(--lg-blur);
+    backdrop-filter: var(--lg-blur);
+    border-radius: var(--lg-radius);
+    border: 1px solid var(--lg-border);
+    box-shadow: inset 0 1px 0 var(--lg-highlight), var(--lg-shadow);
+  }
+
+  .yaad-liquid-glass::before {
+    content: '';
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-image: var(--lg-shine);
+    z-index: 0;
+  }
+
+  .yaad-liquid-glass-no-blur {
+    --lg-blur: none;
+  }
+
+  .yaad-liquid-glass-menu {
+    --lg-radius: 26px;
+    --lg-surface: rgba(255, 255, 255, 0.64);
+    --lg-shadow: 0 16px 38px -8px rgba(15, 61, 46, 0.24);
+  }
+
+  html.dark .yaad-liquid-glass-menu {
+    --lg-surface: color-mix(in oklab, var(--color-surface-container) 60%, transparent);
+    --lg-shadow: 0 16px 38px -8px rgba(0, 0, 0, 0.64);
+  }
+
+  .yaad-liquid-glass-card {
+    --lg-radius: 1.5rem;
+  }
+
+  .yaad-liquid-glass-primary {
+    --lg-surface: color-mix(in oklab, var(--color-primary) 88%, transparent);
+    --lg-surface-opaque: var(--color-primary);
+    --lg-border: rgba(255, 255, 255, 0.28);
+    --lg-highlight: rgba(255, 255, 255, 0.45);
+    --lg-shadow: 0 10px 28px -6px rgba(15, 61, 46, 0.34);
+    --lg-shine: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.04) 50%, rgba(255, 255, 255, 0) 100%);
+    background-image: linear-gradient(135deg, color-mix(in oklab, var(--color-primary) 92%, transparent) 0%, color-mix(in oklab, var(--color-primary-container) 90%, transparent) 100%);
+  }
+
+  html.dark .yaad-liquid-glass-primary {
+    --lg-surface: rgba(10, 92, 65, 0.9);
+    --lg-surface-opaque: #09533b;
+    --lg-border: rgba(255, 255, 255, 0.22);
+    --lg-highlight: rgba(255, 255, 255, 0.34);
+    --lg-shadow: 0 12px 30px -6px rgba(0, 0, 0, 0.54);
+    background-image: linear-gradient(135deg, rgba(12, 108, 77, 0.9) 0%, rgba(6, 78, 59, 0.94) 100%);
+  }
+
+  .yaad-liquid-glass-indicator {
+    --lg-surface: color-mix(in oklab, var(--color-primary) 15%, rgba(255, 255, 255, 0.32));
+    --lg-surface-opaque: color-mix(in oklab, var(--color-primary) 16%, var(--color-surface-container-lowest));
+    --lg-border: color-mix(in oklab, var(--color-primary) 24%, rgba(255, 255, 255, 0.52));
+    --lg-highlight: rgba(255, 255, 255, 0.65);
+    --lg-shadow: 0 4px 14px -4px rgba(15, 61, 46, 0.16);
+    --lg-shine: linear-gradient(180deg, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0.06) 55%, rgba(255, 255, 255, 0) 100%);
+  }
+
+  html.dark .yaad-liquid-glass-indicator {
+    --lg-surface: color-mix(in oklab, var(--color-primary) 26%, rgba(255, 255, 255, 0.06));
+    --lg-surface-opaque: color-mix(in oklab, var(--color-primary) 24%, var(--color-surface-container));
+    --lg-border: color-mix(in oklab, var(--color-primary) 42%, rgba(255, 255, 255, 0.16));
+    --lg-highlight: rgba(255, 255, 255, 0.22);
+    --lg-shadow: 0 4px 14px -4px rgba(0, 0, 0, 0.36);
+    --lg-shine: linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.03) 55%, rgba(255, 255, 255, 0) 100%);
+  }
+
+  .yaad-liquid-glass-row {
+    --lg-surface: rgba(255, 255, 255, 0.34);
+    --lg-surface-opaque: color-mix(in oklab, var(--color-surface-container-low) 96%, transparent);
+    --lg-border: rgba(255, 255, 255, 0.52);
+    --lg-highlight: rgba(255, 255, 255, 0.72);
+    --lg-shadow: 0 2px 8px -3px rgba(15, 61, 46, 0.08);
+    --lg-shine: linear-gradient(180deg, rgba(255, 255, 255, 0.26) 0%, rgba(255, 255, 255, 0) 100%);
+  }
+
+  .yaad-liquid-glass-row:hover {
+    --lg-surface: rgba(255, 255, 255, 0.68);
+  }
+
+  .yaad-liquid-glass-row:active {
+    --lg-surface: rgba(255, 255, 255, 0.85);
+  }
+
+  html.dark .yaad-liquid-glass-row {
+    --lg-surface: rgba(255, 255, 255, 0.06);
+    --lg-surface-opaque: color-mix(in oklab, var(--color-surface-container-high) 96%, transparent);
+    --lg-border: rgba(255, 255, 255, 0.12);
+    --lg-highlight: rgba(255, 255, 255, 0.16);
+    --lg-shadow: 0 2px 8px -3px rgba(0, 0, 0, 0.28);
+    --lg-shine: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%);
+  }
+
+  html.dark .yaad-liquid-glass-row:hover {
+    --lg-surface: rgba(255, 255, 255, 0.15);
+  }
+
+  html.dark .yaad-liquid-glass-row:active {
+    --lg-surface: rgba(255, 255, 255, 0.23);
+  }
+
+  .yaad-liquid-glass-chip {
+    --lg-surface: color-mix(in oklab, var(--color-primary) 13%, rgba(255, 255, 255, 0.45));
+    --lg-surface-opaque: color-mix(in oklab, var(--color-primary) 16%, var(--color-surface-container-lowest));
+    --lg-border: color-mix(in oklab, var(--color-primary) 22%, rgba(255, 255, 255, 0.6));
+    --lg-highlight: rgba(255, 255, 255, 0.72);
+    --lg-shadow: 0 2px 8px -3px rgba(15, 61, 46, 0.12);
+    --lg-shine: linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0) 100%);
+  }
+
+  html.dark .yaad-liquid-glass-chip {
+    --lg-surface: color-mix(in oklab, var(--color-primary) 24%, rgba(255, 255, 255, 0.06));
+    --lg-surface-opaque: color-mix(in oklab, var(--color-primary) 26%, var(--color-surface-container));
+    --lg-border: color-mix(in oklab, var(--color-primary) 34%, rgba(255, 255, 255, 0.18));
+    --lg-highlight: rgba(255, 255, 255, 0.22);
+    --lg-shadow: 0 2px 8px -3px rgba(0, 0, 0, 0.35);
+    --lg-shine: linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 100%);
+  }
+
+  .yaad-liquid-glass-chip-on-primary {
+    --lg-surface: rgba(255, 255, 255, 0.2);
+    --lg-surface-opaque: rgba(255, 255, 255, 0.24);
+    --lg-border: rgba(255, 255, 255, 0.34);
+    --lg-highlight: rgba(255, 255, 255, 0.52);
+    --lg-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.18);
+    --lg-shine: linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0) 100%);
+  }
+}
+
+html.yaad-low-end .yaad-liquid-glass,
+html.yaad-lite .yaad-liquid-glass {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  --lg-surface: var(--lg-surface-opaque);
+}
+
+html.yaad-low-end .yaad-liquid-glass-primary,
+html.yaad-lite .yaad-liquid-glass-primary {
   background-image: linear-gradient(135deg, var(--color-primary), var(--color-primary-container)) !important;
   background-color: var(--color-primary) !important;
 }
 
-.yaad-create-menu-glass {
-  background-image: linear-gradient(155deg, rgba(255, 255, 255, 0.68) 0%, rgba(242, 249, 246, 0.54) 100%);
-  background-color: rgba(255, 255, 255, 0.56);
-}
-
-html.dark .yaad-create-menu-glass {
-  background-image: linear-gradient(155deg, rgba(22, 34, 54, 0.66) 0%, rgba(12, 20, 34, 0.56) 100%);
-  background-color: rgba(16, 26, 44, 0.58);
-}
-
-html.yaad-low-end .yaad-create-menu-glass,
-html.yaad-lite .yaad-create-menu-glass {
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-  background-image: none !important;
-  background-color: color-mix(in oklab, var(--color-surface-container-lowest) 97%, transparent) !important;
-}
-
-html.dark.yaad-low-end .yaad-create-menu-glass,
-html.dark.yaad-lite .yaad-create-menu-glass {
-  background-image: none !important;
-  background-color: color-mix(in oklab, var(--color-surface-container) 97%, transparent) !important;
+html.dark.yaad-low-end .yaad-liquid-glass-primary,
+html.dark.yaad-lite .yaad-liquid-glass-primary {
+  background-image: linear-gradient(135deg, #0c6c4d, #064e3b) !important;
+  background-color: #09533b !important;
 }

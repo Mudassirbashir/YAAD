@@ -293,14 +293,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   onCreateList();
                 }
               }}
-              className="yaad-home-glass-card w-full min-h-[76px] sm:min-h-[96px] rounded-2xl sm:rounded-3xl bg-gradient-to-br from-primary/92 via-primary/88 to-primary-container/95 dark:from-[#0c6c4d]/95 dark:via-[#09533b]/95 dark:to-primary-container/95 p-4 sm:p-5 text-white [backdrop-filter:blur(14px)_saturate(150%)] [-webkit-backdrop-filter:blur(14px)_saturate(150%)] border border-white/25 dark:border-white/20 shadow-[0_10px_28px_-6px_rgba(15,61,46,0.28)] dark:shadow-[0_12px_30px_-6px_rgba(0,0,0,0.45)] before:content-[''] before:pointer-events-none before:absolute before:inset-0 before:rounded-[inherit] before:shadow-[inset_0_1px_0_rgba(255,255,255,0.45)] cursor-pointer relative overflow-hidden select-none group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              className="yaad-liquid-glass yaad-liquid-glass-primary yaad-liquid-glass-card relative w-full min-h-[76px] sm:min-h-[96px] p-4 sm:p-5 text-white cursor-pointer select-none group focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
-              {/* Static translucent white highlight layer */}
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/18 via-white/[0.03] to-transparent"
-              />
-
               {/* Inner flex wrapper handles transform-only press response without moving the blurred shell */}
               <div
                 className={`relative z-10 flex items-center justify-between gap-3 w-full ${
@@ -311,9 +305,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
               >
                 {/* Left side: Plus glass chip + Enlarged Create List Title */}
                 <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                  <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-white/18 flex items-center justify-center shrink-0 border border-white/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]">
+                  <div className="yaad-liquid-glass yaad-liquid-glass-no-blur yaad-liquid-glass-chip-on-primary relative w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center shrink-0">
                     <Plus
-                      className={`w-6 h-6 sm:w-7 sm:h-7 text-white stroke-[2.4] ${
+                      className={`relative z-10 w-6 h-6 sm:w-7 sm:h-7 text-white stroke-[2.4] ${
                         canAnimate ? 'transition-transform duration-200 ease-out group-hover:rotate-90' : ''
                       }`}
                     />
@@ -333,11 +327,11 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     <GroceryBasketIllustration size={68} />
                   </div>
                   <div
-                    className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/18 flex items-center justify-center text-white shrink-0 rtl:rotate-180 border border-white/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.45)] ${
+                    className={`yaad-liquid-glass yaad-liquid-glass-no-blur yaad-liquid-glass-chip-on-primary relative w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-white shrink-0 rtl:rotate-180 ${
                       canAnimate ? 'transition-transform duration-150 ease-out group-hover:scale-105' : ''
                     }`}
                   >
-                    <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2]" />
+                    <ChevronRight className="relative z-10 w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2]" />
                   </div>
                 </div>
               </div>
