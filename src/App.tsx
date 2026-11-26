@@ -2040,6 +2040,14 @@ function AppContent() {
           activeTab={activeTab}
           onTabChange={handleTabChange}
           onCreateClick={handleStartCreateList}
+          onCreateOption={(title) => {
+            if (!user) {
+              saveIntendedDestination('/create');
+              navigate('/auth');
+              return;
+            }
+            handleCreateListTitleSubmitted(title);
+          }}
         />
       )}
 

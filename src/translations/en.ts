@@ -22,6 +22,7 @@ export const en = {
     home: 'Home',
     create: 'Create',
     lists: 'Lists',
+    history: 'History',
     settings: 'Settings',
   },
 

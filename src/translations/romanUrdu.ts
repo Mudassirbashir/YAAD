@@ -24,6 +24,7 @@ export const romanUrdu: typeof en = {
     home: 'Home',
     create: 'Nayi List',
     lists: 'Lists',
+    history: 'History',
     settings: 'Settings',
   },
 
