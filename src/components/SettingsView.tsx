@@ -351,17 +351,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {/* ------------------------------------------------------------------ */}
         {/* SECTION 1: PROFILE & ACCOUNT (Directly at top of settings)         */}
         {/* ------------------------------------------------------------------ */}
-        <section id="settings_profile_section" className="flex flex-col gap-4">
+        <section id="settings_profile_section" className="flex flex-col gap-1.5">
           <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-display">
             {t('settings.accountTitle') || (language === 'ur' ? 'اکاؤنٹ' : 'Account')}
           </h2>
 
-          <div className="bg-surface-container-lowest rounded-3xl p-4 sm:p-5 border border-surface-dim/75 shadow-2xs">
+          <div className="bg-surface-container-lowest rounded-3xl p-3 sm:p-3.5 border border-surface-dim/75 shadow-2xs">
             {user ? (
-              <div className="flex items-center justify-between gap-3 sm:gap-4">
+              <div className="flex items-center justify-between gap-2.5 sm:gap-3">
                 {/* Left side: Avatar with click to edit */}
                 <div
-                  className={`relative shrink-0 flex flex-col items-center ${remoteConfig.settings?.photoUpload !== false ? 'cursor-pointer group' : ''}`}
+                  className={`relative shrink-0 min-w-[44px] min-h-[44px] flex flex-col items-center justify-center ${remoteConfig.settings?.photoUpload !== false ? 'cursor-pointer group' : ''}`}
                   onClick={remoteConfig.settings?.photoUpload !== false ? () => {
                     triggerHaptic(8);
                     setShowAvatarPicker(true);
@@ -373,19 +373,19 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     email={user.email}
                     avatarUrl={profile?.avatar_url}
                     size="lg"
-                    className="w-14 h-14 sm:w-16 sm:h-16 ring-2 ring-primary/20 group-hover:ring-primary/50 transition-shadow duration-150 rounded-full"
+                    className="w-13 h-13 sm:w-14 sm:h-14 ring-2 ring-primary/20 group-hover:ring-primary/50 transition-shadow duration-150 rounded-full"
                   />
                   {remoteConfig.settings?.photoUpload !== false && (
-                    <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center shadow-xs ring-1 ring-white">
+                    <div className="absolute -bottom-0.5 -end-0.5 w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center shadow-xs ring-1 ring-white">
                       <Pencil className="w-2.5 h-2.5" />
                     </div>
                   )}
                 </div>
 
-                {/* Profile Information: Name on top with verified badge, phone below, email below phone */}
-                <div className="flex-1 min-w-0">
+                {/* Profile Information: Name primary line, phone & email secondary lines */}
+                <div className="flex-1 min-w-0 flex flex-col gap-0.5">
                   <div className="flex items-center gap-1.5 min-w-0">
-                    <h3 className="text-[17px] font-bold text-on-surface font-display truncate leading-snug">
+                    <h3 className="text-[16px] sm:text-[17px] font-bold text-on-surface font-display truncate leading-tight">
                       {displayName}
                     </h3>
                     {isVerified && (
@@ -395,18 +395,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     )}
                   </div>
 
-                  <p className="text-[13px] text-outline font-body truncate mt-0.5 leading-snug">
-                    {displayPhone ? (
-                      <span dir="ltr" className="font-mono text-on-surface-variant font-medium">
+                  {displayPhone && (
+                    <p className="text-xs sm:text-[13px] text-on-surface-variant font-mono truncate leading-snug flex items-center gap-1.5 min-w-0">
+                      <Smartphone className="w-3.5 h-3.5 text-primary/80 shrink-0" aria-hidden="true" />
+                      <span dir="ltr" className="truncate font-medium">
                         {formatPhoneNumber(displayPhone)}
                       </span>
-                    ) : (
-                      displayEmail || (language === 'ur' ? 'کوئی فون نمبر درج نہیں' : 'No phone added')
-                    )}
-                  </p>
+                    </p>
+                  )}
 
-                  {displayPhone && displayEmail && (
-                    <p className="text-xs text-outline/80 font-body truncate leading-snug">
+                  {displayEmail && (
+                    <p className="text-xs text-outline font-body truncate leading-snug">
                       {displayEmail}
                     </p>
                   )}
@@ -424,7 +423,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     }}
                     title={language === 'ur' ? 'ایڈٹ انفو' : 'Edit Info'}
                     aria-label={language === 'ur' ? 'ایڈٹ انفو' : 'Edit Info'}
-                    className="w-11 h-11 rounded-full bg-surface-container hover:bg-surface-container-high border border-surface-dim/75 text-primary flex items-center justify-center shrink-0 cursor-pointer shadow-2xs active:scale-95 transition-[transform,background-color] duration-150 group"
+                    className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-surface-container hover:bg-surface-container-high border border-surface-dim/75 text-primary flex items-center justify-center shrink-0 cursor-pointer shadow-2xs active:scale-95 transition-[transform,background-color] duration-150 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   >
                     <Pencil className="w-4 h-4 group-hover:scale-110 transition-transform" />
                   </button>
@@ -998,12 +997,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
       </main>
 
-      {/* MODAL 1: Edit Profile Modal */}
+      {/* Full-Screen Edit Profile View */}
       <EditProfileModal
         isOpen={showEditProfileModal}
         onClose={() => setShowEditProfileModal(false)}
         initialName={displayName}
         initialPhone={displayPhone || ''}
+        email={displayEmail}
         initialAvatarUrl={profile?.avatar_url || null}
         focusPhoneOnOpen={focusPhoneInModal}
         onSave={handleSaveProfile}

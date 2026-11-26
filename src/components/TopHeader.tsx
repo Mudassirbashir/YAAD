@@ -145,8 +145,8 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   const [notifications, setNotifications] = useState<InAppNotification[]>(DEFAULT_NOTIFICATIONS);
   const [hasUnread, setHasUnread] = useState(false);
 
-  // By default, if showBack is true (inside a list, edit screen, etc.), do not crowd the header with bell
-  const effectiveHideNotifications = hideNotifications || showBack;
+  // Only explicit hideNotifications hides the bell (showBack screens still show notifications)
+  const effectiveHideNotifications = hideNotifications;
 
   const showNotificationBell = remoteConfig.header?.showNotificationBell !== false && !effectiveHideNotifications;
   const showBellBadge = remoteConfig.header?.showBellBadgeCount !== false && hasUnread;
@@ -276,7 +276,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                   onClick={handleOpenNotifications}
                   aria-label="Notifications"
                   title="Notifications & Alerts"
-                  className="w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full text-primary hover:bg-surface-container-low active:bg-surface-container active:scale-95 transition-[transform,background-color] duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 cursor-pointer"
+                  className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-primary hover:bg-surface-container-low active:bg-surface-container active:scale-95 transition-[transform,background-color] duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 cursor-pointer"
                 >
                   <Bell className="w-5 h-5 stroke-[2]" />
                 </button>
