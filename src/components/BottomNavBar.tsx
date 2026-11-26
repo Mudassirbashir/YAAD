@@ -494,7 +494,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
                   aria-label={t('nav.create') || 'Create'}
                   initial={
                     canAnimate
-                      ? { opacity: 0, scale: 0.92, y: 6 }
+                      ? { opacity: 0, scale: 0.86, y: 10 }
                       : { opacity: 0 }
                   }
                   animate={
@@ -504,86 +504,92 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
                           scale: 1,
                           y: 0,
                           transition: {
-                            duration: 0.18,
-                            ease: [0.22, 1, 0.36, 1],
+                            opacity: { duration: 0.16, ease: 'easeOut' },
+                            scale: { duration: 0.25, ease: [0.22, 1.12, 0.36, 1] },
+                            y: { duration: 0.25, ease: [0.22, 1.12, 0.36, 1] },
                           },
                         }
                       : {
                           opacity: 1,
-                          transition: { duration: 0.08 },
+                          transition: { duration: 0.08, ease: 'linear' },
                         }
                   }
                   exit={
                     canAnimate
                       ? {
                           opacity: 0,
-                          scale: 0.92,
-                          y: 6,
+                          scale: 0.86,
+                          y: 10,
                           transition: {
-                            duration: 0.14,
+                            duration: 0.16,
                             ease: [0.4, 0, 1, 1],
                           },
                         }
                       : {
                           opacity: 0,
-                          transition: { duration: 0.08 },
+                          transition: { duration: 0.08, ease: 'linear' },
                         }
                   }
                   style={{
                     transformOrigin: isRTL ? 'bottom left' : 'bottom right',
+                    willChange: canAnimate ? 'transform, opacity' : undefined,
                   }}
-                  className="absolute bottom-[calc(100%+10px)] end-0 w-[224px] max-w-[calc(100vw-24px)] rounded-3xl p-1.5 bg-surface-container-lowest/80 dark:bg-surface-container-lowest/80 backdrop-blur-lg [backdrop-filter:blur(18px)_saturate(160%)] [-webkit-backdrop-filter:blur(18px)_saturate(160%)] border border-primary/14 dark:border-white/15 shadow-[0_12px_32px_-8px_rgba(15,61,46,0.22)] dark:shadow-[0_14px_36px_-8px_rgba(0,0,0,0.6)] overflow-hidden before:content-[''] before:pointer-events-none before:absolute before:inset-0 before:rounded-[inherit] before:shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] dark:before:shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]"
+                  className="yaad-create-menu-glass absolute bottom-[calc(100%+10px)] end-0 w-[204px] max-w-[calc(100vw-24px)] rounded-[26px] p-1.5 backdrop-blur-lg [backdrop-filter:blur(18px)_saturate(165%)] [-webkit-backdrop-filter:blur(18px)_saturate(165%)] border border-white/60 dark:border-white/18 shadow-[0_14px_34px_-8px_rgba(15,61,46,0.22),inset_0_1px_0_rgba(255,255,255,0.85),inset_0_0_0_1px_rgba(255,255,255,0.28)] dark:shadow-[0_16px_38px_-8px_rgba(0,0,0,0.62),inset_0_1px_0_rgba(255,255,255,0.26),inset_0_0_0_1px_rgba(255,255,255,0.08)] overflow-hidden before:content-[''] before:pointer-events-none before:absolute before:inset-0 before:rounded-[inherit] before:bg-gradient-to-b before:from-white/38 before:via-white/6 before:to-transparent dark:before:from-white/12 dark:before:via-white/3 dark:before:to-transparent"
                 >
                   <div className="relative z-10 flex flex-col gap-0.5">
                     {createMenuOptions.map((option, idx) => {
                       const Icon = option.Icon;
                       return (
-                        <motion.button
-                          key={option.id}
-                          ref={(el) => {
-                            menuItemRefs.current[idx] = el;
-                          }}
-                          id={`nav_create_option_${option.id}`}
-                          type="button"
-                          role="menuitem"
-                          onClick={() => handleCreateOptionSelect(option)}
-                          onKeyDown={(e) => handleMenuItemKeyDown(e, idx)}
-                          initial={
-                            canAnimate
-                              ? { opacity: 0, y: 4 }
-                              : false
-                          }
-                          animate={
-                            canAnimate
-                              ? {
-                                  opacity: 1,
-                                  y: 0,
-                                  transition: {
-                                    duration: 0.15,
-                                    delay: idx * 0.025,
-                                    ease: [0.22, 1, 0.36, 1],
-                                  },
-                                }
-                              : { opacity: 1, transition: { duration: 0 } }
-                          }
-                          whileTap={canAnimate ? { scale: 0.98 } : undefined}
-                          className={`w-full min-h-[48px] px-3 py-2 rounded-2xl flex items-center gap-3 text-start text-sm font-body font-semibold text-on-surface hover:bg-primary/10 dark:hover:bg-primary/20 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                            option.isCustom
-                              ? 'mt-0.5 border-t border-primary/10 dark:border-white/10 rounded-t-xl'
-                              : ''
-                          }`}
-                        >
-                          <span
-                            className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
-                              option.isCustom
-                                ? 'bg-primary text-white'
-                                : 'bg-primary/12 dark:bg-primary/25 text-primary'
-                            }`}
+                        <React.Fragment key={option.id}>
+                          {option.isCustom && (
+                            <div
+                              aria-hidden="true"
+                              className="my-0.5 mx-3 h-px bg-primary/14 dark:bg-white/14"
+                            />
+                          )}
+                          <motion.button
+                            ref={(el) => {
+                              menuItemRefs.current[idx] = el;
+                            }}
+                            id={`nav_create_option_${option.id}`}
+                            type="button"
+                            role="menuitem"
+                            onClick={() => handleCreateOptionSelect(option)}
+                            onKeyDown={(e) => handleMenuItemKeyDown(e, idx)}
+                            initial={
+                              canAnimate
+                                ? { opacity: 0, scale: 0.94, y: 4 }
+                                : false
+                            }
+                            animate={
+                              canAnimate
+                                ? {
+                                    opacity: 1,
+                                    scale: 1,
+                                    y: 0,
+                                    transition: {
+                                      duration: 0.18,
+                                      delay: idx * 0.015,
+                                      ease: [0.22, 1, 0.36, 1],
+                                    },
+                                  }
+                                : { opacity: 1, transition: { duration: 0 } }
+                            }
+                            whileTap={canAnimate ? { scale: 0.97 } : undefined}
+                            className="w-full min-h-[44px] px-2.5 py-1.5 rounded-full flex items-center gap-2.5 text-start text-[13px] font-body font-semibold text-on-surface hover:bg-white/55 dark:hover:bg-white/14 active:bg-white/75 dark:active:bg-white/22 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                           >
-                            <Icon className="w-4 h-4 stroke-[2.2]" aria-hidden="true" />
-                          </span>
-                          <span className="truncate flex-1">{option.label}</span>
-                        </motion.button>
+                            <span
+                              className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 border ${
+                                option.isCustom
+                                  ? 'bg-primary text-white border-white/25'
+                                  : 'bg-primary/14 dark:bg-primary/25 text-primary border-primary/18 dark:border-primary/30'
+                              }`}
+                            >
+                              <Icon className="w-3.5 h-3.5 stroke-[2.3]" aria-hidden="true" />
+                            </span>
+                            <span className="truncate flex-1 leading-tight">{option.label}</span>
+                          </motion.button>
+                        </React.Fragment>
                       );
                     })}
                   </div>
@@ -608,7 +614,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
                 style={{
                   transform: `rotate(${isCreateMenuOpen ? 45 : 0}deg)`,
                   transition: canAnimate
-                    ? 'transform 180ms cubic-bezier(0.22, 1, 0.36, 1)'
+                    ? 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)'
                     : 'none',
                 }}
               >

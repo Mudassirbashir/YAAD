@@ -1108,6 +1108,26 @@ html.yaad-lite .yaad-home-glass-card {
   background-color: var(--color-primary) !important;
 }
 
+.yaad-create-menu-glass {
+  background-image: linear-gradient(155deg, rgba(255, 255, 255, 0.68) 0%, rgba(242, 249, 246, 0.54) 100%);
+  background-color: rgba(255, 255, 255, 0.56);
+}
 
+html.dark .yaad-create-menu-glass {
+  background-image: linear-gradient(155deg, rgba(22, 34, 54, 0.66) 0%, rgba(12, 20, 34, 0.56) 100%);
+  background-color: rgba(16, 26, 44, 0.58);
+}
 
+html.yaad-low-end .yaad-create-menu-glass,
+html.yaad-lite .yaad-create-menu-glass {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  background-image: none !important;
+  background-color: color-mix(in oklab, var(--color-surface-container-lowest) 97%, transparent) !important;
+}
 
+html.dark.yaad-low-end .yaad-create-menu-glass,
+html.dark.yaad-lite .yaad-create-menu-glass {
+  background-image: none !important;
+  background-color: color-mix(in oklab, var(--color-surface-container) 97%, transparent) !important;
+}
