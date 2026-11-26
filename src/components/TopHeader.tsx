@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   ArrowLeft,
-  Settings,
   Bell,
   X,
   CheckCircle2,
@@ -137,25 +136,18 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   title = 'YAAD',
   showBack = false,
   onBack,
-  onSettingsClick,
-  onAvatarClick,
-  onMenuClick,
   onNotificationsClick,
   rightAction,
   hideNotifications = false,
-  hideSettings = false,
 }) => {
   const { language } = useLanguage();
   const { config: remoteConfig } = useRemoteConfig();
-  const [isGearTapped, setIsGearTapped] = useState(false);
   const [notifications, setNotifications] = useState<InAppNotification[]>(DEFAULT_NOTIFICATIONS);
   const [hasUnread, setHasUnread] = useState(false);
 
-  // By default, if showBack is true (inside a list, edit screen, etc.), do not crowd the header with bell and gear
-  const effectiveHideSettings = hideSettings || showBack;
+  // By default, if showBack is true (inside a list, edit screen, etc.), do not crowd the header with bell
   const effectiveHideNotifications = hideNotifications || showBack;
 
-  const showSettingsGear = remoteConfig.header?.showSettingsGear !== false && !effectiveHideSettings;
   const showNotificationBell = remoteConfig.header?.showNotificationBell !== false && !effectiveHideNotifications;
   const showBellBadge = remoteConfig.header?.showBellBadgeCount !== false && hasUnread;
   const showAvatarLogo = remoteConfig.header?.showAvatarButton !== false;
@@ -191,20 +183,6 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
     }
   };
 
-  const handleSettingsClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsGearTapped(true);
-    setTimeout(() => setIsGearTapped(false), 400);
-
-    const handler = onSettingsClick || onMenuClick || onAvatarClick;
-    if (handler) {
-      handler();
-    } else if (typeof window !== 'undefined') {
-      window.history.pushState({}, '', '/settings');
-      window.dispatchEvent(new PopStateEvent('popstate'));
-    }
-  };
-
   const handleBackClick = () => {
     if (onBack) {
       onBack();
@@ -221,9 +199,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   return (
     <>
       <header className="sticky top-0 w-full z-40 bg-background/80 backdrop-blur-xl border-b border-surface-dim/40 transition-colors select-none">
-        <div className="grid grid-cols-[auto_1fr_auto] items-center px-3 sm:px-6 lg:px-8 h-14 w-full max-w-7xl mx-auto gap-2">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center px-3 sm:px-6 lg:px-8 h-14 w-full max-w-7xl mx-auto gap-2">
           {/* Left Action: Back Arrow on non-home screens, Official Logo on Home */}
-          <div className="flex items-center min-w-[44px]">
+          <div className="flex items-center justify-start min-w-[44px]">
             {showBack ? (
               <button
                 id="top_header_back_btn"
@@ -282,7 +260,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
               </div>
             )}
 
-            {/* Push Notification Bell Button with top-right dot badge */}
+            {/* Push Notification Bell Button in trailing-most slot with top-right dot badge */}
             {showNotificationBell && (
               <BadgeAnchor
                 placement="top-right"
@@ -298,30 +276,11 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                   onClick={handleOpenNotifications}
                   aria-label="Notifications"
                   title="Notifications & Alerts"
-                  className="w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full text-primary hover:bg-surface-container-low active:bg-surface-container active:scale-95 transition-[transform,background-color] duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer"
+                  className="w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full text-primary hover:bg-surface-container-low active:bg-surface-container active:scale-95 transition-[transform,background-color] duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 cursor-pointer"
                 >
                   <Bell className="w-5 h-5 stroke-[2]" />
                 </button>
               </BadgeAnchor>
-            )}
-
-            {/* Settings Gear Button */}
-            {showSettingsGear && (
-              <button
-                id="top_header_settings_btn"
-                data-testid="top_header_settings_btn"
-                type="button"
-                onClick={handleSettingsClick}
-                aria-label="Settings"
-                title="Settings"
-                className="w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full text-primary hover:bg-surface-container-low active:bg-surface-container active:scale-95 transition-[transform,background-color] duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer group"
-              >
-                <Settings
-                  className={`w-5 h-5 text-primary stroke-[2] transition-transform duration-300 ease-out group-hover:rotate-45 motion-reduce:transform-none ${
-                    isGearTapped ? 'rotate-90' : 'rotate-0'
-                  }`}
-                />
-              </button>
             )}
           </div>
         </div>

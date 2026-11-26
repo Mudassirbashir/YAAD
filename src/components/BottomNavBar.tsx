@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState, startTransition } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState, startTransition } from 'react';
 import { CalendarDays, Home, PencilLine, Plus, Settings, ShoppingBasket } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { NavigationTab } from '../types';
@@ -33,7 +33,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   const [historyAnimationTrigger, setHistoryAnimationTrigger] = useState(0);
   const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
 
-  // Optimistic visual tab so the sliding indicator reacts immediately on tap before route work
+  // Optimistic visual tab so the sliding indicator responds immediately on tap before route work
   const [visualTab, setVisualTab] = useState<NavigationTab>(activeTab);
   useEffect(() => {
     setVisualTab(activeTab);
@@ -44,6 +44,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   const settingsBtnRef = useRef<HTMLButtonElement>(null);
   const createBtnRef = useRef<HTMLButtonElement>(null);
   const createContainerRef = useRef<HTMLDivElement>(null);
+  const indicatorSquashRef = useRef<HTMLDivElement>(null);
   const menuItemRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const wasMenuOpenRef = useRef(false);
   const suppressReturnFocusRef = useRef(false);
@@ -104,6 +105,40 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
   }, [visibleTabs, showCreate]);
 
   const activeTabIndex = visibleTabs.findIndex((tab) => tab.id === visualTab);
+  const prevTabIndexRef = useRef<number>(activeTabIndex);
+
+  // Subtle liquid squash-and-stretch (scaleX/scaleY only) synchronized with translateX travel
+  useLayoutEffect(() => {
+    const prevIndex = prevTabIndexRef.current;
+    prevTabIndexRef.current = activeTabIndex;
+
+    if (
+      canAnimate &&
+      prevIndex >= 0 &&
+      activeTabIndex >= 0 &&
+      prevIndex !== activeTabIndex &&
+      indicatorSquashRef.current &&
+      typeof indicatorSquashRef.current.animate === 'function'
+    ) {
+      const distance = Math.abs(activeTabIndex - prevIndex);
+      const peakScaleX = distance > 1 ? 1.2 : 1.14;
+      const peakScaleY = distance > 1 ? 0.87 : 0.91;
+
+      indicatorSquashRef.current.getAnimations?.().forEach((anim) => anim.cancel());
+      indicatorSquashRef.current.animate(
+        [
+          { transform: 'scaleX(1) scaleY(1)' },
+          { transform: `scaleX(${peakScaleX}) scaleY(${peakScaleY})`, offset: 0.36 },
+          { transform: 'scaleX(0.96) scaleY(1.03)', offset: 0.78 },
+          { transform: 'scaleX(1) scaleY(1)' },
+        ],
+        {
+          duration: 290,
+          easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+        }
+      );
+    }
+  }, [activeTabIndex, canAnimate]);
 
   const createMenuOptions = useMemo(
     () => [
@@ -348,36 +383,43 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
         id="bottom_navigation_bar"
         role="navigation"
         aria-label={t('nav.mainNavigation') || 'Main Navigation'}
-        className="pointer-events-auto flex items-center justify-center gap-[10px] w-full max-w-[420px] select-none"
+        className="pointer-events-auto flex items-center justify-center gap-[10px] w-full max-w-[420px] h-[58px] select-none"
       >
-        {/* Main Liquid-Glass Pill */}
+        {/* Main Liquid-Glass Pill (constant height & stable equal-width tab track) */}
         {visibleTabs.length > 0 && (
           <div
             role="tablist"
             aria-orientation="horizontal"
-            className="relative flex-1 min-w-0 rounded-full p-1 bg-surface-container-lowest/80 dark:bg-surface-container-lowest/80 backdrop-blur-lg [backdrop-filter:blur(18px)_saturate(160%)] [-webkit-backdrop-filter:blur(18px)_saturate(160%)] border border-primary/12 dark:border-white/15 shadow-[0_8px_28px_-6px_rgba(15,61,46,0.16)] dark:shadow-[0_12px_32px_-6px_rgba(0,0,0,0.55)] overflow-hidden before:content-[''] before:pointer-events-none before:absolute before:inset-0 before:rounded-[inherit] before:shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] dark:before:shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]"
+            className="relative flex-1 min-w-0 h-[58px] rounded-full p-1 bg-surface-container-lowest/80 dark:bg-surface-container-lowest/80 backdrop-blur-lg [backdrop-filter:blur(18px)_saturate(160%)] [-webkit-backdrop-filter:blur(18px)_saturate(160%)] border border-primary/12 dark:border-white/15 shadow-[0_8px_28px_-6px_rgba(15,61,46,0.16)] dark:shadow-[0_12px_32px_-6px_rgba(0,0,0,0.55)] overflow-hidden before:content-[''] before:pointer-events-none before:absolute before:inset-0 before:rounded-[inherit] before:shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] dark:before:shadow-[inset_0_1px_0_rgba(255,255,255,0.2)]"
           >
             <div
-              className="relative grid w-full items-center"
+              className="relative grid w-full h-full items-center"
               style={{
                 gridTemplateColumns: `repeat(${visibleTabs.length}, minmax(0, 1fr))`,
               }}
             >
-              {/* Transform-only sliding glass indicator (no blur on moving element, no layoutId) */}
-              {activeTabIndex >= 0 && (
+              {/* Single persistent liquid-glass indicator: translateX travel + scaleX/scaleY squash-stretch, zero backdrop-filter */}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-y-0 start-0"
+                style={{
+                  width: `${100 / visibleTabs.length}%`,
+                  opacity: activeTabIndex >= 0 ? 1 : 0,
+                  transform: `translateX(${indicatorTranslateX}%)`,
+                  willChange: canAnimate ? 'transform' : undefined,
+                  transition: canAnimate
+                    ? 'transform 290ms cubic-bezier(0.22, 1.1, 0.36, 1), opacity 120ms ease-out'
+                    : 'none',
+                }}
+              >
                 <div
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-y-0 start-0 rounded-full bg-primary/12 dark:bg-primary/25 border border-primary/20 dark:border-primary/35 shadow-[inset_0_1px_0_rgba(255,255,255,0.5)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]"
+                  ref={indicatorSquashRef}
+                  className="w-full h-full rounded-full relative overflow-hidden bg-gradient-to-b from-primary/20 via-primary/12 to-primary/15 dark:from-primary/32 dark:via-primary/20 dark:to-primary/24 border border-primary/25 dark:border-primary/40 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.16)] before:content-[''] before:pointer-events-none before:absolute before:inset-x-2 before:top-0 before:h-[1px] before:bg-gradient-to-r before:from-transparent before:via-white/85 dark:before:via-white/35 before:to-transparent"
                   style={{
-                    width: `${100 / visibleTabs.length}%`,
-                    transform: `translateX(${indicatorTranslateX}%)`,
                     willChange: canAnimate ? 'transform' : undefined,
-                    transition: canAnimate
-                      ? 'transform 200ms ease-out'
-                      : 'none',
                   }}
                 />
-              )}
+              </div>
 
               {visibleTabs.map((tab, idx) => {
                 const isActive = visualTab === tab.id;
@@ -399,14 +441,14 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
                     onKeyDown={(e) => handleNavKeyDown(e, tab.id)}
                     aria-selected={isActive}
                     aria-label={tab.ariaLabel}
-                    className={`relative z-10 flex flex-col items-center justify-center gap-0.5 min-h-[48px] px-1.5 py-1 rounded-full text-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${
+                    className={`relative z-10 flex flex-col items-center justify-center gap-0.5 h-full min-h-[48px] px-1.5 py-1 rounded-full text-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${
                       canAnimate
                         ? 'transition-transform duration-150 ease-out active:scale-95'
                         : ''
                     } ${
                       isActive
-                        ? 'text-primary font-bold'
-                        : 'text-on-surface-variant/80 hover:text-on-surface font-medium'
+                        ? 'text-primary'
+                        : 'text-on-surface-variant/80 hover:text-on-surface'
                     }`}
                   >
                     {tab.id === 'home' && (
@@ -431,7 +473,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
                         aria-hidden="true"
                       />
                     )}
-                    <span className="text-[11px] sm:text-xs font-body font-semibold whitespace-nowrap leading-none max-w-full truncate">
+                    <span className="h-[13px] flex items-center justify-center text-[11px] sm:text-xs font-body font-semibold whitespace-nowrap leading-none max-w-full truncate">
                       {tab.label}
                     </span>
                   </button>
@@ -443,7 +485,7 @@ export const BottomNavBar: React.FC<BottomNavBarProps> = ({
 
         {/* Trailing Circular Create Button + Anchored Glass Menu */}
         {showCreate && (
-          <div ref={createContainerRef} className="relative shrink-0 flex items-center justify-center">
+          <div ref={createContainerRef} className="relative shrink-0 w-14 h-14 flex items-center justify-center">
             <AnimatePresence>
               {isCreateMenuOpen && (
                 <motion.div

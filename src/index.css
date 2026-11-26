@@ -246,6 +246,7 @@ html[data-app-theme="rose"] {
   html {
     overflow-x: hidden;
     width: 100%;
+    scrollbar-gutter: stable;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
   }
@@ -1100,6 +1101,13 @@ html.yaad-lite .bg-black\/75[class*="backdrop-blur"],
 html.yaad-lite .bg-black\/80[class*="backdrop-blur"] {
   background-color: rgba(0, 0, 0, 0.88) !important;
 }
+
+html.yaad-low-end .yaad-home-glass-card,
+html.yaad-lite .yaad-home-glass-card {
+  background-image: linear-gradient(135deg, var(--color-primary), var(--color-primary-container)) !important;
+  background-color: var(--color-primary) !important;
+}
+
 
 
 
