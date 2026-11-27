@@ -1018,6 +1018,18 @@ html.dark .border-neutral-100 {
   will-change: transform, opacity;
 }
 
+@keyframes yaad-shake-kf {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-5px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+
+.yaad-shake {
+  animation: yaad-shake-kf 360ms var(--ease-premium) both;
+}
+
 /* CSS-only decorative typing & caret treatment for empty inputs */
 @keyframes yaad-typing-reveal-kf {
   from {
@@ -1122,6 +1134,10 @@ html[lang="ur"] .yaad-typing-reveal,
   .yaad-typing-overlay {
     animation: none !important;
   }
+  .yaad-shake {
+    animation: none !important;
+    transform: none !important;
+  }
   .yaad-typing-reveal,
   .yaad-typing-rtl {
     animation: none !important;
@@ -1145,6 +1161,12 @@ html[lang="ur"] .yaad-typing-reveal,
     transition: none !important;
     transform: none !important;
   }
+}
+
+html.yaad-low-end .yaad-shake,
+html.yaad-lite .yaad-shake {
+  animation: none !important;
+  transform: none !important;
 }
 
 html.yaad-low-end .yaad-typing-reveal,
