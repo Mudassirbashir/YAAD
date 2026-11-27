@@ -64,7 +64,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
   onItemsChange,
   onRenameList,
 }) => {
-  const { t, getCategoryName, language } = useLanguage();
+  const { t, getCategoryName, language, isRTL } = useLanguage();
   const { config: remoteConfig } = useRemoteConfig();
   const showBarcodeScanner = remoteConfig.features?.barcodeScanner !== false;
   const showItemPhotoUpload = remoteConfig.features?.itemPhotoUpload !== false;
@@ -76,8 +76,11 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
   const [currentTitle, setCurrentTitle] = useState<string>(listTitle);
   const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
   const [titleInputVal, setTitleInputVal] = useState<string>(listTitle);
+  const [isRenameFocused, setIsRenameFocused] = useState<boolean>(false);
+  const renameMountedAtRef = useRef<number>(0);
   const renameInputRef = useRef<HTMLInputElement>(null);
   const [inputVal, setInputVal] = useState<string>('');
+  const [isSearchFocused, setIsSearchFocused] = useState<boolean>(false);
   const [selectedCategory, setSelectedCategory] = useState<CategoryId>('vegetables');
   const [userManuallySelectedCategory, setUserManuallySelectedCategory] = useState<boolean>(false);
   const [inputError, setInputError] = useState<string>('');
@@ -588,6 +591,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
   };
 
   const handleSelectSuggestion = (suggestion: CatalogSearchResult) => {
+    setIsSearchFocused(false);
     const canonical = suggestion.item;
     if (inputVal.trim()) {
       saveUserCustomAlias(inputVal.trim(), {
@@ -610,6 +614,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
   };
 
   const handleSelectRecommendation = (candidate: RecommendationCandidate) => {
+    setIsSearchFocused(false);
     acceptRecommendation(candidate);
     handleUnifiedAddItem(candidate.displayName || candidate.canonicalName, {
       canonicalName: candidate.canonicalName,
@@ -696,33 +701,79 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
             <ArrowLeft className="w-5 h-5 rtl:rotate-180 text-primary" />
           </button>
           {(() => {
+            const renamePlaceholder = t('editList.namePlaceholder') || 'Name your list...';
+            const showRenameTyping = canAnimate && !isRenameFocused && titleInputVal.length === 0;
+            const renameRtlSafe = isUrdu || isRTL || containsUrdu(renamePlaceholder);
+            const renameSteps = Math.min(Math.max(renamePlaceholder.length, 14), 32);
+
             const editingTitleInner = (
               <>
-                <input
-                  ref={renameInputRef}
-                  autoFocus
-                  type="text"
-                  value={titleInputVal}
-                  onChange={(e) => setTitleInputVal(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      const trimmed = titleInputVal.trim() || 'Shopping List';
-                      setCurrentTitle(trimmed);
-                      setIsEditingTitle(false);
-                      onRenameList?.(trimmed);
-                    } else if (e.key === 'Escape') {
-                      setTitleInputVal(currentTitle);
-                      setIsEditingTitle(false);
-                    }
-                  }}
-                  className="w-full text-sm sm:text-base font-bold text-primary bg-surface-container-low px-2.5 py-1 rounded-lg border border-primary/30 outline-none focus:ring-1 focus:ring-primary transition-[box-shadow] duration-150"
-                />
+                <div className="relative flex-1 flex items-center min-w-0">
+                  {showRenameTyping && (
+                    <span
+                      aria-hidden="true"
+                      className="yaad-typing-overlay absolute inset-y-0 inset-x-0 px-2.5 flex items-center text-sm sm:text-base font-bold text-primary/45"
+                    >
+                      {renameRtlSafe ? (
+                        <span className="yaad-typing-rtl truncate">{renamePlaceholder}</span>
+                      ) : (
+                        <span
+                          className="yaad-typing-track"
+                          style={{ '--typing-steps': renameSteps } as React.CSSProperties}
+                        >
+                          <span className="yaad-typing-sizer">{renamePlaceholder}</span>
+                          <span className="yaad-typing-reveal">{renamePlaceholder}</span>
+                        </span>
+                      )}
+                    </span>
+                  )}
+                  <input
+                    ref={renameInputRef}
+                    autoFocus
+                    type="text"
+                    dir="auto"
+                    value={titleInputVal}
+                    onFocus={() => {
+                      if (Date.now() - renameMountedAtRef.current > 100) {
+                        setIsRenameFocused(true);
+                      }
+                    }}
+                    onPointerDown={() => setIsRenameFocused(true)}
+                    onBlur={() => setIsRenameFocused(false)}
+                    onChange={(e) => {
+                      setIsRenameFocused(true);
+                      setTitleInputVal(e.target.value);
+                    }}
+                    onPaste={() => setIsRenameFocused(true)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        const trimmed = titleInputVal.trim() || 'Shopping List';
+                        setCurrentTitle(trimmed);
+                        setIsEditingTitle(false);
+                        setIsRenameFocused(false);
+                        onRenameList?.(trimmed);
+                      } else if (e.key === 'Escape') {
+                        setTitleInputVal(currentTitle);
+                        setIsEditingTitle(false);
+                        setIsRenameFocused(false);
+                      } else {
+                        setIsRenameFocused(true);
+                      }
+                    }}
+                    placeholder={renamePlaceholder}
+                    aria-label={t('editList.title') || 'Rename list'}
+                    className={`w-full text-sm sm:text-base font-bold text-primary bg-surface-container-low px-2.5 py-1 rounded-lg border border-primary/30 outline-none focus:ring-1 focus:ring-primary ${
+                      showRenameTyping ? 'placeholder:text-transparent' : 'placeholder:text-primary/45'
+                    }`}
+                  />
+                </div>
                 <button
                   type="button"
                   onClick={() => {
                     const trimmed = titleInputVal.trim() || 'Shopping List';
                     setCurrentTitle(trimmed);
                     setIsEditingTitle(false);
+                    setIsRenameFocused(false);
                     onRenameList?.(trimmed);
                   }}
                   aria-label="Save list name"
@@ -735,6 +786,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                   onClick={() => {
                     setTitleInputVal(currentTitle);
                     setIsEditingTitle(false);
+                    setIsRenameFocused(false);
                   }}
                   aria-label="Cancel editing"
                   className="w-11 h-11 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center hover:bg-surface-container-high transition-colors cursor-pointer shrink-0"
@@ -755,6 +807,8 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                 <button
                   type="button"
                   onClick={() => {
+                    renameMountedAtRef.current = Date.now();
+                    setIsRenameFocused(false);
                     setTitleInputVal(currentTitle);
                     setIsEditingTitle(true);
                   }}
@@ -839,56 +893,98 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
                 className="space-y-3"
               >
                 <div className="flex items-center gap-2 w-full">
-                  <div className="relative flex-1 flex items-center">
-                    <div className="absolute start-3.5 top-3.5 text-outline pointer-events-none">
-                      <Search className="w-5 h-5" />
-                    </div>
-                    <input
-                      ref={inputRef}
-                      type="text"
-                      dir="auto"
-                      value={inputVal}
-                      onChange={(e) => {
-                        setInputVal(e.target.value);
-                        setUserManuallySelectedCategory(false);
-                        if (inputError) setInputError('');
-                      }}
-                      onPaste={(e) => {
-                        const pasteText = e.clipboardData?.getData('text');
-                        if (pasteText && (pasteText.includes('\n') || pasteText.includes(',') || pasteText.includes('،') || pasteText.includes(';'))) {
-                          e.preventDefault();
-                          handleUnifiedAddItem(pasteText);
-                        }
-                      }}
-                      placeholder={t('addItems.inputPlaceholder') || 'Add item (e.g. Milk, Apples)...'}
-                      aria-label={t('addItems.inputPlaceholder') || 'Add item'}
-                      className="w-full h-12 bg-surface-container-low rounded-full ps-11 pe-26 text-sm sm:text-base text-on-surface font-body border border-outline-variant/60 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-[border-color,box-shadow,background-color] duration-150 placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
-                    />
+                  {(() => {
+                    const searchPlaceholder =
+                      t('addItems.inputPlaceholder') || 'Add item (e.g. Milk, Apples)...';
+                    const showSearchTyping =
+                      canAnimate && !isSearchFocused && inputVal.length === 0;
+                    const searchRtlSafe =
+                      isUrdu || isRTL || containsUrdu(searchPlaceholder);
+                    const searchSteps = Math.min(
+                      Math.max(searchPlaceholder.length, 16),
+                      34
+                    );
 
-                    {/* Clear Button */}
-                    {inputVal && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setInputVal('');
-                          inputRef.current?.focus();
-                        }}
-                        className="absolute end-13 top-1/2 -translate-y-1/2 w-11 h-11 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer"
-                        aria-label="Clear input"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    )}
+                    return (
+                      <div className="relative flex-1 flex items-center">
+                        <div className="absolute start-3.5 top-3.5 text-outline pointer-events-none z-10">
+                          <Search className="w-5 h-5" />
+                        </div>
+                        {showSearchTyping && (
+                          <span
+                            aria-hidden="true"
+                            className="yaad-typing-overlay absolute inset-y-0 inset-x-0 ps-11 pe-14 flex items-center text-sm sm:text-base font-body text-neutral-400 dark:text-neutral-500"
+                          >
+                            {searchRtlSafe ? (
+                              <span className="yaad-typing-rtl truncate">
+                                {searchPlaceholder}
+                              </span>
+                            ) : (
+                              <span
+                                className="yaad-typing-track"
+                                style={{ '--typing-steps': searchSteps } as React.CSSProperties}
+                              >
+                                <span className="yaad-typing-sizer">{searchPlaceholder}</span>
+                                <span className="yaad-typing-reveal">{searchPlaceholder}</span>
+                              </span>
+                            )}
+                          </span>
+                        )}
+                        <input
+                          ref={inputRef}
+                          type="text"
+                          dir="auto"
+                          value={inputVal}
+                          onFocus={() => setIsSearchFocused(true)}
+                          onBlur={() => setIsSearchFocused(false)}
+                          onChange={(e) => {
+                            setInputVal(e.target.value);
+                            setUserManuallySelectedCategory(false);
+                            if (inputError) setInputError('');
+                          }}
+                          onPaste={(e) => {
+                            setIsSearchFocused(true);
+                            const pasteText = e.clipboardData?.getData('text');
+                            if (pasteText && (pasteText.includes('\n') || pasteText.includes(',') || pasteText.includes('،') || pasteText.includes(';'))) {
+                              e.preventDefault();
+                              handleUnifiedAddItem(pasteText);
+                            }
+                          }}
+                          placeholder={searchPlaceholder}
+                          aria-label={t('addItems.inputPlaceholder') || 'Add item'}
+                          className={`w-full h-12 bg-surface-container-low rounded-full ps-11 pe-26 text-sm sm:text-base text-on-surface font-body border border-outline-variant/60 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-[border-color,background-color] duration-150 ${
+                            showSearchTyping
+                              ? 'placeholder:text-transparent'
+                              : 'placeholder:text-neutral-400 dark:placeholder:text-neutral-500'
+                          }`}
+                        />
 
-                    {/* Add Button - Inside Circle */}
-                    <button
-                      type="submit"
-                      className="absolute end-1.5 top-1.5 bottom-1.5 w-11 min-w-11 rounded-full bg-primary text-on-primary flex items-center justify-center hover:bg-primary-container active:scale-95 transition-[transform,background-color] duration-150 shadow-xs cursor-pointer"
-                      aria-label="Add item"
-                    >
-                      <Plus className="w-5 h-5" />
-                    </button>
-                  </div>
+                        {/* Clear Button */}
+                        {inputVal && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setInputVal('');
+                              inputRef.current?.focus();
+                            }}
+                            className="absolute end-13 top-1/2 -translate-y-1/2 w-11 h-11 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container-high transition-colors cursor-pointer"
+                            aria-label="Clear input"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        )}
+
+                        {/* Add Button - Inside Circle */}
+                        <button
+                          type="submit"
+                          className="absolute end-1.5 top-1.5 bottom-1.5 w-11 min-w-11 rounded-full bg-primary text-on-primary flex items-center justify-center hover:bg-primary-container active:scale-95 transition-[transform,background-color] duration-150 shadow-xs cursor-pointer"
+                          aria-label="Add item"
+                        >
+                          <Plus className="w-5 h-5" />
+                        </button>
+                      </div>
+                    );
+                  })()}
 
                   {/* Raised square scanner button with red BETA label */}
                   {showBarcodeScanner && (
@@ -916,7 +1012,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
 
                 {/* Real-time Catalog Search Suggestions Dropdown */}
                 {inputVal.trim().length > 0 && (
-                  <div className="space-y-2 pt-1 animate-fade-in">
+                  <div className={`space-y-2 pt-1 ${canAnimate ? 'yaad-enter-state' : ''}`}>
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-body font-bold text-outline uppercase tracking-wider block">
                         {searchSuggestions.length > 0
@@ -1043,7 +1139,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
 
                   {/* Analysis state animation (1-2 seconds) */}
                   {isAnalyzingSuggestions && (
-                    <div className="p-3 rounded-2xl bg-surface-container-low border border-primary/30 flex items-center gap-3 animate-fade-in">
+                    <div className={`p-3 rounded-2xl bg-surface-container-low border border-primary/30 flex items-center gap-3 ${canAnimate ? 'yaad-enter-state' : ''}`}>
                       <div className="w-8 h-8 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
                         <Sparkles className="w-4 h-4 text-primary animate-pulse" />
                       </div>
@@ -1060,7 +1156,7 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
 
                   {/* Suggestions Revealed after Analysis */}
                   {showSuggestions && !isAnalyzingSuggestions && (activeUnaddedSuggestions.length > 0 || addedSuggestions.length > 0) && (
-                    <div className="space-y-2 animate-slide-in-from-top">
+                    <div className={`space-y-2 ${canAnimate ? 'yaad-enter-state' : ''}`}>
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-body font-bold text-primary flex items-center gap-2">
                           <span>
@@ -1200,7 +1296,9 @@ export const AddItemsView: React.FC<AddItemsViewProps> = ({
               {/* Transient Feedback Banner */}
               {feedbackToast && (
                 <div
-                  className={`p-2.5 rounded-xl text-xs font-body font-semibold flex items-center gap-2 animate-slide-in-from-top ${
+                  className={`p-2.5 rounded-xl text-xs font-body font-semibold flex items-center gap-2 ${
+                    canAnimate ? 'yaad-enter-state' : ''
+                  } ${
                     feedbackToast.type === 'remove'
                       ? 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20'
                       : feedbackToast.type === 'merge'

@@ -17,6 +17,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { triggerHaptic } from '../../lib/sound';
 import { APP_VERSION } from '../../version';
+import { useShouldAnimate } from '../../lib/motionPreference';
 
 interface LegalDocModalProps {
   activeModal: 'privacy' | 'terms' | 'help' | 'about' | null;
@@ -29,6 +30,7 @@ export const LegalDocModal: React.FC<LegalDocModalProps> = ({
 }) => {
   const { t, isRTL, language } = useLanguage();
   const { user, profile } = useAuth();
+  const canAnimate = useShouldAnimate();
 
   // Support Ticket Form State
   const [supportCategory, setSupportCategory] = useState<'lists' | 'account' | 'sync' | 'bug' | 'other'>('lists');
@@ -111,22 +113,27 @@ export const LegalDocModal: React.FC<LegalDocModalProps> = ({
     <div
       id="legal_doc_modal_backdrop"
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in"
+      style={!canAnimate ? { animationDuration: '80ms' } : undefined}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 backdrop-blur-sm p-4 yaad-enter-fade"
       role="dialog"
       aria-modal="true"
+      aria-labelledby="legal_doc_modal_title"
       dir={isRTL ? 'rtl' : 'ltr'}
     >
       <div
         id="legal_doc_modal_container"
         onClick={(e) => e.stopPropagation()}
-        className="bg-surface-container-lowest rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl border border-surface-dim space-y-4 animate-zoom-in-95"
+        style={!canAnimate ? { animationDuration: '80ms' } : undefined}
+        className={`yaad-settings-card p-5 sm:p-6 max-w-md w-full space-y-4 ${
+          canAnimate ? 'yaad-enter-zoom' : 'yaad-enter-fade'
+        }`}
       >
-        <div className="flex items-center justify-between pb-2 border-b border-surface-dim/70">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-primary-fixed/40 text-primary flex items-center justify-center shrink-0 border border-primary/10 shadow-2xs">
+        <div className="flex items-center justify-between gap-3 pb-3 border-b yaad-settings-divider">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="yaad-settings-tile">
               {getIcon()}
             </div>
-            <h3 className="text-lg font-bold text-on-surface font-body tracking-tight">
+            <h3 id="legal_doc_modal_title" className="text-base sm:text-lg font-bold text-on-surface font-display tracking-tight truncate">
               {getTitle()}
             </h3>
           </div>
@@ -134,13 +141,13 @@ export const LegalDocModal: React.FC<LegalDocModalProps> = ({
             type="button"
             onClick={onClose}
             aria-label="Close dialog"
-            className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container-low transition-colors cursor-pointer"
+            className="w-12 h-12 min-w-[48px] min-h-[48px] rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container-low cursor-pointer shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
-        <div className="text-sm text-on-surface-variant space-y-3.5 leading-relaxed max-h-80 overflow-y-auto pr-1">
+        <div className="text-sm text-on-surface-variant space-y-3.5 leading-relaxed max-h-80 overflow-y-auto pe-1">
           {activeModal === 'about' && (
             <>
               <p>
@@ -250,16 +257,16 @@ export const LegalDocModal: React.FC<LegalDocModalProps> = ({
                     </div>
                   ) : (
                     <div className="space-y-1">
-                      <label className="text-xs font-bold text-on-surface-variant block">Your Email Address</label>
+                      <label className="text-xs font-semibold text-on-surface-variant block">Your Email Address</label>
                       <div className="relative">
-                        <Mail className="w-4 h-4 text-outline absolute left-3 top-2.5 pointer-events-none" />
+                        <Mail className="w-4 h-4 text-outline absolute start-3 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true" />
                         <input
                           type="email"
                           required
                           value={guestEmail}
                           onChange={(e) => setGuestEmail(e.target.value)}
                           placeholder="you@example.com"
-                          className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-surface border border-surface-dim focus:outline-none focus:border-primary"
+                          className="w-full min-h-[44px] ps-9 pe-3 py-2 text-xs rounded-2xl bg-surface border border-surface-dim/80 text-on-surface focus:outline-hidden focus:border-primary"
                         />
                       </div>
                     </div>
@@ -351,7 +358,9 @@ export const LegalDocModal: React.FC<LegalDocModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="w-full min-h-[44px] py-2.5 text-xs sm:text-sm font-bold text-white bg-primary hover:bg-primary/90 rounded-2xl transition-[transform,background-color] duration-150 shadow-xs active:scale-98 cursor-pointer"
+            className={`w-full min-h-[48px] py-2.5 text-xs sm:text-sm font-bold text-on-primary bg-primary hover:bg-primary/90 rounded-2xl cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+              canAnimate ? 'transition-transform duration-150 yaad-ease-premium active:scale-[0.98]' : ''
+            }`}
           >
             {t('settings.done') || 'Done'}
           </button>

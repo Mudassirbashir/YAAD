@@ -9,6 +9,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useShouldAnimate } from '../../lib/motionPreference';
 
 interface ChangePasswordModalProps {
   isOpen: boolean;
@@ -22,6 +23,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
   onSubmit,
 }) => {
   const { t, language, isRTL } = useLanguage();
+  const canAnimate = useShouldAnimate();
 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -64,6 +66,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
         type: 'error',
         text:
           t('settings.passwordsDoNotMatch') ||
+          t('settings.passwordMismatch') ||
           (language === 'ur' ? 'پاس ورڈ مماثل نہیں ہیں' : 'Passwords do not match'),
       });
       return;
@@ -101,58 +104,74 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
     <div
       id="change_password_modal_backdrop"
       onClick={() => !isUpdating && onClose()}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in"
+      style={!canAnimate ? { animationDuration: '80ms' } : undefined}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 backdrop-blur-sm p-4 yaad-enter-fade"
       role="dialog"
       aria-modal="true"
+      aria-labelledby="change_password_modal_title"
       dir={isRTL ? 'rtl' : 'ltr'}
     >
       <div
         id="change_password_modal_container"
         onClick={(e) => e.stopPropagation()}
-        className="bg-surface-container-lowest rounded-2xl sm:rounded-3xl p-5 sm:p-6 max-w-sm w-full shadow-xl border border-surface-dim/80 space-y-4 animate-zoom-in-95"
+        style={!canAnimate ? { animationDuration: '80ms' } : undefined}
+        className={`yaad-settings-card p-5 sm:p-6 max-w-sm w-full space-y-4 ${
+          canAnimate ? 'yaad-enter-zoom' : 'yaad-enter-fade'
+        }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between pb-1 border-b border-surface-dim/50">
-          <h3 className="text-base sm:text-lg font-bold text-on-surface font-display">
-            {t('settings.changePassword') || (language === 'ur' ? 'پاس ورڈ تبدیل کریں' : 'Change Password')}
-          </h3>
+        <div className="flex items-center justify-between gap-3 pb-3 border-b yaad-settings-divider">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="yaad-settings-tile">
+              <LockKeyhole className="w-5 h-5 stroke-[1.9]" aria-hidden="true" />
+            </div>
+            <h3
+              id="change_password_modal_title"
+              className="text-base sm:text-lg font-bold text-on-surface font-display truncate"
+            >
+              {t('settings.changePassword') || (language === 'ur' ? 'پاس ورڈ تبدیل کریں' : 'Change Password')}
+            </h3>
+          </div>
           <button
             type="button"
             onClick={onClose}
             disabled={isUpdating}
-            className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container-low transition-colors cursor-pointer"
+            className="w-12 h-12 min-w-[48px] min-h-[48px] rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container-low cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             aria-label="Close"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
         {/* Message Banner */}
         {message && (
           <div
-            className={`p-3 rounded-xl text-xs flex items-center gap-2 ${
+            role="status"
+            className={`p-3 rounded-2xl text-xs flex items-center gap-2 ${
+              canAnimate ? 'yaad-enter-state' : ''
+            } ${
               message.type === 'success'
-                ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                : 'bg-error-container/40 text-error border border-error/20'
+                ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800/50'
+                : 'bg-error-container/40 text-error border border-error/25'
             }`}
           >
             {message.type === 'success' ? (
-              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
             ) : (
-              <AlertCircle className="w-4 h-4 shrink-0 text-error" />
+              <AlertCircle className="w-4 h-4 shrink-0 text-error" aria-hidden="true" />
             )}
             <span className="font-medium">{message.text}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-3.5">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* New Password */}
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             <label
               htmlFor="modal_new_pwd_input"
-              className="text-xs font-bold text-on-surface font-display flex items-center gap-1.5"
+              className="text-xs font-semibold text-on-surface font-display flex items-center gap-1.5"
             >
-              <LockKeyhole className="w-3.5 h-3.5 text-primary" />
+              <LockKeyhole className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
               <span>{t('settings.newPassword') || (language === 'ur' ? 'نیا پاس ورڈ' : 'New Password')}</span>
             </label>
             <div className="relative">
@@ -163,27 +182,27 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="••••••••"
                 disabled={isUpdating}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-surface border border-surface-dim/75 text-on-surface font-mono pe-12 focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 transition-[border-color,box-shadow] duration-150 min-h-[44px]"
+                className="w-full px-3.5 py-2.5 text-sm rounded-2xl bg-surface border border-surface-dim/80 text-on-surface font-mono pe-12 focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 min-h-[48px]"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowNew(!showNew)}
                 aria-label={showNew ? 'Hide new password' : 'Show new password'}
-                className="absolute inset-y-0 end-0 w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center text-outline hover:text-on-surface cursor-pointer rounded-r-xl"
+                className="absolute inset-y-0 end-0 w-12 h-12 min-w-[48px] min-h-[48px] flex items-center justify-center text-outline hover:text-on-surface cursor-pointer rounded-e-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
-                {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showNew ? <EyeOff className="w-4 h-4" aria-hidden="true" /> : <Eye className="w-4 h-4" aria-hidden="true" />}
               </button>
             </div>
           </div>
 
           {/* Confirm Password */}
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             <label
               htmlFor="modal_confirm_pwd_input"
-              className="text-xs font-bold text-on-surface font-display flex items-center gap-1.5"
+              className="text-xs font-semibold text-on-surface font-display flex items-center gap-1.5"
             >
-              <LockKeyhole className="w-3.5 h-3.5 text-primary" />
+              <LockKeyhole className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
               <span>{t('settings.confirmPassword') || (language === 'ur' ? 'پاس ورڈ کی تصدیق کریں' : 'Confirm Password')}</span>
             </label>
             <div className="relative">
@@ -194,16 +213,16 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="••••••••"
                 disabled={isUpdating}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-surface border border-surface-dim/75 text-on-surface font-mono pe-12 focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 transition-[border-color,box-shadow] duration-150 min-h-[44px]"
+                className="w-full px-3.5 py-2.5 text-sm rounded-2xl bg-surface border border-surface-dim/80 text-on-surface font-mono pe-12 focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 min-h-[48px]"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowConfirm(!showConfirm)}
                 aria-label={showConfirm ? 'Hide confirm password' : 'Show confirm password'}
-                className="absolute inset-y-0 end-0 w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center text-outline hover:text-on-surface cursor-pointer rounded-r-xl"
+                className="absolute inset-y-0 end-0 w-12 h-12 min-w-[48px] min-h-[48px] flex items-center justify-center text-outline hover:text-on-surface cursor-pointer rounded-e-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
-                {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showConfirm ? <EyeOff className="w-4 h-4" aria-hidden="true" /> : <Eye className="w-4 h-4" aria-hidden="true" />}
               </button>
             </div>
           </div>
@@ -214,22 +233,24 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
               type="button"
               onClick={onClose}
               disabled={isUpdating}
-              className="px-4 py-2.5 min-h-[44px] text-xs font-semibold text-outline hover:text-on-surface bg-surface-container-low hover:bg-surface-container rounded-xl transition-colors cursor-pointer flex items-center justify-center"
+              className="px-4 py-2.5 min-h-[48px] text-xs sm:text-sm font-semibold text-on-surface-variant hover:text-on-surface bg-surface-container-low hover:bg-surface-container border border-surface-dim/60 rounded-2xl cursor-pointer flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               {t('settings.cancel') || 'Cancel'}
             </button>
             <button
               type="submit"
               disabled={isUpdating || newPassword.length < 6 || newPassword !== confirmPassword}
-              className="px-5 py-2.5 min-h-[44px] text-xs font-bold text-white bg-primary hover:bg-primary/90 rounded-xl transition-[transform,background-color,opacity] duration-150 disabled:opacity-50 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+              className={`px-5 py-2.5 min-h-[48px] text-xs sm:text-sm font-bold text-on-primary bg-primary hover:bg-primary/90 rounded-2xl disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                canAnimate ? 'transition-[transform,opacity] duration-150 yaad-ease-premium active:scale-[0.98]' : ''
+              }`}
             >
               {isUpdating ? (
                 <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
                   <span>{t('settings.saving') || 'Saving...'}</span>
                 </>
               ) : (
-                <span>{t('settings.save') || (language === 'ur' ? 'محفوظ کریں' : 'Save Password')}</span>
+                <span>{t('settings.save') || t('settings.saveName') || (language === 'ur' ? 'محفوظ کریں' : 'Save Password')}</span>
               )}
             </button>
           </div>

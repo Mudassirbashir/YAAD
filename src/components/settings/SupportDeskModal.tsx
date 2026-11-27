@@ -12,6 +12,7 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useShouldAnimate } from '../../lib/motionPreference';
 
 interface SupportDeskModalProps {
   isOpen: boolean;
@@ -31,6 +32,7 @@ export const SupportDeskModal: React.FC<SupportDeskModalProps> = ({
   userPhone,
 }) => {
   const { t, language, isRTL } = useLanguage();
+  const canAnimate = useShouldAnimate();
 
   const [category, setCategory] = useState<'app_issue' | 'grocery_catalog' | 'account' | 'feedback' | 'other'>('app_issue');
   const [subject, setSubject] = useState('');
@@ -113,28 +115,33 @@ export const SupportDeskModal: React.FC<SupportDeskModalProps> = ({
     <div
       id="support_modal_backdrop"
       onClick={() => !isSubmitting && handleDone()}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in"
+      style={!canAnimate ? { animationDuration: '80ms' } : undefined}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 backdrop-blur-sm p-4 yaad-enter-fade"
       role="dialog"
       aria-modal="true"
+      aria-labelledby="support_modal_title"
       dir={isRTL ? 'rtl' : 'ltr'}
     >
       <div
         id="support_modal_container"
         onClick={(e) => e.stopPropagation()}
-        className="bg-white rounded-3xl p-5 sm:p-6 max-w-md w-full shadow-2xl border border-neutral-200 text-neutral-900 space-y-4 max-h-[90vh] overflow-y-auto animate-zoom-in-95"
+        style={!canAnimate ? { animationDuration: '80ms' } : undefined}
+        className={`yaad-settings-card p-5 sm:p-6 max-w-md w-full text-on-surface space-y-4 max-h-[90vh] overflow-y-auto ${
+          canAnimate ? 'yaad-enter-zoom' : 'yaad-enter-fade'
+        }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-[#003527] flex items-center justify-center">
-              <Headphones className="w-5 h-5" />
+        <div className="flex items-center justify-between gap-3 pb-3 border-b yaad-settings-divider">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="yaad-settings-tile">
+              <Headphones className="w-5 h-5 stroke-[1.9]" aria-hidden="true" />
             </div>
-            <div>
-              <h3 className="text-base font-bold text-[#003527] font-body">
+            <div className="min-w-0">
+              <h3 id="support_modal_title" className="text-base font-bold text-on-surface font-display truncate">
                 {language === 'ur' ? 'یاڈ کسٹمر سپورٹ ڈیسک' : 'Customer Support Desk'}
               </h3>
-              <p className="text-[11px] text-neutral-500">
-                {language === 'ur' ? 'براہ راست ایڈمن سپورٹ سے رابطہ کریں' : 'Direct inquiry to YAAD Admin Desk'}
+              <p className="text-xs text-outline font-body truncate">
+                {language === 'ur' ? 'براہ راست ایڈمن سپورٹ سے رابطہ کریں' : 'Direct inquiry to YAAD Support'}
               </p>
             </div>
           </div>
@@ -142,37 +149,37 @@ export const SupportDeskModal: React.FC<SupportDeskModalProps> = ({
             type="button"
             onClick={handleDone}
             disabled={isSubmitting}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
+            className="w-12 h-12 min-w-[48px] min-h-[48px] rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container-low cursor-pointer shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             aria-label="Close"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
         {submittedTicket ? (
           /* Submission Success State */
-          <div className="space-y-4 py-3 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center mx-auto">
-              <CheckCircle2 className="w-8 h-8" />
+          <div className={`space-y-4 py-3 text-center ${canAnimate ? 'yaad-enter-state' : ''}`}>
+            <div className="w-14 h-14 rounded-2xl bg-primary/12 text-primary flex items-center justify-center mx-auto">
+              <CheckCircle2 className="w-8 h-8" aria-hidden="true" />
             </div>
-            <div className="space-y-1">
-              <h4 className="text-base font-bold text-neutral-900">
+            <div className="space-y-1.5">
+              <h4 className="text-base font-bold text-on-surface font-display">
                 {language === 'ur' ? 'شکایت کامیابی سے درج ہو گئی!' : 'Inquiry Submitted Successfully!'}
               </h4>
-              <p className="text-xs text-neutral-600 max-w-xs mx-auto leading-relaxed">
+              <p className="text-[13px] text-on-surface-variant max-w-xs mx-auto leading-relaxed">
                 {language === 'ur'
                   ? `آپ کا ٹکٹ نمبر ${submittedTicket.ticketNumber} ہے۔ ایڈمن کا جواب آپ کے ایپ نوٹیفکیشن میں موصول ہوگا۔`
                   : `Your ticket ${submittedTicket.ticketNumber} has been logged. Admin responses will appear in your notification alerts.`}
               </p>
             </div>
-            <div className="p-3 bg-neutral-50 rounded-2xl border border-neutral-200 text-xs text-neutral-600 flex items-center justify-center gap-2">
-              <HelpCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+            <div className="p-3 bg-surface-container-low rounded-2xl border border-surface-dim/65 text-xs text-on-surface-variant flex items-center justify-center gap-2">
+              <HelpCircle className="w-4 h-4 text-primary shrink-0" aria-hidden="true" />
               <span>{language === 'ur' ? 'ہماری سپورٹ ٹیم جلد جائزہ لے گی۔' : 'Our team will review your inquiry shortly.'}</span>
             </div>
             <button
               type="button"
               onClick={handleDone}
-              className="w-full py-2.5 rounded-xl bg-[#003527] hover:bg-[#00271c] text-white font-bold text-xs shadow-xs cursor-pointer transition-colors duration-150"
+              className="w-full min-h-[48px] py-2.5 px-4 rounded-2xl bg-primary hover:bg-primary/90 text-on-primary font-bold text-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             >
               {language === 'ur' ? 'ٹھیک ہے' : 'Done & Close'}
             </button>
@@ -181,49 +188,50 @@ export const SupportDeskModal: React.FC<SupportDeskModalProps> = ({
           /* Complaint Submission Form */
           <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
             {/* Auto-filled User Details Card */}
-            <div className="bg-emerald-50/70 border border-emerald-100 rounded-2xl p-3.5 space-y-2">
-              <div className="flex items-center justify-between text-[11px] text-emerald-900 font-bold">
-                <span>{language === 'ur' ? 'خودکار تصدیق شدہ شناخت' : 'Auto-Verified Account Profile'}</span>
-                <span className="text-[10px] bg-emerald-200/70 text-[#003527] px-2 py-0.5 rounded-full font-mono">
+            <div className="bg-surface-container-low border border-surface-dim/65 rounded-2xl p-3.5 space-y-2">
+              <div className="flex items-center justify-between gap-2 text-xs text-primary font-bold">
+                <span>{language === 'ur' ? 'خودکار تصدیق شدہ شناخت' : 'Account Profile'}</span>
+                <span className="text-[11px] font-semibold text-primary font-mono">
                   {language === 'ur' ? 'لاگ ان شدہ' : 'Synced'}
                 </span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-neutral-700">
-                <div className="flex items-center gap-1.5 truncate">
-                  <User className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
-                  <span className="font-semibold truncate">{resolvedName}</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-on-surface-variant">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <User className="w-3.5 h-3.5 text-primary shrink-0" aria-hidden="true" />
+                  <span className="font-semibold truncate text-on-surface">{resolvedName}</span>
                 </div>
                 {resolvedEmail && (
-                  <div className="flex items-center gap-1.5 truncate">
-                    <Mail className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
-                    <span className="truncate">{resolvedEmail}</span>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <Mail className="w-3.5 h-3.5 text-primary shrink-0" aria-hidden="true" />
+                    <span dir="ltr" className="truncate">{resolvedEmail}</span>
                   </div>
                 )}
                 {resolvedPhone && (
-                  <div className="flex items-center gap-1.5 truncate">
-                    <Phone className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
-                    <span className="font-mono">{resolvedPhone}</span>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <Phone className="w-3.5 h-3.5 text-primary shrink-0" aria-hidden="true" />
+                    <span dir="ltr" className="font-mono truncate">{resolvedPhone}</span>
                   </div>
                 )}
               </div>
             </div>
 
             {errorMessage && (
-              <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
+              <div className={`p-3 bg-error-container/40 border border-error/25 text-error rounded-2xl flex items-center gap-2 ${canAnimate ? 'yaad-enter-state' : ''}`}>
+                <AlertCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
                 <span>{errorMessage}</span>
               </div>
             )}
 
             {/* Category Dropdown */}
-            <div className="space-y-1">
-              <label className="text-[11px] font-bold text-neutral-700">
+            <div className="space-y-1.5">
+              <label htmlFor="support_category_select" className="text-xs font-semibold text-on-surface block">
                 {language === 'ur' ? 'معاملہ کی نوعیت' : 'Inquiry Category'}
               </label>
               <select
+                id="support_category_select"
                 value={category}
                 onChange={(e) => setCategory(e.target.value as any)}
-                className="w-full px-3 py-2.5 rounded-xl border border-neutral-200 text-xs text-neutral-900 bg-white font-semibold focus:outline-none focus:border-[#003527]"
+                className="w-full min-h-[48px] px-3.5 py-2.5 rounded-2xl border border-surface-dim/80 text-xs sm:text-sm text-on-surface bg-surface font-medium focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20"
               >
                 <option value="app_issue">{language === 'ur' ? 'تکنیکی خرابی (App Issue)' : 'App Technical Issue'}</option>
                 <option value="grocery_catalog">{language === 'ur' ? 'اشیاء اور پرچی (Grocery Items / Parchi)' : 'Grocery Items / Parchi'}</option>
@@ -234,25 +242,27 @@ export const SupportDeskModal: React.FC<SupportDeskModalProps> = ({
             </div>
 
             {/* Optional Subject */}
-            <div className="space-y-1">
-              <label className="text-[11px] font-bold text-neutral-700">
+            <div className="space-y-1.5">
+              <label htmlFor="support_subject_input" className="text-xs font-semibold text-on-surface block">
                 {language === 'ur' ? 'مختصر عنوان (اختیاری)' : 'Subject (Optional)'}
               </label>
               <input
+                id="support_subject_input"
                 type="text"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 placeholder={language === 'ur' ? 'مثال: سبزیوں کی قیمت میں مسئلہ' : 'e.g. Issue saving shopping list'}
-                className="w-full px-3.5 py-2 rounded-xl border border-neutral-200 text-xs focus:outline-none focus:border-[#003527]"
+                className="w-full min-h-[48px] px-3.5 py-2.5 rounded-2xl border border-surface-dim/80 bg-surface text-on-surface text-xs sm:text-sm placeholder:text-outline focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20"
               />
             </div>
 
             {/* Description Textarea */}
-            <div className="space-y-1">
-              <label className="text-[11px] font-bold text-neutral-700">
+            <div className="space-y-1.5">
+              <label htmlFor="support_description_input" className="text-xs font-semibold text-on-surface block">
                 {language === 'ur' ? 'اپنا مسئلہ یا شکایت لکھیں *' : 'Explain your issue or inquiry *'}
               </label>
               <textarea
+                id="support_description_input"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder={
@@ -262,32 +272,34 @@ export const SupportDeskModal: React.FC<SupportDeskModalProps> = ({
                 }
                 rows={4}
                 required
-                className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 text-xs focus:outline-none focus:border-[#003527] resize-none leading-relaxed"
+                className="w-full px-3.5 py-2.5 rounded-2xl border border-surface-dim/80 bg-surface text-on-surface text-xs sm:text-sm placeholder:text-outline focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none leading-relaxed"
               />
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2">
+            <div className="flex items-center justify-end gap-2.5 pt-2">
               <button
                 type="button"
                 onClick={handleDone}
                 disabled={isSubmitting}
-                className="px-4 py-2 rounded-xl border border-neutral-200 text-neutral-600 font-bold hover:bg-neutral-50 transition-colors cursor-pointer"
+                className="min-h-[48px] px-4 py-2.5 rounded-2xl border border-surface-dim/70 bg-surface-container-low hover:bg-surface-container text-on-surface-variant font-semibold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 {t('settings.cancel') || 'Cancel'}
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting || !description.trim()}
-                className="px-5 py-2 rounded-xl bg-[#003527] hover:bg-[#00271c] text-white font-bold transition-[background-color,opacity] duration-150 disabled:opacity-50 flex items-center gap-1.5 cursor-pointer shadow-xs"
+                className={`min-h-[48px] px-5 py-2.5 rounded-2xl bg-primary hover:bg-primary/90 text-on-primary font-bold disabled:opacity-50 flex items-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                  canAnimate ? 'transition-[transform,opacity] duration-150 yaad-ease-premium active:scale-[0.98]' : ''
+                }`}
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
                     <span>{language === 'ur' ? 'بھیجا جا رہا ہے...' : 'Submitting...'}</span>
                   </>
                 ) : (
                   <>
-                    <Send className="w-3.5 h-3.5" />
+                    <Send className="w-4 h-4" aria-hidden="true" />
                     <span>{language === 'ur' ? 'شکایت جمع کریں' : 'Submit Inquiry'}</span>
                   </>
                 )}

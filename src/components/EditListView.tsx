@@ -12,7 +12,7 @@ import { parseMultiItemInput } from '../lib/recognition/engine';
 import { generateUUID } from '../lib/uuid';
 import { QuantityEditModal } from './QuantityEditModal';
 import { playItemCheckSound, triggerHaptic } from '../lib/sound';
-import { BidiText } from '../utils/bidi';
+import { BidiText, containsUrdu } from '../utils/bidi';
 import { resolveVisual } from '../lib/catalog/visualResolver';
 import { useCatalogVersion } from '../lib/catalog/supabaseCatalog';
 import { useShouldAnimate } from '../lib/motionPreference';
@@ -32,13 +32,14 @@ export const EditListView: React.FC<EditListViewProps> = ({
   onOpenProfile,
   onDeleteList,
 }) => {
-  const { t, getCategoryName, language } = useLanguage();
+  const { t, getCategoryName, language, isRTL } = useLanguage();
   useCatalogVersion();
   const { theme, currentThemeConfig } = useAppTheme();
   const canAnimate = useShouldAnimate();
   const isUrdu = language === 'ur';
 
   const [title, setTitle] = useState<string>(list.title);
+  const [isNameFocused, setIsNameFocused] = useState<boolean>(false);
   const [items, setItems] = useState<ShoppingItem[]>(list.items);
   const [newItemName, setNewItemName] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<CategoryId>('vegetables');
@@ -208,15 +209,49 @@ export const EditListView: React.FC<EditListViewProps> = ({
           <label className="sr-only" htmlFor="listName">
             {t('editList.title')}
           </label>
-          <input
-            id="listName"
-            dir="auto"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full bg-transparent border-b-2 border-primary focus:border-primary-container outline-none py-1 text-2xl sm:text-3xl font-extrabold font-display text-primary transition-colors tracking-tight"
-            placeholder={t('editList.namePlaceholder')}
-            type="text"
-          />
+          {(() => {
+            const listNamePlaceholder = t('editList.namePlaceholder') || 'Name your list...';
+            const showNameTyping = canAnimate && !isNameFocused && title.length === 0;
+            const nameRtlSafe = isUrdu || isRTL || containsUrdu(listNamePlaceholder);
+            const nameSteps = Math.min(Math.max(listNamePlaceholder.length, 14), 32);
+
+            return (
+              <div className="relative">
+                {showNameTyping && (
+                  <span
+                    aria-hidden="true"
+                    className="yaad-typing-overlay absolute inset-y-0 inset-x-0 py-1 flex items-center text-2xl sm:text-3xl font-extrabold font-display text-primary/40 tracking-tight"
+                  >
+                    {nameRtlSafe ? (
+                      <span className="yaad-typing-rtl truncate">{listNamePlaceholder}</span>
+                    ) : (
+                      <span
+                        className="yaad-typing-track"
+                        style={{ '--typing-steps': nameSteps } as React.CSSProperties}
+                      >
+                        <span className="yaad-typing-sizer">{listNamePlaceholder}</span>
+                        <span className="yaad-typing-reveal">{listNamePlaceholder}</span>
+                      </span>
+                    )}
+                  </span>
+                )}
+                <input
+                  id="listName"
+                  dir="auto"
+                  value={title}
+                  onFocus={() => setIsNameFocused(true)}
+                  onBlur={() => setIsNameFocused(false)}
+                  onPaste={() => setIsNameFocused(true)}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className={`w-full bg-transparent border-b-2 border-primary focus:border-primary-container outline-none py-1 text-2xl sm:text-3xl font-extrabold font-display text-primary transition-colors tracking-tight ${
+                    showNameTyping ? 'placeholder:text-transparent' : ''
+                  }`}
+                  placeholder={listNamePlaceholder}
+                  type="text"
+                />
+              </div>
+            );
+          })()}
           <p className="text-on-surface-variant font-body text-xs sm:text-sm mt-1">
             {t('editList.editingCount', { count: items.length })}
           </p>
@@ -225,7 +260,9 @@ export const EditListView: React.FC<EditListViewProps> = ({
         {/* Transient Feedback Banner */}
         {feedbackToast && (
           <div
-            className={`p-2.5 rounded-xl text-xs font-body font-semibold flex items-center gap-2 animate-slide-in-from-top ${
+            className={`p-2.5 rounded-xl text-xs font-body font-semibold flex items-center gap-2 ${
+              canAnimate ? 'yaad-enter-state' : ''
+            } ${
               feedbackToast.type === 'remove'
                 ? 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20'
                 : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20'
@@ -539,14 +576,14 @@ export const EditListView: React.FC<EditListViewProps> = ({
             {showDeleteConfirm && (
               <motion.div
                 initial={{ opacity: 0 }}
-                animate={{ opacity: 1, transition: { duration: 0.16, ease: [0.32, 0.72, 0, 1] } }}
+                animate={{ opacity: 1, transition: { duration: 0.18, ease: [0.16, 1, 0.3, 1] } }}
                 exit={{ opacity: 0, transition: { duration: 0.14, ease: [0.36, 0, 0.66, 0] } }}
                 onClick={() => setShowDeleteConfirm(false)}
                 className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4"
               >
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1, transition: { duration: 0.18, ease: [0.32, 0.72, 0, 1] } }}
+                  animate={{ opacity: 1, scale: 1, transition: { duration: 0.2, ease: [0.16, 1, 0.3, 1] } }}
                   exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.16, ease: [0.36, 0, 0.66, 0] } }}
                   onClick={(e) => e.stopPropagation()}
                   className="bg-white dark:bg-stone-900 rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-surface-dim space-y-4"

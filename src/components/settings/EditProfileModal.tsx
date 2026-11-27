@@ -306,7 +306,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
         dir={isRTL ? 'rtl' : 'ltr'}
         style={!canAnimate ? { animationDuration: '80ms' } : undefined}
         className={`fixed inset-0 z-50 bg-background text-on-surface flex flex-col overflow-y-auto overscroll-contain font-sans ${
-          canAnimate ? 'animate-slide-in-from-bottom' : 'animate-fade-in'
+          canAnimate ? 'yaad-enter-slide-up' : 'yaad-enter-fade'
         }`}
       >
             {/* Full-Screen Liquid-Glass Header Area */}
@@ -345,7 +345,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
             {/* Full-Screen Body */}
             <main className="flex-1 w-full max-w-xl mx-auto px-4 sm:px-6 pt-2 pb-[calc(env(safe-area-inset-bottom,0px)+28px)] flex flex-col gap-4">
               {errorMessage && (
-                <div className="p-3 rounded-2xl bg-error-container/30 border border-error/25 text-xs text-error flex items-center gap-2">
+                <div className={`p-3 rounded-2xl bg-error-container/30 border border-error/25 text-xs text-error flex items-center gap-2 ${canAnimate ? 'yaad-enter-state' : ''}`}>
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{errorMessage}</span>
                 </div>
@@ -436,7 +436,9 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                   {isUploadingPhoto && (
                     <div
                       id="profile_photo_uploading_indicator"
-                      className="relative z-10 w-full flex items-center justify-center gap-2 p-2.5 rounded-2xl bg-primary/10 text-primary text-xs font-semibold"
+                      className={`relative z-10 w-full flex items-center justify-center gap-2 p-2.5 rounded-2xl bg-primary/10 text-primary text-xs font-semibold ${
+                        canAnimate ? 'yaad-enter-state' : ''
+                      }`}
                     >
                       <Loader2 className="w-4 h-4 animate-spin shrink-0" />
                       <span>
@@ -448,7 +450,9 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                   {photoUploadError && !isUploadingPhoto && (
                     <div
                       id="profile_photo_upload_error_box"
-                      className="relative z-10 w-full flex flex-col gap-1.5 p-3 rounded-2xl bg-error-container/30 border border-error/25 text-error text-xs text-start"
+                      className={`relative z-10 w-full flex flex-col gap-1.5 p-3 rounded-2xl bg-error-container/30 border border-error/25 text-error text-xs text-start ${
+                        canAnimate ? 'yaad-enter-state' : ''
+                      }`}
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-1.5 min-w-0">
@@ -464,7 +468,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                             onClick={handleRetryUpload}
                             disabled={isSaving}
                             className={`min-h-[44px] px-3.5 py-1.5 rounded-full bg-error text-white font-semibold text-xs hover:bg-error/90 shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-1 ${
-                              canAnimate ? 'transition-transform duration-150 active:scale-95' : ''
+                              canAnimate ? 'transition-transform duration-150 yaad-ease-premium active:scale-95' : ''
                             }`}
                           >
                             {language === 'ur' ? 'دوبارہ کوشش کریں' : 'Retry'}
@@ -480,7 +484,9 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                   {photoSuccessMsg && !isUploadingPhoto && !photoUploadError && (
                     <div
                       id="profile_photo_success_indicator"
-                      className="relative z-10 w-full flex items-center justify-center gap-2 p-2.5 rounded-2xl bg-emerald-500/12 border border-emerald-500/25 text-emerald-700 dark:text-emerald-300 text-xs font-semibold"
+                      className={`relative z-10 w-full flex items-center justify-center gap-2 p-2.5 rounded-2xl bg-emerald-500/12 border border-emerald-500/25 text-emerald-700 dark:text-emerald-300 text-xs font-semibold ${
+                        canAnimate ? 'yaad-enter-state' : ''
+                      }`}
                     >
                       <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                       <span>{photoSuccessMsg}</span>

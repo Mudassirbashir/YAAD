@@ -6,15 +6,11 @@ import {
   Palette,
   Volume2,
   VolumeX,
-  Bell,
-  BellRing,
   Globe2,
   LockKeyhole,
   LogOut,
   Sparkles,
   Headphones,
-  ShieldCheck,
-  ScrollText,
   Info,
   Check,
   ChevronRight,
@@ -22,10 +18,12 @@ import {
   Trash2,
   Gauge,
   Zap,
+  AlertTriangle,
+  Loader2,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { useAppTheme, AppThemeId } from '../context/ThemeContext';
+import { useAppTheme } from '../context/ThemeContext';
 import { useRemoteConfig } from '../hooks/useRemoteConfig';
 import { Language } from '../translations';
 import { APP_VERSION } from '../version';
@@ -64,16 +62,61 @@ interface SettingsViewProps {
   ) => void;
 }
 
+interface SettingsSwitchProps {
+  id: string;
+  checked: boolean;
+  onToggle: () => void;
+  ariaLabel: string;
+  isRTL: boolean;
+  canAnimate: boolean;
+}
+
+const SettingsSwitch: React.FC<SettingsSwitchProps> = ({
+  id,
+  checked,
+  onToggle,
+  ariaLabel,
+  isRTL,
+  canAnimate,
+}) => (
+  <button
+    type="button"
+    id={id}
+    role="switch"
+    aria-checked={checked}
+    aria-label={ariaLabel}
+    onClick={onToggle}
+    className="min-w-[52px] min-h-[48px] flex items-center justify-center rounded-full shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+  >
+    <span
+      className={`w-[50px] h-[30px] rounded-full p-[3px] flex items-center border ${
+        canAnimate ? 'transition-[background-color,border-color] duration-150 yaad-ease-premium' : ''
+      } ${
+        checked
+          ? 'bg-primary border-primary'
+          : 'bg-surface-dim/90 dark:bg-slate-700 border-outline/25 dark:border-slate-600'
+      }`}
+    >
+      <span
+        className={`w-[22px] h-[22px] rounded-full bg-white shadow-xs flex items-center justify-center ${
+          canAnimate ? 'transition-transform duration-150 yaad-ease-premium' : ''
+        } ${checked ? (isRTL ? '-translate-x-5' : 'translate-x-5') : 'translate-x-0'}`}
+      >
+        {checked && (
+          <Check className="w-3 h-3 text-primary stroke-[3]" aria-hidden="true" />
+        )}
+      </span>
+    </span>
+  </button>
+);
+
 export const SettingsView: React.FC<SettingsViewProps> = ({
   onBack,
   onSignOut,
   onDeleteAccount,
   onOpenAuth,
   onOpenLegalPage,
-  initialEditPhone = false,
-  onClearInitialEditPhone,
   subSection = null,
-  onSubSectionChange,
 }) => {
   const { t, language, setLanguage, isRTL } = useLanguage();
   const { user, profile, updateUserProfile, changePassword } = useAuth();
@@ -91,6 +134,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [showSupportModal, setShowSupportModal] = useState(false);
   const [showSignOutModal, setShowSignOutModal] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [activeLegalModal, setActiveLegalModal] = useState<
     'privacy' | 'terms' | 'help' | 'about' | null
   >(null);
@@ -107,14 +152,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       const targetId = `settings_${subSection}_section`;
       const el = document.getElementById(targetId);
       if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.scrollIntoView({ behavior: canAnimate ? 'smooth' : 'auto', block: 'center' });
       }
       const timer = setTimeout(() => {
         setHighlightedSection(null);
       }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [subSection]);
+  }, [subSection, canAnimate]);
 
   // Milo companion active state
   const [miloActive, setMiloActive] = useState<boolean>(() => isMiloEnabled());
@@ -196,7 +241,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     }
   };
 
-  // Push notifications state
+  // Push notifications state (preserved as inactive state; no unrendered row added)
   const [pushEnabled, setPushEnabled] = useState<boolean>(() => {
     try {
       return localStorage.getItem('yaad_push_enabled') !== 'false';
@@ -205,7 +250,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     }
   });
 
-  const handleTogglePush = async () => {
+  const _handleTogglePush = async () => {
     triggerHaptic(8);
     triggerMiloEvent('settings_saved');
     if (!pushEnabled) {
@@ -226,6 +271,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       localStorage.setItem('yaad_push_enabled', 'false');
     }
   };
+  void _handleTogglePush;
 
   // Language selection handler
   const handleSelectLanguage = async (newLang: Language) => {
@@ -260,7 +306,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     if (!res.error) {
       triggerHaptic([20, 15, 30]);
       triggerMiloEvent('settings_saved');
-      setAvatarToast(isRTL ? 'پروفائل تصویر کامیابی سے اپڈیٹ ہوگئی!' : 'Profile picture updated successfully!');
+      setAvatarToast(
+        language === 'ur'
+          ? 'پروفائل تصویر کامیابی سے اپڈیٹ ہوگئی!'
+          : language === 'roman-urdu'
+          ? 'Profile picture kamyabi se update ho gayi!'
+          : 'Profile picture updated successfully!'
+      );
       setTimeout(() => setAvatarToast(null), 3500);
     }
   };
@@ -273,6 +325,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     } finally {
       setIsSigningOut(false);
       setShowSignOutModal(false);
+    }
+  };
+
+  // Delete account confirmation handler
+  const handleConfirmDeleteAccount = async () => {
+    if (!onDeleteAccount) return;
+    setIsDeletingAccount(true);
+    try {
+      await onDeleteAccount();
+    } finally {
+      setIsDeletingAccount(false);
+      setShowDeleteConfirmModal(false);
     }
   };
 
@@ -334,11 +398,27 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     };
   }, [user?.id, profile?.is_verified, updateUserProfile]);
 
+  const languageOptions: Array<{
+    id: Language;
+    domId: string;
+    label: string;
+    isUrdu?: boolean;
+  }> = [
+    { id: 'en', domId: 'lang_select_en', label: t('settings.languageEn') || 'English' },
+    { id: 'roman-urdu', domId: 'lang_select_roman_urdu', label: t('settings.languageRomanUrdu') || 'Roman Urdu' },
+    { id: 'ur', domId: 'lang_select_ur', label: t('settings.languageUrdu') || 'اردو', isUrdu: true },
+  ];
+
+  const hasPreferencesRows =
+    remoteConfig.settings?.languageSelect !== false ||
+    remoteConfig.settings?.miloCompanion !== false ||
+    remoteConfig.settings?.soundEffects !== false;
+
   return (
     <div
       id="settings_screen_container"
       dir={isRTL ? 'rtl' : 'ltr'}
-      className="min-h-screen bg-background text-on-surface flex flex-col font-sans pb-[calc(env(safe-area-inset-bottom,0px)+112px)] sm:pb-36"
+      className="min-h-screen bg-background text-on-surface flex flex-col font-sans pb-[calc(env(safe-area-inset-bottom,0px)+116px)] sm:pb-36"
     >
       {/* 1. Standard Top Navigation Header */}
       <TopHeader
@@ -347,24 +427,30 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         onBack={onBack}
       />
 
-      {/* 2. Main Page Container — 24px section rhythm (iOS/M3 spec) */}
-      <main className="max-w-2xl mx-auto w-full px-4 sm:px-6 py-4 sm:py-6 flex flex-col gap-6">
+      {/* 2. Main Page Container — consistent 24px section rhythm & tight heading-to-card gap */}
+      <main className="max-w-2xl mx-auto w-full px-4 sm:px-6 pt-4 pb-6 flex flex-col gap-6">
         {/* ------------------------------------------------------------------ */}
-        {/* SECTION 1: PROFILE & ACCOUNT (Directly at top of settings)         */}
+        {/* SECTION 1: ACCOUNT & PROFILE                                       */}
         {/* ------------------------------------------------------------------ */}
-        <section id="settings_profile_section" className="flex flex-col gap-1.5">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-display">
+        <section id="settings_profile_section" className="flex flex-col gap-2">
+          <h2 className="yaad-settings-section-label px-1 font-display">
             {t('settings.accountTitle') || (language === 'ur' ? 'اکاؤنٹ' : 'Account')}
           </h2>
 
-          <div className="bg-surface-container-lowest rounded-3xl p-3 sm:p-3.5 border border-surface-dim/75 shadow-2xs">
+          <div
+            className={`yaad-settings-card yaad-settings-hero-card p-4 sm:p-5 ${
+              highlightedSection === 'profile' ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''
+            }`}
+          >
             {user ? (
-              <div className="flex items-center justify-between gap-2.5 sm:gap-3">
-                {/* Left side: Avatar with click to edit */}
+              <div className="flex items-center justify-between gap-3 sm:gap-4">
+                {/* Leading Avatar (tap to open Avatar Picker when allowed) */}
                 {remoteConfig.settings?.photoUpload !== false ? (
                   <button
                     type="button"
-                    className="relative shrink-0 min-w-[44px] min-h-[44px] flex flex-col items-center justify-center cursor-pointer group rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                    className={`relative shrink-0 min-w-[48px] min-h-[48px] flex items-center justify-center cursor-pointer group rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                      canAnimate ? 'transition-transform duration-150 yaad-ease-premium active:scale-95' : ''
+                    }`}
                     onClick={() => {
                       triggerHaptic(8);
                       setShowAvatarPicker(true);
@@ -377,28 +463,31 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       email={user.email}
                       avatarUrl={profile?.avatar_url}
                       size="lg"
-                      className="w-13 h-13 sm:w-14 sm:h-14 ring-2 ring-primary/20 group-hover:ring-primary/50 rounded-full"
+                      className="w-14 h-14 sm:w-15 sm:h-15 ring-2 ring-primary/20 group-hover:ring-primary/45 rounded-full"
                     />
-                    <div className="absolute -bottom-0.5 -end-0.5 w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center shadow-xs ring-1 ring-white">
-                      <Pencil className="w-2.5 h-2.5" />
-                    </div>
+                    <span
+                      aria-hidden="true"
+                      className="absolute -bottom-0.5 -end-0.5 w-6 h-6 rounded-full bg-primary text-on-primary flex items-center justify-center shadow-xs ring-2 ring-surface-container-lowest"
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </span>
                   </button>
                 ) : (
-                  <div className="relative shrink-0 min-w-[44px] min-h-[44px] flex flex-col items-center justify-center">
+                  <div className="relative shrink-0 min-w-[48px] min-h-[48px] flex items-center justify-center">
                     <Avatar
                       name={displayName}
                       email={user.email}
                       avatarUrl={profile?.avatar_url}
                       size="lg"
-                      className="w-13 h-13 sm:w-14 sm:h-14 ring-2 ring-primary/20 rounded-full"
+                      className="w-14 h-14 sm:w-15 sm:h-15 ring-2 ring-primary/20 rounded-full"
                     />
                   </div>
                 )}
 
-                {/* Profile Information: Name primary line, phone & email secondary lines */}
+                {/* Middle: Name primary, Phone & Email secondary */}
                 <div className="flex-1 min-w-0 flex flex-col gap-0.5">
                   <div className="flex items-center gap-1.5 min-w-0">
-                    <h3 className="text-[16px] sm:text-[17px] font-bold text-on-surface font-display truncate leading-tight">
+                    <h3 className="text-[17px] sm:text-[18px] font-bold text-on-surface font-display truncate leading-tight">
                       {displayName}
                     </h3>
                     {isVerified && (
@@ -409,22 +498,22 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   </div>
 
                   {displayPhone && (
-                    <p className="text-xs sm:text-[13px] text-on-surface-variant font-mono truncate leading-snug flex items-center gap-1.5 min-w-0">
+                    <p className="text-[13px] text-on-surface-variant font-mono truncate leading-snug flex items-center gap-1.5 min-w-0 mt-0.5">
                       <Smartphone className="w-3.5 h-3.5 text-primary/80 shrink-0" aria-hidden="true" />
-                      <span dir="ltr" className="truncate font-medium">
+                      <span dir="ltr" className="truncate font-medium tabular-nums">
                         {formatPhoneNumber(displayPhone)}
                       </span>
                     </p>
                   )}
 
                   {displayEmail && (
-                    <p dir="ltr" className="text-xs text-outline font-body truncate leading-snug rtl:text-right">
+                    <p dir="ltr" className="text-[13px] text-outline font-body truncate leading-snug rtl:text-right">
                       {displayEmail}
                     </p>
                   )}
                 </div>
 
-                {/* Right side: Circular button with pencil icon (Edit Info / ایڈٹ انفو) */}
+                {/* Trailing Edit Profile pencil button (≥48px touch target) */}
                 {remoteConfig.settings?.editProfile !== false && (
                   <button
                     id="edit_profile_btn"
@@ -434,30 +523,32 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       setFocusPhoneInModal(false);
                       setShowEditProfileModal(true);
                     }}
-                    title={language === 'ur' ? 'ایڈٹ انفو' : 'Edit Info'}
-                    aria-label={language === 'ur' ? 'ایڈٹ انفو' : 'Edit Info'}
-                    className={`w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-surface-container hover:bg-surface-container-high border border-surface-dim/75 text-primary flex items-center justify-center shrink-0 cursor-pointer shadow-2xs group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-                      canAnimate ? 'transition-transform duration-150 active:scale-95' : ''
+                    title={language === 'ur' ? 'ایڈٹ انفو' : 'Edit Profile'}
+                    aria-label={language === 'ur' ? 'ایڈٹ انفو' : 'Edit Profile'}
+                    className={`w-12 h-12 min-w-[48px] min-h-[48px] rounded-2xl bg-surface-container-low hover:bg-primary/10 border border-surface-dim/70 text-primary flex items-center justify-center shrink-0 cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                      canAnimate ? 'transition-transform duration-150 yaad-ease-premium active:scale-95' : ''
                     }`}
                   >
-                    <Pencil className={`w-4 h-4 ${canAnimate ? 'group-hover:scale-110 transition-transform duration-150' : ''}`} />
+                    <Pencil className="w-4 h-4 stroke-[2.1]" aria-hidden="true" />
                   </button>
                 )}
               </div>
             ) : (
-              /* Guest State Card */
-              <div className="flex items-center justify-between gap-4 min-h-[52px]">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-2xl bg-surface-container text-primary flex items-center justify-center shrink-0">
-                    <User className="w-5 h-5 stroke-[2]" />
+              /* Guest State Card — adapts cleanly down to 320px */
+              <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 min-h-[56px]">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="yaad-settings-tile">
+                    <User className="w-5 h-5 stroke-[1.9]" aria-hidden="true" />
                   </div>
-                  <div className="min-w-0">
-                    <h3 className="text-[15px] font-semibold text-on-surface font-display leading-snug">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-[16px] font-bold text-on-surface font-display leading-snug truncate">
                       {t('settings.guestUser') || (language === 'ur' ? 'مہمان صارف' : 'Guest Account')}
                     </h3>
-                    <p className="text-[13px] text-outline font-body truncate leading-snug mt-0.5">
+                    <p className="text-[13px] text-outline font-body leading-snug mt-0.5 line-clamp-2">
                       {language === 'ur'
                         ? 'پرچیاں کلاؤڈ پر محفوظ کرنے کے لیے لاگ ان کریں'
+                        : language === 'roman-urdu'
+                        ? 'Lists cloud par mehfooz rakhne ke liye sign in karein'
                         : 'Sign in to sync your lists across devices'}
                     </p>
                   </div>
@@ -466,8 +557,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <button
                   type="button"
                   onClick={() => onOpenAuth?.('signin')}
-                  className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold text-white bg-primary hover:bg-primary/90 shrink-0 cursor-pointer shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-                    canAnimate ? 'transition-transform duration-150 active:scale-95' : ''
+                  className={`min-h-[48px] px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold text-on-primary bg-primary hover:bg-primary/90 shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                    canAnimate ? 'transition-transform duration-150 yaad-ease-premium active:scale-95' : ''
                   }`}
                 >
                   {t('auth.signIn') || (language === 'ur' ? 'سائن ان' : 'Sign In')}
@@ -478,20 +569,34 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </section>
 
         {/* ------------------------------------------------------------------ */}
-        {/* SECTION 2: PERFORMANCE (Language only, smooth & rounded)          */}
+        {/* SECTION 2: PREFERENCES / GENERAL                                   */}
         {/* ------------------------------------------------------------------ */}
-        {(remoteConfig.settings?.languageSelect !== false || remoteConfig.settings?.miloCompanion !== false || remoteConfig.settings?.soundEffects !== false) && (
-          <section id="settings_preferences_section" className="flex flex-col gap-1.5">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-display">
-              {language === 'ur' ? 'جنرل' : 'General'}
+        {hasPreferencesRows && (
+          <section id="settings_preferences_section" className="flex flex-col gap-2">
+            <h2 className="yaad-settings-section-label px-1 font-display">
+              {t('settings.preferencesTitle') || (language === 'ur' ? 'ترجیحات' : 'Preferences')}
             </h2>
 
-            <div className="bg-surface-container-lowest rounded-3xl border border-surface-dim/75 shadow-2xs p-4 sm:p-5 flex flex-col gap-4">
+            <div
+              className={`yaad-settings-card p-4 sm:p-5 flex flex-col ${
+                highlightedSection === 'preferences'
+                  ? 'ring-2 ring-primary ring-offset-2 ring-offset-background'
+                  : ''
+              }`}
+            >
+              {/* Language Selector */}
               {remoteConfig.settings?.languageSelect !== false && (
-                <>
+                <div
+                  id="settings_language_section"
+                  className={`flex flex-col gap-3 pb-4 ${
+                    highlightedSection === 'language'
+                      ? 'rounded-2xl p-2 -m-2 bg-primary/5 ring-2 ring-primary/60'
+                      : ''
+                  }`}
+                >
                   <div className="flex items-center gap-3 min-h-[52px]">
-                    <div className="w-10 h-10 rounded-2xl bg-surface-container text-primary flex items-center justify-center shrink-0">
-                      <Globe2 className="w-5 h-5 stroke-[2]" />
+                    <div className="yaad-settings-tile">
+                      <Globe2 className="w-5 h-5 stroke-[1.9]" aria-hidden="true" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <h3 className="text-[15px] font-semibold text-on-surface font-display leading-snug">
@@ -506,114 +611,105 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     </div>
                   </div>
 
-                  {/* 3-way Segmented Control — uniform 44px rows (touch target spec) */}
-                  <div className="grid grid-cols-3 gap-1.5 p-1.5 bg-surface-container-low rounded-2xl items-center">
-                    {/* English */}
-                    <button
-                      id="lang_select_en"
-                      type="button"
-                      onClick={() => handleSelectLanguage('en')}
-                      className={`min-h-[44px] py-2 px-1 sm:px-2 rounded-xl text-xs font-semibold font-display flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${
-                        language === 'en'
-                          ? 'bg-surface-container-lowest text-primary shadow-xs ring-1 ring-black/5'
-                          : 'text-outline hover:text-on-surface'
-                      }`}
-                    >
-                      <span>English</span>
-                      {language === 'en' && <Check className="w-3.5 h-3.5 stroke-[2.5] shrink-0" />}
-                    </button>
-
-                    {/* Roman Urdu - strictly whitespace-nowrap so it never breaks to 2 lines */}
-                    <button
-                      id="lang_select_roman_urdu"
-                      type="button"
-                      onClick={() => handleSelectLanguage('roman-urdu')}
-                      className={`min-h-[44px] py-2 px-1 sm:px-2 rounded-xl text-xs font-semibold font-display flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${
-                        language === 'roman-urdu'
-                          ? 'bg-surface-container-lowest text-primary shadow-xs ring-1 ring-black/5'
-                          : 'text-outline hover:text-on-surface'
-                      }`}
-                    >
-                      <span>Roman Urdu</span>
-                      {language === 'roman-urdu' && <Check className="w-3.5 h-3.5 stroke-[2.5] shrink-0" />}
-                    </button>
-
-                    {/* Urdu */}
-                    <button
-                      id="lang_select_ur"
-                      type="button"
-                      onClick={() => handleSelectLanguage('ur')}
-                      className={`min-h-[44px] py-2 px-1 sm:px-2 rounded-xl text-xs font-semibold font-urdu flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${
-                        language === 'ur'
-                          ? 'bg-surface-container-lowest text-primary shadow-xs ring-1 ring-black/5'
-                          : 'text-outline hover:text-on-surface'
-                      }`}
-                    >
-                      <span>اردو</span>
-                      {language === 'ur' && <Check className="w-3.5 h-3.5 stroke-[2.5] shrink-0" />}
-                    </button>
+                  {/* 3-way Segmented Choice Control (EN / Roman Urdu / Urdu) */}
+                  <div
+                    role="radiogroup"
+                    aria-label={t('settings.language') || 'Language'}
+                    className="grid grid-cols-3 gap-1.5 p-1.5 bg-surface-container-low rounded-2xl border border-surface-dim/45 items-stretch"
+                  >
+                    {languageOptions.map((opt) => {
+                      const isSelected = language === opt.id;
+                      return (
+                        <button
+                          key={opt.id}
+                          id={opt.domId}
+                          type="button"
+                          role="radio"
+                          aria-checked={isSelected}
+                          onClick={() => handleSelectLanguage(opt.id)}
+                          className={`min-h-[48px] py-2 px-1.5 sm:px-2.5 rounded-xl text-[11px] min-[390px]:text-xs sm:text-[13px] font-semibold flex flex-col min-[400px]:flex-row items-center justify-center gap-0.5 min-[400px]:gap-1.5 cursor-pointer whitespace-nowrap border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${
+                            opt.isUrdu ? 'font-urdu' : 'font-display'
+                          } ${
+                            canAnimate ? 'transition-[transform,background-color,color,border-color] duration-150 yaad-ease-premium active:scale-[0.98]' : ''
+                          } ${
+                            isSelected
+                              ? 'bg-primary text-on-primary border-primary font-bold shadow-xs'
+                              : 'bg-transparent text-on-surface-variant border-transparent hover:text-on-surface hover:bg-surface-container/80'
+                          }`}
+                        >
+                          <Check
+                            className={`w-3 h-3 sm:w-3.5 sm:h-3.5 stroke-[2.8] shrink-0 ${
+                              isSelected ? 'opacity-100' : 'opacity-0 hidden min-[400px]:hidden'
+                            }`}
+                            aria-hidden="true"
+                          />
+                          <span className="leading-tight">{opt.label}</span>
+                        </button>
+                      );
+                    })}
                   </div>
-                </>
+                </div>
               )}
 
-              {/* Lite Mode, Milo Pet Companion, Speed Meter & Sound Feedback Toggles */}
-              <div className={`flex flex-col gap-4 ${remoteConfig.settings?.languageSelect !== false ? 'pt-4 border-t border-surface-dim/40' : ''}`}>
+              {/* Toggle Rows with subtle hairline dividers & 12-16px spacing */}
+              <div
+                className={`flex flex-col divide-y yaad-settings-divider ${
+                  remoteConfig.settings?.languageSelect !== false
+                    ? 'border-t yaad-settings-divider pt-1'
+                    : ''
+                }`}
+              >
                 {/* Lite Mode Toggle + low-end-only hint */}
-                <div className="flex flex-col gap-1.5">
-                  <div className="flex items-center justify-between gap-3 min-h-[52px]">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                        <Zap className="w-5 h-5 stroke-[2]" />
+                <div className={`flex flex-col gap-1.5 ${remoteConfig.settings?.languageSelect !== false ? 'py-3' : 'pb-3'}`}>
+                  <div className="flex items-center justify-between gap-3 min-h-[54px]">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="yaad-settings-tile">
+                        <Zap className="w-5 h-5 stroke-[1.9]" aria-hidden="true" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <h4 className="text-[15px] font-semibold text-on-surface font-display truncate leading-snug">
                           Lite mode
                         </h4>
                         <p className="text-[13px] text-outline font-body leading-snug mt-0.5">
-                          Halke phone ke liye sab se tez mode — animation aur Milo band
+                          {language === 'ur'
+                            ? 'ہلکے فون کے لیے تیز موڈ — اینیمیشن اور مائلو بند'
+                            : language === 'en'
+                            ? 'Fastest mode for budget phones — disables animations and Milo'
+                            : 'Halke phone ke liye sab se tez mode — animation aur Milo band'}
                         </p>
                       </div>
                     </div>
 
-                    <button
-                      type="button"
+                    <SettingsSwitch
                       id="toggle_lite_mode"
-                      role="switch"
-                      aria-checked={liteModeActive}
-                      onClick={handleToggleLiteMode}
-                      className="min-w-[51px] min-h-[44px] flex items-center justify-center rounded-full shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                      aria-label={liteModeActive ? 'Disable Lite mode' : 'Enable Lite mode'}
-                    >
-                      <span
-                        className={`w-[51px] h-[31px] rounded-full p-[2px] flex items-center ${
-                          liteModeActive ? 'bg-primary' : 'bg-surface-dim'
-                        }`}
-                      >
-                        <span
-                          className={`w-[27px] h-[27px] rounded-full bg-white shadow-xs block ${
-                            canAnimate ? 'transition-transform duration-150' : ''
-                          } ${liteModeActive ? (isRTL ? '-translate-x-5' : 'translate-x-5') : 'translate-x-0'}`}
-                        />
-                      </span>
-                    </button>
+                      checked={liteModeActive}
+                      onToggle={handleToggleLiteMode}
+                      ariaLabel={liteModeActive ? 'Disable Lite mode' : 'Enable Lite mode'}
+                      isRTL={isRTL}
+                      canAnimate={canAnimate}
+                    />
                   </div>
 
                   {isLowEndPhone && !liteModeActive && (
                     <p
                       id="lite_mode_low_end_hint"
-                      className="text-xs text-outline font-body ps-[52px] leading-snug"
+                      className="text-[13px] text-outline font-body ps-[52px] leading-snug"
                     >
-                      Aap ka phone low-end hai — Lite mode se app tez chalega
+                      {language === 'ur'
+                        ? 'آپ کا فون لو اینڈ ہے — لائٹ موڈ سے ایپ تیز چلے گی'
+                        : language === 'en'
+                        ? 'Your device is low-end — turn on Lite mode for faster performance'
+                        : 'Aap ka phone low-end hai — Lite mode se app tez chalega'}
                     </p>
                   )}
                 </div>
 
                 {/* Milo Companion Toggle */}
                 {remoteConfig.settings?.miloCompanion !== false && (
-                  <div className="flex items-center justify-between gap-3 min-h-[52px]">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-2xl bg-amber-400/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-                        <Sparkles className="w-5 h-5 stroke-[2]" />
+                  <div className="py-3 flex items-center justify-between gap-3 min-h-[54px]">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="yaad-settings-tile yaad-settings-tile-warm">
+                        <Sparkles className="w-5 h-5 stroke-[1.9]" aria-hidden="true" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <h4 className="text-[15px] font-semibold text-on-surface font-display truncate leading-snug">
@@ -622,118 +718,86 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         <p className="text-[13px] text-outline font-body leading-snug mt-0.5">
                           {language === 'ur'
                             ? 'فلوٹنگ اینیمیٹڈ ببل اور جشن کے تاثرات'
+                            : language === 'roman-urdu'
+                            ? 'Floating pet aur choti khushi ke lamhaat'
                             : 'Interactive floating pet & celebration moments'}
                         </p>
                       </div>
                     </div>
 
-                    <button
-                      type="button"
+                    <SettingsSwitch
                       id="toggle_milo_companion"
-                      role="switch"
-                      aria-checked={miloActive}
-                      onClick={handleToggleMilo}
-                      className="min-w-[51px] min-h-[44px] flex items-center justify-center rounded-full shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                      aria-label={miloActive ? 'Disable Milo' : 'Enable Milo'}
-                    >
-                      <span
-                        className={`w-[51px] h-[31px] rounded-full p-[2px] flex items-center ${
-                          miloActive ? 'bg-primary' : 'bg-surface-dim'
-                        }`}
-                      >
-                        <span
-                          className={`w-[27px] h-[27px] rounded-full bg-white shadow-xs block ${
-                            canAnimate ? 'transition-transform duration-150' : ''
-                          } ${miloActive ? (isRTL ? '-translate-x-5' : 'translate-x-5') : 'translate-x-0'}`}
-                        />
-                      </span>
-                    </button>
+                      checked={miloActive}
+                      onToggle={handleToggleMilo}
+                      ariaLabel={miloActive ? 'Disable Milo Pet Companion' : 'Enable Milo Pet Companion'}
+                      isRTL={isRTL}
+                      canAnimate={canAnimate}
+                    />
                   </div>
                 )}
 
                 {/* Speed Meter Toggle */}
-                <div className="flex items-center justify-between gap-3 min-h-[52px]">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-2xl bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                      <Gauge className="w-5 h-5 stroke-[2]" />
+                <div className="py-3 flex items-center justify-between gap-3 min-h-[54px]">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="yaad-settings-tile">
+                      <Gauge className="w-5 h-5 stroke-[1.9]" aria-hidden="true" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <h4 className="text-[15px] font-semibold text-on-surface font-display truncate leading-snug">
                         Speed meter
                       </h4>
                       <p className="text-[13px] text-outline font-body leading-snug mt-0.5">
-                        Phone par asal speed naapne ke liye (band hone par bilkul free)
+                        {language === 'ur'
+                          ? 'فون پر اصل اسپیڈ دیکھنے کے لیے (بند ہونے پر زیرو اثر)'
+                          : language === 'en'
+                          ? 'Measure live app speed on device (zero overhead when off)'
+                          : 'Phone par asal speed naapne ke liye (band hone par bilkul free)'}
                       </p>
                     </div>
                   </div>
 
-                  <button
-                    type="button"
+                  <SettingsSwitch
                     id="toggle_speed_meter"
-                    role="switch"
-                    aria-checked={perfMeterActive}
-                    onClick={handleTogglePerfMeter}
-                    className="min-w-[51px] min-h-[44px] flex items-center justify-center rounded-full shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                    aria-label={perfMeterActive ? 'Disable Speed meter' : 'Enable Speed meter'}
-                  >
-                    <span
-                      className={`w-[51px] h-[31px] rounded-full p-[2px] flex items-center ${
-                        perfMeterActive ? 'bg-primary' : 'bg-surface-dim'
-                      }`}
-                    >
-                      <span
-                        className={`w-[27px] h-[27px] rounded-full bg-white shadow-xs block ${
-                          canAnimate ? 'transition-transform duration-150' : ''
-                        } ${perfMeterActive ? (isRTL ? '-translate-x-5' : 'translate-x-5') : 'translate-x-0'}`}
-                      />
-                    </span>
-                  </button>
+                    checked={perfMeterActive}
+                    onToggle={handleTogglePerfMeter}
+                    ariaLabel={perfMeterActive ? 'Disable Speed meter' : 'Enable Speed meter'}
+                    isRTL={isRTL}
+                    canAnimate={canAnimate}
+                  />
                 </div>
 
                 {/* Sound Effects Toggle */}
                 {remoteConfig.settings?.soundEffects !== false && (
-                  <div className="flex items-center justify-between gap-3 min-h-[52px]">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-2xl bg-surface-container text-primary flex items-center justify-center shrink-0">
+                  <div className="pt-3 flex items-center justify-between gap-3 min-h-[54px]">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="yaad-settings-tile">
                         {soundEnabled ? (
-                          <Volume2 className="w-5 h-5 stroke-[2]" />
+                          <Volume2 className="w-5 h-5 stroke-[1.9]" aria-hidden="true" />
                         ) : (
-                          <VolumeX className="w-5 h-5 stroke-[2] text-outline" />
+                          <VolumeX className="w-5 h-5 stroke-[1.9] text-outline" aria-hidden="true" />
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
                         <h4 className="text-[15px] font-semibold text-on-surface font-display truncate leading-snug">
-                          {language === 'ur' ? 'آواز کے اثرات' : 'Sound Effects'}
+                          {t('settings.soundEffects') || (language === 'ur' ? 'آواز کے اثرات' : 'Sound Effects')}
                         </h4>
                         <p className="text-[13px] text-outline font-body leading-snug mt-0.5">
-                          {language === 'ur'
-                            ? 'مائلو کی آوازیں اور تصدیقی دھنیں'
-                            : 'Synthesized pet audio & action feedback'}
+                          {t('settings.soundEffectsDesc') ||
+                            (language === 'ur'
+                              ? 'مائلو کی آوازیں اور تصدیقی دھنیں'
+                              : 'Synthesized pet audio & action feedback')}
                         </p>
                       </div>
                     </div>
 
-                    <button
-                      type="button"
+                    <SettingsSwitch
                       id="toggle_sound_effects"
-                      role="switch"
-                      aria-checked={soundEnabled}
-                      onClick={handleToggleSound}
-                      className="min-w-[51px] min-h-[44px] flex items-center justify-center rounded-full shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                      aria-label={soundEnabled ? 'Mute sound effects' : 'Enable sound effects'}
-                    >
-                      <span
-                        className={`w-[51px] h-[31px] rounded-full p-[2px] flex items-center ${
-                          soundEnabled ? 'bg-primary' : 'bg-surface-dim'
-                        }`}
-                      >
-                        <span
-                          className={`w-[27px] h-[27px] rounded-full bg-white shadow-xs block ${
-                            canAnimate ? 'transition-transform duration-150' : ''
-                          } ${soundEnabled ? (isRTL ? '-translate-x-5' : 'translate-x-5') : 'translate-x-0'}`}
-                        />
-                      </span>
-                    </button>
+                      checked={soundEnabled}
+                      onToggle={handleToggleSound}
+                      ariaLabel={soundEnabled ? 'Mute sound effects' : 'Enable sound effects'}
+                      isRTL={isRTL}
+                      canAnimate={canAnimate}
+                    />
                   </div>
                 )}
               </div>
@@ -742,33 +806,45 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         )}
 
         {/* ------------------------------------------------------------------ */}
-        {/* SECTION 3: APPEARANCE & THEMES (Simplified Names + Custom Palettes) */}
+        {/* SECTION 3: APPEARANCE & THEMES                                     */}
         {/* ------------------------------------------------------------------ */}
         {remoteConfig.settings?.themeColor !== false && (
-          <section id="settings_appearance_section" className="flex flex-col gap-1.5">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-display">
-              {t('settings.appearanceTitle') || (language === 'ur' ? 'تھیم اور رنگ' : 'Appearance & Theme')}
+          <section id="settings_appearance_section" className="flex flex-col gap-2">
+            <h2 className="yaad-settings-section-label px-1 font-display">
+              {t('settings.appearanceTitle') || (language === 'ur' ? 'تھیم اور رنگ' : 'Appearance & Themes')}
             </h2>
 
-            <div className="bg-surface-container-lowest rounded-3xl p-4 sm:p-5 border border-surface-dim/75 shadow-2xs space-y-4">
+            <div
+              className={`yaad-settings-card p-4 sm:p-5 flex flex-col gap-4 ${
+                highlightedSection === 'appearance'
+                  ? 'ring-2 ring-primary ring-offset-2 ring-offset-background'
+                  : ''
+              }`}
+            >
               <div className="flex items-center gap-3 min-h-[52px]">
-                <div className="w-10 h-10 rounded-2xl bg-surface-container text-primary flex items-center justify-center shrink-0">
-                  <Palette className="w-5 h-5 stroke-[2]" />
+                <div className="yaad-settings-tile">
+                  <Palette className="w-5 h-5 stroke-[1.9]" aria-hidden="true" />
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <h3 className="text-[15px] font-semibold text-on-surface font-display leading-snug">
                     {language === 'ur' ? 'ایپ تھیم' : 'App Theme'}
                   </h3>
                   <p className="text-[13px] text-outline font-body leading-snug mt-0.5">
                     {language === 'ur'
                       ? 'اپنی پسند کی آسان تھیم یا کسٹم رنگ منتخب کریں'
+                      : language === 'roman-urdu'
+                      ? 'Pasandeeda theme ya custom rang chunein'
                       : 'Select a clean pre-set theme or customize your own'}
                   </p>
                 </div>
               </div>
 
               {/* Standard Pre-set Themes Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              <div
+                role="group"
+                aria-label={language === 'ur' ? 'ایپ تھیمز' : 'Preset Themes'}
+                className="grid grid-cols-2 sm:grid-cols-3 gap-2.5"
+              >
                 {themes.map((item) => {
                   const isActive = theme === item.id;
                   const localizedName =
@@ -783,57 +859,72 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       key={item.id}
                       id={`theme_select_btn_${item.id}`}
                       type="button"
+                      aria-pressed={isActive}
                       onClick={() => {
                         triggerHaptic(8);
                         setTheme(item.id);
                         triggerMiloEvent('settings_saved');
                       }}
-                      className={`h-14 min-h-[44px] rounded-2xl border px-3 flex items-center justify-between gap-2 cursor-pointer text-start active:bg-surface-container-low focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${
+                      className={`min-h-[56px] rounded-2xl px-3 py-2 flex items-center justify-between gap-2 cursor-pointer text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${
+                        canAnimate ? 'transition-[transform,background-color,border-color] duration-150 yaad-ease-premium active:scale-[0.98]' : ''
+                      } ${
                         isActive
-                          ? 'border-primary bg-primary/10 ring-1 ring-primary/30 shadow-2xs'
-                          : 'border-surface-dim/70 bg-surface-container-lowest hover:bg-surface-container-low/60'
+                          ? 'border-2 border-primary bg-primary/10 dark:bg-primary/16'
+                          : 'border border-surface-dim/70 bg-surface-container-low/55 hover:bg-surface-container-low'
                       }`}
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        {/* Swatch circle */}
-                        <div
-                          className="w-5.5 h-5.5 rounded-full shrink-0 flex items-center justify-center border border-black/10 shadow-2xs"
+                        <span
+                          aria-hidden="true"
+                          className="w-6 h-6 rounded-full shrink-0 flex items-center justify-center border border-black/15"
                           style={{ backgroundColor: item.primary }}
                         >
-                          <div
-                            className="w-2 h-2 rounded-full"
+                          <span
+                            className="w-2.5 h-2.5 rounded-full"
                             style={{ backgroundColor: item.accent }}
                           />
-                        </div>
-                        <span className="text-xs font-bold font-display text-on-surface truncate">
+                        </span>
+                        <span
+                          className={`text-xs sm:text-[13px] font-display truncate ${
+                            isActive ? 'font-bold text-on-surface' : 'font-semibold text-on-surface-variant'
+                          }`}
+                        >
                           {localizedName}
                         </span>
                       </div>
 
                       {isActive && (
-                        <div className="w-4 h-4 rounded-full bg-primary text-white flex items-center justify-center shrink-0">
-                          <Check className="w-2.5 h-2.5 stroke-[3]" />
-                        </div>
+                        <span
+                          aria-hidden="true"
+                          className="w-5 h-5 rounded-full bg-primary text-on-primary flex items-center justify-center shrink-0"
+                        >
+                          <Check className="w-3 h-3 stroke-[3]" />
+                        </span>
                       )}
                     </button>
                   );
                 })}
               </div>
 
-              {/* Custom Theme Card with 4 Distinct Palettes */}
-              <div className="pt-2 border-t border-surface-dim/60 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-on-surface font-display">
+              {/* Custom Theme Palettes */}
+              <div className="pt-4 border-t yaad-settings-divider flex flex-col gap-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[13px] font-semibold text-on-surface font-display">
                     {language === 'ur' ? 'کسٹم تھیم (Custom Theme)' : 'Custom Theme Palettes'}
                   </span>
                   {theme === 'custom' && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                      {language === 'ur' ? 'فعال ہے' : 'Active'}
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                      <Check className="w-3.5 h-3.5 stroke-[2.6]" aria-hidden="true" />
+                      <span>{language === 'ur' ? 'فعال ہے' : 'Active'}</span>
                     </span>
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div
+                  role="group"
+                  aria-label={language === 'ur' ? 'کسٹم رنگ پیلیٹس' : 'Custom Color Palettes'}
+                  className="grid grid-cols-2 sm:grid-cols-4 gap-2.5"
+                >
                   {customPalettes.map((cp) => {
                     const isCpActive = theme === 'custom' && selectedCustomPalette.id === cp.id;
                     const cpName =
@@ -846,30 +937,44 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     return (
                       <button
                         key={cp.id}
+                        id={`custom_palette_btn_${cp.id}`}
                         type="button"
+                        aria-pressed={isCpActive}
                         onClick={() => {
                           triggerHaptic(8);
                           setSelectedCustomPalette(cp.id);
                           setTheme('custom');
                           triggerMiloEvent('settings_saved');
                         }}
-                        className={`h-12 min-h-[44px] rounded-2xl border px-2.5 flex items-center justify-between gap-1.5 cursor-pointer text-start active:bg-surface-container-low focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${
+                        className={`min-h-[52px] rounded-2xl px-2.5 py-2 flex items-center justify-between gap-1.5 cursor-pointer text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${
+                          canAnimate ? 'transition-[transform,background-color,border-color] duration-150 yaad-ease-premium active:scale-[0.98]' : ''
+                        } ${
                           isCpActive
-                            ? 'border-primary ring-2 ring-primary/40 bg-primary/10 shadow-xs'
-                            : 'border-surface-dim/70 bg-surface-container-low hover:bg-surface-container'
+                            ? 'border-2 border-primary bg-primary/10 dark:bg-primary/16'
+                            : 'border border-surface-dim/70 bg-surface-container-low/55 hover:bg-surface-container-low'
                         }`}
                       >
                         <div className="flex items-center gap-2 min-w-0">
-                          <div
-                            className="w-5 h-5 rounded-full shrink-0 border border-black/15 shadow-2xs"
+                          <span
+                            aria-hidden="true"
+                            className="w-5 h-5 rounded-full shrink-0 border border-black/15"
                             style={{ backgroundColor: cp.primary }}
                           />
-                          <span className="text-[11px] font-bold text-on-surface truncate">
+                          <span
+                            className={`text-xs truncate ${
+                              isCpActive ? 'font-bold text-on-surface' : 'font-semibold text-on-surface-variant'
+                            }`}
+                          >
                             {cpName}
                           </span>
                         </div>
                         {isCpActive && (
-                          <Check className="w-3.5 h-3.5 text-primary shrink-0 stroke-[3]" />
+                          <span
+                            aria-hidden="true"
+                            className="w-4 h-4 rounded-full bg-primary text-on-primary flex items-center justify-center shrink-0"
+                          >
+                            <Check className="w-2.5 h-2.5 stroke-[3]" />
+                          </span>
                         )}
                       </button>
                     );
@@ -881,58 +986,75 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         )}
 
         {/* ------------------------------------------------------------------ */}
-        {/* SECTION 4: SECURITY (Change Password Card)                         */}
+        {/* SECTION 4: SECURITY                                                */}
         {/* ------------------------------------------------------------------ */}
         {user && remoteConfig.settings?.changePassword !== false && (
-          <section id="settings_security_section" className="flex flex-col gap-1.5">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-display">
+          <section id="settings_security_section" className="flex flex-col gap-2">
+            <h2 className="yaad-settings-section-label px-1 font-display">
               {t('settings.securityTitle') || (language === 'ur' ? 'سیکیورٹی' : 'Security')}
             </h2>
 
-            <div className="bg-surface-container-lowest rounded-3xl border border-surface-dim/75 shadow-2xs p-4 sm:p-5 flex items-center justify-between gap-3 min-h-[76px]">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-2xl bg-surface-container text-primary flex items-center justify-center shrink-0">
-                  <LockKeyhole className="w-5 h-5 stroke-[2]" />
-                </div>
-                <div className="min-w-0">
-                  <h3 className="text-[15px] font-semibold text-on-surface font-display leading-snug">
-                    {t('settings.changePassword') || (language === 'ur' ? 'پاس ورڈ تبدیل کریں' : 'Change Password')}
-                  </h3>
-                  <p className="text-[13px] text-outline font-body truncate leading-snug mt-0.5">
-                    {language === 'ur'
-                      ? 'اپنے یاد اکاؤنٹ کا نیا پاس ورڈ سیٹ کریں'
-                      : 'Update your account login password'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Circular pencil action button */}
+            <div
+              className={`yaad-settings-card overflow-hidden ${
+                highlightedSection === 'security'
+                  ? 'ring-2 ring-primary ring-offset-2 ring-offset-background'
+                  : ''
+              }`}
+            >
               <button
                 type="button"
                 id="toggle_change_password_btn"
-                onClick={() => setShowChangePasswordModal(true)}
-                title={language === 'ur' ? 'پاس ورڈ تبدیل کریں' : 'Change Password'}
-                aria-label="Change Password"
-                className={`w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-surface-container hover:bg-surface-container-high border border-surface-dim/75 text-primary flex items-center justify-center shrink-0 cursor-pointer shadow-2xs group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-                  canAnimate ? 'transition-transform duration-150 active:scale-95' : ''
-                }`}
+                onClick={() => {
+                  triggerHaptic(8);
+                  setShowChangePasswordModal(true);
+                }}
+                className="w-full p-4 sm:p-5 min-h-[68px] flex items-center justify-between gap-3 text-start hover:bg-surface-container-low/65 active:bg-surface-container-low cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
               >
-                <Pencil className={`w-4 h-4 ${canAnimate ? 'group-hover:scale-110 transition-transform duration-150' : ''}`} />
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="yaad-settings-tile">
+                    <LockKeyhole className="w-5 h-5 stroke-[1.9]" aria-hidden="true" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-[15px] font-semibold text-on-surface font-display leading-snug">
+                      {t('settings.changePassword') || (language === 'ur' ? 'پاس ورڈ تبدیل کریں' : 'Change Password')}
+                    </h3>
+                    <p className="text-[13px] text-outline font-body truncate leading-snug mt-0.5">
+                      {language === 'ur'
+                        ? 'اپنے یاد اکاؤنٹ کا نیا پاس ورڈ سیٹ کریں'
+                        : language === 'roman-urdu'
+                        ? 'Apne YAAD account ka naya password set karein'
+                        : 'Update your account login password'}
+                    </p>
+                  </div>
+                </div>
+
+                <span
+                  aria-hidden="true"
+                  className="w-9 h-9 rounded-xl bg-surface-container-low border border-surface-dim/55 text-primary flex items-center justify-center shrink-0 group-hover:bg-primary/10"
+                >
+                  <Pencil className="w-4 h-4 stroke-[2]" />
+                </span>
               </button>
             </div>
           </section>
         )}
 
         {/* ------------------------------------------------------------------ */}
-        {/* SECTION 5: ABOUT & SUPPORT (Only About YAAD & Customer Support Desk) */}
+        {/* SECTION 5: ABOUT & SUPPORT                                         */}
         {/* ------------------------------------------------------------------ */}
         {(remoteConfig.settings?.customerSupport !== false || remoteConfig.settings?.aboutYaad !== false) && (
-          <section id="settings_about_section" className="flex flex-col gap-1.5">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-display">
+          <section id="settings_about_section" className="flex flex-col gap-2">
+            <h2 className="yaad-settings-section-label px-1 font-display">
               {t('settings.aboutTitle') || (language === 'ur' ? 'معلومات و سپورٹ' : 'About & Support')}
             </h2>
 
-            <div className="bg-surface-container-lowest rounded-3xl border border-surface-dim/75 shadow-2xs divide-y divide-surface-dim/50 overflow-hidden">
+            <div
+              className={`yaad-settings-card divide-y yaad-settings-divider overflow-hidden ${
+                highlightedSection === 'about'
+                  ? 'ring-2 ring-primary ring-offset-2 ring-offset-background'
+                  : ''
+              }`}
+            >
               {/* 1. Customer Support Desk */}
               {remoteConfig.settings?.customerSupport !== false && (
                 <button
@@ -942,29 +1064,28 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     triggerHaptic(8);
                     setShowSupportModal(true);
                   }}
-                  className={`w-full p-4 sm:px-5 sm:py-4 flex items-center justify-between gap-3 text-start hover:bg-surface-container-low/60 active:bg-surface-container-low cursor-pointer group min-h-[68px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset ${
-                    highlightedSection === 'support' ? 'bg-primary/10 ring-2 ring-primary ring-inset rounded-2xl' : ''
+                  className={`w-full p-4 sm:p-5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-low/65 active:bg-surface-container-low cursor-pointer group min-h-[68px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset ${
+                    highlightedSection === 'support' ? 'bg-primary/10 ring-2 ring-primary ring-inset' : ''
                   }`}
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-2xl bg-surface-container text-primary flex items-center justify-center shrink-0">
-                      <Headphones className="w-5 h-5 stroke-[2]" />
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="yaad-settings-tile">
+                      <Headphones className="w-5 h-5 stroke-[1.9]" aria-hidden="true" />
                     </div>
-                    <div className="min-w-0">
-                      <h3 className="text-[15px] font-semibold text-on-surface font-display flex items-center gap-2 leading-snug">
-                        <span>{language === 'ur' ? 'کسٹمر سپورٹ ڈیسک' : 'Customer Support Desk'}</span>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                          {language === 'ur' ? 'براہ راست رابطہ' : 'Direct Help'}
-                        </span>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-[15px] font-semibold text-on-surface font-display leading-snug truncate">
+                        {language === 'ur' ? 'کسٹمر سپورٹ ڈیسک' : 'Customer Support Desk'}
                       </h3>
                       <p className="text-[13px] text-outline font-body truncate leading-snug mt-0.5">
                         {language === 'ur'
-                          ? 'ایڈمن سپورٹ ٹیم سے فوری مدد یا شکایت درج کریں'
-                          : 'Contact staff or report an issue directly'}
+                          ? 'سپورٹ ٹیم سے براہ راست مدد یا شکایت درج کریں'
+                          : language === 'roman-urdu'
+                          ? 'Support team se barah-e-raast madad ya shikayat bhejein'
+                          : 'Direct help · Contact staff or report an issue'}
                       </p>
                     </div>
                   </div>
-                  <Chevron className="w-5 h-5 text-outline group-hover:text-primary shrink-0" />
+                  <Chevron className="w-5 h-5 text-outline group-hover:text-primary shrink-0" aria-hidden="true" />
                 </button>
               )}
 
@@ -973,15 +1094,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <button
                   id="settings_link_about"
                   type="button"
-                  onClick={() => handleOpenLegal('about')}
-                  className="w-full p-4 sm:px-5 sm:py-4 flex items-center justify-between gap-3 text-start hover:bg-surface-container-low/60 active:bg-surface-container-low cursor-pointer group min-h-[68px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
+                  onClick={() => {
+                    triggerHaptic(8);
+                    handleOpenLegal('about');
+                  }}
+                  className="w-full p-4 sm:p-5 flex items-center justify-between gap-3 text-start hover:bg-surface-container-low/65 active:bg-surface-container-low cursor-pointer group min-h-[68px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-2xl bg-surface-container text-primary flex items-center justify-center shrink-0">
-                      <Sparkles className="w-5 h-5 stroke-[2]" />
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="yaad-settings-tile">
+                      <Info className="w-5 h-5 stroke-[1.9]" aria-hidden="true" />
                     </div>
-                    <div className="min-w-0">
-                      <h3 className="text-[15px] font-semibold text-on-surface font-display leading-snug">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-[15px] font-semibold text-on-surface font-display leading-snug truncate">
                         {t('settings.aboutYaad') || (language === 'ur' ? 'یاد کے بارے میں' : 'About YAAD')}
                       </h3>
                       <p className="text-[13px] text-outline font-body truncate leading-snug mt-0.5">
@@ -992,7 +1116,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       </p>
                     </div>
                   </div>
-                  <Chevron className="w-5 h-5 text-outline group-hover:text-primary shrink-0" />
+                  <Chevron className="w-5 h-5 text-outline group-hover:text-primary shrink-0" aria-hidden="true" />
                 </button>
               )}
             </div>
@@ -1000,10 +1124,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         )}
 
         {/* ------------------------------------------------------------------ */}
-        {/* SECTION 6: SIGN OUT & DESTRUCTIVE ACTIONS (32px separated zone)    */}
+        {/* SECTION 6: ISOLATED SIGN OUT & DESTRUCTIVE ZONE                    */}
         {/* ------------------------------------------------------------------ */}
         {user && (
-          <div className="pt-8 flex flex-col items-center justify-center gap-3">
+          <section
+            aria-label={language === 'ur' ? 'اکاؤنٹ سیشن' : 'Account session'}
+            className="pt-4 mt-1 border-t yaad-settings-divider flex flex-col items-center gap-3"
+          >
             {remoteConfig.settings?.signOut !== false && (
               <button
                 id="settings_sign_out_trigger_btn"
@@ -1012,47 +1139,41 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   triggerHaptic(10);
                   setShowSignOutModal(true);
                 }}
-                className={`w-full sm:w-auto sm:min-w-[220px] min-h-[44px] py-2.5 px-6 rounded-xl border border-rose-200/80 dark:border-rose-500/30 bg-rose-50/80 dark:bg-rose-950/40 hover:bg-rose-100/90 dark:hover:bg-rose-950/60 text-rose-700 dark:text-rose-300 font-bold font-display text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 ${
-                  canAnimate ? 'transition-transform duration-150 active:scale-95' : ''
+                className={`w-full min-h-[52px] py-3 px-5 rounded-2xl border border-rose-200/90 dark:border-rose-500/30 bg-rose-50/85 dark:bg-rose-950/35 hover:bg-rose-100/90 dark:hover:bg-rose-950/55 text-rose-700 dark:text-rose-300 font-semibold font-display text-[15px] flex items-center justify-center gap-2.5 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                  canAnimate ? 'transition-transform duration-150 yaad-ease-premium active:scale-[0.99]' : ''
                 }`}
               >
-                <LogOut className="w-4 h-4 stroke-[2.2] rtl:rotate-180" />
+                <LogOut className="w-5 h-5 stroke-[2] rtl:rotate-180" aria-hidden="true" />
                 <span>{t('auth.signOut') || (language === 'ur' ? 'اکاؤنٹ سے لاگ آؤٹ' : 'Sign Out')}</span>
               </button>
             )}
 
             {onDeleteAccount && remoteConfig.settings?.deleteAccount === true && (
               <button
+                id="settings_delete_account_btn"
                 type="button"
                 onClick={() => {
-                  if (
-                    window.confirm(
-                      language === 'ur'
-                        ? 'کیا آپ واقعی اپنا اکاؤنٹ حذف کرنا چاہتے ہیں؟ یہ عمل واپس نہیں ہو سکتا۔'
-                        : 'Are you sure you want to permanently delete your account? This cannot be undone.'
-                    )
-                  ) {
-                    onDeleteAccount();
-                  }
+                  triggerHaptic(10);
+                  setShowDeleteConfirmModal(true);
                 }}
-                className="min-h-[44px] px-4 py-2 text-[11px] text-outline hover:text-rose-600 cursor-pointer rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
+                className="min-h-[48px] px-4 py-2 text-[13px] font-medium text-rose-700/80 dark:text-rose-400/85 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-500/8 cursor-pointer rounded-xl inline-flex items-center justify-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2"
               >
-                {language === 'ur' ? 'اکاؤنٹ مستقل حذف کریں' : 'Delete Account'}
+                <Trash2 className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span>{language === 'ur' ? 'اکاؤنٹ مستقل حذف کریں' : 'Delete Account'}</span>
               </button>
             )}
-
-            <p className="text-[11px] text-outline/60 font-body text-center">
-              YAAD • {language === 'ur' ? 'یاد — شاپنگ میموری اسسٹنٹ' : 'Simple Shopping Memory'}
-            </p>
-          </div>
+          </section>
         )}
 
         {/* Unhighlighted Plain App Version at the very bottom */}
-        <div className="pt-4 pb-2 text-center select-none">
-          <span className="text-[11px] text-outline/50 font-mono tracking-wide">
+        <footer className="pt-2 pb-1 text-center select-none flex flex-col items-center gap-1">
+          <p className="text-xs text-outline/75 font-body">
+            YAAD · {language === 'ur' ? 'یاد — شاپنگ میموری اسسٹنٹ' : 'Simple Shopping Memory'}
+          </p>
+          <span className="text-xs text-outline/60 font-mono tabular-nums tracking-wide">
             YAAD v{APP_VERSION}
           </span>
-        </div>
+        </footer>
       </main>
 
       {/* Full-Screen Edit Profile View */}
@@ -1108,18 +1229,82 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         userPhone={displayPhone}
       />
 
+      {/* MODAL 7: Conditional Delete Account Confirmation Modal */}
+      {showDeleteConfirmModal && onDeleteAccount && remoteConfig.settings?.deleteAccount === true && (
+        <div
+          id="delete_account_modal_backdrop"
+          onClick={() => !isDeletingAccount && setShowDeleteConfirmModal(false)}
+          style={!canAnimate ? { animationDuration: '80ms' } : undefined}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 backdrop-blur-sm p-4 yaad-enter-fade"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete_account_modal_title"
+          dir={isRTL ? 'rtl' : 'ltr'}
+        >
+          <div
+            id="delete_account_modal_container"
+            onClick={(e) => e.stopPropagation()}
+            style={!canAnimate ? { animationDuration: '80ms' } : undefined}
+            className={`yaad-settings-card p-5 sm:p-6 max-w-sm w-full space-y-4 text-center ${
+              canAnimate ? 'yaad-enter-zoom' : 'yaad-enter-fade'
+            }`}
+          >
+            <div className="w-12 h-12 rounded-2xl bg-rose-500/12 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto border border-rose-500/20">
+              <AlertTriangle className="w-6 h-6" aria-hidden="true" />
+            </div>
+            <div className="space-y-1.5">
+              <h3 id="delete_account_modal_title" className="text-lg font-bold text-on-surface font-display">
+                {language === 'ur' ? 'اکاؤنٹ مستقل حذف کریں؟' : 'Delete Your Account?'}
+              </h3>
+              <p className="text-[13px] text-on-surface-variant leading-relaxed">
+                {language === 'ur'
+                  ? 'کیا آپ واقعی اپنا اکاؤنٹ حذف کرنا چاہتے ہیں؟ یہ عمل واپس نہیں ہو سکتا۔'
+                  : 'Are you sure you want to permanently delete your account? This cannot be undone.'}
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row-reverse gap-2.5 pt-1">
+              <button
+                type="button"
+                id="confirm_delete_account_btn"
+                onClick={handleConfirmDeleteAccount}
+                disabled={isDeletingAccount}
+                className="flex-1 min-h-[48px] px-4 py-2.5 rounded-2xl text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2"
+              >
+                {isDeletingAccount ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                    <span>{language === 'ur' ? 'حذف ہو رہا ہے...' : 'Deleting...'}</span>
+                  </>
+                ) : (
+                  <span>{language === 'ur' ? 'ہاں، حذف کریں' : 'Yes, Delete'}</span>
+                )}
+              </button>
+              <button
+                type="button"
+                id="cancel_delete_account_btn"
+                onClick={() => setShowDeleteConfirmModal(false)}
+                disabled={isDeletingAccount}
+                className="flex-1 min-h-[48px] px-4 py-2.5 rounded-2xl text-sm font-semibold text-on-surface bg-surface-container-low hover:bg-surface-container border border-surface-dim/70 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              >
+                {t('settings.cancel') || (language === 'ur' ? 'منسوخ' : 'Cancel')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Avatar Save Feedback Toast */}
       {avatarToast && (
         <div
           role="status"
           aria-live="polite"
           style={!canAnimate ? { animationDuration: '80ms' } : undefined}
-          className={`fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-[#00422f] text-emerald-100 px-4 py-2.5 rounded-2xl shadow-xl flex items-center gap-2.5 border border-emerald-400/30 text-xs font-body font-semibold ${
-            canAnimate ? 'animate-slide-in-from-bottom' : 'animate-fade-in'
+          className={`fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-[#003527] text-[#FDF6E3] px-4 py-2.5 rounded-2xl shadow-lg flex items-center gap-2.5 border border-[#FCBC1F]/35 text-xs font-body font-semibold max-w-[calc(100vw-32px)] ${
+            canAnimate ? 'yaad-enter-state' : 'yaad-enter-fade'
           }`}
         >
-          <Check className="w-4 h-4 text-emerald-400 stroke-[3]" />
-          <span>{avatarToast}</span>
+          <Check className="w-4 h-4 text-[#FCBC1F] stroke-[3] shrink-0" aria-hidden="true" />
+          <span className="truncate">{avatarToast}</span>
         </div>
       )}
     </div>

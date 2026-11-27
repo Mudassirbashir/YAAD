@@ -777,6 +777,7 @@ html.dark .border-neutral-100 {
   /* SPRING-OVERSHOOT — organic, elastic bounce for tactile feedback & celebrations */
   --ease-elastic: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-spring-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
 
   /* Legacy aliases mapped to standardized curves */
   --ease-out: cubic-bezier(0.32, 0.72, 0, 1);
@@ -950,6 +951,154 @@ html.dark .border-neutral-100 {
   transform-origin: top left;
 }
 
+/* Shared premium easing & entrance utilities (transform + opacity only) */
+.yaad-ease-premium {
+  transition-timing-function: var(--ease-premium);
+}
+
+@keyframes yaad-enter-fade-kf {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes yaad-enter-slide-up-kf {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes yaad-enter-zoom-kf {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes yaad-enter-state-kf {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.yaad-enter-fade {
+  animation: yaad-enter-fade-kf 200ms var(--ease-premium) both;
+  will-change: opacity;
+}
+
+.yaad-enter-slide-up {
+  animation: yaad-enter-slide-up-kf 240ms var(--ease-premium) both;
+  will-change: transform, opacity;
+}
+
+.yaad-enter-zoom {
+  animation: yaad-enter-zoom-kf 220ms var(--ease-premium) both;
+  will-change: transform, opacity;
+}
+
+.yaad-enter-state {
+  animation: yaad-enter-state-kf 200ms var(--ease-premium) both;
+  will-change: transform, opacity;
+}
+
+/* CSS-only decorative typing & caret treatment for empty inputs */
+@keyframes yaad-typing-reveal-kf {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes yaad-caret-blink-kf {
+  0%, 49% {
+    border-inline-end-color: var(--color-primary);
+  }
+  50%, 100% {
+    border-inline-end-color: transparent;
+  }
+}
+
+.yaad-typing-overlay {
+  pointer-events: none;
+  user-select: none;
+  overflow: hidden;
+  animation: yaad-enter-fade-kf 180ms var(--ease-premium) both;
+}
+
+.yaad-typing-track {
+  display: inline-grid;
+  position: relative;
+  max-width: 100%;
+  overflow: hidden;
+  vertical-align: middle;
+}
+
+.yaad-typing-sizer {
+  visibility: hidden;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.yaad-typing-reveal {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  display: inline-flex;
+  align-items: center;
+  overflow: hidden;
+  white-space: nowrap;
+  width: 0;
+  padding-inline-end: 2px;
+  border-inline-end: 2px solid var(--color-primary);
+  animation:
+    yaad-typing-reveal-kf 680ms steps(var(--typing-steps, 26), end) forwards,
+    yaad-caret-blink-kf 1s step-end infinite;
+}
+
+/* Urdu/RTL safe typing polish: no width-steps slicing so Nastaliq shaping stays intact */
+.yaad-typing-rtl {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  padding-inline-end: 4px;
+  border-inline-end: 2px solid var(--color-primary);
+  animation:
+    yaad-enter-fade-kf 180ms var(--ease-premium) both,
+    yaad-caret-blink-kf 1s step-end infinite;
+}
+
+html[lang="ur"] .yaad-typing-reveal,
+[dir="rtl"] .yaad-typing-reveal {
+  width: auto !important;
+  max-width: 100%;
+  position: relative;
+  padding-inline-end: 4px;
+  animation:
+    yaad-enter-fade-kf 180ms var(--ease-premium) both,
+    yaad-caret-blink-kf 1s step-end infinite !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-scale-in,
   .animate-scale-out,
@@ -959,12 +1108,25 @@ html.dark .border-neutral-100 {
   .animate-slide-out-to-top,
   .animate-slide-in-from-bottom,
   .animate-slide-out-to-bottom,
-  .popover-menu {
+  .popover-menu,
+  .yaad-enter-slide-up,
+  .yaad-enter-zoom,
+  .yaad-enter-state {
     animation: fade-in 150ms ease forwards !important;
     transform: none !important;
   }
-  .animate-fade-in {
+  .animate-fade-in,
+  .yaad-enter-fade {
     animation: fade-in 150ms ease forwards !important;
+  }
+  .yaad-typing-overlay {
+    animation: none !important;
+  }
+  .yaad-typing-reveal,
+  .yaad-typing-rtl {
+    animation: none !important;
+    width: 100% !important;
+    border-inline-end-color: transparent !important;
   }
   .checkbox-wrapper.is-celebrating,
   .yaad-checkbox-container.is-celebrating,
@@ -982,6 +1144,89 @@ html.dark .border-neutral-100 {
     animation: none !important;
     transition: none !important;
     transform: none !important;
+  }
+}
+
+html.yaad-low-end .yaad-typing-reveal,
+html.yaad-lite .yaad-typing-reveal,
+html.yaad-low-end .yaad-typing-rtl,
+html.yaad-lite .yaad-typing-rtl {
+  animation: none !important;
+  width: 100% !important;
+  border-inline-end-color: transparent !important;
+}
+
+/* ====================================================================
+   YAAD SETTINGS DESIGN TOKENS & UTILITIES
+   Honors active theme tokens + Dark Mode while anchoring YAAD's
+   Deep Green (#003527), Yellow (#FCBC1F), and Cream (#FDF6E3) warmth.
+   ==================================================================== */
+:root {
+  --yaad-brand-green: #003527;
+  --yaad-brand-yellow: #FCBC1F;
+  --yaad-brand-cream: #FDF6E3;
+  --yaad-settings-card-bg: var(--color-surface-container-lowest);
+  --yaad-settings-card-border: color-mix(in oklab, var(--color-surface-dim) 72%, transparent);
+  --yaad-settings-card-shadow: 0 2px 10px -4px rgba(0, 53, 39, 0.06), 0 1px 2px rgba(0, 53, 39, 0.03);
+  --yaad-settings-divider: color-mix(in oklab, var(--color-surface-dim) 55%, transparent);
+  --yaad-settings-tile-bg: color-mix(in oklab, var(--color-primary) 9%, var(--color-surface-container-low));
+  --yaad-settings-warm-bg: #FDF6E3;
+  --yaad-settings-warm-fg: #7a5200;
+  --yaad-settings-warm-border: color-mix(in oklab, #FCBC1F 34%, transparent);
+}
+
+html.dark {
+  --yaad-settings-card-bg: var(--color-surface-container-lowest);
+  --yaad-settings-card-border: #1e293b;
+  --yaad-settings-card-shadow: 0 4px 18px -6px rgba(0, 0, 0, 0.45);
+  --yaad-settings-divider: rgba(148, 163, 184, 0.14);
+  --yaad-settings-tile-bg: color-mix(in oklab, var(--color-primary) 16%, var(--color-surface-container));
+  --yaad-settings-warm-bg: color-mix(in oklab, #FCBC1F 16%, var(--color-surface-container));
+  --yaad-settings-warm-fg: #FCBC1F;
+  --yaad-settings-warm-border: rgba(252, 188, 31, 0.24);
+}
+
+@layer components {
+  .yaad-settings-card {
+    background-color: var(--yaad-settings-card-bg);
+    border: 1px solid var(--yaad-settings-card-border);
+    border-radius: 1.5rem;
+    box-shadow: var(--yaad-settings-card-shadow);
+  }
+
+  html[data-app-theme="default"] .yaad-settings-hero-card {
+    background-image: linear-gradient(180deg, #ffffff 0%, color-mix(in oklab, var(--yaad-brand-cream) 48%, #ffffff) 100%);
+    border-color: color-mix(in oklab, var(--yaad-brand-green) 11%, var(--color-surface-dim));
+  }
+
+  .yaad-settings-section-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-outline);
+  }
+
+  .yaad-settings-tile {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.875rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background-color: var(--yaad-settings-tile-bg);
+    color: var(--color-primary);
+  }
+
+  .yaad-settings-tile-warm {
+    background-color: var(--yaad-settings-warm-bg);
+    color: var(--yaad-settings-warm-fg);
+    border: 1px solid var(--yaad-settings-warm-border);
+  }
+
+  .yaad-settings-divider {
+    border-color: var(--yaad-settings-divider);
   }
 }
 

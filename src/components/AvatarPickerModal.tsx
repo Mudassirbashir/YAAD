@@ -200,19 +200,19 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
   const modalInner = (
     <>
       {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-surface-dim/60 flex items-center justify-between bg-surface-container-low/40 shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-              <Sparkles className="w-5 h-5 text-primary" />
+        <div className="p-4 sm:p-5 border-b yaad-settings-divider flex items-center justify-between gap-3 bg-surface-container-low/40 shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="yaad-settings-tile">
+              <Sparkles className="w-5 h-5 text-primary stroke-[1.9]" aria-hidden="true" />
             </div>
-            <div>
+            <div className="min-w-0">
               <h2
                 id="avatar_picker_modal_title"
-                className="text-base sm:text-lg font-bold text-on-surface font-display leading-tight"
+                className="text-base sm:text-lg font-bold text-on-surface font-display leading-tight truncate"
               >
                 {t('settings.avatarPickerTitle') || 'Choose Avatar'}
               </h2>
-              <p className="text-xs text-outline font-body">
+              <p className="text-xs text-outline font-body truncate">
                 {t('settings.avatarPickerSubtitle') || 'Select a custom emoji and background style'}
               </p>
             </div>
@@ -221,9 +221,9 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
             id="avatar_picker_close_btn"
             onClick={onClose}
             aria-label="Close"
-            className="w-8 h-8 rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-colors active:scale-90"
+            className="w-12 h-12 min-w-[48px] min-h-[48px] rounded-full flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container cursor-pointer shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -253,7 +253,7 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
                 </span>
                 <div className="text-sm font-bold text-on-surface flex items-center gap-2">
                   {customPhotoUrl ? (
-                    <span className="inline-flex items-center gap-1.5 text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full font-semibold">
+                    <span className={`inline-flex items-center gap-1.5 text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full font-semibold ${canAnimate ? 'yaad-enter-state' : ''}`}>
                       <Camera className="w-3 h-3" />
                       {language === 'ur' ? 'اپنی تصویر' : 'Custom Photo'}
                     </span>
@@ -281,7 +281,7 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
                 type="button"
                 onClick={handleUploadClick}
                 disabled={isUploadingPhoto}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-[transform,background-color,color,box-shadow] active:scale-95 cursor-pointer ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-transform duration-150 yaad-ease-premium active:scale-95 cursor-pointer ${
                   customPhotoUrl
                     ? 'bg-primary text-on-primary shadow-xs'
                     : 'bg-surface-container text-on-surface hover:bg-surface-container-high'
@@ -299,7 +299,7 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
                 id="avatar_toggle_initials_btn"
                 type="button"
                 onClick={handleSetInitials}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-[transform,background-color,color,box-shadow] active:scale-95 cursor-pointer ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-transform duration-150 yaad-ease-premium active:scale-95 cursor-pointer ${
                   isUseInitials && !customPhotoUrl
                     ? 'bg-primary text-on-primary shadow-xs'
                     : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'
@@ -313,7 +313,7 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
 
           {/* Upload Error Alert */}
           {uploadError && (
-            <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200/60 dark:border-rose-900/40 rounded-xl text-xs text-rose-700 dark:text-rose-400 font-medium">
+            <div className={`p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200/60 dark:border-rose-900/40 rounded-xl text-xs text-rose-700 dark:text-rose-400 font-medium ${canAnimate ? 'yaad-enter-state' : ''}`}>
               {uploadError}
             </div>
           )}
@@ -345,7 +345,7 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
                     onClick={() => handleSelectColor(palette.id)}
                     title={language === 'ur' ? palette.nameUrdu : palette.name}
                     aria-label={`Select background color ${palette.name}`}
-                    className={`w-9 h-9 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-[transform,opacity,box-shadow] duration-150 relative ${
+                    className={`w-9 h-9 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-[transform,opacity] duration-150 yaad-ease-premium relative ${
                       palette.bgClass
                     } ${palette.borderClass} border ${
                       isSelected
@@ -383,7 +383,7 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
                       setSelectedCategory(cat.id);
                       setSearchQuery('');
                     }}
-                    className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-[transform,background-color,color,box-shadow] active:scale-95 ${
+                    className={`shrink-0 min-h-[40px] px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-transform duration-150 yaad-ease-premium active:scale-95 ${
                       isActive
                         ? 'bg-primary text-on-primary shadow-xs font-bold'
                         : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container'
@@ -405,14 +405,14 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t('settings.avatarSearchPlaceholder') || 'Search emojis...'}
-                className="w-full h-9 bg-surface-container rounded-xl pl-9 pr-8 rtl:pl-8 rtl:pr-9 text-xs font-body text-on-surface placeholder:text-outline border border-surface-dim focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 transition-[border-color,box-shadow]"
+                className="w-full min-h-[44px] bg-surface-container rounded-xl pl-9 pr-8 rtl:pl-8 rtl:pr-9 text-xs font-body text-on-surface placeholder:text-outline border border-surface-dim focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface w-4 h-4 rounded-full flex items-center justify-center rtl:right-auto rtl:left-2.5"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface w-6 h-6 rounded-full flex items-center justify-center rtl:right-auto rtl:left-2.5"
                 >
-                  <X className="w-3 h-3" />
+                  <X className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
@@ -432,7 +432,7 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
                       id={`avatar_emoji_btn_${index}`}
                       onClick={() => handleSelectEmoji(emoji)}
                       aria-label={`Select ${emoji}`}
-                      className={`h-11 rounded-xl flex items-center justify-center text-2xl transition-[transform,background-color,box-shadow] duration-150 select-none ${
+                      className={`h-11 rounded-xl flex items-center justify-center text-2xl transition-transform duration-150 yaad-ease-premium select-none ${
                         isSelected
                           ? `${activeColorOption.bgClass} ring-2 ring-primary scale-110 shadow-sm font-bold`
                           : 'hover:bg-surface-container-high hover:scale-105 active:scale-95'
@@ -452,13 +452,13 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
         </div>
 
         {/* Modal Footer Actions */}
-        <div className="p-4 sm:p-5 border-t border-surface-dim/60 bg-surface-container-low/30 flex items-center justify-between gap-3 shrink-0">
+        <div className="p-4 sm:p-5 border-t yaad-settings-divider bg-surface-container-low/30 flex items-center justify-between gap-3 shrink-0">
           <button
             id="avatar_picker_cancel_btn"
             type="button"
             onClick={onClose}
             disabled={isSaving}
-            className="px-4 py-2.5 text-xs font-semibold text-outline hover:text-on-surface hover:bg-surface-container rounded-2xl transition-colors active:scale-95"
+            className="min-h-[48px] px-4 py-2.5 text-xs sm:text-sm font-semibold text-outline hover:text-on-surface hover:bg-surface-container rounded-2xl active:scale-95 cursor-pointer"
           >
             {t('settings.cancel') || 'Cancel'}
           </button>
@@ -468,7 +468,7 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="px-5 py-2.5 text-xs font-bold text-on-primary bg-primary hover:bg-primary/90 rounded-2xl shadow-sm hover:shadow transition-[transform,background-color,box-shadow,opacity] flex items-center gap-2 active:scale-95 disabled:opacity-50"
+            className="min-h-[48px] px-5 py-2.5 text-xs sm:text-sm font-bold text-on-primary bg-primary hover:bg-primary/90 rounded-2xl shadow-sm transition-[transform,opacity] duration-150 yaad-ease-premium flex items-center gap-2 active:scale-95 disabled:opacity-50 cursor-pointer"
           >
             {isSaving ? (
               <>
@@ -513,7 +513,7 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
         <motion.div
           id="avatar_picker_backdrop"
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1, transition: { duration: 0.16, ease: [0.32, 0.72, 0, 1] } }}
+          animate={{ opacity: 1, transition: { duration: 0.2, ease: [0.16, 1, 0.3, 1] } }}
           exit={{ opacity: 0, transition: { duration: 0.14, ease: [0.36, 0, 0.66, 0] } }}
           onClick={onClose}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto"
@@ -523,9 +523,9 @@ export const AvatarPickerModal: React.FC<AvatarPickerModalProps> = ({
         >
           <motion.div
             id="avatar_picker_container"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1, transition: { duration: 0.18, ease: [0.32, 0.72, 0, 1] } }}
-            exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.16, ease: [0.36, 0, 0.66, 0] } }}
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1, transition: { duration: 0.24, ease: [0.16, 1, 0.3, 1] } }}
+            exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.16, ease: [0.36, 0, 0.66, 0] } }}
             onClick={(e) => e.stopPropagation()}
             className="bg-surface-container-lowest rounded-3xl w-full max-w-lg shadow-2xl border border-surface-dim overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[88vh]"
           >

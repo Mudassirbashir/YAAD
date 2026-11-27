@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, ArrowRight, AlertCircle, ShoppingBag } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { triggerHaptic } from '../lib/sound';
+import { useShouldAnimate } from '../lib/motionPreference';
+import { containsUrdu } from '../utils/bidi';
 
 export interface CreateListViewProps {
   onBack: () => void;
@@ -14,12 +16,15 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
   onCreateList,
   onContinue,
 }) => {
-  const { t, language } = useLanguage();
+  const { t, language, isRTL } = useLanguage();
+  const canAnimate = useShouldAnimate();
   const [customTitle, setCustomTitle] = useState<string>('');
+  const [hasUserFocused, setHasUserFocused] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [isShaking, setIsShaking] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
+  const mountedAtRef = useRef<number>(Date.now());
 
   const isUrdu = language === 'ur';
 
@@ -107,48 +112,94 @@ export const CreateListView: React.FC<CreateListViewProps> = ({
 
         {/* 3. List Name Input Field: Round shape, 16px text-base (prevents mobile zoom), submit button */}
         <form onSubmit={handleSubmitCustomTitle} className="space-y-2 mt-1">
-          <div
-            className={`relative flex items-center w-full rounded-full border transition-[border-color,box-shadow] duration-150 bg-surface-container-lowest shadow-xs ${
-              isShaking ? 'animate-bounce' : ''
-            } ${
-              errorMsg
-                ? 'border-error ring-2 ring-error/20'
-                : 'border-neutral-300 dark:border-neutral-700 focus-within:border-primary dark:focus-within:border-white focus-within:ring-2 focus-within:ring-primary/20 dark:focus-within:ring-white/10'
-            }`}
-          >
-            <input
-              ref={titleInputRef}
-              id="list_title_input"
-              dir="auto"
-              type="text"
-              autoFocus
-              value={customTitle}
-              onChange={(e) => {
-                setCustomTitle(e.target.value);
-                if (errorMsg) setErrorMsg('');
-              }}
-              className="w-full h-13 sm:h-14 ps-5 pe-16 bg-transparent text-on-surface font-body text-base outline-none placeholder:text-neutral-400 dark:placeholder:text-neutral-500 rounded-full"
-              placeholder={t('createList.customPlaceholder') || (isUrdu ? 'لسٹ کا نام (مثلاً سودا سلف)' : 'List Name (e.g. Weekly Groceries)')}
-              aria-label="List Name"
-            />
+          {(() => {
+            const placeholderText =
+              t('createList.customPlaceholder') ||
+              (isUrdu ? 'لسٹ کا نام (مثلاً سودا سلف)' : 'List Name (e.g. Weekly Groceries)');
+            const showTitleTyping =
+              canAnimate && !hasUserFocused && customTitle.length === 0;
+            const titleRtlSafe = isUrdu || isRTL || containsUrdu(placeholderText);
+            const titleSteps = Math.min(Math.max(placeholderText.length, 10), 32);
 
-            {/* Circular button with right arrow */}
-            <button
-              id="create_list_submit_btn"
-              type="submit"
-              disabled={isSubmitting}
-              aria-label="Continue"
-              className="absolute end-1.5 top-1/2 -translate-y-1/2 w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-primary hover:bg-[#0c3125] text-white flex items-center justify-center hover:opacity-95 active:scale-95 transition-[transform,background-color,opacity] duration-150 shadow-xs cursor-pointer disabled:opacity-50"
-            >
-              <ArrowRight className="w-5 h-5 rtl:rotate-180" />
-            </button>
-          </div>
+            return (
+              <div
+                className={`relative flex items-center w-full rounded-full border transition-[border-color] duration-150 bg-surface-container-lowest shadow-xs ${
+                  isShaking ? 'animate-bounce' : ''
+                } ${
+                  errorMsg
+                    ? 'border-error ring-2 ring-error/20'
+                    : 'border-neutral-300 dark:border-neutral-700 focus-within:border-primary dark:focus-within:border-white focus-within:ring-2 focus-within:ring-primary/20 dark:focus-within:ring-white/10'
+                }`}
+              >
+                {showTitleTyping && (
+                  <span
+                    aria-hidden="true"
+                    className="yaad-typing-overlay absolute inset-y-0 inset-x-0 ps-5 pe-16 flex items-center font-body text-base text-neutral-400 dark:text-neutral-500"
+                  >
+                    {titleRtlSafe ? (
+                      <span className="yaad-typing-rtl truncate">{placeholderText}</span>
+                    ) : (
+                      <span
+                        className="yaad-typing-track"
+                        style={{ '--typing-steps': titleSteps } as React.CSSProperties}
+                      >
+                        <span className="yaad-typing-sizer">{placeholderText}</span>
+                        <span className="yaad-typing-reveal">{placeholderText}</span>
+                      </span>
+                    )}
+                  </span>
+                )}
+                <input
+                  ref={titleInputRef}
+                  id="list_title_input"
+                  dir="auto"
+                  type="text"
+                  autoFocus
+                  value={customTitle}
+                  onPointerDown={() => setHasUserFocused(true)}
+                  onFocus={() => {
+                    if (Date.now() - mountedAtRef.current > 120) {
+                      setHasUserFocused(true);
+                    }
+                  }}
+                  onBlur={() => setHasUserFocused(false)}
+                  onKeyDown={() => setHasUserFocused(true)}
+                  onPaste={() => setHasUserFocused(true)}
+                  onChange={(e) => {
+                    setHasUserFocused(true);
+                    setCustomTitle(e.target.value);
+                    if (errorMsg) setErrorMsg('');
+                  }}
+                  className={`w-full h-13 sm:h-14 ps-5 pe-16 bg-transparent text-on-surface font-body text-base outline-none rounded-full ${
+                    showTitleTyping
+                      ? 'placeholder:text-transparent'
+                      : 'placeholder:text-neutral-400 dark:placeholder:text-neutral-500'
+                  }`}
+                  placeholder={placeholderText}
+                  aria-label="List Name"
+                />
+
+                {/* Circular button with right arrow */}
+                <button
+                  id="create_list_submit_btn"
+                  type="submit"
+                  disabled={isSubmitting}
+                  aria-label="Continue"
+                  className="absolute end-1.5 top-1/2 -translate-y-1/2 w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-primary hover:bg-[#0c3125] text-white flex items-center justify-center hover:opacity-95 active:scale-95 transition-[transform,background-color,opacity] duration-150 shadow-xs cursor-pointer disabled:opacity-50"
+                >
+                  <ArrowRight className="w-5 h-5 rtl:rotate-180" />
+                </button>
+              </div>
+            );
+          })()}
 
           {/* Validation Alert Message */}
           {errorMsg && (
             <div
               role="alert"
-              className="px-3.5 py-2 rounded-2xl bg-error/10 border border-error/20 text-error font-body text-xs sm:text-sm font-medium flex items-center gap-2 animate-fade-in"
+              className={`px-3.5 py-2 rounded-2xl bg-error/10 border border-error/20 text-error font-body text-xs sm:text-sm font-medium flex items-center gap-2 ${
+                canAnimate ? 'yaad-enter-state' : ''
+              }`}
             >
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{errorMsg}</span>

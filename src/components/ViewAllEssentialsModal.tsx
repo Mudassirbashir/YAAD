@@ -13,6 +13,7 @@ import { ShoppingList } from '../types';
 import { FrequentEssentialVisual, FIXED_HOME_ESSENTIALS } from './home/FrequentEssentialsSection';
 import { playItemAddSound, triggerHaptic } from '../lib/sound';
 import { useShouldAnimate } from '../lib/motionPreference';
+import { containsUrdu } from '../utils/bidi';
 
 interface ViewAllEssentialsModalProps {
   isOpen: boolean;
@@ -31,10 +32,12 @@ export const ViewAllEssentialsModal: React.FC<ViewAllEssentialsModalProps> = ({
   mostRecentActiveList,
   onAddItem,
 }) => {
-  const { t } = useLanguage();
+  const { t, language, isRTL } = useLanguage();
   const catalogVersion = useCatalogVersion();
   const canAnimate = useShouldAnimate();
+  const isUrdu = language === 'ur';
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isSearchFocused, setIsSearchFocused] = useState<boolean>(false);
   const [addedItemsMap, setAddedItemsMap] = useState<Record<string, boolean>>({});
   const [addingItemId, setAddingItemId] = useState<string | null>(null);
 
@@ -47,6 +50,7 @@ export const ViewAllEssentialsModal: React.FC<ViewAllEssentialsModalProps> = ({
     if (isOpen) {
       setVisibleCount(PAGE_SIZE);
       setSearchQuery('');
+      setIsSearchFocused(false);
     }
   }, [isOpen]);
 
@@ -212,30 +216,72 @@ export const ViewAllEssentialsModal: React.FC<ViewAllEssentialsModalProps> = ({
 
           {/* Search bar */}
           <div className="p-3.5 sm:p-4 bg-white dark:bg-surface-container-low border-b border-surface-dim/50 shrink-0">
-            <div className="relative">
-              <Search className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setVisibleCount(PAGE_SIZE);
-                }}
-                placeholder={t('essentials.searchPlaceholder') || 'Search staples & essentials (Milk, Eggs, Atta)...'}
-                aria-label="Search essentials"
-                className="w-full h-11 ps-10 pe-10 bg-surface-container-lowest dark:bg-surface-container border border-surface-dim rounded-xl font-body text-sm text-on-surface placeholder:text-outline outline-none focus:ring-2 focus:ring-primary/20 transition-shadow duration-150"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  aria-label="Clear search"
-                  className="w-10 h-10 absolute end-0.5 top-1/2 -translate-y-1/2 flex items-center justify-center text-outline hover:text-on-surface cursor-pointer rounded-full"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
+            {(() => {
+              const essentialsPlaceholder =
+                t('essentials.searchPlaceholder') ||
+                'Search staples & essentials (Milk, Eggs, Atta)...';
+              const showSearchTyping =
+                canAnimate && !isSearchFocused && searchQuery.length === 0;
+              const searchRtlSafe =
+                isUrdu || isRTL || containsUrdu(essentialsPlaceholder);
+              const searchSteps = Math.min(
+                Math.max(essentialsPlaceholder.length, 16),
+                36
+              );
+
+              return (
+                <div className="relative flex items-center">
+                  <Search className="w-4 h-4 text-outline absolute start-3.5 top-1/2 -translate-y-1/2 pointer-events-none z-10" />
+                  {showSearchTyping && (
+                    <span
+                      aria-hidden="true"
+                      className="yaad-typing-overlay absolute inset-y-0 inset-x-0 ps-10 pe-10 flex items-center font-body text-sm text-outline"
+                    >
+                      {searchRtlSafe ? (
+                        <span className="yaad-typing-rtl truncate">
+                          {essentialsPlaceholder}
+                        </span>
+                      ) : (
+                        <span
+                          className="yaad-typing-track"
+                          style={{ '--typing-steps': searchSteps } as React.CSSProperties}
+                        >
+                          <span className="yaad-typing-sizer">{essentialsPlaceholder}</span>
+                          <span className="yaad-typing-reveal">{essentialsPlaceholder}</span>
+                        </span>
+                      )}
+                    </span>
+                  )}
+                  <input
+                    type="text"
+                    dir="auto"
+                    value={searchQuery}
+                    onFocus={() => setIsSearchFocused(true)}
+                    onBlur={() => setIsSearchFocused(false)}
+                    onPaste={() => setIsSearchFocused(true)}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setVisibleCount(PAGE_SIZE);
+                    }}
+                    placeholder={essentialsPlaceholder}
+                    aria-label="Search essentials"
+                    className={`w-full h-11 ps-10 pe-10 bg-surface-container-lowest dark:bg-surface-container border border-surface-dim rounded-xl font-body text-sm text-on-surface outline-none focus:ring-2 focus:ring-primary/20 ${
+                      showSearchTyping ? 'placeholder:text-transparent' : 'placeholder:text-outline'
+                    }`}
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      aria-label="Clear search"
+                      className="w-10 h-10 absolute end-0.5 top-1/2 -translate-y-1/2 flex items-center justify-center text-outline hover:text-on-surface cursor-pointer rounded-full"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              );
+            })()}
           </div>
 
           {/* Active list indicator */}
@@ -392,11 +438,11 @@ export const ViewAllEssentialsModal: React.FC<ViewAllEssentialsModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm yaad-enter-fade">
         <motion.div
           initial={{ opacity: 0, scale: 0.98, y: 12 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.98, y: 12 }}
+          animate={{ opacity: 1, scale: 1, y: 0, transition: { duration: 0.22, ease: [0.16, 1, 0.3, 1] } }}
+          exit={{ opacity: 0, scale: 0.98, y: 12, transition: { duration: 0.16, ease: [0.36, 0, 0.66, 0] } }}
           className="bg-[#FAFAFA] dark:bg-surface-container-lowest w-full max-w-2xl h-full sm:h-[88vh] sm:rounded-3xl flex flex-col overflow-hidden shadow-2xl border border-surface-dim/70"
         >
           {modalInner}

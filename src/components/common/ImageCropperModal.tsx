@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { triggerHaptic } from '../../lib/sound';
+import { useShouldAnimate } from '../../lib/motionPreference';
 
 interface ImageCropperModalProps {
   isOpen: boolean;
@@ -28,6 +29,7 @@ export const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
   onCropComplete,
 }) => {
   const { language, isRTL } = useLanguage();
+  const canAnimate = useShouldAnimate();
 
   const [imageLoaded, setImageLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -236,14 +238,18 @@ export const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
   return (
     <div
       id="image_cropper_modal_backdrop"
-      className="fixed inset-0 z-60 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-fade-in"
+      className={`fixed inset-0 z-60 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 ${
+        canAnimate ? 'yaad-enter-fade' : ''
+      }`}
       role="dialog"
       aria-modal="true"
       dir={isRTL ? 'rtl' : 'ltr'}
     >
       <div
         id="image_cropper_modal_container"
-        className="bg-surface-container-lowest text-on-surface rounded-3xl p-5 sm:p-6 max-w-md w-full shadow-2xl border border-surface-dim/80 space-y-4 animate-zoom-in-95 flex flex-col"
+        className={`bg-surface-container-lowest text-on-surface rounded-3xl p-5 sm:p-6 max-w-md w-full shadow-2xl border border-surface-dim/80 space-y-4 flex flex-col ${
+          canAnimate ? 'yaad-enter-zoom' : ''
+        }`}
       >
         {/* Header */}
         <div className="flex items-center justify-between pb-2 border-b border-surface-dim/50">
@@ -280,7 +286,9 @@ export const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
           <div
             id="cropper_error_message"
             role="alert"
-            className="p-2.5 rounded-xl bg-error-container/30 border border-error/20 text-xs text-error flex items-center justify-center gap-2"
+            className={`p-2.5 rounded-xl bg-error-container/30 border border-error/20 text-xs text-error flex items-center justify-center gap-2 ${
+              canAnimate ? 'yaad-enter-state' : ''
+            }`}
           >
             <AlertCircle className="w-4 h-4 shrink-0 text-error" />
             <span>{loadError}</span>
@@ -322,7 +330,7 @@ export const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
               style={{
                 transform: `translate(${position.x}px, ${position.y}px) rotate(${rotation}deg) scale(${zoom})`,
                 transformOrigin: 'center center',
-                transition: isDragging ? 'none' : 'transform 0.08s ease-out',
+                transition: isDragging || !canAnimate ? 'none' : 'transform 160ms var(--ease-premium)',
                 maxWidth: '100%',
                 maxHeight: '100%',
                 objectFit: 'contain',
@@ -431,7 +439,7 @@ export const ImageCropperModal: React.FC<ImageCropperModalProps> = ({
             id="cropper_apply_btn"
             onClick={handleCrop}
             disabled={!imageLoaded || isProcessing}
-            className="px-5 py-2.5 text-xs font-bold text-white bg-primary hover:bg-primary/90 rounded-xl transition-[transform,background-color,opacity] disabled:opacity-50 active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-md"
+            className="px-5 py-2.5 text-xs font-bold text-white bg-primary hover:bg-primary/90 rounded-xl transition-[transform,opacity] duration-150 yaad-ease-premium disabled:opacity-50 active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-md"
           >
             {isProcessing ? (
               <>
