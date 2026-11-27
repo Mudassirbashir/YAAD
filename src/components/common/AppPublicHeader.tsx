@@ -69,23 +69,23 @@ export const AppPublicHeader: React.FC<AppPublicHeaderProps> = ({
     <header
       id="app_public_header"
       dir={dir}
-      className={`fixed top-0 left-0 right-0 z-50 bg-[#faf8f5]/85 backdrop-blur-xl border-b border-[#e5e1d8] select-none ${
+      className={`fixed top-0 left-0 right-0 z-50 bg-[#faf8f5]/80 dark:bg-background/80 backdrop-blur-xl border-b border-[#e5e1d8] dark:border-outline-variant/40 select-none ${
         canAnimate ? 'transition-transform duration-200 ease-out' : ''
       } ${isVisible ? 'translate-y-0 shadow-2xs' : '-translate-y-full'}`}
     >
-      <div className="relative max-w-6xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2">
+      <div className="max-w-6xl mx-auto px-2.5 sm:px-6 h-16 grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 sm:gap-3">
         {/* Leading: Back Button (optional) + Official YAAD Logo */}
-        <div className="flex items-center gap-2 sm:gap-3 z-10 shrink-0">
+        <div className="flex items-center justify-start gap-1.5 sm:gap-3 shrink-0 min-w-[44px]">
           {showBack && onBack && (
             <button
               type="button"
               onClick={onBack}
               aria-label={t('back') || 'Back'}
-              className={`w-11 h-11 min-w-[44px] min-h-[44px] rounded-full border border-[#e5e1d8] bg-white hover:bg-[#f0ebe1] flex items-center justify-center text-[#1c2826] shadow-2xs cursor-pointer ${
+              className={`w-11 h-11 min-w-[44px] min-h-[44px] rounded-full border border-[#e5e1d8] dark:border-outline-variant bg-white dark:bg-surface-container hover:bg-[#f0ebe1] flex items-center justify-center text-[#1c2826] dark:text-on-surface shadow-2xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
                 canAnimate ? 'transition-transform duration-150 active:scale-95' : ''
               }`}
             >
-              <ArrowLeft className="w-4 h-4 text-[#1c2826] rtl:rotate-180" />
+              <ArrowLeft className="w-4 h-4 rtl:rotate-180" />
             </button>
           )}
 
@@ -94,7 +94,7 @@ export const AppPublicHeader: React.FC<AppPublicHeaderProps> = ({
             onClick={handleLogoClick}
             aria-label={t('landing.goHome') || 'Go to YAAD Home'}
             title={t('landing.goHome') || 'Go to YAAD Home'}
-            className={`flex items-center p-1 rounded-xl cursor-pointer group ${
+            className={`flex items-center p-1 rounded-xl cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
               canAnimate ? 'transition-[transform,opacity] duration-150 hover:opacity-90 active:scale-95' : ''
             }`}
           >
@@ -116,26 +116,26 @@ export const AppPublicHeader: React.FC<AppPublicHeaderProps> = ({
           </button>
         </div>
 
-        {/* Center: Brand Wordmark centered cleanly in viewport */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto text-center">
+        {/* Center: Brand Wordmark centered cleanly without overlap */}
+        <div className="flex items-center justify-center text-center min-w-0">
           <button
             type="button"
             onClick={handleLogoClick}
             dir="ltr"
-            className="min-h-[44px] px-2 text-base sm:text-lg font-black tracking-tight text-[#005039] font-display hover:opacity-85 cursor-pointer select-none inline-flex items-center justify-center"
+            className="min-h-[44px] px-1.5 sm:px-2 text-base sm:text-lg font-black tracking-tight text-[#005039] dark:text-primary font-display hover:opacity-85 cursor-pointer select-none inline-flex items-center justify-center rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
           >
             {title}
           </button>
         </div>
 
         {/* Trailing: Logged-out "Try YAAD Free" CTA or Authenticated User Profile */}
-        <div className="flex items-center gap-2 z-10 shrink-0">
+        <div className="flex items-center justify-end gap-2 shrink-0 min-w-[44px]">
           {activeUser ? (
             <button
               type="button"
               onClick={handleCtaClick}
               title={userDisplayName || t('landing.accountDashboard') || 'Your Account Dashboard'}
-              className={`inline-flex items-center gap-2 min-h-[44px] px-2.5 py-1.5 sm:px-3 rounded-full bg-white hover:bg-[#faf8f5] border border-[#005039]/25 text-[#005039] shadow-2xs cursor-pointer group ${
+              className={`inline-flex items-center gap-2 min-h-[44px] px-2.5 py-1.5 sm:px-3 rounded-full bg-white dark:bg-surface-container hover:bg-[#faf8f5] border border-[#005039]/25 dark:border-primary/40 text-[#005039] dark:text-primary shadow-2xs cursor-pointer group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
                 canAnimate ? 'transition-transform duration-150 active:scale-95' : ''
               }`}
             >
@@ -146,7 +146,7 @@ export const AppPublicHeader: React.FC<AppPublicHeaderProps> = ({
                 size="sm"
                 className="ring-1 ring-[#005039]/30"
               />
-              <span className="hidden sm:inline text-xs font-bold text-[#1c2826] max-w-[120px] truncate">
+              <span className="hidden sm:inline text-xs font-bold text-[#1c2826] dark:text-on-surface max-w-[120px] truncate">
                 {userDisplayName.split(' ')[0] || 'Dashboard'}
               </span>
             </button>
@@ -155,7 +155,7 @@ export const AppPublicHeader: React.FC<AppPublicHeaderProps> = ({
               id="public_header_try_free_btn"
               type="button"
               onClick={handleCtaClick}
-              className={`inline-flex items-center justify-center min-h-[44px] h-11 px-3.5 sm:px-5 rounded-full bg-[#005039] hover:bg-[#003d2b] text-white font-display font-bold text-xs sm:text-[13px] tracking-tight whitespace-nowrap shadow-xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#005039] focus-visible:ring-offset-2 ${
+              className={`inline-flex items-center justify-center min-h-[44px] h-11 px-3 sm:px-5 rounded-full bg-[#005039] hover:bg-[#003d2b] text-white font-display font-bold text-[11px] sm:text-[13px] tracking-tight whitespace-nowrap shadow-xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#005039] focus-visible:ring-offset-2 ${
                 canAnimate ? 'transition-transform duration-150 active:scale-95' : ''
               }`}
             >

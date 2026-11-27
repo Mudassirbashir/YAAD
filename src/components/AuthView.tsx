@@ -596,7 +596,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 onClick={handleBack}
                 disabled={isAnyLoading}
                 aria-label={t('back') || 'Back'}
-                className={`w-11 h-11 min-w-[44px] min-h-[44px] rounded-full border border-neutral-200/80 dark:border-outline-variant bg-white/85 dark:bg-surface-container hover:bg-white flex items-center justify-center text-on-surface shadow-2xs cursor-pointer disabled:opacity-50 ${buttonPressClass}`}
+                className={`w-11 h-11 min-w-[44px] min-h-[44px] rounded-full border border-neutral-200/80 dark:border-outline-variant bg-white/85 dark:bg-surface-container hover:bg-white flex items-center justify-center text-on-surface shadow-2xs cursor-pointer disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${buttonPressClass}`}
               >
                 <ArrowLeft className="w-5 h-5 rtl:rotate-180" />
               </button>
@@ -690,7 +690,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                     onClick={handleGoogleSignIn}
                     disabled={isAnyLoading}
                     aria-describedby={lastUsedMethod === 'google' ? 'auth_google_last_used_hint' : undefined}
-                    className={`w-full min-h-[52px] px-4 rounded-full border border-neutral-300/90 dark:border-outline-variant bg-white dark:bg-surface-container-lowest hover:bg-neutral-50 text-neutral-900 dark:text-on-surface text-sm font-semibold font-body shadow-2xs flex items-center justify-center gap-3 cursor-pointer disabled:opacity-60 ${buttonPressClass}`}
+                    className={`w-full min-h-[52px] px-3.5 sm:px-4 rounded-full border border-neutral-300/90 dark:border-outline-variant bg-white dark:bg-surface-container-lowest hover:bg-neutral-50 text-neutral-900 dark:text-on-surface text-[13px] sm:text-sm font-semibold font-body shadow-2xs flex items-center justify-center gap-2 sm:gap-3 cursor-pointer disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${buttonPressClass}`}
                   >
                     {googleLoading ? (
                       <Loader2 className="w-5 h-5 animate-spin text-neutral-600 shrink-0" />
@@ -703,7 +703,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                     {lastUsedMethod === 'google' && (
                       <span
                         aria-hidden="true"
-                        className="shrink-0 whitespace-nowrap px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-900/50 text-[#005039] dark:text-emerald-200 border border-emerald-200/80 dark:border-emerald-700/50"
+                        className="shrink-0 whitespace-nowrap px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold bg-emerald-50 dark:bg-emerald-900/50 text-[#005039] dark:text-emerald-200 border border-emerald-200/80 dark:border-emerald-700/50"
                       >
                         {lastUsedLabel}
                       </span>
@@ -729,7 +729,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                     }}
                     disabled={isAnyLoading}
                     aria-describedby={lastUsedMethod === 'email' ? 'auth_email_last_used_hint' : undefined}
-                    className={`yaad-liquid-glass relative w-full min-h-[52px] px-4 rounded-full text-on-surface text-sm font-semibold font-body flex items-center justify-center gap-3 cursor-pointer disabled:opacity-60 hover:bg-white/90 dark:hover:bg-surface-container ${buttonPressClass}`}
+                    className={`yaad-liquid-glass yaad-liquid-glass-no-blur relative w-full min-h-[52px] px-3.5 sm:px-4 rounded-full text-on-surface text-[13px] sm:text-sm font-semibold font-body flex items-center justify-center gap-2 sm:gap-3 cursor-pointer disabled:opacity-60 hover:bg-white/90 dark:hover:bg-surface-container focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${buttonPressClass}`}
                   >
                     <Mail className="relative z-10 w-5 h-5 text-primary shrink-0" aria-hidden="true" />
                     <span className="relative z-10 truncate">
@@ -738,7 +738,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                     {lastUsedMethod === 'email' && (
                       <span
                         aria-hidden="true"
-                        className="relative z-10 shrink-0 whitespace-nowrap px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-900/50 text-[#005039] dark:text-emerald-200 border border-emerald-200/80 dark:border-emerald-700/50"
+                        className="relative z-10 shrink-0 whitespace-nowrap px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold bg-emerald-50 dark:bg-emerald-900/50 text-[#005039] dark:text-emerald-200 border border-emerald-200/80 dark:border-emerald-700/50"
                       >
                         {lastUsedLabel}
                       </span>
@@ -815,7 +815,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
-                      className="absolute end-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-on-surface min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
+                      className="absolute end-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-on-surface min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                     >
                       {showPassword ? (
                         <EyeOff className="w-4 h-4" />
@@ -835,7 +835,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                       setErrorMessage(null);
                       setInfoMessage(null);
                     }}
-                    className="min-h-[44px] px-1 text-xs font-medium text-on-surface-variant hover:text-primary cursor-pointer"
+                    className="min-h-[44px] px-2 text-xs font-medium text-on-surface-variant hover:text-primary cursor-pointer rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   >
                     Forgot Password?
                   </button>
@@ -845,7 +845,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 <button
                   type="submit"
                   disabled={isAnyLoading}
-                  className={`w-full h-12 min-h-[48px] rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 mt-1 ${buttonPressClass}`}
+                  className={`w-full h-12 min-h-[48px] rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 mt-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${buttonPressClass}`}
                 >
                   {loading ? (
                     <Loader2 className="w-5 h-5 animate-spin text-white" />
@@ -866,7 +866,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                     setErrorMessage(null);
                     setInfoMessage(null);
                   }}
-                  className="text-primary font-bold hover:underline cursor-pointer ms-1 min-h-[44px] inline-flex items-center"
+                  className="text-primary font-bold hover:underline cursor-pointer ms-1 px-1.5 min-h-[44px] inline-flex items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                   {t('auth.switchSignUp') || 'Sign Up'}
                 </button>
@@ -1060,7 +1060,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                 <button
                   type="submit"
                   disabled={!agreedToTerms || isAnyLoading}
-                  className={`w-full h-12 min-h-[48px] rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed mt-2 ${buttonPressClass}`}
+                  className={`w-full h-12 min-h-[48px] rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed mt-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${buttonPressClass}`}
                 >
                   {loading ? (
                     <Loader2 className="w-5 h-5 animate-spin text-white" />
@@ -1081,7 +1081,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
                     setErrorMessage(null);
                     setInfoMessage(null);
                   }}
-                  className="text-primary font-bold hover:underline cursor-pointer ms-1 min-h-[44px] inline-flex items-center"
+                  className="text-primary font-bold hover:underline cursor-pointer ms-1 px-1.5 min-h-[44px] inline-flex items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                   {t('auth.switchSignIn') || 'Sign In'}
                 </button>
@@ -1379,7 +1379,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
               <button
                 type="button"
                 onClick={() => onOpenLegalPage?.('privacy')}
-                className="min-h-[44px] px-2 font-medium hover:text-primary underline underline-offset-4 cursor-pointer inline-flex items-center"
+                className="min-h-[44px] px-2 font-medium hover:text-primary underline underline-offset-4 cursor-pointer inline-flex items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 {t('settings.privacyPolicy') || 'Privacy Policy'}
               </button>
@@ -1389,7 +1389,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
               <button
                 type="button"
                 onClick={() => onOpenLegalPage?.('terms')}
-                className="min-h-[44px] px-2 font-medium hover:text-primary underline underline-offset-4 cursor-pointer inline-flex items-center"
+                className="min-h-[44px] px-2 font-medium hover:text-primary underline underline-offset-4 cursor-pointer inline-flex items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 {t('settings.termsOfService') || 'Terms of Service'}
               </button>

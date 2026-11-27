@@ -1047,6 +1047,11 @@ html.yaad-lite .bg-\[\#faf8f5\]\/80 {
   background-color: rgba(250, 248, 245, 0.97) !important;
 }
 
+html.dark.yaad-low-end .dark\:bg-background\/80,
+html.dark.yaad-lite .dark\:bg-background\/80 {
+  background-color: color-mix(in oklab, var(--color-background) 97%, transparent) !important;
+}
+
 html.yaad-low-end .bg-\[\#fffdf6\]\/90,
 html.yaad-lite .bg-\[\#fffdf6\]\/90 {
   background-color: rgba(255, 253, 246, 0.97) !important;
