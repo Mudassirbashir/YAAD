@@ -147,8 +147,8 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   const [notifications, setNotifications] = useState<InAppNotification[]>(DEFAULT_NOTIFICATIONS);
   const [hasUnread, setHasUnread] = useState(false);
 
-  // Only explicit hideNotifications hides the bell (showBack screens still show notifications)
-  const effectiveHideNotifications = hideNotifications;
+  // Preserve existing hide behavior when hideNotifications is true or showBack is true
+  const effectiveHideNotifications = hideNotifications || showBack;
 
   const showNotificationBell = remoteConfig.header?.showNotificationBell !== false && !effectiveHideNotifications;
   const showBellBadge = remoteConfig.header?.showBellBadgeCount !== false && hasUnread;
@@ -246,7 +246,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             className="flex items-center justify-center text-center px-1 min-w-0"
           >
             <h1 className="text-lg sm:text-xl font-extrabold font-display text-primary tracking-tight truncate flex items-center justify-center">
-              <div
+              <span
                 id="top_header_wordmark"
                 className="inline-flex items-center gap-2 justify-center select-none"
                 dir="ltr"
@@ -254,7 +254,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                 <span className="font-extrabold text-primary tracking-tight text-lg sm:text-xl font-display leading-none">
                   YAAD
                 </span>
-              </div>
+              </span>
             </h1>
           </div>
 
