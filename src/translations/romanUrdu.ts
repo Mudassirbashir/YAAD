@@ -520,10 +520,17 @@ export const romanUrdu: typeof en = {
     createAccount: 'Naya Account Banayein',
   },
 
+  // Public Header & Landing CTAs
+  landing: {
+    tryFree: 'Muft Shuru Karein',
+    goHome: 'YAAD Home par jayein',
+    accountDashboard: 'Aapka Account Dashboard',
+  },
+
   // Auth Modal & Screen
   auth: {
-    signInTitle: 'Khush Amdeed',
-    signInSubtitle: 'Apni shopping lists sync karne k liye sign in karein.',
+    signInTitle: 'Sign In Karein',
+    signInSubtitle: 'Apni shopping lists sync karne ke liye email aur password darj karein.',
     signUpTitle: 'Naya Account Banayein',
     signUpSubtitle: 'YAAD par account banayein aur lists mehfooz rakhein.',
     emailLabel: 'Email Address',
@@ -549,10 +556,14 @@ export const romanUrdu: typeof en = {
     hasAccountPrompt: 'Pehle se account hai?',
     switchSignUp: 'Naya banayein',
     switchSignIn: 'Sign In',
-    guestNote: 'Shopping lists mehfooz rakhne k liye sign in zaroori hai.',
-    googleBtn: 'Google k zariye Sign In',
-    orDivider: 'ya in k zariye chalein',
-    requireAuthNotice: 'Apni shopping lists dekhne k liye sign in karein ya naya account banayein',
+    guestNote: 'Shopping lists mehfooz rakhne ke liye sign in zaroori hai.',
+    googleBtn: 'Google ke zariye jari rakhein',
+    continueWithGoogle: 'Google ke sath jari rakhein',
+    continueWithEmail: 'Email ke sath jari rakhein',
+    lastUsed: 'Aakhri dafa istemal',
+    lastUsedHint: 'Is device par aakhri dafa istemal shuda tareeqa',
+    orDivider: 'ya in ke zariye chalein',
+    requireAuthNotice: 'Apni shopping lists dekhne ke liye sign in karein ya naya account banayein',
     secureNote: 'Aapka saara data mehfooz tareeqay se encrypted aur cloud par sync hota hai.',
   },
 

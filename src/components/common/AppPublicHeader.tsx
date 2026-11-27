@@ -1,8 +1,9 @@
-import React, { useState, useRef } from 'react';
-import { ArrowLeft, User, LogIn } from 'lucide-react';
+import React from 'react';
+import { ArrowLeft } from 'lucide-react';
 import { useSmartScroll } from '../../hooks/useSmartScroll';
-import { APP_IMAGES } from '../../data/initialData';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
+import { useShouldAnimate } from '../../lib/motionPreference';
 import { Avatar } from '../Avatar';
 
 interface AppPublicHeaderProps {
@@ -24,36 +25,20 @@ export const AppPublicHeader: React.FC<AppPublicHeaderProps> = ({
 }) => {
   const isVisible = useSmartScroll(25);
   const { user: authUser, profile } = useAuth();
-  const [isExpanding, setIsExpanding] = useState(false);
-  const isNavigatingRef = useRef(false);
+  const { t, dir } = useLanguage();
+  const canAnimate = useShouldAnimate();
 
   // Active user: prop takes precedence if explicitly passed, otherwise use auth context
   const activeUser = propUser !== undefined ? propUser : authUser;
 
-  const handleProfileClick = () => {
-    if (activeUser) {
-      if (onSignIn) {
-        onSignIn();
-      } else if (typeof window !== 'undefined') {
-        window.location.href = '/home';
-      }
+  const handleCtaClick = () => {
+    if (onSignIn) {
+      onSignIn();
       return;
     }
-
-    if (isNavigatingRef.current) return;
-    isNavigatingRef.current = true;
-
-    // Smooth, deliberate slide animation for the Sign In button
-    setIsExpanding(true);
-
-    // Give user time (750ms) to clearly see the elegant slide out animation
-    setTimeout(() => {
-      if (onSignIn) {
-        onSignIn();
-      }
-      setIsExpanding(false);
-      isNavigatingRef.current = false;
-    }, 750);
+    if (typeof window !== 'undefined') {
+      window.location.href = activeUser ? '/home' : '/auth';
+    }
   };
 
   const handleLogoClick = () => {
@@ -78,35 +63,43 @@ export const AppPublicHeader: React.FC<AppPublicHeaderProps> = ({
     activeUser?.email ||
     '';
 
+  const tryFreeLabel = t('landing.tryFree') || 'Try YAAD Free';
+
   return (
     <header
       id="app_public_header"
-      className={`fixed top-0 left-0 right-0 z-50 bg-[#faf8f5]/80 backdrop-blur-xl border-b border-[#e5e1d8] transition-transform duration-300 ease-in-out select-none ${
-        isVisible ? 'translate-y-0 shadow-2xs' : '-translate-y-full'
-      }`}
+      dir={dir}
+      className={`fixed top-0 left-0 right-0 z-50 bg-[#faf8f5]/85 backdrop-blur-xl border-b border-[#e5e1d8] select-none ${
+        canAnimate ? 'transition-transform duration-200 ease-out' : ''
+      } ${isVisible ? 'translate-y-0 shadow-2xs' : '-translate-y-full'}`}
     >
-      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
-        {/* Left: Back Button and Official YAAD Logo */}
-        <div className="flex items-center gap-2 sm:gap-3 z-10">
+      <div className="relative max-w-6xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2">
+        {/* Leading: Back Button (optional) + Official YAAD Logo */}
+        <div className="flex items-center gap-2 sm:gap-3 z-10 shrink-0">
           {showBack && onBack && (
             <button
               type="button"
               onClick={onBack}
-              aria-label="Go back"
-              className="w-11 h-11 rounded-full border border-[#e5e1d8] bg-white hover:bg-[#f0ebe1] flex items-center justify-center text-[#1c2826] transition-colors shadow-2xs active:scale-95 cursor-pointer"
+              aria-label={t('back') || 'Back'}
+              className={`w-11 h-11 min-w-[44px] min-h-[44px] rounded-full border border-[#e5e1d8] bg-white hover:bg-[#f0ebe1] flex items-center justify-center text-[#1c2826] shadow-2xs cursor-pointer ${
+                canAnimate ? 'transition-transform duration-150 active:scale-95' : ''
+              }`}
             >
-              <ArrowLeft className="w-4 h-4 text-[#1c2826]" />
+              <ArrowLeft className="w-4 h-4 text-[#1c2826] rtl:rotate-180" />
             </button>
           )}
 
           <button
             type="button"
             onClick={handleLogoClick}
-            className="flex items-center gap-2 p-1 rounded-xl hover:opacity-90 active:scale-95 transition-[transform,opacity] duration-150 cursor-pointer group"
-            title="Go to YAAD Home"
+            aria-label={t('landing.goHome') || 'Go to YAAD Home'}
+            title={t('landing.goHome') || 'Go to YAAD Home'}
+            className={`flex items-center p-1 rounded-xl cursor-pointer group ${
+              canAnimate ? 'transition-[transform,opacity] duration-150 hover:opacity-90 active:scale-95' : ''
+            }`}
           >
             {/* High-contrast container for the official logo */}
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-white border border-[#e5e1d8] flex items-center justify-center shadow-xs p-1">
+            <div className="w-9 h-9 rounded-xl bg-white border border-[#e5e1d8] flex items-center justify-center shadow-xs p-1">
               <picture className="w-full h-full flex items-center justify-center">
                 <source srcSet="/logo-128.webp" type="image/webp" />
                 <img
@@ -123,25 +116,28 @@ export const AppPublicHeader: React.FC<AppPublicHeaderProps> = ({
           </button>
         </div>
 
-        {/* Center: Brand Name strictly centered to the entire viewport */}
+        {/* Center: Brand Wordmark centered cleanly in viewport */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto text-center">
           <button
             type="button"
             onClick={handleLogoClick}
-            className="text-base sm:text-lg font-black tracking-tight text-[#005039] font-display hover:opacity-85 transition-opacity cursor-pointer select-none"
+            dir="ltr"
+            className="min-h-[44px] px-2 text-base sm:text-lg font-black tracking-tight text-[#005039] font-display hover:opacity-85 cursor-pointer select-none inline-flex items-center justify-center"
           >
             {title}
           </button>
         </div>
 
-        {/* Right: Smooth Sliding Interactive Sign In / Authenticated User Profile */}
-        <div className="flex items-center gap-2 z-10">
+        {/* Trailing: Logged-out "Try YAAD Free" CTA or Authenticated User Profile */}
+        <div className="flex items-center gap-2 z-10 shrink-0">
           {activeUser ? (
             <button
               type="button"
-              onClick={handleProfileClick}
-              title={userDisplayName || 'Your Account Dashboard'}
-              className="inline-flex items-center gap-2 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-full bg-white hover:bg-[#faf8f5] border border-[#005039]/25 text-[#005039] shadow-2xs active:scale-95 transition-[transform,background-color] duration-150 cursor-pointer group"
+              onClick={handleCtaClick}
+              title={userDisplayName || t('landing.accountDashboard') || 'Your Account Dashboard'}
+              className={`inline-flex items-center gap-2 min-h-[44px] px-2.5 py-1.5 sm:px-3 rounded-full bg-white hover:bg-[#faf8f5] border border-[#005039]/25 text-[#005039] shadow-2xs cursor-pointer group ${
+                canAnimate ? 'transition-transform duration-150 active:scale-95' : ''
+              }`}
             >
               <Avatar
                 name={userDisplayName}
@@ -156,38 +152,14 @@ export const AppPublicHeader: React.FC<AppPublicHeaderProps> = ({
             </button>
           ) : (
             <button
+              id="public_header_try_free_btn"
               type="button"
-              onClick={handleProfileClick}
-              disabled={isExpanding}
-              title="Sign in to your account"
-              aria-label="Sign in"
-              className={`group relative flex items-center shadow-2xs cursor-pointer active:scale-95 transition-[background-color,border-color,color,box-shadow,transform] duration-500 ease-out overflow-hidden ${
-                isExpanding
-                  ? 'w-[108px] sm:w-[116px] px-3.5 py-2 rounded-full bg-[#005039] text-white border border-[#005039] shadow-md'
-                  : 'w-11 h-11 rounded-full justify-center bg-white border border-[#005039]/25 text-[#005039] hover:border-[#005039] hover:bg-[#005039]/5'
+              onClick={handleCtaClick}
+              className={`inline-flex items-center justify-center min-h-[44px] h-11 px-3.5 sm:px-5 rounded-full bg-[#005039] hover:bg-[#003d2b] text-white font-display font-bold text-xs sm:text-[13px] tracking-tight whitespace-nowrap shadow-xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#005039] focus-visible:ring-offset-2 ${
+                canAnimate ? 'transition-transform duration-150 active:scale-95' : ''
               }`}
             >
-              <div
-                className={`flex items-center justify-center shrink-0 transition-transform duration-500 ease-out ${
-                  isExpanding ? 'scale-105 text-white' : 'text-[#005039]'
-                }`}
-              >
-                {isExpanding ? (
-                  <LogIn className="w-4 h-4 text-white animate-pulse" />
-                ) : (
-                  <User className="w-4 h-4 text-[#005039]" />
-                )}
-              </div>
-
-              <span
-                className={`whitespace-nowrap text-xs font-extrabold tracking-tight transition-[opacity,transform] duration-500 ease-out ${
-                  isExpanding
-                    ? 'opacity-100 translate-x-0 ms-2 max-w-[80px]'
-                    : 'opacity-0 -translate-x-2 ms-0 max-w-0 pointer-events-none'
-                }`}
-              >
-                Sign In
-              </span>
+              {tryFreeLabel}
             </button>
           )}
         </div>
@@ -195,3 +167,4 @@ export const AppPublicHeader: React.FC<AppPublicHeaderProps> = ({
     </header>
   );
 };
+

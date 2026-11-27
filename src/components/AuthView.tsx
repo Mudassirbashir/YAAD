@@ -6,13 +6,38 @@ import {
   Loader2,
   AlertCircle,
   CheckCircle2,
+  Mail,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useAppRouter } from '../router/RouterContext';
-import { APP_IMAGES } from '../data/initialData';
 import { formatAuthErrorMessage } from '../lib/supabase';
 import { validatePhoneNumber } from '../utils/phone';
+import { useShouldAnimate } from '../lib/motionPreference';
+
+const LAST_AUTH_METHOD_KEY = 'yaad_last_auth_method';
+type LastAuthMethod = 'google' | 'email';
+
+function readLastAuthMethod(): LastAuthMethod | null {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return null;
+  try {
+    const val = localStorage.getItem(LAST_AUTH_METHOD_KEY);
+    return val === 'google' || val === 'email' ? val : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeLastAuthMethod(method: LastAuthMethod | null) {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
+  try {
+    if (method === 'google' || method === 'email') {
+      localStorage.setItem(LAST_AUTH_METHOD_KEY, method);
+    } else {
+      localStorage.removeItem(LAST_AUTH_METHOD_KEY);
+    }
+  } catch {}
+}
 
 // Official multi-color Google 'G' icon
 const GoogleOfficialIcon: React.FC<{ className?: string }> = ({ className = 'w-5 h-5 shrink-0' }) => (
@@ -51,10 +76,10 @@ export const AuthView: React.FC<AuthViewProps> = ({
   onSuccessDisplayChange,
   onOpenLegalPage,
 }) => {
-  const { language, setLanguage } = useLanguage();
+  const { t, dir, setLanguage } = useLanguage();
   const { navigate } = useAppRouter();
+  const canAnimate = useShouldAnimate();
   const {
-    user,
     signIn,
     signUp,
     startOfflineOnboarding,
@@ -68,11 +93,16 @@ export const AuthView: React.FC<AuthViewProps> = ({
     updatePassword,
   } = useAuth();
 
-  const isUrdu = language === 'ur';
-
   // Mode state
   const [mode, setMode] = useState<AuthScreenMode>(
     isPasswordRecovery ? 'reset_password' : initialMode
+  );
+  // First screen hides email/password inputs until user explicitly taps "Continue with Email"
+  const [showEmailFlow, setShowEmailFlow] = useState<boolean>(
+    isPasswordRecovery || initialMode === 'signup'
+  );
+  const [lastUsedMethod, setLastUsedMethod] = useState<LastAuthMethod | null>(() =>
+    readLastAuthMethod()
   );
 
   // Success screen state
@@ -114,6 +144,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
   useEffect(() => {
     if (isPasswordRecovery) {
       setMode('reset_password');
+      setShowEmailFlow(true);
       setErrorMessage(null);
       setInfoMessage(null);
     }
@@ -142,6 +173,12 @@ export const AuthView: React.FC<AuthViewProps> = ({
   // Trigger success screen animation sequence
   useEffect(() => {
     if (mode === 'success') {
+      if (!canAnimate) {
+        setParticlesActive(false);
+        setCheckmarkDrawn(true);
+        setContentVisible(true);
+        return;
+      }
       const t1 = setTimeout(() => setParticlesActive(true), 150);
       const t2 = setTimeout(() => setCheckmarkDrawn(true), 250);
       const t3 = setTimeout(() => setContentVisible(true), 400);
@@ -156,7 +193,7 @@ export const AuthView: React.FC<AuthViewProps> = ({
       setParticlesActive(false);
       setContentVisible(false);
     }
-  }, [mode]);
+  }, [mode, canAnimate]);
 
   // Trigger success screen on successful auth
   const triggerSuccessState = (type: 'signin' | 'signup') => {
@@ -171,19 +208,28 @@ export const AuthView: React.FC<AuthViewProps> = ({
   const handleBack = () => {
     if (isAnyLoading) return;
     setNeedsEmailConfirmation(false);
-    if (mode === 'signup' || mode === 'forgot_password') {
+    if (mode === 'forgot_password') {
       setMode('signin');
+      setShowEmailFlow(true);
       setErrorMessage(null);
       setInfoMessage(null);
       return;
     }
     if (mode === 'reset_password') {
       setMode('signin');
+      setShowEmailFlow(false);
       setErrorMessage(null);
       setInfoMessage(null);
       return;
     }
-    // In signin mode: navigate reliably back to home screen
+    if (showEmailFlow) {
+      setMode('signin');
+      setShowEmailFlow(false);
+      setErrorMessage(null);
+      setInfoMessage(null);
+      return;
+    }
+    // On first continuation screen: navigate reliably back to home/public entry
     navigate('/');
   };
 
@@ -194,10 +240,14 @@ export const AuthView: React.FC<AuthViewProps> = ({
     setInfoMessage(null);
     setGoogleLoading(true);
     isSubmittingRef.current = true;
+    const prevMethod = readLastAuthMethod();
 
     try {
+      // Persist 'google' before full-page OAuth redirect; roll back if error occurs
+      writeLastAuthMethod('google');
       const { error } = await signInWithGoogle();
       if (error) {
+        writeLastAuthMethod(prevMethod);
         const msg = error.message.toLowerCase();
         if (msg.includes('cancel') || msg.includes('abort') || msg.includes('closed')) {
           setErrorMessage('Google sign-in was cancelled.');
@@ -206,10 +256,11 @@ export const AuthView: React.FC<AuthViewProps> = ({
         } else {
           setErrorMessage(formatAuthErrorMessage(error));
         }
+      } else {
+        setLastUsedMethod('google');
       }
-      // Note: In case of redirect, browser handles redirect. If popup returns smoothly:
-      // triggerSuccessState('signin');
     } catch (err) {
+      writeLastAuthMethod(prevMethod);
       setErrorMessage(formatAuthErrorMessage(err));
     } finally {
       isSubmittingRef.current = false;
@@ -277,6 +328,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
       }
 
       // Successful Sign In
+      writeLastAuthMethod('email');
+      setLastUsedMethod('email');
       setLanguage('en');
       triggerSuccessState('signin');
     } catch (err) {
@@ -351,6 +404,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
           phoneNumber: phoneValidation.cleaned || trimmedPhone,
           language: 'en',
         });
+        writeLastAuthMethod('email');
+        setLastUsedMethod('email');
         setLanguage('en');
         triggerSuccessState('signup');
         return;
@@ -380,6 +435,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
 
       // Check if email confirmation is required (Supabase project settings)
       if (res.needsEmailConfirmation) {
+        writeLastAuthMethod('email');
+        setLastUsedMethod('email');
         setNeedsEmailConfirmation(true);
         setSuccessType('signup');
         setErrorMessage(null);
@@ -389,6 +446,8 @@ export const AuthView: React.FC<AuthViewProps> = ({
       }
 
       // Successful Sign Up with active session
+      writeLastAuthMethod('email');
+      setLastUsedMethod('email');
       setNeedsEmailConfirmation(false);
       setLanguage('en');
       triggerSuccessState('signup');
@@ -503,397 +562,484 @@ export const AuthView: React.FC<AuthViewProps> = ({
     onSuccess?.();
   };
 
-  return (
-    <div className="min-h-screen bg-[#F7FAF5] flex flex-col justify-between items-center px-4 py-6 sm:py-10 text-neutral-900 font-body selection:bg-[#003527] selection:text-white">
-      {/* Centered Application Card Frame */}
-      <div className="w-full max-w-[440px] mx-auto flex flex-col justify-between flex-1 bg-white sm:rounded-3xl sm:border sm:border-neutral-200/80 sm:shadow-sm px-5 py-6 sm:px-8 sm:py-9">
+  const lastUsedLabel = t('auth.lastUsed') || 'Last used';
+  const lastUsedHint = t('auth.lastUsedHint') || 'Last used sign-in method on this device';
+  const isFirstContinuationScreen = !showEmailFlow && (mode === 'signin' || mode === 'signup');
 
-        {/* ─── TOP BAR ─── */}
-        <div className="flex items-center justify-between w-full mb-6">
-          {mode !== 'success' ? (
-            <button
-              type="button"
-              onClick={handleBack}
-              disabled={isAnyLoading}
-              aria-label="Go back"
-              className="w-10 h-10 rounded-full border border-neutral-200/90 bg-white hover:bg-neutral-100 flex items-center justify-center text-neutral-700 transition-colors shadow-2xs active:scale-95 cursor-pointer disabled:opacity-50"
+  const motionFadeClass = canAnimate
+    ? 'animate-fade-in'
+    : 'transition-opacity duration-[80ms]';
+  const buttonPressClass = canAnimate
+    ? 'transition-transform duration-150 ease-out active:scale-[0.985]'
+    : 'transition-opacity duration-[80ms]';
+
+  return (
+    <div
+      dir={dir}
+      className="min-h-screen bg-[#F7FAF5] dark:bg-background relative flex flex-col justify-between items-center px-4 py-6 sm:py-10 text-on-surface font-body selection:bg-[#003527] selection:text-white overflow-x-hidden"
+    >
+      {/* Subtle organic light backdrop accent — keeps surface calm and readable */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(16,185,129,0.08),transparent_58%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(16,185,129,0.12),transparent_55%)]"
+      />
+
+      {/* Centered Application Card Frame */}
+      <div className="yaad-liquid-glass yaad-liquid-glass-card relative z-10 w-full max-w-[440px] mx-auto flex flex-col justify-between flex-1 px-5 py-6 sm:px-8 sm:py-8">
+        <div className="relative z-10 flex flex-col justify-between flex-1">
+          {/* ─── TOP BAR ─── */}
+          <div className="flex items-center justify-between w-full mb-5">
+            {mode !== 'success' ? (
+              <button
+                id="auth_back_btn"
+                type="button"
+                onClick={handleBack}
+                disabled={isAnyLoading}
+                aria-label={t('back') || 'Back'}
+                className={`w-11 h-11 min-w-[44px] min-h-[44px] rounded-full border border-neutral-200/80 dark:border-outline-variant bg-white/85 dark:bg-surface-container hover:bg-white flex items-center justify-center text-on-surface shadow-2xs cursor-pointer disabled:opacity-50 ${buttonPressClass}`}
+              >
+                <ArrowLeft className="w-5 h-5 rtl:rotate-180" />
+              </button>
+            ) : (
+              <div className="w-11 h-11" />
+            )}
+
+            {/* Compact YAAD Logo in Top Bar when inside Email Flow / Recovery / Success */}
+            {!isFirstContinuationScreen ? (
+              <div className="flex items-center gap-2" dir="ltr">
+                <picture className="w-8 h-8 flex items-center justify-center">
+                  <source srcSet="/logo-128.webp" type="image/webp" />
+                  <img
+                    src="/logo.png"
+                    alt="YAAD"
+                    width={32}
+                    height={32}
+                    className="w-8 h-8 object-contain"
+                  />
+                </picture>
+                <span className="font-display font-extrabold text-lg tracking-tight text-primary">
+                  YAAD
+                </span>
+              </div>
+            ) : (
+              <div className="w-11 h-11" />
+            )}
+
+            {/* Right Spacer */}
+            <div className="w-11 h-11" />
+          </div>
+
+          {/* ─── ERROR & INFO NOTIFICATIONS ─── */}
+          {errorMessage && mode !== 'success' && (
+            <div
+              role="alert"
+              className={`mb-5 p-3.5 rounded-xl bg-red-50 dark:bg-error-container/20 border border-red-200/80 dark:border-error/40 text-red-800 dark:text-red-200 text-xs sm:text-sm font-medium flex items-start gap-2.5 ${motionFadeClass}`}
             >
-              <ArrowLeft className="w-5 h-5 text-neutral-700" />
-            </button>
-          ) : (
-            <div className="w-10 h-10" />
+              <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-300 shrink-0 mt-0.5" />
+              <span className="leading-snug flex-1">{errorMessage}</span>
+            </div>
           )}
 
-          {/* YAAD Logo */}
-          <div className="flex items-center gap-2">
-            <img
-              src={APP_IMAGES.logoTransparent || '/logo.png'}
-              alt="YAAD"
-              width={32}
-              height={32}
-              className="w-8 h-8 object-contain"
-            />
-            <span className="font-display font-extrabold text-lg tracking-tight text-[#003527]">
-              YAAD
-            </span>
-          </div>
-
-          {/* Right Spacer */}
-          <div className="w-10 h-10" />
-        </div>
-
-        {/* ─── ERROR & INFO NOTIFICATIONS ─── */}
-        {errorMessage && mode !== 'success' && (
-          <div
-            role="alert"
-            className="mb-5 p-3.5 rounded-xl bg-red-50 border border-red-200/80 text-red-800 text-xs sm:text-sm font-medium flex items-start gap-2.5 animate-fade-in"
-          >
-            <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-            <span className="leading-snug flex-1">{errorMessage}</span>
-          </div>
-        )}
-
-        {infoMessage && mode !== 'success' && (
-          <div
-            role="status"
-            className="mb-5 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-xs sm:text-sm font-medium flex items-start gap-2.5 animate-fade-in"
-          >
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-            <span className="leading-snug flex-1">{infoMessage}</span>
-          </div>
-        )}
-
-        {/* ═════════════════════════════════════════════════════════════ */}
-        {/* ─── STATE 1: SIGN IN ─────────────────────────────────────── */}
-        {/* ═════════════════════════════════════════════════════════════ */}
-        {mode === 'signin' && (
-          <div className="flex-1 flex flex-col justify-center">
-            {/* Header */}
-            <div className="mb-6">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 font-display tracking-tight">
-                Welcome Back
-              </h1>
-              <p className="text-neutral-500 text-xs sm:text-sm mt-1.5 font-normal leading-relaxed">
-                Stay connected by signing in with your email and password to access your account.
-              </p>
-            </div>
-
-            {/* Google Authentication Button */}
-            <button
-              type="button"
-              onClick={handleGoogleSignIn}
-              disabled={isAnyLoading}
-              className="w-full h-12 rounded-full border border-neutral-300/90 bg-white hover:bg-neutral-50 text-neutral-800 text-sm font-semibold font-body shadow-2xs flex items-center justify-center gap-3 transition-[transform,background-color] duration-150 active:scale-[0.99] cursor-pointer disabled:opacity-60 mb-5"
+          {infoMessage && mode !== 'success' && (
+            <div
+              role="status"
+              className={`mb-5 p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-700/50 text-emerald-800 dark:text-emerald-200 text-xs sm:text-sm font-medium flex items-start gap-2.5 ${motionFadeClass}`}
             >
-              {googleLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin text-neutral-600" />
-              ) : (
-                <GoogleOfficialIcon className="w-5 h-5" />
-              )}
-              <span>Continue with Google</span>
-            </button>
-
-            {/* Divider */}
-            <div className="relative flex items-center justify-center mb-5">
-              <div className="border-t border-neutral-200 w-full" />
-              <span className="bg-white px-3 text-xs font-body text-neutral-400 font-medium">
-                or
-              </span>
-              <div className="border-t border-neutral-200 w-full" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-300 shrink-0 mt-0.5" />
+              <span className="leading-snug flex-1">{infoMessage}</span>
             </div>
+          )}
 
-            {/* Sign In Form */}
-            <form onSubmit={handleSignInSubmit} className="space-y-4">
-              {/* Email Address */}
-              <div>
-                <label
-                  htmlFor="signin_email"
-                  className="block text-xs font-semibold text-neutral-700 mb-1.5"
-                >
-                  Email Address
-                </label>
-                <input
-                  id="signin_email"
-                  type="email"
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  disabled={isAnyLoading}
-                  className="w-full h-12 px-4 rounded-2xl border border-neutral-200/90 bg-neutral-50/60 text-neutral-900 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 focus:bg-white transition-[border-color,box-shadow,background-color] duration-150 disabled:opacity-60"
-                />
-              </div>
-
-              {/* Password */}
-              <div>
-                <label
-                  htmlFor="signin_password"
-                  className="block text-xs font-semibold text-neutral-700 mb-1.5"
-                >
-                  Password
-                </label>
-                <div className="relative">
-                  <input
-                    id="signin_password"
-                    type={showPassword ? 'text' : 'password'}
-                    autoComplete="current-password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    disabled={isAnyLoading}
-                    className="w-full h-12 px-4 pr-12 rounded-2xl border border-neutral-200/90 bg-neutral-50/60 text-neutral-900 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 focus:bg-white transition-[border-color,box-shadow,background-color] duration-150 disabled:opacity-60"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 p-1 transition-colors cursor-pointer"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="w-4 h-4" />
-                    ) : (
-                      <Eye className="w-4 h-4" />
-                    )}
-                  </button>
+          {/* ═════════════════════════════════════════════════════════════ */}
+          {/* ─── STEP-FREE FIRST SCREEN: GOOGLE FIRST, EMAIL SECOND ────── */}
+          {/* ═════════════════════════════════════════════════════════════ */}
+          {isFirstContinuationScreen && (
+            <div className={`flex-1 flex flex-col justify-center py-4 ${motionFadeClass}`}>
+              {/* Clean YAAD Identity Centerpiece */}
+              <div className="flex flex-col items-center text-center mb-10">
+                <div className="w-20 h-20 rounded-3xl bg-white dark:bg-surface-container-lowest border border-emerald-900/10 dark:border-white/10 shadow-sm flex items-center justify-center p-3 mb-4">
+                  <picture className="w-full h-full flex items-center justify-center">
+                    <source srcSet="/logo-128.webp" type="image/webp" />
+                    <img
+                      src="/logo.png"
+                      alt="YAAD"
+                      width={56}
+                      height={56}
+                      className="w-full h-full object-contain"
+                    />
+                  </picture>
                 </div>
-              </div>
-
-              {/* Forgot Password Link */}
-              <div className="flex justify-end pt-0.5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMode('forgot_password');
-                    setErrorMessage(null);
-                    setInfoMessage(null);
-                  }}
-                  className="text-xs font-medium text-neutral-500 hover:text-[#003527] transition-colors cursor-pointer"
+                <h1
+                  dir="ltr"
+                  className="font-display font-black text-3xl tracking-tight text-primary leading-none"
                 >
-                  Forgot Password?
-                </button>
-              </div>
-
-              {/* Primary CTA: Sign In */}
-              <button
-                type="submit"
-                disabled={isAnyLoading}
-                className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-sm hover:shadow-md active:scale-[0.99] transition-[transform,background-color,box-shadow] duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 mt-2"
-              >
-                {loading ? (
-                  <Loader2 className="w-5 h-5 animate-spin text-white" />
-                ) : (
-                  <span>Sign In</span>
-                )}
-              </button>
-            </form>
-
-            {/* Bottom Navigation */}
-            <div className="text-center mt-7 text-xs sm:text-sm text-neutral-500 font-medium">
-              <span>{"Don't have an account? "}</span>
-              <button
-                type="button"
-                onClick={() => {
-                  setMode('signup');
-                  setErrorMessage(null);
-                  setInfoMessage(null);
-                }}
-                className="text-[#003527] font-bold hover:underline cursor-pointer ml-1"
-              >
-                Sign Up
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ═════════════════════════════════════════════════════════════ */}
-        {/* ─── STATE 2: CREATE YOUR ACCOUNT / SIGN UP ─────────────────── */}
-        {/* ═════════════════════════════════════════════════════════════ */}
-        {mode === 'signup' && (
-          <div className="flex-1 flex flex-col justify-center">
-            {/* Header */}
-            <div className="mb-5">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 font-display tracking-tight">
-                Create your account
-              </h1>
-              <p className="text-neutral-500 text-xs sm:text-sm mt-1.5 font-normal leading-relaxed">
-                Provide your full name, email, and password to create your account and get started.
-              </p>
-            </div>
-
-            {/* Google Authentication Button */}
-            <button
-              type="button"
-              onClick={handleGoogleSignIn}
-              disabled={isAnyLoading}
-              className="w-full h-12 rounded-full border border-neutral-300/90 bg-white hover:bg-neutral-50 text-neutral-800 text-sm font-semibold font-body shadow-2xs flex items-center justify-center gap-3 transition-[transform,background-color] duration-150 active:scale-[0.99] cursor-pointer disabled:opacity-60 mb-5"
-            >
-              {googleLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin text-neutral-600" />
-              ) : (
-                <GoogleOfficialIcon className="w-5 h-5" />
-              )}
-              <span>Continue with Google</span>
-            </button>
-
-            {/* Divider */}
-            <div className="relative flex items-center justify-center mb-4">
-              <div className="border-t border-neutral-200 w-full" />
-              <span className="bg-white px-3 text-xs font-body text-neutral-400 font-medium">
-                or
-              </span>
-              <div className="border-t border-neutral-200 w-full" />
-            </div>
-
-            {/* Sign Up Form */}
-            <form onSubmit={handleSignUpSubmit} className="space-y-3.5">
-              {/* Full Name */}
-              <div>
-                <label
-                  htmlFor="signup_name"
-                  className="block text-xs font-semibold text-neutral-700 mb-1"
-                >
-                  Full Name
-                </label>
-                <input
-                  id="signup_name"
-                  type="text"
-                  autoComplete="name"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="e.g. Ali Khan"
-                  disabled={isAnyLoading}
-                  className="w-full h-11 px-4 rounded-2xl border border-neutral-200/90 bg-neutral-50/60 text-neutral-900 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 focus:bg-white transition-[border-color,box-shadow,background-color] duration-150 disabled:opacity-60"
-                />
-              </div>
-
-              {/* Phone Number */}
-              <div>
-                <label
-                  htmlFor="signup_phone"
-                  className="block text-xs font-semibold text-neutral-700 mb-1"
-                >
-                  Phone Number
-                </label>
-                <input
-                  id="signup_phone"
-                  type="tel"
-                  autoComplete="tel"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  placeholder="0300 1234567"
-                  disabled={isAnyLoading}
-                  className="w-full h-11 px-4 rounded-2xl border border-neutral-200/90 bg-neutral-50/60 text-neutral-900 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 focus:bg-white transition-[border-color,box-shadow,background-color] duration-150 disabled:opacity-60"
-                />
-              </div>
-
-              {/* Email Address */}
-              <div>
-                <label
-                  htmlFor="signup_email"
-                  className="block text-xs font-semibold text-neutral-700 mb-1"
-                >
-                  Email Address
-                </label>
-                <input
-                  id="signup_email"
-                  type="email"
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  disabled={isAnyLoading}
-                  className="w-full h-11 px-4 rounded-2xl border border-neutral-200/90 bg-neutral-50/60 text-neutral-900 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 focus:bg-white transition-[border-color,box-shadow,background-color] duration-150 disabled:opacity-60"
-                />
-              </div>
-
-              {/* Password */}
-              <div>
-                <label
-                  htmlFor="signup_password"
-                  className="block text-xs font-semibold text-neutral-700 mb-1"
-                >
-                  Password
-                </label>
-                <div className="relative">
-                  <input
-                    id="signup_password"
-                    type={showPassword ? 'text' : 'password'}
-                    autoComplete="new-password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    disabled={isAnyLoading}
-                    className="w-full h-11 px-4 pr-12 rounded-2xl border border-neutral-200/90 bg-neutral-50/60 text-neutral-900 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 focus:bg-white transition-[border-color,box-shadow,background-color] duration-150 disabled:opacity-60"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 p-1 transition-colors cursor-pointer"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="w-4 h-4" />
-                    ) : (
-                      <Eye className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
-                <p className="text-[11px] text-neutral-500 mt-1 font-body">
-                  Must be at least 6 characters.
+                  YAAD
+                </h1>
+                <p className="text-xs sm:text-sm font-medium text-on-surface-variant mt-2">
+                  {t('tagline') || 'Simple Shopping Memory'}
                 </p>
               </div>
 
-              {/* Confirm Password */}
-              <div>
-                <label
-                  htmlFor="signup_confirm_password"
-                  className="block text-xs font-semibold text-neutral-700 mb-1"
-                >
-                  Confirm Password
-                </label>
-                <div className="relative">
-                  <input
-                    id="signup_confirm_password"
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    autoComplete="new-password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="••••••••"
-                    disabled={isAnyLoading}
-                    className="w-full h-11 px-4 pr-12 rounded-2xl border border-neutral-200/90 bg-neutral-50/60 text-neutral-900 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 focus:bg-white transition-[border-color,box-shadow,background-color] duration-150 disabled:opacity-60"
-                  />
+              {/* Primary Choices: Google First, Email Second */}
+              <div className="space-y-3.5 w-full">
+                {/* 1. Continue with Google */}
+                <div className="w-full">
                   <button
+                    id="auth_continue_google_btn"
                     type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 p-1 transition-colors cursor-pointer"
+                    onClick={handleGoogleSignIn}
+                    disabled={isAnyLoading}
+                    aria-describedby={lastUsedMethod === 'google' ? 'auth_google_last_used_hint' : undefined}
+                    className={`w-full min-h-[52px] px-4 rounded-full border border-neutral-300/90 dark:border-outline-variant bg-white dark:bg-surface-container-lowest hover:bg-neutral-50 text-neutral-900 dark:text-on-surface text-sm font-semibold font-body shadow-2xs flex items-center justify-center gap-3 cursor-pointer disabled:opacity-60 ${buttonPressClass}`}
                   >
-                    {showConfirmPassword ? (
-                      <EyeOff className="w-4 h-4" />
+                    {googleLoading ? (
+                      <Loader2 className="w-5 h-5 animate-spin text-neutral-600 shrink-0" />
                     ) : (
-                      <Eye className="w-4 h-4" />
+                      <GoogleOfficialIcon className="w-5 h-5 shrink-0" />
+                    )}
+                    <span className="truncate">
+                      {t('auth.continueWithGoogle') || 'Continue with Google'}
+                    </span>
+                    {lastUsedMethod === 'google' && (
+                      <span
+                        aria-hidden="true"
+                        className="shrink-0 whitespace-nowrap px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-900/50 text-[#005039] dark:text-emerald-200 border border-emerald-200/80 dark:border-emerald-700/50"
+                      >
+                        {lastUsedLabel}
+                      </span>
                     )}
                   </button>
+                  {lastUsedMethod === 'google' && (
+                    <span id="auth_google_last_used_hint" className="sr-only">
+                      {lastUsedHint}
+                    </span>
+                  )}
+                </div>
+
+                {/* 2. Continue with Email */}
+                <div className="w-full">
+                  <button
+                    id="auth_continue_email_btn"
+                    type="button"
+                    onClick={() => {
+                      setMode('signin');
+                      setShowEmailFlow(true);
+                      setErrorMessage(null);
+                      setInfoMessage(null);
+                    }}
+                    disabled={isAnyLoading}
+                    aria-describedby={lastUsedMethod === 'email' ? 'auth_email_last_used_hint' : undefined}
+                    className={`yaad-liquid-glass relative w-full min-h-[52px] px-4 rounded-full text-on-surface text-sm font-semibold font-body flex items-center justify-center gap-3 cursor-pointer disabled:opacity-60 hover:bg-white/90 dark:hover:bg-surface-container ${buttonPressClass}`}
+                  >
+                    <Mail className="relative z-10 w-5 h-5 text-primary shrink-0" aria-hidden="true" />
+                    <span className="relative z-10 truncate">
+                      {t('auth.continueWithEmail') || 'Continue with Email'}
+                    </span>
+                    {lastUsedMethod === 'email' && (
+                      <span
+                        aria-hidden="true"
+                        className="relative z-10 shrink-0 whitespace-nowrap px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-900/50 text-[#005039] dark:text-emerald-200 border border-emerald-200/80 dark:border-emerald-700/50"
+                      >
+                        {lastUsedLabel}
+                      </span>
+                    )}
+                  </button>
+                  {lastUsedMethod === 'email' && (
+                    <span id="auth_email_last_used_hint" className="sr-only">
+                      {lastUsedHint}
+                    </span>
+                  )}
                 </div>
               </div>
+            </div>
+          )}
 
-              {/* Terms & Privacy Agreement */}
-              <div className="pt-1">
-                <label className="flex items-start gap-2.5 cursor-pointer select-none text-xs text-neutral-600 font-body">
+          {/* ═════════════════════════════════════════════════════════════ */}
+          {/* ─── EMAIL FLOW STATE 1: SIGN IN ──────────────────────────── */}
+          {/* ═════════════════════════════════════════════════════════════ */}
+          {showEmailFlow && mode === 'signin' && (
+            <div className={`flex-1 flex flex-col justify-center ${motionFadeClass}`}>
+              {/* Header */}
+              <div className="mb-6">
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-on-surface font-display tracking-tight">
+                  {t('auth.signInTitle') || 'Sign In'}
+                </h1>
+                <p className="text-on-surface-variant text-xs sm:text-sm mt-1.5 font-normal leading-relaxed">
+                  {t('auth.signInSubtitle') ||
+                    'Sign in with your email and password to sync your shopping lists.'}
+                </p>
+              </div>
+
+              {/* Sign In Form */}
+              <form onSubmit={handleSignInSubmit} className="space-y-4">
+                {/* Email Address */}
+                <div>
+                  <label
+                    htmlFor="signin_email"
+                    className="block text-xs font-semibold text-on-surface-variant mb-1.5"
+                  >
+                    {t('auth.emailLabel') || 'Email Address'}
+                  </label>
                   <input
-                    id="signup_terms_checkbox"
-                    type="checkbox"
-                    checked={agreedToTerms}
-                    onChange={(e) => setAgreedToTerms(e.target.checked)}
-                    className="mt-0.5 w-4 h-4 rounded border-neutral-300 text-[#003527] focus:ring-[#003527] accent-[#003527] cursor-pointer"
+                    id="signin_email"
+                    type="email"
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder={t('auth.emailPlaceholder') || 'name@example.com'}
+                    disabled={isAnyLoading}
+                    className="w-full h-12 px-4 rounded-2xl border border-neutral-200/90 dark:border-outline-variant bg-white/90 dark:bg-surface-container-lowest text-on-surface text-sm placeholder:text-neutral-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:opacity-60"
                   />
-                  <span className="leading-tight">
-                    <>
+                </div>
+
+                {/* Password */}
+                <div>
+                  <label
+                    htmlFor="signin_password"
+                    className="block text-xs font-semibold text-on-surface-variant mb-1.5"
+                  >
+                    {t('auth.passwordLabel') || 'Password'}
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="signin_password"
+                      type={showPassword ? 'text' : 'password'}
+                      autoComplete="current-password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      disabled={isAnyLoading}
+                      className="w-full h-12 ps-4 pe-12 rounded-2xl border border-neutral-200/90 dark:border-outline-variant bg-white/90 dark:bg-surface-container-lowest text-on-surface text-sm placeholder:text-neutral-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:opacity-60"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      className="absolute end-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-on-surface min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Forgot Password Link */}
+                <div className="flex justify-end pt-0.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode('forgot_password');
+                      setErrorMessage(null);
+                      setInfoMessage(null);
+                    }}
+                    className="min-h-[44px] px-1 text-xs font-medium text-on-surface-variant hover:text-primary cursor-pointer"
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+
+                {/* Primary CTA: Sign In */}
+                <button
+                  type="submit"
+                  disabled={isAnyLoading}
+                  className={`w-full h-12 min-h-[48px] rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 mt-1 ${buttonPressClass}`}
+                >
+                  {loading ? (
+                    <Loader2 className="w-5 h-5 animate-spin text-white" />
+                  ) : (
+                    <span>{t('auth.signInBtn') || 'Sign In'}</span>
+                  )}
+                </button>
+              </form>
+
+              {/* Calm secondary link to switch between sign-in and sign-up */}
+              <div className="text-center mt-5 text-xs sm:text-sm text-on-surface-variant font-medium">
+                <span>{t('auth.noAccountPrompt') || "Don't have an account?"} </span>
+                <button
+                  id="auth_switch_to_signup_btn"
+                  type="button"
+                  onClick={() => {
+                    setMode('signup');
+                    setErrorMessage(null);
+                    setInfoMessage(null);
+                  }}
+                  className="text-primary font-bold hover:underline cursor-pointer ms-1 min-h-[44px] inline-flex items-center"
+                >
+                  {t('auth.switchSignUp') || 'Sign Up'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ═════════════════════════════════════════════════════════════ */}
+          {/* ─── EMAIL FLOW STATE 2: CREATE YOUR ACCOUNT / SIGN UP ──────── */}
+          {/* ═════════════════════════════════════════════════════════════ */}
+          {showEmailFlow && mode === 'signup' && (
+            <div className={`flex-1 flex flex-col justify-center ${motionFadeClass}`}>
+              {/* Header */}
+              <div className="mb-5">
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-on-surface font-display tracking-tight">
+                  {t('auth.signUpTitle') || 'Create your account'}
+                </h1>
+                <p className="text-on-surface-variant text-xs sm:text-sm mt-1.5 font-normal leading-relaxed">
+                  {t('auth.signUpSubtitle') ||
+                    'Provide your full name, email, and password to create your account and get started.'}
+                </p>
+              </div>
+
+              {/* Sign Up Form */}
+              <form onSubmit={handleSignUpSubmit} className="space-y-3.5">
+                {/* Full Name */}
+                <div>
+                  <label
+                    htmlFor="signup_name"
+                    className="block text-xs font-semibold text-on-surface-variant mb-1"
+                  >
+                    {t('auth.fullNameLabel') || 'Full Name'}
+                  </label>
+                  <input
+                    id="signup_name"
+                    type="text"
+                    autoComplete="name"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder={t('auth.fullNamePlaceholder') || 'e.g. Ali Khan'}
+                    disabled={isAnyLoading}
+                    className="w-full h-11 px-4 rounded-2xl border border-neutral-200/90 dark:border-outline-variant bg-white/90 dark:bg-surface-container-lowest text-on-surface text-sm placeholder:text-neutral-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:opacity-60"
+                  />
+                </div>
+
+                {/* Phone Number */}
+                <div>
+                  <label
+                    htmlFor="signup_phone"
+                    className="block text-xs font-semibold text-on-surface-variant mb-1"
+                  >
+                    {t('auth.phoneLabel') || 'Phone Number'}
+                  </label>
+                  <input
+                    id="signup_phone"
+                    type="tel"
+                    autoComplete="tel"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    placeholder="0300 1234567"
+                    disabled={isAnyLoading}
+                    className="w-full h-11 px-4 rounded-2xl border border-neutral-200/90 dark:border-outline-variant bg-white/90 dark:bg-surface-container-lowest text-on-surface text-sm placeholder:text-neutral-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:opacity-60"
+                  />
+                </div>
+
+                {/* Email Address */}
+                <div>
+                  <label
+                    htmlFor="signup_email"
+                    className="block text-xs font-semibold text-on-surface-variant mb-1"
+                  >
+                    {t('auth.emailLabel') || 'Email Address'}
+                  </label>
+                  <input
+                    id="signup_email"
+                    type="email"
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@example.com"
+                    disabled={isAnyLoading}
+                    className="w-full h-11 px-4 rounded-2xl border border-neutral-200/90 dark:border-outline-variant bg-white/90 dark:bg-surface-container-lowest text-on-surface text-sm placeholder:text-neutral-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:opacity-60"
+                  />
+                </div>
+
+                {/* Password */}
+                <div>
+                  <label
+                    htmlFor="signup_password"
+                    className="block text-xs font-semibold text-on-surface-variant mb-1"
+                  >
+                    {t('auth.passwordLabel') || 'Password'}
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="signup_password"
+                      type={showPassword ? 'text' : 'password'}
+                      autoComplete="new-password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      disabled={isAnyLoading}
+                      className="w-full h-11 ps-4 pe-12 rounded-2xl border border-neutral-200/90 dark:border-outline-variant bg-white/90 dark:bg-surface-container-lowest text-on-surface text-sm placeholder:text-neutral-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:opacity-60"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      className="absolute end-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-on-surface min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-on-surface-variant mt-1 font-body">
+                    Must be at least 6 characters.
+                  </p>
+                </div>
+
+                {/* Confirm Password */}
+                <div>
+                  <label
+                    htmlFor="signup_confirm_password"
+                    className="block text-xs font-semibold text-on-surface-variant mb-1"
+                  >
+                    Confirm Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="signup_confirm_password"
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      autoComplete="new-password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="••••••••"
+                      disabled={isAnyLoading}
+                      className="w-full h-11 ps-4 pe-12 rounded-2xl border border-neutral-200/90 dark:border-outline-variant bg-white/90 dark:bg-surface-container-lowest text-on-surface text-sm placeholder:text-neutral-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:opacity-60"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                      className="absolute end-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-on-surface min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Terms & Privacy Agreement */}
+                <div className="pt-1">
+                  <label className="flex items-start gap-2.5 cursor-pointer select-none text-xs text-on-surface-variant font-body">
+                    <input
+                      id="signup_terms_checkbox"
+                      type="checkbox"
+                      checked={agreedToTerms}
+                      onChange={(e) => setAgreedToTerms(e.target.checked)}
+                      className="mt-0.5 w-4 h-4 rounded border-neutral-300 text-[#003527] focus:ring-[#003527] accent-[#003527] cursor-pointer"
+                    />
+                    <span className="leading-tight">
+                      <>
                         I agree to the{' '}
                         <button
                           type="button"
                           onClick={() => onOpenLegalPage?.('terms')}
-                          className="font-bold text-[#003527] underline hover:text-black cursor-pointer"
+                          className="font-bold text-primary underline hover:opacity-80 cursor-pointer"
                         >
                           Terms
                         </button>{' '}
@@ -901,322 +1047,357 @@ export const AuthView: React.FC<AuthViewProps> = ({
                         <button
                           type="button"
                           onClick={() => onOpenLegalPage?.('privacy')}
-                          className="font-bold text-[#003527] underline hover:text-black cursor-pointer"
+                          className="font-bold text-primary underline hover:opacity-80 cursor-pointer"
                         >
                           Privacy Policy
                         </button>
                       </>
-                  </span>
-                </label>
-              </div>
+                    </span>
+                  </label>
+                </div>
 
-              {/* Primary CTA: Sign Up */}
-              <button
-                type="submit"
-                disabled={!agreedToTerms || isAnyLoading}
-                className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-sm hover:shadow-md active:scale-[0.99] transition-[transform,background-color,box-shadow] duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed mt-3"
-              >
-                {loading ? (
-                  <Loader2 className="w-5 h-5 animate-spin text-white" />
-                ) : (
-                  <span>Sign Up</span>
-                )}
-              </button>
-            </form>
-
-            {/* Bottom Navigation */}
-            <div className="text-center mt-6 text-xs sm:text-sm text-neutral-500 font-medium">
-              <span>Already have an account? </span>
-              <button
-                type="button"
-                onClick={() => {
-                  setMode('signin');
-                  setErrorMessage(null);
-                  setInfoMessage(null);
-                }}
-                className="text-[#003527] font-bold hover:underline cursor-pointer ml-1"
-              >
-                Sign In
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ═════════════════════════════════════════════════════════════ */}
-        {/* ─── STATE 3: SUCCESSFUL AUTHENTICATION / ACCOUNT CREATED ─── */}
-        {/* ═════════════════════════════════════════════════════════════ */}
-        {mode === 'success' && (
-          <div className="flex-1 flex flex-col items-center justify-center py-6 text-center animate-fade-in">
-            {/* Animated Circular Success Badge */}
-            <div className="relative flex items-center justify-center my-6">
-              {/* Central Circle with YAAD Deep Green gradient */}
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-tr from-[#003527] to-[#047857] flex items-center justify-center shadow-[0_12px_36px_rgba(0,53,39,0.25)] transition-transform duration-500 ease-out transform scale-100">
-                <svg
-                  className="w-12 h-12 sm:w-14 sm:h-14 text-white"
-                  viewBox="0 0 52 52"
-                  fill="none"
-                  stroke="currentColor"
-                >
-                  <circle
-                    cx="26"
-                    cy="26"
-                    r="23"
-                    fill="none"
-                    stroke="rgba(255,255,255,0.18)"
-                    strokeWidth="2"
-                  />
-                  <path
-                    d="M15 27 L23 35 L37 18"
-                    fill="none"
-                    stroke="white"
-                    strokeWidth="4.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    style={{
-                      strokeDasharray: 50,
-                      strokeDashoffset: checkmarkDrawn ? 0 : 50,
-                      transition: 'stroke-dashoffset 0.5s cubic-bezier(0.65, 0, 0.45, 1) 0.15s',
-                    }}
-                  />
-                </svg>
-              </div>
-
-              {/* Celebratory Particles / Confetti Dots */}
-              {particles.map((p, idx) => (
-                <span
-                  key={idx}
-                  className="absolute rounded-full pointer-events-none transition-[transform,opacity] duration-700 ease-out"
-                  style={{
-                    width: `${p.size}px`,
-                    height: `${p.size}px`,
-                    backgroundColor: p.color,
-                    transform: particlesActive
-                      ? `translate(${p.tx}px, ${p.ty}px) scale(1)`
-                      : 'translate(0, 0) scale(0)',
-                    opacity: particlesActive ? 0.85 : 0,
-                  }}
-                />
-              ))}
-            </div>
-
-            {/* Success Copy */}
-            <div
-              className={`transition-[opacity,transform] duration-500 ease-out ${
-                contentVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
-              }`}
-            >
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 font-display tracking-tight">
-                {needsEmailConfirmation ? 'Account Created!' : 'Successful!'}
-              </h2>
-              <p className="text-neutral-500 text-xs sm:text-sm mt-2 max-w-xs mx-auto leading-relaxed">
-                {needsEmailConfirmation
-                  ? 'Check your email to confirm your YAAD account. Once verified, you can sign in to your account.'
-                  : successType === 'signup'
-                  ? 'Your account is created successfully and ready now.'
-                  : 'You have signed in successfully. Welcome back to YAAD.'}
-              </p>
-            </div>
-
-            {/* Action CTA: Browse Home or Go to Sign In */}
-            <div
-              className={`w-full mt-8 transition-[opacity,transform] duration-500 ease-out ${
-                contentVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
-              }`}
-            >
-              {needsEmailConfirmation ? (
+                {/* Primary CTA: Sign Up */}
                 <button
+                  type="submit"
+                  disabled={!agreedToTerms || isAnyLoading}
+                  className={`w-full h-12 min-h-[48px] rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed mt-2 ${buttonPressClass}`}
+                >
+                  {loading ? (
+                    <Loader2 className="w-5 h-5 animate-spin text-white" />
+                  ) : (
+                    <span>{t('auth.signUpBtn') || 'Sign Up'}</span>
+                  )}
+                </button>
+              </form>
+
+              {/* Calm secondary link to switch back to Sign In */}
+              <div className="text-center mt-5 text-xs sm:text-sm text-on-surface-variant font-medium">
+                <span>{t('auth.hasAccountPrompt') || 'Already have an account?'} </span>
+                <button
+                  id="auth_switch_to_signin_btn"
                   type="button"
                   onClick={() => {
                     setMode('signin');
                     setErrorMessage(null);
-                    setInfoMessage('Check your email to confirm your YAAD account, then sign in.');
-                    setPassword('');
-                    setNeedsEmailConfirmation(false);
+                    setInfoMessage(null);
                   }}
-                  className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-[transform,background-color,box-shadow] duration-150 flex items-center justify-center gap-2 cursor-pointer"
+                  className="text-primary font-bold hover:underline cursor-pointer ms-1 min-h-[44px] inline-flex items-center"
                 >
-                  <span>Go to Sign In</span>
+                  {t('auth.switchSignIn') || 'Sign In'}
                 </button>
-              ) : (
+              </div>
+            </div>
+          )}
+
+          {/* ═════════════════════════════════════════════════════════════ */}
+          {/* ─── STATE 3: SUCCESSFUL AUTHENTICATION / ACCOUNT CREATED ─── */}
+          {/* ═════════════════════════════════════════════════════════════ */}
+          {mode === 'success' && (
+            <div className={`flex-1 flex flex-col items-center justify-center py-6 text-center ${motionFadeClass}`}>
+              {/* Animated Circular Success Badge */}
+              <div className="relative flex items-center justify-center my-6">
+                <div
+                  className={`w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-tr from-[#003527] to-[#047857] flex items-center justify-center shadow-[0_12px_36px_rgba(0,53,39,0.25)] ${
+                    canAnimate ? 'transition-transform duration-500 ease-out scale-100' : ''
+                  }`}
+                >
+                  <svg
+                    className="w-12 h-12 sm:w-14 sm:h-14 text-white"
+                    viewBox="0 0 52 52"
+                    fill="none"
+                    stroke="currentColor"
+                  >
+                    <circle
+                      cx="26"
+                      cy="26"
+                      r="23"
+                      fill="none"
+                      stroke="rgba(255,255,255,0.18)"
+                      strokeWidth="2"
+                    />
+                    <path
+                      d="M15 27 L23 35 L37 18"
+                      fill="none"
+                      stroke="white"
+                      strokeWidth="4.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      style={{
+                        strokeDasharray: 50,
+                        strokeDashoffset: checkmarkDrawn ? 0 : 50,
+                        transition: canAnimate
+                          ? 'stroke-dashoffset 0.5s cubic-bezier(0.65, 0, 0.45, 1) 0.15s'
+                          : 'none',
+                      }}
+                    />
+                  </svg>
+                </div>
+
+                {/* Celebratory Particles (only when motion enabled) */}
+                {canAnimate &&
+                  particles.map((p, idx) => (
+                    <span
+                      key={idx}
+                      className="absolute rounded-full pointer-events-none transition-[transform,opacity] duration-700 ease-out"
+                      style={{
+                        width: `${p.size}px`,
+                        height: `${p.size}px`,
+                        backgroundColor: p.color,
+                        transform: particlesActive
+                          ? `translate(${p.tx}px, ${p.ty}px) scale(1)`
+                          : 'translate(0, 0) scale(0)',
+                        opacity: particlesActive ? 0.85 : 0,
+                      }}
+                    />
+                  ))}
+              </div>
+
+              {/* Success Copy */}
+              <div
+                className={`${
+                  canAnimate
+                    ? `transition-[opacity,transform] duration-500 ease-out ${
+                        contentVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
+                      }`
+                    : 'opacity-100'
+                }`}
+              >
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-on-surface font-display tracking-tight">
+                  {needsEmailConfirmation ? 'Account Created!' : 'Successful!'}
+                </h2>
+                <p className="text-on-surface-variant text-xs sm:text-sm mt-2 max-w-xs mx-auto leading-relaxed">
+                  {needsEmailConfirmation
+                    ? 'Check your email to confirm your YAAD account. Once verified, you can sign in to your account.'
+                    : successType === 'signup'
+                    ? 'Your account is created successfully and ready now.'
+                    : 'You have signed in successfully. Your lists are ready.'}
+                </p>
+              </div>
+
+              {/* Action CTA: Browse Home or Go to Sign In */}
+              <div
+                className={`w-full mt-8 ${
+                  canAnimate
+                    ? `transition-[opacity,transform] duration-500 ease-out ${
+                        contentVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
+                      }`
+                    : 'opacity-100'
+                }`}
+              >
+                {needsEmailConfirmation ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode('signin');
+                      setShowEmailFlow(true);
+                      setErrorMessage(null);
+                      setInfoMessage('Check your email to confirm your YAAD account, then sign in.');
+                      setPassword('');
+                      setNeedsEmailConfirmation(false);
+                    }}
+                    className={`w-full h-12 min-h-[48px] rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-md flex items-center justify-center gap-2 cursor-pointer ${buttonPressClass}`}
+                  >
+                    <span>Go to Sign In</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleBrowseHome}
+                    className={`w-full h-12 min-h-[48px] rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-md flex items-center justify-center gap-2 cursor-pointer ${buttonPressClass}`}
+                  >
+                    <span>Browse Home</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ═════════════════════════════════════════════════════════════ */}
+          {/* ─── STATE 4: FORGOT PASSWORD ─────────────────────────────── */}
+          {/* ═════════════════════════════════════════════════════════════ */}
+          {mode === 'forgot_password' && (
+            <div className={`flex-1 flex flex-col justify-center ${motionFadeClass}`}>
+              <div className="mb-6">
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-on-surface font-display tracking-tight">
+                  Forgot Password
+                </h1>
+                <p className="text-on-surface-variant text-xs sm:text-sm mt-1.5 font-normal leading-relaxed">
+                  Enter your registered email address to receive password reset instructions.
+                </p>
+              </div>
+
+              <form onSubmit={handleForgotPasswordSubmit} className="space-y-4">
+                <div>
+                  <label
+                    htmlFor="forgot_email"
+                    className="block text-xs font-semibold text-on-surface-variant mb-1.5"
+                  >
+                    Email Address
+                  </label>
+                  <input
+                    id="forgot_email"
+                    type="email"
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@example.com"
+                    disabled={isAnyLoading}
+                    className="w-full h-12 px-4 rounded-2xl border border-neutral-200/90 dark:border-outline-variant bg-white/90 dark:bg-surface-container-lowest text-on-surface text-sm placeholder:text-neutral-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:opacity-60"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isAnyLoading}
+                  className={`w-full h-12 min-h-[48px] rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 mt-3 ${buttonPressClass}`}
+                >
+                  {loading ? (
+                    <Loader2 className="w-5 h-5 animate-spin text-white" />
+                  ) : (
+                    <span>Send Reset Link</span>
+                  )}
+                </button>
+              </form>
+
+              <div className="text-center mt-7 text-xs sm:text-sm text-on-surface-variant font-medium">
+                <span>Remember your password? </span>
                 <button
                   type="button"
-                  onClick={handleBrowseHome}
-                  className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-md hover:shadow-lg active:scale-[0.99] transition-[transform,background-color,box-shadow] duration-150 flex items-center justify-center gap-2 cursor-pointer"
+                  onClick={() => {
+                    setMode('signin');
+                    setShowEmailFlow(true);
+                    setErrorMessage(null);
+                    setInfoMessage(null);
+                  }}
+                  className="text-primary font-bold hover:underline cursor-pointer ms-1 min-h-[44px] inline-flex items-center"
                 >
-                  <span>Browse Home</span>
+                  Sign In
                 </button>
-              )}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* ═════════════════════════════════════════════════════════════ */}
-        {/* ─── STATE 4: FORGOT PASSWORD ─────────────────────────────── */}
-        {/* ═════════════════════════════════════════════════════════════ */}
-        {mode === 'forgot_password' && (
-          <div className="flex-1 flex flex-col justify-center">
-            {/* Header */}
-            <div className="mb-6">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 font-display tracking-tight">
-                Forgot Password
-              </h1>
-              <p className="text-neutral-500 text-xs sm:text-sm mt-1.5 font-normal leading-relaxed">
-                Enter your registered email address to receive password reset instructions.
-              </p>
-            </div>
-
-            {/* Forgot Password Form */}
-            <form onSubmit={handleForgotPasswordSubmit} className="space-y-4">
-              <div>
-                <label
-                  htmlFor="forgot_email"
-                  className="block text-xs font-semibold text-neutral-700 mb-1.5"
-                >
-                  Email Address
-                </label>
-                <input
-                  id="forgot_email"
-                  type="email"
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  disabled={isAnyLoading}
-                  className="w-full h-12 px-4 rounded-2xl border border-neutral-200/90 bg-neutral-50/60 text-neutral-900 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 focus:bg-white transition-[border-color,box-shadow,background-color] duration-150 disabled:opacity-60"
-                />
+          {/* ═════════════════════════════════════════════════════════════ */}
+          {/* ─── STATE 5: RESET PASSWORD (NEW PASSWORD) ───────────────── */}
+          {/* ═════════════════════════════════════════════════════════════ */}
+          {mode === 'reset_password' && (
+            <div className={`flex-1 flex flex-col justify-center ${motionFadeClass}`}>
+              <div className="mb-6">
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-on-surface font-display tracking-tight">
+                  Set New Password
+                </h1>
+                <p className="text-on-surface-variant text-xs sm:text-sm mt-1.5 font-normal leading-relaxed">
+                  Choose a new strong password for your YAAD account.
+                </p>
               </div>
 
-              {/* Primary CTA */}
-              <button
-                type="submit"
-                disabled={isAnyLoading}
-                className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-sm hover:shadow-md active:scale-[0.99] transition-[transform,background-color,box-shadow] duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 mt-3"
-              >
-                {loading ? (
-                  <Loader2 className="w-5 h-5 animate-spin text-white" />
-                ) : (
-                  <span>Send Reset Link</span>
-                )}
-              </button>
-            </form>
+              <form onSubmit={handleResetPasswordSubmit} className="space-y-4">
+                <div>
+                  <label
+                    htmlFor="reset_new_password"
+                    className="block text-xs font-semibold text-on-surface-variant mb-1.5"
+                  >
+                    New Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="reset_new_password"
+                      type={showNewPassword ? 'text' : 'password'}
+                      autoComplete="new-password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="••••••••"
+                      disabled={isAnyLoading}
+                      className="w-full h-12 ps-4 pe-12 rounded-2xl border border-neutral-200/90 dark:border-outline-variant bg-white/90 dark:bg-surface-container-lowest text-on-surface text-sm placeholder:text-neutral-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:opacity-60"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      aria-label={showNewPassword ? 'Hide password' : 'Show password'}
+                      className="absolute end-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-on-surface min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
+                    >
+                      {showNewPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
 
-            {/* Bottom Navigation */}
-            <div className="text-center mt-7 text-xs sm:text-sm text-neutral-500 font-medium">
-              <span>Remember your password? </span>
+                <div>
+                  <label
+                    htmlFor="reset_confirm_password"
+                    className="block text-xs font-semibold text-on-surface-variant mb-1.5"
+                  >
+                    Confirm New Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="reset_confirm_password"
+                      type={showConfirmNewPassword ? 'text' : 'password'}
+                      autoComplete="new-password"
+                      value={confirmNewPassword}
+                      onChange={(e) => setConfirmNewPassword(e.target.value)}
+                      placeholder="••••••••"
+                      disabled={isAnyLoading}
+                      className="w-full h-12 ps-4 pe-12 rounded-2xl border border-neutral-200/90 dark:border-outline-variant bg-white/90 dark:bg-surface-container-lowest text-on-surface text-sm placeholder:text-neutral-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:opacity-60"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
+                      aria-label={showConfirmNewPassword ? 'Hide password' : 'Show password'}
+                      className="absolute end-2.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-on-surface min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
+                    >
+                      {showConfirmNewPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isAnyLoading}
+                  className={`w-full h-12 min-h-[48px] rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 mt-3 ${buttonPressClass}`}
+                >
+                  {loading ? (
+                    <Loader2 className="w-5 h-5 animate-spin text-white" />
+                  ) : (
+                    <span>Save New Password</span>
+                  )}
+                </button>
+              </form>
+            </div>
+          )}
+
+          {/* ─── BOTTOM LEGAL LINKS ─── */}
+          {mode !== 'success' && (
+            <div className="pt-5 mt-4 border-t border-neutral-200/60 dark:border-outline-variant/40 flex items-center justify-center gap-4 text-xs text-on-surface-variant">
               <button
                 type="button"
-                onClick={() => {
-                  setMode('signin');
-                  setErrorMessage(null);
-                  setInfoMessage(null);
-                }}
-                className="text-[#003527] font-bold hover:underline cursor-pointer ml-1"
+                onClick={() => onOpenLegalPage?.('privacy')}
+                className="min-h-[44px] px-2 font-medium hover:text-primary underline underline-offset-4 cursor-pointer inline-flex items-center"
               >
-                Sign In
+                {t('settings.privacyPolicy') || 'Privacy Policy'}
               </button>
-            </div>
-          </div>
-        )}
-
-        {/* ═════════════════════════════════════════════════════════════ */}
-        {/* ─── STATE 5: RESET PASSWORD (NEW PASSWORD) ───────────────── */}
-        {/* ═════════════════════════════════════════════════════════════ */}
-        {mode === 'reset_password' && (
-          <div className="flex-1 flex flex-col justify-center">
-            {/* Header */}
-            <div className="mb-6">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 font-display tracking-tight">
-                Set New Password
-              </h1>
-              <p className="text-neutral-500 text-xs sm:text-sm mt-1.5 font-normal leading-relaxed">
-                Choose a new strong password for your YAAD account.
-              </p>
-            </div>
-
-            {/* Reset Form */}
-            <form onSubmit={handleResetPasswordSubmit} className="space-y-4">
-              <div>
-                <label
-                  htmlFor="reset_new_password"
-                  className="block text-xs font-semibold text-neutral-700 mb-1.5"
-                >
-                  New Password
-                </label>
-                <div className="relative">
-                  <input
-                    id="reset_new_password"
-                    type={showNewPassword ? 'text' : 'password'}
-                    autoComplete="new-password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="••••••••"
-                    disabled={isAnyLoading}
-                    className="w-full h-12 px-4 pr-12 rounded-2xl border border-neutral-200/90 bg-neutral-50/60 text-neutral-900 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 focus:bg-white transition-[border-color,box-shadow,background-color] duration-150 disabled:opacity-60"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    aria-label={showNewPassword ? 'Hide password' : 'Show password'}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 p-1 transition-colors cursor-pointer"
-                  >
-                    {showNewPassword ? (
-                      <EyeOff className="w-4 h-4" />
-                    ) : (
-                      <Eye className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="reset_confirm_password"
-                  className="block text-xs font-semibold text-neutral-700 mb-1.5"
-                >
-                  Confirm New Password
-                </label>
-                <div className="relative">
-                  <input
-                    id="reset_confirm_password"
-                    type={showConfirmNewPassword ? 'text' : 'password'}
-                    autoComplete="new-password"
-                    value={confirmNewPassword}
-                    onChange={(e) => setConfirmNewPassword(e.target.value)}
-                    placeholder="••••••••"
-                    disabled={isAnyLoading}
-                    className="w-full h-12 px-4 pr-12 rounded-2xl border border-neutral-200/90 bg-neutral-50/60 text-neutral-900 text-sm placeholder:text-neutral-400 focus:outline-none focus:border-[#003527] focus:ring-2 focus:ring-[#003527]/10 focus:bg-white transition-[border-color,box-shadow,background-color] duration-150 disabled:opacity-60"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
-                    aria-label={showConfirmNewPassword ? 'Hide password' : 'Show password'}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 p-1 transition-colors cursor-pointer"
-                  >
-                    {showConfirmNewPassword ? (
-                      <EyeOff className="w-4 h-4" />
-                    ) : (
-                      <Eye className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* Primary CTA */}
+              <span aria-hidden="true" className="text-neutral-300 dark:text-outline-variant">
+                •
+              </span>
               <button
-                type="submit"
-                disabled={isAnyLoading}
-                className="w-full h-12 rounded-full bg-[#003527] hover:bg-[#00271c] active:bg-[#001f16] text-white font-body text-sm font-bold shadow-sm hover:shadow-md active:scale-[0.99] transition-[transform,background-color,box-shadow] duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 mt-3"
+                type="button"
+                onClick={() => onOpenLegalPage?.('terms')}
+                className="min-h-[44px] px-2 font-medium hover:text-primary underline underline-offset-4 cursor-pointer inline-flex items-center"
               >
-                {loading ? (
-                  <Loader2 className="w-5 h-5 animate-spin text-white" />
-                ) : (
-                  <span>Save New Password</span>
-                )}
+                {t('settings.termsOfService') || 'Terms of Service'}
               </button>
-            </form>
-          </div>
-        )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 };
+
