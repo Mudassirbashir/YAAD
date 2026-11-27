@@ -320,7 +320,9 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                       onClick={onClose}
                       disabled={isSaving}
                       aria-label={language === 'ur' ? 'واپس' : 'Back'}
-                      className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center text-primary hover:bg-primary/10 active:scale-95 transition-transform duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                      className={`w-11 h-11 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center text-primary hover:bg-primary/10 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                        canAnimate ? 'transition-transform duration-150 active:scale-95' : ''
+                      }`}
                     >
                       <ArrowLeft className="w-5 h-5 rtl:rotate-180" aria-hidden="true" />
                     </button>
@@ -370,7 +372,9 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                         disabled={isSaving}
                         title={language === 'ur' ? 'تصویر منتخب کریں' : 'Select photo'}
                         aria-label={language === 'ur' ? 'تصویر منتخب کریں' : 'Select photo'}
-                        className="yaad-liquid-glass yaad-liquid-glass-no-blur yaad-liquid-glass-primary absolute -bottom-1 -end-1 w-9 h-9 flex items-center justify-center text-white cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        className={`yaad-liquid-glass yaad-liquid-glass-no-blur yaad-liquid-glass-primary absolute -bottom-1.5 -end-1.5 w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center text-white cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                          canAnimate ? 'transition-transform duration-150 active:scale-95' : ''
+                        }`}
                       >
                         <Camera className="relative z-10 w-4 h-4" aria-hidden="true" />
                       </button>
@@ -459,7 +463,9 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                             id="retry_photo_upload_btn"
                             onClick={handleRetryUpload}
                             disabled={isSaving}
-                            className="min-h-[44px] px-3.5 py-1.5 rounded-full bg-error text-white font-semibold text-xs hover:bg-error/90 active:scale-95 transition-transform duration-150 shrink-0 cursor-pointer"
+                            className={`min-h-[44px] px-3.5 py-1.5 rounded-full bg-error text-white font-semibold text-xs hover:bg-error/90 shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error focus-visible:ring-offset-1 ${
+                              canAnimate ? 'transition-transform duration-150 active:scale-95' : ''
+                            }`}
                           >
                             {language === 'ur' ? 'دوبارہ کوشش کریں' : 'Retry'}
                           </button>
@@ -495,80 +501,82 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                 {/* 2. Account Information Section (Order: Full Name -> Email Address -> Phone Number) */}
                 <section
                   aria-label={language === 'ur' ? 'اکاؤنٹ کی معلومات' : 'Account Information'}
-                  className="bg-surface-container-lowest rounded-3xl p-4 sm:p-5 border border-surface-dim/75 shadow-2xs flex flex-col gap-3.5"
+                  className="yaad-liquid-glass yaad-liquid-glass-card relative p-4 sm:p-5"
                 >
-                  {/* Full Name */}
-                  <div className="flex flex-col gap-1.5">
-                    <label
-                      htmlFor="edit_modal_name_input"
-                      className="text-xs font-bold text-on-surface font-display flex items-center gap-1.5"
-                    >
-                      <User className="w-3.5 h-3.5 text-primary shrink-0" aria-hidden="true" />
-                      <span>{t('settings.name') || (language === 'ur' ? 'مکمل نام' : 'Full Name')}</span>
-                    </label>
-                    <input
-                      id="edit_modal_name_input"
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder={t('settings.namePlaceholder') || 'Enter your name'}
-                      disabled={isSaving}
-                      className="w-full min-h-[44px] px-3.5 py-2.5 text-sm rounded-2xl bg-surface border border-surface-dim/80 text-on-surface focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 font-body"
-                      required
-                    />
-                  </div>
-
-                  {/* Email Address (Read-Only Account Info) */}
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-xs font-bold text-on-surface font-display flex items-center gap-1.5">
-                      <Mail className="w-3.5 h-3.5 text-primary shrink-0" aria-hidden="true" />
-                      <span>{t('settings.email') || (language === 'ur' ? 'ای میل ایڈریس' : 'Email Address')}</span>
-                    </span>
-                    <div
-                      id="edit_profile_email_value"
-                      className="w-full min-h-[44px] px-3.5 py-2.5 text-sm rounded-2xl bg-surface-container-low/80 border border-surface-dim/60 text-on-surface-variant flex items-center min-w-0"
-                    >
-                      <span dir="ltr" className="truncate font-body">
-                        {email || (language === 'ur' ? 'کوئی ای میل درج نہیں' : 'No email linked')}
-                      </span>
+                  <div className="relative z-10 flex flex-col gap-3.5">
+                    {/* Full Name */}
+                    <div className="flex flex-col gap-1.5">
+                      <label
+                        htmlFor="edit_modal_name_input"
+                        className="text-xs font-bold text-on-surface font-display flex items-center gap-1.5"
+                      >
+                        <User className="w-3.5 h-3.5 text-primary shrink-0" aria-hidden="true" />
+                        <span>{t('settings.name') || (language === 'ur' ? 'مکمل نام' : 'Full Name')}</span>
+                      </label>
+                      <input
+                        id="edit_modal_name_input"
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder={t('settings.namePlaceholder') || 'Enter your name'}
+                        disabled={isSaving}
+                        className="w-full min-h-[44px] px-3.5 py-2.5 text-sm rounded-2xl bg-surface border border-surface-dim/80 text-on-surface focus:outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/20 font-body"
+                        required
+                      />
                     </div>
-                  </div>
 
-                  {/* Phone Number */}
-                  <div className="flex flex-col gap-1.5">
-                    <label
-                      htmlFor="edit_modal_phone_input"
-                      className="text-xs font-bold text-on-surface font-display flex items-center gap-1.5"
-                    >
-                      <Smartphone className="w-3.5 h-3.5 text-primary shrink-0" aria-hidden="true" />
-                      <span>{t('settings.phone') || (language === 'ur' ? 'فون نمبر' : 'Phone Number')}</span>
-                    </label>
-                    <input
-                      id="edit_modal_phone_input"
-                      type="tel"
-                      dir="ltr"
-                      value={phone}
-                      onChange={(e) => {
-                        setPhone(e.target.value);
-                        if (phoneError) setPhoneError(null);
-                      }}
-                      placeholder="+92 300 1234567"
-                      disabled={isSaving}
-                      className={`w-full min-h-[44px] px-3.5 py-2.5 text-sm rounded-2xl bg-surface border text-on-surface font-mono focus:outline-hidden focus:ring-2 ${
-                        phoneError
-                          ? 'border-error focus:border-error focus:ring-error/20'
-                          : 'border-surface-dim/80 focus:border-primary focus:ring-primary/20'
-                      }`}
-                    />
-                    {phoneError ? (
-                      <p className="text-[11px] text-error font-medium">{phoneError}</p>
-                    ) : (
-                      <p className="text-[11px] text-outline font-body">
-                        {language === 'ur'
-                          ? 'پاکستانی نمبر (+92) درج کریں'
-                          : 'Format: +92 300 1234567'}
-                      </p>
-                    )}
+                    {/* Email Address (Read-Only Account Info) */}
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-xs font-bold text-on-surface font-display flex items-center gap-1.5">
+                        <Mail className="w-3.5 h-3.5 text-primary shrink-0" aria-hidden="true" />
+                        <span>{t('settings.email') || (language === 'ur' ? 'ای میل ایڈریس' : 'Email Address')}</span>
+                      </span>
+                      <div
+                        id="edit_profile_email_value"
+                        className="w-full min-h-[44px] px-3.5 py-2.5 text-sm rounded-2xl bg-surface-container-low/80 border border-surface-dim/60 text-on-surface-variant flex items-center min-w-0 overflow-hidden"
+                      >
+                        <span dir="ltr" className="truncate font-body w-full rtl:text-right">
+                          {email || (language === 'ur' ? 'کوئی ای میل درج نہیں' : 'No email linked')}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Phone Number */}
+                    <div className="flex flex-col gap-1.5">
+                      <label
+                        htmlFor="edit_modal_phone_input"
+                        className="text-xs font-bold text-on-surface font-display flex items-center gap-1.5"
+                      >
+                        <Smartphone className="w-3.5 h-3.5 text-primary shrink-0" aria-hidden="true" />
+                        <span>{t('settings.phone') || (language === 'ur' ? 'فون نمبر' : 'Phone Number')}</span>
+                      </label>
+                      <input
+                        id="edit_modal_phone_input"
+                        type="tel"
+                        dir="ltr"
+                        value={phone}
+                        onChange={(e) => {
+                          setPhone(e.target.value);
+                          if (phoneError) setPhoneError(null);
+                        }}
+                        placeholder="+92 300 1234567"
+                        disabled={isSaving}
+                        className={`w-full min-h-[44px] px-3.5 py-2.5 text-sm rounded-2xl bg-surface border text-on-surface font-mono focus:outline-hidden focus:ring-2 ${
+                          phoneError
+                            ? 'border-error focus:border-error focus:ring-error/20'
+                            : 'border-surface-dim/80 focus:border-primary focus:ring-primary/20'
+                        }`}
+                      />
+                      {phoneError ? (
+                        <p className="text-[11px] text-error font-medium">{phoneError}</p>
+                      ) : (
+                        <p className="text-[11px] text-outline font-body">
+                          {language === 'ur'
+                            ? 'پاکستانی نمبر (+92) درج کریں'
+                            : 'Format: +92 300 1234567'}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </section>
 

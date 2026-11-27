@@ -261,7 +261,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
               type="button"
               onClick={onOpenProfile}
               aria-label="Open Profile & Settings"
-              className="w-11 h-11 rounded-full ring-2 ring-surface-dim hover:ring-primary/40 active:scale-95 transition-[transform,box-shadow] duration-150 shrink-0 cursor-pointer overflow-hidden flex items-center justify-center bg-surface-container shadow-2xs"
+              className={`w-11 h-11 rounded-full ring-2 ring-surface-dim hover:ring-primary/40 shrink-0 cursor-pointer overflow-hidden flex items-center justify-center bg-surface-container shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+                canAnimate ? 'transition-transform duration-150 active:scale-95' : ''
+              }`}
             >
               <Avatar
                 name={profile?.full_name || user?.email || 'User'}

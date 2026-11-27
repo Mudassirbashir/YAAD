@@ -1,6 +1,7 @@
 import React from 'react';
-import { LogOut, Loader2, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { LogOut, Loader2, ShieldCheck } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useShouldAnimate } from '../../lib/motionPreference';
 
 interface SignOutConfirmModalProps {
   isOpen: boolean;
@@ -15,7 +16,8 @@ export const SignOutConfirmModal: React.FC<SignOutConfirmModalProps> = ({
   onConfirm,
   isSigningOut,
 }) => {
-  const { t, language, isRTL } = useLanguage();
+  const { language, isRTL } = useLanguage();
+  const canAnimate = useShouldAnimate();
 
   if (!isOpen) return null;
 
@@ -23,6 +25,7 @@ export const SignOutConfirmModal: React.FC<SignOutConfirmModalProps> = ({
     <div
       id="sign_out_modal_backdrop"
       onClick={() => !isSigningOut && onClose()}
+      style={!canAnimate ? { animationDuration: '80ms' } : undefined}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-fade-in"
       role="dialog"
       aria-modal="true"
@@ -32,7 +35,10 @@ export const SignOutConfirmModal: React.FC<SignOutConfirmModalProps> = ({
       <div
         id="sign_out_modal_container"
         onClick={(e) => e.stopPropagation()}
-        className="bg-surface-container-lowest rounded-3xl p-6 sm:p-7 max-w-sm sm:max-w-md w-full shadow-2xl border border-surface-dim/80 space-y-5 text-center animate-zoom-in-95"
+        style={!canAnimate ? { animationDuration: '80ms' } : undefined}
+        className={`bg-surface-container-lowest rounded-3xl p-6 sm:p-7 max-w-sm sm:max-w-md w-full shadow-2xl border border-surface-dim/80 space-y-5 text-center ${
+          canAnimate ? 'animate-zoom-in-95' : 'animate-fade-in'
+        }`}
       >
         {/* Visual Badge */}
         <div className="w-14 h-14 rounded-2xl bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto border border-rose-500/20 shadow-xs">
@@ -72,7 +78,9 @@ export const SignOutConfirmModal: React.FC<SignOutConfirmModalProps> = ({
             type="button"
             onClick={onConfirm}
             disabled={isSigningOut}
-            className="flex-1 min-h-[46px] py-2.5 px-4 text-xs sm:text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 active:bg-rose-800 rounded-2xl transition-[transform,background-color,opacity] duration-150 shadow-xs disabled:opacity-50 active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+            className={`flex-1 min-h-[46px] py-2.5 px-4 text-xs sm:text-sm font-bold text-white bg-rose-600 hover:bg-rose-700 active:bg-rose-800 rounded-2xl shadow-xs disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 ${
+              canAnimate ? 'transition-transform duration-150 active:scale-95' : ''
+            }`}
           >
             {isSigningOut ? (
               <>
@@ -93,7 +101,9 @@ export const SignOutConfirmModal: React.FC<SignOutConfirmModalProps> = ({
             id="sign_out_cancel_btn"
             onClick={onClose}
             disabled={isSigningOut}
-            className="flex-1 min-h-[46px] py-2.5 px-4 text-xs sm:text-sm font-bold text-on-surface bg-surface-container hover:bg-surface-container-high rounded-2xl transition-colors disabled:opacity-50 active:scale-95 cursor-pointer border border-surface-dim/60"
+            className={`flex-1 min-h-[46px] py-2.5 px-4 text-xs sm:text-sm font-bold text-on-surface bg-surface-container hover:bg-surface-container-high rounded-2xl disabled:opacity-50 cursor-pointer border border-surface-dim/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+              canAnimate ? 'transition-transform duration-150 active:scale-95' : ''
+            }`}
           >
             {language === 'ur' ? 'نہیں، سائن اِن رہیں' : 'Keep Me Signed In'}
           </button>

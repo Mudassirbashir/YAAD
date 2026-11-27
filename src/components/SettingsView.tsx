@@ -45,7 +45,7 @@ import { isMiloSoundEnabled, setMiloSoundEnabled } from '../pet/miloSounds';
 import { triggerMiloEvent } from '../pet/useMilo';
 import { isPerfMeterEnabled, setPerfMeterEnabled } from '../lib/perfMeter';
 import { isLowEndDevice, setLiteMode } from '../lib/deviceTier';
-import { useLiteMode } from '../lib/motionPreference';
+import { useLiteMode, useShouldAnimate } from '../lib/motionPreference';
 
 interface SettingsViewProps {
   onBack: () => void;
@@ -79,6 +79,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const { user, profile, updateUserProfile, changePassword } = useAuth();
   const { theme, setTheme, themes, customPalettes, selectedCustomPalette, setSelectedCustomPalette } = useAppTheme();
   const { config: remoteConfig } = useRemoteConfig();
+  const canAnimate = useShouldAnimate();
 
   const Chevron = isRTL ? ChevronLeft : ChevronRight;
 
@@ -360,27 +361,39 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             {user ? (
               <div className="flex items-center justify-between gap-2.5 sm:gap-3">
                 {/* Left side: Avatar with click to edit */}
-                <div
-                  className={`relative shrink-0 min-w-[44px] min-h-[44px] flex flex-col items-center justify-center ${remoteConfig.settings?.photoUpload !== false ? 'cursor-pointer group' : ''}`}
-                  onClick={remoteConfig.settings?.photoUpload !== false ? () => {
-                    triggerHaptic(8);
-                    setShowAvatarPicker(true);
-                  } : undefined}
-                  title={remoteConfig.settings?.photoUpload !== false ? (language === 'ur' ? 'پروفائل پکچر تبدیل کریں' : 'Change Profile Picture') : undefined}
-                >
-                  <Avatar
-                    name={displayName}
-                    email={user.email}
-                    avatarUrl={profile?.avatar_url}
-                    size="lg"
-                    className="w-13 h-13 sm:w-14 sm:h-14 ring-2 ring-primary/20 group-hover:ring-primary/50 transition-shadow duration-150 rounded-full"
-                  />
-                  {remoteConfig.settings?.photoUpload !== false && (
+                {remoteConfig.settings?.photoUpload !== false ? (
+                  <button
+                    type="button"
+                    className="relative shrink-0 min-w-[44px] min-h-[44px] flex flex-col items-center justify-center cursor-pointer group rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                    onClick={() => {
+                      triggerHaptic(8);
+                      setShowAvatarPicker(true);
+                    }}
+                    title={language === 'ur' ? 'پروفائل پکچر تبدیل کریں' : 'Change Profile Picture'}
+                    aria-label={language === 'ur' ? 'پروفائل پکچر تبدیل کریں' : 'Change Profile Picture'}
+                  >
+                    <Avatar
+                      name={displayName}
+                      email={user.email}
+                      avatarUrl={profile?.avatar_url}
+                      size="lg"
+                      className="w-13 h-13 sm:w-14 sm:h-14 ring-2 ring-primary/20 group-hover:ring-primary/50 rounded-full"
+                    />
                     <div className="absolute -bottom-0.5 -end-0.5 w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center shadow-xs ring-1 ring-white">
                       <Pencil className="w-2.5 h-2.5" />
                     </div>
-                  )}
-                </div>
+                  </button>
+                ) : (
+                  <div className="relative shrink-0 min-w-[44px] min-h-[44px] flex flex-col items-center justify-center">
+                    <Avatar
+                      name={displayName}
+                      email={user.email}
+                      avatarUrl={profile?.avatar_url}
+                      size="lg"
+                      className="w-13 h-13 sm:w-14 sm:h-14 ring-2 ring-primary/20 rounded-full"
+                    />
+                  </div>
+                )}
 
                 {/* Profile Information: Name primary line, phone & email secondary lines */}
                 <div className="flex-1 min-w-0 flex flex-col gap-0.5">
@@ -405,7 +418,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   )}
 
                   {displayEmail && (
-                    <p className="text-xs text-outline font-body truncate leading-snug">
+                    <p dir="ltr" className="text-xs text-outline font-body truncate leading-snug rtl:text-right">
                       {displayEmail}
                     </p>
                   )}
@@ -423,9 +436,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     }}
                     title={language === 'ur' ? 'ایڈٹ انفو' : 'Edit Info'}
                     aria-label={language === 'ur' ? 'ایڈٹ انفو' : 'Edit Info'}
-                    className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-surface-container hover:bg-surface-container-high border border-surface-dim/75 text-primary flex items-center justify-center shrink-0 cursor-pointer shadow-2xs active:scale-95 transition-[transform,background-color] duration-150 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    className={`w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-surface-container hover:bg-surface-container-high border border-surface-dim/75 text-primary flex items-center justify-center shrink-0 cursor-pointer shadow-2xs group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                      canAnimate ? 'transition-transform duration-150 active:scale-95' : ''
+                    }`}
                   >
-                    <Pencil className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                    <Pencil className={`w-4 h-4 ${canAnimate ? 'group-hover:scale-110 transition-transform duration-150' : ''}`} />
                   </button>
                 )}
               </div>
@@ -451,7 +466,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 <button
                   type="button"
                   onClick={() => onOpenAuth?.('signin')}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-primary hover:bg-primary/90 transition-[transform,background-color] duration-150 shrink-0 cursor-pointer shadow-xs active:scale-95"
+                  className={`min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold text-white bg-primary hover:bg-primary/90 shrink-0 cursor-pointer shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                    canAnimate ? 'transition-transform duration-150 active:scale-95' : ''
+                  }`}
                 >
                   {t('auth.signIn') || (language === 'ur' ? 'سائن ان' : 'Sign In')}
                 </button>
@@ -464,7 +481,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {/* SECTION 2: PERFORMANCE (Language only, smooth & rounded)          */}
         {/* ------------------------------------------------------------------ */}
         {(remoteConfig.settings?.languageSelect !== false || remoteConfig.settings?.miloCompanion !== false || remoteConfig.settings?.soundEffects !== false) && (
-          <section id="settings_preferences_section" className="flex flex-col gap-4">
+          <section id="settings_preferences_section" className="flex flex-col gap-1.5">
             <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-display">
               {language === 'ur' ? 'جنرل' : 'General'}
             </h2>
@@ -496,7 +513,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       id="lang_select_en"
                       type="button"
                       onClick={() => handleSelectLanguage('en')}
-                      className={`min-h-[44px] py-2 px-1 sm:px-2 rounded-xl text-xs font-semibold font-display transition-[background-color,color,box-shadow] duration-150 flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
+                      className={`min-h-[44px] py-2 px-1 sm:px-2 rounded-xl text-xs font-semibold font-display flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${
                         language === 'en'
                           ? 'bg-surface-container-lowest text-primary shadow-xs ring-1 ring-black/5'
                           : 'text-outline hover:text-on-surface'
@@ -511,7 +528,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       id="lang_select_roman_urdu"
                       type="button"
                       onClick={() => handleSelectLanguage('roman-urdu')}
-                      className={`min-h-[44px] py-2 px-1 sm:px-2 rounded-xl text-xs font-semibold font-display transition-[background-color,color,box-shadow] duration-150 flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
+                      className={`min-h-[44px] py-2 px-1 sm:px-2 rounded-xl text-xs font-semibold font-display flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${
                         language === 'roman-urdu'
                           ? 'bg-surface-container-lowest text-primary shadow-xs ring-1 ring-black/5'
                           : 'text-outline hover:text-on-surface'
@@ -526,7 +543,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       id="lang_select_ur"
                       type="button"
                       onClick={() => handleSelectLanguage('ur')}
-                      className={`min-h-[44px] py-2 px-1 sm:px-2 rounded-xl text-xs font-semibold font-urdu transition-[background-color,color,box-shadow] duration-150 flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap ${
+                      className={`min-h-[44px] py-2 px-1 sm:px-2 rounded-xl text-xs font-semibold font-urdu flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${
                         language === 'ur'
                           ? 'bg-surface-container-lowest text-primary shadow-xs ring-1 ring-black/5'
                           : 'text-outline hover:text-on-surface'
@@ -561,13 +578,23 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     <button
                       type="button"
                       id="toggle_lite_mode"
+                      role="switch"
+                      aria-checked={liteModeActive}
                       onClick={handleToggleLiteMode}
-                      className={`w-[51px] h-[31px] rounded-full transition-colors p-[2px] flex items-center shrink-0 cursor-pointer ${
-                        liteModeActive ? 'bg-primary justify-end' : 'bg-surface-dim justify-start'
-                      }`}
+                      className="min-w-[51px] min-h-[44px] flex items-center justify-center rounded-full shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                       aria-label={liteModeActive ? 'Disable Lite mode' : 'Enable Lite mode'}
                     >
-                      <span className="w-[27px] h-[27px] rounded-full bg-white shadow-xs block" />
+                      <span
+                        className={`w-[51px] h-[31px] rounded-full p-[2px] flex items-center ${
+                          liteModeActive ? 'bg-primary' : 'bg-surface-dim'
+                        }`}
+                      >
+                        <span
+                          className={`w-[27px] h-[27px] rounded-full bg-white shadow-xs block ${
+                            canAnimate ? 'transition-transform duration-150' : ''
+                          } ${liteModeActive ? (isRTL ? '-translate-x-5' : 'translate-x-5') : 'translate-x-0'}`}
+                        />
+                      </span>
                     </button>
                   </div>
 
@@ -603,13 +630,23 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     <button
                       type="button"
                       id="toggle_milo_companion"
+                      role="switch"
+                      aria-checked={miloActive}
                       onClick={handleToggleMilo}
-                      className={`w-[51px] h-[31px] rounded-full transition-colors p-[2px] flex items-center shrink-0 cursor-pointer ${
-                        miloActive ? 'bg-primary justify-end' : 'bg-surface-dim justify-start'
-                      }`}
+                      className="min-w-[51px] min-h-[44px] flex items-center justify-center rounded-full shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                       aria-label={miloActive ? 'Disable Milo' : 'Enable Milo'}
                     >
-                      <span className="w-[27px] h-[27px] rounded-full bg-white shadow-xs block" />
+                      <span
+                        className={`w-[51px] h-[31px] rounded-full p-[2px] flex items-center ${
+                          miloActive ? 'bg-primary' : 'bg-surface-dim'
+                        }`}
+                      >
+                        <span
+                          className={`w-[27px] h-[27px] rounded-full bg-white shadow-xs block ${
+                            canAnimate ? 'transition-transform duration-150' : ''
+                          } ${miloActive ? (isRTL ? '-translate-x-5' : 'translate-x-5') : 'translate-x-0'}`}
+                        />
+                      </span>
                     </button>
                   </div>
                 )}
@@ -633,13 +670,23 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   <button
                     type="button"
                     id="toggle_speed_meter"
+                    role="switch"
+                    aria-checked={perfMeterActive}
                     onClick={handleTogglePerfMeter}
-                    className={`w-[51px] h-[31px] rounded-full transition-colors p-[2px] flex items-center shrink-0 cursor-pointer ${
-                      perfMeterActive ? 'bg-primary justify-end' : 'bg-surface-dim justify-start'
-                    }`}
+                    className="min-w-[51px] min-h-[44px] flex items-center justify-center rounded-full shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                     aria-label={perfMeterActive ? 'Disable Speed meter' : 'Enable Speed meter'}
                   >
-                    <span className="w-[27px] h-[27px] rounded-full bg-white shadow-xs block" />
+                    <span
+                      className={`w-[51px] h-[31px] rounded-full p-[2px] flex items-center ${
+                        perfMeterActive ? 'bg-primary' : 'bg-surface-dim'
+                      }`}
+                    >
+                      <span
+                        className={`w-[27px] h-[27px] rounded-full bg-white shadow-xs block ${
+                          canAnimate ? 'transition-transform duration-150' : ''
+                        } ${perfMeterActive ? (isRTL ? '-translate-x-5' : 'translate-x-5') : 'translate-x-0'}`}
+                      />
+                    </span>
                   </button>
                 </div>
 
@@ -669,13 +716,23 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     <button
                       type="button"
                       id="toggle_sound_effects"
+                      role="switch"
+                      aria-checked={soundEnabled}
                       onClick={handleToggleSound}
-                      className={`w-[51px] h-[31px] rounded-full transition-colors p-[2px] flex items-center shrink-0 cursor-pointer ${
-                        soundEnabled ? 'bg-primary justify-end' : 'bg-surface-dim justify-start'
-                      }`}
+                      className="min-w-[51px] min-h-[44px] flex items-center justify-center rounded-full shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                       aria-label={soundEnabled ? 'Mute sound effects' : 'Enable sound effects'}
                     >
-                      <span className="w-[27px] h-[27px] rounded-full bg-white shadow-xs block" />
+                      <span
+                        className={`w-[51px] h-[31px] rounded-full p-[2px] flex items-center ${
+                          soundEnabled ? 'bg-primary' : 'bg-surface-dim'
+                        }`}
+                      >
+                        <span
+                          className={`w-[27px] h-[27px] rounded-full bg-white shadow-xs block ${
+                            canAnimate ? 'transition-transform duration-150' : ''
+                          } ${soundEnabled ? (isRTL ? '-translate-x-5' : 'translate-x-5') : 'translate-x-0'}`}
+                        />
+                      </span>
                     </button>
                   </div>
                 )}
@@ -687,11 +744,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {/* ------------------------------------------------------------------ */}
         {/* SECTION 3: APPEARANCE & THEMES (Simplified Names + Custom Palettes) */}
         {/* ------------------------------------------------------------------ */}
-        {/* ------------------------------------------------------------------ */}
-        {/* SECTION 3: APPEARANCE & THEMES (Simplified Names + Custom Palettes) */}
-        {/* ------------------------------------------------------------------ */}
         {remoteConfig.settings?.themeColor !== false && (
-          <section id="settings_appearance_section" className="flex flex-col gap-4">
+          <section id="settings_appearance_section" className="flex flex-col gap-1.5">
             <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-display">
               {t('settings.appearanceTitle') || (language === 'ur' ? 'تھیم اور رنگ' : 'Appearance & Theme')}
             </h2>
@@ -734,7 +788,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         setTheme(item.id);
                         triggerMiloEvent('settings_saved');
                       }}
-                      className={`h-14 rounded-2xl border px-3 flex items-center justify-between gap-2 transition-[background-color,border-color,box-shadow] duration-150 cursor-pointer text-start active:bg-surface-container-low ${
+                      className={`h-14 min-h-[44px] rounded-2xl border px-3 flex items-center justify-between gap-2 cursor-pointer text-start active:bg-surface-container-low focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${
                         isActive
                           ? 'border-primary bg-primary/10 ring-1 ring-primary/30 shadow-2xs'
                           : 'border-surface-dim/70 bg-surface-container-lowest hover:bg-surface-container-low/60'
@@ -799,7 +853,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                           setTheme('custom');
                           triggerMiloEvent('settings_saved');
                         }}
-                        className={`h-12 rounded-2xl border px-2.5 flex items-center justify-between gap-1.5 transition-[background-color,border-color,box-shadow] duration-150 cursor-pointer text-start active:bg-surface-container-low ${
+                        className={`h-12 min-h-[44px] rounded-2xl border px-2.5 flex items-center justify-between gap-1.5 cursor-pointer text-start active:bg-surface-container-low focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${
                           isCpActive
                             ? 'border-primary ring-2 ring-primary/40 bg-primary/10 shadow-xs'
                             : 'border-surface-dim/70 bg-surface-container-low hover:bg-surface-container'
@@ -830,7 +884,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {/* SECTION 4: SECURITY (Change Password Card)                         */}
         {/* ------------------------------------------------------------------ */}
         {user && remoteConfig.settings?.changePassword !== false && (
-          <section id="settings_security_section" className="flex flex-col gap-4">
+          <section id="settings_security_section" className="flex flex-col gap-1.5">
             <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-display">
               {t('settings.securityTitle') || (language === 'ur' ? 'سیکیورٹی' : 'Security')}
             </h2>
@@ -859,9 +913,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 onClick={() => setShowChangePasswordModal(true)}
                 title={language === 'ur' ? 'پاس ورڈ تبدیل کریں' : 'Change Password'}
                 aria-label="Change Password"
-                className="w-10 h-10 rounded-full bg-surface-container hover:bg-surface-container-high border border-surface-dim/75 text-primary flex items-center justify-center shrink-0 cursor-pointer shadow-2xs active:scale-95 transition-[transform,background-color] duration-150 group"
+                className={`w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-surface-container hover:bg-surface-container-high border border-surface-dim/75 text-primary flex items-center justify-center shrink-0 cursor-pointer shadow-2xs group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
+                  canAnimate ? 'transition-transform duration-150 active:scale-95' : ''
+                }`}
               >
-                <Pencil className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                <Pencil className={`w-4 h-4 ${canAnimate ? 'group-hover:scale-110 transition-transform duration-150' : ''}`} />
               </button>
             </div>
           </section>
@@ -871,7 +927,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {/* SECTION 5: ABOUT & SUPPORT (Only About YAAD & Customer Support Desk) */}
         {/* ------------------------------------------------------------------ */}
         {(remoteConfig.settings?.customerSupport !== false || remoteConfig.settings?.aboutYaad !== false) && (
-          <section id="settings_about_section" className="flex flex-col gap-4">
+          <section id="settings_about_section" className="flex flex-col gap-1.5">
             <h2 className="text-xs font-bold uppercase tracking-wider text-outline px-1 font-display">
               {t('settings.aboutTitle') || (language === 'ur' ? 'معلومات و سپورٹ' : 'About & Support')}
             </h2>
@@ -886,7 +942,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     triggerHaptic(8);
                     setShowSupportModal(true);
                   }}
-                  className={`w-full p-4 sm:px-5 sm:py-4 flex items-center justify-between gap-3 text-start hover:bg-surface-container-low/60 active:bg-surface-container-low transition-colors cursor-pointer group min-h-[68px] ${
+                  className={`w-full p-4 sm:px-5 sm:py-4 flex items-center justify-between gap-3 text-start hover:bg-surface-container-low/60 active:bg-surface-container-low cursor-pointer group min-h-[68px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset ${
                     highlightedSection === 'support' ? 'bg-primary/10 ring-2 ring-primary ring-inset rounded-2xl' : ''
                   }`}
                 >
@@ -908,7 +964,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       </p>
                     </div>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-outline group-hover:text-primary transition-colors shrink-0" />
+                  <Chevron className="w-5 h-5 text-outline group-hover:text-primary shrink-0" />
                 </button>
               )}
 
@@ -918,7 +974,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   id="settings_link_about"
                   type="button"
                   onClick={() => handleOpenLegal('about')}
-                  className="w-full p-4 sm:px-5 sm:py-4 flex items-center justify-between gap-3 text-start hover:bg-surface-container-low/60 active:bg-surface-container-low transition-colors cursor-pointer group min-h-[68px]"
+                  className="w-full p-4 sm:px-5 sm:py-4 flex items-center justify-between gap-3 text-start hover:bg-surface-container-low/60 active:bg-surface-container-low cursor-pointer group min-h-[68px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-10 h-10 rounded-2xl bg-surface-container text-primary flex items-center justify-center shrink-0">
@@ -936,7 +992,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       </p>
                     </div>
                   </div>
-                  <ChevronRight className="w-5 h-5 text-outline group-hover:text-primary transition-colors shrink-0" />
+                  <Chevron className="w-5 h-5 text-outline group-hover:text-primary shrink-0" />
                 </button>
               )}
             </div>
@@ -956,9 +1012,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   triggerHaptic(10);
                   setShowSignOutModal(true);
                 }}
-                className="w-full sm:w-auto sm:min-w-[220px] py-2.5 px-6 rounded-xl border border-rose-200/80 bg-rose-50/80 hover:bg-rose-100/90 text-rose-700 font-bold font-display text-xs sm:text-sm transition-[transform,background-color] duration-150 flex items-center justify-center gap-2 cursor-pointer shadow-2xs active:scale-95"
+                className={`w-full sm:w-auto sm:min-w-[220px] min-h-[44px] py-2.5 px-6 rounded-xl border border-rose-200/80 dark:border-rose-500/30 bg-rose-50/80 dark:bg-rose-950/40 hover:bg-rose-100/90 dark:hover:bg-rose-950/60 text-rose-700 dark:text-rose-300 font-bold font-display text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 ${
+                  canAnimate ? 'transition-transform duration-150 active:scale-95' : ''
+                }`}
               >
-                <LogOut className="w-4 h-4 stroke-[2.2]" />
+                <LogOut className="w-4 h-4 stroke-[2.2] rtl:rotate-180" />
                 <span>{t('auth.signOut') || (language === 'ur' ? 'اکاؤنٹ سے لاگ آؤٹ' : 'Sign Out')}</span>
               </button>
             )}
@@ -977,7 +1035,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     onDeleteAccount();
                   }
                 }}
-                className="text-[11px] text-outline hover:text-rose-600 transition-colors cursor-pointer py-1"
+                className="min-h-[44px] px-4 py-2 text-[11px] text-outline hover:text-rose-600 cursor-pointer rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
               >
                 {language === 'ur' ? 'اکاؤنٹ مستقل حذف کریں' : 'Delete Account'}
               </button>
@@ -1055,7 +1113,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         <div
           role="status"
           aria-live="polite"
-          className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-[#00422f] text-emerald-100 px-4 py-2.5 rounded-2xl shadow-xl flex items-center gap-2.5 border border-emerald-400/30 animate-slide-in-from-bottom text-xs font-body font-semibold"
+          style={!canAnimate ? { animationDuration: '80ms' } : undefined}
+          className={`fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-[#00422f] text-emerald-100 px-4 py-2.5 rounded-2xl shadow-xl flex items-center gap-2.5 border border-emerald-400/30 text-xs font-body font-semibold ${
+            canAnimate ? 'animate-slide-in-from-bottom' : 'animate-fade-in'
+          }`}
         >
           <Check className="w-4 h-4 text-emerald-400 stroke-[3]" />
           <span>{avatarToast}</span>

@@ -13,6 +13,7 @@ import {
 import { useLanguage } from '../context/LanguageContext';
 import { Badge, BadgeAnchor } from './common/Badge';
 import { useRemoteConfig } from '../hooks/useRemoteConfig';
+import { useShouldAnimate } from '../lib/motionPreference';
 
 interface TopHeaderProps {
   title?: string;
@@ -142,6 +143,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
 }) => {
   const { language } = useLanguage();
   const { config: remoteConfig } = useRemoteConfig();
+  const canAnimate = useShouldAnimate();
   const [notifications, setNotifications] = useState<InAppNotification[]>(DEFAULT_NOTIFICATIONS);
   const [hasUnread, setHasUnread] = useState(false);
 
@@ -198,7 +200,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
 
   return (
     <>
-      <header className="sticky top-0 w-full z-40 bg-background/80 backdrop-blur-xl border-b border-surface-dim/40 transition-colors select-none">
+      <header className="sticky top-0 w-full z-40 bg-background/80 backdrop-blur-xl border-b border-surface-dim/40 select-none">
         <div className="grid grid-cols-[1fr_auto_1fr] items-center px-3 sm:px-6 lg:px-8 h-14 w-full max-w-7xl mx-auto gap-2">
           {/* Left Action: Back Arrow on non-home screens, Official Logo on Home */}
           <div className="flex items-center justify-start min-w-[44px]">
@@ -208,7 +210,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                 type="button"
                 onClick={handleBackClick}
                 aria-label="Go back"
-                className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-surface-container-low transition-colors text-primary active:scale-95 duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 cursor-pointer"
+                className={`w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-surface-container-low text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 cursor-pointer ${
+                  canAnimate ? 'transition-transform duration-150 active:scale-95' : ''
+                }`}
               >
                 <ArrowLeft className="w-5 h-5 rtl:rotate-180" />
               </button>
@@ -224,7 +228,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                       width={36}
                       height={36}
                       draggable={false}
-                      className="h-full w-full object-contain select-none transition-transform duration-200 hover:scale-105 active:scale-95"
+                      className={`h-full w-full object-contain select-none ${
+                        canAnimate ? 'transition-transform duration-200 hover:scale-105 active:scale-95' : ''
+                      }`}
                     />
                   </picture>
                 </div>
@@ -266,7 +272,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                 placement="top-right"
                 badge={
                   showBellBadge ? (
-                    <Badge dot tone="warning" pulse ariaLabel="Unread notifications" />
+                    <Badge dot tone="warning" pulse={canAnimate} ariaLabel="Unread notifications" />
                   ) : null
                 }
               >
@@ -276,7 +282,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                   onClick={handleOpenNotifications}
                   aria-label="Notifications"
                   title="Notifications & Alerts"
-                  className="w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-primary hover:bg-surface-container-low active:bg-surface-container active:scale-95 transition-[transform,background-color] duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 cursor-pointer"
+                  className={`w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-primary hover:bg-surface-container-low active:bg-surface-container focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 cursor-pointer ${
+                    canAnimate ? 'transition-transform duration-150 active:scale-95' : ''
+                  }`}
                 >
                   <Bell className="w-5 h-5 stroke-[2]" />
                 </button>
